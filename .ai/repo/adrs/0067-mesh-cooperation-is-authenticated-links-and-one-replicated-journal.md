@@ -31,7 +31,8 @@ not support the product it was presented as:
    handovers were files under one checkout's `.ai/local/`; no event, session or review
    travelled anywhere.
 2. **The same repository on two machines was two repositories.** Advertisements carried
-   `sha256(git common directory path)`: `/Users/k/repo` and `/home/k/repo` never matched.
+   `sha256(git common directory path)`, and a macOS checkout path never matched the Linux
+   checkout path of the same clone.
 3. **Two worktrees of one machine could not see each other.** Both servers hold the same
    node key; the manager skipped the second one's datagrams as "self-heard", and its
    multicast socket could not bind the port the first held.

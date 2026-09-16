@@ -13535,15 +13535,18 @@ cli:
                 - name: verdict
                   long: verdict
                   positional: false
-                  help: "`approved`, `changes_requested` or `commented`"
+                  help: What the reviewer decided
                   value_name: VERDICT
                   takes_value: true
                   required: true
                   global: false
                   possible_values:
                     - name: approved
+                      help: the work is good as it stands and the requester may proceed
                     - name: changes_requested
+                      help: the work needs changing before it proceeds; the note says what
                     - name: commented
+                      help: "an observation with no verdict: neither approval nor a request to change"
                   defaults: []
                 - name: note
                   long: note

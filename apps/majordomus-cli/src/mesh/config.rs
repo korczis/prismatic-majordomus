@@ -75,6 +75,29 @@ pub struct MeshConfig {
 /// Cooperation settings: whether this runtime links to the trusted runtimes of its
 /// repository, how often it proves it is alive, when a silent runtime counts as gone, and
 /// which endpoints to dial when discovery cannot find them.
+///
+/// Every field has a default that is safe on its own, so a declaration that says nothing
+/// about cooperation still behaves as intended: links are on, but a link needs a trusted
+/// peer of the same repository, and under the default trust policy there is none until a
+/// person lists a key.
+///
+/// ```
+/// use majordomus_cli::mesh::config::{CooperationConfig, DEFAULT_EXPIRY, DEFAULT_HEARTBEAT};
+///
+/// let default = CooperationConfig::default();
+/// assert!(default.enabled && default.seeds.is_empty() && default.repository.is_none());
+/// assert!(
+///     default.expiry_seconds >= 3 * default.heartbeat_seconds,
+///     "one lost round must never expire a runtime",
+/// );
+///
+/// // and what a declaration leaves out, it gets
+/// let stated: CooperationConfig =
+///     serde_json::from_value(serde_json::json!({ "seeds": ["http://10.0.0.2:8742"] })).unwrap();
+/// assert_eq!(stated.seeds, ["http://10.0.0.2:8742"]);
+/// assert_eq!(stated.heartbeat_seconds, DEFAULT_HEARTBEAT);
+/// assert_eq!(stated.expiry_seconds, DEFAULT_EXPIRY);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CooperationConfig {

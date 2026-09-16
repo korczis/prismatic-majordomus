@@ -38,11 +38,31 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::journal::{
-    canonical_json, ClaimMode, EventBody, HandoverBody, MeshEvent, SessionInfo, StreamId,
-    StreamLiveness,
+    canonical_json, causal_key, ClaimMode, EventBody, HandoverBody, MeshEvent, SessionInfo,
+    StreamId, StreamLiveness,
 };
 
-/// A session's standing.
+/// A session's standing, as every runtime of the mesh reads it. The distinction that
+/// matters is between `Closed` and `Expired`: the first is a session that said it was
+/// finished, the second one whose runtime stopped beating and can no longer say anything.
+/// Both end the session's claims, but only the second is a machine nobody should expect an
+/// answer from.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, SessionState};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }).unwrap();
+/// assert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);
+///
+/// // the same events, read on a runtime that no longer hears the writer
+/// let gone = fold(&j.events(), &|_| StreamLiveness::Expired);
+/// assert_eq!(gone.sessions[0].state, SessionState::Expired);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SessionState {
@@ -54,7 +74,28 @@ pub enum SessionState {
     Expired,
 }
 
-/// One session anywhere in the mesh.
+/// One session anywhere in the mesh, as the fold sees it: what the session said about
+/// itself, where it is writing from, and whether it still counts. The key is
+/// `<stream>/<session>` rather than the session's own id, because two runtimes may both
+/// call a session `s1` and the mesh has to hold them apart.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, SessionView};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "claude-code") })
+///     .unwrap();
+///
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let view: &SessionView = &state.sessions[0];
+/// assert!(view.key.ends_with("/s1"), "qualified by the stream that wrote it: {}", view.key);
+/// assert_eq!(view.info.client, "claude-code");
+/// assert_eq!(view.runtime, view.stream.runtime_key());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SessionView {
     /// `<stream>/<session>`: unique across the mesh.
@@ -73,7 +114,24 @@ pub struct SessionView {
     pub updated_lamport: u64,
 }
 
-/// A claim's standing.
+/// A claim's standing, and — where it ended or lost — what ended it. The two variants that
+/// carry a string exist because the bare verdict is not actionable: a worker told its claim
+/// expired needs to know whether its session closed or its runtime stopped beating, and one
+/// told its claim is conflicted needs the key of the claim that beat it, which is the same
+/// key on every runtime.
+///
+/// ```
+/// use majordomus_cli::mesh::state::ClaimState;
+///
+/// assert!(ClaimState::Held.is_live());
+/// assert!(ClaimState::Conflicted("s/c1".into()).is_live(), "still held, and not the winner");
+/// assert!(!ClaimState::Released.is_live());
+///
+/// // the detail travels with the verdict, so a reader is never left asking who won
+/// let value = serde_json::to_value(ClaimState::Conflicted("s/c1".into())).unwrap();
+/// assert_eq!(value["state"], "conflicted");
+/// assert_eq!(value["detail"], "s/c1");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case", tag = "state", content = "detail")]
 pub enum ClaimState {
@@ -88,13 +146,48 @@ pub enum ClaimState {
 }
 
 impl ClaimState {
-    /// Whether the claim is live (held or conflicted).
+    /// Whether the claim is live (held or conflicted). A conflicted claim counts as live
+    /// because it has not gone away: its holder is still working, and the next claim over
+    /// that scope has to meet it too. Only a release, a closed session or an expired
+    /// runtime ends a claim.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::state::ClaimState;
+    ///
+    /// assert!(ClaimState::Held.is_live());
+    /// assert!(ClaimState::Conflicted("s/c1".into()).is_live(), "losing is not ending");
+    /// assert!(!ClaimState::Released.is_live());
+    /// assert!(!ClaimState::Expired("its runtime stopped beating".into()).is_live());
+    /// ```
     pub fn is_live(&self) -> bool {
         matches!(self, ClaimState::Held | ClaimState::Conflicted(_))
     }
 }
 
-/// One claim anywhere in the mesh.
+/// One claim anywhere in the mesh: who took what, for what, and where it stands. The
+/// acquisition's Lamport stamp and sequence are carried rather than derived on demand,
+/// because they are what exclusivity is decided by — every runtime ranks two competing
+/// claims by the same triple and so names the same winner, with no message passing and no
+/// "last packet wins".
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+///     scope: vec!["apps/majordomus-cli".into()], intent: Some("document the mesh".into()),
+///     mode: ClaimMode::Exclusive, issue: Some("#184".into()) }).unwrap();
+///
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let claim: &ClaimView = &state.claims[0];
+/// assert_eq!(claim.scope, ["apps/majordomus-cli"]);
+/// assert_eq!(claim.state, ClaimState::Held);
+/// assert!(claim.acquired_lamport > 0, "the order exclusivity is decided in");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ClaimView {
     /// `<stream>/<claim>`.
@@ -125,13 +218,47 @@ pub struct ClaimView {
 }
 
 impl ClaimView {
-    fn order(&self) -> (u64, &StreamId, u64) {
-        (self.acquired_lamport, &self.stream, self.acquired_seq)
+    /// Where the claim stands in the one order exclusivity is decided by: the Lamport stamp
+    /// of its acquisition, then its stream, then its sequence. Owned, because a collection
+    /// keys a map by it rather than sorting itself with a comparator of its own.
+    fn order_key(&self) -> (u64, StreamId, u64) {
+        (
+            self.acquired_lamport,
+            self.stream.clone(),
+            self.acquired_seq,
+        )
     }
 }
 
 /// Two live claims of different sessions whose scopes meet, at least one advisory:
 /// reported, never refused.
+///
+/// An overlap is information, not a verdict — it is how two workers find out they are in
+/// the same place without either being stopped. The meeting paths are listed pairwise
+/// rather than summarized, because the useful question is which path of mine meets which
+/// path of theirs.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, ClaimOverlap};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// for (claim, session, mode) in [
+///     ("c1", "s1", ClaimMode::Exclusive),
+///     ("c2", "s2", ClaimMode::Advisory),
+/// ] {
+///     j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),
+///         scope: vec!["apps".into()], intent: None, mode, issue: None }).unwrap();
+/// }
+///
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let overlap: &ClaimOverlap = &state.overlaps[0];
+/// assert_ne!(overlap.first, overlap.second, "two claims, two sessions");
+/// assert_eq!(overlap.paths, [("apps".to_string(), "apps".to_string())]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ClaimOverlap {
     /// The earlier claim's key.
@@ -142,7 +269,34 @@ pub struct ClaimOverlap {
     pub paths: Vec<(String, String)>,
 }
 
-/// A handover anywhere in the mesh.
+/// A handover anywhere in the mesh, with everyone who has taken it. The id is the digest
+/// of the body, so the same handover published twice — by a retry, or by two runtimes that
+/// both saw it — is one handover here; and `consumed_by` is what keeps two workers from
+/// silently picking up the same continuity, since the list is folded from events every
+/// runtime holds.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, HandoverView};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let body = "# Objective\nship\n".to_string();
+/// let handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,
+///     milestone: None, branch: Some("feature/x".into()), head: None, created_at: None,
+///     name: None, body };
+/// let id = handover.id.clone();
+/// j.append_own(EventBody::HandoverPublished { handover }).unwrap();
+/// j.append_own(EventBody::HandoverConsumed { handover: id.clone(), session: "s1".into() })
+///     .unwrap();
+///
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let view: &HandoverView = &state.handovers[0];
+/// assert_eq!(view.id, id, "identified by what it says, not by who said it");
+/// assert_eq!(view.consumed_by.len(), 1, "somebody has picked this one up");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct HandoverView {
     /// The content digest.
@@ -159,7 +313,29 @@ pub struct HandoverView {
     pub consumed_by: Vec<String>,
 }
 
-/// A review request's standing.
+/// A review request's standing: whether anybody has answered it yet. There is deliberately
+/// no `Approved` or `Rejected` here — a request may be answered by several runtimes and the
+/// verdicts are the answers' own, so collapsing them into one state would throw away the
+/// disagreement that makes a second reviewer worth asking.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, ReviewState};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
+///     subject: "feature/x".into(), scope: vec![], issue: None, reviewer: None }).unwrap();
+/// let asked = fold(&j.events(), &|_| StreamLiveness::Own);
+/// assert_eq!(asked.reviews[0].state, ReviewState::Open);
+///
+/// let request = asked.reviews[0].key.clone();
+/// j.append_own(EventBody::ReviewAnswered { request, session: "s2".into(),
+///     verdict: "approved".into(), note: None }).unwrap();
+/// assert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ReviewState {
@@ -169,7 +345,26 @@ pub enum ReviewState {
     Answered,
 }
 
-/// One answer to a review request.
+/// One answer to a review request: who answered, what they decided, and why. The verdict
+/// is one of the three declared words, so a requester can act on it without reading the
+/// note; the note is where the reasoning goes and is optional, because "approved" often
+/// needs none.
+///
+/// ```
+/// use majordomus_cli::mesh::state::ReviewAnswer;
+///
+/// let answer = ReviewAnswer {
+///     session: "a1b2c3d4-r1-0f/s2".into(),
+///     verdict: "changes_requested".into(),
+///     note: Some("the fold is not deterministic".into()),
+/// };
+/// assert_eq!(answer.verdict, "changes_requested");
+///
+/// // the note is omitted rather than carried empty when there is nothing to say
+/// let bare = ReviewAnswer { note: None, ..answer };
+/// let value = serde_json::to_value(&bare).unwrap();
+/// assert!(value.get("note").is_none());
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ReviewAnswer {
     /// The answering session's key.
@@ -181,7 +376,32 @@ pub struct ReviewAnswer {
     pub note: Option<String>,
 }
 
-/// One review request anywhere in the mesh.
+/// One review request anywhere in the mesh, with every answer it has drawn. A request with
+/// no `reviewer` is an offer to the whole mesh rather than to nobody, which is why the
+/// answers are a list: any linked runtime carrying the `reviews` feature may add one, and
+/// they are kept in Lamport order so that every runtime reads them in the same sequence.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, ReviewView};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ReviewRequested { review: "r1".into(), session: "s1".into(),
+///     subject: "feature/mesh-cooperation".into(), scope: vec!["src/mesh".into()],
+///     issue: Some("#184".into()), reviewer: None }).unwrap();
+/// let request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();
+/// j.append_own(EventBody::ReviewAnswered { request, session: "s2".into(),
+///     verdict: "approved".into(), note: Some("reads well".into()) }).unwrap();
+///
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let review: &ReviewView = &state.reviews[0];
+/// assert_eq!(review.subject, "feature/mesh-cooperation");
+/// assert_eq!(review.reviewer, None, "offered to the mesh, not addressed");
+/// assert_eq!(review.answers[0].verdict, "approved");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ReviewView {
     /// `<stream>/<review>`.
@@ -206,6 +426,33 @@ pub struct ReviewView {
 
 /// The whole folded state, every collection in key order, and its digest: two runtimes
 /// that agree print the same digest.
+///
+/// The digest is the point. Convergence is otherwise a claim nobody can check from one
+/// machine; with it, two operators compare one short string and know whether their
+/// runtimes are looking at the same world. `opaque_events` is the other half of that
+/// honesty: events of kinds this executable does not interpret are counted and relayed
+/// rather than dropped, so a newer peer's traffic is visible instead of silently missing.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, CooperationState};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }).unwrap();
+///
+/// let events = j.events();
+/// let state: CooperationState = fold(&events, &|_| StreamLiveness::Own);
+/// assert_eq!(state.digest.len(), 32);
+///
+/// // the same events in another order, and twice over, are the same state
+/// let mut shuffled = events.clone();
+/// shuffled.reverse();
+/// shuffled.extend(events);
+/// assert_eq!(fold(&shuffled, &|_| StreamLiveness::Own).digest, state.digest);
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct CooperationState {
     /// Every session.
@@ -226,13 +473,44 @@ pub struct CooperationState {
 
 /// Fold events into state. `liveness` answers for each stream; the caller supplies the
 /// journal's verdicts, a test supplies whatever it is testing.
+///
+/// Liveness is a parameter rather than something read here because it is the one input
+/// that is not in the events: whether a stream still beats is a local observation, and
+/// making it an argument is what keeps the fold itself pure — the same events with the
+/// same verdicts give the same state, in any order and however often they are repeated.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{fold, ClaimState};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
+///     .unwrap();
+///
+/// // read where the writer is alive, the claim holds
+/// let here = fold(&j.events(), &|_| StreamLiveness::Own);
+/// assert_eq!(here.claims[0].state, ClaimState::Held);
+///
+/// // read where its beat has stopped, it ended on its own; nobody released it
+/// let elsewhere = fold(&j.events(), &|_| StreamLiveness::Expired);
+/// assert!(matches!(elsewhere.claims[0].state, ClaimState::Expired(_)));
+/// ```
 pub fn fold(
     events: &[MeshEvent],
     liveness: &dyn Fn(&StreamId) -> StreamLiveness,
 ) -> CooperationState {
-    let mut ordered: Vec<&MeshEvent> = events.iter().collect();
-    ordered.sort_by(|a, b| (a.lamport, &a.stream, a.seq).cmp(&(b.lamport, &b.stream, b.seq)));
-    ordered.dedup_by(|a, b| a.stream == b.stream && a.seq == b.seq);
+    // Keyed by the causal position, so the map both orders and deduplicates: an event is
+    // identified by `(stream, seq)`, and the same event twice is one entry.
+    let ordered: Vec<&MeshEvent> = events
+        .iter()
+        .map(|e| (causal_key(e), e))
+        .collect::<BTreeMap<_, _>>()
+        .into_values()
+        .collect();
 
     let mut sessions: BTreeMap<String, SessionView> = BTreeMap::new();
     let mut claims: BTreeMap<String, ClaimView> = BTreeMap::new();
@@ -394,13 +672,20 @@ pub fn fold(
     }
 
     // Exclusivity: live exclusive claims in acquisition order; the first to a scope wins.
-    let mut exclusive: Vec<&mut ClaimView> = claims
-        .values_mut()
+    // The map is what orders them — the same `(lamport, stream, seq)` on every runtime, so
+    // every runtime names the same winner.
+    let exclusive: Vec<String> = claims
+        .values()
         .filter(|c| c.state.is_live() && c.mode == ClaimMode::Exclusive)
+        .map(|c| (c.order_key(), c.key.clone()))
+        .collect::<BTreeMap<_, _>>()
+        .into_values()
         .collect();
-    exclusive.sort_by(|a, b| a.order().cmp(&b.order()));
     let mut winners: Vec<(String, String, Vec<String>)> = Vec::new();
-    for claim in exclusive {
+    for key in exclusive {
+        let Some(claim) = claims.get_mut(&key) else {
+            continue;
+        };
         let beaten = winners.iter().find(|(_, session, scope)| {
             *session != claim.session && scopes_meet(scope, &claim.scope)
         });
@@ -418,8 +703,13 @@ pub fn fold(
     }
 
     // Advisory overlaps: live claims of different sessions that meet, not both exclusive.
-    let mut live: Vec<&ClaimView> = claims.values().filter(|c| c.state.is_live()).collect();
-    live.sort_by(|a, b| a.order().cmp(&b.order()));
+    let live: Vec<&ClaimView> = claims
+        .values()
+        .filter(|c| c.state.is_live())
+        .map(|c| (c.order_key(), c))
+        .collect::<BTreeMap<_, _>>()
+        .into_values()
+        .collect();
     let mut overlaps = Vec::new();
     for (i, first) in live.iter().enumerate() {
         for second in &live[i + 1..] {
@@ -459,7 +749,18 @@ fn digest(state: &CooperationState) -> String {
     hash.iter().take(16).map(|b| format!("{b:02x}")).collect()
 }
 
-/// Whether any path of one scope meets any path of the other.
+/// Whether any path of one scope meets any path of the other. Paths meet by
+/// [`crate::peers::claims_meet`], the peer board's own predicate, so that a claim means the
+/// same thing on this machine and on another: a directory contains what is under it, and
+/// two claims that share no path do not meet however similar they look.
+///
+/// ```
+/// use majordomus_cli::mesh::state::scopes_meet;
+///
+/// assert!(scopes_meet(&["apps".into()], &["apps/majordomus-cli/src".into()]), "a tree contains it");
+/// assert!(!scopes_meet(&["apps".into()], &["docs".into()]));
+/// assert!(!scopes_meet(&[], &["apps".into()]), "a claim over nothing meets nothing");
+/// ```
 pub fn scopes_meet(a: &[String], b: &[String]) -> bool {
     a.iter()
         .any(|x| b.iter().any(|y| crate::peers::claims_meet(x, y)))
@@ -479,6 +780,38 @@ fn meeting_paths(a: &[String], b: &[String]) -> Vec<(String, String)> {
 
 /// The live exclusive claims of other sessions a new exclusive claim of `session` over
 /// `scope` would meet: empty means admissible. An advisory claim is always admissible.
+///
+/// This is the difference between refusing a claim and reporting a conflict after the
+/// fact. Admission is checked against the folded state before anything is written, so a
+/// claim that could have been refused is refused; what is left — genuinely concurrent
+/// claims from two sides of a partition — is what the fold ranks afterwards, and both
+/// runtimes name the same winner.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+/// use majordomus_cli::mesh::state::{admission_conflicts, fold};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+///     scope: vec!["apps".into()], intent: None, mode: ClaimMode::Exclusive, issue: None })
+///     .unwrap();
+/// let state = fold(&j.events(), &|_| StreamLiveness::Own);
+/// let held = &state.claims[0];
+///
+/// // another session cannot take a scope inside one already held exclusively
+/// let met = admission_conflicts(&state, "s2", &["apps/majordomus-cli".into()],
+///     ClaimMode::Exclusive);
+/// assert_eq!(met.len(), 1);
+/// assert_eq!(met[0].key, held.key, "the refusal names what it met");
+///
+/// // the holder is not in its own way, and an advisory claim is never refused
+/// assert!(admission_conflicts(&state, &held.session, &["apps".into()], ClaimMode::Exclusive)
+///     .is_empty());
+/// assert!(admission_conflicts(&state, "s2", &["apps".into()], ClaimMode::Advisory).is_empty());
+/// ```
 pub fn admission_conflicts<'a>(
     state: &'a CooperationState,
     session: &str,

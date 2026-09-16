@@ -4029,7 +4029,7 @@ majordomus mesh review answer [OPTIONS] <REQUEST>
 |---|---|---|---|
 | `<REQUEST>` | `<REQUEST>` | required | The request's key, `<stream>/<review>` |
 | `--session` | `<SESSION>` | required | The answering session's id within this runtime |
-| `--verdict` | `approved` \| `changes_requested` \| `commented` | required | `approved`, `changes_requested` or `commented` |
+| `--verdict` | `approved` \| `changes_requested` \| `commented` | required | What the reviewer decided — `approved`: the work is good as it stands and the requester may proceed; `changes_requested`: the work needs changing before it proceeds; the note says what; `commented`: an observation with no verdict: neither approval nor a request to change |
 | `--note` | `<NOTE>` | — | The note |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |

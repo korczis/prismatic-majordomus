@@ -203,7 +203,24 @@ pub enum MeshCommand {
 }
 
 #[derive(Debug, Args)]
-/// `mesh peer`.
+/// `mesh peer`: which single runtime of the mesh to describe. The runtime key is
+/// `<node>-<runtime>`, and a bare node id is accepted as a shorthand for that node's first
+/// runtime, because a machine running one server is the common case and spelling its
+/// runtime out adds nothing. The key is positional and required: a `peer` question with no
+/// subject is `peers`, which is a different command.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshPeerArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "peer", "a1b2c3d4-r1"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Peer(peer) = mesh.command else { panic!("expected `peer`") };
+/// assert_eq!(peer.runtime, "a1b2c3d4-r1");
+///
+/// // the runtime is the whole question, so there is no answer without one
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "peer"]).is_err());
+/// ```
 pub struct MeshPeerArgs {
     /// The runtime key `<node>-<runtime>`, or a node id for its first runtime
     pub runtime: String,
@@ -213,7 +230,30 @@ pub struct MeshPeerArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh events`.
+/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--after` is a
+/// resume point rather than a timestamp, so a caller that remembers the last stamp it saw
+/// reads each event exactly once however the clocks of the machines involved disagree;
+/// `--limit` bounds one answer. Both are optional, and saying neither asks for the newest
+/// page under the server's own default.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshEventsArgs};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "events", "--after", "42", "--limit", "10"])
+///         .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!(events.after, Some(42));
+/// assert_eq!(events.limit, Some(10));
+///
+/// // neither flag is the whole journal under the server's default page
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!((events.after, events.limit), (None, None));
+/// ```
 pub struct MeshEventsArgs {
     /// Only events whose Lamport stamp is above this
     #[arg(long)]
@@ -227,7 +267,30 @@ pub struct MeshEventsArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh claim`.
+/// `mesh claim`: the paths a session takes, the session taking them, and whether the claim
+/// refuses an overlap or only reports one. The scope is positional and repeatable because
+/// a claim over nothing is not a claim; `--session` is required because a claim belongs to
+/// a session and ends with it, and `--advisory` is the difference between a claim that can
+/// refuse another runtime's and one that only makes the overlap visible.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshClaimArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "claim", "src/mesh", "docs/MESH.md",
+///     "--session", "s1", "--intent", "document the mesh",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Claim(claim) = mesh.command else { panic!("expected `claim`") };
+/// assert_eq!(claim.scope, ["src/mesh", "docs/MESH.md"]);
+/// assert_eq!(claim.session, "s1");
+/// assert!(!claim.advisory, "a claim refuses an overlap unless it says otherwise");
+///
+/// // a claim over no path at all is a parse error, not an empty claim
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "claim", "--session", "s1"]).is_err());
+/// ```
 pub struct MeshClaimArgs {
     /// Repository-relative paths to claim
     #[arg(required = true)]
@@ -253,7 +316,24 @@ pub struct MeshClaimArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh release`.
+/// `mesh release`: the one claim to give back, by the `<stream>/<claim>` key `mesh claim`
+/// printed when it took it. The key names the stream that made the claim as well as the
+/// claim itself, so a runtime can only release what it holds, and a person who kept the
+/// line `mesh claim` printed needs nothing else.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReleaseArgs};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "release", "a1b2c3d4-r1/claim-7"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Release(release) = mesh.command else { panic!("expected `release`") };
+/// assert_eq!(release.claim, "a1b2c3d4-r1/claim-7");
+///
+/// // releasing nothing in particular is not a release
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "release"]).is_err());
+/// ```
 pub struct MeshReleaseArgs {
     /// The claim's key, `<stream>/<claim>`, as `mesh claim` printed it
     pub claim: String,
@@ -263,7 +343,24 @@ pub struct MeshReleaseArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh session`.
+/// `mesh session`: the group that carries a session's lifecycle on the mesh. The group
+/// itself runs nothing — every runnable path under it is `open` or `close` — so it refuses
+/// to be invoked bare rather than guessing which half of a lifecycle was meant.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionArgs, MeshSessionCommand};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "session", "close", "--session", "s1"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let session: MeshSessionArgs = session;
+/// assert!(matches!(session.command, MeshSessionCommand::Close(_)));
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "session"]).is_err());
+/// ```
 pub struct MeshSessionArgs {
     #[command(subcommand)]
     /// `open` or `close`.
@@ -271,7 +368,24 @@ pub struct MeshSessionArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `mesh session` subcommands.
+/// The two ends of a session's life on the mesh: `open`, which announces a session and
+/// updates what it says about itself, and `close`, which ends it and with it every claim
+/// it held on every linked runtime. There is no third verb, because everything a session
+/// does between those two ends is a claim, a handover or a review.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s1", "--client", "claude-code",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// assert_eq!(open.client.as_deref(), Some("claude-code"));
+/// ```
 pub enum MeshSessionCommand {
     /// Open or update a session: what it is, what it does, where
     Open(MeshSessionOpenArgs),
@@ -280,7 +394,34 @@ pub enum MeshSessionCommand {
 }
 
 #[derive(Debug, Args)]
-/// `mesh session open`.
+/// `mesh session open`: everything a session says about itself, so that another runtime's
+/// operator can tell who is here and what they are doing. Only `--session` is required;
+/// the rest — client, worker, intent, task, issue, milestone, branch, head — are what the
+/// session knows about its own work, and opening the same id twice updates the record
+/// rather than refusing, which is what makes this usable from a hook that cannot know
+/// whether it has run before.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCommand, MeshSessionOpenArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s1",
+///     "--worker", "documenter", "--branch", "feature/mesh-cooperation",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// let open: MeshSessionOpenArgs = open;
+/// assert_eq!(open.session, "s1");
+/// assert_eq!(open.worker.as_deref(), Some("documenter"));
+/// assert_eq!(open.branch.as_deref(), Some("feature/mesh-cooperation"));
+/// assert_eq!(open.task, None, "what the session does not say stays unsaid");
+///
+/// // a session without an id is not a session
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "open"]).is_err());
+/// ```
 pub struct MeshSessionOpenArgs {
     /// The session's id within this runtime
     #[arg(long)]
@@ -315,7 +456,25 @@ pub struct MeshSessionOpenArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh session close`.
+/// `mesh session close`: the id of the session that has finished. Closing is the one act
+/// that ends a session's claims everywhere at once, so it takes the session and nothing
+/// else — there is no partial close, and no flag that could make one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCloseArgs, MeshSessionCommand};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "session", "close", "--session", "s1"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Close(close) = session.command else { panic!("expected `close`") };
+/// let close: MeshSessionCloseArgs = close;
+/// assert_eq!(close.session, "s1");
+///
+/// // and closing no session in particular is refused
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "close"]).is_err());
+/// ```
 pub struct MeshSessionCloseArgs {
     /// The session's id within this runtime
     #[arg(long)]
@@ -326,7 +485,23 @@ pub struct MeshSessionCloseArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh handover`.
+/// `mesh handover`: the group that moves a handover record between runtimes. Continuity
+/// between two workers of one repository is otherwise a file one of them cannot see, and
+/// the two verbs here are the two halves of that move; the group runs neither by itself.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverArgs, MeshHandoverCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "handover", "publish"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let handover: MeshHandoverArgs = handover;
+/// assert!(matches!(handover.command, MeshHandoverCommand::Publish(_)));
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "handover"]).is_err());
+/// ```
 pub struct MeshHandoverArgs {
     #[command(subcommand)]
     /// `publish` or `consume`.
@@ -334,7 +509,25 @@ pub struct MeshHandoverArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `mesh handover` subcommands.
+/// The two halves of moving continuity across the mesh: `publish` offers this checkout's
+/// handover to every linked runtime, and `consume` takes one another runtime offered and
+/// writes it where `handover --resolve` will find it. Publishing does not choose a reader
+/// and consuming does not ask the publisher, so neither side has to be running when the
+/// other acts.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "handover", "consume", "h-7", "--session", "s1",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let MeshHandoverCommand::Consume(consume) = handover.command else { panic!("expected it") };
+/// assert_eq!(consume.handover, "h-7");
+/// ```
 pub enum MeshHandoverCommand {
     /// Publish this checkout's newest handover record (or the one named) to every linked runtime
     Publish(MeshHandoverPublishArgs),
@@ -343,7 +536,28 @@ pub enum MeshHandoverCommand {
 }
 
 #[derive(Debug, Args)]
-/// `mesh handover publish`.
+/// `mesh handover publish`: which record to offer, and what it belongs to. Every flag is
+/// optional because the useful default is the newest handover this checkout wrote — the
+/// one a worker has just finished — and `--path` exists for the case where that is not the
+/// one meant. The issue and milestone travel with the record so that a runtime receiving
+/// it can file it without reading it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverCommand,
+///     MeshHandoverPublishArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "handover", "publish", "--issue", "I1703",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let MeshHandoverCommand::Publish(publish) = handover.command else { panic!("expected it") };
+/// let publish: MeshHandoverPublishArgs = publish;
+/// assert_eq!(publish.issue.as_deref(), Some("I1703"));
+/// assert_eq!(publish.path, None, "no path means the newest record this checkout wrote");
+/// ```
 pub struct MeshHandoverPublishArgs {
     /// The record, relative to the repository root, under .ai/local/state/handovers/
     #[arg(long)]
@@ -360,7 +574,32 @@ pub struct MeshHandoverPublishArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh handover consume`.
+/// `mesh handover consume`: which offered handover to take, and on whose behalf. The
+/// consumption is recorded on the mesh so that two workers cannot silently pick up the
+/// same handover, which is why the session is required and not inferred.
+/// `--no-materialize` records the act without writing the local record, for a caller that
+/// wants the claim on the handover but will read it some other way.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverCommand,
+///     MeshHandoverConsumeArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "handover", "consume", "h-7", "--session", "s1",
+///     "--no-materialize",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let MeshHandoverCommand::Consume(consume) = handover.command else { panic!("expected it") };
+/// let consume: MeshHandoverConsumeArgs = consume;
+/// assert_eq!((consume.handover.as_str(), consume.session.as_str()), ("h-7", "s1"));
+/// assert!(consume.no_materialize);
+///
+/// // the consuming session is what makes the consumption attributable, so it is required
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "handover", "consume", "h-7"]).is_err());
+/// ```
 pub struct MeshHandoverConsumeArgs {
     /// The handover's id, as `mesh state` lists it
     pub handover: String,
@@ -376,7 +615,27 @@ pub struct MeshHandoverConsumeArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh review`.
+/// `mesh review`: the group that carries a review across runtimes, so that a worker can
+/// have its branch read by a worker it cannot otherwise address. Asking and answering are
+/// separate acts by separate runtimes, which is why they are separate subcommands and the
+/// group itself runs nothing.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewArgs, MeshReviewCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "request", "feature/x", "--session", "s1",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let review: MeshReviewArgs = review;
+/// assert!(matches!(review.command, MeshReviewCommand::Request(_)));
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "review"]).is_err());
+/// ```
 pub struct MeshReviewArgs {
     #[command(subcommand)]
     /// `request` or `answer`.
@@ -384,7 +643,25 @@ pub struct MeshReviewArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `mesh review` subcommands.
+/// The two sides of a review on the mesh: `request` puts a subject and its scope in front
+/// of the other runtimes, and `answer` records one runtime's verdict on it. A request
+/// names a reviewer only when it wants a particular one; unaddressed, it is an offer any
+/// linked runtime may answer.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "answer", "a1b2c3d4-r1/rev-2",
+///     "--session", "s1", "--verdict", "approved",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Answer(answer) = review.command else { panic!("expected `answer`") };
+/// assert_eq!(answer.verdict, "approved");
+/// ```
 pub enum MeshReviewCommand {
     /// Ask for a review of a branch, commit or pull request
     Request(MeshReviewRequestArgs),
@@ -393,7 +670,30 @@ pub enum MeshReviewCommand {
 }
 
 #[derive(Debug, Args)]
-/// `mesh review request`.
+/// `mesh review request`: what is to be read, who is asking, and optionally who is asked.
+/// The subject is a branch, a commit or a pull request, written as the requester refers to
+/// it; `--scope` is repeatable and narrows the request to the paths that matter, which is
+/// what makes an answer cheap enough to be worth asking for. Leaving `--reviewer` unsaid
+/// offers the request to every linked runtime rather than to none.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand,
+///     MeshReviewRequestArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "request", "feature/mesh-cooperation",
+///     "--session", "s1", "--scope", "src/mesh", "--scope", "docs/MESH.md",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Request(request) = review.command else { panic!("expected it") };
+/// let request: MeshReviewRequestArgs = request;
+/// assert_eq!(request.subject, "feature/mesh-cooperation");
+/// assert_eq!(request.scope, ["src/mesh", "docs/MESH.md"]);
+/// assert_eq!(request.reviewer, None, "unaddressed: any linked runtime may answer");
+/// ```
 pub struct MeshReviewRequestArgs {
     /// What to review: a branch, a commit, a pull request
     pub subject: String,
@@ -415,15 +715,50 @@ pub struct MeshReviewRequestArgs {
 }
 
 #[derive(Debug, Args)]
-/// `mesh review answer`.
+/// `mesh review answer`: the request being answered, the session answering it, and the
+/// verdict. The verdict is one of three declared words rather than free text, so that a
+/// requester can act on an answer without reading it, and clap refuses anything else at
+/// the boundary; the note is where the reasoning goes.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewAnswerArgs, MeshReviewCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "answer", "a1b2c3d4-r1/rev-2", "--session", "s1",
+///     "--verdict", "changes_requested", "--note", "the fold is not deterministic",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Answer(answer) = review.command else { panic!("expected `answer`") };
+/// let answer: MeshReviewAnswerArgs = answer;
+/// assert_eq!(answer.request, "a1b2c3d4-r1/rev-2");
+/// assert_eq!(answer.verdict, "changes_requested");
+/// assert_eq!(answer.note.as_deref(), Some("the fold is not deterministic"));
+///
+/// // a verdict outside the three declared words is refused before anything runs
+/// assert!(Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "answer", "a1b2c3d4-r1/rev-2", "--session", "s1",
+///     "--verdict", "lgtm",
+/// ])
+/// .is_err());
+/// ```
 pub struct MeshReviewAnswerArgs {
     /// The request's key, `<stream>/<review>`
     pub request: String,
     /// The answering session's id within this runtime
     #[arg(long)]
     pub session: String,
-    /// `approved`, `changes_requested` or `commented`
-    #[arg(long, value_parser = ["approved", "changes_requested", "commented"])]
+    /// What the reviewer decided
+    #[arg(long, value_parser = [
+        clap::builder::PossibleValue::new("approved")
+            .help("the work is good as it stands and the requester may proceed"),
+        clap::builder::PossibleValue::new("changes_requested")
+            .help("the work needs changing before it proceeds; the note says what"),
+        clap::builder::PossibleValue::new("commented")
+            .help("an observation with no verdict: neither approval nor a request to change"),
+    ])]
     pub verdict: String,
     /// The note
     #[arg(long)]

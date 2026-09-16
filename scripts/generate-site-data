@@ -54,7 +54,7 @@ MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 PJ="$(mj_rel "$MJ_PROJECT_DIR")"; AI="$(mj_rel "$MJ_AI_DIR")"; LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 # common.sh installs its own EXIT trap, so the staging cleanup is chained after sourcing it
 # rather than before, or the later trap would silently replace this one and leak the directory.
-trap 'rm -rf "$STAGE" "${RULES_TMP:-}" "${LINK_TRACKED:-}" "${LINK_DOCS:-}"; mj_cleanup' EXIT
+trap 'rm -rf "$STAGE" "${RULES_TMP:-}" "${LINK_TRACKED:-}" "${LINK_DOCS:-}" "${TRACKED_LIST:-}"; mj_cleanup' EXIT
 command -v jq >/dev/null || { echo "generate-site-data: jq is required" >&2; exit 12; }
 GEN_VERSION=1
 
@@ -628,8 +628,18 @@ EOF
 # state under .ai/local, which the forge has never seen) is named and not linked. Every path
 # used to become blob/master/<path>, which 404s for all of the local state and for every
 # directory; scripts/ci/link-check refuses both.
+# The tracked listing reaches jq through a file, never through argv, and is taken once for
+# the whole pass rather than once per responsibility. Linux caps a SINGLE argv entry at
+# MAX_ARG_STRLEN (131072 bytes) regardless of the much larger total ARG_MAX; `git ls-files`
+# is 131887 bytes in this checkout, so execve failed with E2BIG and jq reported "Argument
+# list too long" on the runner while macOS, which has no per-argument cap of that shape,
+# passed. --rawfile has no ceiling at all rather than a larger one, so growth cannot bring
+# this back. The listing ends in a newline where the command substitution stripped it; the
+# empty last field is dropped by the same filter that already dropped empty lines.
+TRACKED_LIST="$(mktemp "${TMPDIR:-/tmp}/mj.tracked.XXXXXX")"
+git -C "$ROOT" ls-files > "$TRACKED_LIST"
 forge_paths() {
-  jq -Rn --arg files "$(git -C "$ROOT" ls-files)" '
+  jq -Rn --rawfile files "$TRACKED_LIST" '
     ($files | split("\n") | map(select(. != ""))) as $tracked
     | ($tracked | map(split("/") | . as $p | range(1; length) | $p[:.] | join("/")) | unique) as $dirs
     | [inputs | select(. != "") | rtrimstr("/") as $p
@@ -1759,8 +1769,14 @@ done
 jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u | while read -r m; do
   jq -e --arg m "$m" '.modules[] | select(.id == $m and .source == "builtin")' "$REG" >/dev/null || { echo "generate-site-data: docs/generated/registry.json: capability module $m is not a builtin module of the manifest" >&2; exit 10; }
 done
+# The claims matrix reaches the program through a file, for the reason the plan's collections
+# do (see "The model's collections reach jq through files"): the array is 134895 bytes here
+# and a single argv entry is capped at 131072 on Linux, so --argjson failed with "Argument
+# list too long" on the runner and nowhere else. --slurpfile wraps it in an array, which is
+# why the program reads $claims[0].
+jq -c '.claims' "$OUT/capabilities.json" > "$STAGE/executable-claims.json"
 jq -S --arg repo_url "$(jq -r '.repository_url' "$OUT/project.json")" --arg branch master \
-   --argjson claims "$(jq -c '.claims' "$OUT/capabilities.json")" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
+   --slurpfile claims "$STAGE/executable-claims.json" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
   || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; exit 13; }
 # ---------------------------------------------------------------- method.json, governance-graph.json
 # The governance method as a dataset: the layers an invariant descends through with what this

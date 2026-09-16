@@ -85,6 +85,26 @@ pub fn doctor(declaration: Option<Result<MeshConfig, MeshError>>) -> MeshDoctorR
 
 /// [`doctor`] for the repository at `root`: adds whether the repository has a mesh
 /// identity cooperation can match on.
+///
+/// Discovery works without one — two nodes can hear each other while belonging to
+/// different repositories — but a link does not, so a report that omits this check can say
+/// every prerequisite holds while cooperation is unreachable. `root` is optional because
+/// the caller may have no repository at hand, and then the check is not run rather than
+/// failed.
+///
+/// ```
+/// use majordomus_cli::mesh::doctor::doctor_at;
+///
+/// // a directory holding no history has no identity to match on, and the check says so
+/// let nowhere = tempfile::tempdir().unwrap();
+/// let report = doctor_at(None, Some(nowhere.path()));
+/// let repository = report.checks.iter().find(|c| c.check == "repository").unwrap();
+/// assert!(!repository.ok);
+/// assert!(repository.remediation.as_deref().unwrap().contains("cooperation.repository"));
+///
+/// // with no root to ask about, the question is not asked at all
+/// assert!(doctor_at(None, None).checks.iter().all(|c| c.check != "repository"));
+/// ```
 pub fn doctor_at(
     declaration: Option<Result<MeshConfig, MeshError>>,
     root: Option<&Path>,

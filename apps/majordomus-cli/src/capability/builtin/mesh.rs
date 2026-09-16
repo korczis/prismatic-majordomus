@@ -260,6 +260,14 @@ pub struct MachineNode {
     pub runtimes: Vec<RuntimeNode>,
 }
 
+/// This machine first, then the others by the name a person reads; the node id ends the key,
+/// because two machines can carry one name and the order must still be total.
+impl crate::order::Ordered for MachineNode {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.node).ranked(i64::from(!self.local))
+    }
+}
+
 /// The answer of `mesh.peers`: machine → runtime → session → claim, every level from the
 /// one journal and the one link table.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -383,7 +391,7 @@ pub fn peer_tree(c: &Cooperation) -> PeerTree {
             .push(runtime);
     }
     let mut machines: Vec<MachineNode> = machines.into_values().collect();
-    machines.sort_by_key(|m| !m.local);
+    crate::order::canonical(&mut machines);
     PeerTree {
         active: status.active,
         reason: status.reason,

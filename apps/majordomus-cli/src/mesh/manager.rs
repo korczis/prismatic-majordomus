@@ -164,6 +164,37 @@ impl MeshRuntime {
 
     /// Attach the cooperation runtime a server built for this mesh. The runtime is
     /// already started; a second attachment replaces nothing.
+    ///
+    /// Discovery and cooperation are built separately — one finds runtimes, the other
+    /// links to them — and this is where the surfaces find both behind one handle. The
+    /// first attachment wins, so a second server in one process cannot quietly take over
+    /// the journal the first one is already writing to.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let built = |slot: &str| Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: slot.into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// let first = built("0000000000000001");
+    /// mesh.attach_cooperation(Arc::clone(&first));
+    /// mesh.attach_cooperation(built("0000000000000002"));
+    ///
+    /// let attached = mesh.cooperation().expect("a cooperation runtime");
+    /// assert_eq!(attached.runtime_key(), first.runtime_key(), "the first one keeps the slot");
+    /// ```
     pub fn attach_cooperation(&self, cooperation: Arc<Cooperation>) {
         let mut slot = self.cooperation.lock().expect("mesh cooperation");
         if slot.is_none() {
@@ -172,6 +203,22 @@ impl MeshRuntime {
     }
 
     /// Record why cooperation is not running while the mesh is.
+    ///
+    /// A mesh that discovers runtimes and links to none is the confusing case: everything
+    /// looks switched on and nothing is shared. The server that decided not to start
+    /// cooperation says so here, so the answer reaches whoever asks rather than living in
+    /// the log of a process they cannot see.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// mesh.decline_cooperation("no endpoint to be dialed at");
+    ///
+    /// let status = mesh.cooperation_status();
+    /// assert!(!status.active);
+    /// assert_eq!(status.reason.as_deref(), Some("no endpoint to be dialed at"));
+    /// ```
     pub fn decline_cooperation(&self, reason: &str) {
         *self
             .cooperation_reason
@@ -179,7 +226,37 @@ impl MeshRuntime {
             .expect("mesh cooperation reason") = Some(reason.into());
     }
 
-    /// The cooperation runtime, when one runs.
+    /// The cooperation runtime, while one is still running. A stopped runtime is not
+    /// handed out: a caller that got it would write to a journal nobody is replicating and
+    /// believe it had told the mesh something. `None` here means the same to every caller
+    /// — do this locally, or say it cannot be done — however cooperation came to be absent.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// assert!(mesh.cooperation().is_none(), "nothing has attached one");
+    ///
+    /// mesh.attach_cooperation(Arc::clone(&cooperation));
+    /// assert!(mesh.cooperation().is_some());
+    ///
+    /// cooperation.stop();
+    /// assert!(mesh.cooperation().is_none(), "a stopped runtime is not handed out");
+    /// ```
     pub fn cooperation(&self) -> Option<Arc<Cooperation>> {
         self.cooperation
             .lock()
@@ -191,6 +268,24 @@ impl MeshRuntime {
 
     /// Cooperation's status, or why there is none: the mesh's own reason when the mesh is
     /// off, cooperation's reason when only cooperation is.
+    ///
+    /// The two reasons are kept apart because they call for different acts. A mesh that was
+    /// never switched on is a declaration to write; cooperation declined under a running
+    /// mesh is something about this server — no endpoint, no trusted key — and the more
+    /// specific reason is the one worth telling a person, so it wins when both exist.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// let untouched = mesh.cooperation_status();
+    /// assert!(untouched.reason.unwrap().contains("no shared server"), "the mesh's reason");
+    ///
+    /// mesh.decline_cooperation("the declaration enables the mesh but not cooperation");
+    /// let declined = mesh.cooperation_status();
+    /// assert!(declined.reason.unwrap().contains("not cooperation"), "the nearer reason wins");
+    /// assert!(declined.peers.is_empty(), "and the shape is the one a live runtime answers");
+    /// ```
     pub fn cooperation_status(&self) -> CooperationStatus {
         if let Some(c) = self.cooperation() {
             return c.status();
@@ -235,6 +330,39 @@ impl MeshRuntime {
     /// [`MeshRuntime::activate`] for one runtime slot of the node: what a shared server
     /// does, naming its checkout's runtime so that two servers of one machine announce,
     /// hear and link to each other as the two runtimes they are.
+    ///
+    /// Without the slot, two worktrees of one repository on one machine would announce
+    /// under one identity and each would take the other's announcements for its own echo.
+    /// The slot is what makes them two peers that cooperate, which is the ordinary case on
+    /// a developer's machine and not an exotic one.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    ///
+    /// use majordomus_cli::mesh::config::MeshConfig;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// // a declaration with every discovery mechanism off: nothing opens a socket
+    /// let config: MeshConfig = serde_json::from_value(serde_json::json!({
+    ///     "schema": "mesh/v1", "kind": "mesh", "id": "majordomus", "enabled": true,
+    ///     "multicast": { "enabled": false },
+    /// })).unwrap();
+    ///
+    /// let mesh = MeshRuntime::new();
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// mesh.activate_as(&config, Arc::clone(&identity), "0000000000000001",
+    ///     vec!["127.0.0.1:8742".into()], vec!["root".into()], "doc").unwrap();
+    ///
+    /// let status = mesh.status();
+    /// assert!(status.active);
+    /// assert_eq!(status.identity.unwrap().node_id, identity.public.node_id);
+    ///
+    /// // idempotent: the second server of this process does not restart the first's mesh
+    /// mesh.activate_as(&config, Arc::clone(&identity), "0000000000000002",
+    ///     vec!["127.0.0.1:8743".into()], vec!["root".into()], "doc").unwrap();
+    /// assert_eq!(mesh.status().started_at, status.started_at);
+    /// ```
     pub fn activate_as(
         &self,
         config: &MeshConfig,

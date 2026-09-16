@@ -13,6 +13,31 @@
 //!   — and never copies a path of the author's disk.
 //!
 //! Materializing the same handover twice writes one file.
+//!
+//! The publishing half needs nothing but the record on disk, which is what the round trip
+//! below exercises: the newest record of a checkout, read into the bounded body a journal
+//! event carries, identified by the digest of that body and carrying none of the paths of
+//! the machine that wrote it.
+//!
+//! ```
+//! use majordomus_cli::mesh::handover::{directory, latest, to_body};
+//!
+//! let checkout = tempfile::tempdir().unwrap();
+//! let dir = directory(checkout.path());
+//! std::fs::create_dir_all(&dir).unwrap();
+//! std::fs::write(
+//!     dir.join("20260915T100000Z--feature-x--abcdef1--0011.md"),
+//!     "---\nschema_version: 1\ntask_id: t-1\nbranch: feature/x\nhead: abcdef1234\n\
+//!      worktree: /home/someone/dev/repo\n---\n\n# Objective\nship\n",
+//! )
+//! .unwrap();
+//!
+//! let newest = latest(checkout.path()).unwrap();
+//! let body = to_body(&newest, Some("#184".into()), None).unwrap();
+//! assert_eq!(body.branch.as_deref(), Some("feature/x"));
+//! assert_eq!(body.issue.as_deref(), Some("#184"), "the publisher's to say");
+//! assert!(!serde_json::to_string(&body).unwrap().contains("/home/someone"));
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -20,13 +45,47 @@ use std::path::{Path, PathBuf};
 use super::journal::{HandoverBody, MAX_HANDOVER_BYTES};
 use super::state::HandoverView;
 
-/// Where a checkout's handover records live.
+/// Where a checkout's handover records live. It is under `.ai/local/`, which is never
+/// committed, so a handover is a fact about one checkout until something — this module, or
+/// a person — moves it; both halves of this module agree on the location by calling here
+/// rather than by each spelling the path.
+///
+/// ```
+/// use majordomus_cli::mesh::handover::directory;
+///
+/// let root = tempfile::tempdir().unwrap();
+/// let dir = directory(root.path());
+/// assert!(dir.ends_with(".ai/local/state/handovers"));
+/// assert!(dir.starts_with(root.path()), "always inside the checkout it belongs to");
+/// ```
 pub fn directory(root: &Path) -> PathBuf {
     root.join(".ai/local/state/handovers")
 }
 
 /// The newest handover record of a checkout: names begin with a compact UTC timestamp, so
 /// the greatest name is the latest record.
+///
+/// Sorting by name rather than by modification time is deliberate — a file copied or
+/// restored keeps the moment its handover describes, which is the question being asked,
+/// and not the moment the bytes landed. Anything that is not a handover of this checkout
+/// is passed over rather than reported: a file that is not Markdown, one whose name does
+/// not begin with a timestamp, and a symbolic link out of the directory, which is how
+/// something outside the checkout would otherwise get itself published.
+///
+/// ```
+/// use majordomus_cli::mesh::handover::{directory, latest};
+///
+/// let root = tempfile::tempdir().unwrap();
+/// let dir = directory(root.path());
+/// std::fs::create_dir_all(&dir).unwrap();
+/// assert!(latest(root.path()).is_err(), "an empty directory holds no newest record");
+///
+/// std::fs::write(dir.join("20260101T000000Z--a--0000000--00.md"), "---\n---\nold").unwrap();
+/// std::fs::write(dir.join("20260915T100000Z--b--0000000--01.md"), "---\n---\nnew").unwrap();
+/// std::fs::write(dir.join("README.md"), "not a handover").unwrap();
+/// let newest = latest(root.path()).unwrap();
+/// assert!(newest.ends_with("20260915T100000Z--b--0000000--01.md"));
+/// ```
 pub fn latest(root: &Path) -> Result<PathBuf, String> {
     let dir = directory(root);
     let real_dir = dir
@@ -58,6 +117,32 @@ fn one_line(value: &str) -> String {
 
 /// Split a record into its front matter (flat `key: value` lines; list items are skipped)
 /// and its body.
+///
+/// This is a reader of one shape, not a YAML parser: a handover's front matter is flat by
+/// contract, and the few facts the mesh needs from it are scalars. Nesting and list items
+/// are skipped rather than refused, so a record that carries more than this module
+/// understands still publishes.
+///
+/// ```
+/// use majordomus_cli::mesh::handover::read;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let path = dir.path().join("record.md");
+/// std::fs::write(
+///     &path,
+///     "---\nbranch: feature/x\nchanged_files:\n  - apps/x.rs\n---\n\n# Objective\nship\n",
+/// )
+/// .unwrap();
+///
+/// let (front, body) = read(&path).unwrap();
+/// assert_eq!(front["branch"], "feature/x");
+/// assert!(!front.contains_key("apps/x.rs"), "a list item is not a fact of the front matter");
+/// assert!(body.starts_with("# Objective"));
+///
+/// // a file with no front matter is not a handover record
+/// std::fs::write(&path, "# Objective\nship\n").unwrap();
+/// assert!(read(&path).is_err());
+/// ```
 pub fn read(path: &Path) -> Result<(BTreeMap<String, String>, String), String> {
     let text = std::fs::read_to_string(path).map_err(|e| format!("{}: {e}", path.display()))?;
     split(&text).ok_or_else(|| format!("{}: no front matter", path.display()))
@@ -81,6 +166,37 @@ fn split(text: &str) -> Option<(BTreeMap<String, String>, String)> {
 
 /// The journal body of a local record. `issue` and `milestone` are the publisher's to say:
 /// a handover record has no field for either.
+///
+/// What crosses is the body and a few facts about the work — never a path of the author's
+/// disk, because the receiving checkout is somewhere else and a path from another machine
+/// is at best noise. The body is bounded at [`MAX_HANDOVER_BYTES`] and an empty one is
+/// refused, since a handover whose body says nothing hands nothing over. A placeholder
+/// front-matter value (`none`, `DETACHED`) is read as the absence it stands for.
+///
+/// ```
+/// use majordomus_cli::mesh::handover::to_body;
+/// use majordomus_cli::mesh::journal::HandoverBody;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let path = dir.path().join("20260915T100000Z--feature-x--abcdef1--0011.md");
+/// std::fs::write(
+///     &path,
+///     "---\ntask_id: t-1\nbranch: DETACHED\nhead: abcdef1234\nworktree: /home/someone/repo\n\
+///      ---\n\n# Objective\nship\n",
+/// )
+/// .unwrap();
+///
+/// let body = to_body(&path, Some("#184".into()), None).unwrap();
+/// assert_eq!(body.task.as_deref(), Some("t-1"));
+/// assert_eq!(body.branch, None, "DETACHED is the absence of a branch, not a branch");
+/// assert_eq!(body.issue.as_deref(), Some("#184"));
+/// assert_eq!(body.id, HandoverBody::digest_of(&body.body));
+/// assert!(!serde_json::to_string(&body).unwrap().contains("/home/someone"));
+///
+/// // a record whose body says nothing hands nothing over
+/// std::fs::write(&path, "---\ntask_id: t-1\n---\n\n").unwrap();
+/// assert!(to_body(&path, None, None).is_err());
+/// ```
 pub fn to_body(
     path: &Path,
     issue: Option<String>,
@@ -142,6 +258,45 @@ fn repository_id(root: &Path) -> Result<String, String> {
 /// Write a consumed handover into `root`'s handovers directory, or return the record that
 /// already holds it. The record's worktree is `mesh:<origin runtime>`: it resolves as
 /// another checkout's handover on the same branch.
+///
+/// This is the half that turns a message into continuity: after it, `majordomus handover
+/// --resolve` on this checkout finds the other machine's handover through the ordinary
+/// resolution and nothing downstream has to know the mesh exists. It is written to be
+/// repeatable — consuming the same handover twice yields the one record — and defensively,
+/// because every value in it was written by another runtime: the front matter and the file
+/// name admit only what their parts are, so neither a key nor a path can be smuggled in
+/// through a branch name or a timestamp.
+///
+/// ```
+/// use majordomus_cli::mesh::handover::{directory, materialize, to_body};
+/// use majordomus_cli::mesh::journal::StreamId;
+/// use majordomus_cli::mesh::state::HandoverView;
+///
+/// let tmp = tempfile::tempdir().unwrap();
+/// let root = tmp.path().join("checkout");
+/// std::fs::create_dir_all(&root).unwrap();
+/// assert!(std::process::Command::new("git")
+///     .arg("-C").arg(&root).args(["init", "-q"]).status().unwrap().success());
+///
+/// let src = tmp.path().join("20260915T100000Z--feature-x--abcdef1--0011.md");
+/// std::fs::write(&src, "---\nbranch: feature/x\nhead: abcdef1234\n---\n\n# Objective\nship\n")
+///     .unwrap();
+/// let stream = StreamId::parse(&format!("{}-{}-{}", "a".repeat(32), "b".repeat(16), "c".repeat(16)))
+///     .unwrap();
+/// let view = HandoverView {
+///     id: to_body(&src, None, None).unwrap().id,
+///     stream,
+///     runtime: format!("{}-{}", "a".repeat(32), "b".repeat(16)),
+///     published_lamport: 1,
+///     handover: to_body(&src, None, None).unwrap(),
+///     consumed_by: vec![],
+/// };
+///
+/// let written = materialize(&root, &view).unwrap();
+/// assert_eq!(written.parent(), Some(directory(&root).as_path()));
+/// assert_eq!(materialize(&root, &view).unwrap(), written, "one handover, one record");
+/// assert!(std::fs::read_to_string(&written).unwrap().contains("worktree: mesh:"));
+/// ```
 pub fn materialize(root: &Path, view: &HandoverView) -> Result<PathBuf, String> {
     let dir = directory(root);
     std::fs::create_dir_all(&dir).map_err(|e| format!("{}: {e}", dir.display()))?;

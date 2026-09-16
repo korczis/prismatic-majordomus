@@ -99,6 +99,23 @@ const SIGNING_DOMAIN: &[u8] = b"majordomus-mesh-event/v1\n";
 /// 16 hex>`. The node is the machine's key, the runtime is one checkout's server on that
 /// machine, the instance is one process run of that server — so two worktrees on one
 /// machine are two streams, and a restart is a new stream of the same runtime.
+///
+/// Numbering events within a stream rather than globally is what makes replication cheap
+/// and unambiguous: a gap in one stream is visible without coordinating with anyone, and
+/// `(stream, seq)` identifies an event on every machine that holds it.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::StreamId;
+///
+/// let id = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"c".repeat(16)).unwrap();
+/// assert_eq!(id.node(), "a".repeat(32));
+/// assert_eq!(id.runtime(), "b".repeat(16));
+///
+/// // a restart is a new stream, and the same runtime
+/// let after = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"d".repeat(16)).unwrap();
+/// assert_ne!(after, id);
+/// assert_eq!(after.runtime_key(), id.runtime_key());
+/// ```
 #[derive(
     Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -122,6 +139,19 @@ impl From<StreamId> for String {
 
 impl StreamId {
     /// A stream id from its three parts; `None` unless each is lowercase hex of its width.
+    ///
+    /// The widths are checked here rather than trusted, because every accessor slices the
+    /// text at fixed offsets: an id built from a part of the wrong length would be a panic
+    /// waiting in a peer's marks, and the parts often come from another machine.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::StreamId;
+    ///
+    /// assert!(StreamId::new(&"a".repeat(32), &"b".repeat(16), &"c".repeat(16)).is_some());
+    /// assert!(StreamId::new("short", &"b".repeat(16), &"c".repeat(16)).is_none());
+    /// assert!(StreamId::new(&"A".repeat(32), &"b".repeat(16), &"c".repeat(16)).is_none(),
+    ///     "one spelling only: lowercase hex");
+    /// ```
     pub fn new(node: &str, runtime: &str, instance: &str) -> Option<Self> {
         Self::parse(&format!("{node}-{runtime}-{instance}"))
     }
@@ -147,27 +177,71 @@ impl StreamId {
         ok.then(|| StreamId(text.to_string()))
     }
 
-    /// The node (machine key digest) part.
+    /// The node (machine key digest) part: which machine's key signs everything this
+    /// stream carries. Two streams that share a node are two servers of one machine, and
+    /// the per-node bounds of the journal are counted against this.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::StreamId;
+    ///
+    /// let id = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"c".repeat(16)).unwrap();
+    /// let sibling = StreamId::new(&"a".repeat(32), &"e".repeat(16), &"f".repeat(16)).unwrap();
+    /// assert_eq!(id.node(), sibling.node(), "two runtimes of one machine");
+    /// assert_ne!(id.runtime_key(), sibling.runtime_key());
+    /// ```
     pub fn node(&self) -> &str {
         &self.0[..32]
     }
 
-    /// The runtime part.
+    /// The runtime part: which server of that machine — one per checkout — so two
+    /// worktrees of one clone are told apart and can claim against each other.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::StreamId;
+    ///
+    /// let id = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"c".repeat(16)).unwrap();
+    /// assert_eq!(id.runtime(), "b".repeat(16));
+    /// assert_eq!(id.runtime_key(), format!("{}-{}", id.node(), id.runtime()));
+    /// ```
     pub fn runtime(&self) -> &str {
         &self.0[33..49]
     }
 
-    /// The instance part.
+    /// The instance part: which run of that server. It is what makes a restart visible —
+    /// the same runtime with a new instance has a fresh sequence, so a peer knows to say
+    /// hello again rather than resume a link whose counters no longer mean anything.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::StreamId;
+    ///
+    /// let before = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"c".repeat(16)).unwrap();
+    /// let after = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"d".repeat(16)).unwrap();
+    /// assert_ne!(before.instance(), after.instance(), "a restart is a new run");
+    /// assert_eq!(before.runtime(), after.runtime(), "of the same server");
+    /// ```
     pub fn instance(&self) -> &str {
         &self.0[50..66]
     }
 
-    /// `<node>-<runtime>`: the durable identity of a runtime across its restarts.
+    /// `<node>-<runtime>`: the durable identity of a runtime across its restarts. It is
+    /// what the peer table, a claim key and `mesh peer` are all keyed by, because a worker
+    /// cares which server it is talking to and not which run of it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::StreamId;
+    ///
+    /// let before = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"c".repeat(16)).unwrap();
+    /// let after = StreamId::new(&"a".repeat(32), &"b".repeat(16), &"d".repeat(16)).unwrap();
+    /// assert_eq!(before.runtime_key(), after.runtime_key(), "one peer, two runs");
+    /// assert_eq!(before.runtime_key().len(), 49);
+    /// ```
     pub fn runtime_key(&self) -> String {
         self.0[..49].to_string()
     }
 
-    /// The id as text.
+    /// The id as text, in the one spelling every surface carries: a map key, a mark, a
+    /// claim's prefix and a log line all print this, so an id read anywhere can be compared
+    /// with an id read anywhere else.
     pub fn as_str(&self) -> &str {
         &self.0
     }
@@ -181,6 +255,22 @@ impl std::fmt::Display for StreamId {
 
 /// What a session tells the mesh about itself. Every field is a public fact about work in
 /// progress; none is a path on the author's disk, a secret or a credential.
+///
+/// Almost everything here is optional, and that is the design: a session says what it
+/// knows, and a field it leaves out is omitted rather than carried empty, so a reader can
+/// tell "no task" from "a task called nothing". Opening the same session id again replaces
+/// this record, which is how a session that learns its branch later tells the mesh.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::SessionInfo;
+///
+/// let mut info = SessionInfo::named("s1", "claude-code");
+/// assert_eq!(info.task, None);
+/// assert!(serde_json::to_value(&info).unwrap().get("task").is_none(), "unsaid, not empty");
+///
+/// info.branch = Some("feature/mesh-cooperation".into());
+/// assert_eq!(serde_json::to_value(&info).unwrap()["branch"], "feature/mesh-cooperation");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SessionInfo {
     /// The session's id within its stream.
@@ -220,7 +310,18 @@ pub struct SessionInfo {
 }
 
 impl SessionInfo {
-    /// A session with only an id and a client: what a test or an example needs.
+    /// A session with only an id and a client: what a test or an example needs. The two
+    /// arguments are the two facts a session cannot be without — something to refer to it
+    /// by, and what kind of worker it is — and everything else is filled in afterwards by
+    /// whoever knows it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::SessionInfo;
+    ///
+    /// let info = SessionInfo::named("s1", "codex");
+    /// assert_eq!((info.session.as_str(), info.client.as_str()), ("s1", "codex"));
+    /// assert_eq!(info.worker, None, "the rest is the session's to say later");
+    /// ```
     pub fn named(session: &str, client: &str) -> Self {
         SessionInfo {
             session: session.into(),
@@ -230,7 +331,17 @@ impl SessionInfo {
     }
 }
 
-/// Whether a claim excludes others or only tells them.
+/// Whether a claim excludes others or only tells them. Both are useful and they answer
+/// different questions: an exclusive claim is a worker saying "do not edit this while I
+/// am", an advisory one is saying "I am here". Exclusive is the default because a claim
+/// taken without a thought about the mode is a claim somebody expects to be respected.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::ClaimMode;
+///
+/// assert_eq!(ClaimMode::default(), ClaimMode::Exclusive);
+/// assert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!("advisory"));
+/// ```
 #[derive(
     Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -246,6 +357,33 @@ pub enum ClaimMode {
 }
 
 /// A handover as the mesh carries it: the record's facts and its body, bounded.
+///
+/// What travels is the writing, plus the few facts that let a receiver file it — the task,
+/// the issue, the branch, the commit. No path of the author's disk is among them, because
+/// the checkout that reads this is somewhere else and a path from another machine is at
+/// best noise. Identity is the digest of the body, so a handover published twice by a
+/// retry or by two runtimes is one handover everywhere.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::HandoverBody;
+///
+/// let body = "# Objective\nship the mesh\n".to_string();
+/// let handover = HandoverBody {
+///     id: HandoverBody::digest_of(&body),
+///     task: Some("t-1".into()),
+///     issue: Some("#184".into()),
+///     milestone: None,
+///     branch: Some("feature/mesh-cooperation".into()),
+///     head: None,
+///     created_at: None,
+///     name: None,
+///     body,
+/// };
+/// assert_eq!(handover.id, HandoverBody::digest_of(&handover.body));
+///
+/// let wire = serde_json::to_value(&handover).unwrap();
+/// assert!(wire.get("milestone").is_none(), "what it does not say is omitted");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct HandoverBody {
     /// The content digest (32 hex): the same handover published twice is one handover.
@@ -276,7 +414,19 @@ pub struct HandoverBody {
 }
 
 impl HandoverBody {
-    /// The content digest a handover body is identified by.
+    /// The content digest a handover body is identified by. Identifying a handover by what
+    /// it says rather than by who published it is what makes publication idempotent across
+    /// the mesh: a retry, a relay and a second publisher all produce the same id, and the
+    /// fold keeps one handover with one list of consumers.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::HandoverBody;
+    ///
+    /// let body = "# Objective\nship\n";
+    /// assert_eq!(HandoverBody::digest_of(body).len(), 32);
+    /// assert_eq!(HandoverBody::digest_of(body), HandoverBody::digest_of(body));
+    /// assert_ne!(HandoverBody::digest_of(body), HandoverBody::digest_of("# Objective\nwait\n"));
+    /// ```
     pub fn digest_of(body: &str) -> String {
         use sha2::{Digest, Sha256};
         let digest = Sha256::digest(body.as_bytes());
@@ -287,6 +437,20 @@ impl HandoverBody {
 /// What an event says. One vocabulary for every runtime; an event of a kind this
 /// executable does not know is stored and relayed but not interpreted, so a newer peer
 /// never breaks an older one's replication.
+///
+/// The vocabulary is small on purpose: everything the mesh coordinates is a session, a
+/// claim, a handover or a review, and an event that would need a ninth kind is a feature
+/// that has not been agreed. The `kind` tag is what goes on the wire, so it is protocol —
+/// two executables of different ages read the same word for the same event.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::{EventBody, SessionInfo, KNOWN_KINDS};
+///
+/// let opened = EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") };
+/// assert_eq!(opened.kind(), "session_opened");
+/// assert!(KNOWN_KINDS.contains(&opened.kind()));
+/// assert_eq!(serde_json::to_value(&opened).unwrap()["kind"], "session_opened");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum EventBody {
@@ -381,7 +545,19 @@ pub const KNOWN_KINDS: &[&str] = &[
 ];
 
 impl EventBody {
-    /// The kind's wire word.
+    /// The kind's wire word: the same snake-case spelling the serialized event carries, so
+    /// a counter, a log line and a peer's JSON all name an event the same way. It is
+    /// written out rather than derived from the variant name, because the word is protocol
+    /// and renaming a variant must not change what another runtime reads.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::{EventBody, KNOWN_KINDS};
+    ///
+    /// let released = EventBody::ClaimReleased { claim: "c1".into() };
+    /// assert_eq!(released.kind(), "claim_released");
+    /// assert_eq!(serde_json::to_value(&released).unwrap()["kind"], released.kind());
+    /// assert!(KNOWN_KINDS.contains(&released.kind()));
+    /// ```
     pub fn kind(&self) -> &'static str {
         match self {
             EventBody::SessionOpened { .. } => "session_opened",
@@ -397,6 +573,31 @@ impl EventBody {
 
     /// Check the body's bounds: short identifiers, repository-relative scopes, a bounded
     /// handover. A body out of bounds is refused before it is signed or stored.
+    ///
+    /// It runs on both sides: on the writer, so a runtime never signs something its peers
+    /// will refuse, and on the reader, so nothing a peer sends is stored unchecked. The
+    /// bounds are not arbitrary — a scope must be repository-relative because a claim over
+    /// `/etc` means nothing on another machine, a handover's id must be the digest of its
+    /// body or identity would be forgeable, and the fields that become front matter where
+    /// a handover is consumed must be single lines.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::{EventBody, HandoverBody, SessionInfo};
+    ///
+    /// assert!(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }.validate().is_ok());
+    ///
+    /// // a scope that is not repository-relative is refused
+    /// let escaping = EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+    ///     scope: vec!["../../etc".into()], intent: None, mode: Default::default(), issue: None };
+    /// assert!(escaping.validate().is_err());
+    ///
+    /// // and a handover whose id is not the digest of its body is not that handover
+    /// let body = "# Objective\nship\n".to_string();
+    /// let lying = EventBody::HandoverPublished { handover: HandoverBody {
+    ///     id: HandoverBody::digest_of("something else"), task: None, issue: None,
+    ///     milestone: None, branch: None, head: None, created_at: None, name: None, body } };
+    /// assert!(lying.validate().is_err());
+    /// ```
     pub fn validate(&self) -> Result<(), String> {
         match self {
             EventBody::SessionOpened { info } => {
@@ -571,6 +772,32 @@ fn paths(scope: &[String], required: bool) -> Result<(), String> {
 /// One event as the wire and the store carry it. The body is kept as JSON so that an
 /// event of an unknown kind survives storage and relay byte-for-byte; [`MeshEvent::body`]
 /// interprets it.
+///
+/// Every field above the signature is covered by it, which is what makes a relay harmless:
+/// a runtime that forwards an event cannot alter its stream, its sequence, its repository
+/// or its body without the next reader noticing, and so vouches for nothing. The wall
+/// clock is the one field nothing is decided by — freshness is measured with beats and
+/// monotonic clocks, never by comparing two machines' idea of the time.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+///
+/// let event: &MeshEvent = &j.events()[0];
+/// assert_eq!(event.seq, 1, "dense from 1 within its stream");
+/// assert_eq!(event.kind(), "session_closed");
+/// assert_eq!(event.id(), format!("{}/1", event.stream));
+///
+/// // a relayed byte changed anywhere under the signature is a different event
+/// let mut tampered = event.clone();
+/// tampered.repo = "another-repository".into();
+/// assert_ne!(tampered.signing_bytes(), event.signing_bytes());
+/// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct MeshEvent {
     /// The event format version.
@@ -594,6 +821,27 @@ pub struct MeshEvent {
     pub sig: String,
 }
 
+/// The causal position of an event: its Lamport stamp, then its stream, then its sequence.
+///
+/// One definition, because every runtime must apply the same events in the same sequence
+/// for the fold to converge, and two comparators that drift apart would be two different
+/// states with one name. Collections key a `BTreeMap` by it rather than sorting themselves.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::{causal_key, EventBody, Journal};
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use std::sync::Arc;
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+/// let event = &j.events()[0];
+/// assert_eq!(causal_key(event), (event.lamport, event.stream.clone(), event.seq));
+/// ```
+pub fn causal_key(event: &MeshEvent) -> (u64, StreamId, u64) {
+    (event.lamport, event.stream.clone(), event.seq)
+}
+
 /// The canonical bytes of a JSON value: object keys sorted at every depth, no whitespace.
 /// Signer and verifier compute it identically regardless of how either parser orders keys.
 ///
@@ -611,8 +859,9 @@ pub fn canonical_json(value: &Value) -> Vec<u8> {
 fn write_canonical(value: &Value, out: &mut Vec<u8>) {
     match value {
         Value::Object(map) => {
-            let mut keys: Vec<&String> = map.keys().collect();
-            keys.sort();
+            // A BTreeSet, not a sorted vector: the signing order is the byte order of the
+            // keys, decided by the container rather than by a comparator written here.
+            let keys: std::collections::BTreeSet<&String> = map.keys().collect();
             out.push(b'{');
             for (i, key) in keys.iter().enumerate() {
                 if i > 0 {
@@ -639,7 +888,32 @@ fn write_canonical(value: &Value, out: &mut Vec<u8>) {
 }
 
 impl MeshEvent {
-    /// The bytes the signature covers.
+    /// The bytes the signature covers: a domain separator, then the canonical JSON of
+    /// every field of the event except the signature itself. Canonical, so that signer and
+    /// verifier agree however their JSON parsers order keys; domain-separated, so that a
+    /// signature over an event can never be presented as one over an advertisement or a
+    /// link message.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let event = j.events()[0].clone();
+    ///
+    /// // the signature is not part of what it covers, so re-signing changes nothing here
+    /// let mut resigned = event.clone();
+    /// resigned.sig = "00".repeat(64);
+    /// assert_eq!(resigned.signing_bytes(), event.signing_bytes());
+    ///
+    /// // the body is
+    /// let mut edited = event.clone();
+    /// edited.body = serde_json::json!({ "kind": "session_closed", "session": "s2" });
+    /// assert_ne!(edited.signing_bytes(), event.signing_bytes());
+    /// ```
     pub fn signing_bytes(&self) -> Vec<u8> {
         let core = serde_json::json!({
             "v": self.v,
@@ -656,23 +930,89 @@ impl MeshEvent {
         bytes
     }
 
-    /// `<stream>/<seq>`: the event's identity everywhere.
+    /// `<stream>/<seq>`: the event's identity everywhere. It is the pair rather than a
+    /// digest because it is also the address replication works with — a peer's marks name
+    /// a stream and a sequence, and what is missing is arithmetic rather than a search.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// let events = j.events();
+    /// assert_eq!(events[0].id(), format!("{}/1", events[0].stream));
+    /// assert_ne!(events[0].id(), events[1].id());
+    /// ```
     pub fn id(&self) -> String {
         format!("{}/{}", self.stream, self.seq)
     }
 
-    /// The interpreted body; `None` for a kind this executable does not know.
+    /// The interpreted body; `None` for a kind this executable does not know. An event
+    /// this version cannot read is still stored and relayed byte-for-byte, so an older
+    /// runtime in a mesh with newer ones carries their traffic instead of breaking it —
+    /// the fold counts what it could not interpret rather than dropping it silently.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let event = j.events()[0].clone();
+    /// assert!(matches!(event.body(), Some(EventBody::SessionClosed { .. })));
+    ///
+    /// // a kind from a newer peer: unreadable here, and still an event
+    /// let mut newer = event.clone();
+    /// newer.body = serde_json::json!({ "kind": "telepathy_offered" });
+    /// assert!(newer.body().is_none());
+    /// assert_eq!(newer.kind(), "telepathy_offered");
+    /// ```
     pub fn body(&self) -> Option<EventBody> {
         serde_json::from_value(self.body.clone()).ok()
     }
 
-    /// The body's `kind` word, known or not.
+    /// The body's `kind` word, known or not. It reads the tag out of the stored JSON
+    /// rather than going through [`MeshEvent::body`], so that an event this executable
+    /// cannot interpret can still be counted and shown by name.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionOpened {
+    ///     info: majordomus_cli::mesh::journal::SessionInfo::named("s1", "cli"),
+    /// })
+    /// .unwrap();
+    /// assert_eq!(j.events()[0].kind(), "session_opened");
+    /// ```
     pub fn kind(&self) -> &str {
         self.body.get("kind").and_then(Value::as_str).unwrap_or("")
     }
 }
 
-/// Why an event was not stored.
+/// Why an event was not stored. A journal that silently drops what it is sent is a journal
+/// nobody can debug, so every refusal is counted under one of these reasons and shown: a
+/// mesh whose runtimes will not converge can be diagnosed from the numbers, because the
+/// reasons distinguish a misconfiguration (`Repository`, `Untrusted`) from an attack
+/// (`Signature`, `Identity`) from a limit reached (`Capacity`, `Oversized`).
+///
+/// ```
+/// use majordomus_cli::mesh::journal::Rejection;
+///
+/// // the wire word is what a counter and a JSON report both carry
+/// assert_eq!(serde_json::to_value(Rejection::Untrusted).unwrap(), serde_json::json!("untrusted"));
+/// assert_ne!(Rejection::Untrusted, Rejection::Repository);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -696,7 +1036,31 @@ pub enum Rejection {
     Capacity,
 }
 
-/// What one ingest did.
+/// What one ingest did: how many events were stored, how many were deliveries of something
+/// already held, how many are waiting for a gap ahead of them, and what was refused and
+/// why. Every event handed in is accounted for in exactly one of those, which is what makes
+/// a sync round auditable — a peer that sends ten events and is told about ten knows
+/// nothing went missing between the wire and the store.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, IngestReport, Journal, SessionInfo};
+///
+/// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+///     "repo".into(), None).unwrap();
+/// a.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }).unwrap();
+///
+/// let events = a.missing_for(&b.marks(), 1 << 20);
+/// let first: IngestReport = b.ingest(&events, &|_| Ok(()));
+/// assert_eq!((first.accepted, first.duplicate, first.rejected_total()), (1, 0, 0));
+///
+/// // at-least-once delivery: the same event again is absorbed, and changes nothing
+/// let second = b.ingest(&events, &|_| Ok(()));
+/// assert_eq!((second.accepted, second.duplicate), (0, 1));
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IngestReport {
     /// Newly stored and applied, in stream order.
@@ -723,6 +1087,29 @@ impl IngestReport {
 /// What a runtime knows of one stream: the contiguous high-water sequence, the highest
 /// beat with its origin's signature, and how long ago that beat was seen to rise (`None`
 /// when never).
+///
+/// A mark is both halves of replication in one value. The sequence is what a peer compares
+/// to decide what to send, which is why replication is a comparison rather than a flood.
+/// The beat is how liveness crosses machines without comparing clocks: the origin signs it,
+/// a relay forwards the signature and adds how long ago *it* saw the beat rise, and the
+/// reader converts that to freshness on its own monotonic clock. Because only the origin
+/// can sign its beat, a relay can carry a stream's liveness without being able to invent it.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamMark};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+/// j.beat_own();
+///
+/// let marks = j.marks();
+/// let mark: &StreamMark = &marks[&j.own_stream()];
+/// assert_eq!(mark.seq, 1, "every event up to here is held");
+/// assert!(mark.beat > 0 && mark.sig.is_some(), "the beat is the origin's signed statement");
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct StreamMark {
     /// Every event up to and including this sequence is held.
@@ -750,7 +1137,21 @@ fn beat_bytes(stream: &StreamId, beat: u64) -> Vec<u8> {
 /// Every stream's mark: what a sync request and answer carry.
 pub type Marks = BTreeMap<StreamId, StreamMark>;
 
-/// Whether a stream is speaking now, on this runtime's clock.
+/// Whether a stream is speaking now, on this runtime's clock. It is a verdict about a
+/// stream and not about a link: a runtime reachable only through a relay is alive, and a
+/// runtime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`
+/// because a runtime's own stream needs no evidence — it is the thing doing the beating.
+///
+/// ```
+/// use majordomus_cli::mesh::journal::StreamLiveness;
+///
+/// assert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());
+/// assert!(!StreamLiveness::Expired.is_alive());
+/// assert_eq!(
+///     serde_json::to_value(StreamLiveness::Expired).unwrap(),
+///     serde_json::json!("expired"),
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StreamLiveness {
@@ -763,13 +1164,44 @@ pub enum StreamLiveness {
 }
 
 impl StreamLiveness {
-    /// Whether the stream counts as alive: its claims hold, its sessions are present.
+    /// Whether the stream counts as alive: its claims hold, its sessions are present. The
+    /// two living verdicts are collapsed here because everything downstream treats them
+    /// alike — a claim of this runtime's own and a claim of a peer that still beats both
+    /// exclude — while the distinction is kept in the enum for anything that reports it.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::journal::StreamLiveness;
+    ///
+    /// assert!(StreamLiveness::Own.is_alive(), "no evidence needed for one's own stream");
+    /// assert!(StreamLiveness::Live.is_alive());
+    /// assert!(!StreamLiveness::Expired.is_alive(), "its claims end without anyone releasing them");
+    /// ```
     pub fn is_alive(self) -> bool {
         !matches!(self, StreamLiveness::Expired)
     }
 }
 
-/// The journal's counters since start.
+/// The journal's counters since start: how much it holds, how much it has written,
+/// received, absorbed, refused, held back and compacted away. They are what makes a
+/// replication problem diagnosable from one machine — a runtime whose `received` never
+/// rises is not linked, one whose `rejected` rises is being sent something it will not
+/// take, and one whose `pending` stays high is missing an event ahead of what it has.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, JournalTallies};
+///
+/// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let before: JournalTallies = j.tallies();
+/// assert_eq!((before.written, before.events), (0, 0));
+///
+/// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+/// let after = j.tallies();
+/// assert_eq!((after.written, after.events, after.streams), (1, 1, 1));
+/// assert!(after.lamport > before.lamport);
+/// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct JournalTallies {
     /// Streams tracked.
@@ -821,6 +1253,28 @@ struct Inner {
 
 /// The journal of one runtime. `Mutex<BTreeMap>`: a handful of events a second, and a
 /// deterministic order falls out for free.
+///
+/// One journal holds every stream this runtime knows of, not only its own: what arrives
+/// from a peer is stored beside what this runtime wrote, which is what lets it relay. It
+/// is the only thing in the mesh that writes, and everything a surface shows about
+/// cooperation is a fold of what it holds.
+///
+/// ```
+/// use std::sync::Arc;
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo};
+///
+/// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+///     "repo".into(), None).unwrap();
+/// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+///     "repo".into(), None).unwrap();
+/// a.append_own(EventBody::SessionOpened { info: SessionInfo::named("s1", "cli") }).unwrap();
+///
+/// // what B receives is held beside what B writes, so B can relay A's stream onwards
+/// b.ingest(&a.missing_for(&b.marks(), 1 << 20), &|_| Ok(()));
+/// assert_eq!(b.tallies().streams, 2, "B's own stream, and the one it heard from A");
+/// assert!(b.events().iter().any(|e| &e.stream == a.own_stream()));
+/// ```
 pub struct Journal {
     identity: Arc<NodeIdentity>,
     own: StreamId,
@@ -835,6 +1289,40 @@ impl Journal {
     /// the identity given, and `path`, when given, is the JSONL file events persist to and
     /// are reloaded from. Reloaded events keep their streams; none of them is fresh until
     /// a beat is heard again, so a restart never resurrects anybody's ownership.
+    ///
+    /// That last part is the reason persistence is safe here: reloading events would
+    /// otherwise bring back claims whose holders are long gone, and a restarted runtime
+    /// would refuse work on behalf of machines that are not running. Persistence is
+    /// optional because a journal without a path is a complete journal — it simply starts
+    /// empty and refills from its peers.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let path = dir.path().join("journal.jsonl");
+    ///
+    /// let before = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()),
+    ///     "0000000000000001", "repo".into(), Some(path.clone())).unwrap();
+    /// before.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    ///
+    /// // another runtime opens the same file: the events are back, and whoever wrote them
+    /// // is not alive here until a beat is heard again
+    /// let after = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()),
+    ///     "0000000000000002", "repo".into(), Some(path)).unwrap();
+    /// assert_eq!(after.events().len(), 1);
+    /// assert_eq!(
+    ///     after.liveness(before.own_stream(), Duration::from_secs(30)),
+    ///     StreamLiveness::Expired,
+    /// );
+    ///
+    /// // a runtime slot that is not 16 hex is not a runtime
+    /// let ephemeral = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// assert!(Journal::open(ephemeral, "nope", "repo".into(), None).is_err());
+    /// ```
     pub fn open(
         identity: Arc<NodeIdentity>,
         runtime: &str,
@@ -888,7 +1376,9 @@ impl Journal {
         inner.tallies.duplicates = 0;
     }
 
-    /// This runtime's own stream.
+    /// This runtime's own stream: the one stream this journal may write to, and the prefix
+    /// every claim, session and review key it creates carries. Nothing else in the journal
+    /// is this runtime's to number or to sign.
     pub fn own_stream(&self) -> &StreamId {
         &self.own
     }
@@ -900,6 +1390,31 @@ impl Journal {
 
     /// Sign, store and persist an event of this runtime. The body's bounds are checked
     /// first: nothing out of bounds is ever signed.
+    ///
+    /// The sequence is dense from 1 and the Lamport stamp rises above every stamp this
+    /// runtime has seen, so a peer can tell from the numbers alone whether it is missing
+    /// something, and every runtime folds concurrent events in the same order. Writing is
+    /// the only way an event enters the mesh; a relay never creates one.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let first = j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let second = j.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    /// assert_eq!((first.seq, second.seq), (1, 2), "dense from 1");
+    /// assert!(second.lamport > first.lamport);
+    /// assert_eq!(first.stream, *j.own_stream());
+    ///
+    /// // out of bounds is refused before anything is signed or stored
+    /// let escaping = EventBody::ClaimAcquired { claim: "c1".into(), session: "s1".into(),
+    ///     scope: vec!["/etc".into()], intent: None, mode: Default::default(), issue: None };
+    /// assert!(j.append_own(escaping).is_err());
+    /// assert_eq!(j.events().len(), 2, "and nothing was written");
+    /// ```
     pub fn append_own(&self, body: EventBody) -> Result<MeshEvent, MeshError> {
         body.validate().map_err(MeshError::Protocol)?;
         let body = serde_json::to_value(&body).map_err(|e| MeshError::Protocol(e.to_string()))?;
@@ -940,6 +1455,28 @@ impl Journal {
     }
 
     /// Raise this runtime's own beat: one heartbeat, signed, so that no relay can raise it.
+    ///
+    /// The beat is how a runtime says "still here" without writing an event for it — it
+    /// travels in marks, which every sync round carries anyway, so liveness costs nothing
+    /// extra. The signature is what makes a relay safe: a runtime can pass on somebody
+    /// else's beat and cannot invent one, so a crashed runtime stops being alive for
+    /// everybody at once and its claims end on their own.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::Journal;
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.beat_own();
+    /// let first = j.marks()[j.own_stream()].clone();
+    /// j.beat_own();
+    /// let second = j.marks()[j.own_stream()].clone();
+    ///
+    /// assert!(second.beat > first.beat, "the beat only rises");
+    /// assert_ne!(second.sig, first.sig, "each beat is its own signed statement");
+    /// ```
     pub fn beat_own(&self) {
         let mut inner = self.inner.lock().expect("journal lock");
         let log = inner.streams.entry(self.own.clone()).or_default();
@@ -949,7 +1486,29 @@ impl Journal {
         log.fresh_at = Some(Instant::now());
     }
 
-    /// Every stream's mark, own included, ages measured now.
+    /// Every stream's mark, own included, ages measured now. This is the whole of what a
+    /// runtime tells a peer about its state: a sequence per stream and a beat per stream,
+    /// from which the peer computes what to send. Nothing is asked for and nothing is
+    /// flooded, which is why an event reaches every runtime once per link and stops.
+    ///
+    /// The ages are measured at the moment of the call rather than stored, because an age
+    /// is only meaningful relative to when it was taken.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// assert_eq!(j.marks()[j.own_stream()].seq, 0, "nothing written yet");
+    ///
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// j.beat_own();
+    /// let mark = j.marks()[j.own_stream()].clone();
+    /// assert_eq!(mark.seq, 1);
+    /// assert!(mark.age_ms.is_some(), "a beat has been heard, and how long ago");
+    /// ```
     pub fn marks(&self) -> Marks {
         let now = Instant::now();
         let inner = self.inner.lock().expect("journal lock");
@@ -988,6 +1547,30 @@ impl Journal {
     /// age a stream but never hold a dead one alive past one expiry after its last real beat.
     /// Sequences are not merged: only events move high-water marks. A stream is created from
     /// a mark only when the mark verifies, and only within the stream quotas.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{Journal, StreamLiveness};
+    ///
+    /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+    ///     "repo".into(), None).unwrap();
+    /// a.beat_own();
+    ///
+    /// // B learns that A is beating, because A signed the beat
+    /// b.merge_marks(&a.marks(), &|_| true, Duration::from_secs(30));
+    /// assert_eq!(b.liveness(a.own_stream(), Duration::from_secs(30)), StreamLiveness::Live);
+    ///
+    /// // an untrusted origin's beat tells B nothing, however well signed
+    /// let c = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000003",
+    ///     "repo".into(), None).unwrap();
+    /// c.beat_own();
+    /// b.merge_marks(&c.marks(), &|_| false, Duration::from_secs(30));
+    /// assert_eq!(b.liveness(c.own_stream(), Duration::from_secs(30)), StreamLiveness::Expired);
+    /// ```
     pub fn merge_marks(&self, marks: &Marks, trusted: &dyn Fn(&str) -> bool, expiry: Duration) {
         let now = Instant::now();
         let ceiling = (expiry + Duration::from_secs(1)).as_millis() as u64;
@@ -1030,6 +1613,37 @@ impl Journal {
 
     /// The events a peer lacks by its marks, in stream-then-sequence order, at most
     /// `budget` serialized bytes (always at least one event when any is missing).
+    ///
+    /// This is the half of replication that decides what travels, and it decides it from
+    /// the peer's own marks rather than from a request: a runtime sends what the peer says
+    /// it lacks and nothing else, so an event crosses each link once and stops. The budget
+    /// keeps one round bounded, and the streams are visited from a rotating start, so a
+    /// stream a peer keeps refusing cannot spend the whole budget round after round and
+    /// starve the streams behind it.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+    ///     "repo".into(), None).unwrap();
+    /// a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// a.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// // B has nothing, so both events are missing for it
+    /// let missing = a.missing_for(&b.marks(), 1 << 20);
+    /// assert_eq!(missing.len(), 2);
+    ///
+    /// // once B holds them, its marks say so and nothing is sent again
+    /// b.ingest(&missing, &|_| Ok(()));
+    /// assert!(a.missing_for(&b.marks(), 1 << 20).is_empty());
+    ///
+    /// // a budget of nothing still moves one event: progress is never zero
+    /// assert_eq!(a.missing_for(&Default::default(), 0).len(), 1);
+    /// ```
     pub fn missing_for(&self, peer: &Marks, budget: usize) -> Vec<MeshEvent> {
         let inner = self.inner.lock().expect("journal lock");
         let mut out = Vec::new();
@@ -1068,6 +1682,41 @@ impl Journal {
     /// origin, made above the journal; everything else — size, version, identity,
     /// signature, repository, bounds, order, duplicates — is decided here, once, for every
     /// transport and relay alike.
+    ///
+    /// Trust is the caller's because it is policy, and everything else is decided here
+    /// because it must be decided the same way for every arrival: a datagram, a sync round
+    /// and a file reloaded from disk are all input, and none of them is believed. Events
+    /// are applied in stream order, so one that arrives ahead of its gap waits rather than
+    /// being applied out of turn, and one that arrives twice is counted and changes nothing.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal, Rejection};
+    ///
+    /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+    ///     "repo".into(), None).unwrap();
+    /// let first = a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let second = a.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// // the second event alone arrives first: it waits for the gap ahead of it
+    /// let report = b.ingest(&[second.clone()], &|_| Ok(()));
+    /// assert_eq!((report.accepted, report.pending), (0, 1));
+    ///
+    /// // the first arrives and both are applied, in the stream's order
+    /// let report = b.ingest(&[first], &|_| Ok(()));
+    /// assert_eq!(report.accepted, 2);
+    /// assert_eq!(b.events().len(), 2);
+    ///
+    /// // an untrusted origin is refused, with the reason the caller gave
+    /// let c = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000003",
+    ///     "repo".into(), None).unwrap();
+    /// let theirs = c.append_own(EventBody::SessionClosed { session: "s9".into() }).unwrap();
+    /// let report = b.ingest(&[theirs], &|_| Err(Rejection::Untrusted));
+    /// assert_eq!(report.rejected[&Rejection::Untrusted], 1);
+    /// ```
     pub fn ingest(
         &self,
         events: &[MeshEvent],
@@ -1245,7 +1894,31 @@ impl Journal {
         let _ = file.write_all(text.as_bytes());
     }
 
-    /// A stream's liveness on this runtime's clock, against `expiry`.
+    /// A stream's liveness on this runtime's clock, against `expiry`. The measurement is
+    /// local and monotonic — how long since this process saw the beat rise — so two
+    /// machines never compare wall clocks and a machine with a wrong clock cannot hold a
+    /// dead runtime's claims alive. A stream nobody has ever beaten for is expired, which
+    /// is the right answer for a stream learned from a relay that has not heard from it.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{Journal, StreamLiveness};
+    ///
+    /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+    ///     "repo".into(), None).unwrap();
+    /// let expiry = Duration::from_secs(30);
+    ///
+    /// assert_eq!(a.liveness(a.own_stream(), expiry), StreamLiveness::Own);
+    /// assert_eq!(a.liveness(b.own_stream(), expiry), StreamLiveness::Expired, "never heard of");
+    ///
+    /// b.beat_own();
+    /// a.merge_marks(&b.marks(), &|_| true, expiry);
+    /// assert_eq!(a.liveness(b.own_stream(), expiry), StreamLiveness::Live);
+    /// ```
     pub fn liveness(&self, stream: &StreamId, expiry: Duration) -> StreamLiveness {
         if *stream == self.own {
             return StreamLiveness::Own;
@@ -1258,7 +1931,27 @@ impl Journal {
         }
     }
 
-    /// Every stream's liveness and time since its beat rose, in stream order.
+    /// Every stream's liveness and time since its beat rose, in stream order. The age
+    /// travels with the verdict because "expired" alone is not diagnosable: a stream whose
+    /// beat rose a minute ago is a runtime that stopped, and one whose beat was never heard
+    /// is a runtime this one has only been told about.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{Journal, StreamLiveness};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let all = j.stream_liveness(Duration::from_secs(30));
+    /// let (liveness, age) = all[j.own_stream()];
+    /// assert_eq!(liveness, StreamLiveness::Own);
+    /// assert_eq!(age, None, "no beat has been raised yet");
+    ///
+    /// j.beat_own();
+    /// assert!(j.stream_liveness(Duration::from_secs(30))[j.own_stream()].1.is_some());
+    /// ```
     pub fn stream_liveness(
         &self,
         expiry: Duration,
@@ -1282,7 +1975,30 @@ impl Journal {
             .collect()
     }
 
-    /// Every held event, in stream-then-sequence order.
+    /// Every held event, in stream-then-sequence order. Events waiting for a gap are not
+    /// here: what this returns is what the journal is prepared to stand behind, and the
+    /// fold takes it whole, which is why the order it comes out in does not matter to the
+    /// result.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+    ///     "repo".into(), None).unwrap();
+    /// let first = a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// let second = a.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// // an event still waiting for the gap ahead of it is not yet held
+    /// b.ingest(&[second], &|_| Ok(()));
+    /// assert!(b.events().is_empty());
+    /// b.ingest(&[first], &|_| Ok(()));
+    /// assert_eq!(b.events().len(), 2);
+    /// assert_eq!(b.events()[0].seq, 1, "stream order, whatever the arrival order was");
+    /// ```
     pub fn events(&self) -> Vec<MeshEvent> {
         let inner = self.inner.lock().expect("journal lock");
         inner
@@ -1293,21 +2009,73 @@ impl Journal {
     }
 
     /// Held events whose Lamport stamp is above `after`, in Lamport order, at most `limit`.
+    ///
+    /// The Lamport stamp is what a reader can resume from: it rises with causality rather
+    /// than with anybody's clock, so a caller that remembers the last stamp it saw reads
+    /// each event once however the machines involved disagree about the time. This is what
+    /// `mesh events --after` is.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let first = j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s2".into() }).unwrap();
+    ///
+    /// assert_eq!(j.events_after(0, 100).len(), 2, "from the beginning");
+    /// let rest = j.events_after(first.lamport, 100);
+    /// assert_eq!(rest.len(), 1, "resumed where the reader left off");
+    /// assert!(rest[0].lamport > first.lamport);
+    /// assert_eq!(j.events_after(0, 1).len(), 1, "one page");
+    /// ```
     pub fn events_after(&self, after: u64, limit: usize) -> Vec<MeshEvent> {
-        let mut events: Vec<MeshEvent> = self
-            .events()
+        self.events()
             .into_iter()
             .filter(|e| e.lamport > after)
-            .collect();
-        events.sort_by(|a, b| (a.lamport, &a.stream, a.seq).cmp(&(b.lamport, &b.stream, b.seq)));
-        events.truncate(limit);
-        events
+            .map(|e| (causal_key(&e), e))
+            .collect::<BTreeMap<_, _>>()
+            .into_values()
+            .take(limit)
+            .collect()
     }
 
     /// Drop every stream that has been expired for longer than `retention` and holds no
     /// handover, when the journal is over its bound or `force` is set; the file is
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
     /// release to compaction.
+    ///
+    /// The two exclusions are what make dropping events safe. Only a stream that has been
+    /// silent well past its expiry goes, so no claim can lose the release that would have
+    /// ended it; and a stream holding a published handover stays, because a handover is
+    /// continuity somebody may still be waiting to pick up. What is dropped leaves a
+    /// tombstone carrying the sequence it reached, so a peer that still holds the stream
+    /// is not sent it all over again.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use std::time::Duration;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// let b = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000002",
+    ///     "repo".into(), None).unwrap();
+    /// a.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    /// b.ingest(&a.missing_for(&b.marks(), 1 << 20), &|_| Ok(()));
+    /// assert_eq!(b.events().len(), 1);
+    ///
+    /// // under its bounds, compaction does nothing unless it is asked
+    /// assert_eq!(b.compact(Duration::ZERO, Duration::ZERO, false), 0);
+    ///
+    /// // asked, the silent stream goes, and its mark stays so it is not re-sent
+    /// assert_eq!(b.compact(Duration::ZERO, Duration::ZERO, true), 1);
+    /// assert!(b.events().is_empty());
+    /// assert_eq!(b.marks()[a.own_stream()].seq, 1, "the tombstone remembers how far it got");
+    /// ```
     pub fn compact(&self, expiry: Duration, retention: Duration, force: bool) -> u64 {
         let now = Instant::now();
         let mut inner = self.inner.lock().expect("journal lock");
@@ -1361,7 +2129,24 @@ impl Journal {
         dropped
     }
 
-    /// The tallies now.
+    /// The tallies now: a snapshot of the counters, taken under the lock so that the
+    /// numbers in one answer are consistent with each other rather than read one at a time
+    /// while the journal moves. This is what `mesh status` and the cooperation status show.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    ///
+    /// let j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
+    ///     "repo".into(), None).unwrap();
+    /// j.append_own(EventBody::SessionClosed { session: "s1".into() }).unwrap();
+    ///
+    /// let snapshot = j.tallies();
+    /// assert_eq!(snapshot.written, 1);
+    /// assert_eq!(snapshot.events, j.events().len());
+    /// assert_eq!(snapshot.received, 0, "nothing came from a peer");
+    /// ```
     pub fn tallies(&self) -> JournalTallies {
         let inner = self.inner.lock().expect("journal lock");
         let mut tallies = inner.tallies;

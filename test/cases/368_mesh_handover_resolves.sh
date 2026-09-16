@@ -20,7 +20,7 @@ trap 'for p in $PIDS; do kill "$p" 2>/dev/null || true; done' EXIT
 mkrepo() {
   mkdir -p "$1"
   (
-    cd "$1"
+    cd "$1" || exit
     git init -q .
     git config user.email t@example.com
     git config user.name t
@@ -80,17 +80,17 @@ poll 150 linked "$A" || { cat "$A.serve.log" "$B.serve.log"; exit 1; }
 poll 150 linked "$B"
 
 # ---------------------------------------------------------------- 1. a claim excludes across runtimes
-cd "$A"
+cd "$A" || exit
 expect_exit 0 "$RB" mesh claim lib --session a1 --issue '#184'
 expect_grep '^written '
 claim_seen() { ( cd "$B" && "$RB" mesh state --format json ) | jq -e '[.state.claims[] | select(.state.state == "held")] | length == 1'; }
 poll 100 claim_seen
-cd "$B"
+cd "$B" || exit
 expect_exit 10 "$RB" mesh claim lib/a --session b1
 expect_grep 'claim_conflict'
 
 # ---------------------------------------------------------------- 2. a handover crosses and resolves
-cd "$A"
+cd "$A" || exit
 "$MJ" start "carry the mesh" --scope lib >/dev/null
 expect_exit 0 bash -c "printf '# Objective\nship the mesh\n# Current State\nlinks work\n# Next Action\nrender the machine tree\n' | '$MJ' handover"
 # stdout alone: expect_exit folds stderr (the server discovery's log lines) into its capture.
@@ -99,7 +99,7 @@ ID="$("$RB" mesh handover publish --issue '#184' --format json 2>/dev/null | jq 
 held_on_b() { ( cd "$B" && "$RB" mesh state --format json ) | jq -e --arg h "$ID" '[.state.handovers[] | select(.id == $h)] | length == 1'; }
 poll 100 held_on_b
 
-cd "$B"
+cd "$B" || exit
 expect_exit 0 "$RB" mesh handover consume "$ID" --session b1
 expect_grep '^record +\.ai/local/state/handovers/'
 expect_exit 0 "$MJ" handover --resolve
@@ -114,9 +114,9 @@ consumed_on_a() { ( cd "$A" && "$RB" mesh state --format json ) | jq -e --arg h 
 poll 100 consumed_on_a
 
 # ---------------------------------------------------------------- 3. both runtimes verify
-cd "$B"
+cd "$B" || exit
 expect_exit 0 "$RB" mesh verify
 expect_grep 'cooperation verified'
-cd "$A"
+cd "$A" || exit
 expect_exit 0 "$RB" mesh verify --format json
 expect_grep '"ok": true'

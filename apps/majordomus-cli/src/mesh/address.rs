@@ -16,7 +16,26 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 
 use super::protocol::MAX_ENDPOINTS;
 
-/// The endpoints a server bound at `bound` (`host:port`) advertises.
+/// The endpoints a server bound at `bound` (`host:port`) advertises. A bind is what the
+/// socket was asked for; an endpoint is what another machine can dial, and the two differ
+/// exactly when the bind is unspecified — nobody can reach `0.0.0.0`, so that bind is
+/// expanded into the interfaces it actually listens on. A bind this cannot parse is
+/// passed through unchanged, because a name this process cannot resolve may still be one
+/// its peers can.
+///
+/// ```
+/// use majordomus_cli::mesh::address::advertised_endpoints;
+///
+/// assert_eq!(advertised_endpoints("127.0.0.1:8742"), ["127.0.0.1:8742"]);
+///
+/// // the unspecified bind never advertises itself, and keeps the port it was given
+/// let wide = advertised_endpoints("0.0.0.0:8742");
+/// assert!(wide.iter().all(|e| e.ends_with(":8742") && !e.starts_with("0.0.0.0")));
+/// assert!(!wide.is_empty(), "loopback stands in when no interface is up");
+///
+/// // a host this process cannot parse is still a host its peers may know
+/// assert_eq!(advertised_endpoints("gateway.local:8742"), ["gateway.local:8742"]);
+/// ```
 pub fn advertised_endpoints(bound: &str) -> Vec<String> {
     let Ok(addr) = bound.parse::<SocketAddr>() else {
         return vec![bound.to_string()];
@@ -36,7 +55,18 @@ pub fn advertised_endpoints(bound: &str) -> Vec<String> {
     endpoints
 }
 
-/// Whether every endpoint is a loopback address: reachable from this machine alone.
+/// Whether every endpoint is a loopback address: reachable from this machine alone. A
+/// runtime in that state is not broken and is not on the mesh either, which is a
+/// distinction the doctor has to be able to draw before it blames the network for a
+/// cooperation that was never reachable. One routable endpoint is enough, so this asks of
+/// all of them rather than of any.
+///
+/// ```
+/// use majordomus_cli::mesh::address::loopback_only;
+///
+/// assert!(loopback_only(&["127.0.0.1:8742".into(), "localhost:8742".into()]));
+/// assert!(!loopback_only(&["127.0.0.1:8742".into(), "10.0.0.2:8742".into()]));
+/// ```
 pub fn loopback_only(endpoints: &[String]) -> bool {
     endpoints.iter().all(|e| {
         e.parse::<SocketAddr>()
@@ -54,17 +84,32 @@ fn rank(name: &str) -> u8 {
     u8::from(BRIDGES.iter().any(|b| name.starts_with(b)))
 }
 
-/// The up, non-loopback IPv4 interfaces, ranked, with their names.
+/// The up, non-loopback IPv4 interfaces of this machine, ranked, with their names. What is
+/// left out is what a remote runtime could not dial anyway: an interface that is down,
+/// loopback, unspecified, or link-local. The order is the advertising preference — a
+/// physical or overlay interface before a container or VM bridge — because only the first
+/// [`MAX_ENDPOINTS`] survive into an advertisement and a bridge address is the one a peer
+/// is least likely to reach.
+///
+/// ```
+/// use majordomus_cli::mesh::address::interfaces;
+///
+/// // whatever this machine has, every address here is one a peer could be told to dial
+/// for (name, ip) in interfaces() {
+///     assert!(!ip.is_loopback() && !ip.is_unspecified(), "{name} advertises {ip}");
+/// }
+/// ```
 #[cfg(unix)]
 pub fn interfaces() -> Vec<(String, Ipv4Addr)> {
-    let mut out = Vec::new();
+    let mut out: std::collections::BTreeMap<(u8, String, String), (String, Ipv4Addr)> =
+        std::collections::BTreeMap::new();
     // SAFETY: getifaddrs hands back a linked list this function walks read-only and frees
     // exactly once; every pointer is checked for null before it is read, and a sockaddr
     // is reinterpreted as sockaddr_in only when its family says AF_INET.
     unsafe {
         let mut head: *mut libc::ifaddrs = std::ptr::null_mut();
         if libc::getifaddrs(&mut head) != 0 {
-            return out;
+            return Vec::new();
         }
         let mut cursor = head;
         while !cursor.is_null() {
@@ -86,18 +131,30 @@ pub fn interfaces() -> Vec<(String, Ipv4Addr)> {
                         .into_owned()
                 };
                 if !ip.is_loopback() && !ip.is_unspecified() && !ip.is_link_local() {
-                    out.push((name, ip));
+                    // Keyed by the declared preference of the interface, then by its name
+                    // and address: the map holds the order, so nothing here compares.
+                    out.insert((rank(&name), name.clone(), ip.to_string()), (name, ip));
                 }
             }
             cursor = entry.ifa_next;
         }
         libc::freeifaddrs(head);
     }
-    out.sort_by_key(|(name, _)| rank(name));
-    out
+    out.into_values().collect()
 }
 
-/// No interface enumeration off Unix: the bound address is all there is to advertise.
+/// No interface enumeration off Unix: `getifaddrs` is the only enumeration this crate
+/// carries, so on any other platform the bound address is all there is to advertise. The
+/// empty answer is not a failure — it makes a server bound to every interface fall back to
+/// advertising loopback, which is honest about what a peer can reach rather than guessing
+/// an address that may not exist.
+///
+/// ```
+/// use majordomus_cli::mesh::address::{advertised_endpoints, interfaces};
+///
+/// assert!(interfaces().is_empty(), "nothing is enumerated off Unix");
+/// assert_eq!(advertised_endpoints("0.0.0.0:8742"), ["127.0.0.1:8742"]);
+/// ```
 #[cfg(not(unix))]
 pub fn interfaces() -> Vec<(String, Ipv4Addr)> {
     Vec::new()

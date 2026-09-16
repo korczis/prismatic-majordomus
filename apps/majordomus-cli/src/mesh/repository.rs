@@ -2,8 +2,9 @@
 //!
 //! A repository's mesh identity must be the same on every machine that holds a clone of
 //! it and different for every other repository. The path of the git directory (what
-//! `server.status` digests to tell checkouts apart) is neither: `/Users/a/repo` and
-//! `/home/a/repo` are one repository with two paths. So the mesh identity is derived from
+//! `server.status` digests to tell checkouts apart) is neither: a macOS checkout path and
+//! the Linux checkout path of the same clone are one repository with two spellings. So the
+//! mesh identity is derived from
 //! the repository's **root commits** — content every full clone shares and no unrelated
 //! repository has — or, when a person declares one, from the declared identity
 //! (`cooperation.repository`), which is what a shallow clone needs and what separates a
@@ -34,7 +35,20 @@ use super::MeshError;
 const REPOSITORY_DOMAIN: &str = "majordomus-mesh-repository/v1\n";
 const RUNTIME_DOMAIN: &str = "majordomus-mesh-runtime/v1\n";
 
-/// What the repository identity was derived from.
+/// What the repository identity was derived from, which a reader needs in order to judge
+/// it: an identity taken from the root commits is a fact about the history two clones
+/// share, while a declared one is a decision somebody made, and only the second can be
+/// changed by editing a file.
+///
+/// ```
+/// use majordomus_cli::mesh::repository::{declared, of_root_commits, MeshRepositoryBasis};
+///
+/// assert_eq!(declared("majordomus").unwrap().basis, MeshRepositoryBasis::Declared);
+/// assert_eq!(
+///     of_root_commits(&["a".repeat(40)]).basis,
+///     MeshRepositoryBasis::RootCommits,
+/// );
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum MeshRepositoryBasis {
@@ -44,7 +58,19 @@ pub enum MeshRepositoryBasis {
     RootCommits,
 }
 
-/// A repository's mesh identity and where it came from.
+/// A repository's mesh identity, carried by every advertisement, link and event, together
+/// with the account of where it came from. The `detail` exists so that a person told two
+/// checkouts are not the same repository can see what each one was derived from instead of
+/// comparing two opaque digests.
+///
+/// ```
+/// use majordomus_cli::mesh::repository::MeshRepositoryIdentity;
+/// use majordomus_cli::mesh::repository::of_root_commits;
+///
+/// let identity: MeshRepositoryIdentity = of_root_commits(&["a".repeat(40)]);
+/// assert_eq!(identity.id.len(), 32, "32 hex characters, on every machine");
+/// assert_eq!(identity.detail, "aaaaaaaaaaaa", "the evidence, short enough to read");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct MeshRepositoryIdentity {
     /// 32 hex: what advertisements, links and events carry.
@@ -63,7 +89,20 @@ fn digest(text: &str, hex_chars: usize) -> String {
         .collect()
 }
 
-/// The identity a declared value yields.
+/// The identity a declared value yields: what a shallow clone, which cannot see its own
+/// root commit, must use, and what separates a fork that should not cooperate with the
+/// repository it came from. The value is a name chosen by the people who run the mesh, not
+/// a digest, so it is bounded and must not be empty — an empty declaration would put every
+/// repository that forgot to fill it in on one mesh.
+///
+/// ```
+/// use majordomus_cli::mesh::repository::declared;
+///
+/// let a = declared("majordomus").unwrap();
+/// assert_eq!(a.id, declared("  majordomus  ").unwrap().id, "surrounding space is noise");
+/// assert_ne!(a.id, declared("majordomus-fork").unwrap().id);
+/// assert!(declared("").is_err(), "an empty declaration would merge unrelated repositories");
+/// ```
 pub fn declared(value: &str) -> Result<MeshRepositoryIdentity, MeshError> {
     let value = value.trim();
     if value.is_empty() || value.len() > 128 {
@@ -78,11 +117,28 @@ pub fn declared(value: &str) -> Result<MeshRepositoryIdentity, MeshError> {
     })
 }
 
-/// The identity a set of root commits yields, in any order.
+/// The identity a set of root commits yields. The roots are treated as a set rather than a
+/// list, because `git rev-list` makes no promise about the order it prints them in and two
+/// machines that disagreed about that order would decide they held different repositories;
+/// for the same reason the same root named twice is one root.
+///
+/// ```
+/// use majordomus_cli::mesh::repository::of_root_commits;
+///
+/// let a = of_root_commits(&["b".repeat(40), "a".repeat(40)]);
+/// let b = of_root_commits(&["a".repeat(40), "b".repeat(40), "a".repeat(40)]);
+/// assert_eq!(a.id, b.id, "a set: order and repetition are not information");
+/// assert_ne!(a.id, of_root_commits(&["a".repeat(40)]).id);
+/// ```
 pub fn of_root_commits(roots: &[String]) -> MeshRepositoryIdentity {
-    let mut sorted: Vec<&str> = roots.iter().map(|r| r.trim()).collect();
-    sorted.sort_unstable();
-    sorted.dedup();
+    // A set, so the digest reads the same on every machine whatever order the commits were
+    // listed in, and the same root named twice is one root.
+    let sorted: Vec<&str> = roots
+        .iter()
+        .map(|r| r.trim())
+        .collect::<std::collections::BTreeSet<_>>()
+        .into_iter()
+        .collect();
     let joined = sorted.join("\n");
     MeshRepositoryIdentity {
         id: digest(&format!("{REPOSITORY_DOMAIN}roots\n{joined}"), 32),
@@ -98,6 +154,21 @@ pub fn of_root_commits(roots: &[String]) -> MeshRepositoryIdentity {
 /// Resolve the mesh identity of the repository at `root`: the declared value when there
 /// is one; otherwise its root commits, refusing a shallow clone (whose "root" is only
 /// where its history was cut) and a repository with no commit yet.
+///
+/// The declaration is consulted first and answers on its own, so a caller that has one
+/// never runs git — which is what lets a shallow clone, a worktree of one, or a directory
+/// that is not a repository at all still take part in a mesh.
+///
+/// ```
+/// use majordomus_cli::mesh::repository::{declared, resolve};
+///
+/// let nowhere = tempfile::tempdir().unwrap();
+/// let stated = resolve(nowhere.path(), Some("majordomus")).unwrap();
+/// assert_eq!(stated.id, declared("majordomus").unwrap().id, "git was never asked");
+///
+/// // without one, the history has to answer, and a directory holding no history cannot
+/// assert!(resolve(nowhere.path(), None).is_err());
+/// ```
 pub fn resolve(
     root: &Path,
     declared_value: Option<&str>,
@@ -141,7 +212,18 @@ pub fn resolve(
     Ok(of_root_commits(&roots))
 }
 
-/// The runtime slot of a checkout: 16 hex of a digest of its checkout id.
+/// The runtime slot of a checkout: 16 hex of a digest of its checkout id. A runtime is one
+/// server of one node, so this is what makes a restarted server the same runtime as the
+/// one it replaced — a new instance of it rather than a new participant — while two
+/// worktrees of one machine stay two runtimes that can claim against each other.
+///
+/// ```
+/// use majordomus_cli::mesh::repository::runtime_id;
+///
+/// assert_eq!(runtime_id("checkout-1"), runtime_id("checkout-1"), "a restart is not a new runtime");
+/// assert_ne!(runtime_id("checkout-1"), runtime_id("checkout-2"));
+/// assert_eq!(runtime_id("checkout-1").len(), 16);
+/// ```
 pub fn runtime_id(checkout_id: &str) -> String {
     digest(&format!("{RUNTIME_DOMAIN}{checkout_id}"), 16)
 }

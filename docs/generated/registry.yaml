@@ -14827,7 +14827,7 @@ capabilities:
               - type: string
                 const: advisory
                 description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: Whether a claim excludes others or only tells them.
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
     output:
       name: Written
       schema:
@@ -14848,7 +14848,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -14986,12 +14986,12 @@ capabilities:
           - refused
           - counters
           - journal
-        description: "The whole cooperation runtime, as every surface reports it."
+        description: "The whole cooperation runtime, as every surface reports it: the command line, the HTTP\nsurface and MCP all render this one value, so that a person and an agent asking the same\nquestion of the same runtime are never told different things.\n\nIt answers in one reading the three questions a mesh raises — is this runtime\ncooperating at all, what does it speak, and who is it linked to — and it stays\nanswerable when the answer is no: an inactive runtime still reports its protocol range\nand the reason, rather than an absence the caller has to interpret.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::CooperationStatus;\n\nlet running: CooperationStatus = cooperation.status();\nassert_eq!(running.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert!(running.peers.is_empty(), \"nothing is dialed until something dials\");\n\n// and where there is no runtime at all, the same shape says why\nlet none = CooperationStatus::inactive(\"the mesh declaration is disabled\");\nassert_eq!(none.protocol, running.protocol, \"still answerable about what it speaks\");\n```"
         title: CooperationStatus
         "$defs":
           StreamId:
             type: string
-            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
           MeshRepositoryIdentity:
             type: object
             properties:
@@ -15008,7 +15008,7 @@ capabilities:
               - id
               - basis
               - detail
-            description: "A repository's mesh identity and where it came from."
+            description: "A repository's mesh identity, carried by every advertisement, link and event, together\nwith the account of where it came from. The `detail` exists so that a person told two\ncheckouts are not the same repository can see what each one was derived from instead of\ncomparing two opaque digests.\n\n```\nuse majordomus_cli::mesh::repository::MeshRepositoryIdentity;\nuse majordomus_cli::mesh::repository::of_root_commits;\n\nlet identity: MeshRepositoryIdentity = of_root_commits(&[\"a\".repeat(40)]);\nassert_eq!(identity.id.len(), 32, \"32 hex characters, on every machine\");\nassert_eq!(identity.detail, \"aaaaaaaaaaaa\", \"the evidence, short enough to read\");\n```"
           MeshRepositoryBasis:
             oneOf:
               - type: string
@@ -15017,7 +15017,7 @@ capabilities:
               - type: string
                 const: root_commits
                 description: "The repository's root commits."
-            description: What the repository identity was derived from.
+            description: "What the repository identity was derived from, which a reader needs in order to judge\nit: an identity taken from the root commits is a fact about the history two clones\nshare, while a declared one is a decision somebody made, and only the second can be\nchanged by editing a file.\n\n```\nuse majordomus_cli::mesh::repository::{declared, of_root_commits, MeshRepositoryBasis};\n\nassert_eq!(declared(\"majordomus\").unwrap().basis, MeshRepositoryBasis::Declared);\nassert_eq!(\n    of_root_commits(&[\"a\".repeat(40)]).basis,\n    MeshRepositoryBasis::RootCommits,\n);\n```"
           PeerView:
             type: object
             properties:
@@ -15132,7 +15132,7 @@ capabilities:
               - reconnects
               - restarts
               - linked_at
-            description: One peer as every surface shows it.
+            description: "One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\na.dial(&[\"b:1\".into()]).unwrap();\n\nlet peer: &PeerView = &a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \"the durable identity, not the endpoint\");\nassert!(peer.outbound, \"this runtime dials it\");\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \"the peer's process has not died under the link\");\n```"
           TrustState:
             oneOf:
               - type: object
@@ -15183,7 +15183,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "No exchange within the expiry: the link is dropped and will be re-dialed."
-            description: "A link's standing, from this runtime's side."
+            description: "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
           RefusedView:
             type: object
             properties:
@@ -15209,7 +15209,7 @@ capabilities:
               - direction
               - refusal
               - at
-            description: "A candidate that was refused, with the rule that refused it."
+            description: "A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str, policy: TrustPolicy| {\n#   let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let a = runtime(\"a:1\", TrustPolicy::Tofu);\n# let strict = runtime(\"s:1\", TrustPolicy::DenyUnknown);\na.dial(&[\"s:1\".into()]).expect_err(\"reachable, and not trusted\");\n\nlet refused: &RefusedView = &strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \"inbound\", \"this runtime refused the hello\");\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```"
           LinkRefusal:
             type: object
             properties:
@@ -15234,7 +15234,7 @@ capabilities:
               - detail
               - proto_min
               - proto_max
-            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```"
           RefusalCode:
             oneOf:
               - type: string
@@ -15276,7 +15276,7 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
-            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
           CooperationCounters:
             type: object
             properties:
@@ -15375,7 +15375,7 @@ capabilities:
               - threads
               - refused_in
               - refused_out
-            description: The link and replication counters since start.
+            description: "The link and replication counters since start: what this runtime did, not what it\nholds. They are monotonic and never reset, so two readings a minute apart are a rate —\nwhich is the only way to tell a mesh that is working from one that is retrying, since\nboth show the same peers in the same states.\n\nThe counts are split by direction throughout (`handshakes_out` against\n`handshakes_in`, `refused_in` against `refused_out`) because a runtime that refuses\neveryone and one that everyone refuses need opposite remedies.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\nlet key = a.dial(&[\"b:1\".into()]).unwrap();\na.sync_with(&key).unwrap();\n\nlet dialer: CooperationCounters = a.status().counters;\nlet answerer = b.status().counters;\nassert_eq!((dialer.handshakes_out, dialer.syncs_out), (1, 1));\nassert_eq!((answerer.handshakes_in, answerer.syncs_in), (1, 1), \"the other side of it\");\nassert_eq!(answerer.handshakes_out, 0, \"B never dialed anybody\");\n```"
           JournalTallies:
             type: object
             properties:
@@ -15440,7 +15440,7 @@ capabilities:
               - compacted
               - opaque
               - lamport
-            description: "The journal's counters since start."
+            description: "The journal's counters since start: how much it holds, how much it has written,\nreceived, absorbed, refused, held back and compacted away. They are what makes a\nreplication problem diagnosable from one machine — a runtime whose `received` never\nrises is not linked, one whose `rejected` rises is being sent something it will not\ntake, and one whose `pending` stays high is missing an event ahead of what it has.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, JournalTallies};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet before: JournalTallies = j.tallies();\nassert_eq!((before.written, before.events), (0, 0));\n\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\nlet after = j.tallies();\nassert_eq!((after.written, after.events, after.streams), (1, 1, 1));\nassert!(after.lamport > before.lamport);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -15657,10 +15657,10 @@ capabilities:
               - pk
               - body
               - sig
-            description: "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it."
+            description: "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines' idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\n\nlet event: &MeshEvent = &j.events()[0];\nassert_eq!(event.seq, 1, \"dense from 1 within its stream\");\nassert_eq!(event.kind(), \"session_closed\");\nassert_eq!(event.id(), format!(\"{}/1\", event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \"another-repository\".into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```"
           StreamId:
             type: string
-            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -15768,10 +15768,10 @@ capabilities:
               - published_lamport
               - handover
               - consumed_by
-            description: A handover anywhere in the mesh.
+            description: "A handover anywhere in the mesh, with everyone who has taken it. The id is the digest\nof the body, so the same handover published twice — by a retry, or by two runtimes that\nboth saw it — is one handover here; and `consumed_by` is what keeps two workers from\nsilently picking up the same continuity, since the list is folded from events every\nruntime holds.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, HandoverView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet body = \"# Objective\\nship\\n\".to_string();\nlet handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,\n    milestone: None, branch: Some(\"feature/x\".into()), head: None, created_at: None,\n    name: None, body };\nlet id = handover.id.clone();\nj.append_own(EventBody::HandoverPublished { handover }).unwrap();\nj.append_own(EventBody::HandoverConsumed { handover: id.clone(), session: \"s1\".into() })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &HandoverView = &state.handovers[0];\nassert_eq!(view.id, id, \"identified by what it says, not by who said it\");\nassert_eq!(view.consumed_by.len(), 1, \"somebody has picked this one up\");\n```"
           StreamId:
             type: string
-            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
           HandoverBody:
             type: object
             properties:
@@ -15819,7 +15819,7 @@ capabilities:
             required:
               - id
               - body
-            description: "A handover as the mesh carries it: the record's facts and its body, bounded."
+            description: "A handover as the mesh carries it: the record's facts and its body, bounded.\n\nWhat travels is the writing, plus the few facts that let a receiver file it — the task,\nthe issue, the branch, the commit. No path of the author's disk is among them, because\nthe checkout that reads this is somewhere else and a path from another machine is at\nbest noise. Identity is the digest of the body, so a handover published twice by a\nretry or by two runtimes is one handover everywhere.\n\n```\nuse majordomus_cli::mesh::journal::HandoverBody;\n\nlet body = \"# Objective\\nship the mesh\\n\".to_string();\nlet handover = HandoverBody {\n    id: HandoverBody::digest_of(&body),\n    task: Some(\"t-1\".into()),\n    issue: Some(\"#184\".into()),\n    milestone: None,\n    branch: Some(\"feature/mesh-cooperation\".into()),\n    head: None,\n    created_at: None,\n    name: None,\n    body,\n};\nassert_eq!(handover.id, HandoverBody::digest_of(&handover.body));\n\nlet wire = serde_json::to_value(&handover).unwrap();\nassert!(wire.get(\"milestone\").is_none(), \"what it does not say is omitted\");\n```"
           Written:
             type: object
             properties:
@@ -15838,7 +15838,7 @@ capabilities:
               - key
               - event
               - lamport
-            description: "A written event, as an operation answers it."
+            description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -15913,7 +15913,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -16054,7 +16054,7 @@ capabilities:
         required:
           - body
           - sig
-        description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged."
+        description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.\n\nKeeping the body as JSON rather than as the bytes that were signed is what makes the\nprotocol extensible: a field a newer peer added is carried through verification\nuntouched, because the signature is checked over the canonical form of whatever is\nthere rather than over a shape this version knows.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, verify_signed, Domain, Signed};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet signed: Signed = sign(&node, Domain::SyncRequest, serde_json::json!({ \"b\": 2, \"a\": 1 }));\nassert_eq!(signed.sig.len(), 128, \"hex Ed25519\");\n\n// key order is not content, so a round trip through JSON still verifies\nlet wire = serde_json::to_string(&signed).unwrap();\nlet back: Signed = serde_json::from_str(&wire).unwrap();\nassert!(verify_signed(&node.public.public_key, Domain::SyncRequest, &back));\n```"
         title: Signed
     output:
       name: LinkReply
@@ -16071,7 +16071,7 @@ capabilities:
               - "$ref": "#/$defs/LinkRefusal"
               - type: "null"
             description: "The refusal, when not."
-        description: "What a hello or a sync answers over the wire: a signed message or a refusal."
+        description: "What a hello or a sync answers over the wire: a signed message or a refusal. Both are\nsuccessful replies — the transport carries them the same way and neither is an error —\nbecause a refusal is a decision this protocol wants recorded and shown, and an answer\nthat arrived as an HTTP failure would be indistinguishable from a peer that is down.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, Domain, LinkReply, RefusalCode};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet accepted = LinkReply::accepted(sign(&node, Domain::Welcome, serde_json::json!({})));\nassert!(accepted.signed.is_some() && accepted.refusal.is_none());\n\nlet refused = LinkReply::refused(RefusalCode::SelfLink, \"this runtime dialled itself\");\nassert!(refused.signed.is_none());\nassert_eq!(refused.refusal.unwrap().code, RefusalCode::SelfLink);\n```"
         title: LinkReply
         "$defs":
           Signed:
@@ -16085,7 +16085,7 @@ capabilities:
             required:
               - body
               - sig
-            description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged."
+            description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.\n\nKeeping the body as JSON rather than as the bytes that were signed is what makes the\nprotocol extensible: a field a newer peer added is carried through verification\nuntouched, because the signature is checked over the canonical form of whatever is\nthere rather than over a shape this version knows.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, verify_signed, Domain, Signed};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet signed: Signed = sign(&node, Domain::SyncRequest, serde_json::json!({ \"b\": 2, \"a\": 1 }));\nassert_eq!(signed.sig.len(), 128, \"hex Ed25519\");\n\n// key order is not content, so a round trip through JSON still verifies\nlet wire = serde_json::to_string(&signed).unwrap();\nlet back: Signed = serde_json::from_str(&wire).unwrap();\nassert!(verify_signed(&node.public.public_key, Domain::SyncRequest, &back));\n```"
           LinkRefusal:
             type: object
             properties:
@@ -16110,7 +16110,7 @@ capabilities:
               - detail
               - proto_min
               - proto_max
-            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```"
           RefusalCode:
             oneOf:
               - type: string
@@ -16152,7 +16152,7 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
-            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -16194,7 +16194,7 @@ capabilities:
         required:
           - body
           - sig
-        description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged."
+        description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.\n\nKeeping the body as JSON rather than as the bytes that were signed is what makes the\nprotocol extensible: a field a newer peer added is carried through verification\nuntouched, because the signature is checked over the canonical form of whatever is\nthere rather than over a shape this version knows.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, verify_signed, Domain, Signed};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet signed: Signed = sign(&node, Domain::SyncRequest, serde_json::json!({ \"b\": 2, \"a\": 1 }));\nassert_eq!(signed.sig.len(), 128, \"hex Ed25519\");\n\n// key order is not content, so a round trip through JSON still verifies\nlet wire = serde_json::to_string(&signed).unwrap();\nlet back: Signed = serde_json::from_str(&wire).unwrap();\nassert!(verify_signed(&node.public.public_key, Domain::SyncRequest, &back));\n```"
         title: Signed
     output:
       name: LinkReply
@@ -16211,7 +16211,7 @@ capabilities:
               - "$ref": "#/$defs/LinkRefusal"
               - type: "null"
             description: "The refusal, when not."
-        description: "What a hello or a sync answers over the wire: a signed message or a refusal."
+        description: "What a hello or a sync answers over the wire: a signed message or a refusal. Both are\nsuccessful replies — the transport carries them the same way and neither is an error —\nbecause a refusal is a decision this protocol wants recorded and shown, and an answer\nthat arrived as an HTTP failure would be indistinguishable from a peer that is down.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, Domain, LinkReply, RefusalCode};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet accepted = LinkReply::accepted(sign(&node, Domain::Welcome, serde_json::json!({})));\nassert!(accepted.signed.is_some() && accepted.refusal.is_none());\n\nlet refused = LinkReply::refused(RefusalCode::SelfLink, \"this runtime dialled itself\");\nassert!(refused.signed.is_none());\nassert_eq!(refused.refusal.unwrap().code, RefusalCode::SelfLink);\n```"
         title: LinkReply
         "$defs":
           Signed:
@@ -16225,7 +16225,7 @@ capabilities:
             required:
               - body
               - sig
-            description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged."
+            description: "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.\n\nKeeping the body as JSON rather than as the bytes that were signed is what makes the\nprotocol extensible: a field a newer peer added is carried through verification\nuntouched, because the signature is checked over the canonical form of whatever is\nthere rather than over a shape this version knows.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, verify_signed, Domain, Signed};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet signed: Signed = sign(&node, Domain::SyncRequest, serde_json::json!({ \"b\": 2, \"a\": 1 }));\nassert_eq!(signed.sig.len(), 128, \"hex Ed25519\");\n\n// key order is not content, so a round trip through JSON still verifies\nlet wire = serde_json::to_string(&signed).unwrap();\nlet back: Signed = serde_json::from_str(&wire).unwrap();\nassert!(verify_signed(&node.public.public_key, Domain::SyncRequest, &back));\n```"
           LinkRefusal:
             type: object
             properties:
@@ -16250,7 +16250,7 @@ capabilities:
               - detail
               - proto_min
               - proto_max
-            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```"
           RefusalCode:
             oneOf:
               - type: string
@@ -16292,7 +16292,7 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
-            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -16633,7 +16633,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "Its beat has not risen within the expiry, or was never heard."
-            description: "Whether a stream is speaking now, on this runtime's clock."
+            description: "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```"
           PeerView:
             type: object
             properties:
@@ -16748,7 +16748,7 @@ capabilities:
               - reconnects
               - restarts
               - linked_at
-            description: One peer as every surface shows it.
+            description: "One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\na.dial(&[\"b:1\".into()]).unwrap();\n\nlet peer: &PeerView = &a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \"the durable identity, not the endpoint\");\nassert!(peer.outbound, \"this runtime dials it\");\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \"the peer's process has not died under the link\");\n```"
           TrustState:
             oneOf:
               - type: object
@@ -16799,7 +16799,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "No exchange within the expiry: the link is dropped and will be re-dialed."
-            description: "A link's standing, from this runtime's side."
+            description: "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
           SessionNode:
             type: object
             properties:
@@ -16891,7 +16891,7 @@ capabilities:
             required:
               - session
               - client
-            description: "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential."
+            description: "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```"
           SessionState:
             oneOf:
               - type: string
@@ -16903,7 +16903,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "Never closed, but its runtime stopped beating: gone, as far as anyone can tell."
-            description: "A session's standing."
+            description: "A session's standing, as every runtime of the mesh reads it. The distinction that\nmatters is between `Closed` and `Expired`: the first is a session that said it was\nfinished, the second one whose runtime stopped beating and can no longer say anything.\nBoth end the session's claims, but only the second is a machine nobody should expect an\nanswer from.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"cli\") }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);\n\n// the same events, read on a runtime that no longer hears the writer\nlet gone = fold(&j.events(), &|_| StreamLiveness::Expired);\nassert_eq!(gone.sessions[0].state, SessionState::Expired);\n```"
           ClaimView:
             type: object
             properties:
@@ -16960,10 +16960,10 @@ capabilities:
               - acquired_lamport
               - acquired_seq
               - state
-            description: One claim anywhere in the mesh.
+            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
           StreamId:
             type: string
-            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
           ClaimMode:
             oneOf:
               - type: string
@@ -16972,7 +16972,7 @@ capabilities:
               - type: string
                 const: advisory
                 description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: Whether a claim excludes others or only tells them.
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           ClaimState:
             oneOf:
               - type: object
@@ -17013,7 +17013,7 @@ capabilities:
                   - state
                   - detail
                 description: "Live, exclusive, and beaten to its scope by the claim whose key this names."
-            description: "A claim's standing."
+            description: "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
           RefusedView:
             type: object
             properties:
@@ -17039,7 +17039,7 @@ capabilities:
               - direction
               - refusal
               - at
-            description: "A candidate that was refused, with the rule that refused it."
+            description: "A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str, policy: TrustPolicy| {\n#   let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let a = runtime(\"a:1\", TrustPolicy::Tofu);\n# let strict = runtime(\"s:1\", TrustPolicy::DenyUnknown);\na.dial(&[\"s:1\".into()]).expect_err(\"reachable, and not trusted\");\n\nlet refused: &RefusedView = &strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \"inbound\", \"this runtime refused the hello\");\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```"
           LinkRefusal:
             type: object
             properties:
@@ -17064,7 +17064,7 @@ capabilities:
               - detail
               - proto_min
               - proto_max
-            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```"
           RefusalCode:
             oneOf:
               - type: string
@@ -17106,7 +17106,7 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
-            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -17258,7 +17258,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "Its beat has not risen within the expiry, or was never heard."
-            description: "Whether a stream is speaking now, on this runtime's clock."
+            description: "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```"
           PeerView:
             type: object
             properties:
@@ -17373,7 +17373,7 @@ capabilities:
               - reconnects
               - restarts
               - linked_at
-            description: One peer as every surface shows it.
+            description: "One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\na.dial(&[\"b:1\".into()]).unwrap();\n\nlet peer: &PeerView = &a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \"the durable identity, not the endpoint\");\nassert!(peer.outbound, \"this runtime dials it\");\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \"the peer's process has not died under the link\");\n```"
           TrustState:
             oneOf:
               - type: object
@@ -17424,7 +17424,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "No exchange within the expiry: the link is dropped and will be re-dialed."
-            description: "A link's standing, from this runtime's side."
+            description: "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
           SessionNode:
             type: object
             properties:
@@ -17516,7 +17516,7 @@ capabilities:
             required:
               - session
               - client
-            description: "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential."
+            description: "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```"
           SessionState:
             oneOf:
               - type: string
@@ -17528,7 +17528,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "Never closed, but its runtime stopped beating: gone, as far as anyone can tell."
-            description: "A session's standing."
+            description: "A session's standing, as every runtime of the mesh reads it. The distinction that\nmatters is between `Closed` and `Expired`: the first is a session that said it was\nfinished, the second one whose runtime stopped beating and can no longer say anything.\nBoth end the session's claims, but only the second is a machine nobody should expect an\nanswer from.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"cli\") }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);\n\n// the same events, read on a runtime that no longer hears the writer\nlet gone = fold(&j.events(), &|_| StreamLiveness::Expired);\nassert_eq!(gone.sessions[0].state, SessionState::Expired);\n```"
           ClaimView:
             type: object
             properties:
@@ -17585,10 +17585,10 @@ capabilities:
               - acquired_lamport
               - acquired_seq
               - state
-            description: One claim anywhere in the mesh.
+            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
           StreamId:
             type: string
-            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
           ClaimMode:
             oneOf:
               - type: string
@@ -17597,7 +17597,7 @@ capabilities:
               - type: string
                 const: advisory
                 description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: Whether a claim excludes others or only tells them.
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           ClaimState:
             oneOf:
               - type: object
@@ -17638,7 +17638,7 @@ capabilities:
                   - state
                   - detail
                 description: "Live, exclusive, and beaten to its scope by the claim whose key this names."
-            description: "A claim's standing."
+            description: "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
           RefusedView:
             type: object
             properties:
@@ -17664,7 +17664,7 @@ capabilities:
               - direction
               - refusal
               - at
-            description: "A candidate that was refused, with the rule that refused it."
+            description: "A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str, policy: TrustPolicy| {\n#   let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let a = runtime(\"a:1\", TrustPolicy::Tofu);\n# let strict = runtime(\"s:1\", TrustPolicy::DenyUnknown);\na.dial(&[\"s:1\".into()]).expect_err(\"reachable, and not trusted\");\n\nlet refused: &RefusedView = &strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \"inbound\", \"this runtime refused the hello\");\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```"
           LinkRefusal:
             type: object
             properties:
@@ -17689,7 +17689,7 @@ capabilities:
               - detail
               - proto_min
               - proto_max
-            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end."
+            description: "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```"
           RefusalCode:
             oneOf:
               - type: string
@@ -17731,7 +17731,7 @@ capabilities:
               - type: string
                 const: feature_unsupported
                 description: The peer lacks a feature the operation needs.
-            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket."
+            description: "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -17928,7 +17928,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -18008,7 +18008,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -18095,7 +18095,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -18161,7 +18161,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -18277,7 +18277,7 @@ capabilities:
           - key
           - event
           - lamport
-        description: "A written event, as an operation answers it."
+        description: "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```"
         title: Written
     provenance:
       source: builtin
@@ -18390,7 +18390,7 @@ capabilities:
               - reviews
               - opaque_events
               - digest
-            description: "The whole folded state, every collection in key order, and its digest: two runtimes\nthat agree print the same digest."
+            description: "The whole folded state, every collection in key order, and its digest: two runtimes\nthat agree print the same digest.\n\nThe digest is the point. Convergence is otherwise a claim nobody can check from one\nmachine; with it, two operators compare one short string and know whether their\nruntimes are looking at the same world. `opaque_events` is the other half of that\nhonesty: events of kinds this executable does not interpret are counted and relayed\nrather than dropped, so a newer peer's traffic is visible instead of silently missing.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, CooperationState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"cli\") }).unwrap();\n\nlet events = j.events();\nlet state: CooperationState = fold(&events, &|_| StreamLiveness::Own);\nassert_eq!(state.digest.len(), 32);\n\n// the same events in another order, and twice over, are the same state\nlet mut shuffled = events.clone();\nshuffled.reverse();\nshuffled.extend(events);\nassert_eq!(fold(&shuffled, &|_| StreamLiveness::Own).digest, state.digest);\n```"
           SessionView:
             type: object
             properties:
@@ -18425,10 +18425,10 @@ capabilities:
               - info
               - state
               - updated_lamport
-            description: One session anywhere in the mesh.
+            description: "One session anywhere in the mesh, as the fold sees it: what the session said about\nitself, where it is writing from, and whether it still counts. The key is\n`<stream>/<session>` rather than the session's own id, because two runtimes may both\ncall a session `s1` and the mesh has to hold them apart.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &SessionView = &state.sessions[0];\nassert!(view.key.ends_with(\"/s1\"), \"qualified by the stream that wrote it: {}\", view.key);\nassert_eq!(view.info.client, \"claude-code\");\nassert_eq!(view.runtime, view.stream.runtime_key());\n```"
           StreamId:
             type: string
-            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime."
+            description: "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```"
           SessionInfo:
             type: object
             properties:
@@ -18491,7 +18491,7 @@ capabilities:
             required:
               - session
               - client
-            description: "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential."
+            description: "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```"
           SessionState:
             oneOf:
               - type: string
@@ -18503,7 +18503,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "Never closed, but its runtime stopped beating: gone, as far as anyone can tell."
-            description: "A session's standing."
+            description: "A session's standing, as every runtime of the mesh reads it. The distinction that\nmatters is between `Closed` and `Expired`: the first is a session that said it was\nfinished, the second one whose runtime stopped beating and can no longer say anything.\nBoth end the session's claims, but only the second is a machine nobody should expect an\nanswer from.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"cli\") }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);\n\n// the same events, read on a runtime that no longer hears the writer\nlet gone = fold(&j.events(), &|_| StreamLiveness::Expired);\nassert_eq!(gone.sessions[0].state, SessionState::Expired);\n```"
           ClaimView:
             type: object
             properties:
@@ -18560,7 +18560,7 @@ capabilities:
               - acquired_lamport
               - acquired_seq
               - state
-            description: One claim anywhere in the mesh.
+            description: "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```"
           ClaimMode:
             oneOf:
               - type: string
@@ -18569,7 +18569,7 @@ capabilities:
               - type: string
                 const: advisory
                 description: "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused."
-            description: Whether a claim excludes others or only tells them.
+            description: "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```"
           ClaimState:
             oneOf:
               - type: object
@@ -18610,7 +18610,7 @@ capabilities:
                   - state
                   - detail
                 description: "Live, exclusive, and beaten to its scope by the claim whose key this names."
-            description: "A claim's standing."
+            description: "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```"
           ClaimOverlap:
             type: object
             properties:
@@ -18634,7 +18634,7 @@ capabilities:
               - first
               - second
               - paths
-            description: "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused."
+            description: "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused.\n\nAn overlap is information, not a verdict — it is how two workers find out they are in\nthe same place without either being stopped. The meeting paths are listed pairwise\nrather than summarized, because the useful question is which path of mine meets which\npath of theirs.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimOverlap};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nfor (claim, session, mode) in [\n    (\"c1\", \"s1\", ClaimMode::Exclusive),\n    (\"c2\", \"s2\", ClaimMode::Advisory),\n] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),\n        scope: vec![\"apps\".into()], intent: None, mode, issue: None }).unwrap();\n}\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet overlap: &ClaimOverlap = &state.overlaps[0];\nassert_ne!(overlap.first, overlap.second, \"two claims, two sessions\");\nassert_eq!(overlap.paths, [(\"apps\".to_string(), \"apps\".to_string())]);\n```"
           HandoverView:
             type: object
             properties:
@@ -18667,7 +18667,7 @@ capabilities:
               - published_lamport
               - handover
               - consumed_by
-            description: A handover anywhere in the mesh.
+            description: "A handover anywhere in the mesh, with everyone who has taken it. The id is the digest\nof the body, so the same handover published twice — by a retry, or by two runtimes that\nboth saw it — is one handover here; and `consumed_by` is what keeps two workers from\nsilently picking up the same continuity, since the list is folded from events every\nruntime holds.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, HandoverView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet body = \"# Objective\\nship\\n\".to_string();\nlet handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,\n    milestone: None, branch: Some(\"feature/x\".into()), head: None, created_at: None,\n    name: None, body };\nlet id = handover.id.clone();\nj.append_own(EventBody::HandoverPublished { handover }).unwrap();\nj.append_own(EventBody::HandoverConsumed { handover: id.clone(), session: \"s1\".into() })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &HandoverView = &state.handovers[0];\nassert_eq!(view.id, id, \"identified by what it says, not by who said it\");\nassert_eq!(view.consumed_by.len(), 1, \"somebody has picked this one up\");\n```"
           HandoverBody:
             type: object
             properties:
@@ -18715,7 +18715,7 @@ capabilities:
             required:
               - id
               - body
-            description: "A handover as the mesh carries it: the record's facts and its body, bounded."
+            description: "A handover as the mesh carries it: the record's facts and its body, bounded.\n\nWhat travels is the writing, plus the few facts that let a receiver file it — the task,\nthe issue, the branch, the commit. No path of the author's disk is among them, because\nthe checkout that reads this is somewhere else and a path from another machine is at\nbest noise. Identity is the digest of the body, so a handover published twice by a\nretry or by two runtimes is one handover everywhere.\n\n```\nuse majordomus_cli::mesh::journal::HandoverBody;\n\nlet body = \"# Objective\\nship the mesh\\n\".to_string();\nlet handover = HandoverBody {\n    id: HandoverBody::digest_of(&body),\n    task: Some(\"t-1\".into()),\n    issue: Some(\"#184\".into()),\n    milestone: None,\n    branch: Some(\"feature/mesh-cooperation\".into()),\n    head: None,\n    created_at: None,\n    name: None,\n    body,\n};\nassert_eq!(handover.id, HandoverBody::digest_of(&handover.body));\n\nlet wire = serde_json::to_value(&handover).unwrap();\nassert!(wire.get(\"milestone\").is_none(), \"what it does not say is omitted\");\n```"
           ReviewView:
             type: object
             properties:
@@ -18758,7 +18758,7 @@ capabilities:
               - scope
               - state
               - answers
-            description: One review request anywhere in the mesh.
+            description: "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```"
           ReviewState:
             oneOf:
               - type: string
@@ -18767,7 +18767,7 @@ capabilities:
               - type: string
                 const: answered
                 description: At least one answer.
-            description: "A review request's standing."
+            description: "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```"
           ReviewAnswer:
             type: object
             properties:
@@ -18785,7 +18785,7 @@ capabilities:
             required:
               - session
               - verdict
-            description: One answer to a review request.
+            description: "One answer to a review request: who answered, what they decided, and why. The verdict\nis one of the three declared words, so a requester can act on it without reading the\nnote; the note is where the reasoning goes and is optional, because \"approved\" often\nneeds none.\n\n```\nuse majordomus_cli::mesh::state::ReviewAnswer;\n\nlet answer = ReviewAnswer {\n    session: \"a1b2c3d4-r1-0f/s2\".into(),\n    verdict: \"changes_requested\".into(),\n    note: Some(\"the fold is not deterministic\".into()),\n};\nassert_eq!(answer.verdict, \"changes_requested\");\n\n// the note is omitted rather than carried empty when there is nothing to say\nlet bare = ReviewAnswer { note: None, ..answer };\nlet value = serde_json::to_value(&bare).unwrap();\nassert!(value.get(\"note\").is_none());\n```"
           StreamView:
             type: object
             properties:
@@ -18817,7 +18817,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "Its beat has not risen within the expiry, or was never heard."
-            description: "Whether a stream is speaking now, on this runtime's clock."
+            description: "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh
@@ -19137,7 +19137,7 @@ capabilities:
           - ok
           - checks
           - peers
-        description: "The answer of `mesh.verify`."
+        description: "What `mesh verify` found: the local checks, every peer's round, and the state digest\nafterwards. The digest is what makes the report worth running on two machines — two\nruntimes that print the same digest have the same sessions, claims, handovers and\nreviews, and two that do not have something to reconcile, whatever their links say.\n\n`ok` is the conjunction of everything below it, so a caller may act on the one field\nand a person may read the rest to find out which part of it was false.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyReport;\n\nlet report: MeshVerifyReport = cooperation.verify();\nassert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert_eq!(report.digest, Some(cooperation.state().digest), \"what a peer is compared to\");\nassert_eq!(report.ok, report.checks.iter().all(|c| c.ok), \"one field for every check\");\n```"
         title: MeshVerifyReport
         "$defs":
           MeshVerifyCheck:
@@ -19166,7 +19166,7 @@ capabilities:
               - check
               - ok
               - detail
-            description: "One verification check: what was checked, whether it holds, the evidence, and — when\nsomething is wrong or limited — the impact and what to do about it."
+            description: "One verification check: what was checked, whether it holds, the evidence, and — when\nsomething is wrong or limited — the impact and what to do about it.\n\nThe impact and the remedy are carried with the verdict rather than left to whoever\nrenders it, so that a failing check is actionable wherever it is read — in a terminal,\nin a JSON answer, or by an agent that has never seen the mesh before. A check that\nholds carries neither, because there is nothing to do.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyCheck;\n\nlet report = cooperation.verify();\nlet first: &MeshVerifyCheck = &report.checks[0];\nassert_eq!(first.check, \"cooperation\");\nassert!(first.detail.contains(cooperation.runtime_key()), \"the evidence, not a verdict\");\nassert!(first.remediation.is_none(), \"a check that holds asks for nothing\");\n```"
           PeerVerdict:
             type: object
             properties:
@@ -19204,7 +19204,7 @@ capabilities:
               - state
               - dialed
               - detail
-            description: "One peer's verification."
+            description: "What one sync round, run now rather than remembered, said about one peer. Verification\ndoes not report the link's standing and stop there: it exchanges with the peer and says\nwhether the exchange worked and whether both sides ended holding the same marks, which\nis the difference between a peer that answers and a peer that agrees.\n\n`round_trip` and `converged` are optional because a peer this runtime does not dial is\nnot asked — an absent answer is not a failed one, and reporting `false` there would\nmake an inbound-only link look broken every time.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n# impl LinkTransport for Net {\n#   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n#     version: \"doc\".into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n# let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\na.dial(&[\"b:1\".into()]).unwrap();\n\nlet dialer: &PeerVerdict = &a.verify().peers[0];\nassert_eq!(dialer.round_trip, Some(true), \"asked, and answered\");\n\nlet answerer = &b.verify().peers[0];\nassert!(!answerer.dialed, \"B does not dial A, so B asks nothing of it\");\nassert_eq!(answerer.round_trip, None, \"and reports no verdict it did not earn\");\n```"
           LinkState:
             oneOf:
               - type: string
@@ -19222,7 +19222,7 @@ capabilities:
               - type: string
                 const: expired
                 description: "No exchange within the expiry: the link is dropped and will be re-dialed."
-            description: "A link's standing, from this runtime's side."
+            description: "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::mesh

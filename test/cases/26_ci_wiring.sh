@@ -149,20 +149,20 @@ expect_exit 0 "$PLAN" --check
 grep -q 'scripts/ci-plan ' "$W" || { echo "    validate.yml does not run scripts/ci-plan"; exit 1; }
 grep -q 'scripts/ci/verdict ' "$W" || { echo "    validate.yml does not run scripts/ci/verdict"; exit 1; }
 "$PLAN" --full "probe" > full.json
-jobs="$(grep -oE '^  [a-z]+:$' "$W" | tr -d ' :')"
+jobs="$(grep -oE '^  [a-z][a-z-]*:$' "$W" | tr -d ' :')"
 for j in $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$jobs" | grep -qx "$j" || { echo "    the model names job $j and validate.yml has no such job"; exit 1; }
 done
 for g in $(jq -r '.gates[] | select(.job != "structure") | .id' full.json); do
   job="$(jq -r --arg g "$g" '.gates[] | select(.id == $g) | .job' full.json)"
-  awk -v j="  $job:" '$0 == j {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -qE "needs\.plan\.outputs\.$(printf '%s' "$g" | tr '-' '_') == 'true'" \
+  awk -v j="  $job:" '$0 == j {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W" | grep -qE "needs\.plan\.outputs\.$(printf '%s' "$g" | tr '-' '_') == 'true'" \
     || { echo "    job $job is not gated on the plan's output for $g"; exit 1; }
 done
-ci_needs="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | sed -n 's/^    needs: \[\(.*\)\]$/\1/p' | tr -d ' ' | tr ',' '\n')"
+ci_needs="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W" | sed -n 's/^    needs: \[\(.*\)\]$/\1/p' | tr -d ' ' | tr ',' '\n')"
 for j in plan $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }
 done
-awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }
+awk '$0 == "  ci:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }
 # a pull request's runs are superseded by the next commit; master's never are
 grep -q "cancel-in-progress: \${{ github.event_name == 'pull_request' }}" "$W" || { echo "    validate.yml does not cancel superseded pull-request runs only"; exit 1; }
 # no bare push trigger: a branch with a pull request is validated once, as that pull request

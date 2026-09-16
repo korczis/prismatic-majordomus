@@ -25,6 +25,68 @@
 //! alive while its beat keeps rising anywhere in the mesh — a runtime linked only through
 //! a relay is still alive, and a runtime that crashed stops beating for everyone at once.
 //! Claims follow streams, not links.
+//!
+//! The whole of it, two runtimes in one process. Only the socket is replaced: the
+//! handshake, the signatures, the admission and the fold are the ones a LAN takes.
+//!
+//! ```
+//! use std::collections::BTreeMap;
+//! use std::sync::{Arc, Mutex, Weak};
+//!
+//! use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+//! use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+//! use majordomus_cli::mesh::identity::NodeIdentity;
+//! use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+//! use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+//! use majordomus_cli::mesh::registry::MeshRegistry;
+//! use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+//! use majordomus_cli::mesh::trust::TrustPolicy;
+//!
+//! #[derive(Default)]
+//! struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+//!
+//! impl LinkTransport for Net {
+//!     fn post(&self, endpoint: &str, path: &str, m: &Signed) -> Result<LinkReply, String> {
+//!         let peer = (self.0.lock().unwrap().get(endpoint).and_then(Weak::upgrade))
+//!             .ok_or_else(|| format!("{endpoint}: nobody there"))?;
+//!         Ok(if path == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) })
+//!     }
+//! }
+//!
+//! let net = Arc::new(Net::default());
+//! let runtime = |endpoint: &str| {
+//!     let c = Cooperation::new(CooperationSetup {
+//!         identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+//!         runtime: runtime_id(endpoint),
+//!         repository: of_root_commits(&["root".into()]),
+//!         endpoints: vec![endpoint.into()],
+//!         version: "doc".into(),
+//!         config: CooperationConfig::default(),
+//!         trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] },
+//!         journal_path: None,
+//!         registry: Arc::new(MeshRegistry::new()),
+//!         transport: Arc::clone(&net) as Arc<dyn LinkTransport>,
+//!         board: None,
+//!         checkout: CheckoutFacts::default(),
+//!     })
+//!     .unwrap();
+//!     net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c));
+//!     c
+//! };
+//!
+//! let (a, b) = (runtime("a:1"), runtime("b:1"));
+//! let key = a.dial(&["b:1".into()]).expect("B welcomes A");
+//! assert_eq!(key, b.runtime_key(), "the link is keyed by the peer's runtime");
+//!
+//! a.claim(&SessionInfo::named("s1", "cli"), vec!["apps".into()], None,
+//!     ClaimMode::Exclusive, None).unwrap();
+//! for _ in 0..2 {
+//!     a.journal().beat_own();
+//!     a.sync_with(&key).unwrap();
+//! }
+//! assert_eq!(b.state().claims.len(), 1, "the claim crossed the link");
+//! assert_eq!(a.state().digest, b.state().digest, "one state, two runtimes");
+//! ```
 
 use std::collections::BTreeMap;
 use std::path::PathBuf;
@@ -64,7 +126,41 @@ const NONCE_CACHE: usize = 4096;
 /// The stop check's slice while sleeping.
 const SLICE: Duration = Duration::from_millis(100);
 
-/// Everything cooperation needs to start.
+/// Everything one runtime needs before it can link to another, gathered in one place so
+/// that the runtime never reaches for it later. Each field is a decision somebody else
+/// already made — the declaration's policy, the checkout's identity, this process's key,
+/// the socket to speak through — and passing them in is what lets a test replace any of
+/// them without a fixture: a fake transport, an ephemeral key, a journal that never
+/// touches the disk.
+///
+/// ```
+/// use std::sync::Arc;
+///
+/// use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::link::HttpTransport;
+/// use majordomus_cli::mesh::registry::MeshRegistry;
+/// use majordomus_cli::mesh::repository::of_root_commits;
+///
+/// let setup = CooperationSetup {
+///     identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+///     runtime: "0000000000000001".into(),
+///     repository: of_root_commits(&["root".into()]),
+///     endpoints: vec!["127.0.0.1:9".into()],
+///     version: "doc".into(),
+///     config: CooperationConfig::default(),
+///     trust: TrustConfig::default(),
+///     journal_path: None,
+///     registry: Arc::new(MeshRegistry::new()),
+///     transport: Arc::new(HttpTransport),
+///     board: None,
+///     checkout: CheckoutFacts::default(),
+/// };
+///
+/// let cooperation = Cooperation::new(setup).unwrap();
+/// assert!(cooperation.runtime_key().ends_with("-0000000000000001"));
+/// ```
 pub struct CooperationSetup {
     /// This node's identity.
     pub identity: Arc<NodeIdentity>,
@@ -97,6 +193,21 @@ pub struct CooperationSetup {
 /// What the projected sessions say about the checkout they work in. Computed once at
 /// start — branch and head are refreshed when a board session changes, never on a
 /// heartbeat, so liveness never rescans the repository.
+///
+/// Both fields are optional because a runtime need not be in a checkout at all, and a
+/// runtime that is says so once: the root is kept rather than the branch, so that a
+/// session announced after a checkout moved carries where it is now and not where it was
+/// when the process started.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::CheckoutFacts;
+///
+/// let unknown = CheckoutFacts::default();
+/// assert!(unknown.root.is_none(), "a runtime outside a checkout claims no branch");
+///
+/// let here = CheckoutFacts { id: Some("c0ffee".into()), root: Some(".".into()) };
+/// assert_eq!(here.id.as_deref(), Some("c0ffee"));
+/// ```
 #[derive(Debug, Clone, Default)]
 pub struct CheckoutFacts {
     /// The checkout id (a digest).
@@ -127,7 +238,20 @@ struct Projected {
     claims: BTreeMap<String, (String, Vec<String>, String)>,
 }
 
-/// A link's standing, from this runtime's side.
+/// A link's standing, from this runtime's side. It is a statement about a connection and
+/// never about the peer: a runtime reachable only through a third party is `Expired` here
+/// while its streams beat on everywhere, which is why claims follow streams and not this.
+///
+/// The variants are ordered by how far the link has fallen, so the worst link in a table
+/// is the maximum and a reader never has to rank them by hand.
+///
+/// ```
+/// use majordomus_cli::mesh::cooperation::LinkState;
+///
+/// let table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];
+/// assert_eq!(table.iter().max(), Some(&LinkState::Unreachable), "the worst link shows");
+/// assert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), "connected");
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -211,7 +335,47 @@ struct Counters {
     refused_out: Mutex<BTreeMap<RefusalCode, u64>>,
 }
 
-/// One peer as every surface shows it.
+/// One peer as every surface shows it: who it is, how this runtime reaches it, and what
+/// the link has been through. The counters are carried per peer rather than only in the
+/// totals because the question a person asks of a flapping mesh is which peer is flapping,
+/// and `restarts` answers a different one from `reconnects` — a peer whose process keeps
+/// dying, against a link that keeps dropping under a process that never did.
+///
+/// ```
+/// # use std::collections::BTreeMap;
+/// # use std::sync::{Arc, Mutex, Weak};
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::*;
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+/// # use majordomus_cli::mesh::trust::TrustPolicy;
+/// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+/// # impl LinkTransport for Net {
+/// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+/// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+/// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+/// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+/// # let net = Arc::new(Net::default());
+/// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(),
+/// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+/// #     registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+/// #     checkout: CheckoutFacts::default() }).unwrap();
+/// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+/// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+/// a.dial(&["b:1".into()]).unwrap();
+///
+/// let peer: &PeerView = &a.peers()[0];
+/// assert_eq!(peer.runtime, b.runtime_key(), "the durable identity, not the endpoint");
+/// assert!(peer.outbound, "this runtime dials it");
+/// assert_eq!(peer.handshakes, 1);
+/// assert_eq!(peer.restarts, 0, "the peer's process has not died under the link");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PeerView {
     /// `<node>-<runtime>`: the peer's durable identity.
@@ -264,7 +428,48 @@ pub struct PeerView {
     pub linked_at: String,
 }
 
-/// A candidate that was refused, with the rule that refused it.
+/// A candidate that was refused, with the rule that refused it. A refusal is kept and
+/// shown rather than logged and dropped, because the commonest mesh failure is a link that
+/// never forms: a person who declared a seed and sees no peer needs the decision that was
+/// made about it — the wrong repository, a key nobody allowed, a clock too far out — and
+/// the direction says which side made it.
+///
+/// ```
+/// # use std::collections::BTreeMap;
+/// # use std::sync::{Arc, Mutex, Weak};
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::*;
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+/// # use majordomus_cli::mesh::trust::TrustPolicy;
+/// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+/// # impl LinkTransport for Net {
+/// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+/// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+/// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+/// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+/// # let net = Arc::new(Net::default());
+/// # let runtime = |endpoint: &str, policy: TrustPolicy| {
+/// #   let c = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(),
+/// #     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,
+/// #     registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+/// #     checkout: CheckoutFacts::default() }).unwrap();
+/// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+/// # let a = runtime("a:1", TrustPolicy::Tofu);
+/// # let strict = runtime("s:1", TrustPolicy::DenyUnknown);
+/// a.dial(&["s:1".into()]).expect_err("reachable, and not trusted");
+///
+/// let refused: &RefusedView = &strict.status().refused[0];
+/// assert_eq!(refused.refusal.code, RefusalCode::Untrusted);
+/// assert_eq!(refused.direction, "inbound", "this runtime refused the hello");
+/// assert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct RefusedView {
     /// The endpoint dialed, or `inbound:<runtime>` for a refused hello.
@@ -281,7 +486,51 @@ pub struct RefusedView {
     pub at: String,
 }
 
-/// The link and replication counters since start.
+/// The link and replication counters since start: what this runtime did, not what it
+/// holds. They are monotonic and never reset, so two readings a minute apart are a rate —
+/// which is the only way to tell a mesh that is working from one that is retrying, since
+/// both show the same peers in the same states.
+///
+/// The counts are split by direction throughout (`handshakes_out` against
+/// `handshakes_in`, `refused_in` against `refused_out`) because a runtime that refuses
+/// everyone and one that everyone refuses need opposite remedies.
+///
+/// ```
+/// # use std::collections::BTreeMap;
+/// # use std::sync::{Arc, Mutex, Weak};
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::*;
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+/// # use majordomus_cli::mesh::trust::TrustPolicy;
+/// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+/// # impl LinkTransport for Net {
+/// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+/// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+/// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+/// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+/// # let net = Arc::new(Net::default());
+/// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(),
+/// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+/// #     registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+/// #     checkout: CheckoutFacts::default() }).unwrap();
+/// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+/// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+/// let key = a.dial(&["b:1".into()]).unwrap();
+/// a.sync_with(&key).unwrap();
+///
+/// let dialer: CooperationCounters = a.status().counters;
+/// let answerer = b.status().counters;
+/// assert_eq!((dialer.handshakes_out, dialer.syncs_out), (1, 1));
+/// assert_eq!((answerer.handshakes_in, answerer.syncs_in), (1, 1), "the other side of it");
+/// assert_eq!(answerer.handshakes_out, 0, "B never dialed anybody");
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct CooperationCounters {
     /// Handshakes this runtime completed as the dialer.
@@ -316,7 +565,40 @@ pub struct CooperationCounters {
     pub refused_out: BTreeMap<RefusalCode, u64>,
 }
 
-/// The whole cooperation runtime, as every surface reports it.
+/// The whole cooperation runtime, as every surface reports it: the command line, the HTTP
+/// surface and MCP all render this one value, so that a person and an agent asking the same
+/// question of the same runtime are never told different things.
+///
+/// It answers in one reading the three questions a mesh raises — is this runtime
+/// cooperating at all, what does it speak, and who is it linked to — and it stays
+/// answerable when the answer is no: an inactive runtime still reports its protocol range
+/// and the reason, rather than an absence the caller has to interpret.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::cooperation::CooperationStatus;
+///
+/// let running: CooperationStatus = cooperation.status();
+/// assert_eq!(running.runtime.as_deref(), Some(cooperation.runtime_key()));
+/// assert!(running.peers.is_empty(), "nothing is dialed until something dials");
+///
+/// // and where there is no runtime at all, the same shape says why
+/// let none = CooperationStatus::inactive("the mesh declaration is disabled");
+/// assert_eq!(none.protocol, running.protocol, "still answerable about what it speaks");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct CooperationStatus {
     /// Whether cooperation runs in this process.
@@ -360,6 +642,19 @@ pub struct CooperationStatus {
 
 impl CooperationStatus {
     /// The status of a runtime where cooperation is not running, and why.
+    ///
+    /// The protocol range and the features are still filled in, because what this
+    /// executable would speak is knowable without a runtime and a person comparing two
+    /// machines needs it precisely when one of them is not cooperating.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::cooperation::CooperationStatus;
+    ///
+    /// let status = CooperationStatus::inactive("no mesh declaration in this repository");
+    /// assert!(!status.active);
+    /// assert!(status.reason.unwrap().contains("no mesh declaration"), "never a bare false");
+    /// assert!(!status.features.is_empty(), "what it would speak is known without a runtime");
+    /// ```
     pub fn inactive(reason: &str) -> Self {
         CooperationStatus {
             active: false,
@@ -382,7 +677,45 @@ impl CooperationStatus {
     }
 }
 
-/// Why a cooperation operation did not happen.
+/// Why a cooperation operation did not happen. Every variant is a decision rather than a
+/// fault: nothing here is a transport failure or a bug, so a caller that sees one has been
+/// told something true about the mesh and should say it to its user rather than retry.
+///
+/// `Conflict` carries the claims it met instead of a message about them, because the
+/// worker being refused needs the other side's scope, session and runtime to go and talk
+/// to whoever holds it.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::cooperation::CooperationError;
+/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+///
+/// let held = SessionInfo::named("s1", "cli");
+/// cooperation.claim(&held, vec!["apps".into()], None, ClaimMode::Exclusive, None).unwrap();
+///
+/// let latecomer = SessionInfo::named("s2", "cli");
+/// let refused = cooperation
+///     .claim(&latecomer, vec!["apps/cli".into()], None, ClaimMode::Exclusive, None)
+///     .unwrap_err();
+/// match &refused {
+///     CooperationError::Conflict(claims) => assert_eq!(claims[0].scope, ["apps"]),
+///     other => panic!("expected a conflict, got {other}"),
+/// }
+/// assert!(refused.to_string().contains("apps"), "the message names what it met");
+/// ```
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum CooperationError {
     /// An exclusive claim meets live exclusive claims of other sessions.
@@ -404,6 +737,35 @@ pub enum CooperationError {
 
 /// One verification check: what was checked, whether it holds, the evidence, and — when
 /// something is wrong or limited — the impact and what to do about it.
+///
+/// The impact and the remedy are carried with the verdict rather than left to whoever
+/// renders it, so that a failing check is actionable wherever it is read — in a terminal,
+/// in a JSON answer, or by an agent that has never seen the mesh before. A check that
+/// holds carries neither, because there is nothing to do.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::cooperation::MeshVerifyCheck;
+///
+/// let report = cooperation.verify();
+/// let first: &MeshVerifyCheck = &report.checks[0];
+/// assert_eq!(first.check, "cooperation");
+/// assert!(first.detail.contains(cooperation.runtime_key()), "the evidence, not a verdict");
+/// assert!(first.remediation.is_none(), "a check that holds asks for nothing");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshVerifyCheck {
     /// What was checked.
@@ -420,7 +782,51 @@ pub struct MeshVerifyCheck {
     pub remediation: Option<String>,
 }
 
-/// One peer's verification.
+/// What one sync round, run now rather than remembered, said about one peer. Verification
+/// does not report the link's standing and stop there: it exchanges with the peer and says
+/// whether the exchange worked and whether both sides ended holding the same marks, which
+/// is the difference between a peer that answers and a peer that agrees.
+///
+/// `round_trip` and `converged` are optional because a peer this runtime does not dial is
+/// not asked — an absent answer is not a failed one, and reporting `false` there would
+/// make an inbound-only link look broken every time.
+///
+/// ```
+/// # use std::collections::BTreeMap;
+/// # use std::sync::{Arc, Mutex, Weak};
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::*;
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+/// # use majordomus_cli::mesh::trust::TrustPolicy;
+/// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+/// # impl LinkTransport for Net {
+/// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+/// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+/// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+/// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+/// # let net = Arc::new(Net::default());
+/// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(),
+/// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+/// #     registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+/// #     checkout: CheckoutFacts::default() }).unwrap();
+/// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+/// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+/// a.dial(&["b:1".into()]).unwrap();
+///
+/// let dialer: &PeerVerdict = &a.verify().peers[0];
+/// assert_eq!(dialer.round_trip, Some(true), "asked, and answered");
+///
+/// let answerer = &b.verify().peers[0];
+/// assert!(!answerer.dialed, "B does not dial A, so B asks nothing of it");
+/// assert_eq!(answerer.round_trip, None, "and reports no verdict it did not earn");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct PeerVerdict {
     /// The peer's runtime key.
@@ -442,7 +848,36 @@ pub struct PeerVerdict {
     pub detail: String,
 }
 
-/// The answer of `mesh.verify`.
+/// What `mesh verify` found: the local checks, every peer's round, and the state digest
+/// afterwards. The digest is what makes the report worth running on two machines — two
+/// runtimes that print the same digest have the same sessions, claims, handovers and
+/// reviews, and two that do not have something to reconcile, whatever their links say.
+///
+/// `ok` is the conjunction of everything below it, so a caller may act on the one field
+/// and a person may read the rest to find out which part of it was false.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::cooperation::MeshVerifyReport;
+///
+/// let report: MeshVerifyReport = cooperation.verify();
+/// assert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));
+/// assert_eq!(report.digest, Some(cooperation.state().digest), "what a peer is compared to");
+/// assert_eq!(report.ok, report.checks.iter().all(|c| c.ok), "one field for every check");
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct MeshVerifyReport {
     /// Whether every check holds and every round succeeded.
@@ -461,6 +896,19 @@ pub struct MeshVerifyReport {
 
 impl MeshVerifyReport {
     /// The report of a runtime where cooperation does not run.
+    ///
+    /// Not running is a failing verification rather than an empty one: a person who asked
+    /// whether the mesh works has been told no, and the single check carries the impact —
+    /// nothing leaves or reaches this runtime — and the steps that would turn it on.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::cooperation::MeshVerifyReport;
+    ///
+    /// let report = MeshVerifyReport::inactive("cooperation is disabled in the declaration");
+    /// assert!(!report.ok, "a mesh that does not run has not been verified");
+    /// let check = &report.checks[0];
+    /// assert!(check.impact.is_some() && check.remediation.is_some(), "what it costs, and the fix");
+    /// ```
     pub fn inactive(reason: &str) -> Self {
         MeshVerifyReport {
             ok: false,
@@ -478,7 +926,42 @@ impl MeshVerifyReport {
     }
 }
 
-/// A written event, as an operation answers it.
+/// What an operation wrote, as its answer to the caller. Every mesh operation is an event
+/// appended to this runtime's journal, and the caller is handed the three facts it cannot
+/// work out for itself: the mesh-wide key of the thing it created, the event that says so,
+/// and the Lamport stamp that places it against everyone else's events.
+///
+/// The key is what a later operation is addressed by — a claim is released by the key its
+/// acquisition returned, never by the local name it was given — and the stamp is what a
+/// caller waiting for a peer to catch up compares against.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::cooperation::Written;
+/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+///
+/// let session = SessionInfo::named("s1", "cli");
+/// let written: Written = cooperation
+///     .claim(&session, vec!["docs".into()], None, ClaimMode::Advisory, None)
+///     .unwrap();
+/// assert!(written.lamport > 0, "placed against every other runtime's events");
+///
+/// // and the key it returned is how the claim is addressed from here on
+/// cooperation.release(&written.key).unwrap();
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Written {
     /// `<stream>/<local id>` of what was created or changed.
@@ -489,7 +972,37 @@ pub struct Written {
     pub lamport: u64,
 }
 
-/// What a dial or a sync round did not do.
+/// What a dial or a sync round did not do. The three are kept apart because they are acted
+/// on differently: an unreachable peer is retried with a backoff, a refusal is a decision
+/// that will be made the same way next time and is recorded rather than retried, and the
+/// absence of a link is this runtime's own state and not the peer's.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::cooperation::RoundError;
+///
+/// // nobody answers at the discard port: a peer to back off from, not a decision
+/// let nobody = cooperation.dial(&["127.0.0.1:9".into()]).unwrap_err();
+/// assert!(matches!(nobody, RoundError::Unreachable(_)), "{nobody}");
+/// assert!(nobody.to_string().contains("127.0.0.1:9"), "a failure names where it was going");
+///
+/// // and syncing with a peer this runtime never linked to is its own state, not the peer's
+/// let never = cooperation.sync_with("somebody-0000000000000002").unwrap_err();
+/// assert!(matches!(never, RoundError::NoLink), "{never}");
+/// ```
 #[derive(Debug, Clone)]
 pub enum RoundError {
     /// No endpoint answered.
@@ -516,7 +1029,44 @@ struct Target {
     endpoints: Vec<String>,
 }
 
-/// The cooperation runtime.
+/// One runtime's whole part in the mesh, behind one handle. It holds the single journal
+/// this process writes to, the single table of links it has, and the admission lock that
+/// decides claims — and it is deliberately one object rather than a set of services,
+/// because every one of those is the other's context: a claim is admitted against state
+/// folded from events that arrived over a link, and a link is admitted against trust the
+/// same object evaluates.
+///
+/// Every surface — the command line, HTTP, MCP — performs its operations through this, so
+/// there is one place where a session is opened and one where a claim is refused, whoever
+/// asked. Nothing here dials or beats until [`Cooperation::start`]; a runtime that is
+/// merely built is a complete, readable, local mesh of one.
+///
+/// ```
+/// # use std::sync::Arc;
+/// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+/// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+/// # use majordomus_cli::mesh::identity::NodeIdentity;
+/// # use majordomus_cli::mesh::link::HttpTransport;
+/// # use majordomus_cli::mesh::registry::MeshRegistry;
+/// # use majordomus_cli::mesh::repository::of_root_commits;
+/// # let cooperation: Arc<Cooperation> = Cooperation::new(CooperationSetup {
+/// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+/// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+/// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+/// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+/// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+/// # }).unwrap();
+/// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+///
+/// let session = SessionInfo::named("s1", "cli");
+/// cooperation.claim(&session, vec!["apps".into()], Some("documenting".into()),
+///     ClaimMode::Exclusive, None).unwrap();
+///
+/// // the operation, the event and the folded state are one runtime's, with nobody linked
+/// let state = cooperation.state();
+/// assert_eq!(state.claims[0].intent.as_deref(), Some("documenting"));
+/// assert_eq!(state.sessions.len(), 1, "claiming opened the session it needed");
+/// ```
 pub struct Cooperation {
     identity: Arc<NodeIdentity>,
     card: RuntimeCard,
@@ -579,6 +1129,38 @@ fn rfc3339_now() -> String {
 
 impl Cooperation {
     /// Open the journal and build the runtime; nothing dials until [`Cooperation::start`].
+    ///
+    /// The declaration is validated and this runtime's card is checked here rather than at
+    /// the first handshake, so a runtime that would be refused by every peer refuses to
+    /// exist instead of failing one link at a time in the background where nobody reads
+    /// it. Building it is also what fixes this runtime's stream: the key it answers to
+    /// from now on, and the stream its events are written to.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let setup = |heartbeat: u64, expiry: u64| CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(),
+    /// #     config: CooperationConfig { heartbeat_seconds: heartbeat, expiry_seconds: expiry,
+    /// #         ..CooperationConfig::default() },
+    /// #     trust: TrustConfig::default(), journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()), transport: Arc::new(HttpTransport),
+    /// #     board: None, checkout: CheckoutFacts::default() };
+    /// let cooperation = Cooperation::new(setup(5, 30)).unwrap();
+    /// assert!(cooperation.peers().is_empty(), "built, and dialing nobody");
+    /// assert!(cooperation.journal().own_stream().runtime_key() == cooperation.runtime_key());
+    ///
+    /// // a declaration that no peer could live with is refused here, not at the first link
+    /// let Err(refused) = Cooperation::new(setup(30, 5)) else { panic!("a live runtime") };
+    /// assert!(refused.to_string().contains("expiry"), "{refused}");
+    /// ```
     pub fn new(setup: CooperationSetup) -> Result<Arc<Self>, super::MeshError> {
         setup.config.validate().map_err(super::MeshError::Config)?;
         let journal = Arc::new(Journal::open(
@@ -631,6 +1213,48 @@ impl Cooperation {
     /// takes the new one, a withdrawn announcement is released, and a session that left
     /// the board is closed. One-way and idempotent — the board stays the local truth, the
     /// journal carries it to every linked runtime. Nothing happens when nothing changed.
+    ///
+    /// This is the whole bridge between the board a person reads on one machine and the
+    /// mesh every other machine reads: a worker announces once, to its own server, and is
+    /// visible everywhere without knowing that anything else exists.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// use majordomus_cli::peers::{ClientInfo, PeerBoard, Transport};
+    ///
+    /// let board = Arc::new(PeerBoard::new());
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: Some(Arc::clone(&board)),
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// let worker = board.attach(Transport::Http);
+    /// board.identify(&worker, ClientInfo { name: "claude-code".into(), version: "1".into(),
+    ///     title: None });
+    /// board.announce(&worker, "documenting the mesh", vec!["apps/majordomus-cli".into()]);
+    ///
+    /// cooperation.project_board();
+    /// let state = cooperation.state();
+    /// assert_eq!(state.claims[0].scope, ["apps/majordomus-cli"], "the announcement crossed");
+    /// assert_eq!(state.sessions[0].info.client, "claude-code");
+    ///
+    /// // idempotent: projecting an unchanged board writes nothing
+    /// cooperation.project_board();
+    /// assert_eq!(cooperation.state().digest, state.digest);
+    ///
+    /// // and a worker that leaves takes its claim with it
+    /// board.detach(&worker);
+    /// cooperation.project_board();
+    /// assert!(!cooperation.state().claims[0].state.is_live());
+    /// ```
     pub fn project_board(&self) {
         let Some(board) = &self.board else { return };
         let peers = board.list();
@@ -729,12 +1353,18 @@ impl Cooperation {
         }
     }
 
-    /// This runtime's key, `<node>-<runtime>`.
+    /// This runtime's key, `<node>-<runtime>`: who it is to every other runtime, for as
+    /// long as this checkout exists on this machine. It survives a restart — which is what
+    /// lets a peer recognise a returning runtime as the same one rather than a second —
+    /// while the instance inside its card does not.
     pub fn runtime_key(&self) -> &str {
         &self.own_key
     }
 
-    /// This runtime's journal.
+    /// The journal this runtime writes to and every peer's events land in. Handed out
+    /// rather than wrapped because reading the mesh is reading events: a caller that wants
+    /// marks, tallies or the raw stream takes them from here, and the operations above
+    /// exist for the writes, which must not be done by hand.
     pub fn journal(&self) -> &Arc<Journal> {
         &self.journal
     }
@@ -748,6 +1378,33 @@ impl Cooperation {
     }
 
     /// Start the supervisor: the heartbeat, the dialers and the expiry. Never blocks.
+    ///
+    /// It returns before anything has linked, because linking depends on other machines
+    /// and a server must answer while it is still finding them. A disabled declaration
+    /// starts nothing at all and says so through [`Cooperation::status`], rather than
+    /// starting a supervisor that would refuse every round.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// cooperation.start();
+    /// assert!(!cooperation.stopped(), "the supervisor is up and the caller was not held");
+    ///
+    /// cooperation.stop();
+    /// assert!(cooperation.state().digest.len() == 32, "and the journal is still readable");
+    /// ```
     pub fn start(self: &Arc<Self>) {
         if !self.config.enabled {
             return;
@@ -776,6 +1433,36 @@ impl Cooperation {
 
     /// Stop every cooperation thread at its next bounded wait and drop every link. The
     /// journal stays readable; this runtime's stream simply stops beating.
+    ///
+    /// Stopping is deliberately not a farewell. Nothing is said to the peers, because a
+    /// runtime that crashes says nothing either and the mesh must behave the same way in
+    /// both cases: the streams stop beating, the claims stop excluding after the expiry,
+    /// and no peer is left believing a promise that a power cut would have broken.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// let session = SessionInfo::named("s1", "cli");
+    /// cooperation.claim(&session, vec!["apps".into()], None, ClaimMode::Exclusive, None).unwrap();
+    /// cooperation.stop();
+    ///
+    /// assert!(cooperation.stopped());
+    /// assert_eq!(cooperation.state().claims.len(), 1, "the record survives the runtime");
+    /// ```
     pub fn stop(&self) {
         self.stop.store(true, Ordering::SeqCst);
         let mut table = self.table.lock().expect("cooperation table");
@@ -790,7 +1477,34 @@ impl Cooperation {
         }
     }
 
-    /// Whether [`Cooperation::stop`] was called.
+    /// Whether this runtime has been told to stop. It is checked at the top of every
+    /// handler, so a stopped runtime refuses a hello and a sync with a typed refusal
+    /// instead of quietly half-linking while its threads wind down.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::link::{RefusalCode, Signed};
+    ///
+    /// assert!(!cooperation.stopped());
+    /// cooperation.stop();
+    ///
+    /// let hello = Signed { body: serde_json::json!({}), sig: String::new() };
+    /// let reply = cooperation.accept_hello(&hello);
+    /// assert_eq!(reply.refusal.unwrap().code, RefusalCode::NotActive, "refused, not ignored");
+    /// ```
     pub fn stopped(&self) -> bool {
         self.stop.load(Ordering::SeqCst)
     }
@@ -808,6 +1522,39 @@ impl Cooperation {
 
     /// The trust verdict for a key: this machine's own key is trusted as itself; any
     /// other by the declared policy against what discovery knows of the node.
+    ///
+    /// It is asked twice for every event, once when a link is admitted and again when an
+    /// event is ingested, because a link admitted an hour ago is not a warrant for what
+    /// arrives over it now — an event carries the key that signed it, and a key that has
+    /// since been withdrawn from the allowlist stops being believed without dropping
+    /// anything.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// # let own_key = identity.public.public_key.clone();
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity, runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// let stranger = NodeIdentity::ephemeral().unwrap().public.public_key.clone();
+    ///
+    /// // two runtimes of one machine share a key, and neither has to allow the other
+    /// assert!(cooperation.trust_of_key(&own_key).is_trusted(), "this machine, twice over");
+    ///
+    /// // and under the default policy an unheard-of key is not trusted by being reachable
+    /// assert!(!cooperation.trust_of_key(&stranger).is_trusted());
+    /// assert!(!cooperation.trust_of_key("not a key at all").is_trusted());
+    /// ```
     pub fn trust_of_key(&self, public_key: &str) -> TrustState {
         if public_key == self.identity.public.public_key {
             return TrustState::Trusted("this machine's own key".into());
@@ -863,6 +1610,49 @@ impl Cooperation {
 
     /// Answer a hello: the whole admission, in order — shape, signature, freshness,
     /// replay, protocol, self, repository, trust, capacity — and a signed welcome.
+    ///
+    /// The order is the point. Everything cheap and unauthenticated is decided before
+    /// anything expensive, and nothing a stranger says is believed before its signature is
+    /// checked, so an unsigned flood costs a parse and a refusal. It answers a refusal
+    /// rather than dropping the message, because a peer that is being refused for its
+    /// clock, its repository or its key can only fix that if it is told.
+    ///
+    /// ```
+    /// # use std::collections::BTreeMap;
+    /// # use std::sync::{Arc, Mutex, Weak};
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::*;
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+    /// # impl LinkTransport for Net {
+    /// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+    /// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+    /// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+    /// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+    /// # let net = Arc::new(Net::default());
+    /// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+    /// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+    /// // A dials; the transport hands B's accept_hello the signed hello, and B welcomes it
+    /// a.dial(&["b:1".into()]).unwrap();
+    /// assert_eq!(b.peers()[0].runtime, a.runtime_key(), "admitted, both ways");
+    ///
+    /// // anything that is not a signed hello of this protocol is refused, and named
+    /// let nonsense = Signed { body: serde_json::json!({"hello": true}), sig: "00".into() };
+    /// let refusal = b.accept_hello(&nonsense).refusal.unwrap();
+    /// assert_eq!(refusal.code, RefusalCode::Malformed);
+    /// ```
     pub fn accept_hello(&self, message: &Signed) -> LinkReply {
         if self.stopped() {
             return LinkReply::refused(RefusalCode::NotActive, "cooperation is stopped");
@@ -1056,6 +1846,54 @@ impl Cooperation {
     /// Answer a sync round: the link must be known and its peer's instance current, the
     /// signature must be the peer's and the counter must rise; then ingest, merge, and
     /// answer with what the peer lacks.
+    ///
+    /// The rising counter is what makes a captured round worthless: a recorded request
+    /// replayed later carries a counter that has already been used, and is refused without
+    /// the events in it being looked at. Answering with what the peer lacks in the same
+    /// round is what makes the exchange symmetrical — one call, both directions — so
+    /// convergence does not depend on which side dials.
+    ///
+    /// ```
+    /// # use std::collections::BTreeMap;
+    /// # use std::sync::{Arc, Mutex, Weak};
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::*;
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+    /// # impl LinkTransport for Net {
+    /// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+    /// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+    /// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+    /// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+    /// # let net = Arc::new(Net::default());
+    /// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+    /// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+    /// let key = a.dial(&["b:1".into()]).unwrap();
+    /// b.claim(&SessionInfo::named("s1", "cli"), vec!["docs".into()], None,
+    ///     ClaimMode::Advisory, None).unwrap();
+    ///
+    /// // A asks; B's answer carries B's own events back, so one round settles both sides
+    /// a.sync_with(&key).unwrap();
+    /// assert_eq!(a.state().claims.len(), 1, "B answered with what A lacked");
+    /// assert_eq!(b.status().counters.syncs_in, 1);
+    ///
+    /// // a round under no link this runtime issued is refused before its events are read
+    /// let stranger = Signed { body: serde_json::json!({"link": "ff", "counter": 1}), sig: "".into() };
+    /// assert_eq!(b.accept_sync(&stranger).refusal.unwrap().code, RefusalCode::Malformed);
+    /// ```
     pub fn accept_sync(&self, message: &Signed) -> LinkReply {
         if self.stopped() {
             return LinkReply::refused(RefusalCode::NotActive, "cooperation is stopped");
@@ -1179,6 +2017,49 @@ impl Cooperation {
 
     /// Say hello at each endpoint in turn until one welcomes this runtime; verify the
     /// welcome as strictly as a hello is verified. Returns the peer's runtime key.
+    ///
+    /// A peer is dialed by its endpoints rather than by one address because a machine
+    /// answers at several and only it knows which of them a caller can reach; the key that
+    /// comes back is what the link is remembered by, so a peer that moves between
+    /// addresses is still the same peer. Verifying the welcome as strictly as a hello is
+    /// what keeps the trust decision symmetrical — dialing somebody is not a reason to
+    /// believe what answers.
+    ///
+    /// ```
+    /// # use std::collections::BTreeMap;
+    /// # use std::sync::{Arc, Mutex, Weak};
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::*;
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+    /// # impl LinkTransport for Net {
+    /// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+    /// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+    /// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+    /// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+    /// # let net = Arc::new(Net::default());
+    /// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+    /// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+    /// // the first address is dead, the second answers: one peer, found at the one that works
+    /// let key = a.dial(&["nowhere:1".into(), "b:1".into()]).unwrap();
+    /// assert_eq!(key, b.runtime_key());
+    /// assert_eq!(a.peers()[0].endpoint.as_deref(), Some("b:1"));
+    ///
+    /// // dialing this runtime's own endpoint is a refusal, not a link to itself
+    /// a.dial(&["a:1".into()]).expect_err("a runtime does not cooperate with itself");
+    /// ```
     pub fn dial(&self, endpoints: &[String]) -> Result<String, RoundError> {
         let hello = Hello {
             proto_min: LINK_PROTOCOL_MIN,
@@ -1334,7 +2215,59 @@ impl Cooperation {
         Err(RoundError::Unreachable(last))
     }
 
-    /// One sync round with a peer this runtime dials.
+    /// One sync round with a peer this runtime dials: push what the peer lacks, take what
+    /// this runtime lacks, in one exchange.
+    ///
+    /// Only the dialing side runs rounds, so a link has one driver and one counter however
+    /// many threads hold it; an inbound-only peer is synced by its own side. A round is
+    /// bounded by an event budget rather than by time, so a runtime that has been away for
+    /// a day catches up over several rounds instead of one that never finishes.
+    ///
+    /// ```
+    /// # use std::collections::BTreeMap;
+    /// # use std::sync::{Arc, Mutex, Weak};
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::*;
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+    /// # impl LinkTransport for Net {
+    /// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+    /// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+    /// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+    /// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+    /// # let net = Arc::new(Net::default());
+    /// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+    /// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+    /// let key = a.dial(&["b:1".into()]).unwrap();
+    /// a.claim(&SessionInfo::named("s1", "cli"), vec!["apps".into()], None,
+    ///     ClaimMode::Exclusive, None).unwrap();
+    ///
+    /// for _ in 0..2 {
+    ///     a.journal().beat_own();
+    ///     a.sync_with(&key).unwrap();
+    /// }
+    /// assert_eq!(a.state().digest, b.state().digest, "the two now hold one state");
+    ///
+    /// // B's own claims come back over the same rounds, without B dialing anybody
+    /// b.claim(&SessionInfo::named("s2", "cli"), vec!["docs".into()], None,
+    ///     ClaimMode::Exclusive, None).unwrap();
+    /// b.journal().beat_own();
+    /// a.sync_with(&key).unwrap();
+    /// assert_eq!(a.state().claims.len(), 2);
+    /// ```
     pub fn sync_with(&self, runtime_key: &str) -> Result<(), RoundError> {
         // One round per link at a time: a verification and a worker (or two workers for one
         // peer) racing on the counter would refuse each other's rounds as replays.
@@ -1629,7 +2562,47 @@ impl Cooperation {
 
     // ------------------------------------------------------------------ reading
 
-    /// Every peer, by runtime key.
+    /// Every peer this runtime has a link to, including the ones that have expired and not
+    /// yet been forgotten. An expired peer is kept for a retention window rather than
+    /// dropped on the spot, because "the peer I had is gone" is the answer a person needs
+    /// when a machine stops answering, and a list that silently shrinks tells them nothing.
+    ///
+    /// ```
+    /// # use std::collections::BTreeMap;
+    /// # use std::sync::{Arc, Mutex, Weak};
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::*;
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+    /// # impl LinkTransport for Net {
+    /// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+    /// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+    /// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+    /// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+    /// # let net = Arc::new(Net::default());
+    /// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+    /// # let (a, b, c) = (runtime("a:1"), runtime("b:1"), runtime("c:1"));
+    /// a.dial(&["b:1".into()]).unwrap();
+    /// a.dial(&["c:1".into()]).unwrap();
+    ///
+    /// let keys: Vec<String> = a.peers().into_iter().map(|p| p.runtime).collect();
+    /// assert_eq!(keys.len(), 2, "one entry per runtime, whoever dialed whom");
+    /// assert!(keys.iter().any(|k| k == b.runtime_key()), "B is one of them");
+    /// assert!(keys.iter().any(|k| k == c.runtime_key()), "and C is the other");
+    /// assert_eq!(b.peers().len(), 1, "B was dialed once and holds one peer");
+    /// ```
     pub fn peers(&self) -> Vec<PeerView> {
         let table = self.table.lock().expect("cooperation table");
         let own_node = self.identity.public.node_id.as_str();
@@ -1663,7 +2636,35 @@ impl Cooperation {
             .collect()
     }
 
-    /// The whole status.
+    /// Everything a person or an agent can ask about this runtime, in one reading: what it
+    /// is, what it speaks, who it is linked to, what it refused, and what it has done.
+    ///
+    /// It is one call rather than several because the parts are only meaningful together —
+    /// a peer count means nothing without the refusals beside it — and because two calls
+    /// would be two moments, and a mesh changes between them.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let repository = of_root_commits(&["root".into()]);
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: repository.clone(), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// let status = cooperation.status();
+    /// assert!(status.active, "this process is cooperating");
+    /// assert_eq!(status.repository.unwrap().id, repository.id, "what links are matched on");
+    /// assert_eq!(status.endpoints, ["127.0.0.1:9"], "where a peer would dial it");
+    /// assert!(status.started_at.is_some(), "and since when");
+    /// ```
     pub fn status(&self) -> CooperationStatus {
         let refused = {
             let table = self.table.lock().expect("cooperation table");
@@ -1724,6 +2725,44 @@ impl Cooperation {
     }
 
     /// The folded state, liveness judged on this runtime's clock now.
+    ///
+    /// It is computed on every call rather than kept, because the answer changes with the
+    /// clock and not only with the events: nothing has to happen for a claim to expire, so
+    /// a cached state would go quietly wrong while nothing was arriving. Two runtimes that
+    /// hold the same events and agree about who is alive fold the same state, which is what
+    /// the digest is for.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// let empty = cooperation.state();
+    /// assert!(empty.claims.is_empty());
+    ///
+    /// let session = SessionInfo::named("s1", "cli");
+    /// let claim = cooperation
+    ///     .claim(&session, vec!["apps".into()], None, ClaimMode::Exclusive, None)
+    ///     .unwrap();
+    /// let taken = cooperation.state();
+    /// assert!(taken.claims[0].state.is_live());
+    /// assert_ne!(taken.digest, empty.digest, "the digest is what a peer is compared to");
+    ///
+    /// cooperation.release(&claim.key).unwrap();
+    /// assert!(!cooperation.state().claims[0].state.is_live(), "released, not forgotten");
+    /// ```
     pub fn state(&self) -> CooperationState {
         let live = self.journal.stream_liveness(self.expiry());
         fold(&self.journal.events(), &|s| {
@@ -1733,7 +2772,40 @@ impl Cooperation {
         })
     }
 
-    /// Every stream's liveness and the milliseconds since its beat rose.
+    /// Every stream's liveness and the milliseconds since its beat rose — the layer claims
+    /// actually follow, which is not the layer links live on.
+    ///
+    /// A runtime this one has no link to is alive here as long as its beat keeps arriving
+    /// through somebody else, and a runtime with a healthy link is dead here the moment it
+    /// stops beating. That is what makes exclusivity survive a relay and a crash alike, and
+    /// it is why this is worth reading beside [`Cooperation::peers`] rather than instead
+    /// of it.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::StreamLiveness;
+    ///
+    /// cooperation.journal().beat_own();
+    /// let streams = cooperation.streams();
+    /// let (id, liveness, age) = &streams[0];
+    ///
+    /// assert_eq!(id, cooperation.journal().own_stream(), "a runtime hears itself first");
+    /// assert_eq!(*liveness, StreamLiveness::Own, "never judged against its own clock");
+    /// assert!(age.is_some(), "and it knows when it last beat");
+    /// ```
     pub fn streams(&self) -> Vec<(StreamId, StreamLiveness, Option<u64>)> {
         self.journal
             .stream_liveness(self.expiry())
@@ -1744,6 +2816,47 @@ impl Cooperation {
 
     /// Verify cooperation now: the local checks, then one sync round with every peer this
     /// runtime dials, and whether both sides hold the same marks afterwards.
+    ///
+    /// It acts rather than reports. Everything else here answers from what happened to
+    /// arrive; this goes and asks, because the failure it exists to catch is the one where
+    /// every counter looks reasonable and no traffic is actually crossing. It is therefore
+    /// safe to run and not free: it writes nothing, but it costs a round per peer.
+    ///
+    /// ```
+    /// # use std::collections::BTreeMap;
+    /// # use std::sync::{Arc, Mutex, Weak};
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::*;
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+    /// # use majordomus_cli::mesh::trust::TrustPolicy;
+    /// # #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);
+    /// # impl LinkTransport for Net {
+    /// #   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {
+    /// #     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))
+    /// #         .ok_or_else(|| format!("{e}: nobody there"))?;
+    /// #     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }
+    /// # let net = Arc::new(Net::default());
+    /// # let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec![endpoint.into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(),
+    /// #     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,
+    /// #     registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,
+    /// #     checkout: CheckoutFacts::default() }).unwrap();
+    /// #   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };
+    /// # let (a, b) = (runtime("a:1"), runtime("b:1"));
+    /// a.dial(&["b:1".into()]).unwrap();
+    ///
+    /// a.journal().beat_own();
+    /// let report = a.verify();
+    /// assert!(report.ok, "every check held and every round went through");
+    /// assert_eq!(report.peers[0].converged, Some(true), "and the two hold the same marks");
+    /// assert_eq!(report.digest, Some(b.state().digest), "which is one state, seen twice");
+    /// ```
     pub fn verify(&self) -> MeshVerifyReport {
         let mut checks = Vec::new();
         let heartbeat = self.heartbeat();
@@ -1957,13 +3070,81 @@ impl Cooperation {
         state.sessions.iter().any(|s| s.key == key)
     }
 
-    /// Open (or update) a session of this runtime.
+    /// Open a session of this runtime, or say again what an open one is doing. One call
+    /// serves both because a session is identified by its name and described by the rest:
+    /// announcing a new intent under an existing name is an update every runtime folds the
+    /// same way, and nothing has to be told apart from what came before.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::SessionInfo;
+    ///
+    /// let opened = cooperation.open_session(SessionInfo::named("s1", "claude-code")).unwrap();
+    /// assert!(opened.key.ends_with("/s1"), "qualified by the stream that wrote it");
+    ///
+    /// let with_intent = SessionInfo { intent: Some("documenting the mesh".into()),
+    ///     ..SessionInfo::named("s1", "claude-code") };
+    /// cooperation.open_session(with_intent).unwrap();
+    ///
+    /// let sessions = cooperation.state().sessions;
+    /// assert_eq!(sessions.len(), 1, "said again, not opened twice");
+    /// assert_eq!(sessions[0].info.intent.as_deref(), Some("documenting the mesh"));
+    /// ```
     pub fn open_session(&self, info: SessionInfo) -> Result<Written, CooperationError> {
         let key = self.own(&info.session);
         self.write(EventBody::SessionOpened { info }, key)
     }
 
     /// Close a session of this runtime; its claims end with it.
+    ///
+    /// Claims end with the session rather than having to be released one by one, because
+    /// the commonest way for a worker to stop is not an orderly one: what a session held
+    /// must be recoverable from the fact that it is over. Only this runtime may close its
+    /// own sessions — a session on another runtime is closed by that runtime, or expires
+    /// when it stops beating.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    /// use majordomus_cli::mesh::state::SessionState;
+    ///
+    /// let session = SessionInfo::named("s1", "cli");
+    /// cooperation.claim(&session, vec!["apps".into()], None, ClaimMode::Exclusive, None).unwrap();
+    /// cooperation.close_session("s1").unwrap();
+    ///
+    /// let state = cooperation.state();
+    /// assert_eq!(state.sessions[0].state, SessionState::Closed);
+    /// assert!(!state.claims[0].state.is_live(), "nobody had to release it");
+    ///
+    /// // and a name this runtime never opened is not something it can close
+    /// cooperation.close_session("s9").expect_err("no such session here");
+    /// ```
     pub fn close_session(&self, session: &str) -> Result<Written, CooperationError> {
         let state = self.state();
         if !self.session_exists(&state, session) {
@@ -1982,6 +3163,43 @@ impl Cooperation {
     /// Claim a scope for a session of this runtime. An exclusive claim that meets a live
     /// exclusive claim of another session — on any runtime this one has heard — is
     /// refused with the claims it meets; the session is opened first if it is new.
+    ///
+    /// This is where exclusion actually happens. Admission is checked against the folded
+    /// state of every runtime this one has heard from, under a lock, so two callers here
+    /// cannot both be told yes; and an advisory claim is never refused, because its purpose
+    /// is to make two workers visible to each other rather than to stop either.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// let first = SessionInfo::named("s1", "cli");
+    /// cooperation.claim(&first, vec!["apps/majordomus-cli".into()],
+    ///     Some("the mesh module".into()), ClaimMode::Exclusive, Some("#184".into())).unwrap();
+    ///
+    /// // a scope under a held one is the same place, and another session is refused it
+    /// let second = SessionInfo::named("s2", "cli");
+    /// cooperation.claim(&second, vec!["apps/majordomus-cli/src".into()], None,
+    ///     ClaimMode::Exclusive, None).expect_err("the scope is claimed");
+    ///
+    /// // announcing the same work advisedly is always allowed: it informs, it does not exclude
+    /// cooperation.claim(&second, vec!["apps/majordomus-cli/src".into()], None,
+    ///     ClaimMode::Advisory, None).unwrap();
+    /// assert_eq!(cooperation.state().overlaps.len(), 1, "two workers, told about each other");
+    /// ```
     pub fn claim(
         &self,
         session: &SessionInfo,
@@ -2018,7 +3236,43 @@ impl Cooperation {
         )
     }
 
-    /// Release a claim this runtime holds.
+    /// Release a claim this runtime took in its current run.
+    ///
+    /// Only the holder releases: a claim is a statement by one runtime about what it is
+    /// doing, and letting another runtime withdraw it would make the record say something
+    /// its author never said. A dead holder is not a problem this needs to solve — its
+    /// stream stops beating and its claims stop excluding on every runtime at once.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+    ///
+    /// let mine = SessionInfo::named("s1", "cli");
+    /// let held = cooperation
+    ///     .claim(&mine, vec!["apps".into()], None, ClaimMode::Exclusive, None)
+    ///     .unwrap();
+    /// cooperation.release(&held.key).unwrap();
+    ///
+    /// // the scope is free again, for anybody
+    /// let other = SessionInfo::named("s2", "cli");
+    /// cooperation.claim(&other, vec!["apps".into()], None, ClaimMode::Exclusive, None).unwrap();
+    ///
+    /// // a claim of another runtime is not this one's to withdraw
+    /// cooperation.release("somebody-0000000000000002/c-abc").expect_err("not its author");
+    /// ```
     pub fn release(&self, claim_key: &str) -> Result<Written, CooperationError> {
         let own_prefix = format!("{}/", self.journal.own_stream());
         let Some(local) = claim_key.strip_prefix(&own_prefix) else {
@@ -2038,13 +3292,82 @@ impl Cooperation {
         )
     }
 
-    /// Publish a handover for every linked runtime.
+    /// Publish a handover for every linked runtime to pick up.
+    ///
+    /// A handover is identified by the digest of what it says, so publishing the same
+    /// continuity twice — by a retry, or by two runtimes that both saw it — leaves one
+    /// handover rather than a choice between duplicates for whoever comes to take it.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::HandoverBody;
+    ///
+    /// let body = "# Objective\nfinish the mesh docs\n".to_string();
+    /// let handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,
+    ///     milestone: None, branch: Some("feature/mesh".into()), head: None, created_at: None,
+    ///     name: None, body };
+    ///
+    /// let written = cooperation.publish_handover(handover.clone()).unwrap();
+    /// assert_eq!(written.key, handover.id, "addressed by what it says");
+    ///
+    /// cooperation.publish_handover(handover).unwrap();
+    /// assert_eq!(cooperation.state().handovers.len(), 1, "published twice, and still one");
+    /// ```
     pub fn publish_handover(&self, handover: HandoverBody) -> Result<Written, CooperationError> {
         let id = handover.id.clone();
         self.write(EventBody::HandoverPublished { handover }, id)
     }
 
-    /// Record that a session of this runtime consumed a handover, and return it.
+    /// Take a handover: return its body and record, for everyone, that this session took
+    /// it. The record is the point. Two workers picking up the same continuity is the
+    /// failure this prevents, and it can only be prevented by the taking being visible —
+    /// so reading a handover and consuming it are one operation, and a second worker sees
+    /// who was there before it decides.
+    ///
+    /// Taking one already taken is not refused, because a handover may legitimately be
+    /// picked up again; the record simply names everybody who has.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::journal::HandoverBody;
+    ///
+    /// let body = "# Objective\nfinish the mesh docs\n".to_string();
+    /// let id = HandoverBody::digest_of(&body);
+    /// cooperation.publish_handover(HandoverBody { id: id.clone(), task: None, issue: None,
+    ///     milestone: None, branch: None, head: None, created_at: None, name: None, body }).unwrap();
+    ///
+    /// let (taken, _written) = cooperation.consume_handover(&id, "s1").unwrap();
+    /// assert!(taken.handover.body.contains("mesh docs"), "the continuity itself");
+    /// assert_eq!(cooperation.state().handovers[0].consumed_by.len(), 1, "and who took it");
+    ///
+    /// cooperation.consume_handover("no-such-handover", "s1").expect_err("nothing to take");
+    /// ```
     pub fn consume_handover(
         &self,
         id: &str,
@@ -2067,6 +3390,41 @@ impl Cooperation {
     }
 
     /// Ask for a review; a named reviewer must be a linked peer carrying `reviews`.
+    ///
+    /// A request may name nobody, and then it is an offer to the whole mesh — which is the
+    /// useful shape when a worker wants a second opinion and does not care whose. Naming a
+    /// reviewer is checked here rather than left to fail silently later: a request
+    /// addressed to a runtime that is not linked, or to one whose executable does not do
+    /// reviews, would otherwise sit unanswered and look like indifference.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::state::ReviewState;
+    ///
+    /// cooperation.request_review("s1", "feature/mesh-cooperation".into(),
+    ///     vec!["apps/majordomus-cli/src/mesh".into()], Some("#184".into()), None).unwrap();
+    ///
+    /// let review = &cooperation.state().reviews[0];
+    /// assert_eq!(review.subject, "feature/mesh-cooperation");
+    /// assert_eq!(review.state, ReviewState::Open, "asked of anybody, answered by nobody yet");
+    ///
+    /// // a reviewer nobody is linked to is refused now, not left waiting
+    /// cooperation.request_review("s1", "feature/x".into(), vec![], None,
+    ///     Some("somebody-0000000000000002".into())).expect_err("no such peer");
+    /// ```
     pub fn request_review(
         &self,
         session: &str,
@@ -2108,7 +3466,44 @@ impl Cooperation {
         )
     }
 
-    /// Answer a review request, from any runtime.
+    /// Answer a review request — anybody's, on any runtime, except the session that asked.
+    ///
+    /// The one refusal here is self-review, because a verdict from the session under review
+    /// is not a second pair of eyes and a record that allowed it would make every review in
+    /// the mesh worth less. Several sessions may answer one request and their verdicts all
+    /// stand: the disagreement is the information.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// use majordomus_cli::mesh::state::ReviewState;
+    ///
+    /// let asked = cooperation
+    ///     .request_review("s1", "feature/mesh-cooperation".into(), vec![], None, None)
+    ///     .unwrap();
+    ///
+    /// cooperation.answer_review(&asked.key, "s2", "approved".into(),
+    ///     Some("the examples run".into())).unwrap();
+    /// let review = &cooperation.state().reviews[0];
+    /// assert_eq!(review.state, ReviewState::Answered);
+    /// assert_eq!(review.answers[0].verdict, "approved");
+    ///
+    /// // the session under review does not get a vote on itself
+    /// cooperation.answer_review(&asked.key, "s1", "approved".into(), None)
+    ///     .expect_err("a review is another session's verdict");
+    /// ```
     pub fn answer_review(
         &self,
         request: &str,
