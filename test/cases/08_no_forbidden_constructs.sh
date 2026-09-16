@@ -114,9 +114,16 @@ FIXTURE
 fp="$(interactive_scan "$planted")"
 [ -z "$fp" ] || { printf '    the interactive scan reports non-interactive forms as findings:\n%s\n' "$fp"; exit 1; }
 
-unattended="$(ls "$ROOT"/scripts/* "$ROOT"/scripts/ci/* "$ROOT"/lib/*.sh "$ROOT"/test/*.sh "$ROOT"/test/cases/*.sh \
-  "$ROOT"/bin/* "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/actions/*/action.yml 2>/dev/null \
-  | grep -v "/test/cases/08_no_forbidden_constructs.sh$")"
+# The globs are walked rather than listed: a name is a path, not a line of `ls` output, and
+# this case's own fixtures are the one thing the scan must not read — it plants the very
+# constructs it refuses.
+unattended=""
+for f in "$ROOT"/scripts/* "$ROOT"/scripts/ci/* "$ROOT"/lib/*.sh "$ROOT"/test/*.sh "$ROOT"/test/cases/*.sh \
+         "$ROOT"/bin/* "$ROOT"/.github/workflows/*.yml "$ROOT"/.github/actions/*/action.yml; do
+  [ -f "$f" ] || continue
+  case "$f" in */test/cases/08_no_forbidden_constructs.sh) continue ;; esac
+  unattended="$unattended $f"
+done
 [ -n "$unattended" ] || { echo "    the interactive scan found no files to read; it would report clean over nothing"; exit 1; }
 # shellcheck disable=SC2086  # the list is intentionally word-split into arguments
 # A hosted CI runner's sudo has no password to ask for, so sudo in a workflow cannot block;
