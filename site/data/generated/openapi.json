@@ -545,6 +545,7 @@
     "schema-RuleTestProof": "docs/api/rules/",
     "schema-RuleValidator": "docs/api/rules/",
     "schema-RulesReport": "docs/api/rules/",
+    "schema-RulesVerdict": "docs/api/rules/",
     "schema-RuntimeView": "docs/api/lifecycle/",
     "schema-ScopeConflict": "docs/api/devtask/",
     "schema-ScopeReport": "docs/api/repository/",
@@ -680,7 +681,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 112,
-    "schemas": 527,
+    "schemas": 528,
     "tags": 37
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1315,6 +1316,7 @@
     "RuleTestProof": "rules",
     "RuleValidator": "rules",
     "RulesReport": "rules",
+    "RulesVerdict": "rules",
     "RuntimeView": "lifecycle",
     "ScopeConflict": "devtask",
     "ScopeReport": "repository",
@@ -25670,7 +25672,7 @@
       "variants": []
     },
     {
-      "description": "The whole rule corpus, verified.\n#### Example\n\nThe whole corpus joined to the tree and the ledger. `satisfied` is true when no rule\ndeclares a class its proof does not support.\n\n```\nuse majordomus_cli::rules::RulesReport;\nlet r = RulesReport {\n    head: None,\n    working_tree: \"clean\".into(),\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\n```",
+      "description": "The whole rule corpus, verified.\n#### Example\n\nThe whole corpus joined to the tree and the ledger. `verdict` is what the corpus can be\nsaid to prove; `satisfied` is only that there are no findings, and the two differ\nwhenever a blocking rule has never been run.\n\n```\nuse majordomus_cli::rules::{RulesReport, RulesVerdict};\nlet r = RulesReport {\n    head: None,\n    working_tree: \"clean\".into(),\n    verdict: RulesVerdict::Unproven,\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\nassert_ne!(r.verdict, RulesVerdict::Proven, \"no findings is not proof\");\n```",
       "home": "rules",
       "is_enum": false,
       "name": "RulesReport",
@@ -25688,6 +25690,15 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "What the whole corpus proves: `proven`, `unproven` or `failing`. Derived over the\nwhole corpus before any filter, like the tallies.",
+          "name": "verdict",
+          "refs": [
+            "RulesVerdict"
+          ],
+          "required": true,
+          "type": "RulesVerdict"
         },
         {
           "description": "Every rule, in canonical id order.",
@@ -25724,7 +25735,7 @@
           "type": "array of RuleFinding"
         },
         {
-          "description": "Whether there are no findings.",
+          "description": "Whether there are no findings — and nothing more. A corpus none of whose blocking\nrules was ever run is `satisfied`; `verdict` is the field that says whether anything\nwas proven.",
           "name": "satisfied",
           "refs": [],
           "required": true,
@@ -25737,6 +25748,33 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the whole corpus can be said to prove, in one word, before any number is read.\n\n`satisfied` answers a narrower question — are there findings — and a corpus in which no\nblocking rule was ever run has none, because `not run`, `gated` and `reviewed` are weaker\nstates rather than defects (docs/DOCTRINE.md). Read alone, `satisfied: true` over such a\ncorpus says \"every rule is enforced\" about a repository that has shown nothing. The\nverdict is the answer that cannot be read that way: it is `proven` only when every\nblocking rule carries a current passing run.\n#### Example\n\n```\nuse majordomus_cli::rules::{RuleState, RulesVerdict};\n// a corpus with a finding is failing, whatever else is true of it\nassert_eq!(RulesVerdict::of([RuleState::Proven], true), RulesVerdict::Failing);\n// one blocking rule never run is enough to leave the corpus unproven\nassert_eq!(\n    RulesVerdict::of([RuleState::Proven, RuleState::NotRun], false),\n    RulesVerdict::Unproven\n);\nassert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);\n```",
+      "home": "rules",
+      "is_enum": true,
+      "name": "RulesVerdict",
+      "properties": [],
+      "type": "\"proven\" | \"unproven\" | \"failing\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RulesReport"
+      ],
+      "values": [
+        {
+          "description": "Every blocking rule carries a passing run that nothing it names has changed since.",
+          "value": "proven"
+        },
+        {
+          "description": "No finding, and at least one blocking rule has no current passing run — never run,\ngated, reviewed, stale — or there is no blocking rule at all.",
+          "value": "unproven"
+        },
+        {
+          "description": "At least one rule declares a class its proof does not support.",
+          "value": "failing"
+        }
+      ],
       "variants": []
     },
     {
