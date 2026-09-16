@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.diagnostics-decide-the-exit@1]
 tags: [process, agents, orchestration]
+
+x-majordomus:
+  tests: [test/cases/121_liveness_doctrine.sh, test/cases/122_liveness_gate.sh]
 ---
 
 # Rationale
@@ -61,13 +64,18 @@ has been shown not to exist, never the first suggestion.
 
 # Failure behaviour
 
-Decided by review. Nothing in the tool can observe another program's render loop, and a rule
-about how a worker reasons is not a scan over a tree. What can be checked mechanically is the
-narrower half — a command run interactively, an unbounded wait — and those are
-`project.commands-run-non-interactively` and `project.every-wait-is-bounded`, which this rule
-is the reason for.
+Mostly review: nothing in the tool can observe another program's render loop, and a rule about
+how a worker reasons is not a scan over a tree. One shape of it is mechanical, and
+`scripts/liveness-check` — the CI gate `liveness-check` in the `structure` job — reports it on
+every push as `unsupervised-spawn`: a process put into the background whose completion nobody
+records, which is work whose execution state no longer decides anything. The narrower halves
+of the rest are `project.commands-run-non-interactively` and `project.every-wait-is-bounded`,
+which this rule is the reason for.
 
 # Verification
 
-Review, and the two rules that depend on this one. A change that makes a human-facing surface
-a precondition for execution is not merged.
+`scripts/liveness-check` for the spawn shape, proved by `test/cases/122_liveness_gate.sh`;
+`test/cases/121_liveness_doctrine.sh` proves this rule object itself and the dependency spine
+the other two hang from it. For everything the gate cannot see: review, and the two rules that
+depend on this one. A change that makes a human-facing surface a precondition for execution is
+not merged.

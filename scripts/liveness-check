@@ -10,12 +10,16 @@
 #   scripts/liveness-check --json          the findings as JSON
 #   scripts/liveness-check --baseline      rewrite the baseline from what is found now
 #
-# The rules it serves, once they exist in .ai/repo/rules/project/:
-#   project.every-wait-is-bounded          a wait carries a timeout, a predicate, a recovery
-#   project.commands-run-non-interactively no pager, no prompt, no keypress
-#   project.execution-state-is-authoritative
+# The rules it serves, in .ai/repo/rules/project/, and the shape that decides each:
+#   project.every-wait-is-bounded            unbounded-network, unsupervised-spawn
+#   project.commands-run-non-interactively   pager-blocks
+#   project.execution-state-is-authoritative unsupervised-spawn
 # It does not require them to be present: this gate ships alongside the rules and must not
-# fail a checkout that has one and not the other.
+# fail a checkout that has one and not the other. Where they are present the relation is
+# read from both ends — each of the three names this gate and the two cases below in its
+# own front matter, and test/cases/121_liveness_doctrine.sh refuses a checkout where one
+# end names the other and the other does not name it back. Read from one end only, this
+# list was true and the rules still said the mechanical half did not exist.
 #
 # Existing debt is recorded in .ai/repo/liveness-baseline.txt as "path:class" lines. A
 # finding in the baseline is reported as known and does not fail; a finding that is not is

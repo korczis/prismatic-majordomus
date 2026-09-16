@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.worktree-topology@1]
 tags: [process, worktrees]
+
+x-majordomus:
+  reviewed_because: decided by review and by the record on the shared board — no gate can distinguish a deliberate reclamation from a careless one, and one that tried would have to forbid a worker from cleaning its own tree
 ---
 
 # Rationale

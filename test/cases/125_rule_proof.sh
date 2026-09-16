@@ -163,7 +163,7 @@ expect_exit 0 "$CHECK"
 expect_grep 'no new debt'
 # ...but --strict ignores the baseline, which is how the debt is measured rather than kept.
 expect_exit 10 "$CHECK" --strict
-expect_grep 'blocking rule\(s\) name no proof \(--strict\)'
+expect_grep 'rule\(s\) name no proof \(--strict\)'
 
 # Discharging debt is reported, so a baseline cannot quietly outlive what it excused.
 prule fixture-unproven.v1.md project.fixture-unproven blocking 'tests: [test/cases/01_fixture.sh]'
@@ -171,10 +171,86 @@ expect_exit 0 "$CHECK"
 expect_grep 'debt cleared, run --write-baseline'
 expect_grep 'project\.fixture-unproven'
 
-# An advisory rule is not held to it: the class is what makes proof required.
+# ---------------------------------------------------------------- advisory is not an exemption
+# This is the loophole the gate used to carry, and it is proved from both sides because a
+# test that only passes proves nothing. The `unproven` finding was asked of `class:
+# blocking` alone, so an advisory rule could be documented-only forever and no run said so.
+# Both assertions below were run against the gate before it was widened: the first failed —
+# the gate exited 0 and named nothing — which is the evidence that this case can fail.
 prule fixture-advisory.v1.md project.fixture-advisory advisory
+expect_exit 10 "$CHECK"
+expect_grep 'FAIL rule-proof unproven .*project\.fixture-advisory'
+expect_grep 'is advisory and names neither a validator, nor a test that proves it, nor a reviewed_because'
+# and the diagnostic says both ways out, because a rule with no mechanical expression is
+# not the same failure as a rule nobody got round to proving
+expect_grep 'advisory is not an exemption'
+expect_grep 'reviewed_because: <reason>'
+
+# The way out is proof or a reason, and either one clears it.
+prule fixture-advisory.v1.md project.fixture-advisory advisory 'tests: [test/cases/01_fixture.sh]'
 expect_exit 0 "$CHECK"
-expect_no_grep 'project\.fixture-advisory'
+expect_no_grep 'FAIL rule-proof unproven .*project\.fixture-advisory'
+prule fixture-advisory.v1.md project.fixture-advisory advisory \
+  'reviewed_because: the fixture is about how a worker reasons, which no program in this tree can read'
+expect_exit 0 "$CHECK"
+expect_no_grep 'FAIL rule-proof unproven .*project\.fixture-advisory'
+expect_grep 'NOTE rule-proof reviewed .*project\.fixture-advisory'
+rm -f "$P/fixture-advisory.v1.md"
+expect_exit 0 "$CHECK"
+
+# ---------------------------------------------------------------- the exemption, both halves
+# One population is exempt: a rule that is vendored AND tagged `principle`. The count is on
+# every run, because an exemption nobody sees is the loophole one level up.
+expect_exit 0 "$CHECK"
+expect_grep '^proof is required of: every rule of either class; [0-9]+ vendored culture principle\(s\) are exempt, and nothing else is$'
+
+# The vendored half is required: a project rule that tags itself `principle` is still held
+# to proof, or the exemption would be a word any rule could write about itself.
+prule fixture-principle.v1.md project.fixture-principle advisory
+sed 's/^tags: \[fixture\]$/tags: [principle]/' "$P/fixture-principle.v1.md" > "$T/p" && mv "$T/p" "$P/fixture-principle.v1.md"
+grep -q '^tags: \[principle\]$' "$P/fixture-principle.v1.md" \
+  || { echo "    the fixture did not get the principle tag; the assertion below would pass for the wrong reason"; exit 1; }
+expect_exit 10 "$CHECK"
+expect_grep 'FAIL rule-proof unproven .*project\.fixture-principle'
+rm -f "$P/fixture-principle.v1.md"
+expect_exit 0 "$CHECK"
+
+# The `principle` half is required too: a vendored rule that is not a principle is held to
+# proof like any other, which is what keeps the exemption from being "anything vendored".
+V=.ai/repo/rules/vendor/majordomus/rules
+mkdir -p "$V"
+# vrule TAG — a vendored rule with no proof at all, carrying the tag under test
+vrule() {
+  cat > "$V/fixture-vendored.v1.md" <<Y
+---
+id: majordomus.fixture-vendored
+version: 1
+kind: rule
+title: A vendored fixture
+description: What the vendored fixture requires, in one sentence.
+statement: The normative sentence the vendored fixture asks a worker to follow.
+status: active
+class: advisory
+depends_on: []
+tags: [$1]
+---
+
+# Rationale
+
+A fixture.
+Y
+}
+vrule integrity
+expect_exit 10 "$CHECK"
+expect_grep 'FAIL rule-proof unproven .*majordomus\.fixture-vendored'
+# ...and the same file, tagged `principle`, is the one thing the gate lets through: the
+# vendored culture principles are unenforceable by design and this repository cannot amend
+# them, because the package manifest pins every rule file by content hash.
+vrule principle
+expect_exit 0 "$CHECK"
+expect_no_grep 'majordomus\.fixture-vendored'
+rm -f "$V/fixture-vendored.v1.md"
+expect_exit 0 "$CHECK"
 
 # The healthy line states two counts and nothing else. Under `set -o pipefail` grep -c
 # both prints its zero and exits non-zero, so the guard that used to follow it printed a
