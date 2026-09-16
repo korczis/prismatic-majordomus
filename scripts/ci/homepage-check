@@ -16,6 +16,10 @@
 #   honesty     no feature the product model does not call stable is linked from the homepage
 #   install     the install section carries every command data/registry/distribution.json
 #               gives a newcomer: the install, the next step and the verification
+#   runtime     no page loads the Mermaid runtime without a diagram for it to render; it is the
+#               heaviest file on the site, and the homepage loaded it for years with nothing to draw
+#   weight      the scripts and stylesheets the homepage loads from this site, plus any graph data
+#               it carries inline, weigh no more than site/data/homepage.toml's [budget] declares
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
 #               <meta name="robots" content="noindex"> and is absent from sitemap.xml; every
 #               other page has no noindex it did not ask for in its own front matter and is
@@ -58,7 +62,9 @@ def load_json(rel):
     with open(p) as f:
         return json.load(f)
 
-order = load_toml("site/data/homepage.toml").get("order") or []
+homepage_decl = load_toml("site/data/homepage.toml")
+order = homepage_decl.get("order") or []
+budget = homepage_decl.get("budget") or {}
 unlisted = (load_toml("site/data/nav.toml").get("indexing") or {}).get("unlisted") or []
 product = load_json("site/data/registry/product.json")
 dist = load_json("site/data/registry/distribution.json")
@@ -116,6 +122,56 @@ elif absent:
     bad("install", "the install section does not carry the distribution model's " + ", ".join(absent))
 else:
     ok("install", "the install section carries the install, next-step and verification commands the distribution model gives")
+
+# ---------------------------------------------------------------- runtime
+mermaid_src = re.compile(r'<script\b[^>]*\bsrc="[^"]*mermaid(\.min)?\.js"')
+mermaid_block = re.compile(r'class="[^"]*\bmermaid\b')
+idle = []
+for dirpath, _, files in os.walk(pub):
+    if "index.html" not in files:
+        continue
+    text = open(os.path.join(dirpath, "index.html"), errors="replace").read()
+    if mermaid_src.search(text) and not mermaid_block.search(text):
+        rel = os.path.relpath(dirpath, pub)
+        idle.append("/" if rel == "." else "/" + rel.replace(os.sep, "/") + "/")
+if idle:
+    bad("runtime", f"{len(idle)} page(s) load the Mermaid runtime with no diagram to render: " + ", ".join(sorted(idle)[:8]) + (" ..." if len(idle) > 8 else ""))
+else:
+    ok("runtime", "no page loads the Mermaid runtime without a diagram to render")
+
+# ---------------------------------------------------------------- weight
+# Only what this page decides: the same-origin scripts and stylesheets it links, and graph data
+# inlined as JSON. The HTML itself is not budgeted here — its size follows the recorded runs the
+# page replays, which are evidence, not decoration.
+limit = budget.get("assets_bytes")
+json_limit = budget.get("inline_json_bytes")
+if not isinstance(limit, int) or not isinstance(json_limit, int):
+    bad("weight", "site/data/homepage.toml declares no [budget] assets_bytes and inline_json_bytes; the homepage's weight is unbounded")
+else:
+    sm = os.path.join(pub, "sitemap.xml")
+    first_loc = re.search(r"<loc>(https?://[^/<]+)", open(sm).read()) if os.path.exists(sm) else None
+    site_host = first_loc.group(1) if first_loc else ""
+    refs = re.findall(r'<script\b[^>]*\bsrc="([^"]+)"', home) + re.findall(r'<link\b[^>]*\brel="stylesheet"[^>]*\bhref="([^"]+)"', home)
+    total, counted, missing_assets = 0, [], []
+    for ref in dict.fromkeys(html.unescape(r) for r in refs):
+        if re.match(r"^(https?:)?//", ref) and not (site_host and ref.startswith(site_host + "/")):
+            continue                                  # another origin: not this site's weight to budget
+        path = re.sub(r"^https?://[^/]+", "", ref).split("?")[0].split("#")[0]
+        local = os.path.join(pub, path.lstrip("/"))
+        if os.path.isfile(local):
+            size = os.path.getsize(local); total += size; counted.append((path, size))
+        else:
+            missing_assets.append(path)
+    inline = sum(len(m.group(1).encode()) for m in re.finditer(r'<script\b[^>]*type="application/json"[^>]*>(.*?)</script>', home, re.S))
+    heaviest = ", ".join(f"{p} {n}" for p, n in sorted(counted, key=lambda x: -x[1])[:3])
+    if missing_assets:
+        bad("weight", "the homepage links asset(s) the build did not produce: " + ", ".join(missing_assets[:6]))
+    if total > limit:
+        bad("weight", f"the homepage loads {total} bytes of scripts and stylesheets from this site, over the declared {limit} (heaviest: {heaviest})")
+    if inline > json_limit:
+        bad("weight", f"the homepage carries {inline} bytes of inline JSON, over the declared {json_limit}; publish the data and fetch it")
+    if not missing_assets and total <= limit and inline <= json_limit:
+        ok("weight", f"the homepage loads {total} of {limit} bytes of scripts and stylesheets ({len(counted)} file(s); heaviest: {heaviest}) and {inline} of {json_limit} bytes of inline JSON")
 
 # ---------------------------------------------------------------- indexing
 sm_path = os.path.join(pub, "sitemap.xml")
