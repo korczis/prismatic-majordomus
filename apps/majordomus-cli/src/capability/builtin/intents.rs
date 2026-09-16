@@ -40,7 +40,20 @@ pub const INTENTS_URI: &str = "majordomus://intents";
 
 // ---------------------------------------------------------------- views
 
-/// Every intent, with its derived stage, and how many there are in each stage.
+/// Every intent, with its derived stage, and how many there are in each stage: what
+/// `majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer
+/// with, out of one derivation.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentList;
+/// let empty = IntentList {
+///     count: 0,
+///     stages: std::collections::BTreeMap::new(),
+///     intents: vec![],
+/// };
+/// // a repository that declares no intent answers the route, with nothing in it
+/// assert_eq!(empty.count, 0);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentList {
     /// How many intents.
@@ -51,7 +64,21 @@ pub struct IntentList {
     pub intents: Vec<IntentView>,
 }
 
-/// What the intent model refuses.
+/// What the intent model refuses: whether it is valid, how many intents were examined, and
+/// every finding with its level. Warnings are reported and do not make it invalid.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentValidation;
+/// let v = IntentValidation {
+///     valid: true,
+///     intents: 2,
+///     failures: 0,
+///     warnings: 20,
+///     findings: vec![],
+/// };
+/// // twenty warnings and no failure is a valid model
+/// assert!(v.valid);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct IntentValidation {
     /// True when no finding is a failure. Warnings do not make it false.
@@ -68,7 +95,14 @@ pub struct IntentValidation {
 
 // ---------------------------------------------------------------- inputs
 
-/// Which intent to read.
+/// Which intent to read, by the id that is also its file name. An id this repository does not
+/// hold is a refusal naming what was looked for, never an empty answer.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentRecordInput;
+/// let input = IntentRecordInput { id: "intent-lifecycle".into() };
+/// assert_eq!(input.id, "intent-lifecycle");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct IntentRecordInput {
@@ -104,6 +138,19 @@ impl BenchmarkCases for IntentRecordInput {
 /// `paths` is one comma-separated string rather than a list because a preflight changes
 /// nothing and is therefore a `GET`, and this repository binds a `GET` input to the query
 /// string.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents::IntentPreflightInput;
+/// // an issue, when the work executes one
+/// let by_issue = IntentPreflightInput { issue: Some("I1900".into()), paths: String::new() };
+/// assert!(by_issue.path_list().is_empty());
+/// // or the paths it will touch, when it names no issue yet
+/// let by_paths = IntentPreflightInput {
+///     issue: None,
+///     paths: "apps/majordomus-cli/src,docs".into(),
+/// };
+/// assert_eq!(by_paths.path_list(), ["apps/majordomus-cli/src", "docs"]);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct IntentPreflightInput {
@@ -116,7 +163,9 @@ pub struct IntentPreflightInput {
 }
 
 impl IntentPreflightInput {
-    /// The paths, trimmed, without empties.
+    /// The paths as a list: trimmed, with the empties a trailing or doubled comma leaves
+    /// dropped, so a query string written by hand resolves the same way as one written by a
+    /// program.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::intents::IntentPreflightInput;
@@ -218,7 +267,20 @@ fn intent_preflight(
     Ok(intents.preflight(&plan, issue, &paths))
 }
 
-/// The module.
+/// The module the registry composes: five read-only capabilities over one derivation, each
+/// declared once here and projected to the command line, HTTP, MCP and OpenAPI from that
+/// declaration.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::intents;
+/// let m = intents::module();
+/// assert_eq!(m.id.as_str(), "intents");
+/// // every capability of this module is declared under its own name
+/// assert!(m
+///     .capabilities
+///     .iter()
+///     .all(|e| e.capability.id.as_str().starts_with("intents.")));
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "intents",

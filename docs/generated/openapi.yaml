@@ -14999,7 +14999,7 @@ components:
         - ref
         - state
         - met
-      description: One criterion with the evidence behind it.
+      description: "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
     IntentEvidenceState:
       oneOf:
         - type: string
@@ -15020,7 +15020,7 @@ components:
         - type: string
           const: unresolved
           description: The reference is empty or names nothing this repository holds.
-      description: "What the evidence behind one criterion says, as a word."
+      description: "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
     IntentFinding:
       type: object
       properties:
@@ -15045,7 +15045,7 @@ components:
         - subject
         - message
         - reproduce
-      description: One validation finding.
+      description: "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
     IntentList:
       type: object
       properties:
@@ -15070,7 +15070,7 @@ components:
         - count
         - stages
         - intents
-      description: "Every intent, with its derived stage, and how many there are in each stage."
+      description: "Every intent, with its derived stage, and how many there are in each stage: what\n`majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer\nwith, out of one derivation.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentList;\nlet empty = IntentList {\n    count: 0,\n    stages: std::collections::BTreeMap::new(),\n    intents: vec![],\n};\n// a repository that declares no intent answers the route, with nothing in it\nassert_eq!(empty.count, 0);\n```"
     IntentMilestone:
       type: object
       properties:
@@ -15088,7 +15088,7 @@ components:
       required:
         - id
         - resolved
-      description: "One milestone an intent names, as the plan derives it."
+      description: "One milestone an intent names, as the plan derives it. A milestone that does not resolve is\ncarried with `resolved: false` rather than dropped, because a name that points at nothing is\na finding and not an absence.\n\n```\nuse majordomus_cli::intent::IntentMilestone;\nlet named = IntentMilestone { id: \"no-such\".into(), resolved: false, status: None };\nassert!(!named.resolved);\nassert!(named.status.is_none());\n```"
     IntentPreflight:
       type: object
       properties:
@@ -15120,7 +15120,7 @@ components:
         - issues
         - matches
         - governance
-      description: "Which intent a piece of work serves, or why it serves none."
+      description: "Which intent a piece of work serves, or why it serves none: the issues it resolved to, every\nintent reached with its link, the governance those intents load, and — when nothing is\nreached — the first link that is missing.\n\n```\nuse majordomus_cli::intent::IntentPreflight;\nlet refused = IntentPreflight {\n    verdict: \"refused\".into(),\n    issues: vec![],\n    matches: vec![],\n    governance: vec![],\n    refusal: Some(\"no open issue's scope covers README.md\".into()),\n};\nassert_eq!(refused.verdict, \"refused\");\nassert!(refused.refusal.is_some());\n```"
     IntentPreflightMatch:
       type: object
       properties:
@@ -15145,7 +15145,7 @@ components:
         - stage
         - milestone
         - issue
-      description: "One intent a piece of work serves, and the link that says so."
+      description: "One intent a piece of work serves, and the link that says so: issue to milestone to intent,\neach step named rather than asserted.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n};\nassert_eq!(m.issue, \"I1900\");\n```"
     IntentStage:
       oneOf:
         - type: string
@@ -15169,7 +15169,7 @@ components:
         - type: string
           const: superseded
           description: The record names the intent that replaced it.
-      description: "Where an intent stands, derived on every read and stored nowhere."
+      description: "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
     IntentValidation:
       type: object
       properties:
@@ -15202,7 +15202,7 @@ components:
         - failures
         - warnings
         - findings
-      description: What the intent model refuses.
+      description: "What the intent model refuses: whether it is valid, how many intents were examined, and\nevery finding with its level. Warnings are reported and do not make it invalid.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentValidation;\nlet v = IntentValidation {\n    valid: true,\n    intents: 2,\n    failures: 0,\n    warnings: 20,\n    findings: vec![],\n};\n// twenty warnings and no failure is a valid model\nassert!(v.valid);\n```"
     IntentView:
       type: object
       properties:
@@ -15268,7 +15268,7 @@ components:
         - governance
         - non_goals
         - source
-      description: "One intent, as its record declares it and as the plan and the ledger derive it."
+      description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, and the stage that follows from both.\n\n```\nuse majordomus_cli::intent::{IntentStage, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n```"
     Interface:
       oneOf:
         - type: string
