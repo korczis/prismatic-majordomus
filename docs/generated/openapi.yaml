@@ -55,6 +55,8 @@ tags:
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
+  - name: intent_realization
+    description: "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it."
   - name: intents
     description: "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere."
   - name: lifecycle
@@ -3372,6 +3374,67 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_intent_coverage
       x-majordomus-cli: intent coverage
+  "/api/v1/intents/explain":
+    get:
+      operationId: intent_realization.explain
+      summary: Why an intent stands where it stands
+      description: "One intent explained from the derivations alone: a sentence for its stage naming each milestone's derived status, a sentence per criterion naming its evidence state, the plan's coverage of it and the command that reproduces it, a sentence for the work and providers realising it, and each drift finding; beside them the derived intent, the coverage of its criteria, its realization and the work linked to it."
+      tags:
+        - intent_realization
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "The intent's id."
+          examples:
+            first-intent:
+              value: intent-lifecycle
+      responses:
+        "200":
+          description: "Why an intent stands where it stands: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntentExplanation"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: intent_realization.explain
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::intent_realization
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_intent_explain
+      x-majordomus-cli: intent explain
   "/api/v1/intents/preflight":
     get:
       operationId: intents.preflight
@@ -3443,6 +3506,67 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_intent_preflight
       x-majordomus-cli: intent preflight
+  "/api/v1/intents/realization":
+    get:
+      operationId: intent_realization.work
+      summary: "Which work realises which intent, and what each still lacks"
+      description: "Every unit of work this checkout can see — ledger tasks with their episodes, providers and handovers, closed session records, peer claims — with every intent it realises through issue, milestone and criterion, each link's provenance (declared: the work cites the issue; observed: its episode moved the issue; derived: its branch names the issue; inferred: only an open issue's scope overlaps) or the first missing link; every intent with its unmet criteria and the issues serving each, the work and providers realising it, and its drift: closed_work_contradicted when every milestone is DONE and a criterion's evidence is stale or failing, closed_work_unproven when it never existed, criterion_closed_unmet when every serving issue is DONE and the criterion is not met. Live work serving no intent is a warning."
+      tags:
+        - intent_realization
+      parameters:
+        - name: intent
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "An intent id. When given, only that intent, the work linked to it and its findings are\nanswered; the unlinked work is left out."
+          examples:
+            first-intent:
+              value: intent-lifecycle
+      responses:
+        "200":
+          description: "Which work realises which intent, and what each still lacks: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntentRealization"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: intent_realization.work
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::intent_realization
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-mcp:
+        tool: majordomus_intent_realization
+      x-majordomus-cli: intent realization
   "/api/v1/intents/record":
     get:
       operationId: intents.record
@@ -15142,6 +15266,19 @@ components:
         - state
         - met
       description: "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
+    IntentEpisode:
+      type: object
+      properties:
+        session:
+          type: string
+          description: "The episode id, `s-...`; empty for a peer's connection, which is not an episode."
+        provider:
+          type: string
+          description: "The provider, as its own events or the peer's client name it; empty when unknown."
+        provider_session:
+          type: string
+          description: "The provider's own session identity, when recorded."
+      description: "One execution episode of a piece of work, and the provider that ran it when a record says.\nA provider is never guessed: an episode opened by hand has none.\n\n```\nuse majordomus_cli::intent_realization::IntentEpisode;\nlet e = IntentEpisode {\n    session: \"s-1\".into(),\n    provider: \"codex\".into(),\n    provider_session: String::new(),\n};\nassert_eq!(e.provider, \"codex\");\n```"
     IntentEvidenceState:
       oneOf:
         - type: string
@@ -15163,6 +15300,37 @@ components:
           const: unresolved
           description: The reference is empty or names nothing this repository holds.
       description: "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+    IntentExplanation:
+      type: object
+      properties:
+        intent:
+          "$ref": "#/components/schemas/IntentView"
+          description: "The intent, derived."
+        because:
+          type: array
+          items:
+            type: string
+          description: "One sentence per fact the stage rests on: the stage, each criterion, the work."
+        coverage:
+          type: array
+          items:
+            "$ref": "#/components/schemas/CriterionCoverage"
+          description: "The plan's coverage of each of its criteria."
+        realization:
+          "$ref": "#/components/schemas/IntentRealizationView"
+          description: Its realization.
+        work:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentRealizedWork"
+          description: "Every unit of work linked to it, with its links."
+      required:
+        - intent
+        - because
+        - coverage
+        - realization
+        - work
+      description: "Why an intent stands where it stands: the record, each sentence that explains the stage and\neach criterion, the plan's coverage of its criteria, and the work realising it.\n\n```\nuse majordomus_cli::intent_realization::IntentExplanation;\n// every sentence is derived; an explanation holds no authored status\nlet fields = serde_json::to_value(schemars::schema_for!(IntentExplanation)).unwrap();\nassert!(fields[\"properties\"][\"because\"].is_object());\n```"
     IntentFinding:
       type: object
       properties:
@@ -15188,6 +15356,70 @@ components:
         - message
         - reproduce
       description: "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
+    IntentLink:
+      type: object
+      properties:
+        intent:
+          type: string
+          description: The intent.
+        stage:
+          "$ref": "#/components/schemas/IntentStage"
+          description: Its derived stage.
+        milestone:
+          type: string
+          description: The milestone that links the issue to it.
+        issue:
+          type: string
+          description: The issue that links the work to that milestone.
+        criteria:
+          type: array
+          items:
+            type: string
+          description: The criteria of this intent the issue declares it serves; empty when it declares none.
+        via:
+          "$ref": "#/components/schemas/IntentLinkVia"
+          description: The fact the link was read from.
+        provenance:
+          "$ref": "#/components/schemas/IntentLinkProvenance"
+          description: "How the link is known, from `via`."
+      required:
+        - intent
+        - stage
+        - milestone
+        - issue
+        - via
+        - provenance
+      description: "One link from a piece of work to an intent: through which issue and milestone, serving\nwhich of its criteria, read from which fact, known how.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::{IntentLink, IntentLinkProvenance, IntentLinkVia};\nlet l = IntentLink {\n    intent: \"intent-lifecycle\".into(), stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(), issue: \"I1900\".into(),\n    criteria: vec![\"stage-is-derived\".into()],\n    via: IntentLinkVia::BranchIssue, provenance: IntentLinkProvenance::Derived,\n};\nassert_eq!(l.provenance, l.via.provenance());\n```"
+    IntentLinkProvenance:
+      oneOf:
+        - type: string
+          const: declared
+          description: The work names the issue itself.
+        - type: string
+          const: observed
+          description: "A recorded event shows the work's episode moving the issue."
+        - type: string
+          const: derived
+          description: "The branch the work ran on names the issue, by the worktree naming rule."
+        - type: string
+          const: inferred
+          description: "Nothing stronger exists, and an open issue's scope overlaps the work's scope."
+      description: "How a link from a piece of work to an issue is known, strongest first.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkProvenance;\nassert_eq!(\n    serde_json::to_string(&IntentLinkProvenance::Inferred).unwrap(),\n    \"\\\"inferred\\\"\"\n);\nassert!(IntentLinkProvenance::Observed < IntentLinkProvenance::Derived);\n```"
+    IntentLinkVia:
+      oneOf:
+        - type: string
+          const: named_issue
+          description: "The claim or the task's own words cite the issue by id."
+        - type: string
+          const: moved_issue
+          description: "A plan transition in the work's episode, or the session record's `issues`."
+        - type: string
+          const: branch_issue
+          description: The branch name carries the issue id.
+        - type: string
+          const: scope_overlap
+          description: "An open issue's scope overlaps the work's scope."
+      description: "The fact a link was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentLinkVia;\nassert_eq!(serde_json::to_string(&IntentLinkVia::BranchIssue).unwrap(), \"\\\"branch_issue\\\"\");\nassert_eq!(IntentLinkVia::ScopeOverlap.provenance().as_str(), \"inferred\");\n```"
     IntentList:
       type: object
       properties:
@@ -15288,6 +15520,108 @@ components:
         - milestone
         - issue
       description: "One intent a piece of work serves, and the link that says so: issue to milestone to intent,\neach step named rather than asserted.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n};\nassert_eq!(m.issue, \"I1900\");\n```"
+    IntentRealization:
+      type: object
+      properties:
+        intents:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentRealizationView"
+          description: "Every intent, in identity order."
+        work:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentRealizedWork"
+          description: "Every unit of work read, with its links."
+        orphans:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many units of work realise no intent.
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentFinding"
+          description: "Every finding: each intent's drift, then the live work that serves no intent."
+      required:
+        - intents
+        - work
+        - orphans
+        - findings
+      description: "Every intent, realised, and every unit of work, joined: what `majordomus intent realization`\nanswers.\n\n```\nuse majordomus_cli::intent_realization::IntentRealization;\nlet r = IntentRealization { intents: vec![], work: vec![], orphans: 0, findings: vec![] };\nassert_eq!(r.orphans, 0);\n```"
+    IntentRealizationView:
+      type: object
+      properties:
+        intent:
+          type: string
+          description: The intent.
+        title:
+          type: string
+          description: Its title.
+        stage:
+          "$ref": "#/components/schemas/IntentStage"
+          description: Its derived stage.
+        criteria:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many criteria it declares.
+        met:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many have current evidence.
+        unmet:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentUnmetCriterion"
+          description: Every criterion without current evidence.
+        work:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentWorkRef"
+          description: "Every unit of work linked to it, strongest link first."
+        providers:
+          type: array
+          items:
+            type: string
+          description: "Every provider that ran work linked to it, each once."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentFinding"
+          description: "Drift between the plan's closure and the evidence."
+      required:
+        - intent
+        - title
+        - stage
+        - criteria
+        - met
+        - unmet
+        - work
+        - providers
+        - findings
+      description: "One intent, realised: how far reality is from it, the work realising it and by whom, and the\ndrift between closed work and current evidence.\n\n```\nuse majordomus_cli::intent::IntentStage;\nuse majordomus_cli::intent_realization::IntentRealizationView;\nlet v = IntentRealizationView {\n    intent: \"x\".into(), title: \"X\".into(), stage: IntentStage::Verifying,\n    criteria: 2, met: 1, unmet: vec![], work: vec![], providers: vec![], findings: vec![],\n};\nassert!(v.met < v.criteria);\n```"
+    IntentRealizedWork:
+      type: object
+      properties:
+        work:
+          "$ref": "#/components/schemas/IntentWorkUnit"
+          description: "The work, as recorded."
+        links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentLink"
+          description: "Every intent it realises, strongest link per issue."
+        unlinked:
+          type:
+            - string
+            - "null"
+          description: "When it realises none: the first link that is missing."
+      required:
+        - work
+        - links
+      description: "A unit of work with every intent it realises, or the reason it realises none.\n\n```\nuse majordomus_cli::intent_realization::{IntentRealizedWork, IntentWorkKind, IntentWorkUnit};\nlet w = IntentRealizedWork {\n    work: IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\"),\n    links: vec![],\n    unlinked: Some(\"it names no issue\".into()),\n};\nassert!(w.links.is_empty() && w.unlinked.is_some());\n```"
     IntentStage:
       oneOf:
         - type: string
@@ -15312,6 +15646,37 @@ components:
           const: superseded
           description: The record names the intent that replaced it.
       description: "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+    IntentUnmetCriterion:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The criterion id.
+        criterion:
+          type: string
+          description: What must be observably true.
+        evidence:
+          type: string
+          description: The kind of evidence that settles it.
+        state:
+          "$ref": "#/components/schemas/IntentEvidenceState"
+          description: Why it is not met.
+        reproduce:
+          type:
+            - string
+            - "null"
+          description: "The command that produces its evidence, when one is known."
+        issues:
+          type: array
+          items:
+            type: string
+          description: "The issues declaring they serve it, in plan order."
+      required:
+        - id
+        - criterion
+        - evidence
+        - state
+      description: "A criterion an intent still lacks, with the issues that declare they serve it.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nuse majordomus_cli::intent_realization::IntentUnmetCriterion;\nlet c = IntentUnmetCriterion {\n    id: \"surfaces-agree\".into(), criterion: \"the surfaces agree\".into(),\n    evidence: \"test\".into(), state: IntentEvidenceState::Stale,\n    reproduce: None, issues: vec![\"I1900\".into()],\n};\nassert_eq!(c.state, IntentEvidenceState::Stale);\n```"
     IntentValidation:
       type: object
       properties:
@@ -15411,6 +15776,98 @@ components:
         - non_goals
         - source
       description: "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, and the stage that follows from both.\n\n```\nuse majordomus_cli::intent::{IntentStage, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n```"
+    IntentWorkKind:
+      oneOf:
+        - type: string
+          const: task
+          description: "A task of this checkout's ledger: the durable unit a handover continues, across every\nepisode that worked on it."
+        - type: string
+          const: peer_claim
+          description: "A claim a peer announced on the shared server's board."
+        - type: string
+          const: session_record
+          description: "A closed session record of the shared layer whose episode this checkout's ledger does\nnot hold — another machine's or another checkout's work."
+      description: "Which record a unit of work was read from.\n\n```\nuse majordomus_cli::intent_realization::IntentWorkKind;\nassert_eq!(serde_json::to_string(&IntentWorkKind::PeerClaim).unwrap(), \"\\\"peer_claim\\\"\");\n```"
+    IntentWorkRef:
+      type: object
+      properties:
+        kind:
+          "$ref": "#/components/schemas/IntentWorkKind"
+          description: Which record.
+        id:
+          type: string
+          description: Its identity there.
+        outcome:
+          type: string
+          description: Where it stands.
+        provenance:
+          "$ref": "#/components/schemas/IntentLinkProvenance"
+          description: The strongest of its links to this intent.
+        providers:
+          type: array
+          items:
+            type: string
+          description: The providers that ran it.
+        handovers:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many handovers carried it.
+      required:
+        - kind
+        - id
+        - provenance
+        - handovers
+      description: "A unit of work as one intent sees it: which record, how it stands, and the strongest link.\n\n```\nuse majordomus_cli::intent_realization::{IntentLinkProvenance, IntentWorkKind, IntentWorkRef};\nlet r = IntentWorkRef {\n    kind: IntentWorkKind::Task, id: \"t-1\".into(), outcome: \"active\".into(),\n    provenance: IntentLinkProvenance::Observed, providers: vec![\"codex\".into()],\n    handovers: 1,\n};\nassert_eq!(r.handovers, 1);\n```"
+    IntentWorkUnit:
+      type: object
+      properties:
+        kind:
+          "$ref": "#/components/schemas/IntentWorkKind"
+          description: Which record it was read from.
+        id:
+          type: string
+          description: "Its identity in that record: a task id, a session id, or `<peer>/<claim>`."
+        title:
+          type: string
+          description: "What it says it is, in its own words."
+        outcome:
+          type: string
+          description: "Where it stands: a task's outcome, a session's, or `attached`/`departed` for a claim."
+        branches:
+          type: array
+          items:
+            type: string
+          description: "The branches it ran on, in first-seen order."
+        scope:
+          type: array
+          items:
+            type: string
+          description: The paths it claims.
+        episodes:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntentEpisode"
+          description: "Every episode that worked on it, in first-seen order."
+        handovers:
+          type: array
+          items:
+            type: string
+          description: "The handovers that carried it from one episode to the next, repository-relative."
+        named_issues:
+          type: array
+          items:
+            type: string
+          description: Issue ids its own words cite.
+        moved_issues:
+          type: array
+          items:
+            type: string
+          description: Issue ids a recorded event shows it moving.
+      required:
+        - kind
+        - id
+      description: "One unit of work as its records describe it, before it is joined to any intent.\n\n```\nuse majordomus_cli::intent_realization::{IntentWorkKind, IntentWorkUnit};\nlet unit = IntentWorkUnit::new(IntentWorkKind::Task, \"t-1\");\nassert!(unit.episodes.is_empty());\nassert_eq!(unit.id, \"t-1\");\n```"
     Interface:
       oneOf:
         - type: string

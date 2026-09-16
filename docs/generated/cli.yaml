@@ -13820,3 +13820,196 @@ cli:
               setup: []
               expectation: "exits 0; prints serves, fixture-intent"
           subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - realization
+          route: /docs/cli/intent/realization/
+          executable: true
+          usage: "majordomus intent realization [OPTIONS]"
+          about: "Which work realises which intent — tasks, episodes, providers, handovers, peer claims — each link with its provenance, and each intent's unmet criteria and drift; exit 10 when an intent whose milestones are all DONE is contradicted by its evidence"
+          args:
+            - name: intent
+              long: intent
+              positional: false
+              help: Only this intent and the work linked to it
+              value_name: INTENT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-realization
+              title: "Which work realises which intent, and what each still lacks"
+              description: "Every intent with its unmet criteria and the work realising it, then every task, session record and peer claim with its strongest link — declared, observed, derived or inferred — or the first missing link. Exit 10 when an intent whose milestones are all DONE is contradicted by its evidence."
+              argv:
+                - intent
+                - realization
+              command: majordomus intent realization
+              setup: []
+              expectation: "exits 0; prints fixture-intent, unit(s) of work"
+            - id: intent-realization-json
+              title: "The same, as the shape the API and MCP answer with"
+              description: "What `GET /api/v1/intents/realization` returns and the `majordomus_intent_realization` tool answers: each intent's unmet criteria, work and providers, and each unit of work with its links."
+              argv:
+                - intent
+                - realization
+                - "--format"
+                - json
+              command: majordomus intent realization --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /intents/0/stage, /intents/0/unmet, /work, /orphans"
+          subcommands: []
+        - path:
+            - majordomus
+            - intent
+            - explain
+          route: /docs/cli/intent/explain/
+          executable: true
+          usage: "majordomus intent explain [OPTIONS] <ID>"
+          about: "Why an intent stands where it stands: its stage, each criterion, the work realising it"
+          args:
+            - name: id
+              positional: true
+              help: "The intent's id"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: intent-explain
+              title: Why an intent stands where it stands
+              description: "A sentence for the stage naming each milestone's derived status, one per criterion naming its evidence state and coverage, and one for the work realising it — all derived, none stored."
+              argv:
+                - intent
+                - explain
+                - fixture-intent
+              command: majordomus intent explain fixture-intent
+              setup: []
+              expectation: "exits 0; prints fixture-intent, the-case-passes"
+          subcommands: []
