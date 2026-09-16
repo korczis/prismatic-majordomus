@@ -24,6 +24,10 @@
 #      not this: only the two conventional homes of an authored changelog are refused.
 #   4. The version the tree declares is never behind the newest release the layer records:
 #      a published 1.2.0 with a tree that still says 1.1.0 means the bump was never made.
+#   5. Every published tag has a release record. A tag without one is a release that was
+#      published to the world and never reached the layer every projection is composed from,
+#      which is what a failure in the publish job looks like from the outside: nothing red,
+#      and an installer that goes on serving the previous version.
 #
 #   scripts/ci/release-check                report every finding, exit 10 on any
 #   MJ_ROOT=<dir> scripts/ci/release-check  against another tree (the behavioural case does)
@@ -139,8 +143,96 @@ else
   fi
 fi
 
+# ------------------------------------------ 5. every published tag has a record in the layer
+#
+# The failure this exists for: v0.7.0 published six archives and a GitHub Release, and the
+# step that proposes the record's pull request then failed — run 34965490909, where the
+# publish job held no `pull-requests: write`, so `gh pr create` wrote nothing and its
+# fallback printed `no pull requests found for branch "release/record-v0.7.0"`. Every place
+# a person looks said released: the tag, the release page, the crate's version, the site's
+# version. Master held no record, so the published releases/latest.json went on naming the
+# previous version and the advertised installer went on installing it. Nothing was red but
+# one job in a workflow nobody was watching.
+#
+# The executable already names this state — as a *warning*, inside the baseline it resolves
+# for `release analyze` (apps/majordomus-cli/src/release/compat.rs, diagnostic
+# `tag-without-record`). A warning is what four hours of a wrong installer looks like, and
+# `release version`, the report a person actually opens, prints nothing about it at all.
+# This gate is what turns the same fact into a verdict. It does not ask the executable for
+# it: this gate runs in the `structure` job, which has no toolchain, and `release analyze`
+# refuses outright in a tree that committed no registry — so what is read here is the two
+# things a record is made of, git's tags and the layer's records, and nothing is decided
+# that those files do not state.
+#
+# Debt is recorded, never absorbed: a tag listed in the baseline below, with the reason that
+# clears it, is excused and still named as debt; a line the tree has outgrown is reported so
+# the list cannot rot.
+RECORD_BASELINE=".ai/repo/release-record-baseline.txt"
+excused_list=""
+if [ -f "$RECORD_BASELINE" ]; then
+  excused_list="$(sed -e 's/#.*//' -e 's/[[:space:]]*$//' "$RECORD_BASELINE" | grep -v '^[[:space:]]*$' || true)"
+fi
+
+# a record is named after its tag, or names it
+recorded_tag() {
+  if [ -f ".ai/repo/releases/$1.yaml" ]; then return 0; fi
+  grep -l "^tag: *$1 *\$" .ai/repo/releases/*.yaml >/dev/null 2>&1
+}
+
+if ! command -v git >/dev/null 2>&1 || ! git rev-parse --git-dir >/dev/null 2>&1; then
+  # Never quietly: a measurement that could not be taken is reported, because a gate that
+  # skips is indistinguishable from a gate that passed — project.never-reported-is-not-green.
+  fail "the published tags could not be read here — this tree is not a git checkout, or git is unavailable — so 'every published tag has a record' was not measured"
+else
+  # Local tags, after a fetch: the same list the pipeline tags from, read without a token.
+  # `git ls-remote --tags origin` would ask the forge for a fact a fetched clone already
+  # holds, and would make this gate fail on a machine with no network.
+  # v<major>.<minor>.<patch> exactly: that is what the release workflow cuts, and it refuses
+  # to publish a tag that does not agree with the crate's version, so a tag with a suffix
+  # (v0.2.0-ai-documents) named something else and never published a release.
+  tags="$(git tag --list 'v[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | LC_ALL=C sort -u || true)"
+  if [ -z "$tags" ]; then
+    # No tags is two different states, and only one of them is fine. A repository that has
+    # published nothing has no tags and no records; a checkout whose tags were not fetched
+    # has records and no tags, and answering "nothing to compare" there would be the quiet
+    # pass this check exists to remove. The structure job checks out with fetch-depth 0 for
+    # exactly this reason, so the second state means the fetch, not the tree, is what failed.
+    if [ -n "$newest" ]; then
+      fail "the layer records releases (newest $newest) and this checkout lists no version tag, so 'every published tag has a record' was not measured — fetch the tags (git fetch --tags, or actions/checkout with fetch-depth: 0)"
+    else
+      ok "this checkout carries no version tag and the layer records no release: nothing has been published"
+    fi
+  else
+    missing=0
+    excused=0
+    for t in $tags; do
+      if recorded_tag "$t"; then continue; fi
+      if printf '%s\n' "$excused_list" | grep -qx "$t"; then
+        ok "$t has no release record and is recorded debt in $RECORD_BASELINE"
+        excused=$((excused+1))
+        continue
+      fi
+      missing=$((missing+1))
+      fail "$t is published and the layer holds no release record for it (.ai/repo/releases/$t.yaml is missing); the site's releases/latest.json, the installation guide and every baseline are composed from the records, so this release is invisible to them and the advertised installer still installs the previous one — scripts/release-record writes it"
+    done
+    # Said as it is: a tree carrying excused tags has not been proved clean, and a summary
+    # that read "every published tag has a record" over a baseline would be the quiet pass
+    # this check exists to remove.
+    if [ "$missing" = 0 ] && [ "$excused" = 0 ]; then
+      ok "every published tag this checkout carries has a release record"
+    elif [ "$missing" = 0 ]; then
+      ok "every published tag has a release record except the $excused recorded as debt in $RECORD_BASELINE"
+    fi
+    for e in $excused_list; do
+      if recorded_tag "$e" || ! printf '%s\n' "$tags" | grep -qx "$e"; then
+        printf 'note  %s is excused in %s and no longer needs to be: delete the line\n' "$e" "$RECORD_BASELINE"
+      fi
+    done
+  fi
+fi
+
 if [ "$findings" -eq 0 ]; then
-  printf 'release-check: the release is a projection — one writer, no kept changelog\n'
+  printf 'release-check: the release is a projection — one writer, no kept changelog, every published tag recorded\n'
   exit 0
 fi
 printf 'release-check: %s finding(s)\n' "$findings" >&2
