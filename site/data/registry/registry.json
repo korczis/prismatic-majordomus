@@ -6,27 +6,27 @@
     "version": "0.7.0"
   },
   "registry": {
-    "fingerprint": "35ebda7c9848eed042030ef0acb75f916a298072169a5b23c754d4eeee8a78b4",
+    "fingerprint": "e846097c76f41ed6a09fd04b4fef16085ba89710c9610a3d512ba33f2723c180",
     "summary": {
-      "total": 1465,
-      "builtin": 113,
-      "declarative": 1352,
+      "total": 1476,
+      "builtin": 117,
+      "declarative": 1359,
       "by_kind": {
         "command": 7,
-        "query": 106,
-        "resource": 1352
+        "query": 110,
+        "resource": 1359
       },
       "by_stability": {
-        "behaviorally_verified": 100,
+        "behaviorally_verified": 104,
         "experimental": 7,
-        "implemented": 1358
+        "implemented": 1365
       },
-      "mcp_tools": 110,
-      "mcp_resources": 1393,
-      "http_routes": 112,
-      "cli_commands": 52,
-      "modules": 66,
-      "benchmark_required": 108,
+      "mcp_tools": 114,
+      "mcp_resources": 1401,
+      "http_routes": 116,
+      "cli_commands": 56,
+      "modules": 68,
+      "benchmark_required": 112,
       "benchmark_waived": 5,
       "cached": 35
     },
@@ -19660,6 +19660,964 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
+      },
+      {
+        "id": "intents.list",
+        "module": "intents",
+        "kind": "query",
+        "title": "Every intent, with its derived stage",
+        "description": "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "IntentList",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "count": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many intents."
+              },
+              "stages": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0
+                },
+                "description": "How many in each stage, keyed by the stage word."
+              },
+              "intents": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IntentView"
+                },
+                "description": "Every intent, in identity order."
+              }
+            },
+            "required": [
+              "count",
+              "stages",
+              "intents"
+            ],
+            "description": "Every intent, with its derived stage, and how many there are in each stage: what\n`majordomus intent list`, `GET /api/v1/intents` and the `majordomus_intents` tool all answer\nwith, out of one derivation.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentList;\nlet empty = IntentList {\n    count: 0,\n    stages: std::collections::BTreeMap::new(),\n    intents: vec![],\n};\n// a repository that declares no intent answers the route, with nothing in it\nassert_eq!(empty.count, 0);\n```",
+            "title": "IntentList",
+            "$defs": {
+              "IntentView": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The identity, which is also the file name."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "One line."
+                  },
+                  "statement": {
+                    "type": "string",
+                    "description": "What must become true."
+                  },
+                  "invariants": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What must stay true."
+                  },
+                  "stage": {
+                    "$ref": "#/$defs/IntentStage",
+                    "description": "Derived: the stage."
+                  },
+                  "milestones": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/IntentMilestone"
+                    },
+                    "description": "The milestones, each with its derived status."
+                  },
+                  "satisfaction": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/IntentCriterion"
+                    },
+                    "description": "The criteria, each with its evidence state."
+                  },
+                  "met": {
+                    "type": "integer",
+                    "format": "uint",
+                    "minimum": 0,
+                    "description": "Derived: how many criteria are met."
+                  },
+                  "governance": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The governance a worker on this intent loads."
+                  },
+                  "non_goals": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "What is deliberately not required."
+                  },
+                  "superseded_by": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The replacement, when the record names one."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "Repository-relative path of the record."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "statement",
+                  "invariants",
+                  "stage",
+                  "milestones",
+                  "satisfaction",
+                  "met",
+                  "governance",
+                  "non_goals",
+                  "source"
+                ],
+                "description": "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, and the stage that follows from both.\n\n```\nuse majordomus_cli::intent::{IntentStage, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n```"
+              },
+              "IntentStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "A named milestone does not resolve, or none is named."
+                  },
+                  {
+                    "type": "string",
+                    "const": "planned",
+                    "description": "Every milestone resolves and none has started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "executing",
+                    "description": "A milestone is under way."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verifying",
+                    "description": "Every milestone that counts is DONE; satisfaction is not yet evidenced."
+                  },
+                  {
+                    "type": "string",
+                    "const": "satisfied",
+                    "description": "Verifying, and every criterion has current evidence."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "The record says it was abandoned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "superseded",
+                    "description": "The record names the intent that replaced it."
+                  }
+                ],
+                "description": "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+              },
+              "IntentMilestone": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The id the intent names."
+                  },
+                  "resolved": {
+                    "type": "boolean",
+                    "description": "Whether the plan holds a milestone with that id."
+                  },
+                  "status": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The status the plan derives for it; absent when it does not resolve."
+                  }
+                },
+                "required": [
+                  "id",
+                  "resolved"
+                ],
+                "description": "One milestone an intent names, as the plan derives it. A milestone that does not resolve is\ncarried with `resolved: false` rather than dropped, because a name that points at nothing is\na finding and not an absence.\n\n```\nuse majordomus_cli::intent::IntentMilestone;\nlet named = IntentMilestone { id: \"no-such\".into(), resolved: false, status: None };\nassert!(!named.resolved);\nassert!(named.status.is_none());\n```"
+              },
+              "IntentCriterion": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique within the intent."
+                  },
+                  "criterion": {
+                    "type": "string",
+                    "description": "What is observably true when it is met."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "`test`, `claim`, `command` or `deployment`."
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "What the evidence names, as authored."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/IntentEvidenceState",
+                    "description": "Derived: what the evidence says."
+                  },
+                  "met": {
+                    "type": "boolean",
+                    "description": "Derived: the state is `current`."
+                  },
+                  "reproduce": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The command that produces the evidence again, when one is known."
+                  }
+                },
+                "required": [
+                  "id",
+                  "criterion",
+                  "evidence",
+                  "ref",
+                  "state",
+                  "met"
+                ],
+                "description": "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
+              },
+              "IntentEvidenceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failing",
+                    "description": "The latest recorded run did not pass."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_run",
+                    "description": "The reference resolves and nothing has been recorded for it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_derivable",
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unresolved",
+                    "description": "The reference is empty or names nothing this repository holds."
+                  }
+                ],
+                "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_intents",
+            "resource": {
+              "uri": "majordomus://intents",
+              "name": "intents"
+            }
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/intents"
+          },
+          "cli": {
+            "path": [
+              "intent",
+              "list"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "intent",
+          "project"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+      },
+      {
+        "id": "intents.preflight",
+        "module": "intents",
+        "kind": "query",
+        "title": "Which intent a piece of work serves",
+        "description": "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.",
+        "input": {
+          "name": "IntentPreflightInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "issue": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The issue the work executes, by id. When given, the paths are not consulted."
+              },
+              "paths": {
+                "type": "string",
+                "description": "Repository-relative paths the work will touch, separated by commas.",
+                "default": ""
+              }
+            },
+            "description": "The work to preflight: an issue, or the paths it will touch.\n\n`paths` is one comma-separated string rather than a list because a preflight changes\nnothing and is therefore a `GET`, and this repository binds a `GET` input to the query\nstring.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentPreflightInput;\n// an issue, when the work executes one\nlet by_issue = IntentPreflightInput { issue: Some(\"I1900\".into()), paths: String::new() };\nassert!(by_issue.path_list().is_empty());\n// or the paths it will touch, when it names no issue yet\nlet by_paths = IntentPreflightInput {\n    issue: None,\n    paths: \"apps/majordomus-cli/src,docs\".into(),\n};\nassert_eq!(by_paths.path_list(), [\"apps/majordomus-cli/src\", \"docs\"]);\n```",
+            "title": "IntentPreflightInput"
+          }
+        },
+        "output": {
+          "name": "IntentPreflight",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "verdict": {
+                "type": "string",
+                "description": "`serves` or `refused`."
+              },
+              "issues": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The issues the work was resolved to: the one named, or the open issues whose scope\ncovers a path."
+              },
+              "matches": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IntentPreflightMatch"
+                },
+                "description": "Every intent reached, with the link."
+              },
+              "governance": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The governance of every intent reached, each entry once, in first-seen order."
+              },
+              "refusal": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "When refused: the link that is missing."
+              }
+            },
+            "required": [
+              "verdict",
+              "issues",
+              "matches",
+              "governance"
+            ],
+            "description": "Which intent a piece of work serves, or why it serves none: the issues it resolved to, every\nintent reached with its link, the governance those intents load, and — when nothing is\nreached — the first link that is missing.\n\n```\nuse majordomus_cli::intent::IntentPreflight;\nlet refused = IntentPreflight {\n    verdict: \"refused\".into(),\n    issues: vec![],\n    matches: vec![],\n    governance: vec![],\n    refusal: Some(\"no open issue's scope covers README.md\".into()),\n};\nassert_eq!(refused.verdict, \"refused\");\nassert!(refused.refusal.is_some());\n```",
+            "title": "IntentPreflight",
+            "$defs": {
+              "IntentPreflightMatch": {
+                "type": "object",
+                "properties": {
+                  "intent": {
+                    "type": "string",
+                    "description": "The intent."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "Its title."
+                  },
+                  "stage": {
+                    "$ref": "#/$defs/IntentStage",
+                    "description": "Its derived stage."
+                  },
+                  "milestone": {
+                    "type": "string",
+                    "description": "The milestone that links the work to it."
+                  },
+                  "issue": {
+                    "type": "string",
+                    "description": "The issue that links the work to that milestone."
+                  }
+                },
+                "required": [
+                  "intent",
+                  "title",
+                  "stage",
+                  "milestone",
+                  "issue"
+                ],
+                "description": "One intent a piece of work serves, and the link that says so: issue to milestone to intent,\neach step named rather than asserted.\n\n```\nuse majordomus_cli::intent::{IntentPreflightMatch, IntentStage};\nlet m = IntentPreflightMatch {\n    intent: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    stage: IntentStage::Executing,\n    milestone: \"intent-lifecycle\".into(),\n    issue: \"I1900\".into(),\n};\nassert_eq!(m.issue, \"I1900\");\n```"
+              },
+              "IntentStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "A named milestone does not resolve, or none is named."
+                  },
+                  {
+                    "type": "string",
+                    "const": "planned",
+                    "description": "Every milestone resolves and none has started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "executing",
+                    "description": "A milestone is under way."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verifying",
+                    "description": "Every milestone that counts is DONE; satisfaction is not yet evidenced."
+                  },
+                  {
+                    "type": "string",
+                    "const": "satisfied",
+                    "description": "Verifying, and every criterion has current evidence."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "The record says it was abandoned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "superseded",
+                    "description": "The record names the intent that replaced it."
+                  }
+                ],
+                "description": "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_intent_preflight"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/intents/preflight"
+          },
+          "cli": {
+            "path": [
+              "intent",
+              "preflight"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "intent",
+          "project",
+          "governance"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+      },
+      {
+        "id": "intents.record",
+        "module": "intents",
+        "kind": "query",
+        "title": "One intent, with everything derived about it",
+        "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`.",
+        "input": {
+          "name": "IntentRecordInput",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The intent's id, which is also its file name under `.ai/repo/project/intents/`."
+              }
+            },
+            "required": [
+              "id"
+            ],
+            "description": "Which intent to read, by the id that is also its file name. An id this repository does not\nhold is a refusal naming what was looked for, never an empty answer.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentRecordInput;\nlet input = IntentRecordInput { id: \"intent-lifecycle\".into() };\nassert_eq!(input.id, \"intent-lifecycle\");\n```",
+            "title": "IntentRecordInput"
+          }
+        },
+        "output": {
+          "name": "IntentView",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "The identity, which is also the file name."
+              },
+              "title": {
+                "type": "string",
+                "description": "One line."
+              },
+              "statement": {
+                "type": "string",
+                "description": "What must become true."
+              },
+              "invariants": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What must stay true."
+              },
+              "stage": {
+                "$ref": "#/$defs/IntentStage",
+                "description": "Derived: the stage."
+              },
+              "milestones": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IntentMilestone"
+                },
+                "description": "The milestones, each with its derived status."
+              },
+              "satisfaction": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IntentCriterion"
+                },
+                "description": "The criteria, each with its evidence state."
+              },
+              "met": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "Derived: how many criteria are met."
+              },
+              "governance": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The governance a worker on this intent loads."
+              },
+              "non_goals": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "What is deliberately not required."
+              },
+              "superseded_by": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The replacement, when the record names one."
+              },
+              "source": {
+                "type": "string",
+                "description": "Repository-relative path of the record."
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "statement",
+              "invariants",
+              "stage",
+              "milestones",
+              "satisfaction",
+              "met",
+              "governance",
+              "non_goals",
+              "source"
+            ],
+            "description": "One intent, as its record declares it and as the plan and the ledger derive it: the\nstatement and invariants as authored, each milestone with its derived status, each criterion\nwith the state of its evidence, and the stage that follows from both.\n\n```\nuse majordomus_cli::intent::{IntentStage, IntentView};\nlet view = IntentView {\n    id: \"intent-lifecycle\".into(),\n    title: \"Work is traceable to the intent it serves\".into(),\n    statement: \"A reader can ask what work is for.\".into(),\n    invariants: vec![\"no intent status is stored\".into()],\n    stage: IntentStage::Declared,\n    milestones: vec![],\n    satisfaction: vec![],\n    met: 0,\n    governance: vec![\"adr:adr-0070\".into()],\n    non_goals: vec![],\n    superseded_by: None,\n    source: \".ai/repo/project/intents/intent-lifecycle.yaml\".into(),\n};\n// a record naming no milestone that resolves has not been planned\nassert_eq!(view.stage, IntentStage::Declared);\n```",
+            "title": "IntentView",
+            "$defs": {
+              "IntentStage": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "declared",
+                    "description": "A named milestone does not resolve, or none is named."
+                  },
+                  {
+                    "type": "string",
+                    "const": "planned",
+                    "description": "Every milestone resolves and none has started."
+                  },
+                  {
+                    "type": "string",
+                    "const": "executing",
+                    "description": "A milestone is under way."
+                  },
+                  {
+                    "type": "string",
+                    "const": "verifying",
+                    "description": "Every milestone that counts is DONE; satisfaction is not yet evidenced."
+                  },
+                  {
+                    "type": "string",
+                    "const": "satisfied",
+                    "description": "Verifying, and every criterion has current evidence."
+                  },
+                  {
+                    "type": "string",
+                    "const": "cancelled",
+                    "description": "The record says it was abandoned."
+                  },
+                  {
+                    "type": "string",
+                    "const": "superseded",
+                    "description": "The record names the intent that replaced it."
+                  }
+                ],
+                "description": "Where an intent stands, derived on every read and stored nowhere.\n\n```\nuse majordomus_cli::intent::IntentStage;\n// one word every surface prints, and an order that follows the work\nassert_eq!(IntentStage::Executing.as_str(), \"executing\");\nassert!(IntentStage::Declared < IntentStage::Satisfied);\n```"
+              },
+              "IntentMilestone": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "The id the intent names."
+                  },
+                  "resolved": {
+                    "type": "boolean",
+                    "description": "Whether the plan holds a milestone with that id."
+                  },
+                  "status": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The status the plan derives for it; absent when it does not resolve."
+                  }
+                },
+                "required": [
+                  "id",
+                  "resolved"
+                ],
+                "description": "One milestone an intent names, as the plan derives it. A milestone that does not resolve is\ncarried with `resolved: false` rather than dropped, because a name that points at nothing is\na finding and not an absence.\n\n```\nuse majordomus_cli::intent::IntentMilestone;\nlet named = IntentMilestone { id: \"no-such\".into(), resolved: false, status: None };\nassert!(!named.resolved);\nassert!(named.status.is_none());\n```"
+              },
+              "IntentCriterion": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "Unique within the intent."
+                  },
+                  "criterion": {
+                    "type": "string",
+                    "description": "What is observably true when it is met."
+                  },
+                  "evidence": {
+                    "type": "string",
+                    "description": "`test`, `claim`, `command` or `deployment`."
+                  },
+                  "ref": {
+                    "type": "string",
+                    "description": "What the evidence names, as authored."
+                  },
+                  "state": {
+                    "$ref": "#/$defs/IntentEvidenceState",
+                    "description": "Derived: what the evidence says."
+                  },
+                  "met": {
+                    "type": "boolean",
+                    "description": "Derived: the state is `current`."
+                  },
+                  "reproduce": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The command that produces the evidence again, when one is known."
+                  }
+                },
+                "required": [
+                  "id",
+                  "criterion",
+                  "evidence",
+                  "ref",
+                  "state",
+                  "met"
+                ],
+                "description": "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```"
+              },
+              "IntentEvidenceState": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "A passing run of the test that is in the tree now, or a claim proven or with its\ninputs unchanged since its passing run. The only state that meets a criterion."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "A passing run of a test whose source has changed since, or a claim whose inputs\nhave."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failing",
+                    "description": "The latest recorded run did not pass."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_run",
+                    "description": "The reference resolves and nothing has been recorded for it."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_derivable",
+                    "description": "The reference resolves, and this kind of evidence (`command`, `deployment`) is not\nderivable from the ledger, so it never meets a criterion by itself."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unresolved",
+                    "description": "The reference is empty or names nothing this repository holds."
+                  }
+                ],
+                "description": "What the evidence behind one criterion says, as a word. Only `Current` meets a criterion:\na stale, failing, unrecorded or underivable reference never does, and neither does one that\nresolves to nothing.\n\n```\nuse majordomus_cli::intent::IntentEvidenceState;\nassert_eq!(serde_json::to_string(&IntentEvidenceState::NotRun).unwrap(), \"\\\"not_run\\\"\");\nassert_ne!(IntentEvidenceState::Stale, IntentEvidenceState::Current);\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_intent_record"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/intents/record"
+          },
+          "cli": {
+            "path": [
+              "intent",
+              "show"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "intent",
+          "project"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+      },
+      {
+        "id": "intents.validate",
+        "module": "intents",
+        "kind": "query",
+        "title": "What the intent model refuses",
+        "description": "Every finding over the intents: an intent naming no milestone or no criterion, a milestone that does not resolve, a criterion with no evidence reference or one that names nothing this repository holds, governance that does not resolve, a successor that is not an intent, a file name that disagrees with its id — each a failure — and a milestone no intent serves, a warning.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "IntentValidation",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "valid": {
+                "type": "boolean",
+                "description": "True when no finding is a failure. Warnings do not make it false."
+              },
+              "intents": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many intents were examined."
+              },
+              "failures": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many findings are failures."
+              },
+              "warnings": {
+                "type": "integer",
+                "format": "uint",
+                "minimum": 0,
+                "description": "How many findings are warnings."
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/IntentFinding"
+                },
+                "description": "Every finding."
+              }
+            },
+            "required": [
+              "valid",
+              "intents",
+              "failures",
+              "warnings",
+              "findings"
+            ],
+            "description": "What the intent model refuses: whether it is valid, how many intents were examined, and\nevery finding with its level. Warnings are reported and do not make it invalid.\n\n```\nuse majordomus_cli::capability::builtin::intents::IntentValidation;\nlet v = IntentValidation {\n    valid: true,\n    intents: 2,\n    failures: 0,\n    warnings: 20,\n    findings: vec![],\n};\n// twenty warnings and no failure is a valid model\nassert!(v.valid);\n```",
+            "title": "IntentValidation",
+            "$defs": {
+              "IntentFinding": {
+                "type": "object",
+                "properties": {
+                  "level": {
+                    "type": "string",
+                    "description": "`FAIL` or `WARN`. A failure means the intent model is invalid."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "The stable code a reader greps for."
+                  },
+                  "subject": {
+                    "type": "string",
+                    "description": "The intent or milestone the finding is about."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, in one line."
+                  },
+                  "reproduce": {
+                    "type": "string",
+                    "description": "The command that shows it again."
+                  }
+                },
+                "required": [
+                  "level",
+                  "code",
+                  "subject",
+                  "message",
+                  "reproduce"
+                ],
+                "description": "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::intents"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_intent_validate"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/intents/validate"
+          },
+          "cli": {
+            "path": [
+              "intent",
+              "validate"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "intent",
+          "project",
+          "validation"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
       },
       {
         "id": "lifecycle.closed",
@@ -40132,7 +41090,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -40235,7 +41193,7 @@
         "title": "context",
         "description": "Declarative objects of kind 'context' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 29,
+        "capabilities": 30,
         "capability_ids": []
       },
       {
@@ -40461,6 +41419,29 @@
         "capability_ids": []
       },
       {
+        "id": "intent",
+        "title": "intent",
+        "description": "Declarative objects of kind 'intent' from the repository's AI layer.",
+        "source": "declarative",
+        "capabilities": 1,
+        "capability_ids": []
+      },
+      {
+        "id": "intents",
+        "title": "Intent",
+        "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 4,
+        "capability_ids": [
+          "intents.list",
+          "intents.preflight",
+          "intents.record",
+          "intents.validate"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+      },
+      {
         "id": "issue",
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
@@ -40521,7 +41502,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 19,
+        "capabilities": 20,
         "capability_ids": []
       },
       {
@@ -40723,7 +41704,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 137,
+        "capabilities": 138,
         "capability_ids": []
       },
       {
@@ -40802,7 +41783,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 215,
+        "capabilities": 217,
         "capability_ids": []
       },
       {
@@ -40882,7 +41863,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5cd6968df1fe2f3bac21230755d3d9c101514cf088f0a98b2fa2d91270d734c8",
+    "fingerprint": "404b52107cc5f3fc13b085511a783a58471cdde750ed00927eb65e450e23db7d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40905,33 +41886,34 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
       "claim": 173,
       "command": 31,
-      "context": 29,
+      "context": 30,
       "deployment": 1,
       "distribution-model": 1,
       "document": 247,
       "feature": 25,
       "implementation": 49,
+      "intent": 1,
       "issue": 216,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
       "release-record": 4,
-      "rule": 137,
+      "rule": 138,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 215,
+      "test": 217,
       "use-case": 46,
       "workspace": 1
     },
@@ -41769,6 +42751,23 @@
           "safety",
           "worktrees",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0070",
+        "kind": "adr",
+        "identity": "adr-0070",
+        "title": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
+        "description": "An intent is a typed record, and its stage and satisfaction are derived from the plan and the evidence",
+        "path": ".ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5128,
+        "tags": [
+          "intent",
+          "project",
+          "evidence",
+          "governance"
         ]
       },
       {
@@ -44289,6 +45288,17 @@
         "bytes": 1813
       },
       {
+        "uri": "majordomus://context/ai.repo.project.intents",
+        "kind": "context",
+        "identity": "ai.repo.project.intents",
+        "title": "Intents",
+        "description": "What must become true above the milestones that realise it, with the evidence that settles it.",
+        "path": ".ai/repo/project/intents/README.md",
+        "section": "project",
+        "source_class": "context",
+        "bytes": 1489
+      },
+      {
         "uri": "majordomus://context/ai.repo.project.issues",
         "kind": "context",
         "identity": "ai.repo.project.issues",
@@ -44991,7 +46001,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 54976
+        "bytes": 55795
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -47466,6 +48476,17 @@
         "path": "lib/watch.sh",
         "source_class": "library",
         "bytes": 5756
+      },
+      {
+        "uri": "majordomus://intent/intent-lifecycle",
+        "kind": "intent",
+        "identity": "intent-lifecycle",
+        "title": "Every change can be traced to the intent it serves, and an intent reads satisfied only when evidence says so",
+        "description": "A worker or reviewer can ask, of any piece of work, which declared intent it serves and get an answer derived from the repository's own records, and can ask whether that intent is satisfied and get an answer derived from recorded evidence rather than from a merged pull request or a finished milestone.",
+        "path": ".ai/repo/project/intents/intent-lifecycle.yaml",
+        "section": "project",
+        "source_class": "intent",
+        "bytes": 1699
       },
       {
         "uri": "majordomus://issue/I0001",
@@ -50008,6 +51029,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 2026
+      },
+      {
+        "uri": "majordomus://milestone/intent-lifecycle",
+        "kind": "milestone",
+        "identity": "intent-lifecycle",
+        "title": "Work is traceable to the intent it serves, and an intent is satisfied only by evidence",
+        "description": "An intent is a typed record above the milestones that realise it: a statement, its invariants, and satisfaction criteria each naming the evidence that settles it. Its stage is derived from the plan's milestone status and its satisfaction from the evidence ledger, never stored. A gate refuses an intent that names no milestone or evidence that resolves to nothing, a session's preflight names the intent its work serves or refuses, the Cockpit shows intents with measured and enforced coverage of its scripts, and a milestone closes on GitHub only when the intents it serves are satisfied.",
+        "path": ".ai/repo/project/milestones/intent-lifecycle.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 3874
       },
       {
         "uri": "majordomus://milestone/routing-recommendations",
@@ -52973,6 +54005,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "rule",
+        "identity": "project.work-serves-a-declared-intent@1",
+        "title": "Work serves a declared intent, and an intent is satisfied only by evidence",
+        "description": "What must become true is a typed intent record above the milestones that realise it; its stage is derived from the plan and its satisfaction from recorded evidence, it is never stored, and an intent model whose links do not resolve is refused by a gate.",
+        "path": ".ai/repo/rules/project/work-serves-a-declared-intent.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 3297,
+        "tags": [
+          "intent",
+          "project",
+          "evidence",
+          "projections"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.worktree-topology@1",
         "kind": "rule",
         "identity": "project.worktree-topology@1",
@@ -54443,6 +55492,14 @@
         "bytes": 6101
       },
       {
+        "uri": "majordomus://test/test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "kind": "test",
+        "identity": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "path": "test/cases/367_an_intent_is_satisfied_only_by_evidence.sh",
+        "source_class": "case",
+        "bytes": 4758
+      },
+      {
         "uri": "majordomus://test/test/cases/36_command_doctrines.sh",
         "kind": "test",
         "identity": "test/cases/36_command_doctrines.sh",
@@ -54457,6 +55514,14 @@
         "path": "test/cases/37_responsibility_surface.sh",
         "source_class": "case",
         "bytes": 7839
+      },
+      {
+        "uri": "majordomus://test/test/cases/387_no_payload_is_passed_through_argv.sh",
+        "kind": "test",
+        "identity": "test/cases/387_no_payload_is_passed_through_argv.sh",
+        "path": "test/cases/387_no_payload_is_passed_through_argv.sh",
+        "source_class": "case",
+        "bytes": 3713
       },
       {
         "uri": "majordomus://test/test/cases/40_project_model.sh",
@@ -55649,7 +56714,7 @@
       "identity": [
         "id"
       ],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "application",
@@ -55709,7 +56774,7 @@
       "identity": [
         "id"
       ],
-      "objects": 29
+      "objects": 30
     },
     {
       "name": "deployment",
@@ -55755,6 +56820,16 @@
       "objects": 49
     },
     {
+      "name": "intent",
+      "format": "yaml",
+      "front_matter": "none",
+      "schema": "majordomus.intent/v1",
+      "identity": [
+        "id"
+      ],
+      "objects": 1
+    },
+    {
       "name": "issue",
       "format": "yaml",
       "front_matter": "none",
@@ -55792,7 +56867,7 @@
       "identity": [
         "id"
       ],
-      "objects": 19
+      "objects": 20
     },
     {
       "name": "moment",
@@ -55859,7 +56934,7 @@
         "id",
         "version"
       ],
-      "objects": 137
+      "objects": 138
     },
     {
       "name": "scope",
@@ -55914,7 +56989,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 215
+      "objects": 217
     },
     {
       "name": "use-case",
@@ -73841,6 +74916,605 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "intent"
+        ],
+        "route": "/docs/cli/intent/",
+        "executable": false,
+        "usage": "majordomus intent [OPTIONS] <COMMAND>",
+        "about": "What must become true above the milestones: every intent with its stage derived from the plan and its satisfaction from the recorded evidence, one intent, the model's own validation, and which intent a piece of work serves",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "intent",
+              "list"
+            ],
+            "route": "/docs/cli/intent/list/",
+            "executable": true,
+            "usage": "majordomus intent list [OPTIONS]",
+            "about": "Every intent, with the stage derived from its milestones and its evidence",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-list",
+                "title": "Every intent, with its derived stage",
+                "description": "The stage is derived on every read from the status the plan gives each milestone the intent names and from the evidence recorded for each criterion; no file stores it.",
+                "argv": [
+                  "intent",
+                  "list"
+                ],
+                "command": "majordomus intent list",
+                "setup": [],
+                "expectation": "exits 0; prints STAGE, intent(s)"
+              },
+              {
+                "id": "intent-list-json",
+                "title": "The same, as the shape the API and MCP answer with",
+                "description": "What `GET /api/v1/intents` returns and the `majordomus_intents` tool answers: the count, the tally by stage, and every intent with its milestones and criteria.",
+                "argv": [
+                  "intent",
+                  "list",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus intent list --format json",
+                "setup": [],
+                "expectation": "exits 0; prints one JSON document carrying /count, /stages, /intents/0/stage, /intents/0/satisfaction"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "intent",
+              "show"
+            ],
+            "route": "/docs/cli/intent/show/",
+            "executable": true,
+            "usage": "majordomus intent show [OPTIONS] <ID>",
+            "about": "One intent in full: each milestone's derived status and each criterion's evidence state",
+            "args": [
+              {
+                "name": "id",
+                "positional": true,
+                "help": "The intent's id, which is also its file name",
+                "value_name": "ID",
+                "takes_value": true,
+                "required": true,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-show",
+                "title": "One intent, with each milestone and criterion derived",
+                "description": "The statement and invariants as authored, each milestone with its derived status, and each criterion with the state of its evidence and the command that reproduces it.",
+                "argv": [
+                  "intent",
+                  "show",
+                  "fixture-intent"
+                ],
+                "command": "majordomus intent show fixture-intent",
+                "setup": [],
+                "expectation": "exits 0; prints fixture-intent, stage"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "intent",
+              "validate"
+            ],
+            "route": "/docs/cli/intent/validate/",
+            "executable": true,
+            "usage": "majordomus intent validate [OPTIONS]",
+            "about": "Every finding over the intents; exit 10 when any is a failure",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-validate",
+                "title": "Check the intents before anything relies on them",
+                "description": "An intent naming no milestone, a milestone or evidence reference that resolves to nothing, governance that names nothing: each a failure, and exit 10. A milestone no intent serves is a warning.",
+                "argv": [
+                  "intent",
+                  "validate"
+                ],
+                "command": "majordomus intent validate",
+                "setup": [],
+                "expectation": "exits 0; prints intent(s), valid"
+              }
+            ],
+            "subcommands": []
+          },
+          {
+            "path": [
+              "majordomus",
+              "intent",
+              "preflight"
+            ],
+            "route": "/docs/cli/intent/preflight/",
+            "executable": true,
+            "usage": "majordomus intent preflight [OPTIONS]",
+            "about": "Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none",
+            "args": [
+              {
+                "name": "issue",
+                "long": "issue",
+                "positional": false,
+                "help": "The issue the work executes",
+                "value_name": "ISSUE",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "paths",
+                "long": "path",
+                "positional": false,
+                "help": "A path the work will touch; repeat for each",
+                "value_name": "PATHS",
+                "takes_value": true,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "intent-preflight",
+                "title": "Which intent the work on an issue serves",
+                "description": "Issue to milestone to intent, each link named, with the governance the intent loads. A missing link is a refusal naming it, and exit 10.",
+                "argv": [
+                  "intent",
+                  "preflight",
+                  "--issue",
+                  "I0001"
+                ],
+                "command": "majordomus intent preflight --issue I0001",
+                "setup": [],
+                "expectation": "exits 0; prints serves, fixture-intent"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -74321,6 +75995,46 @@
         "read_only": true,
         "input": "Empty",
         "output": "Health"
+      },
+      {
+        "name": "majordomus_intents",
+        "id": "intents.list",
+        "title": "Every intent, with its derived stage",
+        "description": "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "IntentList"
+      },
+      {
+        "name": "majordomus_intent_preflight",
+        "id": "intents.preflight",
+        "title": "Which intent a piece of work serves",
+        "description": "Given the issue a piece of work executes, or the paths it will touch, the intents it serves — issue to milestone to intent, each link named — and the governance those intents load; or a refusal naming the first link that is missing: an issue that does not exist, paths no open issue covers, a milestone no intent names.",
+        "kind": "query",
+        "read_only": true,
+        "input": "IntentPreflightInput",
+        "output": "IntentPreflight"
+      },
+      {
+        "name": "majordomus_intent_record",
+        "id": "intents.record",
+        "title": "One intent, with everything derived about it",
+        "description": "One intent in full: its statement and invariants as authored, each milestone with the status the plan derives, each satisfaction criterion with the state of its evidence and the command that reproduces it, and the stage. The record's own file stays at `majordomus://intent/<id>`.",
+        "kind": "query",
+        "read_only": true,
+        "input": "IntentRecordInput",
+        "output": "IntentView"
+      },
+      {
+        "name": "majordomus_intent_validate",
+        "id": "intents.validate",
+        "title": "What the intent model refuses",
+        "description": "Every finding over the intents: an intent naming no milestone or no criterion, a milestone that does not resolve, a criterion with no evidence reference or one that names nothing this repository holds, governance that does not resolve, a successor that is not an intent, a file name that disagrees with its id — each a failure — and a milestone no intent serves, a warning.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "IntentValidation"
       },
       {
         "name": "majordomus_lifecycle_closed",
@@ -75074,6 +76788,13 @@
         "kind": "query"
       },
       {
+        "uri": "majordomus://intents",
+        "name": "intents",
+        "id": "intents.list",
+        "title": "Every intent, with its derived stage",
+        "kind": "query"
+      },
+      {
         "uri": "majordomus://lifecycle/episodes",
         "name": "lifecycle-episodes",
         "id": "lifecycle.episodes",
@@ -75538,6 +77259,30 @@
         "method": "GET",
         "path": "/api/v1/health",
         "id": "health.report",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/intents",
+        "id": "intents.list",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/intents/preflight",
+        "id": "intents.preflight",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/intents/record",
+        "id": "intents.record",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
+        "path": "/api/v1/intents/validate",
+        "id": "intents.validate",
         "kind": "query"
       },
       {
@@ -78121,6 +79866,122 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/health"
+      },
+      {
+        "key": "intents.list|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "intents.list",
+        "module": "intents",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "intents.list|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "intents.list",
+        "module": "intents",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_intents"
+      },
+      {
+        "key": "intents.list|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "intents.list",
+        "module": "intents",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/intents"
+      },
+      {
+        "key": "intents.preflight|direct|first-issue",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "intents.preflight",
+        "module": "intents",
+        "case": "first-issue",
+        "cached": false
+      },
+      {
+        "key": "intents.preflight|mcp|first-issue",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "intents.preflight",
+        "module": "intents",
+        "case": "first-issue",
+        "cached": false,
+        "tool": "majordomus_intent_preflight"
+      },
+      {
+        "key": "intents.preflight|http|first-issue",
+        "kind": "capability",
+        "transport": "http",
+        "id": "intents.preflight",
+        "module": "intents",
+        "case": "first-issue",
+        "cached": false,
+        "route": "GET /api/v1/intents/preflight"
+      },
+      {
+        "key": "intents.record|direct|first-intent",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "intents.record",
+        "module": "intents",
+        "case": "first-intent",
+        "cached": false
+      },
+      {
+        "key": "intents.record|mcp|first-intent",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "intents.record",
+        "module": "intents",
+        "case": "first-intent",
+        "cached": false,
+        "tool": "majordomus_intent_record"
+      },
+      {
+        "key": "intents.record|http|first-intent",
+        "kind": "capability",
+        "transport": "http",
+        "id": "intents.record",
+        "module": "intents",
+        "case": "first-intent",
+        "cached": false,
+        "route": "GET /api/v1/intents/record"
+      },
+      {
+        "key": "intents.validate|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "intents.validate",
+        "module": "intents",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "intents.validate|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "intents.validate",
+        "module": "intents",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_intent_validate"
+      },
+      {
+        "key": "intents.validate|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "intents.validate",
+        "module": "intents",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/intents/validate"
       },
       {
         "key": "lifecycle.closed|direct|default",
@@ -81773,6 +83634,90 @@
           "cases": 1
         },
         {
+          "subject": "intents.list",
+          "module": "intents",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.list",
+          "module": "intents",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.list",
+          "module": "intents",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.preflight",
+          "module": "intents",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.preflight",
+          "module": "intents",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.preflight",
+          "module": "intents",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.record",
+          "module": "intents",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.record",
+          "module": "intents",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.record",
+          "module": "intents",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.validate",
+          "module": "intents",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.validate",
+          "module": "intents",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "intents.validate",
+          "module": "intents",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "lifecycle.closed",
           "module": "lifecycle",
           "transport": "direct",
@@ -83192,22 +85137,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 113,
-          "covered": 108,
+          "required": 117,
+          "covered": 112,
           "missing": 0,
           "waived": 5,
           "inapplicable": 0
         },
         "http": {
-          "required": 112,
-          "covered": 108,
+          "required": 116,
+          "covered": 112,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 110,
-          "covered": 106,
+          "required": 114,
+          "covered": 110,
           "missing": 0,
           "waived": 4,
           "inapplicable": 0
@@ -83220,8 +85165,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 348,
-          "covered": 335,
+          "required": 360,
+          "covered": 347,
           "missing": 0,
           "waived": 13,
           "inapplicable": 0
