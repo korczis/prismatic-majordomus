@@ -8371,7 +8371,7 @@ components:
       required:
         - commit
         - dirty
-      description: "The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation."
+      description: "The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation.\n\n```\nuse majordomus_cli::served::BuildIdentity;\nlet id = BuildIdentity {\n    commit: \"a\".repeat(40),\n    dirty: false,\n    source_version: Some(\"0.7.0\".into()),\n    source_hash: None,\n};\n// what is judged is the commit and whether the tree it was built from was committed\nassert_eq!(id.commit.len(), 40);\nassert!(!id.dirty);\n```"
     BuildReport:
       type: object
       properties:
@@ -10897,7 +10897,7 @@ components:
         - deployment
         - observation
         - now
-      description: "One deployment's newest record and what it proves about the commit asked."
+      description: "One deployment's newest record and what it proves about the commit asked. Both are\ncarried: the recorded judgement is what was seen, `now` is what it still proves.\n\n```\nuse majordomus_cli::capability::builtin::served::DeploymentStanding;\nuse majordomus_cli::served::ServedVerdict;\nlet json = r#\"{\"deployment\":\"pages\",\"observation\":{\"schema\":\"majordomus.served-observation/v1\",\n  \"deployment\":\"pages\",\"url\":\"https://majordomus.dev/build.json\",\n  \"expected\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"verdict\":\"served\",\n  \"reason\":\"the deployment serves aaaaaaaaaaaa\",\"at\":\"1970-01-01T00:00:00Z\"},\n  \"now\":{\"verdict\":\"stale\",\"reason\":\"it does not contain bbbbbbbbbbbb\"}}\"#;\nlet s: DeploymentStanding = serde_json::from_str(json).unwrap();\n// seen as served, and no longer proving the commit asked about\nassert_eq!(s.observation.judgement.verdict, ServedVerdict::Served);\nassert_eq!(s.now.verdict, ServedVerdict::Stale);\n```"
     DeploymentStatus:
       oneOf:
         - type: string
@@ -14928,7 +14928,7 @@ components:
       required:
         - verdict
         - reason
-      description: "The judgement of one served identity against one expected commit, with its reason."
+      description: "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
     KindCount:
       type: object
       properties:
@@ -16673,7 +16673,7 @@ components:
         - verdict
         - reason
         - at
-      description: "One observation of one deployment, as recorded."
+      description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
     OpenSession:
       type: object
       properties:
@@ -21023,7 +21023,7 @@ components:
         - observations
         - unreadable
         - deployments
-      description: "Every deployment's standing against one commit."
+      description: "Every deployment's standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n# struct A; impl Ancestry for A {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &\"a\".repeat(40), None, &A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \"nothing observed yet\");\nassert_eq!(s.unreadable, 0);\n```"
     ServedVerdict:
       oneOf:
         - type: string
@@ -21044,7 +21044,7 @@ components:
         - type: string
           const: undecided
           description: "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer."
-      description: What an observation says about the expected commit.
+      description: "What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```"
     ServerStanding:
       oneOf:
         - type: string

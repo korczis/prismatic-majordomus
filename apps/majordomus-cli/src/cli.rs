@@ -635,11 +635,17 @@ pub enum EvidenceCommand {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus served`.
+/// `majordomus served`: what a deployment serves, observed from outside and judged against
+/// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
+/// and the output shape.
 ///
 /// ```
 /// use clap::Parser;
-/// use majordomus_cli::cli::{Cli, Command, ServedCommand};
+/// use majordomus_cli::cli::{Cli, Command, ServedArgs, ServedCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "served", "show"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// let _: ServedArgs = args;   // the group's own arguments
 ///
 /// fn parse(args: &[&str]) -> ServedCommand {
 ///     let Command::Served(a) = Cli::try_parse_from(args).unwrap().command else { panic!() };
@@ -671,7 +677,16 @@ pub struct ServedArgs {
 
 #[derive(Debug, Subcommand)]
 /// The subcommands of `majordomus served`: `observe` is the command line of
-/// `served.observe` and `show` of `served.show`.
+/// `served.observe` and `show` of `served.show`. `observe` is the only one that reaches the
+/// network, and it is a command line and nothing else.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ServedCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "served", "observe", "--dry-run"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// assert!(matches!(args.command, ServedCommand::Observe { dry_run: true, .. }));
+/// ```
 pub enum ServedCommand {
     /// Probe the build identity a deployment serves, judge it against a commit and record it
     Observe {

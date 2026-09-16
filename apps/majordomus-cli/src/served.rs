@@ -62,6 +62,19 @@ pub const DEFAULT_PROBE_SECONDS: u64 = 10;
 /// The build identity a deployment serves, as far as this module relies on it. Other
 /// fields of the served document are ignored rather than refused: the document is written
 /// by another program, and a field it adds is not a malformation.
+///
+/// ```
+/// use majordomus_cli::served::BuildIdentity;
+/// let id = BuildIdentity {
+///     commit: "a".repeat(40),
+///     dirty: false,
+///     source_version: Some("0.7.0".into()),
+///     source_hash: None,
+/// };
+/// // what is judged is the commit and whether the tree it was built from was committed
+/// assert_eq!(id.commit.len(), 40);
+/// assert!(!id.dirty);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct BuildIdentity {
     /// The full commit the served build was made from.
@@ -77,7 +90,14 @@ pub struct BuildIdentity {
     pub source_hash: Option<String>,
 }
 
-/// Why a served body is not a build identity.
+/// Why a served body is not a build identity. The reason is the value: a refusal that says
+/// only "invalid" sends the reader to look at the site by hand.
+///
+/// ```
+/// use majordomus_cli::served::{BuildIdentity, Malformed};
+/// let Malformed(why) = BuildIdentity::parse(b"<html>").unwrap_err();
+/// assert!(why.contains("not JSON"), "{why}");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Malformed(pub String);
 
@@ -129,7 +149,16 @@ impl BuildIdentity {
 
 // ---------------------------------------------------------------- the verdict
 
-/// What an observation says about the expected commit.
+/// What an observation says about the expected commit. Only [`ServedVerdict::Served`] is a
+/// proof; the other five are each a different reason the question was not answered yes.
+///
+/// ```
+/// use majordomus_cli::served::ServedVerdict;
+/// // a measured no and an unanswered question are never spelled the same
+/// assert!(ServedVerdict::Served.passes());
+/// assert_eq!(ServedVerdict::Stale.exit_code(), 10);
+/// assert_eq!(ServedVerdict::Unreachable.exit_code(), 12);
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ServedVerdict {
@@ -149,7 +178,14 @@ pub enum ServedVerdict {
 }
 
 impl ServedVerdict {
-    /// The word every surface prints.
+    /// The word every surface prints — the command line, the HTTP body and the MCP
+    /// result all render the verdict through this one spelling.
+    ///
+    /// ```
+    /// use majordomus_cli::served::ServedVerdict;
+    /// assert_eq!(ServedVerdict::Undecided.as_str(), "undecided");
+    /// assert_eq!(ServedVerdict::Dirty.as_str(), "dirty");
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             ServedVerdict::Served => "served",
@@ -162,6 +198,14 @@ impl ServedVerdict {
     }
 
     /// Whether this verdict proves the expected commit is deployed.
+    ///
+    /// ```
+    /// use majordomus_cli::served::ServedVerdict;
+    /// assert!(ServedVerdict::Served.passes());
+    /// // a site nobody could reach is not a site that serves the commit
+    /// assert!(!ServedVerdict::Unreachable.passes());
+    /// assert!(!ServedVerdict::Dirty.passes());
+    /// ```
     pub fn passes(self) -> bool {
         matches!(self, ServedVerdict::Served)
     }
@@ -169,6 +213,13 @@ impl ServedVerdict {
     /// The exit status the command line reports it with: 0 a proof, 10 a measured "no",
     /// 12 a question that could not be answered. The same three codes `scripts/pages
     /// verify` uses, so a caller of either reads one convention.
+    ///
+    /// ```
+    /// use majordomus_cli::served::ServedVerdict;
+    /// assert_eq!(ServedVerdict::Served.exit_code(), 0);
+    /// assert_eq!(ServedVerdict::Dirty.exit_code(), 10);      // measured, and a no
+    /// assert_eq!(ServedVerdict::Malformed.exit_code(), 12);  // not measured at all
+    /// ```
     pub fn exit_code(self) -> i32 {
         match self {
             ServedVerdict::Served => 0,
@@ -179,16 +230,57 @@ impl ServedVerdict {
 }
 
 /// What git knows about commits, asked through a trait so that the judgement is testable
-/// without a repository.
+/// without a repository. Both answers are three-valued: `None` is "git could not be asked",
+/// which is not a `false`, and collapsing the two is how a record from a history this clone
+/// has never seen gets read as current.
+///
+/// ```
+/// use majordomus_cli::served::Ancestry;
+///
+/// struct OneCommit;
+/// impl Ancestry for OneCommit {
+///     fn has(&self, c: &str) -> Option<bool> { Some(c == "a".repeat(40)) }
+///     fn contains(&self, d: &str, a: &str) -> Option<bool> { Some(d == a) }
+/// }
+/// assert_eq!(OneCommit.has(&"a".repeat(40)), Some(true));
+/// assert_eq!(OneCommit.has(&"f".repeat(40)), Some(false));
+/// ```
 pub trait Ancestry {
     /// Does this clone hold `commit`? `None` when git cannot be asked.
+    ///
+    /// ```
+    /// use majordomus_cli::served::{Ancestry, GitAncestry};
+    /// use std::path::Path;
+    /// // a sha no repository holds resolves to a `false`, not to an error
+    /// let git = GitAncestry { root: Path::new(env!("CARGO_MANIFEST_DIR")) };
+    /// assert_eq!(git.has(&"f".repeat(40)), Some(false));
+    /// ```
     fn has(&self, commit: &str) -> Option<bool>;
     /// Does `descendant` contain `ancestor` (equal, or reachable from it)? `None` when git
     /// cannot be asked.
+    ///
+    /// ```
+    /// use majordomus_cli::served::{Ancestry, GitAncestry};
+    /// use std::path::Path;
+    /// let git = GitAncestry { root: Path::new(env!("CARGO_MANIFEST_DIR")) };
+    /// // every commit contains itself, which is what makes an exact match a proof
+    /// let head = String::from_utf8(
+    ///     std::process::Command::new("git").args(["-C", env!("CARGO_MANIFEST_DIR"), "rev-parse", "HEAD"])
+    ///         .output().unwrap().stdout).unwrap();
+    /// let head = head.trim();
+    /// assert_eq!(git.contains(head, head), Some(true));
+    /// ```
     fn contains(&self, descendant: &str, ancestor: &str) -> Option<bool>;
 }
 
-/// The repository's own git.
+/// The [`Ancestry`] the executable uses: this repository's own git, asked read-only.
+///
+/// ```
+/// use majordomus_cli::served::{Ancestry, GitAncestry};
+/// use std::path::Path;
+/// let git = GitAncestry { root: Path::new(env!("CARGO_MANIFEST_DIR")) };
+/// assert_eq!(git.has(&"0".repeat(40)), Some(false));
+/// ```
 pub struct GitAncestry<'a> {
     /// The checkout asked.
     pub root: &'a Path,
@@ -205,7 +297,22 @@ impl Ancestry for GitAncestry<'_> {
     }
 }
 
-/// The judgement of one served identity against one expected commit, with its reason.
+/// The judgement of one served identity against one expected commit, with its reason. The
+/// reason travels with the verdict so that every surface can say *why* without re-deriving
+/// it.
+///
+/// ```
+/// use majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};
+/// let j: Judgement = judge(&Err(Fetched::Unreachable("timeout".into())), &"a".repeat(40), &fake());
+/// assert_eq!(j.verdict, ServedVerdict::Unreachable);
+/// assert!(j.reason.contains("timeout"));
+/// # use majordomus_cli::served::Ancestry;
+/// # struct N; impl Ancestry for N {
+/// #     fn has(&self, _: &str) -> Option<bool> { Some(true) }
+/// #     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }
+/// # }
+/// # fn fake() -> impl Ancestry { N }
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Judgement {
     /// The verdict.
@@ -214,7 +321,16 @@ pub struct Judgement {
     pub reason: String,
 }
 
-/// What the probe received.
+/// What the probe received: a body, or nothing and the reason. Nothing received is carried
+/// as a value rather than an error, because "the site could not be reached" is an answer
+/// the judgement acts on.
+///
+/// ```
+/// use majordomus_cli::served::Fetched;
+/// let got = Fetched::Unreachable("curl exited 7".into());
+/// assert!(matches!(got, Fetched::Unreachable(ref why) if why.contains("7")));
+/// assert!(matches!(Fetched::Body(b"{}".to_vec()), Fetched::Body(_)));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Fetched {
     /// A body arrived.
@@ -228,6 +344,26 @@ pub enum Fetched {
 /// The order of the questions is the order in which each makes the next meaningless: no
 /// body, no identity, no committed tree, no local knowledge of the served commit, and only
 /// then containment.
+///
+/// ```
+/// use majordomus_cli::served::{judge, Ancestry, BuildIdentity, ServedVerdict};
+///
+/// struct Linear;  // a <- b
+/// impl Ancestry for Linear {
+///     fn has(&self, c: &str) -> Option<bool> { Some(c.starts_with('a') || c.starts_with('b')) }
+///     fn contains(&self, d: &str, a: &str) -> Option<bool> { Some(d >= a) }
+/// }
+/// let id = |c: &str, dirty| Ok(BuildIdentity {
+///     commit: c.into(), dirty, source_version: None, source_hash: None });
+/// let (a, b) = ("a".repeat(40), "b".repeat(40));
+///
+/// // the newer build proves the older commit, because it contains it
+/// assert_eq!(judge(&id(&b, false), &a, &Linear).verdict, ServedVerdict::Served);
+/// // the older build does not prove the newer commit
+/// assert_eq!(judge(&id(&a, false), &b, &Linear).verdict, ServedVerdict::Stale);
+/// // and a build from an uncommitted tree proves no commit at all, not even its own
+/// assert_eq!(judge(&id(&b, true), &b, &Linear).verdict, ServedVerdict::Dirty);
+/// ```
 pub fn judge(
     served: &Result<BuildIdentity, Fetched>,
     expected: &str,
@@ -313,13 +449,39 @@ fn short(sha: &str) -> &str {
 
 // ---------------------------------------------------------------- fetching
 
-/// How a served identity is fetched.
+/// How a served identity is fetched. Behind a trait so that every verdict can be tested
+/// without a network, and so that the one implementation that does reach the network is a
+/// single, reviewable place.
+///
+/// ```
+/// use majordomus_cli::served::{Fetch, Fetched};
+/// struct Canned;
+/// impl Fetch for Canned {
+///     fn fetch(&self, _: &str) -> Fetched { Fetched::Body(b"{}".to_vec()) }
+/// }
+/// assert_eq!(Canned.fetch("https://example.test/build.json"), Fetched::Body(b"{}".to_vec()));
+/// ```
 pub trait Fetch {
-    /// Fetches `url` once, bounded.
+    /// Fetches `url` once, bounded. An implementation never retries: a caller that wants a
+    /// second look decides that itself, with its own clock.
+    ///
+    /// ```
+    /// use majordomus_cli::served::{Curl, Fetch, Fetched};
+    /// // nothing listens on the discard port, so the probe answers with a reason
+    /// let got = Curl { max_seconds: 2 }.fetch("http://127.0.0.1:9/build.json");
+    /// assert!(matches!(got, Fetched::Unreachable(_)));
+    /// ```
     fn fetch(&self, url: &str) -> Fetched;
 }
 
-/// `curl`, run with a fixed argument vector: the URL is an argument, never shell text.
+/// `curl`, run with a fixed argument vector: the URL is an argument, never shell text, and
+/// the probe is bounded so that an unreachable host costs a known number of seconds.
+///
+/// ```
+/// use majordomus_cli::served::{Curl, Fetch, Fetched};
+/// let got = Curl { max_seconds: 2 }.fetch("http://127.0.0.1:9/build.json");
+/// assert!(matches!(got, Fetched::Unreachable(ref why) if why.contains("curl")), "{got:?}");
+/// ```
 pub struct Curl {
     /// The bound on one probe, in seconds.
     pub max_seconds: u64,
@@ -363,6 +525,13 @@ pub fn identity_url(base: &str, identity: &str) -> String {
 /// Refuses a base URL that is not plain `http(s)` with a host. The value reaches `curl` as an
 /// argument, so this is not what keeps a shell safe; it is what keeps `file://` and friends
 /// from being read as a deployment.
+///
+/// ```
+/// use majordomus_cli::served::check_base;
+/// assert!(check_base("https://majordomus.dev").is_ok());
+/// assert!(check_base("http://127.0.0.1:8080/x").is_ok());
+/// assert!(check_base("file:///etc/passwd").is_err());
+/// ```
 pub fn check_base(base: &str) -> Result<(), String> {
     let rest = base
         .strip_prefix("https://")
@@ -377,7 +546,24 @@ pub fn check_base(base: &str) -> Result<(), String> {
 
 // ---------------------------------------------------------------- recording
 
-/// One observation of one deployment, as recorded.
+/// One observation of one deployment, as recorded: what was asked, what was served, what
+/// was judged and when. Everything needed to judge it again later is in the record, which
+/// is what lets [`Observation::rejudge`] answer without probing.
+///
+/// ```
+/// use majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};
+/// use std::{path::Path, time::SystemTime};
+/// struct None_;
+/// impl Fetch for None_ {
+///     fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable("no route".into()) }
+/// }
+/// let git = GitAncestry { root: Path::new(env!("CARGO_MANIFEST_DIR")) };
+/// let o: Observation = observe("pages", "https://s", "build.json", &"a".repeat(40), &None_,
+///                               &git, SystemTime::UNIX_EPOCH);
+/// assert_eq!(o.schema, OBSERVATION_SCHEMA);
+/// assert_eq!(o.url, "https://s/build.json");
+/// assert_eq!(o.at, "1970-01-01T00:00:00Z");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct Observation {
     /// Always [`OBSERVATION_SCHEMA`].
@@ -401,7 +587,30 @@ pub struct Observation {
 
 impl Observation {
     /// Re-judges this record against `expected` now. A served commit keeps proving what it
-    /// contains; a record that received nothing keeps proving nothing.
+    /// contains; a record that received nothing keeps proving nothing. This is where a
+    /// proof goes stale: nothing about the record changes, the commit asked about does.
+    ///
+    /// ```
+    /// use majordomus_cli::served::{observe, Ancestry, Fetch, Fetched, ServedVerdict};
+    /// use std::time::SystemTime;
+    /// struct Linear;  // a <- b
+    /// impl Ancestry for Linear {
+    ///     fn has(&self, c: &str) -> Option<bool> { Some(c.starts_with('a') || c.starts_with('b')) }
+    ///     fn contains(&self, d: &str, a: &str) -> Option<bool> { Some(d >= a) }
+    /// }
+    /// let (a, b) = ("a".repeat(40), "b".repeat(40));
+    /// struct ServesA(String);
+    /// impl Fetch for ServesA {
+    ///     fn fetch(&self, _: &str) -> Fetched {
+    ///         Fetched::Body(format!(r#"{{"commit":"{}","dirty":false}}"#, self.0).into_bytes())
+    ///     }
+    /// }
+    /// let o = observe("pages", "https://s", "build.json", &a, &ServesA(a.clone()), &Linear,
+    ///                 SystemTime::UNIX_EPOCH);
+    /// assert_eq!(o.judgement.verdict, ServedVerdict::Served);
+    /// // the same record, asked about a commit the served build does not contain
+    /// assert_eq!(o.rejudge(&b, &Linear).verdict, ServedVerdict::Stale);
+    /// ```
     pub fn rejudge(&self, expected: &str, git: &dyn Ancestry) -> Judgement {
         let served = match &self.served {
             Some(id) => Ok(id.clone()),
@@ -414,7 +623,26 @@ impl Observation {
     }
 }
 
-/// Probes `base` once and judges the result against `expected`.
+/// Probes `base` once and judges the result against `expected`, returning the record.
+/// Writes nothing: [`append`] is what keeps it.
+///
+/// ```
+/// use majordomus_cli::served::{observe, Ancestry, Fetch, Fetched, ServedVerdict};
+/// use std::time::SystemTime;
+/// struct Nothing;
+/// impl Fetch for Nothing {
+///     fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable("no route".into()) }
+/// }
+/// struct Any;
+/// impl Ancestry for Any {
+///     fn has(&self, _: &str) -> Option<bool> { Some(true) }
+///     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }
+/// }
+/// let o = observe("pages", "https://s", "build.json", &"a".repeat(40), &Nothing, &Any,
+///                 SystemTime::UNIX_EPOCH);
+/// assert_eq!(o.judgement.verdict, ServedVerdict::Unreachable);
+/// assert!(o.served.is_none());
+/// ```
 pub fn observe(
     deployment: &str,
     base: &str,
@@ -447,7 +675,24 @@ pub fn observe(
     }
 }
 
-/// Appends `obs` to the checkout's observation file, creating it.
+/// Appends `obs` to the checkout's observation file, creating it. The file is
+/// checkout-local and never tracked, so a record of a deployment cannot end up describing
+/// the tree it is committed into.
+///
+/// ```
+/// use majordomus_cli::served::{append, observe, read_all, Ancestry, Fetch, Fetched};
+/// use std::time::SystemTime;
+/// # struct N; impl Fetch for N {
+/// #     fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable("x".into()) } }
+/// # struct A; impl Ancestry for A {
+/// #     fn has(&self, _: &str) -> Option<bool> { Some(true) }
+/// #     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }
+/// let dir = tempfile::tempdir().unwrap();
+/// let o = observe("pages", "https://s", "build.json", &"a".repeat(40), &N, &A,
+///                 SystemTime::UNIX_EPOCH);
+/// append(dir.path(), &o).unwrap();
+/// assert_eq!(read_all(dir.path()).0, vec![o]);
+/// ```
 pub fn append(root: &Path, obs: &Observation) -> std::io::Result<PathBuf> {
     let path = root.join(OBSERVATIONS_PATH);
     if let Some(dir) = path.parent() {
@@ -464,7 +709,15 @@ pub fn append(root: &Path, obs: &Observation) -> std::io::Result<PathBuf> {
 }
 
 /// Every readable observation of the checkout, oldest first, and the number of lines that
-/// could not be read. A torn or foreign line is counted, never silently dropped.
+/// could not be read. A torn or foreign line is counted, never silently dropped: a reader
+/// that cannot tell "nothing recorded" from "the record is damaged" acts on the wrong one.
+///
+/// ```
+/// use majordomus_cli::served::read_all;
+/// let dir = tempfile::tempdir().unwrap();
+/// // a checkout that has observed nothing answers with no observations, not an error
+/// assert_eq!(read_all(dir.path()), (Vec::new(), 0));
+/// ```
 pub fn read_all(root: &Path) -> (Vec<Observation>, usize) {
     let Ok(text) = std::fs::read_to_string(root.join(OBSERVATIONS_PATH)) else {
         return (Vec::new(), 0);
@@ -480,7 +733,14 @@ pub fn read_all(root: &Path) -> (Vec<Observation>, usize) {
     (out, unreadable)
 }
 
-/// The newest observation of `deployment`, if any.
+/// The newest observation of `deployment`, if any. The newest is what a reader judges by;
+/// the older ones are the history of what the deployment has served.
+///
+/// ```
+/// use majordomus_cli::served::latest;
+/// // nothing observed, nothing to judge
+/// assert!(latest(&[], "pages").is_none());
+/// ```
 pub fn latest<'a>(all: &'a [Observation], deployment: &str) -> Option<&'a Observation> {
     all.iter().rev().find(|o| o.deployment == deployment)
 }

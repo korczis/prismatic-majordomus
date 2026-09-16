@@ -9,6 +9,21 @@
 //! - `served.show` is a read: it asks no network, writes nothing and re-judges what was
 //!   recorded against the commit asked about, which is what makes an old observation go
 //!   stale without anyone deciding it has (see [`crate::served`]).
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::served;
+//! use majordomus_cli::capability::model::CapabilityKind;
+//!
+//! let m = served::module();
+//! let observe = m.capabilities.iter().find(|c| c.capability.id.as_str() == "served.observe").unwrap();
+//! // the operation that reaches the network is on no surface a client can call
+//! assert_eq!(observe.capability.kind, CapabilityKind::Command);
+//! assert!(observe.capability.exposure.http.is_none());
+//! assert!(observe.capability.exposure.mcp.is_none());
+//!
+//! let show = m.capabilities.iter().find(|c| c.capability.id.as_str() == "served.show").unwrap();
+//! assert_eq!(show.capability.exposure.http.as_ref().unwrap().path, "/api/v1/served");
+//! ```
 
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
@@ -35,7 +50,9 @@ pub const SERVED_URI: &str = "majordomus://served";
 /// The deployment name an observation carries when the caller names none: the public site.
 pub const DEFAULT_DEPLOYMENT: &str = "pages";
 
-/// The input of `served.observe`.
+/// The input of `served.observe`: which deployment, where it is, which commit is expected
+/// and how long the probe may take. Everything is optional — the defaults are this
+/// repository's own site, its `build.json` and `HEAD`.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::served::ObserveInput;
@@ -67,7 +84,20 @@ pub struct ObserveInput {
     pub dry_run: bool,
 }
 
-/// What `served.observe` did.
+/// What `served.observe` did: the observation, where it was recorded, and the exit status
+/// the command line reports the verdict with.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served::Observed;
+/// // the shape a caller reads: a dry run judges and records nothing
+/// let json = r#"{"observation":{"schema":"majordomus.served-observation/v1",
+///   "deployment":"pages","url":"https://majordomus.dev/build.json",
+///   "expected":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","verdict":"unreachable",
+///   "reason":"nothing was received","at":"1970-01-01T00:00:00Z"},"exit_code":12}"#;
+/// let got: Observed = serde_json::from_str(json).unwrap();
+/// assert_eq!(got.exit_code, 12);
+/// assert!(got.recorded.is_none());
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct Observed {
     /// The observation, with its judgement.
@@ -79,7 +109,17 @@ pub struct Observed {
     pub exit_code: i32,
 }
 
-/// The input of `served.show`.
+/// The input of `served.show`: the commit every record is re-judged against, and
+/// optionally a single deployment. `HEAD` and every deployment when absent.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served::ShowInput;
+/// let input: ShowInput = serde_json::from_str(r#"{"deployment":"pages"}"#).unwrap();
+/// assert_eq!(input.deployment.as_deref(), Some("pages"));
+/// assert!(input.commit.is_none(), "absent means HEAD");
+/// // a field this operation does not have is refused rather than ignored
+/// assert!(serde_json::from_str::<ShowInput>(r#"{"url":"https://x"}"#).is_err());
+/// ```
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ShowInput {
@@ -92,7 +132,22 @@ pub struct ShowInput {
     pub deployment: Option<String>,
 }
 
-/// One deployment's newest record and what it proves about the commit asked.
+/// One deployment's newest record and what it proves about the commit asked. Both are
+/// carried: the recorded judgement is what was seen, `now` is what it still proves.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served::DeploymentStanding;
+/// use majordomus_cli::served::ServedVerdict;
+/// let json = r#"{"deployment":"pages","observation":{"schema":"majordomus.served-observation/v1",
+///   "deployment":"pages","url":"https://majordomus.dev/build.json",
+///   "expected":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","verdict":"served",
+///   "reason":"the deployment serves aaaaaaaaaaaa","at":"1970-01-01T00:00:00Z"},
+///   "now":{"verdict":"stale","reason":"it does not contain bbbbbbbbbbbb"}}"#;
+/// let s: DeploymentStanding = serde_json::from_str(json).unwrap();
+/// // seen as served, and no longer proving the commit asked about
+/// assert_eq!(s.observation.judgement.verdict, ServedVerdict::Served);
+/// assert_eq!(s.now.verdict, ServedVerdict::Stale);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct DeploymentStanding {
     /// The deployment name.
@@ -104,7 +159,21 @@ pub struct DeploymentStanding {
     pub now: Judgement,
 }
 
-/// Every deployment's standing against one commit.
+/// Every deployment's standing against one commit: the answer `served.show` gives on the
+/// command line, over HTTP and to an MCP client, from one derivation.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served::{standing, ServedStanding};
+/// use majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};
+/// # struct A; impl Ancestry for A {
+/// #     fn has(&self, _: &str) -> Option<bool> { Some(true) }
+/// #     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }
+/// let dir = tempfile::tempdir().unwrap();
+/// let s: ServedStanding = standing(dir.path(), &"a".repeat(40), None, &A);
+/// assert_eq!(s.observations, OBSERVATIONS_PATH);
+/// assert!(s.deployments.is_empty(), "nothing observed yet");
+/// assert_eq!(s.unreadable, 0);
+/// ```
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct ServedStanding {
     /// The full commit every record was re-judged against.
@@ -221,6 +290,35 @@ fn show(ctx: &Context, input: ShowInput) -> Result<ServedStanding, CapabilityErr
 
 /// The standing of every recorded deployment against `expected`. Public so that a consumer
 /// that judges an intent's deployment criterion reads the same derivation as this read.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served::standing;
+/// use majordomus_cli::served::{append, observe, Ancestry, Fetch, Fetched, ServedVerdict};
+/// use std::time::SystemTime;
+/// struct Linear;  // a <- b
+/// impl Ancestry for Linear {
+///     fn has(&self, c: &str) -> Option<bool> { Some(c.starts_with('a') || c.starts_with('b')) }
+///     fn contains(&self, d: &str, a: &str) -> Option<bool> { Some(d >= a) }
+/// }
+/// struct Serves(String);
+/// impl Fetch for Serves {
+///     fn fetch(&self, _: &str) -> Fetched {
+///         Fetched::Body(format!(r#"{{"commit":"{}","dirty":false}}"#, self.0).into_bytes())
+///     }
+/// }
+/// let (a, b) = ("a".repeat(40), "b".repeat(40));
+/// let dir = tempfile::tempdir().unwrap();
+/// let o = observe("pages", "https://s", "build.json", &a, &Serves(a.clone()), &Linear,
+///                 SystemTime::UNIX_EPOCH);
+/// append(dir.path(), &o).unwrap();
+///
+/// // the record still proves the commit it was taken against ...
+/// let now = standing(dir.path(), &a, None, &Linear);
+/// assert_eq!(now.deployments[0].now.verdict, ServedVerdict::Served);
+/// // ... and stops proving once the commit asked about moves past it
+/// let later = standing(dir.path(), &b, None, &Linear);
+/// assert_eq!(later.deployments[0].now.verdict, ServedVerdict::Stale);
+/// ```
 pub fn standing(
     root: &Path,
     expected: &str,
@@ -272,7 +370,15 @@ impl BenchmarkCases for ShowInput {
     }
 }
 
-/// The module.
+/// The module: `served.observe` (a command of the trusted command line) and `served.show`
+/// (a read on every surface).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::served;
+/// let ids: Vec<_> = served::module().capabilities.iter()
+///     .map(|c| c.capability.id.as_str().to_string()).collect();
+/// assert_eq!(ids, vec!["served.observe", "served.show"]);
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "served",
