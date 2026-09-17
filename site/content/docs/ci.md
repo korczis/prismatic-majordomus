@@ -27,8 +27,10 @@ flowchart LR
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
   plan --&gt; site["site"]
+  plan --&gt; interactions["interactions"]
+  plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
