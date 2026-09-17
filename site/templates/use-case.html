@@ -31,15 +31,15 @@
     <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">{{ u.scenario.setup }}</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
     {%- endif %}
     <div class="mt-4 grid gap-4 sm:grid-cols-3">
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
         <ul class="mt-2 space-y-1 text-sm text-heading">{% for g in u.scenario.given | default(value=[]) %}<li class="flex gap-2"><span aria-hidden="true">·</span><span>{{ g }}</span></li>{% endfor %}</ul>
       </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
         <ol class="mt-2 space-y-1 text-sm text-heading">{% for s in u.scenario.steps %}<li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">{{ loop.index }}</span>{% if s.run is defined %}<code class="min-w-0 break-words font-mono text-xs">majordomus {{ s.run | join(sep=" ") }}</code>{% else %}<span class="min-w-0 break-words text-xs">obligation <code class="font-mono">{{ s.obligation }}</code></span>{% endif %}</li>{% endfor %}</ol>
       </div>
-      <div class="rounded-base border border-default bg-neutral-primary-soft p-4">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
         <ul class="mt-2 space-y-1 text-sm text-heading">{% for t in u.scenario.then | default(value=[]) %}<li class="flex gap-2"><span aria-hidden="true">·</span><span>{{ t }}</span></li>{% endfor %}</ul>
       </div>

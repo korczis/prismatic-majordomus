@@ -324,7 +324,10 @@ for f in "$SF"/.ai/repo/use-cases/*.md "$SF"/.ai/repo/applications/*.md; do
   grep -q '^kind: context$' "$f" && continue
   case " $KEEP " in *" $(basename "$f" .md) "*) sed -i.bak 's/^applications: \[.*\]$/applications: []/' "$f"; rm -f "$f.bak" ;; *) rm -f "$f" ;; esac
 done
-( cd "$SF" && git init -q && git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm fixture ) || exit 1
+# the identity is the fixture's own: a runner has no global git identity, and a commit that
+# borrows the developer's passes on a laptop and fails on CI
+( cd "$SF" && git init -q && git config user.email case94@example.com && git config user.name case94 \
+    && git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm fixture ) || exit 1
 expect_exit 0 "$SF/scripts/generate-site-data" --out "$T/site-data" \
   || { echo "    the site generator refused the pruned catalogue"; exit 1; }
 CAT="$T/site-data/catalogue.json"
