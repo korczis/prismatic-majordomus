@@ -26,6 +26,15 @@
       "status": "conclude"
     },
     {
+      "id": "command:archive",
+      "kind": "command",
+      "label": "majordomus archive",
+      "summary": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
+      "route": "/commands/archive/",
+      "source": "share/commands.yaml",
+      "status": "inspect"
+    },
+    {
       "id": "command:bench",
       "kind": "command",
       "label": "majordomus bench",
@@ -186,6 +195,15 @@
       "route": "/commands/question/",
       "source": "share/commands.yaml",
       "status": "work"
+    },
+    {
+      "id": "command:recover",
+      "kind": "command",
+      "label": "majordomus recover",
+      "summary": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
+      "route": "/commands/recover/",
+      "source": "share/commands.yaml",
+      "status": "setup"
     },
     {
       "id": "command:rules",
@@ -544,7 +562,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "249 object(s) of the layer",
+      "summary": "251 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -565,6 +583,13 @@
       "id": "kind:knowledge",
       "kind": "kind",
       "label": "knowledge",
+      "summary": "1 object(s) of the layer",
+      "source": "share/kinds.yaml"
+    },
+    {
+      "id": "kind:mesh-declaration",
+      "kind": "kind",
+      "label": "mesh-declaration",
       "summary": "1 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
@@ -600,6 +625,13 @@
       "id": "kind:prompt",
       "kind": "kind",
       "label": "prompt",
+      "summary": "4 object(s) of the layer",
+      "source": "share/kinds.yaml"
+    },
+    {
+      "id": "kind:release-record",
+      "kind": "kind",
+      "label": "release-record",
       "summary": "4 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
@@ -664,6 +696,15 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:commands",
+      "kind": "module",
+      "label": "commands",
+      "summary": "Command graph",
+      "route": "/registry/modules/commands/",
+      "source": "apps/majordomus-cli/src/capability/builtin/commands.rs",
+      "status": "implemented"
+    },
+    {
       "id": "module:commit",
       "kind": "module",
       "label": "commit",
@@ -679,6 +720,33 @@
       "summary": "Continuity",
       "route": "/registry/modules/continuity/",
       "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:design",
+      "kind": "module",
+      "label": "design",
+      "summary": "Design system",
+      "route": "/registry/modules/design/",
+      "source": "apps/majordomus-cli/src/capability/builtin/design.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:devcontext",
+      "kind": "module",
+      "label": "devcontext",
+      "summary": "Development context",
+      "route": "/registry/modules/devcontext/",
+      "source": "apps/majordomus-cli/src/capability/builtin/devcontext.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:devtask",
+      "kind": "module",
+      "label": "devtask",
+      "summary": "Executable development scopes",
+      "route": "/registry/modules/devtask/",
+      "source": "apps/majordomus-cli/src/capability/builtin/devtask.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -700,12 +768,39 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:environment",
+      "kind": "module",
+      "label": "environment",
+      "summary": "Repository environment",
+      "route": "/registry/modules/environment/",
+      "source": "apps/majordomus-cli/src/capability/builtin/environment.rs",
+      "status": "behaviorally_verified"
+    },
+    {
       "id": "module:evidence",
       "kind": "module",
       "label": "evidence",
       "summary": "Evidence",
       "route": "/registry/modules/evidence/",
       "source": "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:executions",
+      "kind": "module",
+      "label": "executions",
+      "summary": "Executions",
+      "route": "/registry/modules/executions/",
+      "source": "apps/majordomus-cli/src/capability/builtin/executions.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:gates",
+      "kind": "module",
+      "label": "gates",
+      "summary": "Completion gates",
+      "route": "/registry/modules/gates/",
+      "source": "apps/majordomus-cli/src/capability/builtin/gates.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -724,6 +819,15 @@
       "summary": "Health",
       "route": "/registry/modules/health/",
       "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:lifecycle",
+      "kind": "module",
+      "label": "lifecycle",
+      "summary": "Session lifecycle",
+      "route": "/registry/modules/lifecycle/",
+      "source": "apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -754,6 +858,15 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:obligations",
+      "kind": "module",
+      "label": "obligations",
+      "summary": "Obligations",
+      "route": "/registry/modules/obligations/",
+      "source": "apps/majordomus-cli/src/capability/builtin/obligations.rs",
+      "status": "behaviorally_verified"
+    },
+    {
       "id": "module:peers",
       "kind": "module",
       "label": "peers",
@@ -772,6 +885,15 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:plan",
+      "kind": "module",
+      "label": "plan",
+      "summary": "The plan and its derivations",
+      "route": "/registry/modules/plan/",
+      "source": "apps/majordomus-cli/src/capability/builtin/plan.rs",
+      "status": "behaviorally_verified"
+    },
+    {
       "id": "module:product",
       "kind": "module",
       "label": "product",
@@ -779,6 +901,33 @@
       "route": "/registry/modules/product/",
       "source": "apps/majordomus-cli/src/capability/builtin/product.rs",
       "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:quality",
+      "kind": "module",
+      "label": "quality",
+      "summary": "Public API quality",
+      "route": "/registry/modules/quality/",
+      "source": "apps/majordomus-cli/src/capability/builtin/quality.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:recover",
+      "kind": "module",
+      "label": "recover",
+      "summary": "Recovery of the record stores",
+      "route": "/registry/modules/recover/",
+      "source": "apps/majordomus-cli/src/capability/builtin/recover.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:release",
+      "kind": "module",
+      "label": "release",
+      "summary": "Release",
+      "route": "/registry/modules/release/",
+      "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
+      "status": "implemented"
     },
     {
       "id": "module:repository",
@@ -805,6 +954,15 @@
       "summary": "Server",
       "route": "/registry/modules/server/",
       "source": "apps/majordomus-cli/src/capability/builtin/server.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:session_domain",
+      "kind": "module",
+      "label": "session_domain",
+      "summary": "The session domain",
+      "route": "/registry/modules/session-domain/",
+      "source": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -877,6 +1035,11 @@
   "edges": [
     {
       "source": "command:adr",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "command:archive",
       "target": "surface:cli",
       "kind": "exposed_through"
     },
@@ -967,6 +1130,11 @@
     },
     {
       "source": "command:question",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "command:recover",
       "target": "surface:cli",
       "kind": "exposed_through"
     },
@@ -1077,6 +1245,11 @@
     },
     {
       "source": "feature:cockpit",
+      "target": "module:design",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:cockpit",
       "target": "module:health",
       "kind": "made_of"
     },
@@ -1137,6 +1310,11 @@
     },
     {
       "source": "feature:context",
+      "target": "module:devcontext",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:context",
       "target": "module:directories",
       "kind": "made_of"
     },
@@ -1177,6 +1355,11 @@
     },
     {
       "source": "feature:continuity",
+      "target": "command:recover",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:continuity",
       "target": "command:session",
       "kind": "made_of"
     },
@@ -1208,6 +1391,21 @@
     {
       "source": "feature:continuity",
       "target": "module:continuity",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:continuity",
+      "target": "module:lifecycle",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:continuity",
+      "target": "module:recover",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:continuity",
+      "target": "module:session_domain",
       "kind": "made_of"
     },
     {
@@ -1323,6 +1521,11 @@
     {
       "source": "feature:declare-once",
       "target": "module:product",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:declare-once",
+      "target": "module:quality",
       "kind": "made_of"
     },
     {
@@ -1447,8 +1650,23 @@
     },
     {
       "source": "feature:finish-contract",
+      "target": "module:gates",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:finish-contract",
+      "target": "module:obligations",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:finish-contract",
       "target": "surface:docs",
       "kind": "exposed_through"
+    },
+    {
+      "source": "feature:install",
+      "target": "command:archive",
+      "kind": "made_of"
     },
     {
       "source": "feature:install",
@@ -1477,7 +1695,17 @@
     },
     {
       "source": "feature:install",
+      "target": "kind:release-record",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:install",
       "target": "module:distribution",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:install",
+      "target": "module:release",
       "kind": "made_of"
     },
     {
@@ -1494,6 +1722,21 @@
       "source": "feature:interfaces",
       "target": "feature:declare-once",
       "kind": "related_to"
+    },
+    {
+      "source": "feature:interfaces",
+      "target": "module:commands",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:interfaces",
+      "target": "module:environment",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:interfaces",
+      "target": "module:executions",
+      "kind": "made_of"
     },
     {
       "source": "feature:interfaces",
@@ -1587,6 +1830,11 @@
     },
     {
       "source": "feature:mesh",
+      "target": "kind:mesh-declaration",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:mesh",
       "target": "module:mesh",
       "kind": "made_of"
     },
@@ -1633,6 +1881,16 @@
     {
       "source": "feature:planning",
       "target": "kind:milestone",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:planning",
+      "target": "module:devtask",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:planning",
+      "target": "module:plan",
       "kind": "made_of"
     },
     {
@@ -1961,6 +2219,16 @@
       "kind": "exposed_through"
     },
     {
+      "source": "kind:mesh-declaration",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "kind:mesh-declaration",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "kind:milestone",
       "target": "surface:cockpit",
       "kind": "exposed_through"
@@ -2007,6 +2275,16 @@
     },
     {
       "source": "kind:prompt",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "kind:release-record",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "kind:release-record",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2106,6 +2384,21 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:commands",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:commands",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:commands",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:commit",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2137,6 +2430,61 @@
     },
     {
       "source": "module:continuity",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:design",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:design",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:design",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devcontext",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devcontext",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devcontext",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devcontext",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devtask",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devtask",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devtask",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:devtask",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2176,6 +2524,21 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:environment",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:environment",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:environment",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:evidence",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2196,6 +2559,41 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:executions",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:executions",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:executions",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:executions",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:gates",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:gates",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:gates",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:graph",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2222,6 +2620,21 @@
     },
     {
       "source": "module:health",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:lifecycle",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:lifecycle",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:lifecycle",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2281,6 +2694,21 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:obligations",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:obligations",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:obligations",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:peers",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2311,6 +2739,21 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:plan",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:plan",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:plan",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:product",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2327,6 +2770,56 @@
     },
     {
       "source": "module:product",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:quality",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:quality",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:quality",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:quality",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:recover",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:recover",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:recover",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:release",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:release",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:release",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2387,6 +2880,21 @@
     },
     {
       "source": "module:server",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:session_domain",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:session_domain",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:session_domain",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2462,14 +2970,14 @@
     }
   ],
   "metadata": {
-    "nodes": 102,
-    "edges": 317,
+    "nodes": 120,
+    "edges": 387,
     "acyclic": false,
     "truncated": false
   },
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the features, what they are made of, and the interfaces that follow, as the derived `product` graph; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.7.0"
+    "version": "0.7.1"
   }
 }
