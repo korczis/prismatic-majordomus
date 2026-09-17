@@ -455,7 +455,10 @@ fn every_surface_names_what_writes_the_repository_and_nothing_else() {
     let text = answer["result"]["instructions"].as_str().unwrap();
     assert!(!text.contains("read-only projection"), "{text}");
     assert!(!text.contains("Nothing here writes"), "{text}");
-    assert!(text.contains(&majordomus_cli::about::writes(&writers)), "{text}");
+    assert!(
+        text.contains(&majordomus_cli::about::writes(&writers)),
+        "{text}"
+    );
     for tool in registry
         .iter()
         .filter(|c| c.execution.effect != Effect::RepositoryMutation)
@@ -469,11 +472,20 @@ fn every_surface_names_what_writes_the_repository_and_nothing_else() {
 
     let doc = majordomus_cli::http::openapi::document(registry, "test", None).expect("openapi");
     let description = doc["info"]["description"].as_str().unwrap_or_default();
-    for false_claim in ["read-only projection", "never writes to the repository", "nobody can change it"] {
-        assert!(!description.contains(false_claim), "{false_claim}: {description}");
+    for false_claim in [
+        "read-only projection",
+        "never writes to the repository",
+        "nobody can change it",
+    ] {
+        assert!(
+            !description.contains(false_claim),
+            "{false_claim}: {description}"
+        );
     }
     for c in registry.iter() {
-        let Some(http) = &c.exposure.http else { continue };
+        let Some(http) = &c.exposure.http else {
+            continue;
+        };
         let op = &doc["paths"][&http.path][http.method.as_str().to_ascii_lowercase()];
         assert_eq!(
             op["x-majordomus-effect"],
