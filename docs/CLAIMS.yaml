@@ -1136,6 +1136,24 @@ claims:
     responsibility: doctor
     note: usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee.
 
+  - id: live-scenario-is-read-only
+    claim: A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one; every other shape is refused by usecase validate with exit 10
+    source: docs/USE_CASES.md
+    implementation: lib/usecase.sh
+    test: test/cases/359_live_scenarios.sh
+    status: guaranteed
+    responsibility: doctor
+    note: The class is read from share/commands.yaml, the declaration the reference semantics already come from, so safety is a property of the declaration and not of the author's care (ADR 38). An obligation step is refused in a fixture scenario, because a disposable repository owes nothing, and a step that both runs a command and asserts an obligation is refused as neither.
+
+  - id: live-scenario-evidence-is-local
+    claim: A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered; an undischarged obligation is reported unmet, never failed
+    source: docs/USE_CASES.md
+    implementation: lib/usecase.sh
+    test: test/cases/359_live_scenarios.sh
+    status: guaranteed
+    responsibility: doctor
+    note: A live result describes one tree on one machine at one minute, so it is written to .ai/local/evidence/live/<id>.json rather than beside the committed fixture evidence, and coverage counts it as naming a command and never as covering it. The run separates the two verdicts, because a failing fixture scenario is a defect in the tool and an unmet obligation is work not done (ADR 38).
+
   - id: site-deploy-one-path
     claim: The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged
     source: docs/GITHUB_PAGES_ARCHITECTURE.md

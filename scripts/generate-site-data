@@ -1774,8 +1774,13 @@ done
 jq -r '.capabilities[].module' "$REG" | LC_ALL=C sort -u | while read -r m; do
   jq -e --arg m "$m" '.modules[] | select(.id == $m and .source == "builtin")' "$REG" >/dev/null || { echo "generate-site-data: docs/generated/registry.json: capability module $m is not a builtin module of the manifest" >&2; exit 10; }
 done
+# The claims matrix is slurped from its file, never passed on argv: Linux caps a single
+# argument at MAX_ARG_STRLEN (32 pages, 131072 bytes) whatever ARG_MAX says, and the array
+# crossed it — 129593 bytes on master, 131363 with two claims more. macOS has no such
+# per-argument cap, so the overflow appears only in CI. Every other whole-file payload here
+# travels the same way (--slurpfile), so this one is no longer the exception that breaks.
 jq -S --arg repo_url "$(jq -r '.repository_url' "$OUT/project.json")" --arg branch master \
-   --argjson claims "$(jq -c '.claims' "$OUT/capabilities.json")" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
+   --slurpfile caps "$OUT/capabilities.json" -f "$ROOT/scripts/lib/executable-site.jq" "$REG" > "$OUT/executable.json" \
   || { echo "generate-site-data: projecting docs/generated/registry.json failed" >&2; exit 13; }
 # ---------------------------------------------------------------- method.json, governance-graph.json
 # The governance method as a dataset: the layers an invariant descends through with what this
