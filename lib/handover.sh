@@ -90,6 +90,14 @@ mj_handover_resolve() {
   printf 'Handover: %s\nMatch: %s\nGit state: %s\nCreated: %s (%s)\nTask: %s\n' \
     "${MJ_RES_PATH#"$MJ_ROOT/"}" "$MJ_RES_MATCH" "$(mj_git_label "$MJ_RES_HEAD" "$MJ_RES_BRANCH")" \
     "$MJ_RES_CREATED" "$(mj_age_human "$(mj_age_minutes "$MJ_RES_CREATED" || true)")" "$MJ_RES_TASK"
+  # The verdict the session briefing already applied, said here too: the command a worker
+  # runs by hand used to print an age and leave the reader to decide whether two days is old.
+  # Called as a statement, so MJ_FRESH_* survive (see mj_freshness).
+  mj_freshness "$MJ_RES_CREATED" >/dev/null
+  printf 'Freshness: %s%s\n' "$MJ_FRESH_STATE" "${MJ_FRESH_REASON:+ — $MJ_FRESH_REASON}"
+  if mj_freshness_is_history "$MJ_FRESH_STATE"; then
+    printf 'History: read this record as context; its next action is not an instruction for this tree\n'
+  fi
   [ "$MJ_RES_DIRTY" != "$(mj_git_dirty)" ] && printf 'Divergence: working tree was %s, now %s\n' "$MJ_RES_DIRTY" "$(mj_git_dirty)"
   printf -- '---\n'; mj_record_body "$MJ_RES_PATH"
 }
