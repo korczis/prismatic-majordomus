@@ -1491,6 +1491,26 @@ impl RuntimeState {
     /// what it offers is wider than what any graph can show. Narrowing here rather than at
     /// each consumer is what keeps the overlay keyed by node id: an entry that survives
     /// names a node, and a renderer can look every key up.
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{Builder, Node, NodeState, RuntimeState};
+    /// let mut b = Builder::new("g", "G", "one node", "the composed registry")
+    ///     .node_kind("module", "a subsystem");
+    /// b.node(Node {
+    ///     id: "module:mesh".into(), kind: "module".into(), label: "mesh".into(),
+    ///     summary: None, route: None, source: None, status: None, external: false,
+    ///     facts: Default::default(),
+    /// });
+    /// let graph = b.finish();
+    ///
+    /// let mut observed = RuntimeState::default();
+    /// for id in ["module:mesh", "module:not-in-this-graph"] {
+    ///     observed.nodes.insert(id.into(), NodeState { status: "ok".into(), detail: None });
+    /// }
+    ///
+    /// let overlay = observed.narrowed_to(&graph);
+    /// assert_eq!(overlay.nodes.keys().map(String::as_str).collect::<Vec<_>>(), ["module:mesh"]);
+    /// ```
     pub fn narrowed_to(&self, graph: &Graph) -> RuntimeState {
         let ids: BTreeSet<&str> = graph.nodes.iter().map(|n| n.id.as_str()).collect();
         RuntimeState {
@@ -1504,6 +1524,21 @@ impl RuntimeState {
     }
 
     /// What the process says about one node now, if anything.
+    ///
+    /// `None` is the ordinary answer, not a failure: a graph names more than any one
+    /// process observes, so a renderer draws the declared status alone for those nodes.
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{NodeState, RuntimeState};
+    /// let mut observed = RuntimeState::default();
+    /// observed.nodes.insert(
+    ///     "module:mesh".into(),
+    ///     NodeState { status: "ready".into(), detail: Some("2 peers".into()) },
+    /// );
+    ///
+    /// assert_eq!(observed.of("module:mesh").map(|s| s.status.as_str()), Some("ready"));
+    /// assert!(observed.of("module:nothing-observed-it").is_none());
+    /// ```
     pub fn of(&self, node_id: &str) -> Option<&NodeState> {
         self.nodes.get(node_id)
     }
@@ -1513,11 +1548,32 @@ impl RuntimeState {
 /// them what a process observes about them now.
 ///
 /// The two are held apart on purpose. `graph` is byte-for-byte the value
-/// [`derive`] produced, so a reader can compare a served graph against a published one and
+/// [`derive()`] produced, so a reader can compare a served graph against a published one and
 /// get equality; `runtime` is the overlay, which no published artifact carries and which
 /// nothing but a live process can fill. A consumer that merged them would produce a
 /// document that looks like the static projection, cannot be compared with it, and carries
 /// values that go stale the moment they are written.
+///
+/// ```
+/// use majordomus_cli::graph::{Builder, Node, NodeState, ObservedGraph, RuntimeState};
+/// let mut b = Builder::new("g", "G", "one node", "the composed registry")
+///     .node_kind("module", "a subsystem");
+/// b.node(Node {
+///     id: "module:mesh".into(), kind: "module".into(), label: "mesh".into(),
+///     summary: None, route: None, source: None, status: Some("declared".into()),
+///     external: false, facts: Default::default(),
+/// });
+/// let graph = b.finish();
+///
+/// let mut observed = RuntimeState::default();
+/// observed.nodes.insert("module:mesh".into(), NodeState { status: "ready".into(), detail: None });
+/// let served = ObservedGraph::new(graph.clone(), &observed);
+///
+/// // the definitions are the published value, byte for byte; the observation sits beside them
+/// assert_eq!(served.graph, graph);
+/// assert_eq!(served.graph.nodes[0].status.as_deref(), Some("declared"));
+/// assert_eq!(served.runtime.of("module:mesh").map(|s| s.status.as_str()), Some("ready"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ObservedGraph {
     /// The composed definitions, unchanged.
@@ -1530,6 +1586,26 @@ pub struct ObservedGraph {
 impl ObservedGraph {
     /// Lay an observation over a graph. The graph is not touched, and observations that
     /// name no node of it are dropped.
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{Builder, Node, NodeState, ObservedGraph, RuntimeState};
+    /// let mut b = Builder::new("g", "G", "one node", "the composed registry")
+    ///     .node_kind("module", "a subsystem");
+    /// b.node(Node {
+    ///     id: "module:mesh".into(), kind: "module".into(), label: "mesh".into(),
+    ///     summary: None, route: None, source: None, status: None, external: false,
+    ///     facts: Default::default(),
+    /// });
+    ///
+    /// let mut observed = RuntimeState::default();
+    /// for id in ["module:mesh", "module:a-subsystem-this-graph-does-not-name"] {
+    ///     observed.nodes.insert(id.into(), NodeState { status: "ok".into(), detail: None });
+    /// }
+    ///
+    /// let served = ObservedGraph::new(b.finish(), &observed);
+    /// assert_eq!(served.runtime.nodes.len(), 1);
+    /// assert!(served.runtime.of("module:a-subsystem-this-graph-does-not-name").is_none());
+    /// ```
     pub fn new(graph: Graph, observed: &RuntimeState) -> ObservedGraph {
         let runtime = observed.narrowed_to(&graph);
         ObservedGraph { graph, runtime }
