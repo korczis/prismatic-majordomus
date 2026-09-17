@@ -77,6 +77,15 @@ git worktree add -q "$wt" -b bob
 ( cd "$wt" && "$MJ" start "bob task" --scope lib/auth/sub --owner bob >/dev/null )   # the tracked half is there; the local half is created on first write
 expect_exit 0 "$MJ" check --overlap
 expect_grep 'INFO overlap +.*wt-bob — claims lib/auth/sub — contained by your lib/auth'
+# ...and only reported: the exit above is 0 with an overlap present. The worker bootstraps once
+# told every agent that `check --overlap` refuses a commit; a sentence an agent obeys has to
+# match the exit code it will meet, so no template this checkout renders may say otherwise.
+for tmpl in "$ROOT"/.ai/repo/providers/*.tmpl "$ROOT"/share/skeleton/ai/repo/providers/*.tmpl; do
+  [ -f "$tmpl" ] || continue
+  if tr '\n' ' ' < "$tmpl" | grep -qE 'check --overlap`? (are|is) what refuses?'; then
+    echo "    $tmpl says check --overlap refuses, and it exits 0"; exit 1
+  fi
+done
 git worktree remove --force "$wt"
 
 # --- checkpoint freshness is a statement about work in progress, not about a finished task.
