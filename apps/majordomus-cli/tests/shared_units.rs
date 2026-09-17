@@ -425,6 +425,65 @@ fn a_session_can_be_resumed_by_another_server() {
     assert!(format!("{:?}", surface).contains("Surface"));
 }
 
+/// What a client is told about writing is the registry's declared effects, on every surface.
+///
+/// The instructions every MCP client reads first once ended "Nothing here writes to the
+/// repository", and the summary shared by OpenAPI, the HTTP index and the Cockpit called
+/// the server "read-only", while `plan.transition` and `recover.orphans` wrote tracked files
+/// over MCP and `POST`. The sentence is now measured, and this holds it to the registry in
+/// both directions: every writing tool is named, and nothing else is.
+#[test]
+fn every_surface_names_what_writes_the_repository_and_nothing_else() {
+    use majordomus_cli::capability::Effect;
+
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let registry = app.registry();
+    let writers: Vec<&str> = registry
+        .iter()
+        .filter(|c| c.execution.effect == Effect::RepositoryMutation)
+        .filter_map(|c| c.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()))
+        .collect();
+    assert!(
+        !writers.is_empty(),
+        "the fixture's registry declares no repository-writing tool, so this proves nothing"
+    );
+
+    let surface = Surface::new(app.context.clone());
+    let mut server = Server::new(surface, "test");
+    let answer = server.handle(init()).unwrap().into_value();
+    let text = answer["result"]["instructions"].as_str().unwrap();
+    assert!(!text.contains("read-only projection"), "{text}");
+    assert!(!text.contains("Nothing here writes"), "{text}");
+    assert!(text.contains(&majordomus_cli::about::writes(&writers)), "{text}");
+    for tool in registry
+        .iter()
+        .filter(|c| c.execution.effect != Effect::RepositoryMutation)
+        .filter_map(|c| c.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()))
+    {
+        assert!(
+            !text.contains(&format!(" {tool},")) && !text.contains(&format!(" {tool} write")),
+            "{tool} does not write the repository and is named as if it did: {text}"
+        );
+    }
+
+    let doc = majordomus_cli::http::openapi::document(registry, "test", None).expect("openapi");
+    let description = doc["info"]["description"].as_str().unwrap_or_default();
+    for false_claim in ["read-only projection", "never writes to the repository", "nobody can change it"] {
+        assert!(!description.contains(false_claim), "{false_claim}: {description}");
+    }
+    for c in registry.iter() {
+        let Some(http) = &c.exposure.http else { continue };
+        let op = &doc["paths"][&http.path][http.method.as_str().to_ascii_lowercase()];
+        assert_eq!(
+            op["x-majordomus-effect"],
+            json!(c.execution.effect),
+            "{} publishes an effect other than the one it declares",
+            c.id
+        );
+    }
+}
+
 #[test]
 fn the_stdio_loop_survives_bad_bytes_and_stops_on_a_broken_pipe() {
     let input: &[u8] = b"\xff\xfe not utf-8\n{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"ping\"}\n";

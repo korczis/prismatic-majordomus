@@ -1,7 +1,7 @@
 +++
 title = "Concepts"
 description = "the vocabulary, and the two outcomes people confuse"
-weight = 14
+weight = 15
 [extra]
 source = "docs/CONCEPTS.md"
 +++
@@ -58,6 +58,82 @@ every file it writes, uses these words and no others.
 
 </div>
 
+
+<div class="overflow-x-auto" tabindex="0">
+
+| **enforcement mode** | how a rule is enforced, derived from what its `x-majordomus` block names and never declared: `dispatched` (a validator a command runs), `gated` (tests a CI gate runs), `reviewed` (only a stated reason no machine can check it), `declarative` (nothing) | `majordomus-cli rules report`, ADR 0048 |
+| **rule proof** | where one rule's enforcement actually stands: `proven`, `inputs_unchanged`, `stale`, `gated`, `failing`, `not_run`, `reviewed`, `unrunnable`, `dangling`, `unproven`, the weakest of its tests; a named proof that does not exist is `dangling` and fails the `rule-proof` gate | `majordomus-cli rules show <id>`, `GET /api/v1/rules/rule` |
+| **guarantee** | a public statement of what the tool does, with its source, implementation, test and status, published on the site; the file calls each one a claim | `docs/CLAIMS.yaml`, `docs/claims/`, `/guarantees/` |
+| **evidence** | a recorded execution of a test: runner, outcome, commit, working-tree state, digest and origin, the latest per test; its state against the tree being asked about is derived, never stored | `.ai/repo/evidence/ledger.json`, `majordomus-cli evidence record`, `evidence show` |
+| **proof state** | what a guarantee's evidence says about this tree: `proven` (nothing changed since the run), `inputs_unchanged` (something changed, not its own inputs), `stale` (its inputs changed), `failing`, `not_run`, `unrunnable`, `no_test`; freshness is a relation to the tree, not a timestamp | `majordomus-cli evidence claim <id>` |
+| **gate** | a repository-owned check with the path classes that select it; a gate that has never reported for a change is `queued`, never a pass | `.ai/repo/ci/gates.yaml`, listed by `check` |
+| **obligation** | something a task promises to prove (`tests`, `docs`, `generated`, `commit`, `pages`, …), declared at `start` and required by `finish`; some are established from git or the published site rather than recorded | `start --requires`, `share/obligations.yaml` |
+| **milestone** / **issue** | an outcome specification and an execution contract: dependencies, scope, acceptance criteria, required evidence and transition timestamps — and no status field | `.ai/repo/project/milestones/`, `.ai/repo/project/issues/` |
+| **derived status** | an issue's `DONE`, `VERIFY`, `ACTIVE`, `BLOCKED` or `READY`, computed from its timestamps, its dependencies and whether its required evidence is covered; a status ahead of its blockers is reported | `majordomus plan status` |
+| **execution wave** | the Kahn layer of an issue in the dependency graph; ready issues in one wave that share paths are a scope conflict, because dependencies say what could run together and scope says what safely can | `majordomus plan waves` |
+| **worktree topology** | a branch's canonical checkout path, `<repository>-wt/<branch>`, derived from its name and never registered; a feature-branch commit from anywhere else is refused | `majordomus-cli worktree status`, the pre-commit hook |
+| **shared server** | the one server a checkout runs for every client, elected through a lease; serves MCP, HTTP, OpenAPI, Swagger UI and the Cockpit | `majordomus-cli serve status`, `.ai/local/state/mcp/server.json` |
+| **peer** | one attached MCP client on a checkout's board: a position id (`p1`), a client name, a transport and its announcements; the checkout it carries is the durable half of its identity | `majordomus_peers`, `GET /api/v1/peers` |
+| **announcement** | a peer's stated intent and scope, optionally under a name; replaced by announcing again under the same name, kept in the server's memory only | `majordomus_announce` |
+| **overlap** | two scopes that are equal or contain one another on a path boundary, reported between announcements and between active tasks; awareness, never a lock | `majordomus_peers`, `start`, `check --overlap`, `context` |
+| **mesh node** | a Majordomus instance identified by an Ed25519 key, seen through multicast, broadcast or a rendezvous endpoint with a presence TTL; observed, never authoritative, off by default | `majordomus-cli mesh status`, `.ai/repo/mesh/majordomus.yaml` |
+| **repository environment** | one typed snapshot of what a checkout is — project, version control, toolchains, layer, workflows, providers, services, diagnostics — with provenance for every value; the shell banner is one renderer of it | `majordomus-cli env`, `GET /api/v1/environment` |
+| **effect** | what running a capability changes: `read`, `process_state` or `repository_mutation`; the last is always a command reached by `POST`, named in the MCP instructions and in OpenAPI's `x-majordomus-effect` | `docs/generated/registry.json` |
+| **feature** | a product capability as an object of the layer, naming the modules, commands, kinds, rules, claims and use cases it is made of; the site's feature pages and the interface matrix are derived from it | `.ai/repo/features/`, `majordomus-cli product matrix` |
+| **intent** | what a person wants, as a typed record whose stage is derived and whose criteria are met only by evidence — not on the default branch yet | open pull requests; not a shipped concept |
+
+</div>
+
+
+## Four kinds of state
+
+Every value the tool shows is one of these, and the kind decides who may write it and what may overwrite it.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Kind | What it is | Examples | May it overwrite canonical state? |
+|---|---|---|---|
+| **canonical** | written by a person or a worker in a commit | a rule, an ADR, the policy, an issue's dependencies, a capability declaration | — |
+| **derived** | computed deterministically from canonical and observed inputs, never edited | issue status, waves, rule proof, proof state, `docs/generated/` | no: regenerated, and a hand edit fails the drift check |
+| **observed** | measured now, true only at its timestamp | HEAD, a dirty tree, attached peers, a mesh node's presence, whether a service answers | no: it expires |
+| **inferred** | a heuristic's best guess | keyword relevance in the ranked working set | no: capped below every declared relation |
+
+</div>
+
+
+## What each concept saves
+
+The concepts exist because each one replaces something a worker would otherwise have to redo in every session. The saving is repeated work avoided, not storage.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Concept | What it saves every later worker from | What it compresses | Authored or derived |
+|---|---|---|---|
+| rule | being told the same constraint again, and checking it by eye | a paragraph of instructions into an identity with an enforcement mode | authored once |
+| doctrine | rediscovering why a family of rules exists, and running their checks by hand | a principle plus the validator that decides it | authored once |
+| ADR | re-deciding an architecture question | a debate into decision, alternatives and consequences | authored, accepted by a person |
+| decision | re-asking a smaller settled question | one line of what, why and what was rejected | authored |
+| context document | reading every instruction to find the ones for these paths | the instructions that apply to one path | authored, resolved per path |
+| compiled context | reconstructing the project from history | git, task, rules, decisions and the last handover into one budgeted document | derived per session |
+| checkpoint | losing the last hour when a session dies | recent progress into a capped note | authored or derived |
+| handover | replaying a transcript | a session into objective, state and next action, with its commit | body authored, identity derived |
+| issue and waves | working out what can run next | a dependency graph into ready sets and safe parallel layers | authored records, derived status |
+| scope and overlap | discovering a collision in a merge | who claims which paths | authored scope, derived overlap |
+| evidence | re-establishing whether something was tested against this code | a run into outcome and commit | recorded, state derived |
+| finish contract | a reviewer checking everything by hand | the conditions of "done" into lines that pass or fail | policy authored, verdict derived |
+| one capability declaration | updating the CLI, API, MCP, Cockpit and docs separately | one operation into every interface | authored once, projections derived |
+
+</div>
+
+
+How much each saves is measurable, and none of it is measured here. That would take a benchmark comparing workers on the same task with and without the record: time to the first correct change, input size, corrective prompts, repeated file reads and outcome quality. A number belongs in this table only after that has been run and recorded.
+
+## Words with two meanings
+
+Two words are used for two different things in this repository, and each is kept because renaming it would break published identities.
+
+- **claim** means an overlapping scope seen from another worktree (the row above) and also an entry of `docs/CLAIMS.yaml`, a public guarantee. On the site the second is always called a guarantee.
+- **projection** means a provider instruction file rendered from the policy (the row above) and, more broadly, any surface derived from a canonical declaration: the HTTP routes, the OpenAPI document, the MCP tools and the generated reference are projections of the capability registry.
 
 ## The two outcomes people confuse
 

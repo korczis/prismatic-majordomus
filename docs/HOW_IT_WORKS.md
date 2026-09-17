@@ -321,6 +321,10 @@ MCP is the agent-facing projection of the same registry
   as `majordomus://<kind>/<identity>`, read through the same object resolution the HTTP objects
   endpoint uses.
 - A tool call resolves with `registry.by_mcp_tool` and runs `Context::execute`.
+- The instructions a client reads on `initialize` name the tools that write the repository,
+  measured from each capability's declared effect, and OpenAPI publishes the same effect as
+  `x-majordomus-effect`; `every_surface_names_what_writes_the_repository_and_nothing_else` in
+  `apps/majordomus-cli/tests/shared_units.rs` holds both to the registry.
 - Prompts are not advertised and resource templates are empty — deliberately, not by omission.
 
 No MCP tool is hand-written. `majordomus_announce`, which looks like a special coordination
@@ -812,9 +816,10 @@ is not at.
 
 `handover --resolve` finds the most relevant record: same worktree and branch first, then same
 branch, never repository-wide. It labels the relation to the current HEAD as exact, advanced,
-diverged or a different context. The session briefing also applies the freshness thresholds from
-the policy and shows a stale handover as history without quoting its next action, because an
-instruction that was true days ago is context, not an order.
+diverged or a different context, and prints the freshness verdict from the policy's thresholds,
+marking a stale record as history. The session briefing applies the same verdict and does not
+quote a stale handover's next action, because an instruction that was true days ago is context,
+not an order.
 
 ## Planning
 
@@ -1079,8 +1084,6 @@ find it.
 
 **Not enforced as documented**
 
-- `CLAUDE.md` and `AGENTS.md` say `check --overlap` is what refuses a commit. It reports and exits
-  0, and no hook runs it; the scope doctrine at pre-push is what refuses.
 - `project.derived-files-regenerated` says `scripts/derive-check` runs in CI; its three halves run
   separately, and the composed script does not.
 - `project.no-counts-in-prose` is enforced by review for documents; it is mechanised only for the

@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit"
 description = "the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline"
-weight = 44
+weight = 45
 [extra]
 source = "docs/COCKPIT.md"
 +++
@@ -393,8 +393,11 @@ data the page also prints.
   Only a closed set of text media types is served.
 - **Loopback by default.** `serve` binds `127.0.0.1`; binding anything else logs what it
   means.
-- **Nothing writes.** Every capability the Cockpit can reach is a query, or the one command
-  that changes this process's own memory. Nothing in it writes to the repository.
+- **What writes is declared.** The runner can reach every capability, including the commands
+  whose declared effect is `repository_mutation`. The Run card derives its warning from that
+  effect, so a command that writes tracked files says so before it is sent, always as a
+  `POST` from the page's origin. Every other capability either reads or changes only this
+  process's own memory.
 
 ## Assets
 
@@ -522,11 +525,12 @@ decides whether what this process *serves* is sound. Different subjects with dif
 engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
 A reader who wants both runs both; each names the other's territory.
 
-**No write path.** Every capability the Cockpit can reach is a query, or a command that
-changes this process's own memory — starting an execution and cancelling one are two of
-those. Nothing in it writes to the repository, and a capability that did would need its own
-decision (ADR 12 says so explicitly) and would say so in its own execution policy, which is
-what the confirmation on the Run button reads.
+**The write path is declared, not absent.** Most capabilities the Cockpit can reach are
+queries or commands that change this process's own memory; starting an execution and
+cancelling one are two of those. The ones that write the repository declare the effect
+`repository_mutation` in their execution policy, and that policy is what the warning on the
+Run card reads. ADR 12 requires such a capability to be its own decision, and a unit test in
+`builtin` pins the set of them, so a new one shows up in a diff.
 
 ## In a browser
 

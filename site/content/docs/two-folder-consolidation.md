@@ -1,7 +1,7 @@
 +++
 title = "Two-folder consolidation"
 description = "what the repository writes into a tree today, verified against the code and the running binary, and the ordered slices that reduce it to `.ai/**` and `.majordomus/**` with reversible bridges"
-weight = 11
+weight = 12
 [extra]
 source = "docs/TWO_FOLDER_CONSOLIDATION.md"
 +++

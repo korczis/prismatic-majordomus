@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 48
+weight = 49
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -106,8 +106,10 @@ of the registry (`worktree.topology`, `worktree.status`, `worktree.inspect`,
 `worktree.migration_plan`), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
 the Cockpit and the generated reference without any of those carrying a route or a schema
 of their own. Creating, migrating, repairing and removing are command-line operations of
-the same service: a capability of the registry never writes to the repository, which is the
-contract the shared MCP server rests on, and the Cockpit names the exact command for each.
+the same service. A capability that writes the repository must declare the effect
+`repository_mutation`, be a command and be reached by `POST` — a unit test pins the set of
+such capabilities, so adding one is a visible decision — and moving worktrees on disk is not
+something the shared MCP server takes on; the Cockpit names the exact command for each.
 
 ## Standings and diagnostics
 
