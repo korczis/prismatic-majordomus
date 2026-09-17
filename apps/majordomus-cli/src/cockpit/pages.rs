@@ -810,7 +810,7 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
     let cases = ctx
         .registry
         .cases(c.id.as_str())
-        .map(|provider| provider(&crate::capability::CaseContext { index: &ctx.index }))
+        .map(|provider| provider(&crate::capability::CaseContext::of(ctx)))
         .unwrap_or_default();
     let examples = if cases.is_empty() {
         card(
@@ -1293,9 +1293,13 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
             "kind",
             "Kind",
             kind.as_deref(),
-            ctx.index
-                .kinds()
-                .into_keys()
+            // the kinds of the listing the capability already answered with, rather than a
+            // second reading of the index (ADR 0012): the same objects, so the same kinds
+            list.objects
+                .iter()
+                .map(|o| o.kind.as_str())
+                .collect::<std::collections::BTreeSet<_>>()
+                .into_iter()
                 .map(|k| (k.to_string(), k.to_string()))
                 .collect(),
         ))
@@ -1324,7 +1328,7 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
     .subtitle(format!(
         "{} of {} objects. Each is a file the layer's sources.yaml maps to a kind, read and validated at startup.",
         matching.len(),
-        ctx.index.objects.len()
+        list.count
     ))
     .trail(vec![("Cockpit", Some("/cockpit")), ("Objects", None)])
 }
