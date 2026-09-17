@@ -80,7 +80,7 @@
         <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
           <a href="{{ api_root }}{{ t.slug }}/" class="font-mono text-base font-semibold text-fg-brand hover:underline">{{ t.name }}</a>
           <p class="mt-1 break-words text-sm text-body">{{ t.description }}</p>
-          <ul class="mt-2 space-y-1 text-xs">{% for o in t.operations %}{% if o.primary %}<li class="flex min-w-0 flex-wrap items-baseline gap-x-2"><span class="font-mono font-bold text-body-subtle">{{ o.method }}</span><a href="{{ api_root }}{{ o.home }}/#op-{{ o.id | replace(from=".", to="-") }}" class="min-w-0 break-all font-mono text-fg-brand hover:underline">{{ o.path }}</a></li>{% endif %}{% endfor %}</ul>
+          <ul class="mt-2 space-y-1 text-xs">{% for o in t.operations %}{% if o.primary %}<li class="flex min-w-0 flex-wrap items-baseline gap-x-2"><span class="font-mono font-bold text-body-subtle">{{ o.method }}</span><a href="{{ api_root }}{{ o.home }}/#op-{{ o.id | replace(from=".", to="-") }}" class="inline-block min-w-0 break-all py-1 font-mono text-fg-brand hover:underline">{{ o.path }}</a></li>{% endif %}{% endfor %}</ul>
         </li>
         {%- endfor -%}
       </ul>
