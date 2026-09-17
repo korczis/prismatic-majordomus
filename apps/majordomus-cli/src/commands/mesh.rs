@@ -873,15 +873,23 @@ mod tests {
     #[test]
     fn the_peer_tree_prints_this_machine_before_the_others_and_says_which_is_which() {
         let text = render_peers(&two_machines());
-        let local = text.find("machine    laptop").expect("this machine is listed");
+        let local = text
+            .find("machine    laptop")
+            .expect("this machine is listed");
         let remote = text
             .find("machine    builder")
             .expect("the other machine is listed");
-        assert!(local < remote, "the machine a person is on comes first:\n{text}");
+        assert!(
+            local < remote,
+            "the machine a person is on comes first:\n{text}"
+        );
         assert!(text.contains("machine    laptop aaaaaaaa"), "{text}");
         assert!(text.contains("(local)"), "{text}");
         assert!(text.contains("(remote)"), "{text}");
-        assert!(text.ends_with("digest     0123456789abcdef0123456789abcdef"), "{text}");
+        assert!(
+            text.ends_with("digest     0123456789abcdef0123456789abcdef"),
+            "{text}"
+        );
     }
 
     #[test]
@@ -892,7 +900,9 @@ mod tests {
             "the local runtime beats and has no link to itself:\n{text}"
         );
         assert!(
-            text.contains("runtime  bbbbbbbb…-0000000000000002 live link linked beat 0.8s ago rtt 12ms"),
+            text.contains(
+                "runtime  bbbbbbbb…-0000000000000002 live link linked beat 0.8s ago rtt 12ms"
+            ),
             "a linked runtime shows the link state and the round trip:\n{text}"
         );
     }
@@ -930,8 +940,7 @@ mod tests {
             "digest": "d0",
         }));
         assert_eq!(
-            text,
-            "runtime    r-1\nrepository repo-1234\ndigest     d0",
+            text, "runtime    r-1\nrepository repo-1234\ndigest     d0",
             "nothing between the header and the digest, and no blank claim of peers"
         );
     }
@@ -1045,7 +1054,10 @@ mod tests {
             ),
             "{text}"
         );
-        assert!(text.ends_with("digest     cafebabecafebabecafebabecafebabe"), "{text}");
+        assert!(
+            text.ends_with("digest     cafebabecafebabecafebabecafebabe"),
+            "{text}"
+        );
     }
 
     #[test]
@@ -1094,7 +1106,10 @@ mod tests {
             ],
         }));
         for kind in ["session_opened", "claim_acquired", "handover_published"] {
-            assert!(text.contains(kind), "the kind is what an event is read for:\n{text}");
+            assert!(
+                text.contains(kind),
+                "the kind is what an event is read for:\n{text}"
+            );
         }
         assert!(
             text.starts_with("4  aaaaaaaa…-0000000000000001/1  session_opened\n"),
@@ -1112,7 +1127,10 @@ mod tests {
             "active": true, "count": 1, "lamport": 1,
             "events": [{ "lamport": 1, "stream": "s", "seq": 1, "body": {} }],
         }));
-        assert!(text.contains("s/1  ?"), "an opaque event still takes a line:\n{text}");
+        assert!(
+            text.contains("s/1  ?"),
+            "an opaque event still takes a line:\n{text}"
+        );
     }
 
     #[test]
@@ -1135,19 +1153,33 @@ mod tests {
             ],
         }));
         assert!(text.starts_with("runtime    r-1\n"), "{text}");
-        assert!(text.contains("ok    identity     signed by this node"), "{text}");
-        assert!(text.contains("FAIL  journal      a stream is behind"), "{text}");
-        assert!(text.contains("impact      peers do not see this runtime's claims"), "{text}");
+        assert!(
+            text.contains("ok    identity     signed by this node"),
+            "{text}"
+        );
+        assert!(
+            text.contains("FAIL  journal      a stream is behind"),
+            "{text}"
+        );
+        assert!(
+            text.contains("impact      peers do not see this runtime's claims"),
+            "{text}"
+        );
         assert!(text.contains("remedy      restart the server"), "{text}");
         assert!(
             text.contains("FAIL  peer bbbbbbbb…-0000000000000002 linked dialed — no answer within the timeout"),
             "a peer that did not come back is a failure of the round:\n{text}"
         );
         assert!(
-            text.contains("ok    peer aaaaaaaa…-0000000000000003 linked dials us rtt 9ms converged"),
+            text.contains(
+                "ok    peer aaaaaaaa…-0000000000000003 linked dials us rtt 9ms converged"
+            ),
             "{text}"
         );
-        assert!(text.ends_with("verdict    a check or a round failed (see above)"), "{text}");
+        assert!(
+            text.ends_with("verdict    a check or a round failed (see above)"),
+            "{text}"
+        );
     }
 
     #[test]
@@ -1184,7 +1216,10 @@ mod tests {
             !text.contains("cooperation inactive"),
             "`mesh verify` answers no, with the check, rather than declining to answer:\n{text}"
         );
-        assert!(text.contains("FAIL  cooperation  cooperation is disabled"), "{text}");
+        assert!(
+            text.contains("FAIL  cooperation  cooperation is disabled"),
+            "{text}"
+        );
     }
 
     #[test]
@@ -1228,8 +1263,12 @@ mod tests {
 
     #[test]
     fn the_status_line_says_active_or_inactive_before_anything_else() {
-        let off = render_status(&json!({ "active": false, "reason": "disabled in the declaration" }));
-        assert!(off.starts_with("mesh       inactive\nreason     disabled in the declaration"), "{off}");
+        let off =
+            render_status(&json!({ "active": false, "reason": "disabled in the declaration" }));
+        assert!(
+            off.starts_with("mesh       inactive\nreason     disabled in the declaration"),
+            "{off}"
+        );
 
         let on = render_status(&json!({
             "active": true,
@@ -1246,7 +1285,10 @@ mod tests {
         assert!(on.starts_with("mesh       active\n"), "{on}");
         assert!(on.contains("node       n1 (laptop)"), "{on}");
         assert!(on.contains("trust      deny_unknown"), "{on}");
-        assert!(on.contains("provider   lan running sent 4 received 7\n"), "{on}");
+        assert!(
+            on.contains("provider   lan running sent 4 received 7\n"),
+            "{on}"
+        );
         assert!(
             on.contains("provider   relay failed sent 0 received 0 — no route to host"),
             "a failed provider says why, or it cannot be fixed:\n{on}"
@@ -1297,7 +1339,10 @@ mod tests {
             "identity": { "node_id": "n1", "display_name": "laptop", "public_key": "ed25519:AAAA" },
         }));
         assert!(text.contains("present    true"), "{text}");
-        assert!(text.contains("path       .ai/local/mesh/identity.json"), "{text}");
+        assert!(
+            text.contains("path       .ai/local/mesh/identity.json"),
+            "{text}"
+        );
         assert!(text.contains("node       n1"), "{text}");
         assert!(text.contains("name       laptop"), "{text}");
         assert!(
@@ -1329,10 +1374,19 @@ mod tests {
                          "impact": "no peer can reach this runtime",
                          "remediation": "free the port" }],
         }));
-        assert!(bad.contains("FAIL  sockets      port 8742 is taken"), "{bad}");
-        assert!(bad.contains("      impact      no peer can reach this runtime"), "{bad}");
+        assert!(
+            bad.contains("FAIL  sockets      port 8742 is taken"),
+            "{bad}"
+        );
+        assert!(
+            bad.contains("      impact      no peer can reach this runtime"),
+            "{bad}"
+        );
         assert!(bad.contains("      remedy      free the port"), "{bad}");
-        assert!(bad.ends_with("verdict    a check failed (see above)"), "{bad}");
+        assert!(
+            bad.ends_with("verdict    a check failed (see above)"),
+            "{bad}"
+        );
     }
 
     #[test]
@@ -1342,8 +1396,16 @@ mod tests {
             "aaaaaaaa…-0000000000000001",
             "the node is elided, the runtime never is: two runtimes on one machine must differ"
         );
-        assert_eq!(short("short-rt"), "short…-rt", "a node shorter than eight is not padded");
-        assert_eq!(short("nodash"), "nodash", "what is not a runtime key is printed as it is");
+        assert_eq!(
+            short("short-rt"),
+            "short…-rt",
+            "a node shorter than eight is not padded"
+        );
+        assert_eq!(
+            short("nodash"),
+            "nodash",
+            "what is not a runtime key is printed as it is"
+        );
     }
 
     #[test]
@@ -1364,7 +1426,10 @@ mod tests {
             "issue": Value::Null,
             "nested": { "task": Value::Null, "scope": ["apps"] },
         }));
-        assert_eq!(body, json!({ "session": "s1", "nested": { "scope": ["apps"] } }));
+        assert_eq!(
+            body,
+            json!({ "session": "s1", "nested": { "scope": ["apps"] } })
+        );
         assert_eq!(
             strip_nulls(json!([1, null])),
             json!([1, null]),
@@ -1376,6 +1441,10 @@ mod tests {
     fn a_question_that_was_answered_is_never_a_failure_by_itself() {
         assert!(!never(&json!({ "ok": false })));
         assert_eq!(s(&json!({ "a": "b" }), "a"), "b");
-        assert_eq!(s(&json!({ "a": 1 }), "a"), "", "a value that is not a string reads as empty");
+        assert_eq!(
+            s(&json!({ "a": 1 }), "a"),
+            "",
+            "a value that is not a string reads as empty"
+        );
     }
 }
