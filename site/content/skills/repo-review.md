@@ -1,7 +1,7 @@
 +++
 title = "Repository review"
 description = "An evidence-driven review of the actual state of the repository, or of one change to it, before meaningful engineering work is recommended or done."
-weight = 3
+weight = 5
 [extra]
 id = "repo-review"
 status = "active"

@@ -1814,6 +1814,57 @@
       "tool": "majordomus_session_machine"
     },
     {
+      "api_anchor": "/docs/api/skills/#op-skills-explain",
+      "claims": [],
+      "cli": "majordomus skills explain",
+      "id": "skills.explain",
+      "kind": "query",
+      "module": "skills",
+      "module_route": "/registry/modules/skills/",
+      "resource": null,
+      "route": "/registry/capabilities/skills-explain/",
+      "slug": "skills-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "tests": [],
+      "title": "One skill, with everything derived about it",
+      "tool": "majordomus_skill_explain"
+    },
+    {
+      "api_anchor": "/docs/api/skills/#op-skills-status",
+      "claims": [],
+      "cli": "majordomus skills status",
+      "id": "skills.status",
+      "kind": "query",
+      "module": "skills",
+      "module_route": "/registry/modules/skills/",
+      "resource": "majordomus://skills",
+      "route": "/registry/capabilities/skills-status/",
+      "slug": "skills-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "tests": [],
+      "title": "Every skill, with its derived standing",
+      "tool": "majordomus_skills"
+    },
+    {
+      "api_anchor": "/docs/api/skills/#op-skills-verify",
+      "claims": [],
+      "cli": "majordomus skills verify",
+      "id": "skills.verify",
+      "kind": "query",
+      "module": "skills",
+      "module_route": "/registry/modules/skills/",
+      "resource": null,
+      "route": "/registry/capabilities/skills-verify/",
+      "slug": "skills-verify",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "tests": [],
+      "title": "What the skills owe and do not have",
+      "tool": "majordomus_skills_verify"
+    },
+    {
       "api_anchor": "/docs/api/trace/#op-trace-commit",
       "claims": [],
       "cli": null,
@@ -2401,9 +2452,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 116,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.7.0",
   "modules": [
@@ -3288,6 +3339,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/session_domain.rs",
       "title": "The session domain"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "skills.explain",
+          "route": "/registry/capabilities/skills-explain/",
+          "slug": "skills-explain"
+        },
+        {
+          "id": "skills.status",
+          "route": "/registry/capabilities/skills-status/",
+          "slug": "skills-status"
+        },
+        {
+          "id": "skills.verify",
+          "route": "/registry/capabilities/skills-verify/",
+          "slug": "skills-verify"
+        }
+      ],
+      "claims": [],
+      "id": "skills",
+      "route": "/registry/modules/skills/",
+      "slug": "skills",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/skills.rs",
+      "title": "Skills"
     },
     {
       "capabilities": [

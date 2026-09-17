@@ -203,6 +203,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 2
+  - id: skills
+    title: Skills
+    description: "Every skill the layer defines as a proven capability: whether a test names it and the evidence ledger holds a current passing run of that test, whether the site projects its page, whether a doctrine and a CI gate hold it, and whether a workflow, prompt, profile, provider template, recipe or CI workflow invokes it. All four are derived on every read and none is authored; an active skill no test names or nothing invokes is an orphan."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 3
   - id: trace
     title: Traceability
     description: "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
@@ -24900,6 +24906,849 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/session_domain.rs
+  - id: skills.explain
+    module: skills
+    kind: query
+    title: "One skill, with everything derived about it"
+    description: "One skill in full: its authored identity, status and provenance marker, each test that names it with the state of its latest recorded run and the command that reproduces it, its page, its doctrine and gates, every invocation by path and line, its standing and the findings about it. The file itself stays at `majordomus://skill/<id>`."
+    input:
+      name: SkillExplainInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          id:
+            type: string
+            description: "The skill's id, which is also its directory name."
+        required:
+          - id
+        description: "Which skill to explain, by its id. An id the repository does not hold is a refusal\nnaming what was looked for, never an empty answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillExplainInput;\nlet input = SkillExplainInput { id: \"implement\".into() };\nassert_eq!(input.id, \"implement\");\n```"
+        title: SkillExplainInput
+    output:
+      name: SkillStatus
+      schema:
+        type: object
+        properties:
+          id:
+            type: string
+            description: "The skill's id, which is its directory name."
+          uri:
+            type: string
+            description: "`majordomus://skill/<id>`."
+          title:
+            type: string
+            description: The title as authored.
+          description:
+            type: string
+            description: The description as authored.
+          status:
+            type: string
+            description: "The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused."
+          version:
+            type: integer
+            format: uint64
+            minimum: 0
+            description: The version as authored.
+          path:
+            type: string
+            description: "The file, repository-relative."
+          provenance:
+            anyOf:
+              - "$ref": "#/$defs/SkillProvenance"
+              - type: "null"
+            description: "Where it came from, when it declares that."
+          valid:
+            type: boolean
+            description: "Whether the file satisfies the skill contract, as the index judged it."
+          tested:
+            "$ref": "#/$defs/SkillTested"
+            description: The tested fact.
+          documented:
+            "$ref": "#/$defs/SkillDocumented"
+            description: The documented fact.
+          enforced:
+            "$ref": "#/$defs/SkillEnforced"
+            description: The enforced fact.
+          used:
+            "$ref": "#/$defs/SkillUsed"
+            description: The used fact.
+          standing:
+            "$ref": "#/$defs/SkillStanding"
+            description: "Where it stands, derived from the four."
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/SkillFinding"
+            description: The findings about this skill.
+        required:
+          - id
+          - uri
+          - title
+          - description
+          - status
+          - version
+          - path
+          - valid
+          - tested
+          - documented
+          - enforced
+          - used
+          - standing
+          - findings
+        description: "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::{SkillStanding, SkillStatus};\n// the standing is the one field a listing sorts attention by\nfn attention(s: &SkillStatus) -> bool { s.standing == SkillStanding::Orphan }\nlet _ = attention;\n```"
+        title: SkillStatus
+        "$defs":
+          SkillProvenance:
+            type: object
+            properties:
+              origin:
+                type: string
+                description: "`prior-art`: the concept was studied elsewhere before this skill was written."
+              ledger:
+                type: string
+                description: "`import-<date>#<n>`: the entry of the local import ledger that holds the mapping."
+              decision:
+                type: string
+                description: "`adapted`, `reimplemented` or `merged`."
+            required:
+              - origin
+              - ledger
+              - decision
+            description: "Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \"prior-art\".into(),\n    ledger: \"import-2026-09-09#1\".into(),\n    decision: \"adapted\".into(),\n};\nassert!(p.ledger.starts_with(\"import-\"));\n```"
+          SkillTested:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/SkillEvidence"
+                description: "The weakest state of the naming tests; `untested` when there are none."
+              tests:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillTest"
+                description: "Every test that names the skill, in path order."
+            required:
+              - state
+              - tests
+            description: "The tested fact: the tests that name the skill, and their weakest state.\n\n```\nuse majordomus_cli::skill::{SkillEvidence, SkillTested};\nlet t = SkillTested { state: SkillEvidence::Untested, tests: vec![] };\nassert!(!t.state.current());\n```"
+          SkillEvidence:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every naming test has a passing run, and nothing but the ledger changed since."
+              - type: string
+                const: inputs_unchanged
+                description: "Every naming test passed, and neither the test nor the skill changed since."
+              - type: string
+                const: stale
+                description: "A passing run exists, and the test or the skill changed since."
+              - type: string
+                const: failing
+                description: The latest recorded run of a naming test did not pass.
+              - type: string
+                const: not_run
+                description: A test names the skill and no run of it was ever recorded.
+              - type: string
+                const: unrunnable
+                description: A test names the skill from a path no runner drives.
+              - type: string
+                const: untested
+                description: No test names the skill.
+            description: "What the evidence ledger can say about a skill's tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven < SkillEvidence::Untested);\n```"
+          SkillTest:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The test's path."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "Its identity in the ledger, when a runner owns the path."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: "What the ledger says about its latest run, for this skill."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: The command that runs it again.
+              recorded_at:
+                type:
+                  - string
+                  - "null"
+                description: When the run behind the state was recorded.
+            required:
+              - path
+              - state
+            description: "One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \"test/cases/95_skills.sh\".into(),\n    test: Some(\"suite:95_skills\".into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\"bash test/run.sh 95_skills\".into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+          SkillDocumented:
+            type: object
+            properties:
+              documented:
+                type: boolean
+                description: Whether the page is a tracked file.
+              page:
+                type: string
+                description: Where the page is projected.
+            required:
+              - documented
+              - page
+            description: "The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \"site/content/skills/implement.md\".into() };\nassert!(d.page.ends_with(\"implement.md\"));\n```"
+          SkillEnforced:
+            type: object
+            properties:
+              enforced:
+                type: boolean
+                description: "A doctrine validates skills, and a gate running the verification covers this file."
+              doctrine:
+                type:
+                  - string
+                  - "null"
+                description: "The rule whose validator is `skills`, when the index holds one."
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "The CI gates a change to the skill selects whose command runs `skills verify`."
+            required:
+              - enforced
+              - gates
+            description: "The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```"
+          SkillUsed:
+            type: object
+            properties:
+              used:
+                type: boolean
+                description: At least one invocation surface references the skill.
+              invocations:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillInvocation"
+                description: "Every reference, in path and line order."
+            required:
+              - used
+              - invocations
+            description: "The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```"
+          SkillInvocation:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The invocation surface, repository-relative."
+              line:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The 1-based line the reference is on.
+              reference:
+                type: string
+                description: The reference as written.
+            required:
+              - path
+              - line
+              - reference
+            description: "One place a skill is invoked from.\n\n```\nuse majordomus_cli::skill::SkillInvocation;\nlet i = SkillInvocation {\n    path: \".ai/repo/prompts/review.md\".into(),\n    line: 3,\n    reference: \"majordomus://skill/repo-review\".into(),\n};\nassert_eq!(i.line, 3);\n```"
+          SkillStanding:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Active, and tested with current evidence, documented, enforced and used."
+              - type: string
+                const: partial
+                description: "Active, named by a test and invoked, with at least one debt a warning names."
+              - type: string
+                const: orphan
+                description: "Active, and no test names it or nothing invokes it."
+              - type: string
+                const: invalid
+                description: "Its file does not satisfy the skill contract; one the index refused outright is listed\nhere too, so a listing never silently shrinks."
+              - type: string
+                const: not_required
+                description: "Draft or deprecated: nothing is owed."
+            description: "Where a skill stands, derived from the four facts.\n\n```\nuse majordomus_cli::skill::SkillStanding;\nassert_eq!(SkillStanding::Orphan.label(), \"orphan\");\n```"
+          SkillFinding:
+            type: object
+            properties:
+              level:
+                "$ref": "#/$defs/SkillFindingLevel"
+                description: "`fail` or `warn`."
+              code:
+                type: string
+                description: "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`."
+              skill:
+                type:
+                  - string
+                  - "null"
+                description: "The skill concerned, when the finding is about one."
+              subject:
+                type: string
+                description: "The file the finding is about, repository-relative."
+              message:
+                type: string
+                description: "What is wrong, and what to do about it."
+              reproduce:
+                type: string
+                description: The command that reproduces or settles it.
+            required:
+              - level
+              - code
+              - subject
+              - message
+              - reproduce
+            description: "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```"
+          SkillFindingLevel:
+            oneOf:
+              - type: string
+                const: fail
+                description: "Refuses: `skills verify` exits 10 and the doctrine fails."
+              - type: string
+                const: warn
+                description: "Reported, and does not refuse."
+            description: "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::skills
+    exposure:
+      mcp:
+        tool: majordomus_skill_explain
+      http:
+        method: GET
+        path: /api/v1/skills/explain
+      cli:
+        path:
+          - skills
+          - explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - skill
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/skills.rs
+  - id: skills.status
+    module: skills
+    kind: query
+    title: "Every skill, with its derived standing"
+    description: "Every skill the index holds, each with the tests that name it and the evidence state of their latest runs, its page projection, the doctrine and gates that hold it, every invocation that references it, and the standing those derive: proven, partial, orphan, invalid, or not_required for a draft or deprecated skill."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: SkillStatusList
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many skills.
+          standings:
+            type: object
+            additionalProperties:
+              type: integer
+              format: uint
+              minimum: 0
+            description: "How many in each standing, keyed by the standing word."
+          skills:
+            type: array
+            items:
+              "$ref": "#/$defs/SkillStatus"
+            description: "Every skill, in index order."
+        required:
+          - count
+          - standings
+          - skills
+        description: "Every skill with its derived standing, and how many stand where: what\n`majordomus skills status`, `GET /api/v1/skills` and the `majordomus_skills` tool answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillStatusList;\nlet empty = SkillStatusList {\n    count: 0,\n    standings: std::collections::BTreeMap::new(),\n    skills: vec![],\n};\nassert_eq!(empty.count, 0);\n```"
+        title: SkillStatusList
+        "$defs":
+          SkillStatus:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The skill's id, which is its directory name."
+              uri:
+                type: string
+                description: "`majordomus://skill/<id>`."
+              title:
+                type: string
+                description: The title as authored.
+              description:
+                type: string
+                description: The description as authored.
+              status:
+                type: string
+                description: "The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused."
+              version:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: The version as authored.
+              path:
+                type: string
+                description: "The file, repository-relative."
+              provenance:
+                anyOf:
+                  - "$ref": "#/$defs/SkillProvenance"
+                  - type: "null"
+                description: "Where it came from, when it declares that."
+              valid:
+                type: boolean
+                description: "Whether the file satisfies the skill contract, as the index judged it."
+              tested:
+                "$ref": "#/$defs/SkillTested"
+                description: The tested fact.
+              documented:
+                "$ref": "#/$defs/SkillDocumented"
+                description: The documented fact.
+              enforced:
+                "$ref": "#/$defs/SkillEnforced"
+                description: The enforced fact.
+              used:
+                "$ref": "#/$defs/SkillUsed"
+                description: The used fact.
+              standing:
+                "$ref": "#/$defs/SkillStanding"
+                description: "Where it stands, derived from the four."
+              findings:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillFinding"
+                description: The findings about this skill.
+            required:
+              - id
+              - uri
+              - title
+              - description
+              - status
+              - version
+              - path
+              - valid
+              - tested
+              - documented
+              - enforced
+              - used
+              - standing
+              - findings
+            description: "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::{SkillStanding, SkillStatus};\n// the standing is the one field a listing sorts attention by\nfn attention(s: &SkillStatus) -> bool { s.standing == SkillStanding::Orphan }\nlet _ = attention;\n```"
+          SkillProvenance:
+            type: object
+            properties:
+              origin:
+                type: string
+                description: "`prior-art`: the concept was studied elsewhere before this skill was written."
+              ledger:
+                type: string
+                description: "`import-<date>#<n>`: the entry of the local import ledger that holds the mapping."
+              decision:
+                type: string
+                description: "`adapted`, `reimplemented` or `merged`."
+            required:
+              - origin
+              - ledger
+              - decision
+            description: "Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \"prior-art\".into(),\n    ledger: \"import-2026-09-09#1\".into(),\n    decision: \"adapted\".into(),\n};\nassert!(p.ledger.starts_with(\"import-\"));\n```"
+          SkillTested:
+            type: object
+            properties:
+              state:
+                "$ref": "#/$defs/SkillEvidence"
+                description: "The weakest state of the naming tests; `untested` when there are none."
+              tests:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillTest"
+                description: "Every test that names the skill, in path order."
+            required:
+              - state
+              - tests
+            description: "The tested fact: the tests that name the skill, and their weakest state.\n\n```\nuse majordomus_cli::skill::{SkillEvidence, SkillTested};\nlet t = SkillTested { state: SkillEvidence::Untested, tests: vec![] };\nassert!(!t.state.current());\n```"
+          SkillEvidence:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Every naming test has a passing run, and nothing but the ledger changed since."
+              - type: string
+                const: inputs_unchanged
+                description: "Every naming test passed, and neither the test nor the skill changed since."
+              - type: string
+                const: stale
+                description: "A passing run exists, and the test or the skill changed since."
+              - type: string
+                const: failing
+                description: The latest recorded run of a naming test did not pass.
+              - type: string
+                const: not_run
+                description: A test names the skill and no run of it was ever recorded.
+              - type: string
+                const: unrunnable
+                description: A test names the skill from a path no runner drives.
+              - type: string
+                const: untested
+                description: No test names the skill.
+            description: "What the evidence ledger can say about a skill's tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven < SkillEvidence::Untested);\n```"
+          SkillTest:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The test's path."
+              test:
+                type:
+                  - string
+                  - "null"
+                description: "Its identity in the ledger, when a runner owns the path."
+              state:
+                "$ref": "#/$defs/ProofState"
+                description: "What the ledger says about its latest run, for this skill."
+              reproduce:
+                type:
+                  - string
+                  - "null"
+                description: The command that runs it again.
+              recorded_at:
+                type:
+                  - string
+                  - "null"
+                description: When the run behind the state was recorded.
+            required:
+              - path
+              - state
+            description: "One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \"test/cases/95_skills.sh\".into(),\n    test: Some(\"suite:95_skills\".into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\"bash test/run.sh 95_skills\".into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```"
+          ProofState:
+            oneOf:
+              - type: string
+                const: proven
+                description: "A passing run, and nothing has changed since it — the diff against the execution's\nown commit is empty but for the ledger. Proof of the tree in front of you."
+              - type: string
+                const: inputs_unchanged
+                description: "A passing run, and nothing this claim names has changed since. Not proof at HEAD:\nsomething the claim does not name may have broken it."
+              - type: string
+                const: stale
+                description: "A passing run, but something this claim names has changed since. The proof is older\nthan its subject."
+              - type: string
+                const: failing
+                description: "The latest run of this claim's test did not pass."
+              - type: string
+                const: not_run
+                description: "The claim names a test a runner owns, and no run of it has ever been recorded."
+              - type: string
+                const: unrunnable
+                description: "The claim names a path no runner in this repository drives. Nothing can record it,\nso nothing can prove it this way."
+              - type: string
+                const: no_test
+                description: "The claim names no test at all. Correct for a `planned` or `rejected` claim, and a\ndefect for any other."
+            description: "What the repository can say about one claim's proof, right now.\n\nOrdered from strongest to weakest, so a summary that sorts by this reads as a ranking.\n\n```\nuse majordomus_cli::evidence::ProofState;\n\nlet mut states = vec![ProofState::NotRun, ProofState::Stale, ProofState::Proven];\nstates.sort();\nassert_eq!(\n    states,\n    vec![ProofState::Proven, ProofState::Stale, ProofState::NotRun]\n);\n\n// the two strongest are deliberately not one state: `inputs unchanged` is the absence\n// of a known invalidation, and collapsing it into `proven` is the unaccountable badge\nassert_ne!(ProofState::Proven, ProofState::InputsUnchanged);\nassert!(ProofState::Proven < ProofState::InputsUnchanged);\nassert!(ProofState::InputsUnchanged.passing());\n```\n# Example\n\n```\nuse majordomus_cli::evidence::ProofState;\nassert!(ProofState::Proven.passing());\nassert!(!ProofState::NotRun.passing());\nassert!(!ProofState::InputsUnchanged.meaning().is_empty());\n```"
+          SkillDocumented:
+            type: object
+            properties:
+              documented:
+                type: boolean
+                description: Whether the page is a tracked file.
+              page:
+                type: string
+                description: Where the page is projected.
+            required:
+              - documented
+              - page
+            description: "The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \"site/content/skills/implement.md\".into() };\nassert!(d.page.ends_with(\"implement.md\"));\n```"
+          SkillEnforced:
+            type: object
+            properties:
+              enforced:
+                type: boolean
+                description: "A doctrine validates skills, and a gate running the verification covers this file."
+              doctrine:
+                type:
+                  - string
+                  - "null"
+                description: "The rule whose validator is `skills`, when the index holds one."
+              gates:
+                type: array
+                items:
+                  type: string
+                description: "The CI gates a change to the skill selects whose command runs `skills verify`."
+            required:
+              - enforced
+              - gates
+            description: "The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```"
+          SkillUsed:
+            type: object
+            properties:
+              used:
+                type: boolean
+                description: At least one invocation surface references the skill.
+              invocations:
+                type: array
+                items:
+                  "$ref": "#/$defs/SkillInvocation"
+                description: "Every reference, in path and line order."
+            required:
+              - used
+              - invocations
+            description: "The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```"
+          SkillInvocation:
+            type: object
+            properties:
+              path:
+                type: string
+                description: "The invocation surface, repository-relative."
+              line:
+                type: integer
+                format: uint
+                minimum: 0
+                description: The 1-based line the reference is on.
+              reference:
+                type: string
+                description: The reference as written.
+            required:
+              - path
+              - line
+              - reference
+            description: "One place a skill is invoked from.\n\n```\nuse majordomus_cli::skill::SkillInvocation;\nlet i = SkillInvocation {\n    path: \".ai/repo/prompts/review.md\".into(),\n    line: 3,\n    reference: \"majordomus://skill/repo-review\".into(),\n};\nassert_eq!(i.line, 3);\n```"
+          SkillStanding:
+            oneOf:
+              - type: string
+                const: proven
+                description: "Active, and tested with current evidence, documented, enforced and used."
+              - type: string
+                const: partial
+                description: "Active, named by a test and invoked, with at least one debt a warning names."
+              - type: string
+                const: orphan
+                description: "Active, and no test names it or nothing invokes it."
+              - type: string
+                const: invalid
+                description: "Its file does not satisfy the skill contract; one the index refused outright is listed\nhere too, so a listing never silently shrinks."
+              - type: string
+                const: not_required
+                description: "Draft or deprecated: nothing is owed."
+            description: "Where a skill stands, derived from the four facts.\n\n```\nuse majordomus_cli::skill::SkillStanding;\nassert_eq!(SkillStanding::Orphan.label(), \"orphan\");\n```"
+          SkillFinding:
+            type: object
+            properties:
+              level:
+                "$ref": "#/$defs/SkillFindingLevel"
+                description: "`fail` or `warn`."
+              code:
+                type: string
+                description: "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`."
+              skill:
+                type:
+                  - string
+                  - "null"
+                description: "The skill concerned, when the finding is about one."
+              subject:
+                type: string
+                description: "The file the finding is about, repository-relative."
+              message:
+                type: string
+                description: "What is wrong, and what to do about it."
+              reproduce:
+                type: string
+                description: The command that reproduces or settles it.
+            required:
+              - level
+              - code
+              - subject
+              - message
+              - reproduce
+            description: "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```"
+          SkillFindingLevel:
+            oneOf:
+              - type: string
+                const: fail
+                description: "Refuses: `skills verify` exits 10 and the doctrine fails."
+              - type: string
+                const: warn
+                description: "Reported, and does not refuse."
+            description: "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::skills
+    exposure:
+      mcp:
+        tool: majordomus_skills
+        resource:
+          uri: majordomus://skills
+          name: skills
+      http:
+        method: GET
+        path: /api/v1/skills
+      cli:
+        path:
+          - skills
+          - status
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - skill
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/skills.rs
+  - id: skills.verify
+    module: skills
+    kind: query
+    title: What the skills owe and do not have
+    description: "Every finding over the skills: a file that breaks the skill contract, an active skill no test names or nothing invokes, a test whose latest run failed, a test or an invocation naming a skill that does not exist — each a failure — and evidence that is not current, a missing page or a missing gate, each a warning."
+    input:
+      name: Empty
+      schema:
+        type: object
+        additionalProperties: false
+        description: No input.
+        title: Empty
+    output:
+      name: SkillVerification
+      schema:
+        type: object
+        properties:
+          valid:
+            type: boolean
+            description: True when no finding is a failure.
+          skills:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many skills were examined.
+          failures:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many findings refuse.
+          warnings:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many findings are warnings.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/SkillFinding"
+            description: Every finding.
+        required:
+          - valid
+          - skills
+          - failures
+          - warnings
+          - findings
+        description: "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```"
+        title: SkillVerification
+        "$defs":
+          SkillFinding:
+            type: object
+            properties:
+              level:
+                "$ref": "#/$defs/SkillFindingLevel"
+                description: "`fail` or `warn`."
+              code:
+                type: string
+                description: "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`."
+              skill:
+                type:
+                  - string
+                  - "null"
+                description: "The skill concerned, when the finding is about one."
+              subject:
+                type: string
+                description: "The file the finding is about, repository-relative."
+              message:
+                type: string
+                description: "What is wrong, and what to do about it."
+              reproduce:
+                type: string
+                description: The command that reproduces or settles it.
+            required:
+              - level
+              - code
+              - subject
+              - message
+              - reproduce
+            description: "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```"
+          SkillFindingLevel:
+            oneOf:
+              - type: string
+                const: fail
+                description: "Refuses: `skills verify` exits 10 and the doctrine fails."
+              - type: string
+                const: warn
+                description: "Reported, and does not refuse."
+            description: "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```"
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::skills
+    exposure:
+      mcp:
+        tool: majordomus_skills_verify
+      http:
+        method: GET
+        path: /api/v1/skills/verify
+      cli:
+        path:
+          - skills
+          - verify
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - skill
+      - evidence
+      - validation
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/skills.rs
   - id: trace.commit
     module: trace
     kind: query

@@ -154,6 +154,12 @@
           "command": "majordomus rules",
           "name": "rules",
           "route": "/docs/cli/rules/"
+        },
+        {
+          "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
+          "command": "majordomus skills",
+          "name": "skills",
+          "route": "/docs/cli/skills/"
         }
       ],
       "command": "majordomus",
@@ -20681,13 +20687,555 @@
       ],
       "route": "/docs/cli/rules/proves/",
       "usage": "majordomus rules proves [OPTIONS] <ID>"
+    },
+    {
+      "about": "Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every skill with its derived standing: tested, documented, enforced, used",
+          "command": "majordomus skills status",
+          "name": "status",
+          "route": "/docs/cli/skills/status/"
+        },
+        {
+          "about": "One skill in full: each naming test and its evidence, its page, its gates, every invocation",
+          "command": "majordomus skills explain",
+          "name": "explain",
+          "route": "/docs/cli/skills/explain/"
+        },
+        {
+          "about": "Every finding over the skills; exit 10 when any is a failure",
+          "command": "majordomus skills verify",
+          "name": "verify",
+          "route": "/docs/cli/skills/verify/"
+        }
+      ],
+      "command": "majordomus skills",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "skills",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "skills"
+      ],
+      "route": "/docs/cli/skills/",
+      "usage": "majordomus skills [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every skill with its derived standing: tested, documented, enforced, used",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus skills",
+          "name": "skills",
+          "route": "/docs/cli/skills/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus skills status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "skills",
+            "status"
+          ],
+          "command": "majordomus skills status",
+          "description": "Tested, documented, enforced and used are derived on every read from the tests that name the skill, the evidence ledger, the site projection, the CI model and the invocation surfaces; no file stores them. A repository with no skill answers with none.",
+          "expectation": "exits 0; prints skill(s)",
+          "id": "skills-status",
+          "setup": [],
+          "title": "Every skill, with its derived standing"
+        },
+        {
+          "argv": [
+            "skills",
+            "status",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus skills status --format json",
+          "description": "What `GET /api/v1/skills` returns and the `majordomus_skills` tool answers: the count, the tally by standing, and every skill with its four derived facts.",
+          "expectation": "exits 0; prints one JSON document carrying /count, /standings, /skills",
+          "id": "skills-status-json",
+          "setup": [],
+          "title": "The same, as the shape the API and MCP answer with"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/skills/",
+      "path": [
+        "majordomus",
+        "skills",
+        "status"
+      ],
+      "route": "/docs/cli/skills/status/",
+      "usage": "majordomus skills status [OPTIONS]"
+    },
+    {
+      "about": "One skill in full: each naming test and its evidence, its page, its gates, every invocation",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus skills",
+          "name": "skills",
+          "route": "/docs/cli/skills/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The skill's id, which is also its directory name",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus skills explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "skills",
+            "explain",
+            "no-such-skill"
+          ],
+          "command": "majordomus skills explain no-such-skill",
+          "description": "`skills explain <id>` answers one skill in full: each naming test with the state of its latest run and how to reproduce it, its page, its gates and every invocation by path and line. An id that names no skill exits 12 and names what was looked for.",
+          "expectation": "exits 12",
+          "id": "skills-explain-absent",
+          "setup": [],
+          "title": "A skill the repository does not hold is a refusal, not an empty answer"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/skills/",
+      "path": [
+        "majordomus",
+        "skills",
+        "explain"
+      ],
+      "route": "/docs/cli/skills/explain/",
+      "usage": "majordomus skills explain [OPTIONS] <ID>"
+    },
+    {
+      "about": "Every finding over the skills; exit 10 when any is a failure",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus skills",
+          "name": "skills",
+          "route": "/docs/cli/skills/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus skills verify",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "skills",
+            "verify"
+          ],
+          "command": "majordomus skills verify",
+          "description": "An active skill no test names or nothing invokes, a failing run, a contract violation, or a test or invocation naming a skill that does not exist: each a failure, and exit 10. Evidence that is not current, a missing page or a missing gate: a warning.",
+          "expectation": "exits 0; prints skill(s), valid",
+          "id": "skills-verify",
+          "setup": [],
+          "title": "Check every skill is a proven capability"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "verify",
+      "parent_route": "/docs/cli/skills/",
+      "path": [
+        "majordomus",
+        "skills",
+        "verify"
+      ],
+      "route": "/docs/cli/skills/verify/",
+      "usage": "majordomus skills verify [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 906,
-    "commands": 127,
-    "examples": 134,
-    "runnable": 116
+    "arguments": 927,
+    "commands": 131,
+    "examples": 138,
+    "runnable": 119
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.7.0",

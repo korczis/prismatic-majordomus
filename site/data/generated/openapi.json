@@ -98,6 +98,9 @@
     "op-server-status": "docs/api/server/",
     "op-session_domain-identity": "docs/api/session-domain/",
     "op-session_domain-machine": "docs/api/session-domain/",
+    "op-skills-explain": "docs/api/skills/",
+    "op-skills-status": "docs/api/skills/",
+    "op-skills-verify": "docs/api/skills/",
     "op-trace-commit": "docs/api/trace/",
     "op-trace-issue": "docs/api/trace/",
     "op-trace-report": "docs/api/trace/",
@@ -565,6 +568,20 @@
     "schema-Severity": "docs/api/shared/",
     "schema-Sighting": "docs/api/mesh/",
     "schema-Signal": "docs/api/why/",
+    "schema-SkillDocumented": "docs/api/skills/",
+    "schema-SkillEnforced": "docs/api/skills/",
+    "schema-SkillEvidence": "docs/api/skills/",
+    "schema-SkillFinding": "docs/api/skills/",
+    "schema-SkillFindingLevel": "docs/api/skills/",
+    "schema-SkillInvocation": "docs/api/skills/",
+    "schema-SkillProvenance": "docs/api/skills/",
+    "schema-SkillStanding": "docs/api/skills/",
+    "schema-SkillStatus": "docs/api/skills/",
+    "schema-SkillStatusList": "docs/api/skills/",
+    "schema-SkillTest": "docs/api/skills/",
+    "schema-SkillTested": "docs/api/skills/",
+    "schema-SkillUsed": "docs/api/skills/",
+    "schema-SkillVerification": "docs/api/skills/",
     "schema-Source": "docs/api/design/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
@@ -672,6 +689,7 @@
     "tag-rules": "docs/api/rules/",
     "tag-server": "docs/api/server/",
     "tag-session_domain": "docs/api/session-domain/",
+    "tag-skills": "docs/api/skills/",
     "tag-trace": "docs/api/trace/",
     "tag-web": "docs/api/web/",
     "tag-why": "docs/api/why/",
@@ -679,9 +697,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 112,
-    "schemas": 527,
-    "tags": 37
+    "operations": 115,
+    "schemas": 541,
+    "tags": 38
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -864,6 +882,9 @@
     "server.status": "server",
     "session_domain.identity": "session-domain",
     "session_domain.machine": "session-domain",
+    "skills.explain": "skills",
+    "skills.status": "skills",
+    "skills.verify": "skills",
     "trace.commit": "trace",
     "trace.issue": "trace",
     "trace.report": "trace",
@@ -1335,6 +1356,20 @@
     "Severity": "shared",
     "Sighting": "mesh",
     "Signal": "why",
+    "SkillDocumented": "skills",
+    "SkillEnforced": "skills",
+    "SkillEvidence": "skills",
+    "SkillFinding": "skills",
+    "SkillFindingLevel": "skills",
+    "SkillInvocation": "skills",
+    "SkillProvenance": "skills",
+    "SkillStanding": "skills",
+    "SkillStatus": "skills",
+    "SkillStatusList": "skills",
+    "SkillTest": "skills",
+    "SkillTested": "skills",
+    "SkillUsed": "skills",
+    "SkillVerification": "skills",
     "Source": "design",
     "Spelling": "session-domain",
     "Stability": "shared",
@@ -10680,6 +10715,9 @@
         "server.status",
         "session_domain.identity",
         "session_domain.machine",
+        "skills.status",
+        "skills.explain",
+        "skills.verify",
         "trace.report",
         "trace.commit",
         "trace.issue",
@@ -20909,7 +20947,8 @@
         "ClaimEvidence",
         "EvidenceClaimProof",
         "EvidenceFinding",
-        "RuleTestProof"
+        "RuleTestProof",
+        "SkillTest"
       ],
       "values": [
         {
@@ -26658,6 +26697,646 @@
       "used_by_schemas": [
         "MomentDetail"
       ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The documented fact: the page the site projects for the skill.\n\n```\nuse majordomus_cli::skill::SkillDocumented;\nlet d = SkillDocumented { documented: true, page: \"site/content/skills/implement.md\".into() };\nassert!(d.page.ends_with(\"implement.md\"));\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillDocumented",
+      "properties": [
+        {
+          "description": "Whether the page is a tracked file.",
+          "name": "documented",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Where the page is projected.",
+          "name": "page",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The enforced fact: the doctrine that validates skills and the gates a change to this one\nselects.\n\n```\nuse majordomus_cli::skill::SkillEnforced;\nlet e = SkillEnforced { enforced: false, doctrine: None, gates: vec![] };\nassert!(!e.enforced);\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillEnforced",
+      "properties": [
+        {
+          "description": "A doctrine validates skills, and a gate running the verification covers this file.",
+          "name": "enforced",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The rule whose validator is `skills`, when the index holds one.",
+          "name": "doctrine",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The CI gates a change to the skill selects whose command runs `skills verify`.",
+          "name": "gates",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the evidence ledger can say about a skill's tests, as a whole: the weakest state of\nthe tests that name it, or `untested` when none does.\n\n```\nuse majordomus_cli::skill::SkillEvidence;\nassert!(SkillEvidence::Proven.current());\nassert!(SkillEvidence::InputsUnchanged.current());\nassert!(!SkillEvidence::Stale.current());\nassert!(SkillEvidence::Proven < SkillEvidence::Untested);\n```",
+      "home": "skills",
+      "is_enum": true,
+      "name": "SkillEvidence",
+      "properties": [],
+      "type": "\"proven\" | \"inputs_unchanged\" | \"stale\" | \"failing\" | \"not_run\" | \"unrunnable\" | \"untested\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillTested"
+      ],
+      "values": [
+        {
+          "description": "Every naming test has a passing run, and nothing but the ledger changed since.",
+          "value": "proven"
+        },
+        {
+          "description": "Every naming test passed, and neither the test nor the skill changed since.",
+          "value": "inputs_unchanged"
+        },
+        {
+          "description": "A passing run exists, and the test or the skill changed since.",
+          "value": "stale"
+        },
+        {
+          "description": "The latest recorded run of a naming test did not pass.",
+          "value": "failing"
+        },
+        {
+          "description": "A test names the skill and no run of it was ever recorded.",
+          "value": "not_run"
+        },
+        {
+          "description": "A test names the skill from a path no runner drives.",
+          "value": "unrunnable"
+        },
+        {
+          "description": "No test names the skill.",
+          "value": "untested"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One thing the derivation found wrong, with the command that settles or reproduces it.\n\n```\nuse majordomus_cli::skill::{SkillFinding, SkillFindingLevel};\nlet f = SkillFinding {\n    level: SkillFindingLevel::Fail,\n    code: \"untested\".into(),\n    skill: Some(\"implement\".into()),\n    subject: \".ai/repo/skills/implement/SKILL.md\".into(),\n    message: \"no test names this skill\".into(),\n    reproduce: \"majordomus skills explain implement\".into(),\n};\nassert!(f.reproduce.contains(\"explain\"));\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillFinding",
+      "properties": [
+        {
+          "description": "`fail` or `warn`.",
+          "name": "level",
+          "refs": [
+            "SkillFindingLevel"
+          ],
+          "required": true,
+          "type": "SkillFindingLevel"
+        },
+        {
+          "description": "A stable code: `contract`, `untested`, `unused`, `unevidenced`, `failing`,\n`undocumented`, `unenforced`, `unknown_skill_in_test`, `unknown_skill_invoked`.",
+          "name": "code",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The skill concerned, when the finding is about one.",
+          "name": "skill",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The file the finding is about, repository-relative.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is wrong, and what to do about it.",
+          "name": "message",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that reproduces or settles it.",
+          "name": "reproduce",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus",
+        "SkillVerification"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How bad a finding is: a failure refuses, a warning is reported.\n\n```\nuse majordomus_cli::skill::SkillFindingLevel;\nassert_ne!(SkillFindingLevel::Fail, SkillFindingLevel::Warn);\n```",
+      "home": "skills",
+      "is_enum": true,
+      "name": "SkillFindingLevel",
+      "properties": [],
+      "type": "\"fail\" | \"warn\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillFinding"
+      ],
+      "values": [
+        {
+          "description": "Refuses: `skills verify` exits 10 and the doctrine fails.",
+          "value": "fail"
+        },
+        {
+          "description": "Reported, and does not refuse.",
+          "value": "warn"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One place a skill is invoked from.\n\n```\nuse majordomus_cli::skill::SkillInvocation;\nlet i = SkillInvocation {\n    path: \".ai/repo/prompts/review.md\".into(),\n    line: 3,\n    reference: \"majordomus://skill/repo-review\".into(),\n};\nassert_eq!(i.line, 3);\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillInvocation",
+      "properties": [
+        {
+          "description": "The invocation surface, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The 1-based line the reference is on.",
+          "name": "line",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The reference as written.",
+          "name": "reference",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillUsed"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a skill came from, when it was not written here first: an opaque marker into a\nledger kept outside the repository. The committed half names no source; the ledger entry\nit points at does, locally.\n\n```\nuse majordomus_cli::skill::SkillProvenance;\nlet p = SkillProvenance {\n    origin: \"prior-art\".into(),\n    ledger: \"import-2026-09-09#1\".into(),\n    decision: \"adapted\".into(),\n};\nassert!(p.ledger.starts_with(\"import-\"));\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillProvenance",
+      "properties": [
+        {
+          "description": "`prior-art`: the concept was studied elsewhere before this skill was written.",
+          "name": "origin",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`import-<date>#<n>`: the entry of the local import ledger that holds the mapping.",
+          "name": "ledger",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`adapted`, `reimplemented` or `merged`.",
+          "name": "decision",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a skill stands, derived from the four facts.\n\n```\nuse majordomus_cli::skill::SkillStanding;\nassert_eq!(SkillStanding::Orphan.label(), \"orphan\");\n```",
+      "home": "skills",
+      "is_enum": true,
+      "name": "SkillStanding",
+      "properties": [],
+      "type": "\"proven\" | \"partial\" | \"orphan\" | \"invalid\" | \"not_required\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus"
+      ],
+      "values": [
+        {
+          "description": "Active, and tested with current evidence, documented, enforced and used.",
+          "value": "proven"
+        },
+        {
+          "description": "Active, named by a test and invoked, with at least one debt a warning names.",
+          "value": "partial"
+        },
+        {
+          "description": "Active, and no test names it or nothing invokes it.",
+          "value": "orphan"
+        },
+        {
+          "description": "Its file does not satisfy the skill contract; one the index refused outright is listed\nhere too, so a listing never silently shrinks.",
+          "value": "invalid"
+        },
+        {
+          "description": "Draft or deprecated: nothing is owed.",
+          "value": "not_required"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One skill with everything derived about it.\n\n```\nuse majordomus_cli::skill::{SkillStanding, SkillStatus};\n// the standing is the one field a listing sorts attention by\nfn attention(s: &SkillStatus) -> bool { s.standing == SkillStanding::Orphan }\nlet _ = attention;\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillStatus",
+      "properties": [
+        {
+          "description": "The skill's id, which is its directory name.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`majordomus://skill/<id>`.",
+          "name": "uri",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The title as authored.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The description as authored.",
+          "name": "description",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The lifecycle status as authored: `draft`, `active` or `deprecated`; `unknown` for a\nfile the index refused.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The version as authored.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The file, repository-relative.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where it came from, when it declares that.",
+          "name": "provenance",
+          "refs": [
+            "SkillProvenance"
+          ],
+          "required": false,
+          "type": "SkillProvenance | null"
+        },
+        {
+          "description": "Whether the file satisfies the skill contract, as the index judged it.",
+          "name": "valid",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The tested fact.",
+          "name": "tested",
+          "refs": [
+            "SkillTested"
+          ],
+          "required": true,
+          "type": "SkillTested"
+        },
+        {
+          "description": "The documented fact.",
+          "name": "documented",
+          "refs": [
+            "SkillDocumented"
+          ],
+          "required": true,
+          "type": "SkillDocumented"
+        },
+        {
+          "description": "The enforced fact.",
+          "name": "enforced",
+          "refs": [
+            "SkillEnforced"
+          ],
+          "required": true,
+          "type": "SkillEnforced"
+        },
+        {
+          "description": "The used fact.",
+          "name": "used",
+          "refs": [
+            "SkillUsed"
+          ],
+          "required": true,
+          "type": "SkillUsed"
+        },
+        {
+          "description": "Where it stands, derived from the four.",
+          "name": "standing",
+          "refs": [
+            "SkillStanding"
+          ],
+          "required": true,
+          "type": "SkillStanding"
+        },
+        {
+          "description": "The findings about this skill.",
+          "name": "findings",
+          "refs": [
+            "SkillFinding"
+          ],
+          "required": true,
+          "type": "array of SkillFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "skills.explain"
+      ],
+      "used_by_schemas": [
+        "SkillStatusList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every skill with its derived standing, and how many stand where: what\n`majordomus skills status`, `GET /api/v1/skills` and the `majordomus_skills` tool answer.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillStatusList;\nlet empty = SkillStatusList {\n    count: 0,\n    standings: std::collections::BTreeMap::new(),\n    skills: vec![],\n};\nassert_eq!(empty.count, 0);\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillStatusList",
+      "properties": [
+        {
+          "description": "How many skills.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many in each standing, keyed by the standing word.",
+          "name": "standings",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "Every skill, in index order.",
+          "name": "skills",
+          "refs": [
+            "SkillStatus"
+          ],
+          "required": true,
+          "type": "array of SkillStatus"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "skills.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One test that names a skill, and what the ledger says about it.\n\n```\nuse majordomus_cli::evidence::ProofState;\nuse majordomus_cli::skill::SkillTest;\nlet t = SkillTest {\n    path: \"test/cases/95_skills.sh\".into(),\n    test: Some(\"suite:95_skills\".into()),\n    state: ProofState::NotRun,\n    reproduce: Some(\"bash test/run.sh 95_skills\".into()),\n    recorded_at: None,\n};\nassert_eq!(t.state, ProofState::NotRun);\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillTest",
+      "properties": [
+        {
+          "description": "The test's path.",
+          "name": "path",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its identity in the ledger, when a runner owns the path.",
+          "name": "test",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the ledger says about its latest run, for this skill.",
+          "name": "state",
+          "refs": [
+            "ProofState"
+          ],
+          "required": true,
+          "type": "ProofState"
+        },
+        {
+          "description": "The command that runs it again.",
+          "name": "reproduce",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When the run behind the state was recorded.",
+          "name": "recorded_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillTested"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The tested fact: the tests that name the skill, and their weakest state.\n\n```\nuse majordomus_cli::skill::{SkillEvidence, SkillTested};\nlet t = SkillTested { state: SkillEvidence::Untested, tests: vec![] };\nassert!(!t.state.current());\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillTested",
+      "properties": [
+        {
+          "description": "The weakest state of the naming tests; `untested` when there are none.",
+          "name": "state",
+          "refs": [
+            "SkillEvidence"
+          ],
+          "required": true,
+          "type": "SkillEvidence"
+        },
+        {
+          "description": "Every test that names the skill, in path order.",
+          "name": "tests",
+          "refs": [
+            "SkillTest"
+          ],
+          "required": true,
+          "type": "array of SkillTest"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The used fact: every invocation surface that references the skill.\n\n```\nuse majordomus_cli::skill::SkillUsed;\nlet u = SkillUsed { used: false, invocations: vec![] };\nassert!(!u.used);\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillUsed",
+      "properties": [
+        {
+          "description": "At least one invocation surface references the skill.",
+          "name": "used",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Every reference, in path and line order.",
+          "name": "invocations",
+          "refs": [
+            "SkillInvocation"
+          ],
+          "required": true,
+          "type": "array of SkillInvocation"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SkillStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The verdict over every skill: valid when no finding refuses.\n\n```\nuse majordomus_cli::capability::builtin::skills::SkillVerification;\nlet v = SkillVerification { valid: true, skills: 3, failures: 0, warnings: 2, findings: vec![] };\n// warnings are debts, reported; they do not make the verdict false\nassert!(v.valid);\n```",
+      "home": "skills",
+      "is_enum": false,
+      "name": "SkillVerification",
+      "properties": [
+        {
+          "description": "True when no finding is a failure.",
+          "name": "valid",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many skills were examined.",
+          "name": "skills",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many findings refuse.",
+          "name": "failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "How many findings are warnings.",
+          "name": "warnings",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every finding.",
+          "name": "findings",
+          "refs": [
+            "SkillFinding"
+          ],
+          "required": true,
+          "type": "array of SkillFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "skills.verify"
+      ],
+      "used_by_schemas": [],
       "values": [],
       "variants": []
     },
@@ -37396,6 +38075,191 @@
         }
       ],
       "slug": "session-domain"
+    },
+    {
+      "description": "Every skill the layer defines as a proven capability: whether a test names it and the evidence ledger holds a current passing run of that test, whether the site projects its page, whether a doctrine and a CI gate hold it, and whether a workflow, prompt, profile, provider template, recipe or CI workflow invokes it. All four are derived on every read and none is authored; an active skill no test names or nothing invokes is an orphan.",
+      "name": "skills",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "skills status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/skills\"",
+          "description": "Every skill the index holds, each with the tests that name it and the evidence state of their latest runs, its page projection, the doctrine and gates that hold it, every invocation that references it, and the standing those derive: proven, partial, orphan, invalid, or not_required for a draft or deprecated skill.",
+          "home": "skills",
+          "id": "skills.status",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "skills",
+            "uri": "majordomus://skills"
+          },
+          "mcp_tool": "majordomus_skills",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/skills",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::skills",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Every skill, with its derived standing: the result.",
+              "schema": "SkillStatusList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SkillStatusList",
+          "stability": "behaviorally_verified",
+          "summary": "Every skill, with its derived standing"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "skills explain",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/skills/explain?id=assess-before-deleting\"",
+          "description": "One skill in full: its authored identity, status and provenance marker, each test that names it with the state of its latest recorded run and the command that reproduces it, its page, its doctrine and gates, every invocation by path and line, its standing and the findings about it. The file itself stays at `majordomus://skill/<id>`.",
+          "home": "skills",
+          "id": "skills.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_skill_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The skill's id, which is also its directory name.",
+              "examples": [
+                {
+                  "case": "first-skill",
+                  "value": "\"assess-before-deleting\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/skills/explain",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::skills",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One skill, with everything derived about it: the result.",
+              "schema": "SkillStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SkillStatus",
+          "stability": "behaviorally_verified",
+          "summary": "One skill, with everything derived about it"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "skills verify",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/skills/verify\"",
+          "description": "Every finding over the skills: a file that breaks the skill contract, an active skill no test names or nothing invokes, a test whose latest run failed, a test or an invocation naming a skill that does not exist — each a failure — and evidence that is not current, a missing page or a missing gate, each a warning.",
+          "home": "skills",
+          "id": "skills.verify",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_skills_verify",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/skills/verify",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::skills",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What the skills owe and do not have: the result.",
+              "schema": "SkillVerification",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "SkillVerification",
+          "stability": "behaviorally_verified",
+          "summary": "What the skills owe and do not have"
+        }
+      ],
+      "slug": "skills"
     },
     {
       "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name.",

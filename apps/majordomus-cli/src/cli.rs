@@ -86,6 +86,58 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// Every skill as a proven capability: the tests that name it and the evidence behind them, its page, the doctrine and gates that hold it, what invokes it, and the orphans
+    Skills(SkillsArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus skills`. The output shape is global, so it reads where a person writes it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SkillsCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "skills", "explain", "implement"]).unwrap();
+/// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// assert!(matches!(args.command, SkillsCommand::Explain { .. }));
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "skills"]).is_err());
+/// ```
+pub struct SkillsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `status`, `explain` or `verify`.
+    pub command: SkillsCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus skills`: the command line of `skills.status`,
+/// `skills.explain` and `skills.verify`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, SkillsCommand};
+/// let cli = Cli::parse_from(["majordomus", "skills", "verify"]);
+/// let Command::Skills(args) = cli.command else { panic!("skills") };
+/// assert!(matches!(args.command, SkillsCommand::Verify));
+/// ```
+pub enum SkillsCommand {
+    /// Every skill with its derived standing: tested, documented, enforced, used
+    Status,
+    /// One skill in full: each naming test and its evidence, its page, its gates, every invocation
+    Explain {
+        /// The skill's id, which is also its directory name
+        id: String,
+    },
+    /// Every finding over the skills; exit 10 when any is a failure
+    Verify,
 }
 
 #[derive(Debug, Args)]
@@ -2904,6 +2956,49 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["why"],
             setup: &[],
             expect: Expect::StdoutContains(&["SLUG", "moment(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "skills status",
+        examples: &[
+            ExampleDoc {
+                id: "skills-status",
+                title: "Every skill, with its derived standing",
+                description: "Tested, documented, enforced and used are derived on every read from the tests that name the skill, the evidence ledger, the site projection, the CI model and the invocation surfaces; no file stores them. A repository with no skill answers with none.",
+                argv: &["skills", "status"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["skill(s)"]),
+            },
+            ExampleDoc {
+                id: "skills-status-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/skills` returns and the `majordomus_skills` tool answers: the count, the tally by standing, and every skill with its four derived facts.",
+                argv: &["skills", "status", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/count", "/standings", "/skills"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "skills explain",
+        examples: &[ExampleDoc {
+            id: "skills-explain-absent",
+            title: "A skill the repository does not hold is a refusal, not an empty answer",
+            description: "`skills explain <id>` answers one skill in full: each naming test with the state of its latest run and how to reproduce it, its page, its gates and every invocation by path and line. An id that names no skill exits 12 and names what was looked for.",
+            argv: &["skills", "explain", "no-such-skill"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "skills verify",
+        examples: &[ExampleDoc {
+            id: "skills-verify",
+            title: "Check every skill is a proven capability",
+            description: "An active skill no test names or nothing invokes, a failing run, a contract violation, or a test or invocation naming a skill that does not exist: each a failure, and exit 10. Evidence that is not current, a missing page or a missing gate: a warning.",
+            argv: &["skills", "verify"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["skill(s)", "valid"]),
         }],
     },
     CommandExamples {

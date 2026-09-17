@@ -27,7 +27,16 @@ skill() { # id [status] [related-csv] — a valid skill with one example, writte
     printf 'inputs:\n  - a checkout\noutputs:\n  - a report\n---\n# Purpose\n\nWhy %s exists.\n\n# Procedure\n\n1. Do the %s thing.\n\n# Output\n\nWhat %s leaves behind.\n' "$id" "$id" "$id"
   } > ".ai/repo/skills/$id/SKILL.md"
   printf '# Example for %s\n\n```text\nApply the %s skill.\n```\n' "$id" "$id" > ".ai/repo/skills/$id/examples/basic.md"
-  git add ".ai/repo/skills/$id" >/dev/null
+  # an active skill is a capability only when a test names it and a surface invokes it
+  # (project.skills-are-proven-capabilities); 391_skills_are_proven_capabilities is where that
+  # proof is measured, so every fixture skill here carries both and doctor stays about the file
+  mkdir -p test/cases .ai/repo/workflows
+  printf '# majordomus-skill: %s\ntrue\n' "$id" > "test/cases/00_uses_$id.sh"
+  printf '# Uses %s\n\nFollow majordomus://skill/%s.\n' "$id" "$id" > ".ai/repo/workflows/uses-$id.md"
+  git add ".ai/repo/skills/$id" "test/cases/00_uses_$id.sh" ".ai/repo/workflows/uses-$id.md" >/dev/null
+}
+unskill() { # dir [id the bindings were written for] — the skill and its test and invocation, gone
+  git rm -rqf ".ai/repo/skills/$1" "test/cases/00_uses_${2:-$1}.sh" ".ai/repo/workflows/uses-${2:-$1}.md" >/dev/null
 }
 
 # ---------------------------------------------------------------- usage and the empty case
@@ -117,7 +126,7 @@ git rm -rqf .ai/repo/skills/broken >/dev/null
 skill twin; sed -i.bak 's/^id: twin$/id: review/' .ai/repo/skills/twin/SKILL.md && rm -f .ai/repo/skills/twin/SKILL.md.bak && git add .ai/repo/skills/twin >/dev/null
 expect_exit 10 "$MJ" skills check
 expect_grep "duplicate skill id 'review'"
-git rm -rqf .ai/repo/skills/twin >/dev/null
+unskill twin
 # two skills that describe themselves the same way: a worker selects on the description, so
 # neither can be reached. Case, spacing and a trailing full stop are not a difference.
 skill sibling
@@ -131,7 +140,7 @@ expect_grep '^DRIFT skill +\.ai/repo/skills/sibling/SKILL\.md'
 # a description that says something else is not a duplicate, however similar it looks
 sed -i.bak 's/^description: .*$/description: The review procedure, but for something else entirely./' .ai/repo/skills/sibling/SKILL.md && rm -f .ai/repo/skills/sibling/SKILL.md.bak && git add .ai/repo/skills/sibling >/dev/null
 expect_exit 0 "$MJ" skills check
-git rm -rqf .ai/repo/skills/sibling >/dev/null
+unskill sibling
 # an example under a directory with no skill, and one without a heading
 mkdir -p .ai/repo/skills/orphan/examples && printf 'no heading here\n' > .ai/repo/skills/orphan/examples/x.md && git add .ai/repo/skills/orphan >/dev/null
 expect_exit 10 "$MJ" skills check
@@ -188,7 +197,7 @@ sed -i.bak 's/^id: zeta$/id: omega/' .ai/repo/skills/omega/SKILL.md && rm -f .ai
 expect_exit 0 "$MJ" skills list
 expect_grep '^omega '
 expect_no_grep '^zeta '
-git rm -rqf .ai/repo/skills/omega >/dev/null
+unskill omega zeta
 expect_exit 0 "$MJ" skills check
 expect_grep 'skills: 2 discovered, 2 valid'
 expect_exit 12 "$MJ" skills show omega

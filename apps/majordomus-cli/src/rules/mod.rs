@@ -875,7 +875,7 @@ pub fn definitions(index: &Index) -> Vec<RuleDefinition> {
 /// thing this rule names — and that is answerable from the one line each gate states
 /// directly, its `runs:`. No gate id is written down here: a gate renamed in that file is
 /// renamed in this answer, which is the whole reason to read it rather than to restate it.
-fn gate_commands(root: &Path) -> Vec<(String, String)> {
+pub(crate) fn gate_commands(root: &Path) -> Vec<(String, String)> {
     let Ok(text) = std::fs::read_to_string(root.join(GATES_PATH)) else {
         return Vec::new();
     };
@@ -902,7 +902,7 @@ fn gate_commands(root: &Path) -> Vec<(String, String)> {
 /// drives the crate's tests, for a path under the crate's test directory. A path none of
 /// these resolves gets no gate, which is reported rather than guessed — an over-claimed
 /// gate is the same defect as an over-claimed test.
-fn gates_for(path: &str, commands: &[(String, String)]) -> Vec<String> {
+pub(crate) fn gates_for(path: &str, commands: &[(String, String)]) -> Vec<String> {
     let mut out: BTreeSet<String> = BTreeSet::new();
     for (gate, runs) in commands {
         let names_path = runs.split_whitespace().any(|w| w == path);
@@ -945,6 +945,67 @@ fn gate_runs_exactly(gate: &str, path: &str, commands: &[(String, String)]) -> b
     commands
         .iter()
         .any(|(g, runs)| g == gate && runs.split_whitespace().any(|w| w == path))
+}
+
+/// For every commit the ledger recorded a run against, the paths that differ between it and
+/// the working tree; `None` for a commit git could not compare.
+///
+/// Asked once per report, whatever the number of subjects: rules and skills both judge a
+/// test's run against these, and a subject never runs `git diff` of its own.
+pub(crate) fn ledger_diffs(
+    root: &Path,
+    ledger: &Ledger,
+) -> BTreeMap<String, Option<BTreeSet<String>>> {
+    let mut diffs: BTreeMap<String, Option<BTreeSet<String>>> = BTreeMap::new();
+    for e in &ledger.executions {
+        diffs
+            .entry(e.commit.clone())
+            .or_insert_with(|| changed_since(root, &e.commit));
+    }
+    diffs
+}
+
+/// What the ledger says about one named test, for one subject file: the one judgement of a
+/// recorded run that rules and skills share, so the two can never disagree about a test.
+///
+/// No runner owns the path: `unrunnable`. Nothing recorded: `not_run`. The latest run did not
+/// pass: `failing`. It passed, and the test or the subject changed since (or the test's
+/// source no longer hashes to what ran, or git cannot compare): `stale`. It passed and
+/// nothing changed at all but the ledger: `proven`. Otherwise `inputs_unchanged`.
+pub(crate) fn test_state(
+    root: &Path,
+    diffs: &BTreeMap<String, Option<BTreeSet<String>>>,
+    id: Option<&TestId>,
+    execution: Option<&Execution>,
+    subject: &str,
+) -> ProofState {
+    match (id, execution) {
+        (None, _) => ProofState::Unrunnable,
+        (Some(_), None) => ProofState::NotRun,
+        (Some(t), Some(e)) => {
+            if !e.outcome.proves() {
+                return ProofState::Failing;
+            }
+            match diffs.get(&e.commit).and_then(|d| d.as_ref()) {
+                // git could not compare: not knowing is not proof
+                None => ProofState::Stale,
+                Some(d) => {
+                    let changed_at_all =
+                        d.iter().any(|p| p.as_str() != crate::evidence::LEDGER_PATH);
+                    // what the subject names, and nothing else
+                    let names_changed = d.contains(&t.source()) || d.contains(subject);
+                    let test_moved = e.digest_matches(root) == Some(false);
+                    if names_changed || test_moved {
+                        ProofState::Stale
+                    } else if !changed_at_all {
+                        ProofState::Proven
+                    } else {
+                        ProofState::InputsUnchanged
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// Every path that differs between `commit` and the working tree.
@@ -1046,12 +1107,7 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         crate::git::GitState::Unavailable { .. } => (None, "unknown".to_string()),
     };
 
-    let mut diffs: BTreeMap<String, Option<BTreeSet<String>>> = BTreeMap::new();
-    for e in &ledger.executions {
-        diffs
-            .entry(e.commit.clone())
-            .or_insert_with(|| changed_since(&root, &e.commit));
-    }
+    let diffs = ledger_diffs(&root, ledger);
     let gate_commands = gate_commands(&root);
 
     let defs = definitions(index);
@@ -1101,37 +1157,7 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
                 .as_ref()
                 .and_then(|t| ledger.latest(&t.as_string()))
                 .cloned();
-            let state = match (&id, &execution) {
-                (None, _) => ProofState::Unrunnable,
-                (Some(_), None) => ProofState::NotRun,
-                (Some(t), Some(e)) => {
-                    if !e.outcome.proves() {
-                        ProofState::Failing
-                    } else {
-                        match diffs.get(&e.commit).and_then(|d| d.as_ref()) {
-                            // git could not compare: not knowing is not proof
-                            None => ProofState::Stale,
-                            Some(d) => {
-                                let changed_at_all: Vec<&String> = d
-                                    .iter()
-                                    .filter(|p| p.as_str() != crate::evidence::LEDGER_PATH)
-                                    .collect();
-                                // what this rule names, and nothing else
-                                let names_changed =
-                                    d.contains(&t.source()) || d.contains(&def.path);
-                                let test_moved = e.digest_matches(&root) == Some(false);
-                                if names_changed || test_moved {
-                                    ProofState::Stale
-                                } else if changed_at_all.is_empty() {
-                                    ProofState::Proven
-                                } else {
-                                    ProofState::InputsUnchanged
-                                }
-                            }
-                        }
-                    }
-                }
-            };
+            let state = test_state(&root, &diffs, id.as_ref(), execution.as_ref(), &def.path);
             tests.push(TestProof {
                 gates,
                 kind,

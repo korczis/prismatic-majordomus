@@ -28,6 +28,7 @@ Rules the writer enforces and will reject you for breaking:
 - No transcript, no narrative of the session, no diffs.
 - `Current State` describes what is true in the files right now and is checkable.
 - `Next Action` is one action, not a plan.
-- `Verification` names commands that actually ran, with their exit codes.
+- `Verification` names commands that actually ran, with their exit codes, each claim marked
+  VERIFIED, PARTIAL or BLOCKED as majordomus://skill/report-verification-state defines.
 
 Pipe the result into `majordomus handover`.

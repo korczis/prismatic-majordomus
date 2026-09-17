@@ -49,6 +49,41 @@ message Header {
 
   // What the procedure leaves behind, one item each.
   repeated string outputs = 10;
+
+  // Where the skill came from, when its concept was studied elsewhere before it was written
+  // here. An opaque marker only: the mapping to a source lives in a local import ledger that
+  // is never committed, so a public repository names no private material.
+  Provenance provenance = 11;
+}
+
+// An opaque pointer into the local import ledger (`.ai/local/imports/<date>.yaml`).
+message Provenance {
+  option (majordomus.closed) = true;
+
+  Origin origin = 1 [(majordomus.required) = true];
+
+  // `import-<yyyy-mm-dd>#<n>`: the ledger and the entry in it.
+  string ledger = 2 [
+    (majordomus.required) = true,
+    (majordomus.pattern) = "^import-[0-9]{4}-[0-9]{2}-[0-9]{2}#[1-9][0-9]*$"
+  ];
+
+  Decision decision = 3 [(majordomus.required) = true];
+}
+
+// prior-art: the concept was studied in material outside this repository.
+enum Origin {
+  ORIGIN_UNSPECIFIED = 0;
+  ORIGIN_PRIOR_ART = 1 [(majordomus.value) = "prior-art"];
+}
+
+// adapted: the concept was restated for this repository. reimplemented: only the requirement
+// was kept. merged: an existing skill absorbed it.
+enum Decision {
+  DECISION_UNSPECIFIED = 0;
+  DECISION_ADAPTED = 1 [(majordomus.value) = "adapted"];
+  DECISION_REIMPLEMENTED = 2 [(majordomus.value) = "reimplemented"];
+  DECISION_MERGED = 3 [(majordomus.value) = "merged"];
 }
 
 // draft is discoverable and not yet recommended; deprecated stays readable and is no

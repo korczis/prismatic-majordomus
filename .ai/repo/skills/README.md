@@ -51,8 +51,15 @@ inputs:                   # optional; what the worker must have before starting
   - a checkout with git history available
 outputs:                  # optional; what the procedure leaves behind
   - findings with severity, evidence and the smallest fix
+provenance:               # optional; only when the concept was studied elsewhere first
+  origin: prior-art
+  ledger: import-2026-09-09#2   # the entry in the local, gitignored .ai/local/imports/<date>.yaml
+  decision: adapted             # adapted | reimplemented | merged
 ---
 ```
+
+`provenance` is an opaque marker and nothing more: the source it points at is recorded only in
+the local import ledger, never in a committed file, a commit message or a fixture.
 
 The body is the procedure and carries three level-one sections, each non-empty:
 `# Purpose` (what the skill establishes and what it is not for), `# Procedure` (the
@@ -88,6 +95,34 @@ way cannot both be chosen and the one that was wanted is unreachable. Descriptio
 compared folded to lower case, with runs of whitespace collapsed and trailing sentence
 punctuation dropped: the difference has to be in what the description says, not in how it
 is typed.
+
+## A skill is a capability only when something proves it
+
+A valid file makes a skill exist; it does not make it a capability. Four facts are derived
+about every skill on every read, and none of them is written anywhere
+(`project.skills-are-proven-capabilities`, ADR 0076):
+
+| fact | derived from |
+|---|---|
+| tested | a case or crate test naming it with `majordomus-skill: <id>` on a comment line, and the evidence ledger's latest run of that test |
+| documented | the tracked page `site/content/skills/<id>.md` |
+| enforced | the doctrine whose validator is `skills`, and a CI gate running `skills verify` that a change to the skill selects |
+| used | a workflow, prompt, profile, provider template, recipe, CI workflow or root bootstrap referencing `majordomus://skill/<id>` or the path of its `SKILL.md` |
+
+```bash
+majordomus skills status             # every skill with its standing: proven, partial, orphan, invalid, not_required
+majordomus skills explain my-skill   # each naming test and its evidence, the page, the gates, every invocation
+majordomus skills verify             # exit 10 on an orphan, a failing run, a broken contract, a binding to nothing
+```
+
+These are commands of the Rust executable (`bin/majordomus-cli`), also served as
+`GET /api/v1/skills`, `/api/v1/skills/explain?id=` and `/api/v1/skills/verify`, and as the MCP
+tools `majordomus_skills`, `majordomus_skill_explain` and `majordomus_skills_verify`. An active
+skill no test names or nothing invokes is an orphan and fails `skills verify`, `doctor` and the
+`skills-proof` gate; so does a test or an invocation naming a skill that does not exist.
+Evidence that is not current, a missing page and a missing gate are warnings. A draft or
+deprecated skill owes none of it. Adding an active skill therefore means adding, in the same
+change, the test that names it and the surface that invokes it.
 
 ## What is derived, and must not be edited
 

@@ -64,6 +64,7 @@ pub mod session;
 pub mod share;
 pub(crate) mod shared;
 pub mod site;
+pub mod skill;
 pub mod synthetic;
 pub mod web;
 pub mod why;

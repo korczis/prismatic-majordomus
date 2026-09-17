@@ -50,6 +50,7 @@ pub(crate) mod release;
 pub(crate) mod rules;
 pub(crate) mod scope;
 pub(crate) mod serve;
+pub(crate) mod skills;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -85,6 +86,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
         Command::Rules(args) => rules::run(args),
+        Command::Skills(args) => skills::run(args),
     }
 }
 
@@ -121,6 +123,9 @@ mod tests {
             }),
             (&["majordomus", "why", "list"], |c| {
                 matches!(c, Command::Why(_))
+            }),
+            (&["majordomus", "skills", "status"], |c| {
+                matches!(c, Command::Skills(_))
             }),
             (&["majordomus", "devtask", "issue", "I0001"], |c| {
                 matches!(c, Command::Devtask(_))

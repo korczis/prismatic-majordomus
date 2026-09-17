@@ -151,6 +151,16 @@ gates:
     runs: scripts/ci/finding-reproduce-check
     summary: every finding a command reports names the command that reproduces it; a reporting call with too few arguments, or one this gate cannot parse, is a finding of its own
 
+  # A skill is a capability only when something proves it: a test names it and the evidence
+  # ledger holds a run of that test, a surface invokes it, a doctrine and this gate hold it
+  # (project.skills-are-proven-capabilities, ADR 0076). The verdict is the executable's
+  # `skills verify`, the same derivation the command line, HTTP and MCP answer with; an
+  # orphan fails, evidence that is not current is reported and does not.
+  - id: skills-proof
+    job: structure
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- skills verify
+    summary: every active skill is named by a test and invoked by a workflow, prompt, profile, provider template, recipe or CI workflow; no test or invocation names a skill that does not exist
+
   - id: rule-proof
     job: structure
     runs: scripts/ci/rule-proof-check
@@ -476,6 +486,10 @@ classes:
   # through it, the hook that refuses with it, and the baseline of the commits that predate
   # it. A change to the grammar, the policy or the vocabulary changes what every commit made
   # afterwards is held to, so the gate and both suites run.
+  - id: skills
+    paths: [.ai/repo/skills/**, .ai/repo/prompts/**, .ai/repo/workflows/**, .ai/repo/profiles/**, .ai/repo/providers/**, .just/**, justfile, apps/majordomus-cli/src/skill/**, apps/majordomus-cli/src/capability/builtin/skills.rs, apps/majordomus-cli/src/commands/skills.rs, apps/majordomus-cli/tests/skills.rs, lib/skills.sh, test/cases/95_skills.sh, test/cases/391_skills_are_proven_capabilities.sh, .ai/repo/rules/project/skills-are-proven-capabilities.v1.md]
+    gates: [skills-proof, shell-suite, rust-integration]
+
   - id: commit-policy
     paths: [apps/majordomus-cli/src/commit/**, apps/majordomus-cli/src/capability/builtin/commit.rs, apps/majordomus-cli/src/commands/commit.rs, scripts/ci/commit-policy, .ai/repo/commit-policy-baseline.txt, .githooks/commit-msg, test/cases/274_commit_policy.sh]
     gates: [commit-policy, rust-integration, shell-suite, rust-quality]
