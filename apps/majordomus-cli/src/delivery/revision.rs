@@ -157,7 +157,12 @@ fn single_origin_branch(root: &Path) -> Option<String> {
 /// What `origin/HEAD` points at, as `origin/<branch>`: the remote's own default branch.
 fn symbolic_origin_head(root: &Path) -> Option<String> {
     let out = read_only(root)
-        .args(["symbolic-ref", "--quiet", "--short", "refs/remotes/origin/HEAD"])
+        .args([
+            "symbolic-ref",
+            "--quiet",
+            "--short",
+            "refs/remotes/origin/HEAD",
+        ])
         .output()
         .ok()?;
     if !out.status.success() {
