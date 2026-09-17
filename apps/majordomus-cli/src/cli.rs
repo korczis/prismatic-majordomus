@@ -110,7 +110,7 @@ pub struct IntentArgs {
     pub repo: RepoArgs,
 
     #[command(subcommand)]
-    /// `list`, `show`, `validate` or `preflight`.
+    /// `list`, `show`, `validate`, `coverage` or `preflight`.
     pub command: IntentCommand,
 
     #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
@@ -140,6 +140,8 @@ pub enum IntentCommand {
     },
     /// Every finding over the intents; exit 10 when any is a failure
     Validate,
+    /// Which work carries which criterion, and the reason every issue exists
+    Coverage,
     /// Which intent the work on an issue, or on some paths, serves; exit 10 when it serves none
     Preflight {
         /// The issue the work executes
@@ -3105,6 +3107,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
             setup: &[],
             expect: Expect::StdoutContains(&["intent(s)", "valid"]),
         }],
+    },
+    CommandExamples {
+        command: "intent coverage",
+        examples: &[
+            ExampleDoc {
+                id: "intent-coverage",
+                title: "Which work carries which criterion, and why every issue exists",
+                description: "Every criterion of every live intent with the issues that serve it and how strongly — covered, weakly covered, observed by the recorded gap, or uncovered — and every issue with the reason it exists: the criteria it serves, or maintenance under a milestone no intent names.",
+                argv: &["intent", "coverage"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["CRITERION", "criterion(s)"]),
+            },
+            ExampleDoc {
+                id: "intent-coverage-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents/coverage` returns and the `majordomus_intent_coverage` tool answers: each criterion with its strength and the issues serving it, and each issue with its origin.",
+                argv: &["intent", "coverage", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/criteria/0/strength", "/criteria/0/issues", "/issues/0/origin"]),
+            },
+        ],
     },
     CommandExamples {
         command: "intent preflight",

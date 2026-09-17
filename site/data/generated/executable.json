@@ -891,6 +891,23 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/intents/#op-intents-coverage",
+      "claims": [],
+      "cli": "majordomus intent coverage",
+      "id": "intents.coverage",
+      "kind": "query",
+      "module": "intents",
+      "module_route": "/registry/modules/intents/",
+      "resource": null,
+      "route": "/registry/capabilities/intents-coverage/",
+      "slug": "intents-coverage",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/intents.rs",
+      "tests": [],
+      "title": "Which work carries which criterion, and why each issue exists",
+      "tool": "majordomus_intent_coverage"
+    },
+    {
       "api_anchor": "/docs/api/intents/#op-intents-list",
       "claims": [],
       "cli": "majordomus intent list",
@@ -2469,7 +2486,7 @@
     ]
   },
   "counts": {
-    "capabilities": 117,
+    "capabilities": 118,
     "claims": 51,
     "modules": 38
   },
@@ -2922,6 +2939,11 @@
     },
     {
       "capabilities": [
+        {
+          "id": "intents.coverage",
+          "route": "/registry/capabilities/intents-coverage/",
+          "slug": "intents-coverage"
+        },
         {
           "id": "intents.list",
           "route": "/registry/capabilities/intents-list/",

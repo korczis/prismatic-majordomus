@@ -204,7 +204,7 @@ pub struct MilestoneGraph {
 /// #         priority: "p1".into(), profile: String::new(), parallel_safe: true,
 /// #         title: String::new(), slug: String::new(), depends_on: vec![],
 /// #         blocked_by: vec![], dependents: dependents.iter().map(|s| (*s).into()).collect(),
-/// #         scope: vec![], objective: String::new(), evidence_have: 0, evidence_need: 0,
+/// #         scope: vec![], serves: vec![], objective: String::new(), evidence_have: 0, evidence_need: 0,
 /// #         started_at: String::new(), verified_at: String::new(), completed_at: String::new() }
 /// # }
 /// let issues = vec![node("A", &["B"]), node("B", &["C"]), node("C", &[])];
@@ -246,7 +246,8 @@ pub fn transitive_dependents(issues: &[PlanIssue], id: &str) -> Vec<String> {
 /// #         priority: "p1".into(), profile: String::new(), parallel_safe: true,
 /// #         title: String::new(), slug: String::new(),
 /// #         depends_on: depends_on.iter().map(|s| (*s).into()).collect(),
-/// #         blocked_by: vec![], dependents: vec![], scope: vec![], objective: String::new(),
+/// #         blocked_by: vec![], dependents: vec![], scope: vec![], serves: vec![],
+/// #         objective: String::new(),
 /// #         evidence_have: 0, evidence_need: 0, started_at: String::new(),
 /// #         verified_at: String::new(), completed_at: String::new() }
 /// # }
@@ -688,6 +689,7 @@ mod tests {
             blocked_by: Vec::new(),
             dependents: Vec::new(),
             scope: scope.iter().map(|s| (*s).into()).collect(),
+            serves: Vec::new(),
             objective: String::new(),
             evidence_have: 0,
             evidence_need: 0,

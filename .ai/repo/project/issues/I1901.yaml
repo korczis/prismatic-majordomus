@@ -1,0 +1,33 @@
+id: I1901
+milestone: intent-planning
+title: An issue names the intent criterion it serves, and coverage is derived
+slug: an-issue-names-the-criterion-it-serves
+priority: p1
+profile: implementation
+parallel_safe: true
+serves:
+  - intent-planning#criteria-are-covered
+  - intent-planning#work-has-a-purpose
+objective: "Add `serves` to the issue record and derive, in intent_plan::coverage, the coverage of every intent criterion and the origin of every issue, reported by intent validate."
+why: "An intent relates to milestones and evidence but no criterion relates to the work meant to make it true, so an uncovered criterion is found only at verification."
+current_state: "Issues carry no link to an intent criterion."
+desired_state: "intent validate refuses an uncovered criterion, a purposeless issue under an intent, and a dangling or out-of-milestone link, and warns on weak coverage, duplicate work and a milestone that contributes nothing."
+scope:
+  - apps/majordomus-cli/src/intent_plan.rs
+  - apps/majordomus-cli/src/plan.rs
+  - share/schemas/majordomus/issue
+  - apps/majordomus-cli/tests/intent_plan.rs
+depends_on:
+  - I1900
+acceptance_criteria:
+  - An intent criterion no live issue serves fails intent validate as criterion_uncovered
+  - An issue under an intent's milestone that serves nothing fails as issue_without_purpose
+  - An issue under no intent's milestone reports origin maintenance and no finding
+validation:
+  - cargo test --lib intent_plan
+  - cargo test --test intent_plan
+evidence_required:
+  - coverage_refuses_an_uncovered_criterion
+  - every_issue_has_an_origin
+created_at: 2026-09-15
+updated_at: 2026-09-15

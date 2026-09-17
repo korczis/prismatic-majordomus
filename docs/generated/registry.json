@@ -145,7 +145,7 @@
       "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
       "stability": "behaviorally_verified",
       "source": "builtin",
-      "capabilities": 4
+      "capabilities": 5
     },
     {
       "id": "lifecycle",
@@ -19940,6 +19940,285 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs"
     },
     {
+      "id": "intents.coverage",
+      "module": "intents",
+      "kind": "query",
+      "title": "Which work carries which criterion, and why each issue exists",
+      "description": "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "IntentCoverage",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "criteria": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/CriterionCoverage"
+              },
+              "description": "Every criterion of every live intent, in intent then declaration order."
+            },
+            "issues": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/IssuePurpose"
+              },
+              "description": "Every issue of the plan, in id order, with the reason it exists."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/IntentFinding"
+              },
+              "description": "Every finding, in derivation order."
+            }
+          },
+          "required": [
+            "criteria",
+            "issues",
+            "findings"
+          ],
+          "description": "The whole derived coverage: every criterion of every live intent, every issue with the\nreason it exists, and every finding the two produced. Nothing here is stored; it is derived\non each read from the intents and the plan.\n\n```\nuse majordomus_cli::intent_plan::{IntentCoverage, IssueOrigin, IssuePurpose};\nlet coverage = IntentCoverage {\n    criteria: vec![],\n    issues: vec![IssuePurpose {\n        issue: \"I0007\".into(),\n        milestone: \"ops\".into(),\n        origin: IssueOrigin::Maintenance,\n        serves: vec![],\n        intents: vec![],\n    }],\n    findings: vec![],\n};\nassert_eq!(coverage.failures(), 0);\nassert_eq!(coverage.purpose(\"I0007\").unwrap().origin, IssueOrigin::Maintenance);\n```",
+          "title": "IntentCoverage",
+          "$defs": {
+            "CriterionCoverage": {
+              "type": "object",
+              "properties": {
+                "intent": {
+                  "type": "string",
+                  "description": "The intent."
+                },
+                "criterion": {
+                  "type": "string",
+                  "description": "The criterion id inside it."
+                },
+                "strength": {
+                  "$ref": "#/$defs/CoverageStrength",
+                  "description": "The strength derived from the serving issues."
+                },
+                "issues": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/CoveringIssue"
+                  },
+                  "description": "Every live issue that serves it, in id order."
+                },
+                "milestones": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The milestones those issues belong to, sorted and unique."
+                }
+              },
+              "required": [
+                "intent",
+                "criterion",
+                "strength",
+                "issues",
+                "milestones"
+              ],
+              "description": "One criterion of one intent, and the work that carries it: the live issues that serve it,\nthe milestones those issues sit under, and the strength derived from them.\n\n```\nuse majordomus_cli::intent_plan::{CoverageStrength, CriterionCoverage};\nlet c = CriterionCoverage {\n    intent: \"intent-planning\".into(),\n    criterion: \"gap-is-recorded\".into(),\n    strength: CoverageStrength::Uncovered,\n    issues: vec![],\n    milestones: vec![],\n};\n// nothing serves it, so nothing in the plan will make it true\nassert_eq!(c.strength, CoverageStrength::Uncovered);\nassert!(c.issues.is_empty());\n```"
+            },
+            "CoverageStrength": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "uncovered",
+                  "description": "No live issue serves it."
+                },
+                {
+                  "type": "string",
+                  "const": "observed",
+                  "description": "No live issue serves it, and none needs to: the recorded gap observed it already true.\nWhether it is *met* is still the evidence's question, never this one's."
+                },
+                {
+                  "type": "string",
+                  "const": "weak",
+                  "description": "Every live issue serving it requires no evidence, so nothing gates its completion."
+                },
+                {
+                  "type": "string",
+                  "const": "covered",
+                  "description": "At least one live issue serving it requires evidence before it is DONE."
+                }
+              ],
+              "description": "How well a criterion is carried by the plan: whether work exists for it, whether that work\nis gated by evidence, and whether the recorded gap already saw it true.\n\n```\nuse majordomus_cli::intent_plan::CoverageStrength;\n// the wire spelling every surface answers with\nassert_eq!(serde_json::to_string(&CoverageStrength::Weak).unwrap(), \"\\\"weak\\\"\");\n// the order is the one a reader ranks by: uncovered is the worst\nassert!(CoverageStrength::Uncovered < CoverageStrength::Covered);\n```"
+            },
+            "CoveringIssue": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The issue id."
+                },
+                "milestone": {
+                  "type": "string",
+                  "description": "Its milestone."
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Its derived status."
+                },
+                "evidence_need": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "How many evidence tokens it requires before it may be DONE."
+                }
+              },
+              "required": [
+                "id",
+                "milestone",
+                "status",
+                "evidence_need"
+              ],
+              "description": "One issue as coverage sees it: which milestone carries it, the status the plan derived for\nit, and how much evidence it owes before it may be DONE.\n\n```\nuse majordomus_cli::intent_plan::CoveringIssue;\nlet issue = CoveringIssue {\n    id: \"I1901\".into(),\n    milestone: \"intent-planning\".into(),\n    status: \"READY\".into(),\n    evidence_need: 2,\n};\n// an issue that owes no evidence covers a criterion only weakly\nassert!(issue.evidence_need > 0);\n```"
+            },
+            "IssuePurpose": {
+              "type": "object",
+              "properties": {
+                "issue": {
+                  "type": "string",
+                  "description": "The issue id."
+                },
+                "milestone": {
+                  "type": "string",
+                  "description": "Its milestone."
+                },
+                "origin": {
+                  "$ref": "#/$defs/IssueOrigin",
+                  "description": "Which kind of reason it has."
+                },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The `<intent>#<criterion>` references it declares, as declared."
+                },
+                "intents": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intents whose milestones include this issue's milestone, sorted."
+                }
+              },
+              "required": [
+                "issue",
+                "milestone",
+                "origin",
+                "serves",
+                "intents"
+              ],
+              "description": "The answer to \"why does this issue exist?\": the criteria it declares it serves, the intents\nwhose milestones contain it, and which of the three origins that adds up to.\n\n```\nuse majordomus_cli::intent_plan::{IssueOrigin, IssuePurpose};\nlet purpose = IssuePurpose {\n    issue: \"I1901\".into(),\n    milestone: \"intent-planning\".into(),\n    origin: IssueOrigin::Intent,\n    serves: vec![\"intent-planning#criteria-are-covered\".into()],\n    intents: vec![\"intent-planning\".into()],\n};\nassert_eq!(purpose.origin, IssueOrigin::Intent);\nassert_eq!(purpose.serves.len(), 1);\n```"
+            },
+            "IssueOrigin": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "intent",
+                  "description": "It serves at least one criterion of a declared intent."
+                },
+                {
+                  "type": "string",
+                  "const": "maintenance",
+                  "description": "Its milestone is named by no intent: maintenance or operational work, stated as such."
+                },
+                {
+                  "type": "string",
+                  "const": "unexplained",
+                  "description": "Its milestone realises an intent, but it names nothing it serves."
+                }
+              ],
+              "description": "Why an issue exists: because it serves a criterion, because it is maintenance under a\nmilestone no intent names, or because nobody said — which is a failure under an intent.\n\n```\nuse majordomus_cli::intent_plan::IssueOrigin;\nassert_eq!(serde_json::to_string(&IssueOrigin::Maintenance).unwrap(), \"\\\"maintenance\\\"\");\n// work under no intent is legitimate and says so; it is never given an invented intent\nassert_ne!(IssueOrigin::Maintenance, IssueOrigin::Unexplained);\n```"
+            },
+            "IntentFinding": {
+              "type": "object",
+              "properties": {
+                "level": {
+                  "type": "string",
+                  "description": "`FAIL` or `WARN`. A failure means the intent model is invalid."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The stable code a reader greps for."
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "The intent or milestone the finding is about."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong, in one line."
+                },
+                "reproduce": {
+                  "type": "string",
+                  "description": "The command that shows it again."
+                }
+              },
+              "required": [
+                "level",
+                "code",
+                "subject",
+                "message",
+                "reproduce"
+              ],
+              "description": "One validation finding: its level, a stable code a reader greps for, the intent or milestone\nit is about, one line of what is wrong, and the command that shows it again.\n\n```\nuse majordomus_cli::intent::{IntentFinding, FAIL};\nlet f = IntentFinding {\n    level: FAIL.into(),\n    code: \"unknown_milestone\".into(),\n    subject: \"intent-lifecycle\".into(),\n    message: \"`no-such` is not a milestone\".into(),\n    reproduce: \"majordomus intent validate\".into(),\n};\nassert_eq!(f.level, \"FAIL\");\nassert_eq!(f.reproduce, \"majordomus intent validate\");\n```"
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::intents"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_intent_coverage"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/intents/coverage"
+        },
+        "cli": {
+          "path": [
+            "intent",
+            "coverage"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "behaviorally_verified",
+      "tags": [
+        "intent",
+        "project",
+        "planning"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs"
+    },
+    {
       "id": "intents.list",
       "module": "intents",
       "kind": "query",
@@ -25684,6 +25963,13 @@
                   },
                   "description": "The paths it touches; two issues of one wave that share a path are serialised."
                 },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                },
                 "objective": {
                   "type": "string",
                   "description": "One line: what the issue is for."
@@ -25727,6 +26013,7 @@
                 "blocked_by",
                 "dependents",
                 "scope",
+                "serves",
                 "objective",
                 "evidence_have",
                 "evidence_need",
@@ -26135,6 +26422,13 @@
                   },
                   "description": "The paths it touches; two issues of one wave that share a path are serialised."
                 },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                },
                 "objective": {
                   "type": "string",
                   "description": "One line: what the issue is for."
@@ -26178,6 +26472,7 @@
                 "blocked_by",
                 "dependents",
                 "scope",
+                "serves",
                 "objective",
                 "evidence_have",
                 "evidence_need",
@@ -26425,6 +26720,13 @@
                   },
                   "description": "The paths it touches; two issues of one wave that share a path are serialised."
                 },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                },
                 "objective": {
                   "type": "string",
                   "description": "One line: what the issue is for."
@@ -26468,6 +26770,7 @@
                 "blocked_by",
                 "dependents",
                 "scope",
+                "serves",
                 "objective",
                 "evidence_have",
                 "evidence_need",
@@ -26790,6 +27093,13 @@
                   },
                   "description": "The paths it touches; two issues of one wave that share a path are serialised."
                 },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                },
                 "objective": {
                   "type": "string",
                   "description": "One line: what the issue is for."
@@ -26833,6 +27143,7 @@
                 "blocked_by",
                 "dependents",
                 "scope",
+                "serves",
                 "objective",
                 "evidence_have",
                 "evidence_need",
@@ -27348,6 +27659,13 @@
                   },
                   "description": "The paths it touches; two issues of one wave that share a path are serialised."
                 },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                },
                 "objective": {
                   "type": "string",
                   "description": "One line: what the issue is for."
@@ -27391,6 +27709,7 @@
                 "blocked_by",
                 "dependents",
                 "scope",
+                "serves",
                 "objective",
                 "evidence_have",
                 "evidence_need",
@@ -27875,6 +28194,13 @@
                   },
                   "description": "The paths it touches; two issues of one wave that share a path are serialised."
                 },
+                "serves": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's."
+                },
                 "objective": {
                   "type": "string",
                   "description": "One line: what the issue is for."
@@ -27918,6 +28244,7 @@
                 "blocked_by",
                 "dependents",
                 "scope",
+                "serves",
                 "objective",
                 "evidence_have",
                 "evidence_need",
@@ -41370,10 +41697,12 @@
     "claim",
     "command",
     "context",
+    "critique",
     "deployment",
     "distribution-model",
     "document",
     "feature",
+    "gap",
     "implementation",
     "intent",
     "issue",

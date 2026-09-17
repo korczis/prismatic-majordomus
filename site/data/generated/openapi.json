@@ -49,6 +49,7 @@
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
+    "op-intents-coverage": "docs/api/intents/",
     "op-intents-list": "docs/api/intents/",
     "op-intents-preflight": "docs/api/intents/",
     "op-intents-record": "docs/api/intents/",
@@ -229,7 +230,10 @@
     "schema-ContrastReport": "docs/api/design/",
     "schema-CounterSnapshot": "docs/api/perf/",
     "schema-Counts": "docs/api/why/",
+    "schema-CoverageStrength": "docs/api/intents/",
+    "schema-CoveringIssue": "docs/api/intents/",
     "schema-CpuKind": "docs/api/deploy/",
+    "schema-CriterionCoverage": "docs/api/intents/",
     "schema-CriticalBlocker": "docs/api/devtask/",
     "schema-Declaration": "docs/api/repository/",
     "schema-Deduplicated": "docs/api/devcontext/",
@@ -358,6 +362,7 @@
     "schema-InstallabilityReport": "docs/api/distribution/",
     "schema-InstanceId": "docs/api/mesh/",
     "schema-Integration": "docs/api/trace/",
+    "schema-IntentCoverage": "docs/api/intents/",
     "schema-IntentCriterion": "docs/api/intents/",
     "schema-IntentEvidenceState": "docs/api/intents/",
     "schema-IntentFinding": "docs/api/intents/",
@@ -369,6 +374,8 @@
     "schema-IntentValidation": "docs/api/intents/",
     "schema-IntentView": "docs/api/intents/",
     "schema-Interface": "docs/api/deploy/",
+    "schema-IssueOrigin": "docs/api/intents/",
+    "schema-IssuePurpose": "docs/api/intents/",
     "schema-IssueTrace": "docs/api/trace/",
     "schema-JudgedCommit": "docs/api/commit/",
     "schema-KindCount": "docs/api/environment/",
@@ -694,8 +701,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 116,
-    "schemas": 537,
+    "operations": 117,
+    "schemas": 543,
     "tags": 38
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -830,6 +837,7 @@
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
+    "intents.coverage": "intents",
     "intents.list": "intents",
     "intents.preflight": "intents",
     "intents.record": "intents",
@@ -1014,7 +1022,10 @@
     "ContrastReport": "design",
     "CounterSnapshot": "perf",
     "Counts": "why",
+    "CoverageStrength": "intents",
+    "CoveringIssue": "intents",
     "CpuKind": "deploy",
+    "CriterionCoverage": "intents",
     "CriticalBlocker": "devtask",
     "Declaration": "repository",
     "Deduplicated": "devcontext",
@@ -1143,6 +1154,7 @@
     "InstallabilityReport": "distribution",
     "InstanceId": "mesh",
     "Integration": "trace",
+    "IntentCoverage": "intents",
     "IntentCriterion": "intents",
     "IntentEvidenceState": "intents",
     "IntentFinding": "intents",
@@ -1154,6 +1166,8 @@
     "IntentValidation": "intents",
     "IntentView": "intents",
     "Interface": "deploy",
+    "IssueOrigin": "intents",
+    "IssuePurpose": "intents",
     "IssueTrace": "trace",
     "JudgedCommit": "commit",
     "KindCount": "environment",
@@ -7686,6 +7700,80 @@
       "variants": []
     },
     {
+      "description": "How well a criterion is carried by the plan: whether work exists for it, whether that work\nis gated by evidence, and whether the recorded gap already saw it true.\n\n```\nuse majordomus_cli::intent_plan::CoverageStrength;\n// the wire spelling every surface answers with\nassert_eq!(serde_json::to_string(&CoverageStrength::Weak).unwrap(), \"\\\"weak\\\"\");\n// the order is the one a reader ranks by: uncovered is the worst\nassert!(CoverageStrength::Uncovered < CoverageStrength::Covered);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "CoverageStrength",
+      "properties": [],
+      "type": "\"uncovered\" | \"observed\" | \"weak\" | \"covered\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "CriterionCoverage"
+      ],
+      "values": [
+        {
+          "description": "No live issue serves it.",
+          "value": "uncovered"
+        },
+        {
+          "description": "No live issue serves it, and none needs to: the recorded gap observed it already true.\nWhether it is *met* is still the evidence's question, never this one's.",
+          "value": "observed"
+        },
+        {
+          "description": "Every live issue serving it requires no evidence, so nothing gates its completion.",
+          "value": "weak"
+        },
+        {
+          "description": "At least one live issue serving it requires evidence before it is DONE.",
+          "value": "covered"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One issue as coverage sees it: which milestone carries it, the status the plan derived for\nit, and how much evidence it owes before it may be DONE.\n\n```\nuse majordomus_cli::intent_plan::CoveringIssue;\nlet issue = CoveringIssue {\n    id: \"I1901\".into(),\n    milestone: \"intent-planning\".into(),\n    status: \"READY\".into(),\n    evidence_need: 2,\n};\n// an issue that owes no evidence covers a criterion only weakly\nassert!(issue.evidence_need > 0);\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "CoveringIssue",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its derived status.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many evidence tokens it requires before it may be DONE.",
+          "name": "evidence_need",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CriterionCoverage"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What a machine's CPU is.",
       "home": "deploy",
       "is_enum": true,
@@ -7706,6 +7794,60 @@
           "value": "performance"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One criterion of one intent, and the work that carries it: the live issues that serve it,\nthe milestones those issues sit under, and the strength derived from them.\n\n```\nuse majordomus_cli::intent_plan::{CoverageStrength, CriterionCoverage};\nlet c = CriterionCoverage {\n    intent: \"intent-planning\".into(),\n    criterion: \"gap-is-recorded\".into(),\n    strength: CoverageStrength::Uncovered,\n    issues: vec![],\n    milestones: vec![],\n};\n// nothing serves it, so nothing in the plan will make it true\nassert_eq!(c.strength, CoverageStrength::Uncovered);\nassert!(c.issues.is_empty());\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "CriterionCoverage",
+      "properties": [
+        {
+          "description": "The intent.",
+          "name": "intent",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The criterion id inside it.",
+          "name": "criterion",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The strength derived from the serving issues.",
+          "name": "strength",
+          "refs": [
+            "CoverageStrength"
+          ],
+          "required": true,
+          "type": "CoverageStrength"
+        },
+        {
+          "description": "Every live issue that serves it, in id order.",
+          "name": "issues",
+          "refs": [
+            "CoveringIssue"
+          ],
+          "required": true,
+          "type": "array of CoveringIssue"
+        },
+        {
+          "description": "The milestones those issues belong to, sorted and unique.",
+          "name": "milestones",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentCoverage"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -10660,6 +10802,7 @@
         "graph.list",
         "health.report",
         "intents.list",
+        "intents.coverage",
         "intents.preflight",
         "intents.record",
         "intents.validate",
@@ -15240,6 +15383,48 @@
       "variants": []
     },
     {
+      "description": "The whole derived coverage: every criterion of every live intent, every issue with the\nreason it exists, and every finding the two produced. Nothing here is stored; it is derived\non each read from the intents and the plan.\n\n```\nuse majordomus_cli::intent_plan::{IntentCoverage, IssueOrigin, IssuePurpose};\nlet coverage = IntentCoverage {\n    criteria: vec![],\n    issues: vec![IssuePurpose {\n        issue: \"I0007\".into(),\n        milestone: \"ops\".into(),\n        origin: IssueOrigin::Maintenance,\n        serves: vec![],\n        intents: vec![],\n    }],\n    findings: vec![],\n};\nassert_eq!(coverage.failures(), 0);\nassert_eq!(coverage.purpose(\"I0007\").unwrap().origin, IssueOrigin::Maintenance);\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IntentCoverage",
+      "properties": [
+        {
+          "description": "Every criterion of every live intent, in intent then declaration order.",
+          "name": "criteria",
+          "refs": [
+            "CriterionCoverage"
+          ],
+          "required": true,
+          "type": "array of CriterionCoverage"
+        },
+        {
+          "description": "Every issue of the plan, in id order, with the reason it exists.",
+          "name": "issues",
+          "refs": [
+            "IssuePurpose"
+          ],
+          "required": true,
+          "type": "array of IssuePurpose"
+        },
+        {
+          "description": "Every finding, in derivation order.",
+          "name": "findings",
+          "refs": [
+            "IntentFinding"
+          ],
+          "required": true,
+          "type": "array of IntentFinding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "intents.coverage"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One criterion with the evidence behind it: what the record declared, what the ledger says\nabout it, whether that meets it, and the command that would produce the evidence again.\n\n```\nuse majordomus_cli::intent::{IntentCriterion, IntentEvidenceState};\nlet c = IntentCriterion {\n    id: \"stage-is-derived\".into(),\n    criterion: \"the stage follows the plan\".into(),\n    evidence: \"test\".into(),\n    reference: \"apps/majordomus-cli/tests/intent.rs\".into(),\n    state: IntentEvidenceState::NotRun,\n    met: false,\n    reproduce: None,\n};\n// nothing recorded is not a pass\nassert!(!c.met);\n```",
       "home": "intents",
       "is_enum": false,
@@ -15389,6 +15574,7 @@
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
+        "IntentCoverage",
         "IntentValidation"
       ],
       "values": [],
@@ -15796,6 +15982,85 @@
           "value": "all"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "Why an issue exists: because it serves a criterion, because it is maintenance under a\nmilestone no intent names, or because nobody said — which is a failure under an intent.\n\n```\nuse majordomus_cli::intent_plan::IssueOrigin;\nassert_eq!(serde_json::to_string(&IssueOrigin::Maintenance).unwrap(), \"\\\"maintenance\\\"\");\n// work under no intent is legitimate and says so; it is never given an invented intent\nassert_ne!(IssueOrigin::Maintenance, IssueOrigin::Unexplained);\n```",
+      "home": "intents",
+      "is_enum": true,
+      "name": "IssueOrigin",
+      "properties": [],
+      "type": "\"intent\" | \"maintenance\" | \"unexplained\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "IssuePurpose"
+      ],
+      "values": [
+        {
+          "description": "It serves at least one criterion of a declared intent.",
+          "value": "intent"
+        },
+        {
+          "description": "Its milestone is named by no intent: maintenance or operational work, stated as such.",
+          "value": "maintenance"
+        },
+        {
+          "description": "Its milestone realises an intent, but it names nothing it serves.",
+          "value": "unexplained"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The answer to \"why does this issue exist?\": the criteria it declares it serves, the intents\nwhose milestones contain it, and which of the three origins that adds up to.\n\n```\nuse majordomus_cli::intent_plan::{IssueOrigin, IssuePurpose};\nlet purpose = IssuePurpose {\n    issue: \"I1901\".into(),\n    milestone: \"intent-planning\".into(),\n    origin: IssueOrigin::Intent,\n    serves: vec![\"intent-planning#criteria-are-covered\".into()],\n    intents: vec![\"intent-planning\".into()],\n};\nassert_eq!(purpose.origin, IssueOrigin::Intent);\nassert_eq!(purpose.serves.len(), 1);\n```",
+      "home": "intents",
+      "is_enum": false,
+      "name": "IssuePurpose",
+      "properties": [
+        {
+          "description": "The issue id.",
+          "name": "issue",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which kind of reason it has.",
+          "name": "origin",
+          "refs": [
+            "IssueOrigin"
+          ],
+          "required": true,
+          "type": "IssueOrigin"
+        },
+        {
+          "description": "The `<intent>#<criterion>` references it declares, as declared.",
+          "name": "serves",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The intents whose milestones include this issue's milestone, sorted.",
+          "name": "intents",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntentCoverage"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -20083,6 +20348,13 @@
         {
           "description": "The paths it touches; two issues of one wave that share a path are serialised.",
           "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The intent criteria it exists to make true, each `<intent>#<criterion>`, as declared.\nEmpty for maintenance work under a milestone no intent names; whether a named\ncriterion exists is the intent coverage's question, not the plan's.",
+          "name": "serves",
           "refs": [],
           "required": true,
           "type": "array of string"
@@ -34654,6 +34926,60 @@
           "result_schema": "IntentList",
           "stability": "behaviorally_verified",
           "summary": "Every intent, with its derived stage"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "intent coverage",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/intents/coverage\"",
+          "description": "The plan read against the intents (ADR 0073): every criterion of every live intent with the live issues that serve it, the milestones they belong to, and its strength — covered, weakly covered when no serving issue requires evidence, observed when the recorded gap saw it already true, or uncovered when nothing in the plan will make it true — and every issue with the reason it exists: the criteria it serves, maintenance under a milestone no intent names, or unexplained under one that realises an intent.",
+          "home": "intents",
+          "id": "intents.coverage",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_intent_coverage",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/intents/coverage",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::intents",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Which work carries which criterion, and why each issue exists: the result.",
+              "schema": "IntentCoverage",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntentCoverage",
+          "stability": "behaviorally_verified",
+          "summary": "Which work carries which criterion, and why each issue exists"
         },
         {
           "benchmark": "required",

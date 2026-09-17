@@ -633,6 +633,50 @@
       "tracks": []
     },
     {
+      "id": "ai.repo.project.critiques",
+      "path": ".ai/repo/project/critiques/README.md",
+      "dir": ".ai/repo/project/critiques",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Plan critiques",
+      "description": "The adversarial pass over an intent's plan, as structured findings with their resolutions.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
+      "id": "ai.repo.project.gaps",
+      "path": ".ai/repo/project/gaps/README.md",
+      "dir": ".ai/repo/project/gaps",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Gap analyses",
+      "description": "What a worker observed of this repository against an intent's criteria, at one commit.",
+      "children_require_contract": null,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": []
+    },
+    {
       "id": "ai.repo.project.intents",
       "path": ".ai/repo/project/intents/README.md",
       "dir": ".ai/repo/project/intents",
@@ -1290,6 +1334,72 @@
       }
     },
     {
+      "dir": ".ai/repo/project/critiques",
+      "document": "ai.repo.project.critiques",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "critiques",
+      "contract": {
+        "index": 27,
+        "id": "ai.repo.project.critiques",
+        "path": ".ai/repo/project/critiques/README.md",
+        "dir": ".ai/repo/project/critiques",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Plan critiques",
+        "description": "The adversarial pass over an intent's plan, as structured findings with their resolutions.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "f45175e41681f8e62a44d03863b3d52048babadc3138deb4d734c9f379c425bc"
+      }
+    },
+    {
+      "dir": ".ai/repo/project/gaps",
+      "document": "ai.repo.project.gaps",
+      "requires_contract": true,
+      "governed_by": null,
+      "depth": 3,
+      "name": "gaps",
+      "contract": {
+        "index": 28,
+        "id": "ai.repo.project.gaps",
+        "path": ".ai/repo/project/gaps/README.md",
+        "dir": ".ai/repo/project/gaps",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Gap analyses",
+        "description": "What a worker observed of this repository against an intent's criteria, at one commit.",
+        "children_require_contract": null,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [],
+        "paths": [],
+        "sha256": "e064bbd8d4e89de0511d000df6b2f9fdea4a5d507eaeced7c6ea4b901ce138ae"
+      }
+    },
+    {
       "dir": ".ai/repo/project/intents",
       "document": "ai.repo.project.intents",
       "requires_contract": true,
@@ -1297,7 +1407,7 @@
       "depth": 3,
       "name": "intents",
       "contract": {
-        "index": 27,
+        "index": 29,
         "id": "ai.repo.project.intents",
         "path": ".ai/repo/project/intents/README.md",
         "dir": ".ai/repo/project/intents",
@@ -1333,7 +1443,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 28,
+        "index": 30,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1368,7 +1478,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 29,
+        "index": 31,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1546,7 +1656,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 30,
+        "index": 32,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1858,8 +1968,8 @@
     }
   ],
   "counts": {
-    "directories": 38,
-    "documented": 30,
+    "directories": 40,
+    "documented": 32,
     "exempt": 8
   }
 }

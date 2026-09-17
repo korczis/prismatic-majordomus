@@ -533,7 +533,7 @@ classes:
   # and `rust` already select the suites; this class adds the one gate that reads intents as
   # links between records rather than as files.
   - id: intent
-    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh]
+    paths: [.ai/repo/project/**, share/schemas/majordomus/intent/**, share/schemas/majordomus/gap/**, share/schemas/majordomus/critique/**, apps/majordomus-cli/src/intent.rs, apps/majordomus-cli/src/intent_plan.rs, apps/majordomus-cli/src/intent_review.rs, apps/majordomus-cli/src/capability/builtin/intents.rs, apps/majordomus-cli/src/plan.rs, test/cases/367_an_intent_is_satisfied_only_by_evidence.sh, test/cases/386_a_plan_is_held_to_its_intent.sh]
     gates: [intent-check, rust-integration, shell-suite]
 
   # the decisions and the allocator that hands out their identities. `layer` already selects

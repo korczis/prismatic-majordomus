@@ -1,0 +1,36 @@
+id: intent-planning
+title: The plan of an intent is checked against it before execution, from a recorded gap and a recorded critique
+statement: "Before work on an intent starts, a reader can ask which issue carries each of its criteria, why any issue exists, what a worker observed was missing and what an adversarial review of the plan found — and get answers derived from typed records the repository keeps, with the plan refused when a criterion has no work, work has no purpose, a gap leaves a criterion unanswered, or execution began before the plan was critiqued."
+invariants:
+  - The plan engines stay identical; `serves` is data the plan carries, and only the intent engine judges it
+  - No coverage, gap or critique status is stored; every finding is derived on read
+  - Work under a milestone no intent names stays valid maintenance work and is never assigned an invented intent
+  - Majordomus judges the records; it does not generate a plan or a critique itself
+milestones:
+  - intent-planning
+satisfaction:
+  - id: criteria-are-covered
+    criterion: A criterion no live issue serves, unless the recorded gap observed it satisfied, is refused by intent validate
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_plan.rs
+  - id: work-has-a-purpose
+    criterion: Every issue answers why it exists — the intent criteria it serves, or maintenance under no intent — and an issue under an intent that serves nothing is refused
+    evidence: test
+    ref: apps/majordomus-cli/tests/intent_plan.rs
+  - id: gap-is-recorded
+    criterion: A gap that leaves a criterion unanswered or asserts a state with no observation is refused through the built executable
+    evidence: test
+    ref: test/cases/386_a_plan_is_held_to_its_intent.sh
+  - id: critique-precedes-execution
+    criterion: Work serving an intent that has started while the intent has no critique, or has an open blocking finding, is refused through the built executable
+    evidence: test
+    ref: test/cases/386_a_plan_is_held_to_its_intent.sh
+governance:
+  - adr:adr-0073
+  - adr:adr-0070
+  - rule:project.work-serves-a-declared-intent
+non_goals:
+  - Generating issues or a critique from an intent automatically
+  - Judging whether a criterion is met; that is the evidence's question (ADR 0070)
+created_at: 2026-09-15
+updated_at: 2026-09-15

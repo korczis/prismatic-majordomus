@@ -41,6 +41,11 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 EXIT_INVALID
             })
         }
+        IntentCommand::Coverage => {
+            let v = call(&app, &["intent", "coverage"], json!({}))?;
+            emit(format, &v, coverage_text)?;
+            Ok(0)
+        }
         IntentCommand::Preflight { issue, paths } => {
             let mut input = json!({ "paths": paths.join(",") });
             if let Some(issue) = issue {
@@ -114,6 +119,47 @@ fn list_text(v: &Value) -> String {
     }
     out.push(String::new());
     out.push(format!("{} intent(s)", v["count"]));
+    out.join("\n")
+}
+
+/// Every criterion with the work that carries it, then every issue with the reason it exists.
+fn coverage_text(v: &Value) -> String {
+    let criteria = v["criteria"].as_array().cloned().unwrap_or_default();
+    let mut out = vec![format!("{:<28}  {:<9}  ISSUES", "CRITERION", "STRENGTH")];
+    for c in &criteria {
+        let issues: Vec<&str> = c["issues"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .map(|i| s(i, "id"))
+            .collect();
+        out.push(format!(
+            "{:<28}  {:<9}  {}",
+            format!("{}#{}", s(c, "intent"), s(c, "criterion")),
+            s(c, "strength"),
+            if issues.is_empty() {
+                "—".into()
+            } else {
+                issues.join(" ")
+            },
+        ));
+    }
+    let issues = v["issues"].as_array().cloned().unwrap_or_default();
+    let mut origins: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
+    for i in &issues {
+        *origins.entry(s(i, "origin")).or_default() += 1;
+    }
+    out.push(String::new());
+    out.push(format!(
+        "{} criterion(s); {} issue(s): {}",
+        criteria.len(),
+        issues.len(),
+        origins
+            .iter()
+            .map(|(o, n)| format!("{n} {o}"))
+            .collect::<Vec<_>>()
+            .join(", "),
+    ));
     out.join("\n")
 }
 
