@@ -1,7 +1,7 @@
 +++
 title = "Doctrine"
 description = "what rules are enforced, what enforces each one, how the wiring is verified, the three enforcement modes and why a declared review exemption carries its reason, the proof graph and the ten states a rule's proof can be in, and what was deliberately left out"
-weight = 15
+weight = 16
 [extra]
 source = "docs/DOCTRINE.md"
 +++

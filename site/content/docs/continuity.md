@@ -1,7 +1,7 @@
 +++
 title = "Continuity"
 description = "how work survives the session doing it: the durable records, why transcripts are not state, how context is selected and records resolved"
-weight = 16
+weight = 17
 [extra]
 source = "docs/CONTINUITY.md"
 +++
