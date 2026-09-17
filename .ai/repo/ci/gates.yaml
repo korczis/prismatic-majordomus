@@ -185,8 +185,8 @@ gates:
   - id: claim-proof
     job: structure
     always: true
-    runs: scripts/ci/claim-proof-check
-    summary: a claim marked guaranteed names a test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and the set may not grow
+    runs: scripts/ci/claim-proof-check --strict
+    summary: every claim marked guaranteed names a runnable test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and with the debt at zero any exception fails
 
   - id: rust-quality
     job: structure

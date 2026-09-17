@@ -6,7 +6,7 @@ weight = 15
 id = "say-what-the-tool-is-for"
 source = ".ai/repo/use-cases/say-what-the-tool-is-for.md"
 category = "extension"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

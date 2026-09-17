@@ -1,5 +1,5 @@
 +++
-title = "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed"
+title = "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged"
 description = "The website's homepage, its /features/ pages and its capability matrix name no feature, no"
 weight = 167
 [extra]

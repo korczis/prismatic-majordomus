@@ -1,3 +1,4 @@
+# claims: installer-verifies-before-installing
 # The installer, end to end, against a complete local release: a real archive built from
 # this tree, real metadata rendered by the same renderer the site publishes, served over a
 # real HTTP connection. Nothing here reaches the internet, and nothing here is mocked

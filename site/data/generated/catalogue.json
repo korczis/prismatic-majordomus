@@ -38,8 +38,73 @@
       "applications": [
         "repository-with-authored-governance"
       ],
+      "scenario": {
+        "setup": "authored-governance",
+        "given": [
+          "a hand-written CLAUDE.md people follow, committed",
+          "Majordomus installed, the policy projecting CLAUDE.md in region mode",
+          "the two enforcements wired as git hooks"
+        ],
+        "steps": [
+          {
+            "id": "refuse-overwrite",
+            "run": [
+              "init"
+            ],
+            "note": "a second init never overwrites a layer that is there",
+            "expect": {
+              "exit": 15,
+              "stdout_contains": [
+                "already exists"
+              ]
+            }
+          },
+          {
+            "id": "render-the-region",
+            "run": [
+              "update"
+            ],
+            "note": "the generated region is appended inside the authored file and stamped; the authored text is untouched",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^create CLAUDE.md$"
+              ],
+              "files_contain": [
+                {
+                  "path": "CLAUDE.md",
+                  "pattern": "Hand-written governance"
+                },
+                {
+                  "path": "CLAUDE.md",
+                  "pattern": "^<!-- majordomus:begin [0-9a-f]{12} [0-9a-f]{16} -->$"
+                }
+              ]
+            }
+          },
+          {
+            "id": "prove-it-holds",
+            "run": [
+              "doctor"
+            ],
+            "note": "the projection matches its stamp and the declared enforcement is invoked by the hooks",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   projection",
+                "doctor: 0 failure"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the authored text is byte for byte what it was",
+          "the region carries the policy hash and its own content hash",
+          "doctor is green because the hooks exist and call the tool"
+        ]
+      },
       "path": ".ai/repo/use-cases/adopt-an-existing-repository.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "adopt-an-existing-repository",
@@ -191,8 +256,76 @@
         "several-agents-one-repository",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "active-task",
+        "given": [
+          "an active task scoped to lib, with work done inside that scope"
+        ],
+        "steps": [
+          {
+            "id": "checkpoint",
+            "run": [
+              "checkpoint"
+            ],
+            "stdin": "checkpoint-body.md",
+            "note": "a short progress record inside the task",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "\\.ai/local/state/checkpoints/"
+              ]
+            }
+          },
+          {
+            "id": "handover",
+            "run": [
+              "handover"
+            ],
+            "stdin": "handover-body.md",
+            "note": "the record the next session resumes from, with the sections the policy requires",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "\\.ai/local/state/handovers/"
+              ]
+            }
+          },
+          {
+            "id": "resume",
+            "run": [
+              "context"
+            ],
+            "note": "what the next worker reads instead of a transcript",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^## GIT",
+                "^## TASK",
+                "narrow the parser"
+              ]
+            }
+          },
+          {
+            "id": "verify",
+            "run": [
+              "check"
+            ],
+            "note": "the task is still consistent with git",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 failing"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the handover carries the branch and head it was written at",
+          "the next context names the task, the profile and the scope"
+        ]
+      },
       "path": ".ai/repo/use-cases/hand-work-between-sessions.md",
-      "maturity": "described",
+      "maturity": "verified",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "hand-work-between-sessions",
@@ -365,8 +498,65 @@
         "repository-with-authored-governance",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "bare",
+        "given": [
+          "a repository with no AI layer, and a machine with the tool already installed the way the installer installs it"
+        ],
+        "steps": [
+          {
+            "id": "version",
+            "run": [
+              "version"
+            ],
+            "note": "the installed tool says which release it is; the installer refused to install an archive whose executable said anything else",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^majordomus [0-9]"
+              ]
+            }
+          },
+          {
+            "id": "init",
+            "run": [
+              "init"
+            ],
+            "note": "the command the installer points at next, in the repository you want supervised",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "next: majordomus update",
+                "next: majordomus doctor"
+              ],
+              "files_exist": [
+                ".ai/repo/policy.yaml",
+                ".ai/manifest.yaml"
+              ]
+            }
+          },
+          {
+            "id": "doctor",
+            "run": [
+              "doctor"
+            ],
+            "note": "the layer the installed tool created is a layer the installed tool accepts; the hook lines init printed are not in place yet, which is exactly what doctor is for",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "^OK   layout      .ai/"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "nothing was installed into the project except .ai/ and the files the policy names",
+          "the hook line init printed names the launcher, so an upgrade does not break it",
+          "uninstalling removes the launchers and the prefix, and no repository state"
+        ]
+      },
       "path": ".ai/repo/use-cases/install-the-tool-in-one-command.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "install-the-tool-in-one-command",
@@ -513,8 +703,63 @@
         "repository-with-authored-governance",
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "Majordomus installed with the policy declaring two enforcements",
+          "no git hook invokes the tool yet"
+        ],
+        "steps": [
+          {
+            "id": "list-the-rules",
+            "run": [
+              "doctrine",
+              "list"
+            ],
+            "note": "every rule with its class, and whether the tool enforces it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "majordomus.enforcement-wiring",
+                "blocking"
+              ]
+            }
+          },
+          {
+            "id": "find-the-gap",
+            "run": [
+              "doctor"
+            ],
+            "note": "the enforcement the policy declares reaches no hook: named, with the fix",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "^FAIL wiring",
+                "doctor-on-commit"
+              ]
+            }
+          },
+          {
+            "id": "read-the-status",
+            "run": [
+              "doctrine",
+              "status"
+            ],
+            "note": "the resolved rule set as the tool applies it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctrine"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a declared enforcement that nothing invokes is a failure, not a green line"
+        ]
+      },
       "path": ".ai/repo/use-cases/prove-a-rule-is-enforced.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "prove-a-rule-is-enforced",
@@ -657,8 +902,64 @@
       "applications": [
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "two-worktrees",
+        "given": [
+          "a second worktree of the same repository with an active task scoped to lib"
+        ],
+        "steps": [
+          {
+            "id": "claim-a-scope",
+            "run": [
+              "start",
+              "narrow the parser",
+              "--scope",
+              "lib"
+            ],
+            "note": "the task starts, and the overlap with the other worktree is reported",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^started t-",
+                "overlap"
+              ]
+            }
+          },
+          {
+            "id": "see-the-overlap",
+            "run": [
+              "check",
+              "--overlap"
+            ],
+            "note": "scope containment against every other worktree, never blocking",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "overlap"
+              ]
+            }
+          },
+          {
+            "id": "nothing-to-refuse",
+            "run": [
+              "finish",
+              "--check"
+            ],
+            "note": "no file outside the claimed scope has been touched",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 failing"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "two workers on one repository see each other by scope, and the second is told before it starts"
+        ]
+      },
       "path": ".ai/repo/use-cases/run-several-workers-at-once.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "run-several-workers-at-once",
@@ -801,8 +1102,87 @@
         "ci-gated-project",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "finish-ready",
+        "given": [
+          "an active task with its completion note written"
+        ],
+        "steps": [
+          {
+            "id": "open-a-question",
+            "run": [
+              "question",
+              "add",
+              "should tabs be an error or a warning?"
+            ],
+            "note": "an unresolved question naming the task",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^opened for t-"
+              ]
+            }
+          },
+          {
+            "id": "refused-while-open",
+            "run": [
+              "finish",
+              "--outcome",
+              "completed",
+              "--verify-command",
+              "true"
+            ],
+            "note": "an open question is a blocker; completed is refused",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "^FAIL blockers",
+                "refused"
+              ]
+            }
+          },
+          {
+            "id": "resolve-it",
+            "run": [
+              "question",
+              "resolve",
+              "1",
+              "--answer",
+              "an error"
+            ],
+            "note": "the question is answered as state, not in prose",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "resolved"
+              ]
+            }
+          },
+          {
+            "id": "accepted",
+            "run": [
+              "finish",
+              "--outcome",
+              "completed",
+              "--verify-command",
+              "true"
+            ],
+            "note": "every line of the finish contract passes and the outcome is recorded",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "completed"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "finish writes nothing while any line of the contract fails",
+          "the verification command, its exit code and duration are recorded"
+        ]
+      },
       "path": ".ai/repo/use-cases/accept-or-refuse-finished-work.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "accept-or-refuse-finished-work",
@@ -967,8 +1347,101 @@
       "applications": [
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "session-stranded",
+        "given": [
+          "two episodes open here: one whose client is gone, and one this process is inside"
+        ],
+        "steps": [
+          {
+            "id": "the-plan",
+            "run": [
+              "recover",
+              "episodes",
+              "--check"
+            ],
+            "note": "every candidate is measured and the measurement is printed, including the ones nothing happens to",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "last seen 2020-01-01T00:00:00Z",
+                "stranded:",
+                "live: this process is inside it",
+                "check: 1 action"
+              ]
+            }
+          },
+          {
+            "id": "dry-run-wrote-nothing",
+            "run": [
+              "recover",
+              "episodes",
+              "--check"
+            ],
+            "note": "the check is a dry run: the second one plans exactly what the first one did",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "stranded:",
+                "check: 1 action"
+              ]
+            }
+          },
+          {
+            "id": "recover",
+            "run": [
+              "recover",
+              "episodes"
+            ],
+            "note": "the stranded episode is closed into a record; the live one is untouched",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                ".ai/repo/sessions/",
+                "recovered: 1 action"
+              ]
+            }
+          },
+          {
+            "id": "idempotent",
+            "run": [
+              "recover",
+              "episodes"
+            ],
+            "note": "a second run has nothing to do: one episode, one record",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "nothing to recover"
+              ]
+            }
+          },
+          {
+            "id": "still-live",
+            "run": [
+              "recover",
+              "episodes",
+              "--check"
+            ],
+            "note": "the episode somebody is working in survived the sweep and is still listed as live",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "live: this process is inside it",
+                "nothing to recover"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "an episode under the staleness threshold is never closed, and neither is the one this process resolves to",
+          "an episode whose last sign of life cannot be read as a timestamp is skipped and counted, never closed",
+          "the recovered record claims no commits and no changed files: the tree at recovery time belongs to whoever is working now",
+          "the reason is a ledger event, session.recovered, naming the recovered episode rather than the recoverer"
+        ]
+      },
       "path": ".ai/repo/use-cases/recover-an-episode-nobody-closed.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "recover-an-episode-nobody-closed",
@@ -1190,8 +1663,71 @@
         "repository-with-authored-governance",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "policy-drifted",
+        "given": [
+          "installed and generated, then the policy was edited without regenerating"
+        ],
+        "steps": [
+          {
+            "id": "detect",
+            "run": [
+              "watch"
+            ],
+            "note": "the projection no longer matches the policy it was rendered from",
+            "expect": {
+              "exit": 11,
+              "stdout_contains": [
+                "DRIFT"
+              ]
+            }
+          },
+          {
+            "id": "regenerate",
+            "run": [
+              "update"
+            ],
+            "note": "the projections are rendered again from the edited policy",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "CLAUDE.md"
+              ]
+            }
+          },
+          {
+            "id": "clean",
+            "run": [
+              "watch"
+            ],
+            "note": "nothing disagrees any more",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "watch: 0 drift"
+              ]
+            }
+          },
+          {
+            "id": "what-happened",
+            "run": [
+              "history"
+            ],
+            "note": "the ledger says what changed and when",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "projections.updated"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "drift is a deterministic disagreement between policy, projection and git, reported by name"
+        ]
+      },
       "path": ".ai/repo/use-cases/find-out-what-drifted.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "find-out-what-drifted",
@@ -1354,8 +1890,49 @@
         "repository-opened-in-ai-clients",
         "repository-with-authored-governance"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "a repository with the layer installed, its projections generated and the client autostart wired"
+        ],
+        "steps": [
+          {
+            "id": "what-the-server-will-serve",
+            "run": [
+              "knowledge",
+              "sources"
+            ],
+            "note": "the source classes the Cockpit lists as object kinds are the ones the repository declares",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^policy +shared +policy",
+                "^knowledge sources: [0-9]+ file"
+              ]
+            }
+          },
+          {
+            "id": "sound-before-it-is-served",
+            "run": [
+              "doctor"
+            ],
+            "note": "the Cockpit renders what the layer holds; a layer that does not pass here is what its health page would report",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctor: 0 failure"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the shared server the client autostart binds serves the Cockpit at /cockpit beside Swagger UI at /swagger",
+          "every page is rendered from a capability, so a capability added to the registry has a page with no edit to the Cockpit",
+          "the health page reports one check per dimension, each naming the engine that decided it and the command that reproduces it"
+        ]
+      },
       "path": ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "see-what-the-repository-holds-without-reading-it",
@@ -1453,8 +2030,64 @@
         "majordomus.scope-integrity",
         "majordomus.state-consistency"
       ],
+      "scenario": {
+        "mode": "live",
+        "steps": [
+          {
+            "id": "consistent",
+            "run": [
+              "check"
+            ],
+            "note": "the task is consistent with its scope, its policy and this checkout",
+            "expect": {
+              "exit": 0
+            }
+          },
+          {
+            "id": "nothing-drifted",
+            "run": [
+              "watch"
+            ],
+            "note": "no projection, record or piece of state disagrees with what produced it",
+            "expect": {
+              "exit": 0
+            }
+          },
+          {
+            "id": "the-change-exists",
+            "obligation": "implementation",
+            "note": "there is a change; an empty tree is not finished work"
+          },
+          {
+            "id": "the-cases-were-run",
+            "obligation": "tests",
+            "note": "run over these inputs, not over an earlier shape of them"
+          },
+          {
+            "id": "a-reader-was-considered",
+            "obligation": "docs"
+          },
+          {
+            "id": "the-projections-are-current",
+            "obligation": "generated"
+          },
+          {
+            "id": "committed",
+            "obligation": "commit",
+            "note": "settled live at HEAD; a clean tree is the evidence"
+          },
+          {
+            "id": "pushed",
+            "obligation": "push",
+            "note": "a branch whose commits reach no remote is invisible to every other worker"
+          }
+        ],
+        "then": [
+          "every outstanding item is named, with the command that would discharge it"
+        ]
+      },
       "path": ".ai/repo/use-cases/know-whether-this-work-is-finished.md",
-      "maturity": "described",
+      "maturity": "executable",
       "evidence": null,
       "related_ids": [
         "resume-in-the-right-worktree",
@@ -1515,8 +2148,46 @@
         "repository-opened-in-ai-clients",
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "a repository with the layer installed and its projections generated"
+        ],
+        "steps": [
+          {
+            "id": "nothing-to-add",
+            "run": [
+              "init",
+              "--extend"
+            ],
+            "note": "the layer is complete; the client configurations at the root start the server",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "nothing to add"
+              ]
+            }
+          },
+          {
+            "id": "healthy",
+            "run": [
+              "doctor"
+            ],
+            "note": "what the server will serve is what doctor proved",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctor: 0 failure"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "an MCP client opened here starts the shared server through bin/majordomus-mcp and reads the same layer"
+        ]
+      },
       "path": ".ai/repo/use-cases/serve-the-layer-to-ai-clients.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "serve-the-layer-to-ai-clients",
@@ -1626,8 +2297,43 @@
         "long-running-work",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "the layer installed and the hooks wired; the shell tool proves the wiring, the executable proves the topology"
+        ],
+        "steps": [
+          {
+            "id": "wiring-holds",
+            "run": [
+              "doctor"
+            ],
+            "note": "every declared enforcement entry is wired, the worktree guard among them once the policy declares it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctor: 0 failure"
+              ]
+            }
+          },
+          {
+            "id": "the-briefing-names-the-checkout",
+            "run": [
+              "context"
+            ],
+            "note": "the briefing is about this worktree and branch and never about somebody else''s",
+            "expect": {
+              "exit": 0
+            }
+          }
+        ],
+        "then": [
+          "the executable derives <repo>-wt/<branch> for any branch from git identity alone; test/cases/96_worktree_topology.sh drives it end to end",
+          "a misplaced worktree migrates with its staged, unstaged and untracked work, verified by a fingerprint before and after"
+        ]
+      },
       "path": ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "work-on-a-branch-in-its-canonical-worktree",
@@ -1726,8 +2432,69 @@
       "applications": [
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "installed and wired, nothing measured yet"
+        ],
+        "steps": [
+          {
+            "id": "the-targets",
+            "run": [
+              "bench",
+              "--list"
+            ],
+            "note": "every public command of the registry is a target; nothing is listed by hand",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^doctor +read-only",
+                "^start +state-mutating"
+              ]
+            }
+          },
+          {
+            "id": "measure-one",
+            "run": [
+              "bench",
+              "version",
+              "--samples",
+              "1",
+              "--warmup",
+              "0",
+              "--mode",
+              "cold",
+              "--no-save"
+            ],
+            "note": "one cold run, not saved",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^version +cold +ok +1 "
+              ]
+            }
+          },
+          {
+            "id": "within-budget",
+            "run": [
+              "doctor"
+            ],
+            "note": "doctor reports its own wall time against the policy budget",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "budget",
+                "doctor: 0 failure"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a latency figure comes from a recorded run, never from prose"
+        ]
+      },
       "path": ".ai/repo/use-cases/prove-performance-with-benchmarks.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "prove-performance-with-benchmarks",
@@ -1885,8 +2652,61 @@
         "repository-with-authored-governance",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "the layer installed; the distribution declares the kinds it reads"
+        ],
+        "steps": [
+          {
+            "id": "what-is-declared",
+            "run": [
+              "knowledge",
+              "sources"
+            ],
+            "note": "every source class the repository declares, with what it discovered",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^policy +shared +policy",
+                "^knowledge sources: [0-9]+ file"
+              ]
+            }
+          },
+          {
+            "id": "nothing-to-add",
+            "run": [
+              "init",
+              "--extend"
+            ],
+            "note": "a new kind is a declaration under .ai/repo/knowledge, not a change to the tool",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "nothing to add"
+              ]
+            }
+          },
+          {
+            "id": "still-healthy",
+            "run": [
+              "doctor"
+            ],
+            "note": "the layer is real after the extension",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctor: 0 failure"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a kind added with its schema under .ai/repo/knowledge is served by the executable without a code change"
+        ]
+      },
       "path": ".ai/repo/use-cases/extend-what-the-executable-serves.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "extend-what-the-executable-serves",
@@ -2040,8 +2860,79 @@
         "repository-with-authored-governance",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "why-catalogue",
+        "given": [
+          "the layer installed, with the why section and its three source classes seeded by init",
+          "one moment, one audience and one area written as three files and committed"
+        ],
+        "steps": [
+          {
+            "id": "the-section-explains-itself",
+            "run": [
+              "context",
+              "resolve",
+              ".ai/repo/why/moments"
+            ],
+            "note": "the section has a contract from the first install, so the first moment is one file",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "ai.repo.why"
+              ]
+            }
+          },
+          {
+            "id": "discovered-not-registered",
+            "run": [
+              "knowledge",
+              "sources"
+            ],
+            "note": "the three files are knowledge because a source class discovered them, not because anything listed them",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^moment .*the-same-explanation-twice",
+                "^audience .*small-team",
+                "^area .*continuity"
+              ]
+            }
+          },
+          {
+            "id": "nothing-was-registered",
+            "run": [
+              "init",
+              "--extend"
+            ],
+            "note": "the section is seeded, not generated per entry: there is nothing left to add",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "nothing to add"
+              ]
+            }
+          },
+          {
+            "id": "still-healthy",
+            "run": [
+              "doctor"
+            ],
+            "note": "the layer is real, and the section is part of it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctor: 0 failure"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the catalogue is a section of the layer from the first install, with its contract",
+          "adding a moment is adding one file; the executable half of that is proved by test/cases/98_why_catalogue.sh"
+        ]
+      },
       "path": ".ai/repo/use-cases/say-what-the-tool-is-for.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "say-what-the-tool-is-for",
@@ -2212,8 +3103,62 @@
       "applications": [
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "active-task",
+        "given": [
+          "an active task scoped to lib, with work done inside that scope"
+        ],
+        "steps": [
+          {
+            "id": "checkpoint",
+            "run": [
+              "checkpoint"
+            ],
+            "stdin": "checkpoint-body.md",
+            "note": "a capped progress record; its branch and head are computed from git, never written by hand",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "\\.ai/local/state/checkpoints/"
+              ]
+            }
+          },
+          {
+            "id": "fresh",
+            "run": [
+              "check"
+            ],
+            "note": "the checkpoint is fresh against the profile interval and the task is consistent with git",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 failing"
+              ]
+            }
+          },
+          {
+            "id": "resume",
+            "run": [
+              "context"
+            ],
+            "note": "the newest checkpoint is part of what the next worker reads",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^## TASK",
+                "checkpoint"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the checkpoint file carries the branch and head it was written at",
+          "check reports the checkpoint age against the profile interval",
+          "context names the task and its newest checkpoint"
+        ]
+      },
       "path": ".ai/repo/use-cases/checkpoint-long-work.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "checkpoint-long-work",
@@ -2351,8 +3296,82 @@
         "long-running-work",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "active-task-records",
+        "given": [
+          "an active task that has already produced a checkpoint, a decision and an open question"
+        ],
+        "steps": [
+          {
+            "id": "everything",
+            "run": [
+              "context"
+            ],
+            "note": "git identity, the task and its profile, the scoped documents, open questions, decisions and the newest checkpoint, in authority order",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^## GIT",
+                "^## TASK",
+                "^## PROFILE"
+              ]
+            }
+          },
+          {
+            "id": "budgeted",
+            "run": [
+              "context",
+              "--budget-lines",
+              "30"
+            ],
+            "note": "the same, cut to a budget; what is dropped is named with its reason rather than silently truncated",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "^## GIT",
+                "^## EXCLUDED",
+                "context budget 30 lines"
+              ]
+            }
+          },
+          {
+            "id": "machine",
+            "run": [
+              "context",
+              "--json"
+            ],
+            "note": "the same body as one JSON document for a client that composes its own prompt",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\{"
+              ]
+            }
+          },
+          {
+            "id": "explained",
+            "run": [
+              "check",
+              "--explain"
+            ],
+            "note": "the effective policy and profile the context was assembled under",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^# task",
+                "profile"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "authority order is fixed: git, task, profile, documents, questions, decisions, checkpoint",
+          "a dropped section is named, never lost without a trace",
+          "the JSON form carries the same content as the text form"
+        ]
+      },
       "path": ".ai/repo/use-cases/read-only-the-context-that-fits.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "read-only-the-context-that-fits",
@@ -2544,8 +3563,101 @@
         "long-running-work",
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "finish-blocker-open",
+        "given": [
+          "an active task with one unresolved question open against it"
+        ],
+        "steps": [
+          {
+            "id": "hand-over",
+            "run": [
+              "handover",
+              "--close"
+            ],
+            "stdin": "handover-body.md",
+            "note": "the record the next session resumes from; --close marks the task handed over so a new one may start",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "\\.ai/local/state/handovers/"
+              ]
+            }
+          },
+          {
+            "id": "follow-up",
+            "run": [
+              "start",
+              "the follow-up",
+              "--scope",
+              "lib"
+            ],
+            "note": "the next task; the prior handover for this worktree and branch is named on the way in",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^INFO handover",
+                "same_worktree_same_branch",
+                "next: majordomus context"
+              ]
+            }
+          },
+          {
+            "id": "still-blocked",
+            "run": [
+              "check"
+            ],
+            "note": "the question opened under the previous task still blocks this branch",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "^FAIL blockers",
+                "unresolved question",
+                "tabs"
+              ]
+            }
+          },
+          {
+            "id": "still-listed",
+            "run": [
+              "question",
+              "list"
+            ],
+            "note": "the entry, numbered, with the task it was opened under",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^1  \\[unresolved\\]",
+                "tabs"
+              ]
+            }
+          },
+          {
+            "id": "refused",
+            "run": [
+              "finish",
+              "--outcome",
+              "completed",
+              "--verify-command",
+              "true"
+            ],
+            "note": "completion of the follow-up is refused by the same entry",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "^FAIL blockers"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the handover carries the branch and head it was written at",
+          "a question is a fact of the branch, not of the task that happened to open it",
+          "nothing was resolved by handing over; the next worker sees the same blocker"
+        ]
+      },
       "path": ".ai/repo/use-cases/carry-a-blocker-across-a-handover.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "carry-a-blocker-across-a-handover",
@@ -2763,8 +3875,62 @@
       "applications": [
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "two-worktrees",
+        "given": [
+          "installed and wired, with a second worktree on another branch holding an active task scoped to lib"
+        ],
+        "steps": [
+          {
+            "id": "nothing-here",
+            "run": [
+              "handover",
+              "--resolve"
+            ],
+            "note": "no handover was written for this worktree and branch; absence is reported, never a record from elsewhere",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "No relevant handover"
+              ]
+            }
+          },
+          {
+            "id": "not-my-task",
+            "run": [
+              "check"
+            ],
+            "note": "the other worktree’s task is not this checkout’s; check reports no active task here instead of holding this checkout to a scope it never claimed",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no active task"
+              ]
+            }
+          },
+          {
+            "id": "read-only-view",
+            "run": [
+              "context"
+            ],
+            "note": "what this worktree knows: its own git identity and no task",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^## GIT",
+                "none active"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "handover --resolve never offered a record from another branch",
+          "check did not enforce the other worktree’s scope here",
+          "local state under .ai/local/ is this checkout’s own and untracked"
+        ]
+      },
       "path": ".ai/repo/use-cases/resume-in-the-right-worktree.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "resume-in-the-right-worktree",
@@ -2895,8 +4061,71 @@
         "finish"
       ],
       "applications": [],
+      "scenario": {
+        "setup": "task-owes",
+        "given": [
+          "a repository with the layer installed and a task active"
+        ],
+        "steps": [
+          {
+            "id": "owes-and-cannot-prove-it",
+            "run": [
+              "finish",
+              "--outcome",
+              "completed",
+              "--note",
+              "done"
+            ],
+            "expect": {
+              "exit": 10,
+              "output": "owed, and no evidence was recorded"
+            }
+          },
+          {
+            "id": "honest-is-never-refused",
+            "run": [
+              "check"
+            ],
+            "expect": {
+              "exit": 0,
+              "output": "obligation"
+            }
+          },
+          {
+            "id": "record-it",
+            "run": [
+              "evidence",
+              "--covers",
+              "tests",
+              "--type",
+              "test",
+              "--command",
+              "bash test/run.sh"
+            ],
+            "expect": {
+              "exit": 0,
+              "output": "evidence: tests recorded"
+            }
+          },
+          {
+            "id": "now-it-discharges",
+            "run": [
+              "check"
+            ],
+            "expect": {
+              "exit": 0,
+              "output": "discharged over inputs"
+            }
+          }
+        ],
+        "then": [
+          "the obligation is discharged while the files it names are unchanged",
+          "a change to any of those files makes the same evidence stale, and finish refuses again",
+          "an outcome other than completed is never refused for owing something"
+        ]
+      },
       "path": ".ai/repo/use-cases/prove-what-a-task-owed-before-calling-it-done.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "prove-what-a-task-owed-before-calling-it-done",
@@ -3036,8 +4265,59 @@
         "finish"
       ],
       "applications": [],
+      "scenario": {
+        "setup": "task-owes-outer",
+        "given": [
+          "a repository with the layer installed, an active task that owes commit and push, and the work still in the working tree"
+        ],
+        "steps": [
+          {
+            "id": "recording-it-changes-nothing",
+            "run": [
+              "evidence",
+              "--covers",
+              "commit",
+              "--command",
+              "git commit"
+            ],
+            "expect": {
+              "exit": 0,
+              "output": "evidence: commit recorded"
+            }
+          },
+          {
+            "id": "the-tree-is-asked-instead",
+            "run": [
+              "finish",
+              "--outcome",
+              "completed",
+              "--note",
+              "done"
+            ],
+            "expect": {
+              "exit": 10,
+              "output": "still in the working tree"
+            }
+          },
+          {
+            "id": "what-cannot-be-settled-says-so",
+            "run": [
+              "check"
+            ],
+            "expect": {
+              "exit": 0,
+              "output": "the checkout has no remote"
+            }
+          }
+        ],
+        "then": [
+          "a token the tool can settle is settled live at HEAD, and a recorded line neither discharges it nor rescues it",
+          "a checkout that cannot settle a token falls back to the recorded evidence and says what it could not establish",
+          "unreachable and unpublished are different findings, and neither is reported as the other"
+        ]
+      },
       "path": ".ai/repo/use-cases/say-what-reached-the-remote-and-what-did-not.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "say-what-reached-the-remote-and-what-did-not",
@@ -3163,8 +4443,53 @@
         "repository-with-authored-governance",
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "installed, and the two enforcements the policy declares are actually in place as hooks"
+        ],
+        "steps": [
+          {
+            "id": "policy",
+            "run": [
+              "doctor"
+            ],
+            "note": "the policy parses, every value the code reads is declared with no reader-side default, every profile parses and the default profile exists, and every declared enforcement is reconciled against a hook that calls the tool",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   policy      .ai/repo/policy.yaml — parsed",
+                "no reader-side default",
+                "^OK   profiles",
+                "default 'implementation' exists",
+                "^OK   wiring      doctor-on-commit",
+                "^OK   wiring      finish-on-push",
+                "doctor: 0 failure"
+              ]
+            }
+          },
+          {
+            "id": "no-task",
+            "run": [
+              "check"
+            ],
+            "note": "outside a task the same contract answers with a precondition code, not a green run that checked nothing",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no active task"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "an unknown key in the policy or a profile is a parse failure, not an ignored line",
+          "a policy value the code reads without a declaration is a failure",
+          "exit 12 means a precondition is missing; it is never confused with a clean run"
+        ]
+      },
       "path": ".ai/repo/use-cases/trust-the-policy-before-reading-it.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "trust-the-policy-before-reading-it",
@@ -3303,8 +4628,67 @@
         "repository-opened-in-ai-clients",
         "repository-with-authored-governance"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "installed, and the two enforcements the policy declares are actually in place as hooks"
+        ],
+        "steps": [
+          {
+            "id": "generate",
+            "run": [
+              "update"
+            ],
+            "note": "every projection the policy names, from the one policy, deterministically",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "AGENTS.md",
+                "CLAUDE.md",
+                "each carries its own stamp"
+              ]
+            }
+          },
+          {
+            "id": "prove",
+            "run": [
+              "doctor"
+            ],
+            "note": "each projection matches its stamp, points at .ai/README.md, carries no rule of its own, stays under budget, and every reference in it resolves",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   projection",
+                "^OK   bootstrap",
+                "^OK   budget",
+                "^OK   links",
+                "^OK   counts",
+                "doctor: 0 failure"
+              ]
+            }
+          },
+          {
+            "id": "quiet",
+            "run": [
+              "watch"
+            ],
+            "note": "nothing has drifted since the generation",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 drift finding"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "each generated file carries the policy hash and its own content hash",
+          "the always-loaded file is under the policy’s line budget",
+          "a hardcoded count or a dangling reference in it would have failed doctor"
+        ]
+      },
       "path": ".ai/repo/use-cases/keep-the-bootstrap-thin-and-within-budget.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "keep-the-bootstrap-thin-and-within-budget",
@@ -3477,8 +4861,81 @@
       "applications": [
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "installed, and the two enforcements the policy declares are actually in place as hooks"
+        ],
+        "steps": [
+          {
+            "id": "doctor",
+            "run": [
+              "doctor"
+            ],
+            "note": "every doctrine the registry declares is reached by the command that claims to run it; every finding carries a reproduce command",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   wiring      doctor-on-commit",
+                "^OK   command     surface",
+                "^OK   command     coverage",
+                "doctor: 0 failure"
+              ]
+            }
+          },
+          {
+            "id": "watch",
+            "run": [
+              "watch"
+            ],
+            "note": "drift since the last update: policy, projections, state, retention",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 drift finding"
+              ]
+            }
+          },
+          {
+            "id": "registry",
+            "run": [
+              "doctrine",
+              "list"
+            ],
+            "note": "which rules are enforced, by what, of which class, and whether each is wired",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^majordomus.enforcement-wiring +blocking",
+                "doctor"
+              ]
+            }
+          },
+          {
+            "id": "one-rule",
+            "run": [
+              "doctrine",
+              "show",
+              "majordomus.enforcement-wiring"
+            ],
+            "note": "one rule: its class decides whether a violation stops the command",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^id +majordomus.enforcement-wiring",
+                "^class +blocking"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "exit 0 is clean, 10 is a failing finding, 12 is a missing precondition; nothing exits 0 with a FAIL line",
+          "every FAIL and WARN names the command that reproduces it",
+          "nothing here reached the network or evaluated generated text"
+        ]
+      },
       "path": ".ai/repo/use-cases/gate-ci-on-the-tool-itself.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "gate-ci-on-the-tool-itself",
@@ -3662,8 +5119,39 @@
       "responsibilities": [
         "policy"
       ],
+      "scenario": {
+        "mode": "live",
+        "given": [
+          "the layer installed and the hooks wired; the executable built, because the hook and the gate both call it"
+        ],
+        "steps": [
+          {
+            "id": "no-shell-validator-decides-it",
+            "run": [
+              "doctrine",
+              "list"
+            ],
+            "note": "the doctrine registry is what a lib/ validator decides; project.conventional-commits is absent from it because the judge is the executable, asked by a hook and by a CI gate",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^majordomus.enforcement-wiring +blocking"
+              ],
+              "stdout_not_contains": [
+                "^project\\.conventional-commits"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a rule of this project is enforced by a gate and a hook that call the executable, never by a validator added to the shell tool",
+          "the grammar is one parser: the changelog and the judge read the same CommitHeader::parse and disagree only about what to do with a header nobody spelled conventionally",
+          "the three levels in the policy - off, warning, error - are decisions a repository can read back; off is a value, not an absence",
+          "test/cases/274_commit_policy.sh drives the four commands over real repositories, real worktrees and the real hook; scripts/ci/commit-policy reads the whole history against the baseline, and a branch of its own commits outright"
+        ]
+      },
       "path": ".ai/repo/use-cases/plan-a-commit-and-judge-its-message.md",
-      "maturity": "described",
+      "maturity": "executable",
       "evidence": null,
       "related_ids": [
         "gate-ci-on-the-tool-itself",
@@ -3713,8 +5201,96 @@
         "long-running-work",
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "finish-blocker-open",
+        "given": [
+          "an active task with one unresolved question open against it"
+        ],
+        "steps": [
+          {
+            "id": "see-it",
+            "run": [
+              "question",
+              "list"
+            ],
+            "note": "the open question, numbered, on this branch",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "unresolved",
+                "tabs"
+              ]
+            }
+          },
+          {
+            "id": "refused",
+            "run": [
+              "finish",
+              "--outcome",
+              "completed",
+              "--verify-command",
+              "true"
+            ],
+            "note": "completion is refused while the question is open; the refusal names it",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "question"
+              ]
+            }
+          },
+          {
+            "id": "still-flagged",
+            "run": [
+              "check"
+            ],
+            "note": "check reports the blocker as a failing line, not a warning",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "FAIL"
+              ]
+            }
+          },
+          {
+            "id": "resolve",
+            "run": [
+              "question",
+              "resolve",
+              "1",
+              "--answer",
+              "tabs are refused; the subset has no tabs"
+            ],
+            "note": "the one line is rewritten as resolved with its answer",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "resolved"
+              ]
+            }
+          },
+          {
+            "id": "clear",
+            "run": [
+              "check"
+            ],
+            "note": "nothing blocks now",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 failing"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "finish refused with exit 10 while the question was open",
+          "the resolved entry keeps the question and the answer together",
+          "check is green once the store holds no unresolved entry"
+        ]
+      },
       "path": ".ai/repo/use-cases/block-acceptance-on-an-open-question.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "block-acceptance-on-an-open-question",
@@ -3911,8 +5487,82 @@
         "ci-gated-project",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "plan-model",
+        "given": [
+          "installed, with a canonical project model carrying one milestone and two issues"
+        ],
+        "steps": [
+          {
+            "id": "status",
+            "run": [
+              "plan",
+              "status"
+            ],
+            "note": "milestone progress and the next executable issue, derived from recorded facts",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^M000 +PLANNED",
+                "next ready issue: I0001"
+              ]
+            }
+          },
+          {
+            "id": "show",
+            "run": [
+              "plan",
+              "show",
+              "I0001"
+            ],
+            "note": "the full record of one issue, including the evidence it requires before it may complete",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^# I0001",
+                "READY.*derived",
+                "wave"
+              ]
+            }
+          },
+          {
+            "id": "roadmap",
+            "run": [
+              "plan",
+              "roadmap"
+            ],
+            "note": "milestones in derived order, with now and next; no document is a second authority for this",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^now:  M000"
+              ]
+            }
+          },
+          {
+            "id": "body",
+            "run": [
+              "plan",
+              "body",
+              "I0001"
+            ],
+            "note": "the provider-neutral projection body of one record, the same one the GitHub projection renders",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^# I0001"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "completion is refused while a required evidence item is missing",
+          "the roadmap is derived from milestone state, never written",
+          "a hand edit inside a generated GitHub region is reported rather than kept"
+        ]
+      },
       "path": ".ai/repo/use-cases/complete-an-issue-only-with-its-evidence.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "complete-an-issue-only-with-its-evidence",
@@ -4080,8 +5730,84 @@
         "projection"
       ],
       "applications": [],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "a repository with the layer installed and its files committed"
+        ],
+        "steps": [
+          {
+            "id": "profiles",
+            "run": [
+              "archive",
+              "--list"
+            ],
+            "note": "the snapshots are declarations in share/archive.yaml, not flags",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "context",
+                "audit",
+                "governance"
+              ]
+            }
+          },
+          {
+            "id": "what-would-travel",
+            "run": [
+              "archive",
+              "--dry-run"
+            ],
+            "note": "the count archived is stated beside the count tracked, so a selection that matched nothing cannot look like one that matched everything",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "profile context",
+                "tracked file",
+                "nothing written"
+              ]
+            }
+          },
+          {
+            "id": "written-and-read-back",
+            "run": [
+              "archive",
+              "--format",
+              "tar.gz"
+            ],
+            "note": "the archive is opened again before the command returns",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "OK   archive",
+                "read back"
+              ]
+            }
+          },
+          {
+            "id": "no-such-profile",
+            "run": [
+              "archive",
+              "nosuch"
+            ],
+            "note": "exit 12 is MISSING_ARTIFACT, and the message names the command that lists what exists",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no profile",
+                "archive --list"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "nothing untracked is in the archive, because the file set is the git index",
+          "every entry carries the mode the index records, and the archive says so in its own manifest",
+          "the archive was read back before the command returned, and an unreadable one is a failure rather than a delivery"
+        ]
+      },
       "path": ".ai/repo/use-cases/hand-the-repository-to-a-reader.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "hand-the-repository-to-a-reader",
@@ -4271,8 +5997,69 @@
       "applications": [
         "repository-with-authored-governance"
       ],
+      "scenario": {
+        "setup": "undocumented-directory",
+        "given": [
+          "a repository with Majordomus installed, a new section that carries its contract, and one directory below it that carries none"
+        ],
+        "steps": [
+          {
+            "id": "validate",
+            "run": [
+              "context",
+              "validate"
+            ],
+            "note": "the directory with no document is named, and the one that has its contract is not",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "missing-contract",
+                "zones/deep"
+              ],
+              "stdout_not_contains": [
+                "zones — missing-contract"
+              ]
+            }
+          },
+          {
+            "id": "resolve",
+            "run": [
+              "context",
+              "resolve",
+              ".ai/repo/zones"
+            ],
+            "note": "nothing resolves against a tree that does not validate, not even the part that is correct",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "does not validate"
+              ]
+            }
+          },
+          {
+            "id": "doctor",
+            "run": [
+              "doctor"
+            ],
+            "note": "the same finding through the rule majordomus.context-integrity, which the pre-commit hook runs",
+            "expect": {
+              "exit": 10,
+              "stdout_contains": [
+                "missing-contract"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a directory of the layer with no context document is a named failure, not a silence",
+          "the same tree, and what each directory owes, is readable through majordomus_directories and GET /api/v1/directories without running the gate",
+          "the finding names the directory, so the fix is one file in one place",
+          "the tree refuses to resolve until it is fixed, so nobody reads a half-documented layer",
+          "the same tree, and what each directory owes, is readable through majordomus_directories and GET /api/v1/directories without running the gate"
+        ]
+      },
       "path": ".ai/repo/use-cases/document-every-directory-of-the-layer.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "document-every-directory-of-the-layer",
@@ -4414,8 +6201,91 @@
         "repository-with-authored-governance",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "a repository with Majordomus installed and projections generated, and one commit of work"
+        ],
+        "steps": [
+          {
+            "id": "list",
+            "run": [
+              "context",
+              "list"
+            ],
+            "note": "every scoped document: id, path, scope, composition, providers, status",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "ai.layer"
+              ]
+            }
+          },
+          {
+            "id": "resolve",
+            "run": [
+              "context",
+              "resolve",
+              "lib"
+            ],
+            "note": "the documents that apply to a path, root to target, in effective order with provenance",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^01  ai.layer"
+              ]
+            }
+          },
+          {
+            "id": "explain",
+            "run": [
+              "context",
+              "explain",
+              "lib"
+            ],
+            "note": "the same, with why each applies and why each candidate was left out",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "ai.layer"
+              ]
+            }
+          },
+          {
+            "id": "affected",
+            "run": [
+              "context",
+              "affected"
+            ],
+            "note": "which documents the working tree’s changes touch; nothing is changed here, so nothing is affected",
+            "expect": {
+              "exit": 0,
+              "tree_unchanged": "true"
+            }
+          },
+          {
+            "id": "sync",
+            "run": [
+              "context",
+              "check-sync"
+            ],
+            "note": "the tree validates, every projection matches its stamp, and nothing is affected",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "in sync"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "resolution is deterministic: the same path gives the same ordered list",
+          "a change under a scope names the document that governs it",
+          "the projections are checked against the documents they were rendered from"
+        ]
+      },
       "path": ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "trace-a-change-to-the-context-it-affects",
@@ -4603,8 +6473,100 @@
         "long-running-work",
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "active-task-records",
+        "given": [
+          "an active task that has already produced a checkpoint, a decision and an open question"
+        ],
+        "steps": [
+          {
+            "id": "history",
+            "run": [
+              "history"
+            ],
+            "note": "the ledger read back oldest first, one event per line, from a closed vocabulary",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "task.started",
+                "task.checkpoint",
+                "decision.recorded"
+              ]
+            }
+          },
+          {
+            "id": "by-event",
+            "run": [
+              "history",
+              "--event",
+              "task.checkpoint"
+            ],
+            "note": "only the events of one kind",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "task.checkpoint"
+              ],
+              "stdout_not_contains": [
+                "decision.recorded"
+              ]
+            }
+          },
+          {
+            "id": "valid",
+            "run": [
+              "history",
+              "--validate"
+            ],
+            "note": "every line is a well-formed event; a malformed line would be a failure, not a skipped record",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "every event is registered",
+                "history --validate: ok"
+              ]
+            }
+          },
+          {
+            "id": "find",
+            "run": [
+              "search",
+              "parser"
+            ],
+            "note": "a durable record found literally, across kinds, without an index",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^decision ",
+                "^checkpoint ",
+                "match"
+              ]
+            }
+          },
+          {
+            "id": "caps",
+            "run": [
+              "watch"
+            ],
+            "note": "the ledger, the handovers and the checkpoints are under their retention caps",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   retention   ledger",
+                "^OK   retention   checkpoints",
+                "0 drift finding"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "every event has a name from the closed vocabulary",
+          "the ledger is never silently repaired or truncated",
+          "rotation archives, it does not delete"
+        ]
+      },
       "path": ".ai/repo/use-cases/read-back-what-happened.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "read-back-what-happened",
@@ -4833,8 +6795,115 @@
         "several-agents-one-repository",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "plan-model",
+        "given": [
+          "installed, with a canonical project model carrying one milestone and two issues"
+        ],
+        "steps": [
+          {
+            "id": "validate",
+            "run": [
+              "plan",
+              "validate"
+            ],
+            "note": "schemas, references, the DAG and status consistency; a cycle or a dependency on a missing issue is refused by name",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "0 failure"
+              ]
+            }
+          },
+          {
+            "id": "waves",
+            "run": [
+              "plan",
+              "waves"
+            ],
+            "note": "topological execution waves; issues in one wave that touch the same paths are reported as serialised",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^Wave 0",
+                "I0001 +READY",
+                "^Wave 1",
+                "I0002 +BLOCKED"
+              ]
+            }
+          },
+          {
+            "id": "ready",
+            "run": [
+              "plan",
+              "ready"
+            ],
+            "note": "issues whose dependencies are all satisfied",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "I0001"
+              ],
+              "stdout_not_contains": [
+                "I0002"
+              ]
+            }
+          },
+          {
+            "id": "blocked",
+            "run": [
+              "plan",
+              "blocked"
+            ],
+            "note": "issues waiting on a dependency, and on which one",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "I0002"
+              ]
+            }
+          },
+          {
+            "id": "next",
+            "run": [
+              "plan",
+              "next"
+            ],
+            "note": "the one issue a worker should take now",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^I0001 ",
+                "scope:",
+                "next: majordomus plan start I0001"
+              ]
+            }
+          },
+          {
+            "id": "take-it",
+            "run": [
+              "start",
+              "I0001",
+              "--scope",
+              "src/I0001"
+            ],
+            "note": "the task under the scope the issue names; overlap with other worktrees is computed on claimed paths",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "t-"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "status is derived from recorded facts and stored nowhere",
+          "two issues in one wave with overlapping paths are named as serialised",
+          "the task started carries the scope the issue claims"
+        ]
+      },
       "path": ".ai/repo/use-cases/deliver-issues-in-waves.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "deliver-issues-in-waves",
@@ -5083,8 +7152,69 @@
         "repository-opened-in-ai-clients",
         "repository-with-authored-governance"
       ],
+      "scenario": {
+        "setup": "installed-wired",
+        "given": [
+          "installed, and the two enforcements the policy declares are actually in place as hooks"
+        ],
+        "steps": [
+          {
+            "id": "declared",
+            "run": [
+              "doctor"
+            ],
+            "note": "the scope file is present and well-formed; init seeded it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   layout      .ai/repo/scope.yaml",
+                "doctor: 0 failure"
+              ]
+            }
+          },
+          {
+            "id": "sources",
+            "run": [
+              "knowledge",
+              "sources"
+            ],
+            "note": "the source classes and the files each discovers, after the scope policy is applied",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^policy +shared",
+                "^scope +shared"
+              ]
+            }
+          },
+          {
+            "id": "nodes",
+            "run": [
+              "knowledge",
+              "nodes",
+              "--scope",
+              "shared"
+            ],
+            "note": "the shared objects only: nothing under .ai/local/ is a node",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "shared"
+              ],
+              "stdout_not_contains": [
+                "operational"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "what is in and out of the context is one file in the layer, with a schema",
+          "build outputs, local state, binaries and secrets are out by declaration, not by luck",
+          "the MCP server classifies a path with the same data"
+        ]
+      },
       "path": ".ai/repo/use-cases/classify-what-belongs-in-the-context.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "classify-what-belongs-in-the-context",
@@ -5238,8 +7368,68 @@
       "applications": [
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "active-task-records",
+        "given": [
+          "an active task that has already produced a checkpoint, a decision and an open question"
+        ],
+        "steps": [
+          {
+            "id": "search",
+            "run": [
+              "search",
+              "parser"
+            ],
+            "note": "durable records matched literally, across kinds, without an index",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^decision ",
+                "parser",
+                "match"
+              ]
+            }
+          },
+          {
+            "id": "nodes",
+            "run": [
+              "knowledge",
+              "nodes",
+              "--kind",
+              "rule"
+            ],
+            "note": "one node per canonical object of one kind, with its identity",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^rule "
+              ]
+            }
+          },
+          {
+            "id": "prompts",
+            "run": [
+              "prompt",
+              "list"
+            ],
+            "note": "the repository’s own prompt assets, the ones an MCP client can also read as resources",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^continue ",
+                "^debug "
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the shell and the MCP server answer from the same files",
+          "a majordomus:// URI resolves the same way through the resource read, the tool and the HTTP route",
+          "no index has to exist for the literal search to work"
+        ]
+      },
       "path": ".ai/repo/use-cases/find-an-object-without-reading-everything.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "find-an-object-without-reading-everything",
@@ -5386,8 +7576,107 @@
         "repository-with-authored-governance",
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "Majordomus installed; the skeleton seeds the use-case section with no use case yet"
+        ],
+        "steps": [
+          {
+            "id": "nothing-yet",
+            "run": [
+              "usecase",
+              "list"
+            ],
+            "note": "the section exists and is empty",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "use cases: 0 in"
+              ]
+            }
+          },
+          {
+            "id": "the-gaps",
+            "run": [
+              "usecase",
+              "coverage"
+            ],
+            "note": "every public command is a target; a fresh policy reports gaps and fails on none",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^command +doctor +0 +0 +0 +gap +advisory"
+              ]
+            }
+          },
+          {
+            "id": "scaffold",
+            "run": [
+              "usecase",
+              "scaffold",
+              "--for",
+              "command:doctor"
+            ],
+            "note": "a draft from what the registry, the fixture and the claims already know; nothing in it is verified",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "wrote: \\.ai/repo/use-cases/doctor-draft\\.md"
+              ]
+            }
+          },
+          {
+            "id": "validate",
+            "run": [
+              "usecase",
+              "validate"
+            ],
+            "note": "the draft resolves: its command, setup and category exist",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "usecase validate: 0 failure"
+              ]
+            }
+          },
+          {
+            "id": "run-it",
+            "run": [
+              "usecase",
+              "run",
+              "doctor-draft"
+            ],
+            "note": "the scaffolded scenario executes the real command in a disposable repository",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "doctor-draft +pass"
+              ]
+            }
+          },
+          {
+            "id": "still-a-gap",
+            "run": [
+              "usecase",
+              "coverage"
+            ],
+            "note": "a draft never counts; coverage moves when the use case is active",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^command +doctor +0 +0 +0 +gap"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a use case is a file; everything else (the page, the links, the tally) follows",
+          "a draft can run but cannot cover: status is authored, maturity is observed"
+        ]
+      },
       "path": ".ai/repo/use-cases/add-a-use-case-and-prove-it.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "add-a-use-case-and-prove-it",
@@ -5597,8 +7886,98 @@
       "applications": [
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "capture-installed",
+        "given": [
+          "Majordomus installed, with the provider hook written and the executable on PATH"
+        ],
+        "steps": [
+          {
+            "id": "is-it-real",
+            "run": [
+              "capture",
+              "status"
+            ],
+            "note": "the state is read from the provider configuration and a payload driven through the shim, not from a flag somebody set",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "claude-code",
+                "majordomus-capture"
+              ]
+            }
+          },
+          {
+            "id": "one-prompt-one-record",
+            "run": [
+              "capture",
+              "prompt",
+              "--provider",
+              "claude-code"
+            ],
+            "stdin": "claude-code-prompt.json",
+            "note": "what the provider sends on UserPromptSubmit; the record is the person half of the exchange",
+            "expect": {
+              "exit": 0,
+              "files_exist": [
+                ".ai/local/prompts"
+              ]
+            }
+          },
+          {
+            "id": "both-formats-or-neither",
+            "run": [
+              "capture",
+              "render"
+            ],
+            "note": "a prompt is kept twice under one stem: the record for a machine, the rendering for a person. render rebuilds a missing rendering from its record and never the other way round, because only that direction is possible",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "rendering"
+              ]
+            }
+          },
+          {
+            "id": "never-rejects-a-prompt",
+            "run": [
+              "capture",
+              "prompt",
+              "--provider",
+              "claude-code"
+            ],
+            "stdin": "not-a-payload.txt",
+            "note": "in a hook, exit 2 rejects the person prompt, so a payload the tool cannot read is written to the failure log and the turn goes on",
+            "expect": {
+              "exit": 0,
+              "files_exist": [
+                ".ai/local/prompts/.capture.log"
+              ]
+            }
+          },
+          {
+            "id": "a-subcommand-that-is-not-one",
+            "run": [
+              "capture",
+              "nonsense"
+            ],
+            "note": "the command line still refuses what a person typed wrong: only the hook path is forbidden to exit 2",
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "unknown subcommand"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the archive is written under the ignored half of the layer and never committed",
+          "every prompt is present as both a JSON record and its Markdown rendering",
+          "a prompt the tool could not read is a named failure, not a silence"
+        ]
+      },
       "path": ".ai/repo/use-cases/capture-the-prompts-that-started-the-work.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "capture-the-prompts-that-started-the-work",
@@ -5790,8 +8169,99 @@
         "repository-with-authored-governance",
         "repository-opened-in-ai-clients"
       ],
+      "scenario": {
+        "setup": "installed-skill",
+        "given": [
+          "a repository whose skills section holds one skill directory with SKILL.md and one example, tracked in git"
+        ],
+        "steps": [
+          {
+            "id": "list",
+            "run": [
+              "skills",
+              "list"
+            ],
+            "note": "the inventory is the directory: what is tracked is what is listed",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^release-notes +active +v1 "
+              ]
+            }
+          },
+          {
+            "id": "read-one",
+            "run": [
+              "skills",
+              "show",
+              "release-notes"
+            ],
+            "note": "the canonical path, then the file as written — the procedure, not a paraphrase",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\.ai/repo/skills/release-notes/SKILL\\.md$",
+                "^# Procedure$"
+              ]
+            }
+          },
+          {
+            "id": "machine-readable",
+            "run": [
+              "skills",
+              "show",
+              "release-notes",
+              "--json"
+            ],
+            "note": "the same skill for a program: metadata, provenance, examples and the body",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "\"uri\":\"majordomus://skill/release-notes\"",
+                "\"path\":\".ai/repo/skills/release-notes/SKILL.md\"",
+                "\"valid\":true"
+              ]
+            }
+          },
+          {
+            "id": "check",
+            "run": [
+              "skills",
+              "check"
+            ],
+            "note": "a clean result states what it examined; a repository with no skills is reported, never passed",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^OK   skill",
+                "skills: 1 discovered"
+              ]
+            }
+          },
+          {
+            "id": "refuse-unknown",
+            "run": [
+              "skills",
+              "show",
+              "nosuch"
+            ],
+            "note": "a skill that does not exist is named, with the command that lists what does",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no skill 'nosuch'",
+                "majordomus skills list"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the listing, the catalogue the site renders and the resources the MCP server serves all come from the same discovery",
+          "adding a skill is adding its directory; removing it removes the skill from every surface"
+        ]
+      },
       "path": ".ai/repo/use-cases/follow-a-skill-the-repository-defines.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "follow-a-skill-the-repository-defines",
@@ -6008,8 +8478,81 @@
         "long-running-work",
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "active-task",
+        "given": [
+          "an active task scoped to lib"
+        ],
+        "steps": [
+          {
+            "id": "decide",
+            "run": [
+              "decision",
+              "add",
+              "refuse tabs in the parser",
+              "--why",
+              "two encodings for one token"
+            ],
+            "note": "what was decided, why, and which task decided it; superseded by a later entry, never edited",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "recorded: refuse tabs in the parser"
+              ]
+            }
+          },
+          {
+            "id": "read-back",
+            "run": [
+              "decision",
+              "list"
+            ],
+            "note": "the decisions of this branch, newest first",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "refuse tabs in the parser",
+                "Why: two encodings"
+              ]
+            }
+          },
+          {
+            "id": "find-it",
+            "run": [
+              "search",
+              "tabs"
+            ],
+            "note": "a literal scan over the durable records, no index",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "decision",
+                "match"
+              ]
+            }
+          },
+          {
+            "id": "what-happened",
+            "run": [
+              "history"
+            ],
+            "note": "the ledger names the event and the task",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "decision.recorded",
+                "task.started"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a decision is one line of state with an author, a task and a reason",
+          "nothing has to be re-explained to the next session"
+        ]
+      },
       "path": ".ai/repo/use-cases/keep-decisions-out-of-the-transcript.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "keep-decisions-out-of-the-transcript",
@@ -6175,8 +8718,47 @@
       "applications": [
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "bare",
+        "given": [
+          "an empty repository; nothing installed"
+        ],
+        "steps": [
+          {
+            "id": "print",
+            "run": [
+              "version"
+            ],
+            "note": "the one string the projections, the ledger and the site derive their version from",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"
+              ]
+            }
+          },
+          {
+            "id": "refuse",
+            "run": [
+              "version",
+              "--no-such-option"
+            ],
+            "note": "an argument the command does not know is a usage error, never ignored",
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "unknown option --no-such-option"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the version needs no repository and no installation",
+          "a usage error exits 2, as the exit-code contract says"
+        ]
+      },
       "path": ".ai/repo/use-cases/know-which-tool-is-running.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "know-which-tool-is-running",
@@ -6288,8 +8870,184 @@
         "several-agents-one-repository",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "provider-reachable",
+        "given": [
+          "Majordomus installed, no session open, no provider hook wired",
+          "work about to begin, which is what the compaction and end events have to describe"
+        ],
+        "steps": [
+          {
+            "id": "unwired",
+            "run": [
+              "capture",
+              "status"
+            ],
+            "note": "a repository that wires nothing says so; it is never presented as an episode boundary that happens to be quiet",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "claude-code:session +unconfigured"
+              ]
+            }
+          },
+          {
+            "id": "install",
+            "run": [
+              "capture",
+              "install"
+            ],
+            "note": "one shim per event, and the entries that make the provider run them",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "majordomus-session-start",
+                "majordomus-session-end",
+                "majordomus-session-compact"
+              ],
+              "files_exist": [
+                ".claude/hooks/majordomus-session-start",
+                ".claude/hooks/majordomus-session-end",
+                ".claude/hooks/majordomus-session-compact"
+              ]
+            }
+          },
+          {
+            "id": "proven-by-running-it",
+            "run": [
+              "capture",
+              "status"
+            ],
+            "note": "verified means a synthetic payload went through the end shim and reached the command, with the mutation left out",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "claude-code:session +verified"
+              ]
+            }
+          },
+          {
+            "id": "open",
+            "run": [
+              "session",
+              "start"
+            ],
+            "note": "the open freezes the context the builder resolved into the store the layer names",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "working context: \\.ai/local/session-contexts/"
+              ]
+            }
+          },
+          {
+            "id": "where-it-is",
+            "run": [
+              "session",
+              "context"
+            ],
+            "note": "the path, not the document: local evidence is never poured into a terminal where a context can pick it up",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\.ai/local/session-contexts/2[0-9]+T[0-9]+Z--s-"
+              ]
+            }
+          },
+          {
+            "id": "work-to-describe",
+            "run": [
+              "start",
+              "Prove the lifecycle runs itself",
+              "--scope",
+              "lib"
+            ],
+            "note": "a checkpoint is a progress note inside a task, so the two events below have something to be about",
+            "expect": {
+              "exit": 0
+            }
+          },
+          {
+            "id": "what-a-compaction-would-record",
+            "run": [
+              "checkpoint",
+              "--derive"
+            ],
+            "note": "what the compaction event runs: a progress note composed from git and the ledger, because at that moment nobody is being asked anything",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\.ai/local/state/checkpoints/"
+              ]
+            }
+          },
+          {
+            "id": "what-an-end-would-write",
+            "run": [
+              "handover",
+              "--derive"
+            ],
+            "note": "and what the end event writes when the task is still active: the sections the policy requires, derived from records that already exist, with no model called",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\.ai/local/state/handovers/"
+              ]
+            }
+          },
+          {
+            "id": "what-the-next-worker-is-handed",
+            "run": [
+              "handover",
+              "--resolve"
+            ],
+            "note": "the record the start event quotes into the next episode, with the label that says how far to trust it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "Match: same_worktree_same_branch",
+                "Git state: exact"
+              ]
+            }
+          },
+          {
+            "id": "close",
+            "run": [
+              "session",
+              "close"
+            ],
+            "note": "the shared record; the working context learns the outcome in the same document it was opened with",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\.ai/repo/sessions/"
+              ]
+            }
+          },
+          {
+            "id": "an-end-with-nothing-open",
+            "run": [
+              "session",
+              "close",
+              "--if-none",
+              "ignore"
+            ],
+            "note": "what the provider''s end event passes: the episode may have been closed by hand, or never opened, and neither is a failure",
+            "expect": {
+              "exit": 0
+            }
+          }
+        ],
+        "then": [
+          "the episode boundary exists without a worker choosing to draw it",
+          "what the worker was told at the open is evidence rather than recollection",
+          "the continuation record exists whether or not anybody was willing to type one",
+          "the next episode is handed that record, with the label that says how far to trust it",
+          "the working context stays under the ignored half of the layer and never becomes a transcript"
+        ]
+      },
       "path": ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "let-the-provider-draw-the-episode-boundary",
@@ -6658,8 +9416,61 @@
       "applications": [
         "repository-with-authored-governance"
       ],
+      "scenario": {
+        "setup": "legacy-layout",
+        "given": [
+          "project data under .majordomus/, the pre-.ai layout, and no manifest"
+        ],
+        "steps": [
+          {
+            "id": "plan-it",
+            "run": [
+              "migrate",
+              "--dry-run"
+            ],
+            "note": "every move named, nothing written",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^migrate: \\.majordomus/ \\(pre-\\.ai layout\\) -> \\.ai/",
+                "move  \\.majordomus/policy\\.yaml -> \\.ai/repo/policy\\.yaml"
+              ]
+            }
+          },
+          {
+            "id": "do-it",
+            "run": [
+              "migrate"
+            ],
+            "note": "the files move, the old directory is backed up, the manifest is written",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^migrated: \\.ai/ is the layout"
+              ]
+            }
+          },
+          {
+            "id": "nothing-left",
+            "run": [
+              "migrate"
+            ],
+            "note": "a second migration says the layer is already there and moves nothing",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^already migrated: \\.ai/manifest\\.yaml is present"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the migration is explicit, dry-runnable and backed up",
+          "afterwards every command reads the layer and refuses the old path by name"
+        ]
+      },
       "path": ".ai/repo/use-cases/migrate-from-the-old-layout.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "migrate-from-the-old-layout",
@@ -6796,8 +9607,92 @@
         "several-agents-one-repository",
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "Majordomus installed, no session open"
+        ],
+        "steps": [
+          {
+            "id": "open",
+            "run": [
+              "session",
+              "start",
+              "--worker",
+              "some-provider/some-model"
+            ],
+            "note": "one execution episode of one worker begins",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^session s-[0-9]+-[0-9a-f]+ opened at"
+              ]
+            }
+          },
+          {
+            "id": "refuse-a-second",
+            "run": [
+              "session",
+              "start"
+            ],
+            "note": "one session per checkout at a time",
+            "expect": {
+              "exit": 15,
+              "stdout_contains": [
+                "is open here"
+              ]
+            }
+          },
+          {
+            "id": "close",
+            "run": [
+              "session",
+              "close"
+            ],
+            "note": "the envelope: identity, a temporal boundary, references to what the episode produced",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^\\.ai/repo/sessions/"
+              ]
+            }
+          },
+          {
+            "id": "an-object-of-the-layer",
+            "run": [
+              "knowledge",
+              "nodes",
+              "--kind",
+              "session"
+            ],
+            "note": "the record is a shared object the moment it is committed: one source class discovers it, and the index, MCP, the object routes, the graph and the site follow without being told",
+            "expect": {
+              "exit": 0
+            }
+          },
+          {
+            "id": "ledger",
+            "run": [
+              "history"
+            ],
+            "note": "the ledger carries both ends of the episode",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "session.started",
+                "session.closed"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a closed session is an envelope, never a transcript",
+          "the envelope is a shared object of the layer, discovered rather than registered",
+          "which work happened together, and in what order, is answerable"
+        ]
+      },
       "path": ".ai/repo/use-cases/open-and-close-a-session.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "open-and-close-a-session",
@@ -6985,8 +9880,64 @@
         "long-running-work",
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "plan-model",
+        "given": [
+          "a canonical project model with one milestone and two issues, the second depending on the first"
+        ],
+        "steps": [
+          {
+            "id": "validate",
+            "run": [
+              "plan",
+              "validate"
+            ],
+            "note": "every record parses, every reference resolves, the dependency graph is acyclic",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "milestone",
+                "issue",
+                "0 failure"
+              ]
+            }
+          },
+          {
+            "id": "what-is-ready",
+            "run": [
+              "plan",
+              "ready"
+            ],
+            "note": "the issues nothing blocks",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "I0001"
+              ]
+            }
+          },
+          {
+            "id": "what-is-blocked",
+            "run": [
+              "plan",
+              "blocked"
+            ],
+            "note": "the issues waiting on another",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "I0002"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "status is derived from the records and git, never written into them",
+          "an issue cannot be marked done without the evidence its milestone requires"
+        ]
+      },
       "path": ".ai/repo/use-cases/plan-the-work-as-data.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "plan-the-work-as-data",
@@ -7129,8 +10080,80 @@
         "repository-with-authored-governance",
         "ci-gated-project"
       ],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "the vendored baseline plus this repository's own rules"
+        ],
+        "steps": [
+          {
+            "id": "list",
+            "run": [
+              "rules",
+              "list"
+            ],
+            "note": "every active rule, its version, class and origin, in one deterministic order",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^majordomus\\.scope-integrity +v1 +blocking +vendor:majordomus"
+              ]
+            }
+          },
+          {
+            "id": "read-one",
+            "run": [
+              "rules",
+              "show",
+              "majordomus.scope-integrity"
+            ],
+            "note": "the rule as the tool reads it: identity, class, dependencies, enforcement",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^id: majordomus\\.scope-integrity$",
+                "^class: blocking$"
+              ]
+            }
+          },
+          {
+            "id": "refuse-unknown",
+            "run": [
+              "rules",
+              "show",
+              "nosuch.rule"
+            ],
+            "note": "a rule that does not exist is named, not guessed",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no rule 'nosuch.rule'"
+              ]
+            }
+          },
+          {
+            "id": "what-is-enforced",
+            "run": [
+              "doctrine",
+              "list"
+            ],
+            "note": "the rules with an x-majordomus block, and the commands that run them",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "majordomus.scope-integrity",
+                "blocking"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "the effective set is the baseline plus the repository's rules, with no override",
+          "a rule without an enforcing block is normative for whoever reads it and says so"
+        ]
+      },
       "path": ".ai/repo/use-cases/read-the-rules-the-tool-applies.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "read-the-rules-the-tool-applies",
@@ -7298,8 +10321,152 @@
       "applications": [
         "long-running-work"
       ],
+      "scenario": {
+        "setup": "adr-related",
+        "given": [
+          "Majordomus installed, with one decision proposed and committed",
+          "discovery is over the tracked tree, so a decision git does not hold is not yet part of the layer"
+        ],
+        "steps": [
+          {
+            "id": "what-was-decided",
+            "run": [
+              "adr",
+              "list"
+            ],
+            "note": "one line per decision: identity, status, date, title",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "adr-0001",
+                "proposed"
+              ]
+            }
+          },
+          {
+            "id": "the-record-itself",
+            "run": [
+              "adr",
+              "show",
+              "adr-0001"
+            ],
+            "note": "the path, then the file as written: the provenance says the tool derived it",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "schema: adr/v1",
+                "origin: extracted",
+                "file:docs/d"
+              ]
+            }
+          },
+          {
+            "id": "the-set-is-sound",
+            "run": [
+              "adr",
+              "check"
+            ],
+            "note": "identities, statuses, supersession and every reference, in one pass",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "every identity unique"
+              ]
+            }
+          },
+          {
+            "id": "what-it-put-in-force",
+            "run": [
+              "adr",
+              "show",
+              "adr-0001"
+            ],
+            "note": "related is the forward edge: the rule the decision declares, the file it reaches",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "related:",
+                "rule:majordomus.adr-integrity"
+              ]
+            }
+          },
+          {
+            "id": "the-graph-reads-it-backwards",
+            "run": [
+              "knowledge",
+              "edges",
+              "--type",
+              "declares"
+            ],
+            "note": "the same fact as an edge, with the front-matter key that stated it as provenance; nothing wrote the reverse direction down",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "adr:adr-0001",
+                "rule:majordomus.adr-integrity",
+                "related.0"
+              ]
+            }
+          },
+          {
+            "id": "what-a-change-reaches",
+            "run": [
+              "adr",
+              "affected"
+            ],
+            "note": "the same edges read from a change set: which decisions this work touches. A clean tree reaches nothing, and the exit code never says a decision stopped holding",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "no decision names anything this change set touches"
+              ]
+            }
+          },
+          {
+            "id": "not-yours-to-choose",
+            "run": [
+              "adr",
+              "propose",
+              "A decision that accepts itself",
+              "--status",
+              "accepted"
+            ],
+            "note": "the refusal that matters: a tool that can write accepted turns its inference into repository truth",
+            "expect": {
+              "exit": 15,
+              "stdout_contains": [
+                "not yours to choose"
+              ]
+            }
+          },
+          {
+            "id": "evidence-must-resolve",
+            "run": [
+              "adr",
+              "propose",
+              "A decision derived from a file nobody has",
+              "--from",
+              "file:docs/nosuch"
+            ],
+            "note": "an extracted record without evidence is an assertion, and is refused as one",
+            "expect": {
+              "exit": 2,
+              "stdout_contains": [
+                "names a path that does not exist"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a reference a decision makes is validated where its type says the target lives",
+          "the reverse direction is the graph read backwards, never a second list",
+          "a change set names the decisions it reaches; whether they still hold is a person to read, not an exit code",
+          "a decision is one validated file under .ai/repo/adrs/, discovered as data",
+          "no invocation of the tool writes status accepted"
+        ]
+      },
       "path": ".ai/repo/use-cases/record-a-decision-before-it-is-forgotten.md",
-      "maturity": "described",
+      "maturity": "guaranteed",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "record-a-decision-before-it-is-forgotten",
@@ -7606,8 +10773,66 @@
         "long-running-work",
         "several-agents-one-repository"
       ],
+      "scenario": {
+        "setup": "installed",
+        "given": [
+          "Majordomus installed; the skeleton ships its prompt assets"
+        ],
+        "steps": [
+          {
+            "id": "which",
+            "run": [
+              "prompt",
+              "list"
+            ],
+            "note": "the small set of versioned framings; nothing ranks them",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "continue",
+                "handover",
+                "review"
+              ]
+            }
+          },
+          {
+            "id": "refuse-unknown",
+            "run": [
+              "prompt",
+              "show",
+              "nosuch"
+            ],
+            "note": "an asset that does not exist is named with the command that lists them",
+            "expect": {
+              "exit": 12,
+              "stdout_contains": [
+                "no prompt asset",
+                "prompt list"
+              ]
+            }
+          },
+          {
+            "id": "the-context",
+            "run": [
+              "context"
+            ],
+            "note": "what a prompt embeds: durable state in authority order, within the budget",
+            "expect": {
+              "exit": 0,
+              "stdout_contains": [
+                "^## GIT",
+                "^## BUDGET"
+              ]
+            }
+          }
+        ],
+        "then": [
+          "a prompt is rendered against a closed set of state tokens",
+          "the context inside it is the same one `context` prints"
+        ]
+      },
       "path": ".ai/repo/use-cases/resume-from-a-prompt-asset.md",
-      "maturity": "described",
+      "maturity": "verified",
       "evidence": {
         "schema": "majordomus/use-case-evidence/v1",
         "use_case": "resume-from-a-prompt-asset",
@@ -7959,7 +11184,7 @@
         "migrate-from-the-old-layout"
       ],
       "maturity": {
-        "described": 4
+        "guaranteed": 4
       },
       "applications": [
         "ci-gated-project",
@@ -7987,7 +11212,8 @@
         "resume-in-the-right-worktree"
       ],
       "maturity": {
-        "described": 11
+        "guaranteed": 9,
+        "verified": 2
       },
       "applications": [
         "long-running-work",
@@ -8007,7 +11233,7 @@
         "work-on-a-branch-in-its-canonical-worktree"
       ],
       "maturity": {
-        "described": 3
+        "guaranteed": 3
       },
       "applications": [
         "long-running-work",
@@ -8029,7 +11255,8 @@
         "trust-the-policy-before-reading-it"
       ],
       "maturity": {
-        "described": 5
+        "executable": 1,
+        "guaranteed": 4
       },
       "applications": [
         "ci-gated-project",
@@ -8051,7 +11278,8 @@
         "say-what-reached-the-remote-and-what-did-not"
       ],
       "maturity": {
-        "described": 6
+        "executable": 1,
+        "guaranteed": 5
       },
       "applications": [
         "ci-gated-project",
@@ -8069,7 +11297,7 @@
         "keep-the-bootstrap-thin-and-within-budget"
       ],
       "maturity": {
-        "described": 2
+        "guaranteed": 2
       },
       "applications": [
         "long-running-work",
@@ -8093,7 +11321,7 @@
         "trace-a-change-to-the-context-it-affects"
       ],
       "maturity": {
-        "described": 7
+        "guaranteed": 7
       },
       "applications": [
         "ci-gated-project",
@@ -8115,7 +11343,7 @@
         "serve-the-layer-to-ai-clients"
       ],
       "maturity": {
-        "described": 3
+        "guaranteed": 3
       },
       "applications": [
         "repository-opened-in-ai-clients",
@@ -8133,7 +11361,7 @@
         "prove-performance-with-benchmarks"
       ],
       "maturity": {
-        "described": 1
+        "guaranteed": 1
       },
       "applications": [
         "ci-gated-project"
@@ -8152,7 +11380,7 @@
         "say-what-the-tool-is-for"
       ],
       "maturity": {
-        "described": 4
+        "guaranteed": 4
       },
       "applications": [
         "ci-gated-project",
@@ -8175,7 +11403,9 @@
       "intermediate"
     ],
     "maturities": [
-      "described"
+      "executable",
+      "guaranteed",
+      "verified"
     ]
   },
   "coverage": {
@@ -10313,7 +13543,9 @@
     "applications": 5,
     "categories": 10,
     "maturity": {
-      "described": 46
+      "executable": 2,
+      "guaranteed": 42,
+      "verified": 2
     }
   },
   "uc_index": {

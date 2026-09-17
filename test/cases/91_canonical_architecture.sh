@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: hot-path-no-rebuild
 # The canonical architecture through the built binary, in a repository the shell tool's own
 # `init` wrote: the registry validates with its modules and complete benchmark coverage, the
 # coverage denominator is generated (it equals the executables times their exposures plus the

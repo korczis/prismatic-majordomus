@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: ci-planned-gates, ci-verdict, suite-parallel
 # The CI planner, the verdict and the parallel runner: the pieces validate.yml is an adapter
 # over. The planner is driven with listed paths, never with this checkout's diff, so the
 # case is the same on every machine; the verdict with fixture plans and needs contexts; the

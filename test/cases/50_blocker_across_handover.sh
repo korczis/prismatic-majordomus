@@ -1,3 +1,4 @@
+# claims: blocker-survives-handover
 # A blocking question survives a handover.
 #
 # The gate used to read only questions belonging to the active task, so opening a question,
