@@ -18,6 +18,13 @@
 #               gives a newcomer: the install, the next step and the verification
 #   runtime     no page loads the Mermaid runtime without a diagram for it to render; it is the
 #               heaviest file on the site, and the homepage loaded it for years with nothing to draw
+#   providers   the worker tools the homepage names are exactly the ones data/registry/product.json
+#               names — one added to the model and not rendered is a stale page, one rendered that
+#               the model does not name is a provider typed into a template
+#   trust       every card of the trust strip carries the value its dataset gives: the release the
+#               installer resolves, the verification command, the commit this build was made from
+#               and the executed use cases — and `unknown` where a dataset carries nothing, so an
+#               empty card cannot read as a known one
 #   weight      the scripts and stylesheets the homepage loads from this site, plus any graph data
 #               it carries inline, weigh no more than site/data/homepage.toml's [budget] declares
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
@@ -138,6 +145,68 @@ if idle:
     bad("runtime", f"{len(idle)} page(s) load the Mermaid runtime with no diagram to render: " + ", ".join(sorted(idle)[:8]) + (" ..." if len(idle) > 8 else ""))
 else:
     ok("runtime", "no page loads the Mermaid runtime without a diagram to render")
+
+# ---------------------------------------------------------------- providers
+# The worker tools the homepage names are the product model's, both ways: one added to the model
+# and not rendered is a stale page, and one rendered that the model does not name is a name typed
+# into a template — what project.product-surface-derived forbids. The chips are read out of the
+# <dd data-providers> the template marks, so the assertion holds a structure, not a sentence.
+prov_m = re.search(r"<dd\b[^>]*\bdata-providers\b[^>]*>(.*?)</dd>", home, re.S)
+model_titles = [p.get("title", "") for p in product.get("providers", [])]
+if not prov_m:
+    bad("providers", "the homepage carries no <dd data-providers>; the worker tools it generates for are named nowhere")
+elif not model_titles:
+    bad("providers", "site/data/registry/product.json names no provider; the homepage would name none")
+else:
+    chips = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip()
+             for c in re.findall(r"<(?:a|span)\b[^>]*>(.*?)</(?:a|span)>", prov_m.group(1), re.S)]
+    chips = [c for c in chips if c]
+    missing = [t for t in model_titles if t not in chips]
+    extra = [c for c in chips if c not in model_titles]
+    if missing:
+        bad("providers", "the product model names worker tool(s) the homepage does not: " + ", ".join(missing))
+    if extra:
+        bad("providers", "the homepage names worker tool(s) the product model does not: " + ", ".join(extra))
+    if not missing and not extra:
+        routed = sum(1 for p in product.get("providers", []) if p.get("route"))
+        ok("providers", f"the homepage names every worker tool the product model does ({len(model_titles)}, {routed} with a page of their own), and no other")
+
+# ---------------------------------------------------------------- trust
+# What a reader can check for themselves, each value its dataset's: the release the installer
+# resolves, the command that confirms an install, the commit this build was made from and the
+# executed use cases. A value a dataset does not carry reads `unknown` — it never disappears, so
+# an empty card cannot pass as a known one.
+build_path = os.path.join(root, "site", "data", "build.json")
+build = {}
+if os.path.exists(build_path):
+    with open(build_path) as f:
+        build = json.load(f)
+cat_path = os.path.join(root, "site", "data", "generated", "catalogue.json")
+catalogue = load_json("site/data/generated/catalogue.json") if os.path.exists(cat_path) else {}
+latest = dist.get("latest") or {}
+commit = build.get("commit") or ""
+expect = {
+    "release": [latest.get("version")] if latest.get("version") else ["unknown"],
+    "verify": [dist.get("verify_command")] if dist.get("verify_command") else ["unknown"],
+    "commit": [commit[:7]] if commit and commit != "unknown" else ["unknown"],
+    "use-cases": [str(len(catalogue.get("use_cases") or [])), str(len(catalogue.get("categories") or []))] if catalogue else ["unknown"],
+}
+cards = dict(re.findall(r'<div\b[^>]*\bdata-trust-key="([^"]+)"[^>]*>(.*?)</div>', home, re.S))
+short = [k for k in expect if k not in cards]
+wrong = []
+for key, wanted in expect.items():
+    if key in short:
+        continue
+    text = html.unescape(re.sub(r"<[^>]+>", " ", cards[key]))
+    for value in wanted:
+        if value and value not in text:
+            wrong.append(f"{key} does not carry {value!r}")
+if short:
+    bad("trust", "the homepage carries no trust card for: " + ", ".join(sorted(short)))
+if wrong:
+    bad("trust", "the trust strip disagrees with the datasets it reads: " + "; ".join(wrong))
+if not short and not wrong:
+    ok("trust", f"the trust strip carries what its datasets say: release {expect['release'][0]}, the verification command, commit {expect['commit'][0]}, and {expect['use-cases'][0]} executed use case(s)")
 
 # ---------------------------------------------------------------- weight
 # Only what this page decides: the same-origin scripts and stylesheets it links, and graph data
