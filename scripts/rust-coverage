@@ -107,7 +107,11 @@ if [ -z "$FROM" ]; then
   cargo llvm-cov --version >/dev/null 2>&1 || {
     printf 'rust-coverage: cargo-llvm-cov is not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview)\n' >&2
     exit 12; }
-  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
+  # No suffix after the Xs: GNU mktemp accepts a template with one, BSD mktemp refuses it and
+  # dies with "mkstemp failed ... File exists", so this script measured nothing at all on a
+  # Mac while CI was unaffected. The name only has to be unique — cargo-llvm-cov is told the
+  # format by --json, never by the extension.
+  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX")"
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
   # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
