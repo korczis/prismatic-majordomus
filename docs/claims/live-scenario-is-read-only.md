@@ -43,3 +43,28 @@ bash test/run.sh 359_live_scenarios
 a setup, a live step running a `state-mutating` command, an obligation step in a fixture, an
 unknown obligation token, and a step that both runs and asserts — and requires exit 10 with
 the message that names the cause.
+
+## What it does not cover
+
+It decides a shape, not a behaviour. `class: read-only` in `share/commands.yaml` is a
+declaration, so a command declared read-only that nevertheless writes is refused by nothing
+here — the registry's own truthfulness is what `share/commands.yaml` and its reviewers owe,
+and `31_command_coverage` is where a command's declaration is held to the command graph.
+
+It binds a scenario, not a session. A live scenario cannot mutate the repository it asks
+about; a worker holding the same repository open can, at the same moment, and this claim
+says nothing about that. The task's scope, `check --overlap` and the pre-push hook are what
+speak there.
+
+It says nothing about what a live run observes. Whether the answer is current, whether the
+obligation it asserts was discharged for this tree rather than an older one, is the subject
+of the obligation vocabulary and of `live-scenario-evidence-is-local`, not of this refusal.
+
+## Why it exists
+
+A scenario could only run `majordomus`, so no use case could show the tool refusing a stray
+edit, and the first attempt to write one reached for a step that would have run a mutating
+command against the author's own checkout. The safe answer was already in the tree: every
+command declares its class, and every obligation declares what establishes it. Deciding a
+live scenario from those two declarations makes the dangerous shape unrepresentable rather
+than discouraged — the author cannot write it, so no reviewer has to catch it.

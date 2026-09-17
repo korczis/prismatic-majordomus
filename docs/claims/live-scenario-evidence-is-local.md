@@ -44,3 +44,28 @@ bash test/run.sh 359_live_scenarios
 evidence, that `--live` writes it where git ignores it and leaves the tracked tree
 untouched, that an unmet obligation is counted as `unmet` and not as `failed`, and that the
 command the live scenario runs stays `partial` in coverage.
+
+## What it does not cover
+
+It keeps a live run's evidence out of the tracked tree; it does not make that evidence
+durable. `.ai/local/evidence/live/` is this checkout's, so another worktree, another
+machine and a fresh clone each start with none of it, and nothing replicates it. Evidence
+that must survive a checkout is a ledger execution, which is what `evidence record` writes.
+
+It bounds where the answer is written, not how long it is true. A live answer describes the
+repository at the moment it was asked; nothing here expires it or notices that the tree has
+moved since. Staleness is the evidence subsystem's question, and `proof-is-an-execution`
+is where it is answered.
+
+And it does not make a live scenario count. A live run stays `partial` in coverage by
+construction, so a command whose only scenario is live is reported as not fully covered —
+that is the intended reading, not a gap this claim closes.
+
+## Why it exists
+
+A use case that asks its questions of the repository it was invoked in produces an answer
+about somebody's work in progress, and the first place such an answer would have landed was
+the repository's own published evidence — where it would have been read as a property of the
+project rather than of one machine at one minute. Writing it under `.ai/local/`, which the
+layer already declares is never published, keeps the live answer available to the person who
+asked and invisible to everyone reading the repository.
