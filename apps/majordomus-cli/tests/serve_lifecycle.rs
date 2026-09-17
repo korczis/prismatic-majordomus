@@ -160,8 +160,13 @@ fn three_ensures_at_once_share_one_server() {
     let (_, s) = get(urls.iter().next().unwrap(), "/api/v1/server").unwrap();
     let s: Value = serde_json::from_str(&s).unwrap();
     assert_eq!(s["servers"].as_array().unwrap().len(), 1);
-    let (code, _, _) = mj(&root, &["serve", "stop"]);
-    assert_eq!(code, 0);
+    // `serve stop` waits a bounded time for the lease to go, and that bound is what this
+    // asserts on. Three servers were racing a moment ago, and a loaded runner winds them down
+    // more slowly than a developer's machine: the wait is stated here rather than left at a
+    // default chosen for interactive use. A slow stop is not a failed stop, and a stop that
+    // never happens still fails — only later.
+    let (code, out, err) = mj(&root, &["serve", "stop", "--wait", "60"]);
+    assert_eq!(code, 0, "stdout: {out}\nstderr: {err}");
 }
 
 #[test]

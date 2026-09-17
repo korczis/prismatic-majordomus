@@ -479,6 +479,16 @@ impl MeshRuntime {
     /// flag at once, and the draining that needs locks is left to [`stop`](Self::stop). A
     /// process that is shutting down calls this first, does the work that must not be
     /// delayed — closing its listeners, releasing its lease — and only then drains.
+    ///
+    /// ```
+    /// use majordomus_cli::mesh::manager::MeshRuntime;
+    ///
+    /// // a mesh that never activated has nothing to tell, and says so rather than failing:
+    /// // a shutdown path must not care whether the thing it is stopping ever started
+    /// let mesh = MeshRuntime::new();
+    /// mesh.begin_stop();
+    /// assert!(!mesh.status().active);
+    /// ```
     pub fn begin_stop(&self) {
         if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
             cooperation.begin_stop();
