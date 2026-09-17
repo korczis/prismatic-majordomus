@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guide — Prismatic Majordomus</title>
+<meta name="description" content="what a team gets from the tool and why, then every part of it in turn: how it works, the commands to see it, the test cases that prove it and how finished it is; the first ten minutes; running the proof yourself and keeping the run as evidence; and what it does not do yet">
+<link rel="canonical" href="https://majordomus.dev/docs/guide/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Guide — Prismatic Majordomus">
+<meta property="og:description" content="what a team gets from the tool and why, then every part of it in turn: how it works, the commands to see it, the test cases that prove it and how finished it is; the first ten minutes; running the proof yourself and keeping the run as evidence; and what it does not do yet">
+<meta property="og:url" content="https://majordomus.dev/docs/guide/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Guide</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Guide</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">what a team gets from the tool and why, then every part of it in turn: how it works, the commands to see it, the test cases that prove it and how finished it is; the first ten minutes; running the proof yourself and keeping the run as evidence; and what it does not do yet</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/how-it-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">How Majordomus works</a></li><li><a href="https://majordomus.dev/docs/guide/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Guide</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The mesh: discovery of running Majordomus instances</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li><li><a href="https://majordomus.dev/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shared types</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/GUIDE.md" class="font-mono underline">docs/GUIDE.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>This is the practical companion to two other documents. <a href="https://majordomus.dev/docs/concepts/"><code>CONCEPTS.md</code></a> is the
+vocabulary; <a href="https://majordomus.dev/docs/how-it-works/"><code>HOW_IT_WORKS.md</code></a> is the architecture. This one goes feature by
+feature: what problem it removes, how it works, the commands to see it, and the test cases that
+prove it. Every test named here is a real file in this repository, and
+<a href="https://majordomus.dev/docs/guide/#proving-it-yourself">Proving it yourself</a> runs them.</p>
+<p>Maturity is stated per feature. "On master" means merged and tested. "Branch only" means the work
+exists in an open pull request and is not a feature yet.</p>
+<h2 id="why-a-team-wants-it"><a class="zola-anchor" href="#why-a-team-wants-it" aria-label="Anchor link for: why-a-team-wants-it">Why a team wants it</a></h2>
+<p>AI coding agents are good workers and poor custodians. The cost a team pays is not in the code
+they write; it is in everything around it. Each row below is a cost Majordomus removes, the
+mechanism that removes it, and the test that shows the mechanism works.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>The cost today</th><th>What Majordomus does</th><th>What the team gets</th><th>Proved by</th></tr></thead><tbody>
+<tr><td>every new session re-learns the project; decisions get re-argued</td><td>compiles context from repository state; handovers record the commit they describe and are shown as history once stale</td><td>a worker from any provider continues without the previous chat, and knows when a note is out of date</td><td><code>test/cases/25_continuity_lifecycle.sh</code>, <code>test/cases/127_briefing_freshness.sh</code>, <code>test/cases/62_session_divergence.sh</code></td></tr>
+<tr><td>agents change files outside what they were asked to touch</td><td>every task declares a scope; <code>check</code>, <code>finish</code> and the pre-push hook refuse changes outside it</td><td>reviewable changes with a boundary a machine enforces</td><td><code>test/cases/04_start_check.sh</code>, <code>test/cases/06_finish.sh</code></td></tr>
+<tr><td>parallel agents collide in the same directories</td><td>worktrees at a path derived from the branch; a repository-wide board where workers announce scope; overlap reported when it is created</td><td>collisions visible before they become merge conflicts</td><td><code>test/cases/96_worktree_topology.sh</code>, <code>test/cases/250_the_board_is_repository_wide.sh</code>, <code>test/cases/114_two_worktrees_one_repository.sh</code></td></tr>
+<tr><td>rules in instruction files that nothing checks</td><td>rules declare how they are enforced; a doctrine's validator is dispatched by the commands; <code>doctor</code> verifies the wiring; the rule proof says which rules anything actually runs</td><td>a governance file you can trust, because a broken link fails a build</td><td><code>test/cases/17_doctrine_enforcement.sh</code>, <code>test/cases/18_doctrine_wiring.sh</code>, <code>test/cases/125_rule_proof.sh</code></td></tr>
+<tr><td>"tests pass" and "done" as unverifiable claims</td><td>a finish contract that refuses until scope, verification, gates, blockers and publication are satisfied; evidence recorded with the commit it proves</td><td>completion that means something, and a record of why</td><td><code>test/cases/06_finish.sh</code>, <code>test/cases/32_refusal_lifecycle.sh</code>, <code>test/cases/124_evidence.sh</code></td></tr>
+<tr><td>a flat backlog with hand-edited statuses that go stale</td><td>status derived from dependencies, timestamps and evidence; execution waves; scope conflicts inside a wave</td><td>a plan that cannot contradict itself, and a safe order to parallelise</td><td><code>test/cases/41_project_status.sh</code>, <code>test/cases/42_dag_waves.sh</code>, <code>test/cases/133_plan_transition.sh</code></td></tr>
+<tr><td>different tools and docs describe the project differently</td><td>one instruction policy projected into each provider's file; one capability registry behind CLI, MCP, HTTP, OpenAPI, the Cockpit and the reference; drift regenerated and compared in CI</td><td>every person, agent and interface reads the same state</td><td><code>test/cases/03_update.sh</code>, <code>test/cases/76_capabilities_projections.sh</code>, <code>test/cases/56_derived_current_gate.sh</code></td></tr>
+<tr><td>a deploy "succeeded" and nobody checked the public site</td><td>publication verified against the commit the public site serves</td><td>release status you can believe</td><td><code>test/cases/180_publication_is_observed.sh</code>, <code>test/cases/275_publication_is_current.sh</code></td></tr>
+</tbody></table>
+</div>
+<p>What it deliberately is not: a model, a coding agent, an orchestrator that launches workers, a
+memory database, or a lock manager. It works beside whatever agents a team already uses and
+calls no model itself.</p>
+<h2 id="the-first-ten-minutes"><a class="zola-anchor" href="#the-first-ten-minutes" aria-label="Anchor link for: the-first-ten-minutes">The first ten minutes</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -fsSL https://majordomus.dev/install.sh </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> sh</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> installs majordomus and majordomus-cli</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> cd your-repository</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus init</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> creates .ai/ and the provider bootstraps</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus doctor</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> read-only: is everything declared actually wired?</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus start </span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">fix login redirect</span><span class="z-l-8 z-d-8">&quot;</span><span> --scope apps/web/auth</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus context</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what a worker needs, compiled, within a budget</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> scope, state, blockers, selected gates</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus handover </span><span class="z-l-16 z-d-16">&lt;</span><span> note.md</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> or: finish --outcome completed --verify-command &quot;make test&quot;</span></span></code></pre>
+<p>For an AI client, the repository's MCP server exposes the same state. <code>bin/majordomus-mcp</code> is
+what <code>.mcp.json</code>, <code>.codex/config.toml</code> and <code>.gemini/settings.json</code> start, and
+<code>majordomus-cli serve status</code> prints the local URL of the Cockpit, the API and Swagger UI.</p>
+<h2 id="how-it-works-part-by-part"><a class="zola-anchor" href="#how-it-works-part-by-part" aria-label="Anchor link for: how-it-works-part-by-part">How it works, part by part</a></h2>
+<h3 id="the-layer-and-doctor"><a class="zola-anchor" href="#the-layer-and-doctor" aria-label="Anchor link for: the-layer-and-doctor">The layer and <code>doctor</code></a></h3>
+<p><strong>How it works.</strong> <code>init</code> creates <code>.ai/</code>: <code>manifest.yaml</code> says which section lives where,
+<code>repo/</code> is tracked, and <code>local/</code> is git-ignored. A repository counts as supervised when the
+manifest exists. <code>doctor</code> is read-only. It dispatches every doctrine bound to it: layout,
+schemas, policy, the vendored rule package against its hashes, the doctrine wiring chain,
+provider files against their generation stamps, and hook wiring. Every finding carries a
+reproduce command.</p>
+<p><strong>Try it.</strong> <code>majordomus init</code>, <code>majordomus doctor</code>, <code>majordomus doctor --json</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/01_init.sh</code>, <code>test/cases/02_doctor_basic.sh</code>,
+<code>test/cases/68_ai_discovery.sh</code>, <code>test/cases/32_schema_integrity.sh</code>,
+<code>test/cases/83_doctor_budget.sh</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="one-policy-a-file-for-every-agent"><a class="zola-anchor" href="#one-policy-a-file-for-every-agent" aria-label="Anchor link for: one-policy-a-file-for-every-agent">One policy, a file for every agent</a></h3>
+<p><strong>How it works.</strong> <code>.ai/repo/policy.yaml</code> is the provider-neutral policy. <code>majordomus update</code>
+renders <code>CLAUDE.md</code>, <code>AGENTS.md</code> and the other provider files from it and from templates in
+<code>.ai/repo/providers/</code>. Each file carries a stamp with the policy hash and its own content hash, so
+a hand edit is detected rather than overwritten silently.</p>
+<p><strong>Try it.</strong> <code>majordomus update --dry-run</code>, <code>majordomus update --diff CLAUDE.md</code>, <code>majordomus update</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/03_update.sh</code>, <code>test/cases/13_region_projection.sh</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="task-and-scope"><a class="zola-anchor" href="#task-and-scope" aria-label="Anchor link for: task-and-scope">Task and scope</a></h3>
+<p><strong>How it works.</strong> <code>start</code> records one active task per checkout, with a normalised scope and
+optional obligations (<code>--requires tests,docs,…</code>). <code>check</code> fails every file changed since the
+task began that falls outside the scope. <code>finish</code> refuses the outcome <code>completed</code> for the same
+reason, and <code>finish --check</code> runs in the pre-push hook. <code>start</code> and <code>check --overlap</code> also report
+other worktrees whose active tasks claim overlapping paths. That report is advisory and exits 0.</p>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus start </span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">rate limiting</span><span class="z-l-8 z-d-8">&quot;</span><span> --scope apps/api/limits --requires tests</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus check</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus check --overlap</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus finish --check</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/04_start_check.sh</code> (scope refusal; overlap reported with exit 0),
+<code>test/cases/27_foreign_task.sh</code>, <code>test/cases/108_scope_after_trunk_merge.sh</code>,
+<code>test/cases/93_scope_policy.sh</code>, <code>test/cases/103_obligations.sh</code>.</p>
+<p><strong>Maturity.</strong> On master, and enforced at commit and push time.</p>
+<h3 id="profiles"><a class="zola-anchor" href="#profiles" aria-label="Anchor link for: profiles">Profiles</a></h3>
+<p><strong>How it works.</strong> A profile under <code>.ai/repo/profiles/</code> fixes how much ceremony a kind of work
+gets: context sections, budgets, whether a verify command is required, the checkpoint interval.
+<code>start --profile</code> selects one; the policy names the default.</p>
+<p><strong>Proved by.</strong> <code>test/cases/16_profiles.sh</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="sessions-and-episodes"><a class="zola-anchor" href="#sessions-and-episodes" aria-label="Anchor link for: sessions-and-episodes">Sessions and episodes</a></h3>
+<p><strong>How it works.</strong> Provider hooks call <code>majordomus capture session --event start|compact|end</code>.</p>
+<ul>
+<li><strong>Start</strong> opens an episode, makes sure this checkout's shared server runs, and prints a briefing.</li>
+<li><strong>Compact</strong> derives a checkpoint.</li>
+<li><strong>End</strong> derives a checkpoint and a handover, then closes only that provider's own episode.</li>
+</ul>
+<p>A closed episode becomes an immutable session record that references what was produced and copies none of it. Closing happens exactly once, even under concurrency, and an episode nobody ended is detected.</p>
+<p><strong>Try it.</strong> <code>majordomus session list</code>, <code>majordomus session show &lt;id&gt;</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/54_session_lifecycle_hooks.sh</code>, <code>test/cases/60_session_lifecycle.sh</code>,
+<code>test/cases/61_session_envelope.sh</code>, <code>test/cases/220_exactly_once_close.sh</code>,
+<code>test/cases/222_an_episode_nobody_ended.sh</code>, <code>test/cases/170_provider_lifecycle_declared.sh</code>.</p>
+<p><strong>Maturity.</strong> On master for Claude Code, the one provider with declared lifecycle hooks. Other
+clients use the same records and MCP surface without automatic capture.</p>
+<h3 id="context"><a class="zola-anchor" href="#context" aria-label="Anchor link for: context">Context</a></h3>
+<p><strong>How it works.</strong> Three mechanisms, kept apart:</p>
+<ol>
+<li><strong>Context documents.</strong> A context document is any Markdown file under <code>.ai/</code> declaring <code>schema: context/v1</code> and a scope. <code>context resolve &lt;path&gt;</code> composes the documents that apply to a path, least specific first. Each adds to its ancestors, and superseded documents drop out. <code>context explain</code> says why each one applies. <code>context affected</code> names the documents a change touches.</li>
+<li><strong>Compiled session context.</strong> <code>context</code> assembles git state, peers, the task, the profile, the applicable documents, open questions, decisions, the last checkpoint and handover, relevant files and history, fitted to a line budget:
+<ul>
+<li>sections are dropped in a fixed order;</li>
+<li>checkpoint and handover shrink to a pointer before they disappear;</li>
+<li>git, task, profile and questions are never dropped;</li>
+<li>every drop is listed under EXCLUDED;</li>
+<li>still over budget exits 10, never truncating silently.</li>
+</ul>
+</li>
+<li><strong>Ranked working set.</strong> <code>majordomus-cli devcontext compile</code> walks the object graph from a task, ranks by authority tier and relevance, and spends a token budget. It names everything it skipped. Its only inference, keyword intent, is capped below every declared relation.</li>
+</ol>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus context --budget-lines 120</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus context resolve apps/web/auth</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus context explain apps/web/auth</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli devcontext compile --help</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/23_context.sh</code>, <code>test/cases/55_session_context.sh</code>,
+<code>test/cases/69_context_documents.sh</code>, <code>test/cases/70_context_impact.sh</code>,
+<code>test/cases/71_context_sync.sh</code>, <code>test/cases/106_context_peers.sh</code>,
+<code>test/cases/130_context_compiler.sh</code>.</p>
+<p><strong>Maturity.</strong> On master. The shell <code>context</code> command does not use the Rust ranking yet.</p>
+<h3 id="checkpoints-and-handovers"><a class="zola-anchor" href="#checkpoints-and-handovers" aria-label="Anchor link for: checkpoints-and-handovers">Checkpoints and handovers</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Checkpoint.</strong> A capped progress note while work continues. It resets the staleness clock that <code>check</code> measures.</li>
+<li><strong>Handover.</strong> An append-only record for whoever continues. The body is authored and must have <code># Objective</code>, <code># Current State</code> and <code># Next Action</code>. The front matter is derived: repository, worktree, branch, commit, working-tree state and changed files. A body that claims its own identity is refused.</li>
+</ul>
+<p><code>handover --resolve</code> finds the newest record for the same worktree and branch, then the same branch, never repository-wide. It labels the commit relation as exact, advanced, diverged or a different context, and prints the freshness verdict from the policy's thresholds (fresh, aging or stale); a stale record is marked as history, to be read as context rather than as an instruction. The session briefing applies the same verdict and does not quote a stale handover's next action. A blocker recorded before a handover is still a blocker after it.</p>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus checkpoint --derive</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus handover --derive</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus handover --resolve</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/20_checkpoint.sh</code>, <code>test/cases/05_handover.sh</code>,
+<code>test/cases/25_continuity_lifecycle.sh</code>, <code>test/cases/62_session_divergence.sh</code>,
+<code>test/cases/127_briefing_freshness.sh</code>, <code>test/cases/131_freshness_has_an_age.sh</code>,
+<code>test/cases/50_blocker_across_handover.sh</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="decisions-open-questions-and-adrs"><a class="zola-anchor" href="#decisions-open-questions-and-adrs" aria-label="Anchor link for: decisions-open-questions-and-adrs">Decisions, open questions and ADRs</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Decisions.</strong> Recorded with what was decided, why and what was rejected. They are superseded by a later entry, never edited.</li>
+<li><strong>Open questions.</strong> Stored as state. One that names the active task refuses <code>finish --outcome completed</code>.</li>
+<li><strong>ADRs.</strong> Live in <code>.ai/repo/adrs/</code> and are <code>proposed</code> until a person accepts them. The tool refuses a record that accepts itself, and ADR numbers are allocated without collisions.</li>
+</ul>
+<p><strong>Try it.</strong> <code>majordomus decision add "&lt;what&gt;" --why "&lt;rationale&gt;"</code>,
+<code>majordomus question add "&lt;question&gt;"</code>, <code>majordomus adr list</code>, <code>majordomus adr next</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/21_decision_question.sh</code>, <code>test/cases/99_adr.sh</code>,
+<code>test/cases/271_adr_allocation.sh</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="planning-milestones-issues-status-and-waves"><a class="zola-anchor" href="#planning-milestones-issues-status-and-waves" aria-label="Anchor link for: planning-milestones-issues-status-and-waves">Planning: milestones, issues, status and waves</a></h3>
+<p><strong>How it works.</strong> Milestones and issues are YAML in <code>.ai/repo/project/</code>. An issue declares dependencies, scope, acceptance criteria, validation, required evidence and transition timestamps, and has <strong>no status field</strong>. Status is derived:</p>
+<ol>
+<li><strong>Done:</strong> not cancelled, completed, and every required evidence token covered.</li>
+<li>Otherwise the first that applies of <strong>verify</strong>, <strong>active</strong>, <strong>blocked</strong> (a dependency not done) and <strong>ready</strong>.</li>
+<li>A status ahead of its blockers is reported as premature execution.</li>
+</ol>
+<p><strong>Waves</strong> are the Kahn layering of the dependency graph. Cycles get no wave and are reported. Ready issues in the same wave that share paths produce a scope-conflict warning: dependencies say what could run in parallel, scope says what safely can. <code>plan.transition</code> moves an issue only when the derived plan allows it.</p>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus plan status</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus plan waves</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus plan next</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus plan validate</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/40_project_model.sh</code>, <code>test/cases/41_project_status.sh</code>,
+<code>test/cases/42_dag_waves.sh</code>, <code>test/cases/43_plan_command.sh</code>,
+<code>test/cases/133_plan_transition.sh</code>, <code>test/cases/99_plan_capabilities.sh</code> (the Rust reader is
+byte-identical to the shell engine).</p>
+<p><strong>Maturity.</strong> On master. Intent, a typed record the plan serves, is branch only.</p>
+<h3 id="worktrees"><a class="zola-anchor" href="#worktrees" aria-label="Anchor link for: worktrees">Worktrees</a></h3>
+<p><strong>How it works.</strong> Parallel work lives in git worktrees at a path derived from the branch,
+<code>&lt;repository&gt;-wt/&lt;branch&gt;</code>, with nothing registered. The pre-commit hook refuses a feature-branch
+commit from anywhere else. <code>worktree migrate</code> moves misplaced worktrees with fingerprints taken
+before and after.</p>
+<p><strong>Try it.</strong> <code>majordomus-cli worktree create feature/x</code>, <code>majordomus-cli worktree status</code>,
+<code>majordomus-cli worktree migrate --plan</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/96_worktree_topology.sh</code>,
+<code>test/cases/114_two_worktrees_one_repository.sh</code>, and the crate tests in
+<code>apps/majordomus-cli/tests/worktree.rs</code>.</p>
+<p><strong>Maturity.</strong> On master, and enforced at commit time.</p>
+<h3 id="the-shared-server-the-board-and-overlap"><a class="zola-anchor" href="#the-shared-server-the-board-and-overlap" aria-label="Anchor link for: the-shared-server-the-board-and-overlap">The shared server, the board and overlap</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>The server.</strong> Each checkout runs one shared server, chosen through a lease file. It survives a crash of its owner. <code>serve ensure</code> converges on one, and <code>serve status</code> reports whether it is ready, outdated or stale.</li>
+<li><strong>Peers.</strong> Every MCP client that attaches is a peer.</li>
+<li><strong>Announcing.</strong> A worker announces an intent and a scope with <code>majordomus_announce</code>.</li>
+<li><strong>The board.</strong> <code>majordomus_peers</code> gathers the boards of every worktree of the repository, stamps each peer with its checkout, and says whether the answer is complete.</li>
+<li><strong>Overlap.</strong> Two scopes meet when they are equal or one contains the other on a path boundary.</li>
+</ul>
+<p>Overlap is shown on announce, in the peer list and in <code>context</code>. It is awareness, not a lock: the board lives in memory and is not persisted.</p>
+<p><strong>Try it.</strong> <code>majordomus-cli serve status</code>, <code>curl -s http://127.0.0.1:8742/api/v1/peers</code>,
+<code>majordomus context</code> (the PEERS section).</p>
+<p><strong>Proved by.</strong> <code>test/cases/90_mcp_shared_server.sh</code>,
+<code>test/cases/113_shared_server_survives_a_crash.sh</code>,
+<code>test/cases/250_the_board_is_repository_wide.sh</code>, <code>test/cases/106_context_peers.sh</code>, and
+<code>apps/majordomus-cli/tests/peer_claims.rs</code>.</p>
+<p><strong>Maturity.</strong> On master, repository-wide on one machine.</p>
+<h3 id="the-mesh"><a class="zola-anchor" href="#the-mesh" aria-label="Anchor link for: the-mesh">The mesh</a></h3>
+<p><strong>How it works.</strong> Majordomus instances can discover each other beyond one machine:</p>
+<ul>
+<li>an Ed25519 node identity per user;</li>
+<li>signed, bounded envelopes over UDP multicast, UDP broadcast or an HTTP rendezvous endpoint;</li>
+<li>a registry with a presence TTL;</li>
+<li>deny-unknown trust, which changes only labels.</li>
+</ul>
+<p>It is observation: nothing is executed remotely.</p>
+<p><strong>Try it.</strong> <code>majordomus-cli mesh identity</code>, <code>majordomus-cli mesh status</code>,
+<code>majordomus-cli mesh doctor</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/130_mesh.sh</code>, <code>apps/majordomus-cli/tests/mesh.rs</code>.</p>
+<p><strong>Maturity.</strong> On master, off by default (<code>.ai/repo/mesh/majordomus.yaml</code>). There is no Tailscale
+or mDNS provider. Sharing work claims between machines is branch only.</p>
+<h3 id="rules-doctrines-and-the-rule-proof"><a class="zola-anchor" href="#rules-doctrines-and-the-rule-proof" aria-label="Anchor link for: rules-doctrines-and-the-rule-proof">Rules, doctrines and the rule proof</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Rules.</strong> A rule is a versioned Markdown file with a statement, a class (blocking or advisory), dependencies, and optionally an <code>x-majordomus</code> block. Its enforcement mode is derived from that block:
+<ul>
+<li>a validator a command runs makes it <em>dispatched</em>;</li>
+<li>tests a gate runs make it <em>gated</em>;</li>
+<li>only a stated reason makes it <em>reviewed</em>;</li>
+<li>nothing makes it <em>declarative</em>.</li>
+</ul>
+</li>
+<li><strong>Doctrines.</strong> The dispatched rules. <code>doctor</code> checks each doctrine's chain: validator, dispatching command, failure propagation, test and claim. The check is mutation-tested.</li>
+<li><strong>Rule proof.</strong> The Rust rules engine reduces every rule to one proof state, from proven through gated and not run to dangling and unproven. A named proof that does not exist fails the <code>rule-proof</code> gate.</li>
+</ul>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus doctrine list</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus rules list</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli rules report</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli rules show majordomus.scope-integrity</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/17_doctrine_enforcement.sh</code>, <code>test/cases/18_doctrine_wiring.sh</code>,
+<code>test/cases/14_wiring_dispatcher.sh</code>, <code>test/cases/67_rule_dag.sh</code>,
+<code>test/cases/133_rule_graph.sh</code>, <code>test/cases/125_rule_proof.sh</code>,
+<code>apps/majordomus-cli/tests/rules.rs</code>.</p>
+<p><strong>Maturity.</strong> On master. Most rules stand at <code>not run</code> rather than <code>proven</code>, because CI does not
+yet record its runs into the evidence ledger.</p>
+<h3 id="claims-and-evidence"><a class="zola-anchor" href="#claims-and-evidence" aria-label="Anchor link for: claims-and-evidence">Claims and evidence</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Claims.</strong> <code>docs/CLAIMS.yaml</code> holds the public claims, each with its source, implementation, test and status, published as <code>/guarantees/</code>.</li>
+<li><strong>Evidence.</strong> A recorded execution in <code>.ai/repo/evidence/ledger.json</code>: test, runner, outcome, commit, working-tree state, digest and origin.</li>
+<li><strong>Proof states.</strong> Derived from the ledger and the tree, not from time:
+<ul>
+<li><em>proven</em>: nothing changed since the run;</li>
+<li><em>inputs unchanged</em>: something changed, but not this claim's own inputs;</li>
+<li><em>stale</em>: its inputs changed;</li>
+<li><em>failing</em>, <em>not run</em>, <em>unrunnable</em>, <em>no test</em>.</li>
+</ul>
+</li>
+</ul>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli evidence show</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli evidence claim scope-enforcement</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> MJ_TEST_REPORT</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">.</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">v</span><span class="z-l-1 z-d-3"> bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-8 z-d-8"> 04_start_check</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli evidence record --suite report.tsv</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/124_evidence.sh</code>, <code>test/cases/77_rust_evidence.sh</code>.</p>
+<p><strong>Maturity.</strong> On master. Recording CI runs automatically is branch only.</p>
+<h3 id="gates-and-the-finish-contract"><a class="zola-anchor" href="#gates-and-the-finish-contract" aria-label="Anchor link for: gates-and-the-finish-contract">Gates and the finish contract</a></h3>
+<p><strong>How it works.</strong> Gates are repository-owned checks declared in <code>.ai/repo/ci/gates.yaml</code>, with
+path classes deciding which ones a change selects; CI is a thin adapter over that plan. <code>check</code>
+lists the gates a task's change selects, and a gate that never reported is <code>queued</code>, never green.</p>
+<p><code>finish --outcome completed</code> walks the policy's <code>finish_requires</code>: scope respected, verification ran, state updated, no open blockers, note present, obligations met, gates passed, publication current. Any unmet line refuses with exit 10 and names what is missing. A refused finish is a normal lifecycle event, not an error to work around.</p>
+<p><strong>Try it.</strong> <code>majordomus finish --check</code>,
+<code>majordomus finish --outcome completed --verify-command "make test"</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/06_finish.sh</code>, <code>test/cases/32_refusal_lifecycle.sh</code>,
+<code>test/cases/94_ci_plan.sh</code>, <code>test/cases/131_completion_gates.sh</code>,
+<code>test/cases/138_governance_gates.sh</code>.</p>
+<p><strong>Maturity.</strong> On master, and enforced in the pre-push hook.</p>
+<h3 id="one-registry-behind-every-interface"><a class="zola-anchor" href="#one-registry-behind-every-interface" aria-label="Anchor link for: one-registry-behind-every-interface">One registry behind every interface</a></h3>
+<p><strong>How it works.</strong> Every operation of the Rust executable is declared once, with typed input and output. The following are derived from that declaration:</p>
+<ul>
+<li>HTTP routes under <code>/api/v1</code>;</li>
+<li>the OpenAPI 3.1 document;</li>
+<li>Swagger UI;</li>
+<li>MCP tools and resources;</li>
+<li>the Cockpit's runner;</li>
+<li>the generated reference.</li>
+</ul>
+<p>The command line is written by hand and cross-checked against the registry in both directions. A capability that writes the repository must declare that effect. The MCP instructions and OpenAPI name every such capability, and a test holds both to the registry. Indexed repository objects, such as rules, ADRs and claims, become MCP resources at <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code> without registration.</p>
+<p><strong>Try it.</strong></p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli capabilities list</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli capabilities describe rules.show</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli capabilities validate</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -s http://127.0.0.1:8742/openapi.json </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">.paths | keys</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre>
+<p><strong>Proved by.</strong> <code>test/cases/76_capabilities_projections.sh</code>, <code>test/cases/46_cross_surface.sh</code>,
+<code>test/cases/92_openapi_reference.sh</code>, <code>test/cases/72_rust_mcp.sh</code>,
+<code>apps/majordomus-cli/tests/projections.rs</code>, <code>apps/majordomus-cli/tests/shared_units.rs</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="discovery-generation-and-drift"><a class="zola-anchor" href="#discovery-generation-and-drift" aria-label="Anchor link for: discovery-generation-and-drift">Discovery, generation and drift</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Discovery.</strong> <code>share/kinds.yaml</code> defines document kinds and <code>.ai/repo/knowledge/sources.yaml</code> maps git pathspecs to them, so a new rule file is indexed with no list to edit.</li>
+<li><strong>Generation.</strong> <code>majordomus generate</code> writes the executable's projections, and <code>scripts/derive</code> runs the whole derivation graph.</li>
+<li><strong>Drift.</strong> <code>derive-check</code>, <code>generate --check</code> and <code>generate-site-data --check</code> regenerate and compare byte for byte. The pre-commit hook refuses stale derived files.</li>
+</ul>
+<p><strong>Try it.</strong> <code>just derive</code>, <code>just derive-check</code>, <code>majordomus-cli generate --check</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/64_knowledge_discovery.sh</code>,
+<code>test/cases/51_derived_artifacts_committed.sh</code>, <code>test/cases/56_derived_current_gate.sh</code>,
+<code>test/cases/104_strict_derivation.sh</code>, <code>apps/majordomus-cli/tests/generate_check.rs</code>,
+<code>apps/majordomus-cli/tests/index_behavior.rs</code>.</p>
+<p><strong>Maturity.</strong> On master, and enforced at commit time and in CI.</p>
+<h3 id="repository-environment-and-the-cockpit"><a class="zola-anchor" href="#repository-environment-and-the-cockpit" aria-label="Anchor link for: repository-environment-and-the-cockpit">Repository environment and the Cockpit</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Repository environment.</strong> A typed snapshot of a checkout: project, version control, toolchains, layer, workflows, providers, local services and diagnostics, with provenance for every value. The shell banner (through direnv), <code>majordomus-cli env</code>, <code>GET /api/v1/environment</code> and the MCP resource are renderers of it.</li>
+<li><strong>The Cockpit.</strong> A server-rendered local web UI at <code>/cockpit</code>. It offers a runner for every capability, a browser for every indexed kind, and views for release, design, mesh, worktrees, continuity, executions and graphs. Every page asks the same executor as the API.</li>
+</ul>
+<p><strong>Try it.</strong> <code>majordomus-cli env</code>, <code>majordomus-cli env --json</code>, then open the Cockpit URL that
+<code>majordomus-cli serve status</code> prints.</p>
+<p><strong>Proved by.</strong> <code>test/cases/100_environment.sh</code>, <code>apps/majordomus-cli/tests/environment.rs</code>,
+<code>apps/majordomus-cli/tests/cockpit.rs</code>.</p>
+<p><strong>Maturity.</strong> On master. Plan and board views in the Cockpit are branch only.</p>
+<h3 id="versions-and-publication"><a class="zola-anchor" href="#versions-and-publication" aria-label="Anchor link for: versions-and-publication">Versions and publication</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Versions.</strong> The version is written by one command, <code>majordomus-cli release bump</code>. <code>release analyze</code> measures the minimum bump by comparing the public capability surface with the last release.</li>
+<li><strong>Releases.</strong> A tag builds, publishes, writes a release record and smoke-tests the public installer.</li>
+<li><strong>Site deploys.</strong> A merge to master publishes the site from committed projections. The deploy is verified when <code>majordomus.dev/build.json</code> serves the merge commit, and the <code>pages-live</code> gate checks that no publication is overdue.</li>
+</ul>
+<p><strong>Try it.</strong> <code>majordomus-cli release analyze</code>, <code>curl -s https://majordomus.dev/build.json</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/112_version_matches_surface.sh</code>,
+<code>test/cases/87_release_pipeline.sh</code>, <code>test/cases/180_publication_is_observed.sh</code>,
+<code>test/cases/275_publication_is_current.sh</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="the-command-line-itself"><a class="zola-anchor" href="#the-command-line-itself" aria-label="Anchor link for: the-command-line-itself">The command line itself</a></h3>
+<p><strong>How it works.</strong></p>
+<ul>
+<li><strong>Two programs.</strong> The shell tool <code>majordomus</code> owns the task lifecycle. The Rust executable <code>majordomus-cli</code> owns the registry and its surfaces; the shell tool names it when a command belongs there.</li>
+<li><strong>Help.</strong> Every command answers <code>--help</code> with its usage and nothing else, before and after <code>init</code>.</li>
+<li><strong>Coverage.</strong> Every public command has behavioural and negative coverage.</li>
+<li><strong>Completion.</strong> Answered from one command graph composed from both programs and the <code>just</code> recipes.</li>
+</ul>
+<p><strong>Try it.</strong> <code>majordomus --help</code>, <code>majordomus-cli --help</code>, <code>majordomus-cli completion zsh</code>.</p>
+<p><strong>Proved by.</strong> <code>test/cases/15_command_surface.sh</code>, <code>test/cases/31_command_coverage.sh</code>,
+<code>test/cases/101_command_graph.sh</code>, <code>test/cases/102_completion_shell.sh</code>,
+<code>test/cases/98_cli_reference.sh</code>, <code>apps/majordomus-cli/tests/cli_examples.rs</code>.</p>
+<p><strong>Maturity.</strong> On master.</p>
+<h3 id="end-to-end"><a class="zola-anchor" href="#end-to-end" aria-label="Anchor link for: end-to-end">End to end</a></h3>
+<p><code>test/cases/19_end_to_end.sh</code> walks one repository through <code>init</code>, a scoped task, checks,
+a handover and a finish, as a new user would.</p>
+<h2 id="proving-it-yourself"><a class="zola-anchor" href="#proving-it-yourself" aria-label="Anchor link for: proving-it-yourself">Proving it yourself</a></h2>
+<p>Every shell case runs against a fresh temporary git repository and the real <code>bin/majordomus</code>.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bash test/run.sh 04_start_check 25_continuity_lifecycle 42_dag_waves 125_rule_proof</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> MJ_TEST_JOBS</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">4</span><span class="z-l-1 z-d-3"> bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the whole suite</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> cd apps/majordomus-cli </span><span class="z-l-6 z-d-9">&amp;&amp;</span><span class="z-l-1 z-d-3"> cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-test</span><span class="z-l-8 z-d-8"> projections</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-test</span><span class="z-l-8 z-d-8"> rules</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-test</span><span class="z-l-8 z-d-8"> peer_claims</span></span></code></pre>
+<p>To keep a run as evidence tied to the commit it proves:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> MJ_TEST_REPORT</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">e</span><span class="z-l-8 z-d-8">p</span><span class="z-l-8 z-d-8">o</span><span class="z-l-8 z-d-8">r</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">.</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">s</span><span class="z-l-8 z-d-8">v</span><span class="z-l-1 z-d-3"> bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-8 z-d-8"> 04_start_check</span><span class="z-l-8 z-d-8"> 06_finish</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli evidence record --suite report.tsv</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> majordomus-cli evidence show</span></span></code></pre><h2 id="what-it-does-not-do-yet"><a class="zola-anchor" href="#what-it-does-not-do-yet" aria-label="Anchor link for: what-it-does-not-do-yet">What it does not do yet</a></h2>
+<ul>
+<li>CI runs every gate but does not record its runs into the evidence ledger, so most rules and
+claims read <code>not run</code> until someone records a run.</li>
+<li>The mesh discovers instances; it does not share work claims between machines.</li>
+<li>Overlap is reported, never enforced. The only refusal is a task's own scope.</li>
+<li>Automatic session capture exists for Claude Code only.</li>
+<li>Intent as a typed record, plan and board views in the Cockpit, and a richer entry preflight are
+open pull requests.</li>
+<li>The command line and the Cockpit's area list are written by hand, checked against the
+registry rather than generated from it. <a href="https://majordomus.dev/docs/how-it-works/"><code>HOW_IT_WORKS.md</code></a> lists every such
+place.</li>
+</ul>
+</article></div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

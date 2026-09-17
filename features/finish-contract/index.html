@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -172,9 +172,9 @@
       <div class="flex flex-wrap items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">exposed through</dt>
         <dd><ul class="flex flex-wrap gap-1.5" aria-label="Interfaces this is exposed through">
   <li><a href="https://majordomus.dev/docs/cli/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>cli</a></li>
-  <li><span class="inline-flex items-center gap-1.5 rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body-subtle" title="No module, command or kind this feature names is projected onto HTTP API."><span aria-hidden="true">·</span>api</span></li>
-  <li><span class="inline-flex items-center gap-1.5 rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body-subtle" title="No module, command or kind this feature names is projected onto MCP."><span aria-hidden="true">·</span>mcp</span></li>
-  <li><span class="inline-flex items-center gap-1.5 rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-xs text-body-subtle" title="No module, command or kind this feature names is projected onto Cockpit."><span aria-hidden="true">·</span>cockpit</span></li>
+  <li><a href="https://majordomus.dev/docs/api/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>api</a></li>
+  <li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>mcp</a></li>
+  <li><a href="https://majordomus.dev/docs/cockpit/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>cockpit</a></li>
   <li><a href="https://majordomus.dev/docs/" class="inline-flex items-center gap-1.5 rounded border border-success-subtle bg-success-soft px-1.5 py-0.5 font-mono text-xs font-medium text-fg-success-strong hover:bg-neutral-secondary-medium"><span aria-hidden="true">✓</span>docs</a></li>
 </ul>
 </dd></div>
@@ -196,6 +196,58 @@ escalate or accept, so the field decides and prose never does.</p>
 detects the file at check and at finish and refuses to accept the work. The regression-test
 line is a path heuristic and says so. Nothing here measures tokens or cost.</p>
 </article>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The capabilities behind it</h2>
+    <p class="mt-2 text-body">The capability modules of the executable this feature names, each with the capabilities it composes. The command line, the HTTP route, the MCP tool and the reference beside every row are projections of one declaration, not four registrations.</p>
+    <div class="mt-4 space-y-4">
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/gates/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Completion gates</a>
+          <code class="font-mono text-xs text-body-subtle">gates</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">Completion as a state the repository decides rather than a claim a worker makes: the validation gates this repository declares in its CI model, which of them a task&#39;s own change set selects, what each one last reported, whether that verdict still describes the tree it was taken over, and therefore whether the task may be called finished. A gate that has never reported is `queued` and not `pass`, a run whose files have changed since is `stale` and refuses exactly as a failure does, and a gate the change cannot affect is `exempt` rather than unknown.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/gates-completion/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Whether this task may be called finished</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/gates/completion</span><span>majordomus_completion</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/gates-model/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The CI model</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/gates</span><span>majordomus_gates</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/gates.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/obligations/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Obligations</a>
+          <code class="font-mono text-xs text-body-subtle">obligations</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">What a task owes before it may be called completed, and whether the evidence that discharged each obligation still describes this tree. The vocabulary is data the distribution ships and answers in any clone; the closure is read from the local half of the layer, which this process serves to the worker in front of it and never publishes. Read, never written: `majordomus evidence` records, and a second writer for one ledger would be a second account of the same events.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/obligations-closure/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What this task still owes</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/obligations/closure</span><span>majordomus_obligation_closure</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/obligations-vocabulary/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every obligation there is</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/obligations</span><span>majordomus_obligations</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/obligations.rs</p>
+      </section>
+    </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
       <li class="p-4">
@@ -327,6 +379,9 @@ line is a path heuristic and says so. Nothing here measures tokens or cost.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">4</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">4</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">4</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">7</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">8</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">20</dd></div>
@@ -404,7 +459,7 @@ line is a path heuristic and says so. Nothing here measures tokens or cost.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f8f1fa67c401f05e4cfa98b09649f7501196037" class="font-mono underline">6f8f1fa</a> · inputs <span class="font-mono">01bf1e760527</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

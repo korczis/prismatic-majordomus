@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -244,6 +244,37 @@ published.</p>
           </li>
         </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/repository.rs</p>
       </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/devcontext/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Development context</a>
+          <code class="font-mono text-xs text-body-subtle">devcontext</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">The context a development session should be given, derived from the repository rather than composed by hand: given an issue, a milestone, an intent or a set of paths, the canonical objects that bear on the work, why each one is in the answer, what was left out and why, what collapsed into what, and the whole cost against a budget. The selection is structured — every entry keeps its identifier, its provenance, the selector that reached it and its confidence — because rendering a prompt is a projection of the selection and not the selection itself.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/devcontext-compile/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Compile the context for a piece of work</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus devcontext compile</span><span>GET /api/v1/devcontext</span><span>majordomus_devcontext</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/devcontext-explain/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Why one thing is or is not in a compiled context</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus devcontext explain</span><span>GET /api/v1/devcontext/explain</span><span>majordomus_devcontext_explain</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/devcontext-policy/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The compiler&#39;s own rules</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus devcontext policy</span><span>GET /api/v1/devcontext/policy</span><span>majordomus_devcontext_policy</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/devcontext.rs</p>
+      </section>
     </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
@@ -364,10 +395,10 @@ published.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">4</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">4</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">4</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">1</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">7</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">7</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">7</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">4</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">30</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">6</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">9</dd></div>
@@ -448,7 +479,7 @@ published.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f8f1fa67c401f05e4cfa98b09649f7501196037" class="font-mono underline">6f8f1fa</a> · inputs <span class="font-mono">01bf1e760527</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -1,0 +1,1243 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Majordomus works — Prismatic Majordomus</title>
+<meta name="description" content="how the tool works as one repository model with many projections: authored, discovered, derived, observed and inferred state; the capability declaration and every surface derived from it, including where the command line and the Cockpit are still written by hand; the rule proof ladder from declared to evidenced; sessions, context, handover, planning, the peer board and the mesh; publication and versions; and the architecture debt, measured">
+<link rel="canonical" href="https://majordomus.dev/docs/how-it-works/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="How Majordomus works — Prismatic Majordomus">
+<meta property="og:description" content="how the tool works as one repository model with many projections: authored, discovered, derived, observed and inferred state; the capability declaration and every surface derived from it, including where the command line and the Cockpit are still written by hand; the rule proof ladder from declared to evidenced; sessions, context, handover, planning, the peer board and the mesh; publication and versions; and the architecture debt, measured">
+<meta property="og:url" content="https://majordomus.dev/docs/how-it-works/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=0df860c9a5f750623800">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.7.1 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.7.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">How Majordomus works</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">How Majordomus works</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">how the tool works as one repository model with many projections: authored, discovered, derived, observed and inferred state; the capability declaration and every surface derived from it, including where the command line and the Cockpit are still written by hand; the rule proof ladder from declared to evidenced; sessions, context, handover, planning, the peer board and the mesh; publication and versions; and the architecture debt, measured</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/how-it-works/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">How Majordomus works</a></li><li><a href="https://majordomus.dev/docs/guide/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Guide</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The mesh: discovery of running Majordomus instances</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li><li><a href="https://majordomus.dev/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shared types</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/HOW_IT_WORKS.md" class="font-mono underline">docs/HOW_IT_WORKS.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>Majordomus is easy to misread as a command-line tool, an HTTP API, an MCP server, a dashboard
+and a folder of Markdown rules that happen to ship together. This document explains why that
+reading is wrong, and where it is still right. It follows a fact from the file where it is
+written, through the index and the typed registry that hold it, through the checks that decide
+whether it is true, to every interface that shows it — and it names each place where the
+repository does not yet live up to that shape.</p>
+<p>Every statement here was checked against the code on the default branch. Where the code and a
+design record disagree, the code wins and the disagreement is listed under
+<a href="https://majordomus.dev/docs/how-it-works/#architecture-debt">Architecture debt</a>. Numbers are not written into this document: each one
+is stated as the command that measures it, because a count copied into prose is stale the day
+after it is written (<code>project.no-counts-in-prose</code>).</p>
+<h2 id="the-thesis"><a class="zola-anchor" href="#the-thesis" aria-label="Anchor link for: the-thesis">The thesis</a></h2>
+<blockquote>
+<p>Majordomus should discover and model a fact once, then derive every relevant interface from
+that canonical representation.</p>
+</blockquote>
+<p>That sentence is not a code-reuse preference. It is the mechanism against drift. A repository
+worked on by several people and several AI workers at once accumulates descriptions of itself:
+a command list in the README, another in the help text, a third in an API schema, a fourth in a
+dashboard, a fifth in an agent's tool list. Each is correct on the day it is written, and each
+is maintained by whoever remembers it. More workers and more interfaces multiply the copies, and
+agentic development only makes the copies diverge faster.</p>
+<p>Majordomus goes the other way: one model, many projections. A projection may render a fact
+differently, filter it, or join it with others. It may not hold a second opinion about it.</p>
+<h2 id="the-architecture-in-one-picture"><a class="zola-anchor" href="#the-architecture-in-one-picture" aria-label="Anchor link for: the-architecture-in-one-picture">The architecture in one picture</a></h2>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  A["Authored canonical state: rules, ADRs, policy, claims, milestones, issues, capability declarations"]
+  G["Git and the filesystem"]
+  R["Runtime: server leases, MCP sessions, mesh datagrams"]
+  A --&gt; D["Discovery: kinds.yaml + sources.yaml + the capability composition"]
+  G --&gt; D
+  D --&gt; I["Object index: typed objects with canonical identity"]
+  D --&gt; CR["Capability registry: one descriptor per operation"]
+  I --&gt; CR
+  CR --&gt; X["One executor: Context::execute"]
+  R --&gt; O["Observed state: peers, standing, mesh nodes"]
+  X --&gt; V["Derived state: rule proof, claim evidence, plan status, waves, environment"]
+  O --&gt; V
+  V --&gt; P{"Projections"}
+  P --&gt; CLI["Command line: clap tree checked against the registry"]
+  P --&gt; MCP["MCP: tools and resources"]
+  P --&gt; HTTP["HTTP under /api/v1"]
+  HTTP --&gt; OA["OpenAPI 3.1"]
+  OA --&gt; SW["Swagger UI"]
+  P --&gt; CK["Cockpit: server-rendered pages"]
+  P --&gt; GEN["docs/generated and site data"]
+  GEN --&gt; SITE["majordomus.dev"]
+  GEN --&gt; CHK["generate --check, derive-check, projection tests"]
+</pre>
+<p>Read it from the top. Humans and workers author a small set of canonical files. Discovery finds
+them through declarations rather than hand-kept lists, the index gives each one a typed identity,
+and the capability registry holds every operation the executable can perform. Every surface asks
+the same executor. Derived state — whether a rule is proven, what an issue's status is, what a
+checkout's environment is — is computed on request from canonical and observed inputs, never
+stored as a second copy. The generated files at the bottom are committed and checked, so a
+disagreement between the model and its projections fails a build instead of reaching a reader.</p>
+<h2 id="two-programs-share-one-name"><a class="zola-anchor" href="#two-programs-share-one-name" aria-label="Anchor link for: two-programs-share-one-name">Two programs share one name</a></h2>
+<p>Before the model, one fact that shapes everything below. There are two executables, and both
+answer to <code>majordomus</code>:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Program</th><th>Launcher</th><th>Written in</th><th>Owns</th></tr></thead><tbody>
+<tr><td>the shell tool</td><td><code>bin/majordomus</code> with <code>lib/*.sh</code></td><td>POSIX shell and awk</td><td>the task lifecycle (<code>start</code>, <code>check</code>, <code>finish</code>), <code>handover</code>, <code>context</code>, session capture, <code>doctor</code>, doctrine dispatch, the plan engine</td></tr>
+<tr><td>the Rust executable</td><td><code>bin/majordomus-cli</code></td><td>Rust, <code>apps/majordomus-cli/</code></td><td>the capability registry, <code>serve</code>, <code>mcp</code>, HTTP, OpenAPI, Swagger UI, the Cockpit, <code>generate</code>, peers, mesh, environment, worktrees, rule proof, evidence, release</td></tr>
+</tbody></table>
+</div>
+<p>The shell tool forwards a command it does not know by reading <code>docs/generated/cli.yaml</code>, the
+generated description of the Rust command tree, and naming the executable that owns it. The
+two are converging on the Rust side (ADR 0047 and ADR 0052 describe the session cutover; both
+are still proposed), and some domains already have a Rust reader held to byte equality with the
+shell writer — the plan is the clearest case. The architecture described here is fully true of
+the Rust executable and partly true of the shell tool; the difference is recorded where it
+matters.</p>
+<h2 id="six-kinds-of-state"><a class="zola-anchor" href="#six-kinds-of-state" aria-label="Anchor link for: six-kinds-of-state">Six kinds of state</a></h2>
+<p>Every value Majordomus shows belongs to exactly one of these kinds. The kind decides who may
+write it and whether it can ever overwrite something else.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Kind</th><th>Examples in this repository</th><th>Who creates it</th><th>Who modifies it</th><th>Authority</th><th>May overwrite canonical state</th><th>Invalidated by</th></tr></thead><tbody>
+<tr><td><strong>Authored canonical</strong></td><td>rules under <code>.ai/repo/rules/</code>, ADRs under <code>.ai/repo/adrs/</code>, <code>.ai/repo/policy.yaml</code>, <code>docs/CLAIMS.yaml</code>, milestones and issues under <code>.ai/repo/project/</code>, <code>capability!</code> declarations, <code>share/design/tokens.yaml</code></td><td>a person or a worker, in a commit</td><td>the same, in a reviewed commit</td><td>highest: it is the source</td><td>not applicable</td><td>a new commit</td></tr>
+<tr><td><strong>Discovered</strong></td><td>the object index, the module composition, the git worktree list, the tracked-file set</td><td>the executable, reading authoritative structures</td><td>nobody: it is re-read</td><td>exactly that of its source</td><td>never</td><td>the source changing</td></tr>
+<tr><td><strong>Derived</strong></td><td>rule proof state, claim evidence state, issue status and waves, the environment snapshot, the minimum release version, everything under <code>docs/generated/</code></td><td>a deterministic function of canonical and discovered inputs</td><td>nobody by hand; the generator rewrites it</td><td>none of its own: it is a view</td><td>never; <code>generate --check</code> refuses a hand edit</td><td>any input changing</td></tr>
+<tr><td><strong>Observed</strong></td><td>attached peers, server standing (ready, outdated, stale), mesh node presence, a service port answering, the dirty working tree</td><td>a probe at a moment</td><td>the next probe</td><td>true only at its timestamp</td><td>never</td><td>time: a TTL, a disconnect, the next probe</td></tr>
+<tr><td><strong>Inferred</strong></td><td>the <code>intent</code> relevance score in development context compilation</td><td>a heuristic</td><td>the heuristic</td><td>advisory, ranked below every declared relation</td><td>never</td><td>the inputs changing</td></tr>
+<tr><td><strong>Local continuity</strong></td><td>handovers, checkpoints, the active task, the open episode, the ledger under <code>.ai/local/</code></td><td>the shell tool on behalf of a worker</td><td>append-mostly, through commands only</td><td>evidence of what a worker did, not of what is true now</td><td>never; a stale handover is shown as history</td><td>age and git distance</td></tr>
+</tbody></table>
+</div>
+<p>Two distinctions carry most of the weight.</p>
+<p><strong>Discovery is not inference.</strong> Discovery means the information already exists somewhere
+authoritative and Majordomus finds it: a rule file matched by a pathspec, a module named in the
+composition, a worktree listed by git. Inference means Majordomus proposes a likely
+interpretation. The only inference in the context compiler is keyword relevance, and it is
+capped so that it can never outrank a declared relation (see
+<a href="https://majordomus.dev/docs/how-it-works/#context-for-a-session">Context for a session</a>).</p>
+<p><strong>Observed is not canonical.</strong> A peer being online is not a declaration anybody made; it is the
+current reality, and it expires. Nothing in the peer board or the mesh registry is persisted as
+if it were a fact about the repository.</p>
+<h2 id="discovery"><a class="zola-anchor" href="#discovery" aria-label="Anchor link for: discovery">Discovery</a></h2>
+<p>Majordomus prefers finding repository facts in the structures that already own them over
+keeping parallel registries. The sources it actually reads:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Source</th><th>What is discovered</th><th>Where</th></tr></thead><tbody>
+<tr><td><code>share/kinds.yaml</code></td><td>the document kinds the distribution defines: format, schema identity, identity fields, title field</td><td>loaded by the index</td></tr>
+<tr><td>a <code>kinds.yaml</code> beside <code>sources.yaml</code></td><td>kinds a repository adds, when it has any (it may not redefine distribution kinds)</td><td>same</td></tr>
+<tr><td><code>.ai/repo/knowledge/sources.yaml</code></td><td>which git pathspecs hold objects of which kind</td><td>same</td></tr>
+<tr><td><code>.ai/manifest.yaml</code></td><td>which directory of <code>.ai/</code> holds which section, and which are untracked</td><td>shell tool and executable</td></tr>
+<tr><td>git</td><td>tracked files, worktrees, branches, HEAD, the common git directory</td><td><code>apps/majordomus-cli/src/worktree/</code>, <code>lib/common.sh</code></td></tr>
+<tr><td>the capability composition</td><td>every executable operation</td><td><code>apps/majordomus-cli/src/capability/builtin/mod.rs</code></td></tr>
+<tr><td>the clap tree</td><td>the command line as written</td><td><code>apps/majordomus-cli/src/cli.rs</code></td></tr>
+<tr><td><code>share/commands.yaml</code> and the <code>just</code> recipe dump</td><td>the shell tool's commands and the workflow recipes</td><td>the command graph</td></tr>
+<tr><td><code>.ai/repo/ci/gates.yaml</code></td><td>gates, path classes and what each gate runs</td><td><code>scripts/ci-plan</code>, rule proof</td></tr>
+<tr><td>lease files under <code>.ai/local/state/mcp/</code></td><td>which checkout has a live server, and at which URL</td><td><code>apps/majordomus-cli/src/lease.rs</code></td></tr>
+<tr><td>UDP multicast, broadcast, rendezvous (off by default)</td><td>other Majordomus nodes</td><td><code>apps/majordomus-cli/src/mesh/</code></td></tr>
+<tr><td>the <code>docs/README.md</code> index</td><td>which documents are published and in what order</td><td><code>scripts/generate-site-data</code></td></tr>
+</tbody></table>
+</div>
+<p>Discovery is explicit where it could have been magical. There is no link-time inventory and no
+build script scanning sources: ADR 0004 rejects both, so the composition of modules is an
+ordinary Rust expression a reader can open. That choice has a cost — adding a module means
+editing that composition — recorded under <a href="https://majordomus.dev/docs/how-it-works/#architecture-debt">Architecture debt</a>.</p>
+<p>The index is built once per process from those declarations (<code>apps/majordomus-cli/src/index.rs</code>).
+To see what it holds in this checkout:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli serve ensure</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -s </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">http://127.0.0.1:8742/api/v1/objects?kind=rule</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> .</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -s http://127.0.0.1:8742/api/v1/repository </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> .</span></span></code></pre>
+<p>The shared server of a checkout logs its own URL; <code>serve status</code> prints it when the default port
+is taken.</p>
+<h2 id="identity"><a class="zola-anchor" href="#identity" aria-label="Anchor link for: identity">Identity</a></h2>
+<p>A display name is for a reader. A canonical identity is for every relation. Majordomus never
+joins two things by their titles.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Entity</th><th>Canonical identity</th><th>Example</th></tr></thead><tbody>
+<tr><td>a capability</td><td>a dotted id, namespaced by its module</td><td><code>rules.show</code></td></tr>
+<tr><td>an indexed object</td><td><code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code></td><td><code>majordomus://rule/majordomus.scope-integrity@1</code></td></tr>
+<tr><td>an indexed object as a capability</td><td><code>&lt;kind&gt;.&lt;identity&gt;</code></td><td><code>rule.majordomus.scope-integrity@1</code></td></tr>
+<tr><td>a rule</td><td><code>id</code> plus <code>version</code>, never the file name</td><td><code>project.derived-once</code> at version 1</td></tr>
+<tr><td>a claim</td><td>its <code>id</code> in <code>docs/CLAIMS.yaml</code></td><td><code>scope-enforcement</code></td></tr>
+<tr><td>a test in the evidence ledger</td><td>its runner and path</td><td><code>shell:test/cases/04_start_check.sh</code></td></tr>
+<tr><td>a peer on a board</td><td>a position, <code>p1</code>, <code>p2</code>, reassigned on reconnect; the checkout it carries is the durable half</td><td><code>p7</code> in worktree <code>prismatic-majordomus-wt/feature/x</code></td></tr>
+<tr><td>a mesh node</td><td>a digest of its Ed25519 public key</td><td>kept in <code>~/.local/state/majordomus/node.json</code></td></tr>
+<tr><td>a worktree</td><td>derived from the branch name: <code>&lt;repository&gt;-wt/&lt;branch&gt;</code></td><td><code>prismatic-majordomus-wt/docs/how-majordomus-is-derived</code></td></tr>
+</tbody></table>
+</div>
+<p>Identity is what makes the chain rule, validator, test, execution, evidence joinable by machine.
+A rule names its tests by path; the proof engine binds those paths to gates by what the gates
+run; the evidence ledger records executions by test identity and commit. No step matches text.</p>
+<h2 id="schemas"><a class="zola-anchor" href="#schemas" aria-label="Anchor link for: schemas">Schemas</a></h2>
+<p>There are two schema pipelines, one per kind of thing, and neither is written twice.</p>
+<p><strong>Executable operations.</strong> A capability's input and output are ordinary Rust types that derive
+<code>schemars::JsonSchema</code>. <code>CanonicalSchema::of::&lt;T&gt;</code> turns the type into one JSON Schema 2020-12
+value (<code>apps/majordomus-cli/src/capability/schema.rs</code>), and that single value is rendered four
+ways: inline for MCP (<code>for_mcp</code>), as OpenAPI components (<code>for_openapi</code>), as the Cockpit runner
+form, and into <code>docs/generated/registry.json</code>. HTTP query parameters are coerced through the
+same schema. There is no hand-written JSON Schema for any capability, no TypeScript interface,
+and no separate Swagger definition.</p>
+<pre class="mermaid" tabindex="0">
+flowchart LR
+  T["Rust type with derive JsonSchema"] --&gt; S["CanonicalSchema"]
+  S --&gt; M["MCP inputSchema and outputSchema"]
+  S --&gt; O["OpenAPI components"]
+  S --&gt; F["Cockpit runner form"]
+  S --&gt; J["docs/generated/registry.json"]
+  S --&gt; Q["HTTP query coercion"]
+</pre>
+<p><strong>Repository documents.</strong> Each kind declared in <code>share/kinds.yaml</code> names a schema identity of
+the form <code>&lt;vendor&gt;.&lt;name&gt;/v&lt;n&gt;</code>. The schemas live under <code>share/schemas/majordomus/&lt;kind&gt;/</code>.
+Markdown kinds — rules, ADRs, skills — are authored as protobuf messages and their JSON Schema is
+generated by <code>majordomus generate</code>; YAML kinds are authored directly as JSON Schema. The rule
+header, for example, is the closed message in
+<code>share/schemas/majordomus/rule/rule.v1.proto</code>, which is why an unknown front-matter key in a
+rule is refused rather than silently kept.</p>
+<p><strong>Generated artifacts</strong> have schemas too, under <code>share/schemas/generated/</code>, and <code>generate</code>
+validates each document it writes against its schema before writing it.</p>
+<h2 id="the-capability-the-one-declaration"><a class="zola-anchor" href="#the-capability-the-one-declaration" aria-label="Anchor link for: the-capability-the-one-declaration">The capability: the one declaration</a></h2>
+<p>Every operation of the Rust executable is declared once, with the <code>capability!</code> macro
+(<code>apps/majordomus-cli/src/capability/handler.rs</code>). This is the real declaration of the
+operation that explains one rule's proof, from
+<code>apps/majordomus-cli/src/capability/builtin/rules.rs</code> (description shortened):</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="rust"><span class="giallo-l"><span class="z-l-14 z-d-18">capability!</span><span> {</span></span>
+<span class="giallo-l"><span>    id</span><span class="z-l-16 z-d-16">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">rules.show</span><span class="z-l-8 z-d-8">&quot;</span><span>,</span></span>
+<span class="giallo-l"><span>    title</span><span class="z-l-16 z-d-16">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">What proves this rule</span><span class="z-l-8 z-d-8">&quot;</span><span>,</span></span>
+<span class="giallo-l"><span>    description</span><span class="z-l-16 z-d-16">:</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">One rule with its full proof: ...</span><span class="z-l-8 z-d-8">&quot;</span><span>,</span></span>
+<span class="giallo-l"><span>    input</span><span class="z-l-16 z-d-16">:</span><span class="z-l-1 z-d-3"> RuleInput</span><span>,</span></span>
+<span class="giallo-l"><span>    output</span><span class="z-l-16 z-d-16">:</span><span class="z-l-1 z-d-3"> RuleDetail</span><span>,</span></span>
+<span class="giallo-l"><span>    stability</span><span class="z-l-16 z-d-16">:</span><span class="z-l-1 z-d-3"> Stability</span><span class="z-l-16 z-d-16">::</span><span class="z-l-1 z-d-3">BehaviorallyVerified</span><span>,</span></span>
+<span class="giallo-l"><span>    exposure</span><span class="z-l-16 z-d-16">:</span><span class="z-l-1 z-d-3"> Exposure</span><span> {</span></span>
+<span class="giallo-l"><span>        mcp</span><span class="z-l-16 z-d-16">:</span><span class="z-l-14 z-d-18"> mcp</span><span>(</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">majordomus_rule</span><span class="z-l-8 z-d-8">&quot;</span><span>)</span><span>,</span></span>
+<span class="giallo-l"><span>        http</span><span class="z-l-16 z-d-16">:</span><span class="z-l-14 z-d-18"> get</span><span>(</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">/api/v1/rules/rule</span><span class="z-l-8 z-d-8">&quot;</span><span>)</span><span>,</span></span>
+<span class="giallo-l"><span>        cli</span><span class="z-l-16 z-d-16">:</span><span class="z-l-1 z-d-3"> Some</span><span>(</span><span class="z-l-1 z-d-3">CliExposure</span><span> {</span><span> path</span><span class="z-l-16 z-d-16">:</span><span class="z-l-14 z-d-18"> vec!</span><span>[</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">rules</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-16 z-d-16">.</span><span class="z-l-14 z-d-18">into</span><span>(</span><span>)</span><span>,</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">show</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-16 z-d-16">.</span><span class="z-l-14 z-d-18">into</span><span>(</span><span>)</span><span>]</span><span> }</span><span>)</span><span>,</span></span>
+<span class="giallo-l"><span>    }</span><span>,</span></span>
+<span class="giallo-l"><span>    tags</span><span class="z-l-16 z-d-16">:</span><span> [</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">rules</span><span class="z-l-8 z-d-8">&quot;</span><span>,</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">governance</span><span class="z-l-8 z-d-8">&quot;</span><span>,</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">verification</span><span class="z-l-8 z-d-8">&quot;</span><span>,</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">evidence</span><span class="z-l-8 z-d-8">&quot;</span><span>]</span><span>,</span></span>
+<span class="giallo-l"><span>    cache</span><span class="z-l-16 z-d-16">:</span><span class="z-l-1 z-d-3"> CachePolicy</span><span class="z-l-16 z-d-16">::</span><span class="z-l-1 z-d-3">Disabled</span><span>,</span></span>
+<span class="giallo-l"><span>    handler</span><span class="z-l-16 z-d-16">:</span><span> show</span><span>,</span></span>
+<span class="giallo-l"><span>}</span><span>,</span></span></code></pre>
+<p>What the declaration states, and what the macro fills in by itself:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Declared by the author</th><th>Classified or stamped, never declared</th></tr></thead><tbody>
+<tr><td><code>id</code>, <code>title</code>, <code>description</code></td><td><code>module</code>, stamped by <code>module!</code> when the module is composed</td></tr>
+<tr><td><code>kind</code> (<code>Query</code> by default, or <code>Command</code>, <code>Resource</code>)</td><td><code>provenance</code>, from <code>module_path!()</code></td></tr>
+<tr><td><code>input</code> and <code>output</code> types</td><td><code>availability</code>, <code>visibility</code>, <code>execution</code>, classified from kind and exposure</td></tr>
+<tr><td><code>stability</code></td><td>the benchmark cases, taken from the input type's <code>BenchmarkCases</code> implementation</td></tr>
+<tr><td><code>exposure</code> for MCP, HTTP and the command line</td><td>whether it writes the repository: opt-in with <code>.writes_repository()</code>, pinned by a unit test to <code>plan.transition</code> and <code>recover.orphans</code></td></tr>
+<tr><td><code>tags</code>, <code>cache</code>, <code>benchmark</code>, <code>handler</code></td><td></td></tr>
+</tbody></table>
+</div>
+<p>Two properties are enforced by the compiler rather than by review: an input type without
+benchmark cases does not compile, so every operation is a benchmark target by construction; and
+a handler whose signature does not match the declared types does not compile.</p>
+<h3 id="the-registry"><a class="zola-anchor" href="#the-registry" aria-label="Anchor link for: the-registry">The registry</a></h3>
+<p>Modules compose capabilities with <code>module!</code>; <code>compose_modules!</code> composes modules; the
+application builds the registry with
+<code>CapabilityRegistry::builder().with_modules(builtin::modules()).with_index(&amp;index)</code>.
+The second call is where discovery meets the capability plane: every indexed object becomes a
+<code>Resource</code> capability (<code>apps/majordomus-cli/src/capability/declarative.rs</code>), readable over MCP
+as <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>, so a new rule file is readable by an agent without a line
+of Rust.</p>
+<p><code>build()</code> validates the whole set and collects every error rather than stopping at the first
+(<code>apps/majordomus-cli/src/capability/registry.rs</code>): id grammar, namespace equal to module,
+duplicate MCP tool, duplicate HTTP route, duplicate command path, a malformed HTTP exposure,
+an invalid cache policy. A registry that would expose two operations at one route cannot be
+built.</p>
+<p>There is one executor. <code>Context::execute</code> (<code>apps/majordomus-cli/src/capability/executor.rs</code>)
+is the only caller of the registry's dispatch. The command line, HTTP, MCP and the Cockpit all
+go through it, which is what makes "the same operation on every surface" a property of the code
+rather than a promise.</p>
+<p>To inspect the registry of this checkout:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> jq </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">.capabilities | length</span><span class="z-l-8 z-d-8">&#39;</span><span> docs/generated/registry.json</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> jq -r </span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8">.capabilities[] | [.id, .kind, .stability] | @tsv</span><span class="z-l-8 z-d-8">&#39;</span><span> docs/generated/registry.json</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli capabilities describe rules.show</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli capabilities validate</span></span></code></pre><h2 id="the-projections"><a class="zola-anchor" href="#the-projections" aria-label="Anchor link for: the-projections">The projections</a></h2>
+<h3 id="http"><a class="zola-anchor" href="#http" aria-label="Anchor link for: http">HTTP</a></h3>
+<p>There is no route table. The router asks the registry: <code>Router::capability</code> in
+<code>apps/majordomus-cli/src/http/router.rs</code> calls <code>registry.by_http(method, path)</code>, answers 405
+when another method matches and 404 when nothing does, binds a GET's query parameters through
+the input schema or takes a POST's JSON body, and calls <code>Context::execute</code>. Every HTTP exposure
+is forced under <code>/api/v1/</code> by <code>HttpExposure::PREFIX</code>. Errors map to 400, 404, 422 and 500 in one
+place.</p>
+<p>The few non-capability mounts — <code>/</code>, <code>/openapi.json</code>, <code>/swagger</code>, <code>/cockpit</code>, <code>/mcp</code>, <code>/docs/</code>
+— are declared once in the web surface discovery (<code>apps/majordomus-cli/src/web/</code>), which
+<code>docs/WEB.md</code> describes. A new operation needs no HTTP code at all: <code>rules.show</code> has no handler
+in the router, only the generic dispatch.</p>
+<p>What is written by hand is the business logic behind the handler — <code>apps/majordomus-cli/src/rules/</code>
+for the rule proof — never route metadata.</p>
+<h3 id="openapi"><a class="zola-anchor" href="#openapi" aria-label="Anchor link for: openapi">OpenAPI</a></h3>
+<p><code>apps/majordomus-cli/src/http/openapi.rs</code> walks the registry and produces an OpenAPI 3.1
+document. The <code>operationId</code> is the capability id, the schemas are the canonical schemas as
+components, the examples are the benchmark cases, and <code>x-majordomus-*</code> extensions carry the
+kind and identity. It is served live at <code>/openapi.json</code> from the same registry that serves the
+requests, and committed as <code>docs/generated/openapi.json</code> so a change to the contract is visible
+in review.</p>
+<blockquote>
+<p>OpenAPI is derived from the same contracts that serve real API requests. It is not a second
+documentation to keep in step.</p>
+</blockquote>
+<h3 id="swagger-ui"><a class="zola-anchor" href="#swagger-ui" aria-label="Anchor link for: swagger-ui">Swagger UI</a></h3>
+<p>Swagger UI at <code>/swagger</code> is a renderer of <code>/openapi.json</code> and nothing else
+(<code>apps/majordomus-cli/src/http/swagger.rs</code>). It is not a source of truth, holds no definitions,
+and cannot disagree with the API because it has nothing of its own to disagree with. Its
+browser assets are pinned to one version and loaded from a CDN — the one part of the local
+surface that does not work offline, and the module says so.</p>
+<h3 id="mcp"><a class="zola-anchor" href="#mcp" aria-label="Anchor link for: mcp">MCP</a></h3>
+<p>MCP is the agent-facing projection of the same registry
+(<code>apps/majordomus-cli/src/mcp/surface.rs</code>):</p>
+<ul>
+<li><strong>Tools</strong> are every capability whose exposure names a tool. <code>inputSchema</code> and <code>outputSchema</code>
+come from the canonical schema; the read-only hint comes from the kind.</li>
+<li><strong>Resources</strong> are every capability whose exposure names a resource, plus every indexed object
+as <code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>, read through the same object resolution the HTTP objects
+endpoint uses.</li>
+<li>A tool call resolves with <code>registry.by_mcp_tool</code> and runs <code>Context::execute</code>.</li>
+<li>The instructions a client reads on <code>initialize</code> name the tools that write the repository,
+measured from each capability's declared effect, and OpenAPI publishes the same effect as
+<code>x-majordomus-effect</code>; <code>every_surface_names_what_writes_the_repository_and_nothing_else</code> in
+<code>apps/majordomus-cli/tests/shared_units.rs</code> holds both to the registry.</li>
+<li>Prompts are not advertised and resource templates are empty — deliberately, not by omission.</li>
+</ul>
+<p>No MCP tool is hand-written. <code>majordomus_announce</code>, which looks like a special coordination
+tool, is the ordinary capability <code>peers.announce</code>. The one hand-coded behaviour is in the MCP
+bridge (<code>apps/majordomus-cli/src/mcp/bridge.rs</code>), which recognises that tool so it can replay a
+client's announcements onto a new server after a reconnect.</p>
+<h3 id="the-command-line-a-checked-second-declaration"><a class="zola-anchor" href="#the-command-line-a-checked-second-declaration" aria-label="Anchor link for: the-command-line-a-checked-second-declaration">The command line: a checked second declaration</a></h3>
+<p>This is where the model is honest about itself. The command line is <strong>not</strong> generated from the
+registry. The clap tree in <code>apps/majordomus-cli/src/cli.rs</code> is written by hand, dispatched by a
+hand-written match, and rendered by text functions in each command module. The source says so:
+<code>apps/majordomus-cli/src/capability/closure.rs</code> states that the command line "is declared a
+second time, in clap".</p>
+<p>What keeps that second declaration from drifting is that it is checked in both directions:</p>
+<ol>
+<li><strong>Declared to present.</strong> A capability whose <code>CliExposure</code> names a path that does not exist in
+the clap tree, or exists but cannot run, fails <code>closure.rs</code> and the projection test.</li>
+<li><strong>Present to declared.</strong> Every clap command that does not render a capability must appear in
+<code>cli::LOCAL</code> (<code>apps/majordomus-cli/src/cli/local.rs</code>) with a typed reason — it renders a
+capability, writes the repository, is an alias, is session-local, or manages a process.
+<code>quality::parity</code> checks the list against the tree both ways, and <code>scripts/ci/projection-check</code>
+fails a command with no reason.</li>
+<li><strong>Same executor.</strong> A command that renders a capability calls <code>ctx.execute(id, input)</code>; its own
+code is presentation only (<code>report_text</code>, <code>show_text</code> in
+<code>apps/majordomus-cli/src/commands/rules.rs</code>), and <code>--json</code> prints the capability's value
+unchanged.</li>
+</ol>
+<p>Help text is clap's. Shell completion is not clap's: <code>majordomus completion</code> answers from the
+command graph, which composes the clap tree, <code>share/commands.yaml</code> for the shell tool and the
+<code>just</code> recipe dump (ADR 0027, <code>docs/COMMANDS.md</code>). The command reference on the website,
+<code>/docs/cli/</code>, is generated from <code>docs/generated/cli.json</code>, which is itself generated from the
+clap tree — so the reference cannot list a command the program does not have.</p>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  CAP["capability! declaration with CliExposure"] --&gt; CL["closure check: path exists and runs"]
+  CLAP["clap tree in cli.rs"] --&gt; CL
+  CLAP --&gt; LOC["cli::LOCAL reasons for non-capability commands"]
+  LOC --&gt; PAR["quality::parity both directions"]
+  CLAP --&gt; CJ["docs/generated/cli.json"]
+  CJ --&gt; REF["/docs/cli/ reference pages"]
+  CLAP --&gt; CG["command graph"]
+  SC["share/commands.yaml"] --&gt; CG
+  JU["just recipes"] --&gt; CG
+  CG --&gt; COMP["completion"]
+</pre>
+<h3 id="the-cockpit"><a class="zola-anchor" href="#the-cockpit" aria-label="Anchor link for: the-cockpit">The Cockpit</a></h3>
+<p>The Cockpit is not another application, database or domain model. ADR 0012 calls it a
+projection of the registry for a person, and the code holds to that at the data level: every page
+asks <code>Context::execute</code> (<code>ask()</code> in <code>apps/majordomus-cli/src/cockpit/pages.rs</code>), and it performs
+no discovery of its own. The mesh page renders <code>mesh.status</code> and <code>mesh.nodes</code> and holds no node
+list (<code>project.mesh-is-observation-not-authority</code>); the peers view renders <code>peers.list</code>.</p>
+<p>It is server-rendered Rust with no template engine: a typed HTML tree
+(<code>apps/majordomus-cli/src/cockpit/html.rs</code>), components in <code>view.rs</code>, and browser libraries
+vendored as progressive enhancement. Its colours, type and status words are projections of
+<code>share/design/tokens.yaml</code> (ADR 0036), generated into the stylesheet the pages use.</p>
+<p>What is derived and what is written:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Part</th><th>How it exists</th></tr></thead><tbody>
+<tr><td>the capability explorer and runner at <code>/cockpit/capabilities/&lt;id&gt;</code></td><td>generic: one page for every capability, with a form generated from the input schema and examples from the benchmark cases; <code>rules.show</code> has no page code</td></tr>
+<tr><td>the object browser at <code>/cockpit/objects?kind=&lt;kind&gt;</code> and <code>/cockpit/object?uri=&lt;uri&gt;</code></td><td>generic: every indexed kind, including rules, ADRs and claims</td></tr>
+<tr><td>navigation catalogues</td><td>derived from the registry modules, the index kinds and the graph derivations, grouped by the product model's areas and ordered canonically</td></tr>
+<tr><td>the top-level areas and their routes</td><td>hand-written: a match in <code>apps/majordomus-cli/src/cockpit/mod.rs</code> and an area list in <code>nav.rs</code></td></tr>
+<tr><td>specialised pages (release, design, mesh, worktrees, continuity)</td><td>hand-written views over typed capability answers</td></tr>
+</tbody></table>
+</div>
+<p>So there is no <code>/cockpit/rules/&lt;id&gt;</code> route. A rule is inspected at its object URI, and its proof
+by running <code>rules.show</code> in the runner. Every canonical entity is inspectable; not every kind has
+a bespoke page.</p>
+<h3 id="documentation-and-the-website"><a class="zola-anchor" href="#documentation-and-the-website" aria-label="Anchor link for: documentation-and-the-website">Documentation and the website</a></h3>
+<p>Three generated layers reach a reader, and each one is produced from a canonical source by a
+named generator and checked for drift:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Output</th><th>Source</th><th>Generator</th><th>Drift check</th></tr></thead><tbody>
+<tr><td><code>docs/generated/</code> — registry, OpenAPI, command reference, capabilities reference, benchmarks, changelog, design, artifact manifest, graph</td><td>the registry and the Rust declarations</td><td><code>majordomus generate</code></td><td><code>majordomus generate --check</code>, byte for byte</td></tr>
+<tr><td><code>site/data/generated/</code> and <code>site/content/</code> projections — docs pages, guarantees, doctrines, commands, registry pages, plan status</td><td><code>docs/*.md</code>, <code>docs/CLAIMS.yaml</code>, rules, <code>share/commands.yaml</code>, <code>.ai/repo/project/</code>, the generated registry</td><td><code>scripts/generate-site-data</code></td><td><code>scripts/generate-site-data --check</code></td></tr>
+<tr><td><code>site/public/</code></td><td>everything above</td><td>Zola via <code>scripts/site-build</code></td><td><code>scripts/site-check</code>, then publication verification</td></tr>
+</tbody></table>
+</div>
+<p><code>scripts/derive</code> runs the whole graph in order (generate, site data, generate again because
+documents are indexed objects, then <code>.gitattributes</code>), and <code>scripts/derive-check</code> names every
+stale file. The artifact manifest <code>docs/generated/artifacts.md</code> lists every generated document
+with its schema and source, and is itself generated.</p>
+<p>This document is an example. It is authored once, here. <code>scripts/generate-site-data</code> discovers
+it through its row in <code>docs/README.md</code> — every file in <code>docs/</code> must have a row, or generation
+fails — writes <code>site/content/docs/how-it-works.md</code> with generated front matter (title from the
+first heading, description from the index row, order from the row's position), rewrites its
+relative links to site routes, and turns its <code>mermaid</code> blocks into rendered diagrams. The docs
+page is committed and held to the source by the same <code>--check</code>.</p>
+<h3 id="the-surfaces-compared"><a class="zola-anchor" href="#the-surfaces-compared" aria-label="Anchor link for: the-surfaces-compared">The surfaces compared</a></h3>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Surface</th><th>Consumer</th><th>Purpose</th><th>Derived from</th><th>Written by hand</th><th>Format</th></tr></thead><tbody>
+<tr><td>HTTP</td><td>software</td><td>programmatic operation</td><td>the registry (routes, binding, dispatch)</td><td>business logic only</td><td>JSON under <code>/api/v1</code></td></tr>
+<tr><td>OpenAPI</td><td>integrators, generators</td><td>the contract</td><td>the registry and canonical schemas</td><td>nothing</td><td>OpenAPI 3.1 JSON</td></tr>
+<tr><td>Swagger UI</td><td>a person exploring the API</td><td>interactive contract</td><td><code>/openapi.json</code></td><td>nothing</td><td>HTML</td></tr>
+<tr><td>MCP</td><td>AI workers</td><td>tools and resources</td><td>the registry and the object index</td><td>the reconnect replay of announcements</td><td>JSON-RPC</td></tr>
+<tr><td>Command line</td><td>people and scripts</td><td>interactive operation</td><td>checked against the registry; renders capability values</td><td>the clap tree, text renderers, <code>cli::LOCAL</code></td><td>terminal text or <code>--json</code></td></tr>
+<tr><td>Cockpit</td><td>people</td><td>visibility and running operations</td><td>capability answers; catalogues from registry and index</td><td>area list, routes, specialised views</td><td>HTML</td></tr>
+<tr><td>Generated docs and site</td><td>readers</td><td>reference and explanation</td><td>the registry, the index, <code>docs/</code></td><td>explanatory prose</td><td>Markdown, JSON, HTML</td></tr>
+</tbody></table>
+</div>
+<p>They are interfaces over the same reality, not independent implementations of it. The
+differences are presentation, and the places where presentation is still hand-written are the
+places the checks watch.</p>
+<h2 id="generator-and-renderer"><a class="zola-anchor" href="#generator-and-renderer" aria-label="Anchor link for: generator-and-renderer">Generator and renderer</a></h2>
+<p>A generator decides what exists: which entities, their relations, their order, their metadata.
+A renderer decides only how that looks. The rule proof shows the split:</p>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  RF["rule files"] --&gt; IDX["object index"]
+  GY[".ai/repo/ci/gates.yaml"] --&gt; ENG["rules engine: apps/majordomus-cli/src/rules"]
+  IDX --&gt; ENG
+  LED[".ai/repo/evidence/ledger.json"] --&gt; ENG
+  ENG --&gt; RD["RuleDetail value"]
+  RD --&gt; T1["text renderer: rules show"]
+  RD --&gt; T2["JSON: rules show --json and GET /api/v1/rules/rule"]
+  RD --&gt; T3["MCP tool majordomus_rule"]
+  RD --&gt; T4["Cockpit runner"]
+</pre>
+<p>No renderer computes whether a rule is proven. The frontend is not an authority over
+repository semantics: the Cockpit does not infer rule relationships, issue readiness or
+enforcement state, because the engine that owns each of them already answers.</p>
+<h2 id="how-drift-is-prevented"><a class="zola-anchor" href="#how-drift-is-prevented" aria-label="Anchor link for: how-drift-is-prevented">How drift is prevented</a></h2>
+<p>Generation alone does not prevent drift; a generator nobody re-runs is a stale copy with a
+script beside it. What prevents it is that each projection is checked against its source.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Invariant</th><th>Mechanism</th><th>Where it runs</th></tr></thead><tbody>
+<tr><td>every declared projection exists, and no projection lacks a declaration</td><td><code>every_declared_projection_exists_and_no_projection_is_an_orphan</code> in <code>apps/majordomus-cli/tests/projections.rs</code>: every MCP tool has the capability's id, schema and description; every HTTP exposure has an OpenAPI operation with the same id; every command path exists and runs; no orphan tool, resource or operation; every <code>$ref</code> resolves</td><td>the crate's test suite in CI</td></tr>
+<tr><td>a change to a canonical type reaches every projection</td><td><code>a_change_to_the_canonical_type_or_description_reaches_every_projection</code>: swapping an input type changes MCP properties, OpenAPI parameters and the reference together; removing HTTP exposure removes the path and keeps the tool</td><td>same</td></tr>
+<tr><td>generated output is deterministic and carries no machine path</td><td><code>generated_artifacts_are_byte_identical_twice_and_carry_no_absolute_path</code> and the artifact tracing test</td><td>same</td></tr>
+<tr><td>committed generated files equal a fresh generation</td><td><code>majordomus generate --check</code>, <code>scripts/generate-site-data --check</code>, <code>scripts/derive-check</code></td><td><code>scripts/rust-check</code> and the site job in CI; <code>scripts/pages current</code> in the pre-commit hook</td></tr>
+<tr><td>the capability surfaces agree end to end on a real binary</td><td><code>test/cases/76_capabilities_projections.sh</code>: <code>capabilities validate</code>, one capability compared across its MCP metadata, OpenAPI operation and generated reference, counts compared both ways, <code>generate --check</code> failing after tampering, a new document kind added with data only</td><td>the shell suite</td></tr>
+<tr><td>every command has a reason to exist outside the registry</td><td><code>scripts/ci/projection-check</code>, <code>quality::parity</code></td><td>CI</td></tr>
+<tr><td>the command graph is the one source of completion and references</td><td><code>scripts/ci/command-graph</code>, <code>test/cases/101_command_graph.sh</code></td><td>CI</td></tr>
+<tr><td>a generated file is not edited by hand</td><td>the "GENERATED FILE — DO NOT EDIT DIRECTLY" header plus the byte comparison; <code>project.derived-files-regenerated</code></td><td>pre-commit and CI</td></tr>
+</tbody></table>
+</div>
+<p>Determinism is a requirement, not a nicety: a projection that orders its entries differently on
+two runs makes every regeneration a diff and every drift check noise. Generated outputs sort by
+canonical identity within semantic groups (<code>crate::order</code> in the executable; C-locale sorts in
+the shell generators), and the determinism tests generate twice and compare bytes.</p>
+<h2 id="one-capability-through-every-surface"><a class="zola-anchor" href="#one-capability-through-every-surface" aria-label="Anchor link for: one-capability-through-every-surface">One capability through every surface</a></h2>
+<p><code>rules.show</code>, from declaration to evidence. The last column is the point: almost nothing after
+the declaration is written per capability.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Step</th><th>File or URL</th><th>Authored or derived</th></tr></thead><tbody>
+<tr><td>declaration</td><td><code>apps/majordomus-cli/src/capability/builtin/rules.rs</code></td><td>authored</td></tr>
+<tr><td>input type and its benchmark cases</td><td><code>RuleInput</code> in the same file</td><td>authored</td></tr>
+<tr><td>domain logic</td><td><code>apps/majordomus-cli/src/rules/</code></td><td>authored</td></tr>
+<tr><td>composition</td><td>the <code>rules</code> module in <code>builtin::modules()</code></td><td>authored, one existing line</td></tr>
+<tr><td>registry validation</td><td><code>CapabilityRegistry::build</code></td><td>automatic</td></tr>
+<tr><td>HTTP route</td><td><code>GET /api/v1/rules/rule?rule=&lt;id&gt;</code> via the generic router</td><td>automatic</td></tr>
+<tr><td>OpenAPI operation <code>rules.show</code></td><td><code>/openapi.json</code>, <code>docs/generated/openapi.json</code></td><td>generated</td></tr>
+<tr><td>Swagger UI entry</td><td><code>/swagger</code></td><td>rendered</td></tr>
+<tr><td>MCP tool <code>majordomus_rule</code></td><td><code>mcp/surface.rs</code>, generic</td><td>automatic</td></tr>
+<tr><td>Cockpit runner</td><td><code>/cockpit/capabilities/rules.show</code>, form from the schema</td><td>automatic</td></tr>
+<tr><td>command <code>majordomus-cli rules show &lt;id&gt;</code></td><td>clap variant in <code>cli.rs</code>, dispatch and text renderer in <code>commands/rules.rs</code>, a runnable example in <code>cli.rs</code></td><td>authored, then checked by closure and parity</td></tr>
+<tr><td>reference docs</td><td><code>docs/generated/capabilities.md</code>, <code>docs/generated/modules/rules.md</code>, <code>docs/generated/cli.md</code></td><td>generated</td></tr>
+<tr><td>website</td><td><code>/registry/capabilities/rules-show/</code>, <code>/docs/cli/rules/show/</code></td><td>generated</td></tr>
+<tr><td>benchmarks</td><td>direct, MCP and HTTP transports from the benchmark cases</td><td>generated</td></tr>
+<tr><td>tests</td><td>the per-module projection test, <code>tests/projections.rs</code>, the CLI example test, <code>apps/majordomus-cli/tests/rules.rs</code></td><td>authored once, generic where possible</td></tr>
+</tbody></table>
+</div>
+<h2 id="what-happens-when-a-capability-is-added"><a class="zola-anchor" href="#what-happens-when-a-capability-is-added" aria-label="Anchor link for: what-happens-when-a-capability-is-added">What happens when a capability is added</a></h2>
+<p>The honest developer workflow on the default branch today:</p>
+<ol>
+<li><strong>Write the domain behaviour</strong> in its own module under <code>apps/majordomus-cli/src/</code>.</li>
+<li><strong>Declare the capability</strong> with <code>capability!</code> in a module under
+<code>apps/majordomus-cli/src/capability/builtin/</code>, with input and output types deriving
+<code>JsonSchema</code> and an input implementing <code>BenchmarkCases</code>. If the module is new, add it to the
+<code>pub mod</code> list and to <code>builtin::modules()</code> — the one manual composition step.</li>
+<li><strong>HTTP, OpenAPI, Swagger UI, MCP and the Cockpit runner appear</strong> with no further code.</li>
+<li><strong>If the capability is exposed on the command line</strong>, add the clap variant, dispatch it with
+<code>ctx.execute</code>, write the text renderer, and add a runnable example. Closure and parity refuse
+the build until the declaration and the tree agree.</li>
+<li><strong>Run <code>majordomus generate</code></strong> (or <code>just derive</code>), which rewrites the registry, OpenAPI, the
+references, the benchmark inventory and the site data; commit them with the change. The
+pre-commit hook refuses a commit whose derived files are stale.</li>
+<li><strong>Tests.</strong> The generic projection tests cover the new capability automatically; add a
+behavioural case for what it does.</li>
+<li><strong>Claim and evidence.</strong> If the capability is a public guarantee, add a claim to
+<code>docs/CLAIMS.yaml</code> with its test, and a detail page under <code>docs/claims/</code>; record the test's run
+with <code>majordomus-cli evidence record</code>.</li>
+<li><strong>Version.</strong> The public surface changed, so <code>majordomus-cli release analyze</code> now owes a bump;
+<code>release bump</code> writes it (see <a href="https://majordomus.dev/docs/how-it-works/#publication-and-versions">Publication and versions</a>).</li>
+</ol>
+<p>Nothing is registered separately in HTTP, OpenAPI, Swagger, MCP, the Cockpit or the reference.
+The command line is the remaining second declaration, and it is a checked one. The zero-registration
+goal — a new canonical entity reaching every relevant surface with no per-surface step — is
+met for every surface except the command line and module composition.</p>
+<h2 id="governance-what-each-document-kind-is"><a class="zola-anchor" href="#governance-what-each-document-kind-is" aria-label="Anchor link for: governance-what-each-document-kind-is">Governance: what each document kind is</a></h2>
+<p>The taxonomy as the schemas and loaders implement it:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Kind</th><th>What it is</th><th>Authored at</th><th>Schema</th></tr></thead><tbody>
+<tr><td><strong>rule</strong></td><td>a versioned invariant with a statement, a class (blocking or advisory), dependencies, and optionally a declaration of how it is enforced</td><td><code>.ai/repo/rules/project/</code> and the vendored standard under <code>.ai/repo/rules/vendor/majordomus/rules/</code></td><td><code>majordomus.rule/v1</code></td></tr>
+<tr><td><strong>doctrine</strong></td><td>not a separate kind: a rule whose enforcement block names a validator that a command runs</td><td>derived from rules by <code>lib/doctrine.sh</code></td><td>the rule schema</td></tr>
+<tr><td><strong>policy</strong></td><td>configurable repository behaviour: profiles in force, required handover sections, freshness thresholds, enforcement wiring</td><td><code>.ai/repo/policy.yaml</code></td><td><code>policy.v1</code></td></tr>
+<tr><td><strong>ADR</strong></td><td>an architectural decision with its context, alternatives and consequences; <code>proposed</code> until a person accepts it</td><td><code>.ai/repo/adrs/</code></td><td><code>adr.v1</code></td></tr>
+<tr><td><strong>claim</strong></td><td>a public statement of what the tool guarantees, with its source, implementation, test and status</td><td><code>docs/CLAIMS.yaml</code>, detail in <code>docs/claims/</code></td><td><code>claim.v1</code></td></tr>
+<tr><td><strong>profile</strong></td><td>a named set of policy toggles for a kind of work</td><td><code>.ai/repo/profiles/</code></td><td><code>profile.v1</code></td></tr>
+<tr><td><strong>skill</strong></td><td>a packaged procedure for a worker</td><td><code>.ai/repo/skills/</code></td><td><code>skill.v1</code></td></tr>
+</tbody></table>
+</div>
+<p>The doctrine is the part most often misunderstood. A doctrine is not a principle document that
+rules point at; it is a rule the tool itself enforces through a named validator. The registry of
+doctrines is derived, never written: it is every rule of the effective set whose enforcement
+block names a validator (<code>docs/DOCTRINE.md</code>). The principles a doctrine serves are themselves
+rules — the <code>majordomus.principle-*</code> rules — connected by ordinary <code>depends_on</code>. There is no
+typed doctrine-to-rule field; see <a href="https://majordomus.dev/docs/how-it-works/#architecture-debt">Architecture debt</a>.</p>
+<p>Doctrines come from a package. The standard rules live in <code>share/standard/majordomus/</code>, with a
+manifest carrying each file's sha256, and are vendored byte for byte into the repository.
+<code>majordomus doctor</code> compares the vendored files with the manifest.</p>
+<h3 id="a-rule-s-shape"><a class="zola-anchor" href="#a-rule-s-shape" aria-label="Anchor link for: a-rule-s-shape">A rule's shape</a></h3>
+<p>This is the real header of <code>.ai/repo/rules/project/rule-is-a-doctrine.v1.md</code>:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> p</span><span class="z-l-8 z-d-8">roject.rule-is-a-doctrine</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">v</span><span class="z-l-4 z-d-1">ersion</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">k</span><span class="z-l-4 z-d-1">ind</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> r</span><span class="z-l-8 z-d-8">ule</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">itle</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> A</span><span class="z-l-8 z-d-8"> new enforced rule is a doctrine, not an inline check</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tatement</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> A</span><span class="z-l-8 z-d-8"> rule the tool enforces declares an x-majordomus block ...</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">tatus</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> a</span><span class="z-l-8 z-d-8">ctive</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">lass</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> b</span><span class="z-l-8 z-d-8">locking</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">d</span><span class="z-l-4 z-d-1">epends_on</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">ags</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">d</span><span class="z-l-8 z-d-8">octrine</span><span>]</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">x</span><span class="z-l-4 z-d-1">-majordomus</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  t</span><span class="z-l-4 z-d-1">ests</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">t</span><span class="z-l-8 z-d-8">est/cases/18_doctrine_wiring.sh</span><span class="z-l-6 z-d-9">,</span><span class="z-l-8 z-d-8"> t</span><span class="z-l-8 z-d-8">est/cases/125_rule_proof.sh</span><span>]</span></span></code></pre>
+<p>The body must carry four headings: Rationale, Required behaviour, Failure behaviour,
+Verification. The <code>x-majordomus</code> block has no <code>mode</code> field. The enforcement mode is derived from
+what the block names (ADR 0048):</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>The block names</th><th>Mode</th><th>Meaning</th></tr></thead><tbody>
+<tr><td>a <code>validator</code></td><td><strong>dispatched</strong></td><td>a command runs <code>mj_validate_&lt;name&gt;</code> itself: <code>check</code>, <code>finish</code>, <code>doctor</code>, <code>watch</code> — whichever its <code>enforced_by</code> lists</td></tr>
+<tr><td><code>tests</code> and no validator</td><td><strong>gated</strong></td><td>a CI gate runs the tests that prove it</td></tr>
+<tr><td>only <code>reviewed_because</code></td><td><strong>reviewed</strong></td><td>a person enforces it, and the rule says why no machine can</td></tr>
+<tr><td>nothing</td><td><strong>declarative</strong></td><td>a stated principle with no enforcement claim</td></tr>
+</tbody></table>
+</div>
+<p>A half-declared block is refused by the loader.</p>
+<h3 id="the-lifecycle-of-a-rule"><a class="zola-anchor" href="#the-lifecycle-of-a-rule" aria-label="Anchor link for: the-lifecycle-of-a-rule">The lifecycle of a rule</a></h3>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  AU["authored: a .vN.md file"] --&gt; PA["parsed against rule.v1"]
+  PA --&gt; IX["indexed: majordomus://rule/id@version"]
+  IX --&gt; MO["mode derived from x-majordomus"]
+  MO --&gt; GB["gates bound: tests matched to what gates.yaml runs"]
+  GB --&gt; EX["executed: a gate or a command runs"]
+  EX --&gt; RC["recorded: evidence ledger row with commit and digest"]
+  RC --&gt; ST["state derived against the current tree"]
+  ST --&gt; SF["surfaces: rules report, rules show, MCP, Cockpit, site"]
+</pre>
+<h2 id="a-rule-existing-is-not-a-rule-being-enforced"><a class="zola-anchor" href="#a-rule-existing-is-not-a-rule-being-enforced" aria-label="Anchor link for: a-rule-existing-is-not-a-rule-being-enforced">A rule existing is not a rule being enforced</a></h2>
+<p>This is the central governance idea, and the implementation types it. A rule can stand at any
+of these rungs, and each rung is a separate fact:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Rung</th><th>What establishes it</th></tr></thead><tbody>
+<tr><td>declared</td><td>the file exists</td></tr>
+<tr><td>parsed and valid</td><td>the loader and the rule schema accept it</td></tr>
+<tr><td>registered</td><td>the index holds it at its URI</td></tr>
+<tr><td>proof named</td><td>its <code>x-majordomus</code> block names a validator or tests</td></tr>
+<tr><td>proof resolves</td><td>every named path exists in the tree — otherwise <strong>dangling</strong>, which always fails</td></tr>
+<tr><td>wired</td><td>the validator is dispatched by a command (checked by the doctrine-wiring doctor check), or a gate in <code>.ai/repo/ci/gates.yaml</code> runs the named test</td></tr>
+<tr><td>executed</td><td>a run happened</td></tr>
+<tr><td>recorded</td><td>the evidence ledger holds that run, with its commit, working-tree state and digest</td></tr>
+<tr><td>current</td><td>the recorded run's inputs are unchanged in the tree being asked about</td></tr>
+</tbody></table>
+</div>
+<p>The Rust rules engine (<code>apps/majordomus-cli/src/rules/mod.rs</code>) reduces this to one of ten
+states, strongest first: <code>proven</code>, <code>inputs_unchanged</code>, <code>stale</code>, <code>gated</code>, <code>failing</code>, <code>not_run</code>,
+<code>reviewed</code>, <code>unrunnable</code>, <code>dangling</code>, <code>unproven</code>. A rule's state is the weakest state among its
+tests. Only the first three count as passing. A finding is raised for a dangling proof, or for a
+blocking rule that is unproven, failing or unrunnable; <code>not_run</code>, <code>gated</code> and <code>reviewed</code> are
+deliberately not findings, because they describe the absence of a record rather than a defect.</p>
+<p><code>scripts/ci/rule-proof-check</code> is the gate: a dangling proof fails; a blocking rule naming no
+proof fails, held by a ratchet whose baseline, <code>.ai/repo/rule-proof-baseline.txt</code>, is empty.</p>
+<p>To see where the repository stands — not to take this document's word for it:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellsession"><span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli rules report</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> bin/majordomus-cli rules show majordomus.scope-integrity</span></span>
+<span class="giallo-l"><span class="z-l-6 z-d-9">$</span><span> curl -s http://127.0.0.1:8742/api/v1/rules </span><span class="z-l-16 z-d-16">|</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> .summary</span></span></code></pre>
+<p>At the time of writing that report says every blocking rule names a proof that resolves and is
+bound to a gate, and that few runs are recorded in the ledger, so most rules stand at <code>not_run</code>
+rather than <code>proven</code>. That is the correct reading of the evidence: gates run in CI on every
+change, but CI does not yet write its runs into the ledger. "Satisfied" in the report means the
+proof is named and resolves, not that a recorded run passed. A green badge anywhere in
+Majordomus has to be a projection of a recorded execution, and where no execution is recorded
+the surfaces say <code>not run</code>.</p>
+<h2 id="evidence"><a class="zola-anchor" href="#evidence" aria-label="Anchor link for: evidence">Evidence</a></h2>
+<p>Evidence is a recorded execution, not a test path that happens to exist (<code>docs/EVIDENCE.md</code>).</p>
+<pre class="mermaid" tabindex="0">
+flowchart LR
+  TR["test run"] --&gt; REC["majordomus-cli evidence record"]
+  REC --&gt; LED[".ai/repo/evidence/ledger.json: latest run per test"]
+  LED --&gt; JOIN["join: claim or rule to its tests"]
+  TREE["git: diff from the recorded commit"] --&gt; JOIN
+  JOIN --&gt; STATE["proof state"]
+  STATE --&gt; OUT["evidence report, rules show, Cockpit, site guarantees"]
+</pre>
+<p>The ledger is committed and holds the latest execution per test: runner, outcome, seconds,
+commit, working-tree state, a digest, the origin (local, CI or release) and the command. A
+claim's proof state is derived on request:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>State</th><th>Meaning</th></tr></thead><tbody>
+<tr><td><code>proven</code></td><td>the recorded run passed and nothing changed between its commit and the tree being asked about, excluding the ledger row itself</td></tr>
+<tr><td><code>inputs_unchanged</code></td><td>something changed, but not the claim's own source, implementation or test</td></tr>
+<tr><td><code>stale</code></td><td>one of those changed, or git could not answer</td></tr>
+<tr><td><code>failing</code></td><td>the recorded run failed</td></tr>
+<tr><td><code>not_run</code></td><td>no run is recorded</td></tr>
+<tr><td><code>unrunnable</code></td><td>the named test is of a kind no runner can execute</td></tr>
+<tr><td><code>no_test</code></td><td>the claim names no test</td></tr>
+</tbody></table>
+</div>
+<p>Freshness is therefore not a timestamp but a relation to the tree: a test that passed at one
+commit is <code>proven</code> at that commit, <code>inputs_unchanged</code> at a later commit that did not touch its
+inputs, and <code>stale</code> at one that did. <code>proven</code> and <code>inputs_unchanged</code> are never collapsed into one
+state, because the second is an inference about relevance and the first is not.</p>
+<p>The four evidence capabilities are <code>evidence.report</code>, <code>evidence.claim</code>, <code>evidence.test</code> and
+<code>evidence.record</code> — the last is the only writer and is command-line only.</p>
+<h2 id="one-doctrine-traced-scope-integrity"><a class="zola-anchor" href="#one-doctrine-traced-scope-integrity" aria-label="Anchor link for: one-doctrine-traced-scope-integrity">One doctrine traced: scope integrity</a></h2>
+<p><code>majordomus.scope-integrity</code> is a doctrine: a vendored rule whose block names a validator.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Link</th><th>Where</th></tr></thead><tbody>
+<tr><td>authored</td><td><code>share/standard/majordomus/rules/scope-integrity.v1.md</code>, vendored to <code>.ai/repo/rules/vendor/majordomus/rules/scope-integrity.v1.md</code>, sha256 in both manifests</td></tr>
+<tr><td>principle</td><td><code>depends_on: majordomus.one-worker-one-scope@1</code></td></tr>
+<tr><td>enforcement block</td><td><code>validator: scope</code>, <code>enforced_by: [check, finish, watch]</code>, <code>exit_code: 10</code>, <code>claims: [scope-enforcement, scoped-task]</code>, <code>tests: [test/cases/04_start_check.sh]</code></td></tr>
+<tr><td>validator</td><td><code>mj_validate_scope</code> in <code>lib/check.sh</code>: fails files changed since the task's start that fall outside the task's scope</td></tr>
+<tr><td>dispatch</td><td><code>mj_doctrine_dispatch check</code> and <code>finish</code>; <code>finish --check</code> runs from the pre-push hook</td></tr>
+<tr><td>wiring verified</td><td><code>mj_validate_doctrine_wiring</code> in <code>lib/doctor.sh</code>, mutation-tested by <code>test/cases/18_doctrine_wiring.sh</code></td></tr>
+<tr><td>test</td><td><code>test/cases/04_start_check.sh</code>, run by the <code>shell-suite</code> and <code>macos</code> gates</td></tr>
+<tr><td>claim</td><td><code>scope-enforcement</code> in <code>docs/CLAIMS.yaml</code>, detail at <code>docs/claims/scope-enforcement.md</code></td></tr>
+<tr><td>index and MCP</td><td><code>majordomus://rule/majordomus.scope-integrity@1</code>; tool <code>majordomus_rule</code></td></tr>
+<tr><td>HTTP</td><td><code>GET /api/v1/rules/rule?rule=majordomus.scope-integrity</code></td></tr>
+<tr><td>Cockpit</td><td><code>/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fmajordomus.scope-integrity%401</code></td></tr>
+<tr><td>website</td><td><code>/doctrines/scope-integrity/</code>, from <code>site/data/generated/doctrines.json</code>; <code>/guarantees/scope-enforcement/</code></td></tr>
+<tr><td>evidence</td><td>whatever the ledger holds for <code>test/cases/04_start_check.sh</code>, read with <code>rules show</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="one-rule-traced-derived-files-are-regenerated"><a class="zola-anchor" href="#one-rule-traced-derived-files-are-regenerated" aria-label="Anchor link for: one-rule-traced-derived-files-are-regenerated">One rule traced: derived files are regenerated</a></h2>
+<p><code>project.derived-files-regenerated</code> is a gated project rule: no validator, tests named.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Link</th><th>Where</th></tr></thead><tbody>
+<tr><td>authored</td><td><code>.ai/repo/rules/project/derived-files-regenerated.v1.md</code></td></tr>
+<tr><td>proof</td><td><code>tests:</code> naming <code>test/cases/56_derived_current_gate.sh</code>, <code>test/cases/51_derived_artifacts_committed.sh</code>, <code>test/cases/95_executable_reference.sh</code> and <code>scripts/derive-check</code></td></tr>
+<tr><td>enforcement point</td><td>the pre-commit hook runs <code>scripts/pages current</code>; <code>.ai/repo/policy.yaml</code> declares that wiring as <code>derived-current</code>, and <code>doctor</code> fails if the hook stops running it</td></tr>
+<tr><td>gates</td><td><code>shell-suite</code> and <code>macos</code> run the three cases; <code>scripts/derive-check</code> is classed as unrunnable by the proof engine and ignored because the others resolve</td></tr>
+<tr><td>surfaces</td><td><code>rules show project.derived-files-regenerated</code>, the object page in the Cockpit, and the rules section of <code>/features/declare-once/</code> on the website</td></tr>
+<tr><td>evidence</td><td>read with <code>rules show</code>; the proof is named and gated</td></tr>
+</tbody></table>
+</div>
+<h2 id="walkthrough-adding-a-new-rule"><a class="zola-anchor" href="#walkthrough-adding-a-new-rule" aria-label="Anchor link for: walkthrough-adding-a-new-rule">Walkthrough: adding a new rule</a></h2>
+<p>Suppose a maintainer adds: <em>every public capability has at least one executable verification.</em>
+What happens at each step on the default branch today:</p>
+<ol>
+<li><strong>Authored.</strong> A file named <code>every-capability-is-verified.v1.md</code> under <code>.ai/repo/rules/project/</code>, with the
+rule header and the four body headings. Manual, and the only authored step.</li>
+<li><strong>Schema.</strong> The rule loader validates the header against <code>rule.v1</code>; an unknown key or a
+half-declared enforcement block is refused. Automatic.</li>
+<li><strong>Discovery.</strong> The <code>rule</code> source class in <code>.ai/repo/knowledge/sources.yaml</code> already matches
+the directory, so the index holds <code>majordomus://rule/project.every-capability-is-verified@1</code>.
+Automatic.</li>
+<li><strong>Relations.</strong> <code>depends_on</code> names the principle it serves, by <code>id@version</code>; the DAG is
+validated by <code>doctor</code>. Authored, then checked.</li>
+<li><strong>Enforcement.</strong> The author chooses the mode by what the block names. Much of this rule is
+already true by construction — an input without benchmark cases does not compile, and the
+projection tests run every exposure — so a <code>tests:</code> list naming
+<code>apps/majordomus-cli/tests/projections.rs</code> and a new case makes it <strong>gated</strong>. Authored.</li>
+<li><strong>Gate binding.</strong> The proof engine binds those tests to the gates in
+<code>.ai/repo/ci/gates.yaml</code> that run them. Automatic; a path that does not exist is dangling and
+fails <code>rule-proof-check</code>.</li>
+<li><strong>Command line.</strong> <code>majordomus-cli rules report</code> and <code>rules show</code> include it. Automatic.</li>
+<li><strong>HTTP.</strong> <code>GET /api/v1/rules/rule?rule=project.every-capability-is-verified</code>. Automatic.</li>
+<li><strong>MCP.</strong> Resource at its URI and the <code>majordomus_rule</code> tool. Automatic.</li>
+<li><strong>Cockpit.</strong> Its object page and the rules report in the runner. Automatic.</li>
+<li><strong>Website.</strong> A project rule gets no page of its own; it appears where a product feature names
+it in its <code>rule_refs</code>. A doctrine would get a <code>/doctrines/</code> page. Partly automatic.</li>
+<li><strong>Execution.</strong> CI runs the gates on the next change that touches their path class. Automatic.</li>
+<li><strong>Evidence.</strong> A run reaches the ledger only through <code>evidence record</code>. Manual today.</li>
+<li><strong>Current state on every surface.</strong> Derived on request from the ledger and the tree.
+Automatic.</li>
+<li><strong>Regression.</strong> The gate fails a future change that breaks the invariant; <code>rule-proof-check</code>
+fails a future edit that removes the named test. Automatic.</li>
+</ol>
+<h2 id="sessions-tasks-and-continuity"><a class="zola-anchor" href="#sessions-tasks-and-continuity" aria-label="Anchor link for: sessions-tasks-and-continuity">Sessions, tasks and continuity</a></h2>
+<p>Work survives the session doing it through durable records, not transcripts
+(<code>docs/CONTINUITY.md</code>). The records are written by the shell tool:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Record</th><th>Where</th><th>Persistent</th><th>Authored or derived</th></tr></thead><tbody>
+<tr><td>active task</td><td><code>.ai/local/state/current.yaml</code></td><td>local</td><td>task, scope, profile authored; a <code>computed from git</code> block derived</td></tr>
+<tr><td>open episode</td><td><code>.ai/local/state/sessions-open/</code></td><td>local, until close</td><td>derived from provider hook events</td></tr>
+<tr><td>closed session</td><td><code>.ai/repo/sessions/</code> when the manifest names that section</td><td>committed</td><td>derived from the ledger at close</td></tr>
+<tr><td>checkpoint</td><td><code>.ai/local/checkpoints/</code></td><td>local</td><td>derived with <code>checkpoint --derive</code>, or authored</td></tr>
+<tr><td>handover</td><td><code>.ai/local/state/handovers/</code></td><td>local</td><td>body authored; front matter derived</td></tr>
+<tr><td>ledger</td><td><code>.ai/local/ledger.jsonl</code></td><td>local, append-only</td><td>derived: one receipt per event</td></tr>
+</tbody></table>
+</div>
+<p>Provider hooks (for Claude Code, under <code>.claude/hooks/</code>) call <code>majordomus capture session</code> on
+start, compact and end. Start opens or keeps the episode, makes sure the checkout's server is
+running and prints a briefing; end derives a checkpoint and a handover and closes the provider's
+own session. <code>.ai/local/</code> is git-ignored: continuity is local to a machine, and only closed
+session records are shared.</p>
+<p>The task lifecycle is <code>start</code> with a required scope, <code>check</code> which dispatches the doctrines
+bound to it, and <code>finish</code> with an outcome and, when the profile requires, a verify command whose
+exit code is recorded. A finish that fails a doctrine is refused with exit 10 and the list of
+what is unmet.</p>
+<h3 id="context-for-a-session"><a class="zola-anchor" href="#context-for-a-session" aria-label="Anchor link for: context-for-a-session">Context for a session</a></h3>
+<p>There are two context compilers, and both are deterministic.</p>
+<p><strong><code>majordomus context</code></strong> (<code>lib/context.sh</code>) assembles ordered sections — git, peers, task,
+profile, context documents, open questions, decisions, checkpoint, handover, relevant files,
+history, prompt — gated by profile toggles and fitted to a line budget. Sections are dropped in a
+fixed order, a checkpoint or handover shrinks to a pointer before it disappears, and git, task,
+profile and questions are never dropped. Every drop is listed under EXCLUDED; if the output is
+still over budget the command exits 10 instead of truncating silently.</p>
+<p><strong><code>majordomus context resolve &lt;path&gt;</code></strong> (<code>lib/context_docs.sh</code>) composes the context documents
+that apply to a path: every <code>context/v1</code> Markdown file under <code>.ai/</code> whose scope covers it —
+exact directory, containing subtree, or an explicit path list — ordered by depth, then declared
+order, then path, with superseded documents removed and a fingerprint over the chain. Each
+document adds to its ancestors; the nearest does not replace them.</p>
+<p><strong><code>devcontext.compile</code></strong> is the Rust compiler of a ranked working set for a task
+(<code>apps/majordomus-cli/src/devcontext/</code>). It walks the composed object graph from the task along
+typed edges with fixed forward and reverse weights, sorts by authority tier — task, governance,
+source, decision, knowledge, history — then relevance, then URI, and spends a token budget first
+fit, naming every item it skipped and its cost. Its one inference is intent: words of the task
+matched against an object's title, description, identity and tags, scaled so that the resulting
+relevance is always below that of a declared relation. The shell <code>context</code> command does not use
+it yet.</p>
+<p>Context is generated because it must be rebuildable. A context that exists only inside an earlier
+prompt is lost with that prompt; a context compiled from repository state can be compiled again
+by the next worker and explained item by item.</p>
+<h3 id="handover"><a class="zola-anchor" href="#handover" aria-label="Anchor link for: handover">Handover</a></h3>
+<p><code>majordomus handover</code> takes a body on stdin with the sections the policy requires — Objective,
+Current State, Next Action — or derives one with <code>--derive</code>. The body is authored; the front
+matter is derived: repository, worktree, branch, head, working-tree state, changed files,
+timestamps. A body that carries identity fields is refused, so a worker cannot claim a head it
+is not at.</p>
+<p><code>handover --resolve</code> finds the most relevant record: same worktree and branch first, then same
+branch, never repository-wide. It labels the relation to the current HEAD as exact, advanced,
+diverged or a different context, and prints the freshness verdict from the policy's thresholds,
+marking a stale record as history. The session briefing applies the same verdict and does not
+quote a stale handover's next action, because an instruction that was true days ago is context,
+not an order.</p>
+<h2 id="planning"><a class="zola-anchor" href="#planning" aria-label="Anchor link for: planning">Planning</a></h2>
+<p>Milestones are outcome specifications; issues are execution contracts
+(<code>docs/PLANNING.md</code>). Both are authored YAML under <code>.ai/repo/project/</code>. An issue declares
+dependencies, scope, acceptance criteria, validation, the evidence it requires and the timestamps
+of its transitions. <strong>It has no status field.</strong> Status is derived:</p>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  I["issues: depends_on, timestamps, evidence_required, evidence covers"] --&gt; S["status per issue"]
+  S --&gt; W["waves: Kahn layering of the dependency DAG"]
+  W --&gt; C["scope_conflict warnings: same wave, shared paths"]
+  M["milestones: required issues, milestone dependencies"] --&gt; MS["milestone status"]
+  S --&gt; MS
+  MS --&gt; N["active milestone and next issue"]
+  N --&gt; P["docs/PLAN_STATUS.md, plan capabilities, Cockpit, site"]
+</pre>
+<p>An issue is done when it is not cancelled, has a completion time, and every evidence token it
+requires is covered; otherwise it is the first of verify, active, blocked or ready that its
+timestamps and dependencies allow. A status ahead of its blockers is reported as premature
+execution. Issues on or downstream of a cycle get no wave and are reported. A milestone blocked
+by its dependency blocks its issues.</p>
+<p>The engine is <code>lib/project.awk</code>; <code>apps/majordomus-cli/src/plan.rs</code> is a second reader held to
+byte equality by <code>test/cases/99_plan_capabilities.sh</code>. The one writing capability,
+<code>plan.transition</code>, moves an issue only when the derived plan allows it, and refuses to mark it
+done when the simulated plan after the move would not derive done. There is no stale second
+status to maintain: the status is a function of the records.</p>
+<h2 id="the-peer-board-overlap-and-the-mesh"><a class="zola-anchor" href="#the-peer-board-overlap-and-the-mesh" aria-label="Anchor link for: the-peer-board-overlap-and-the-mesh">The peer board, overlap and the mesh</a></h2>
+<p>Three things are easy to conflate: who else is working in this repository right now, whether
+their work collides with mine, and which Majordomus instances exist on the network.</p>
+<h3 id="the-board-what-peers-are-doing"><a class="zola-anchor" href="#the-board-what-peers-are-doing" aria-label="Anchor link for: the-board-what-peers-are-doing">The board: what peers are doing</a></h3>
+<p>Each checkout's shared server keeps a peer board in memory (<code>apps/majordomus-cli/src/peers.rs</code>).
+An MCP client that attaches becomes a peer with a position id, its client name, transport,
+connection time and last activity. With <code>majordomus_announce</code> it states an intent and a scope,
+optionally under a claim name, and announcing again under the same name replaces that claim.
+The board is not persisted: a departed peer that had announced is retained briefly as not
+attached, and one that never announced disappears.</p>
+<p><code>majordomus_peers</code> gathers the board repository-wide (ADR 0044): it reads this checkout's board
+from memory and asks every sibling worktree's server over HTTP, one hop, stamping each peer with
+the checkout it came from. <code>complete: false</code> means a board could not be read, and <code>boards</code> says
+which and why — a short board is not proof that nobody is there.</p>
+<h3 id="overlap-derived-advisory"><a class="zola-anchor" href="#overlap-derived-advisory" aria-label="Anchor link for: overlap-derived-advisory">Overlap: derived, advisory</a></h3>
+<p>Overlap is derived from claims, never declared. Two scopes meet when they are equal or one
+contains the other on a path boundary. It is computed in three places:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Where</th><th>Compares</th><th>Result</th></tr></thead><tbody>
+<tr><td><code>peers.announce</code> and <code>peers.list</code></td><td>announced scopes on the board</td><td>an overlap list; informational</td></tr>
+<tr><td><code>majordomus start</code> and <code>check --overlap</code> (<code>lib/start.sh</code>)</td><td>the active task scopes of other worktrees</td><td>INFO findings; always exit 0</td></tr>
+<tr><td><code>majordomus context</code></td><td>board claims against the active task's scope</td><td>an OVERLAP line: "a claim is not a lock"</td></tr>
+</tbody></table>
+</div>
+<p>None of them refuses anything. What refuses is the scope doctrine: files a task changed outside
+its own scope fail <code>check</code> and a completed <code>finish</code>, and <code>finish --check</code> runs from the pre-push
+hook. <code>scripts/collision-check</code> scans pushed branches for paths a new piece of work would create.</p>
+<pre class="mermaid" tabindex="0">
+flowchart LR
+  A["worker A: task scope, announced claim"] --&gt; B["board in A's server"]
+  C["worker B in another worktree"] --&gt; D["board in B's server"]
+  B --&gt; G["peers.list gathers every checkout's board"]
+  D --&gt; G
+  G --&gt; O["overlap: scopes equal or nested"]
+  O --&gt; V["CLI context, MCP peers, Cockpit"]
+  T["task scope in current.yaml"] --&gt; SC["scope doctrine at check, finish, pre-push"]
+</pre>
+<h3 id="the-mesh-who-exists"><a class="zola-anchor" href="#the-mesh-who-exists" aria-label="Anchor link for: the-mesh-who-exists">The mesh: who exists</a></h3>
+<p>The mesh answers a different question: which Majordomus nodes exist and can be reached
+(<code>docs/MESH.md</code>, <code>apps/majordomus-cli/src/mesh/</code>). A node has an Ed25519 identity kept per user;
+an instance is one run of a process. Discovery providers send one signed, bounded envelope over
+UDP multicast, UDP broadcast or an HTTP rendezvous endpoint. The registry holds nodes by identity
+with a presence TTL and a retention window; trust is deny-unknown and changes only labels —
+nothing can be executed remotely.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Field</th><th>Kind of state</th></tr></thead><tbody>
+<tr><td>node identity (public key digest)</td><td>persistent, per user</td></tr>
+<tr><td>instance, address, last seen</td><td>observed; expires</td></tr>
+<tr><td>trust label</td><td>authored policy applied to an observation</td></tr>
+</tbody></table>
+</div>
+<p>The declaration <code>.ai/repo/mesh/majordomus.yaml</code> ships with the mesh disabled and no rendezvous
+endpoints, so a default checkout opens no discovery socket. There is no Tailscale or mDNS
+provider; ADR 0050 lists them as future providers, and a rendezvous endpoint reachable over a
+tailnet is the supported way to span machines. Data flow is the same as every other surface:
+<code>mesh.status</code> and <code>mesh.nodes</code> capabilities, served over HTTP and MCP and rendered at
+<code>/cockpit/mesh</code>.</p>
+<p><strong>The mesh and the board are not connected yet.</strong> The board gathers checkouts of one machine
+through lease files; the mesh registry is not consulted. Cross-machine cooperation — sharing
+claims between nodes — is a proposal on an unmerged branch, not a feature. The mesh makes
+instances visible; it does not orchestrate agents.</p>
+<h2 id="the-repository-environment"><a class="zola-anchor" href="#the-repository-environment" aria-label="Anchor link for: the-repository-environment">The repository environment</a></h2>
+<p><code>RepositoryEnvironment</code> (<code>apps/majordomus-cli/src/environment/mod.rs</code>) is one typed snapshot of
+what a checkout is: project, repository, version control, toolchains, layer, workflows, provider
+projections, local services and diagnostics, with a provenance entry for every value
+(<code>docs/ENVIRONMENT.md</code>). It resolves fast from a cache under <code>.ai/local/</code> or fully from the index.</p>
+<p>The model is the architecture; the banner is one renderer of it. The same value is rendered as
+the shell banner through direnv (<code>environment/render.rs</code>), as <code>majordomus-cli env</code> text and JSON,
+as <code>GET /api/v1/environment</code>, as the MCP resource <code>majordomus://environment</code>, and explained by
+<code>environment.explain</code>. A local service is observed with a single bounded TCP connect, which
+proves a port answers and nothing more.</p>
+<h2 id="publication-and-versions"><a class="zola-anchor" href="#publication-and-versions" aria-label="Anchor link for: publication-and-versions">Publication and versions</a></h2>
+<h3 id="from-a-merge-to-a-public-page"><a class="zola-anchor" href="#from-a-merge-to-a-public-page" aria-label="Anchor link for: from-a-merge-to-a-public-page">From a merge to a public page</a></h3>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  M["merge to master"] --&gt; B["scripts/pages build: refuse stale source hash, render without regenerating"]
+  B --&gt; K["scripts/pages check: site-check and the never-published check"]
+  K --&gt; P["scripts/site-deploy pushes site/public to gh-pages"]
+  P --&gt; V["scripts/pages verify --commit SHA: poll majordomus.dev/build.json"]
+  V --&gt; G["pages-live gate: served commit is on master, nothing owed past the window"]
+</pre>
+<p>The publication path (<code>.github/workflows/pages.yml</code>, modelled in <code>.ai/repo/ci/pages.yaml</code>) does
+not regenerate: the committed projections are already checked, so publishing renders them. Three
+facts are kept separate because they fail separately: the build succeeded, the deployment was
+pushed, and the public site serves the new commit. Only the last is verified against the public
+endpoint — <code>build.json</code> on <code>majordomus.dev</code> carries the commit it was built from — and the
+<code>pages-live</code> gate, run at finish, checks that the served commit is on master and that no
+publication has been owed longer than the deploy window
+(<code>share/standard/majordomus/rules/publication-currency.v1.md</code>).</p>
+<h3 id="the-version-has-one-writer"><a class="zola-anchor" href="#the-version-has-one-writer" aria-label="Anchor link for: the-version-has-one-writer">The version has one writer</a></h3>
+<p>The version is stated in three sites — the crate manifest, the crate's lock entry and the shell
+tool's <code>MJ_VERSION</code> — and written by one command, <code>majordomus-cli release bump</code>
+(<code>apps/majordomus-cli/src/release/version.rs</code>), which reads all three back and refuses when they
+disagree. The minimum bump is measured, not chosen: <code>release analyze</code> compares the public
+capability surface — ids, exposures and schemas, with input and output compatibility judged in
+opposite directions — against the last release (ADR 0051). Conventional commits are evidence,
+not the authority. The same analysis is <code>GET /api/v1/release/analysis</code>, an MCP tool and
+<code>/cockpit/release</code>. After a bump, <code>just derive</code> rewrites every generator stamp, the changelog,
+<code>docs/INSTALL.md</code> and the site's version data.</p>
+<p>A tag starts the release workflow: build the platform matrix from
+<code>docs/generated/distribution-matrix.json</code>, publish, write the release record under
+<code>.ai/repo/releases/</code> from the real artifact digests, open a pull request with it, and smoke-test
+the public installer once the record is on the default branch.</p>
+<h2 id="what-doctor-checks"><a class="zola-anchor" href="#what-doctor-checks" aria-label="Anchor link for: what-doctor-checks">What doctor checks</a></h2>
+<p><code>majordomus doctor</code> is read-only and dispatches every doctrine bound to it (<code>lib/doctor.sh</code>).
+Among them: the vendored rule package against its manifest hashes; the doctrine wiring chain from
+validator to dispatch to failure propagation to test, claim and CI; provider instruction files
+against their generation stamps (unstamped or hand-edited fails); the wiring of every
+enforcement entry in the policy, including the pre-commit derivation check; schema integrity,
+layout, budgets, retention, the rule DAG, ADRs, skills and prompts. The Rust <code>health.report</code>
+adds a comparison of the committed registry with an in-process render.</p>
+<p>Doctor detects; it does not repair. Regeneration is <code>majordomus generate</code> and <code>just derive</code>;
+repair of a hand-edited projection is <code>majordomus update</code>. A generator is not self-healing
+merely because it exists, and none of these runs by itself.</p>
+<h2 id="circular-dogfooding"><a class="zola-anchor" href="#circular-dogfooding" aria-label="Anchor link for: circular-dogfooding">Circular dogfooding</a></h2>
+<p>Majordomus is supervised by Majordomus. The rules that forbid hand-kept registries are rules in
+this repository's own <code>.ai/</code>; the proof engine that says whether they are enforced reads this
+repository's gates; the generators that write the reference are checked by the gates those rules
+name; the evidence ledger records runs of the tests that prove the generators deterministic; and
+the Cockpit renders that proof from the same registry it proves. When a generator breaks, a rule
+about generators turns red on the surface the generator produces. The loop is only as strong as
+its weakest recorded link — today, recording executions — which is why that link is named below.</p>
+<h2 id="what-is-not-generated"><a class="zola-anchor" href="#what-is-not-generated" aria-label="Anchor link for: what-is-not-generated">What is not generated</a></h2>
+<p>Majordomus generates mechanical projections. It does not generate human judgment and then
+quietly call it canonical truth.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Authored by people, never generated</th><th>Derived by the machine from it</th></tr></thead><tbody>
+<tr><td>intent: why a milestone exists, what done means</td><td>status, waves, readiness</td></tr>
+<tr><td>a decision and its trade-offs, in an ADR</td><td>the ADR's index entry, links from rules and files</td></tr>
+<tr><td>acceptance of a decision</td><td>nothing: an extracted ADR may not call itself accepted</td></tr>
+<tr><td>the statement of a rule and why it exists</td><td>its mode, gates, proof state, surfaces</td></tr>
+<tr><td>a claim about what the tool guarantees</td><td>its evidence state</td></tr>
+<tr><td>explanatory prose, including this document</td><td>its site page, links, order and description</td></tr>
+<tr><td>a handover's objective and next action</td><td>its repository, branch, head and changed files</td></tr>
+</tbody></table>
+</div>
+<p>If a person records <em>OAuth must use PKCE</em>, the machine may derive the rules it touches, the
+context that should carry it, the links from documentation and whether the implementation is
+tested. It may not rewrite the decision because a heuristic found it unlikely. The inference in
+the context compiler is capped below every declared relation for exactly that reason.</p>
+<h2 id="generation-matrix"><a class="zola-anchor" href="#generation-matrix" aria-label="Anchor link for: generation-matrix">Generation matrix</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Entity</th><th>Authored</th><th>Discovered</th><th>Derived</th><th>CLI</th><th>HTTP</th><th>MCP</th><th>Cockpit</th><th>Website</th></tr></thead><tbody>
+<tr><td>capability</td><td><code>capability!</code></td><td>module composition</td><td>availability, visibility, execution, benchmarks</td><td>only where a clap command renders it</td><td>yes, when exposed</td><td>tool or resource, when exposed</td><td>explorer and runner</td><td><code>/registry/</code> pages</td></tr>
+<tr><td>command</td><td>clap tree, <code>share/commands.yaml</code></td><td><code>just</code> recipes</td><td>command graph, completion</td><td>yes</td><td>through its capability</td><td>through its capability</td><td><code>/cockpit/commands</code></td><td><code>/docs/cli/</code>, <code>/commands/</code></td></tr>
+<tr><td>document object</td><td>any indexed file</td><td><code>sources.yaml</code></td><td>URI, kind</td><td><code>objects</code></td><td><code>/api/v1/objects</code></td><td>resource</td><td>object page</td><td>only kinds with a projection</td></tr>
+<tr><td>rule</td><td>rule file</td><td>index</td><td>mode, gates, proof state</td><td><code>rules report</code>, <code>rules show</code></td><td><code>/api/v1/rules</code></td><td><code>majordomus_rules</code>, <code>majordomus_rule</code></td><td>object page, runner</td><td>doctrines only; project rules via features</td></tr>
+<tr><td>doctrine</td><td>a rule with a validator</td><td>doctrine loader</td><td>doctrine registry</td><td>shell <code>doctrine</code></td><td>via rules</td><td>via rules</td><td>via rules</td><td><code>/doctrines/</code></td></tr>
+<tr><td>claim</td><td><code>docs/CLAIMS.yaml</code>, <code>docs/claims/</code></td><td>index</td><td>evidence state</td><td><code>evidence claim</code></td><td>evidence endpoints</td><td>evidence tools</td><td>object page, runner</td><td><code>/guarantees/</code></td></tr>
+<tr><td>ADR</td><td>ADR file</td><td>index</td><td>none</td><td>objects</td><td>objects</td><td>resource</td><td>object page</td><td>no section</td></tr>
+<tr><td>issue, milestone</td><td>YAML</td><td>index</td><td>status, waves, next</td><td>shell <code>plan</code>, <code>plan</code> capabilities</td><td>plan endpoints</td><td>plan tools</td><td>runner</td><td>plan status</td></tr>
+<tr><td>peer</td><td>announcement</td><td>MCP attach</td><td>overlaps</td><td>none of its own</td><td><code>/api/v1/peers</code></td><td><code>majordomus_peers</code></td><td>runner</td><td>none</td></tr>
+<tr><td>mesh node</td><td>mesh declaration</td><td>providers</td><td>presence, trust label</td><td><code>mesh</code></td><td>mesh endpoints</td><td>mesh tools</td><td><code>/cockpit/mesh</code></td><td>none</td></tr>
+<tr><td>environment</td><td>policy, manifest</td><td>git, toolchains, services</td><td>snapshot with provenance</td><td><code>env</code></td><td><code>/api/v1/environment</code></td><td><code>majordomus://environment</code></td><td>not on the overview</td><td>none</td></tr>
+<tr><td>design token</td><td><code>share/design/tokens.yaml</code></td><td>none</td><td>stylesheets, logo, design data</td><td>none</td><td>design report</td><td>design tools</td><td><code>/cockpit/design</code>, all styling</td><td>all styling</td></tr>
+<tr><td>version</td><td>the three version sites, written by <code>release bump</code></td><td>the last release record</td><td>the minimum bump</td><td><code>release analyze</code></td><td><code>/api/v1/release/analysis</code></td><td>release tool</td><td><code>/cockpit/release</code></td><td>changelog, install</td></tr>
+</tbody></table>
+</div>
+<h2 id="architecture-debt"><a class="zola-anchor" href="#architecture-debt" aria-label="Anchor link for: architecture-debt">Architecture debt</a></h2>
+<p>Where the repository is not yet the model this document describes, measured on the default
+branch. None of this is hidden by the surfaces; it is listed here so a reader does not have to
+find it.</p>
+<p><strong>Declared twice or registered by hand</strong></p>
+<ul>
+<li>The command line is a second declaration in clap, checked by closure and parity but not
+generated. So are the text renderers and runnable examples.</li>
+<li>Adding a capability module edits the <code>pub mod</code> list and <code>builtin::modules()</code>.</li>
+<li>The Cockpit's areas and routes are a hand-written match and list, although its catalogues are
+derived; the route table in <code>docs/COCKPIT.md</code> omits several areas the code serves.</li>
+<li>The shell tool keeps its own dispatch table, and <code>rules</code>, <code>bench</code> and <code>evidence</code> exist in both
+programs with different meanings — shell <code>rules show</code> prints a rule file, Rust <code>rules show</code>
+explains its proof.</li>
+<li>The MCP bridge special-cases the announce tool for reconnect replay.</li>
+<li><code>docs/HARDCODING_LEDGER.yaml</code> lists every known place a fact is written twice, with the command
+that reproduces each; several open entries remain.</li>
+</ul>
+<p><strong>Not derived</strong></p>
+<ul>
+<li>The pipeline diagram on the website's architecture page is a fixed sequence written in the
+generator, although the page says it is drawn from the inputs the generator read, and it omits
+the executable's own generation stages.</li>
+<li>The doctrine-to-principle relation is ordinary <code>depends_on</code>; there is no typed field. Rule-to-claim
+links exist on vendored doctrines only; claims do not point back at rules.</li>
+</ul>
+<p><strong>Not exposed everywhere</strong></p>
+<ul>
+<li>No per-kind Cockpit pages for rules, doctrines, ADRs or claims — the generic object page serves
+them. No website page for project rules outside features, and no ADR section.</li>
+<li>The Cockpit overview does not render the repository environment.</li>
+<li><code>plan evidence</code> has no capability; the shell lifecycle commands (<code>start</code>, <code>check</code>, <code>finish</code>,
+<code>handover</code>, <code>context</code>) are not capabilities, so they have no HTTP or MCP projection.</li>
+<li>Swagger UI's assets come from a CDN.</li>
+</ul>
+<p><strong>Not evidenced</strong></p>
+<ul>
+<li>Executions are recorded in the ledger only by <code>evidence record</code>; CI runs every gate but does not
+yet write its runs back, so most rules and claims read <code>not_run</code> rather than <code>proven</code>. Recording
+CI evidence is work on an unmerged branch.</li>
+<li>Declarative rules name no proof and stand at <code>unproven</code>; they are advisory, so they are not
+findings.</li>
+</ul>
+<p><strong>Not enforced as documented</strong></p>
+<ul>
+<li><code>project.derived-files-regenerated</code> says <code>scripts/derive-check</code> runs in CI; its three halves run
+separately, and the composed script does not.</li>
+<li><code>project.no-counts-in-prose</code> is enforced by review for documents; it is mechanised only for the
+site's marketing copy.</li>
+</ul>
+<p><strong>Not built</strong></p>
+<ul>
+<li>Cross-machine cooperation over the mesh, and a connection between the mesh and the peer board.</li>
+<li>Tailscale and mDNS discovery providers.</li>
+<li>The Rust side of the session lifecycle is a read model; the cutover is proposed.</li>
+<li>Many ADRs that the code already follows remain <code>proposed</code>, because acceptance is a person's act.</li>
+</ul>
+<h2 id="claim-audit"><a class="zola-anchor" href="#claim-audit" aria-label="Anchor link for: claim-audit">Claim audit</a></h2>
+<p>Each strong statement in this document, with how to check it.</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>Statement</th><th>Check</th></tr></thead><tbody>
+<tr><td>HTTP, OpenAPI, MCP and the Cockpit runner need no per-capability code</td><td>read <code>Router::capability</code> in <code>apps/majordomus-cli/src/http/router.rs</code> and <code>mcp/surface.rs</code>; <code>grep -rn '"rules.show"' apps/majordomus-cli/src</code> finds only the declaration and tests</td></tr>
+<tr><td>OpenAPI is derived from the registry that serves requests</td><td><code>apps/majordomus-cli/src/http/openapi.rs</code>; <code>bin/majordomus-cli generate --check</code></td></tr>
+<tr><td>every projection has a declaration and vice versa</td><td><code>cargo test --test projections</code> in <code>apps/majordomus-cli</code></td></tr>
+<tr><td>the command line is a checked second declaration</td><td><code>apps/majordomus-cli/src/capability/closure.rs</code>, <code>apps/majordomus-cli/src/cli/local.rs</code>, <code>scripts/ci/projection-check</code></td></tr>
+<tr><td>a doctrine is a rule with a validator</td><td><code>lib/doctrine.sh</code>; <code>bin/majordomus doctrine list</code></td></tr>
+<tr><td>enforcement mode is derived, not declared</td><td>ADR 0048; <code>rule.v1.proto</code> has no mode field</td></tr>
+<tr><td>a rule's state is the weakest of its tests</td><td><code>apps/majordomus-cli/src/rules/mod.rs</code>; <code>bin/majordomus-cli rules report</code></td></tr>
+<tr><td>issue status is derived with no stored status</td><td>an issue YAML has no status key; <code>lib/project.awk</code>; <code>bin/majordomus plan status</code></td></tr>
+<tr><td>overlap is advisory</td><td><code>lib/check.sh</code> returns 0 after <code>--overlap</code>; <code>peers.rs</code> documents informational overlaps</td></tr>
+<tr><td>the mesh is off by default and has no Tailscale provider</td><td><code>.ai/repo/mesh/majordomus.yaml</code>; <code>ls apps/majordomus-cli/src/mesh</code></td></tr>
+<tr><td>the board is in memory only</td><td>module comment of <code>apps/majordomus-cli/src/peers.rs</code></td></tr>
+<tr><td>publication is verified against the public endpoint</td><td><code>scripts/pages verify</code>; <code>curl -s https://majordomus.dev/build.json</code></td></tr>
+<tr><td>the version has one writer with three sites</td><td><code>apps/majordomus-cli/src/release/version.rs</code>; <code>scripts/ci/release-check</code></td></tr>
+</tbody></table>
+</div>
+<h2 id="why-this-matters"><a class="zola-anchor" href="#why-this-matters" aria-label="Anchor link for: why-this-matters">Why this matters</a></h2>
+<pre class="mermaid" tabindex="0">
+flowchart LR
+  W["more workers"] --&gt; D["more descriptions of the repository"]
+  S["more interfaces"] --&gt; D
+  MD["more metadata"] --&gt; D
+  D --&gt; X["more drift, faster"]
+  ONE["one model"] --&gt; P1["command line"]
+  ONE --&gt; P2["MCP"]
+  ONE --&gt; P3["HTTP and OpenAPI"]
+  ONE --&gt; P4["Cockpit"]
+  ONE --&gt; P5["docs and site"]
+</pre>
+<p>Majordomus is not a collection of commands, dashboards and agent integrations. It is a
+repository-native model from which those surfaces are derived.</p>
+<p>The command line, the HTTP API, MCP, OpenAPI, Swagger UI, the Cockpit and the documentation are
+meant to be projections of one typed repository reality — and where one of them is still written
+by hand, a check holds it to that reality and this document names it.</p>
+<p>Rules and doctrines are not valuable because they are written down. They become valuable when
+their relationship to validators, gates, executions and evidence is machine-inspectable — and
+when the surfaces say <code>not run</code> rather than a green badge until a run is recorded.</p>
+<p>The peer board and the mesh are not agent orchestration. They make workers, their presence and
+their claims visible enough for people and coordination mechanisms to reason about them.</p>
+<p>Generation and derivation are how Majordomus tries to keep one repository from slowly
+accumulating seven incompatible descriptions of itself.</p>
+</article></div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://majordomus.dev/js/mermaid.min.js"></script>
+<script src="https://majordomus.dev/js/diagrams.js"></script>
+
+</body>
+</html>

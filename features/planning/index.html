@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -230,6 +230,103 @@ effort or schedules dates.</p>
           </li>
         </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/trace.rs</p>
       </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/plan/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">The plan and its derivations</a>
+          <code class="font-mono text-xs text-body-subtle">plan</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-issues/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The issues, filtered by what the graph derived</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/issues</span><span>majordomus_plan_issues</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-model/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The whole derived plan</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan</span><span>majordomus_plan</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-next/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The one issue to take now</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/next</span><span>majordomus_plan_next</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-record/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One milestone or issue, with everything derived about it</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/record</span><span>majordomus_plan_record</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-roadmap/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The milestones in derived order</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/roadmap</span><span>majordomus_plan_roadmap</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-status/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Where the plan stands</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/status</span><span>majordomus_plan_status</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-transition/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Move one issue through the lifecycle</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>POST /api/v1/plan/transition</span><span>majordomus_plan_transition</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-validate/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What the model refuses</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/validate</span><span>majordomus_plan_validate</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/plan-waves/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What may run at the same time</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/plan/waves</span><span>majordomus_plan_waves</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/plan.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/devtask/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Executable development scopes</a>
+          <code class="font-mono text-xs text-body-subtle">devtask</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">An issue and a milestone read as work to be done rather than as metadata: what a person authored, where the plan graph puts it, what happened to it locally, where its external projection stands, and whether a worker may start it — with the origin of every value on the value. Nothing here is a second project model: the records are the canonical ones, the status and the graph are `plan`&#39;s, the branches and commits are `trace`&#39;s, the readiness vocabulary refines three canonical statuses without replacing any, and the projection onto GitHub stays `scripts/github-sync`&#39;s. Nothing here writes anything, which is what makes a user-authored GitHub value safe from it.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/devtask-issue/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One issue as an executable development task</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus devtask issue</span><span>GET /api/v1/devtask/issue</span><span>majordomus_devtask</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/devtask-milestone/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One milestone as an executable dependency graph</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus devtask milestone</span><span>GET /api/v1/devtask/milestone</span><span>majordomus_devtask_milestone</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/devtask.rs</p>
+      </section>
     </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
@@ -321,9 +418,10 @@ effort or schedules dates.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">3</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">3</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">3</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">14</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">14</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">14</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">2</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">235</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">3</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">8</dd></div>
@@ -402,7 +500,7 @@ effort or schedules dates.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f8f1fa67c401f05e4cfa98b09649f7501196037" class="font-mono underline">6f8f1fa</a> · inputs <span class="font-mono">01bf1e760527</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

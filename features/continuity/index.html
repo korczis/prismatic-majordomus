@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -219,6 +219,92 @@ what is worth remembering: the worker writes the required sections.</p>
           </li>
         </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/continuity.rs</p>
       </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/lifecycle/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Session lifecycle</a>
+          <code class="font-mono text-xs text-body-subtle">lifecycle</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">The episode lifecycle as an operator sees it: every open episode of this checkout&#39;s store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider&#39;s adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/lifecycle-closed/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The records a clone receives</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/lifecycle/closed</span><span>majordomus_lifecycle_closed</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/lifecycle-episodes/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every open episode</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/lifecycle/episodes</span><span>majordomus_lifecycle_episodes</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/lifecycle-providers/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What each provider&#39;s adapter declares</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/lifecycle/providers</span><span>majordomus_lifecycle_providers</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/lifecycle-recovery/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What the store needs somebody to do</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/lifecycle/recovery</span><span>majordomus_lifecycle_recovery</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/lifecycle-runtime/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The commit this process is answering about</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/lifecycle/runtime</span><span>majordomus_lifecycle_runtime</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/lifecycle.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/session-domain/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">The session domain</a>
+          <code class="font-mono text-xs text-body-subtle">session_domain</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider&#39;s own session — each with the canonical value and each store&#39;s own spelling of it, because the stores spell six things as three words and nothing said so.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/session-domain-identity/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">What identifies this checkout, and how each store spells it</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/session/identity</span><span>majordomus_session_identity</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/session-domain-machine/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The episode lifecycle, as data</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/session/machine</span><span>majordomus_session_machine</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/session_domain.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/recover/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Recovery of the record stores</a>
+          <code class="font-mono text-xs text-body-subtle">recover</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/recover-orphans/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Classify every stray file of the record stores, and sweep the ones that are nobody&#39;s</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>POST /api/v1/recover/orphans</span><span>majordomus_recover_orphans</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/recover.rs</p>
+      </section>
     </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The commands that run it</h2>
     <ul class="mt-4 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
@@ -263,6 +349,13 @@ what is worth remembering: the worker writes the required sections.</p>
           <span class="font-mono text-xs text-body-subtle">work · read-only</span>
         </p>
         <p class="mt-1 text-sm text-body">List, show and render the repository&#39;s own prompt assets, substituting known tokens only.</p>
+      </li>
+      <li class="p-4">
+        <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <a href="https://majordomus.dev/commands/recover/" class="font-mono text-sm font-semibold text-heading hover:text-fg-brand hover:underline">majordomus recover</a>
+          <span class="font-mono text-xs text-body-subtle">setup</span>
+        </p>
+        <p class="mt-1 text-sm text-body">Close episodes nobody ended, fold duplicate records, classify the stores&#39; stray files.</p>
       </li>
     </ul>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The objects it is made of</h2>
@@ -391,9 +484,9 @@ what is worth remembering: the worker writes the required sections.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">1</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">1</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">1</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">9</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">9</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">9</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">objects of its kinds</dt><dd class="font-mono text-sm text-heading">26</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">8</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">11</dd></div>
@@ -474,7 +567,7 @@ what is worth remembering: the worker writes the required sections.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f8f1fa67c401f05e4cfa98b09649f7501196037" class="font-mono underline">6f8f1fa</a> · inputs <span class="font-mono">01bf1e760527</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

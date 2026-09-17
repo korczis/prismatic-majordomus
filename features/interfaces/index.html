@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -289,6 +289,120 @@ machine. It does not run a model and it does not route work to one.</p>
           </li>
         </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/web.rs</p>
       </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/environment/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Repository environment</a>
+          <code class="font-mono text-xs text-body-subtle">environment</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit&#39;s overview and this route are renderings of the same value.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/environment-explain/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Where an environment value came from</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/environment/explain</span><span>majordomus_environment_explain</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/environment-status/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The repository environment</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/environment</span><span>majordomus_environment</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/environment.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/executions/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Executions</a>
+          <code class="font-mono text-xs text-body-subtle">executions</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">behaviorally verified</span>
+        </p>
+        <p class="mt-2 text-sm text-body">Running a capability of this registry as work that can be watched: started, followed event by event over the live channel, read back afterwards, and asked to stop. In memory; an execution does not outlive the process that accepted it.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-cancel/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Ask an execution to stop</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus executions cancel</span><span>POST /api/v1/executions/cancel</span><span>majordomus_execution_cancel</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-demonstrate/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Demonstrate an execution</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/executions/demonstrate</span><span>majordomus_demonstrate_execution</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-events/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">An execution&#39;s event history</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus executions events</span><span>GET /api/v1/executions/events</span><span>majordomus_execution_events</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-get/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One execution</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus executions show</span><span>GET /api/v1/executions/get</span><span>majordomus_execution</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-list/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">List executions</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus executions list</span><span>GET /api/v1/executions</span><span>majordomus_executions</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-protocol/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The live channel&#39;s contract</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus executions protocol</span><span>GET /api/v1/executions/protocol</span><span>majordomus_execution_protocol</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/executions-start/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Start a capability as an execution</a>
+              <span class="font-mono text-xs text-body-subtle">command</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span class="text-heading">$ majordomus run</span><span>POST /api/v1/executions/start</span><span>majordomus_execution_start</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/executions.rs</p>
+      </section>
+      <section class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
+        <p class="flex flex-wrap items-baseline gap-2">
+          <a href="https://majordomus.dev/registry/modules/commands/" class="text-base font-semibold text-heading hover:text-fg-brand hover:underline">Command graph</a>
+          <code class="font-mono text-xs text-body-subtle">commands</code>
+          <span class="ms-auto font-mono text-xs text-body-subtle">implemented</span>
+        </p>
+        <p class="mt-2 text-sm text-body">Every command this repository offers, from whichever program offers it: the Rust executable, the shell tool that carries the task lifecycle, and the workflows the repository declares for a person to run. Composed from the three declarations that already exist — the clap tree, the shipped command registry and the workflow runner&#39;s own dump — never from a list. Each command carries what running it changes, what it needs, where its argument values come from, and every surface that carries it, with the reason when one does not.</p>
+        <ul class="mt-3 divide-y divide-default border-t border-default">
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/commands-get/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">One command in full</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/command</span><span>majordomus_command</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/commands-graph/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">The whole command graph</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/commands/graph</span><span>majordomus_command_graph</span></p>
+          </li>
+          <li class="py-2">
+            <p class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <a href="https://majordomus.dev/registry/capabilities/commands-list/" class="text-sm font-medium text-heading hover:text-fg-brand hover:underline">Every command, one line each</a>
+              <span class="font-mono text-xs text-body-subtle">query</span>
+            </p>
+            <p class="mt-1 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-body"><span>GET /api/v1/commands</span><span>majordomus_commands</span></p>
+          </li>
+        </ul><p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/capability/builtin/commands.rs</p>
+      </section>
     </div>
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What it answers</h2>
     <p class="mt-2 text-body">Operational moments from the Why catalogue that name one of this feature's mechanisms. Nothing here was assigned: a moment appears because it names a rule, a command, a capability or a claim this feature also names.</p>
@@ -407,10 +521,10 @@ machine. It does not run a model and it does not route work to one.</p>
   </div><aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
     <h2 class="text-sm font-semibold uppercase tracking-wide text-body-subtle">Counted at build time</h2>
     <dl class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary-soft">
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">8</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">8</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">8</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">1</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">capabilities</dt><dd class="font-mono text-sm text-heading">20</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">20</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">20</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">command-line paths</dt><dd class="font-mono text-sm text-heading">7</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">4</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">11</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">31</dd></div>
@@ -492,7 +606,7 @@ machine. It does not run a model and it does not route work to one.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/6f8f1fa67c401f05e4cfa98b09649f7501196037" class="font-mono underline">6f8f1fa</a> · inputs <span class="font-mono">01bf1e760527</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/826dde7782a6d69f34c80e559f94bb7c5ea794ab" class="font-mono underline">826dde7</a> · inputs <span class="font-mono">a67b6144ad2f</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
