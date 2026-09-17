@@ -35,8 +35,8 @@ pub struct CaseContext<'a> {
 }
 
 impl<'a> CaseContext<'a> {
-    /// The case context of a live context: what a caller that holds a [`Context`] hands to
-    /// a case provider.
+    /// The case context of a live context: what a caller that holds a
+    /// [`crate::capability::Context`] hands to a case provider.
     ///
     /// It exists so that reaching a provider does not require reaching into the index at
     /// the call site. A benchmark case is declared against the index by design — the
