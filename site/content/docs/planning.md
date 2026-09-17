@@ -246,6 +246,11 @@ there: its stage falls back to `verifying`, and nothing about the intent was wri
 `criterion_closed_unmet` (every issue serving a criterion DONE, the criterion unmet) are
 warnings, as is live work that serves no intent (`work_serves_no_intent`).
 
+In the Cockpit, `/cockpit/intents` lists every intent with its stage and the work realising it,
+and `/cockpit/intents/<id>` shows one: each criterion with its evidence state, linked to the test
+object it names and to the issues serving it, and each unit of work with the provenance of its
+link. Both pages render the capabilities above and decide nothing themselves.
+
 `test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh` is the loop end
 to end: declared, realised across two providers and a handover, closed while one case fails,
 fixed, satisfied, broken again and repaired — with the intent file byte-identical throughout.

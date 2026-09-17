@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.7.0"
   },
-  "fingerprint": "1e47c987ede2c854cc37e4d259991ae9175ea8d5b1ac18ba75e5bae2111baebd",
+  "fingerprint": "cd2b306425d7dc2b0abe87d1a1d7574296bcc5bd92824da51b1aad4ef63c6eef",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -13,11 +13,11 @@
     "featured": 13,
     "providers": 6,
     "modules": 39,
-    "modules_covered": 22,
+    "modules_covered": 24,
     "commands": 30,
     "commands_covered": 28,
     "kinds": 29,
-    "kinds_covered": 22
+    "kinds_covered": 23
   },
   "surfaces": [
     {
@@ -5527,14 +5527,17 @@
       ],
       "audiences": [],
       "modules": [
-        "trace"
+        "trace",
+        "intents",
+        "intent_realization"
       ],
       "commands": [
         "plan"
       ],
       "kinds": [
         "milestone",
-        "issue"
+        "issue",
+        "intent"
       ],
       "rules": [
         "majordomus.project-integrity",
@@ -5561,7 +5564,9 @@
         "deliver-issues-in-waves",
         "complete-an-issue-only-with-its-evidence"
       ],
-      "cockpit": [],
+      "cockpit": [
+        "intents"
+      ],
       "web": [],
       "related": [
         "worktrees",
@@ -5615,6 +5620,88 @@
               "route": "GET /api/v1/trace"
             }
           ]
+        },
+        {
+          "id": "intents",
+          "title": "Intent",
+          "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+          "capabilities": [
+            {
+              "id": "intents.coverage",
+              "title": "Which work carries which criterion, and why each issue exists",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_coverage",
+              "route": "GET /api/v1/intents/coverage",
+              "cli": "majordomus intent coverage"
+            },
+            {
+              "id": "intents.list",
+              "title": "Every intent, with its derived stage",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intents",
+              "resource": "majordomus://intents",
+              "route": "GET /api/v1/intents",
+              "cli": "majordomus intent list"
+            },
+            {
+              "id": "intents.preflight",
+              "title": "Which intent a piece of work serves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_preflight",
+              "route": "GET /api/v1/intents/preflight",
+              "cli": "majordomus intent preflight"
+            },
+            {
+              "id": "intents.record",
+              "title": "One intent, with everything derived about it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_record",
+              "route": "GET /api/v1/intents/record",
+              "cli": "majordomus intent show"
+            },
+            {
+              "id": "intents.validate",
+              "title": "What the intent model refuses",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_validate",
+              "route": "GET /api/v1/intents/validate",
+              "cli": "majordomus intent validate"
+            }
+          ]
+        },
+        {
+          "id": "intent_realization",
+          "title": "Intent realization",
+          "description": "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+          "capabilities": [
+            {
+              "id": "intent_realization.explain",
+              "title": "Why an intent stands where it stands",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_explain",
+              "route": "GET /api/v1/intents/explain",
+              "cli": "majordomus intent explain"
+            },
+            {
+              "id": "intent_realization.work",
+              "title": "Which work realises which intent, and what each still lacks",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_realization",
+              "route": "GET /api/v1/intents/realization",
+              "cli": "majordomus intent realization"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -5633,6 +5720,10 @@
         {
           "name": "issue",
           "objects": 220
+        },
+        {
+          "name": "intent",
+          "objects": 2
         }
       ],
       "rule_refs": [
@@ -5731,7 +5822,13 @@
           "category": "completion"
         }
       ],
-      "cockpit_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "intents",
+          "title": "Intents",
+          "route": "/cockpit/intents"
+        }
+      ],
       "web_refs": [],
       "moments": [
         {
@@ -5773,13 +5870,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 3,
-        "mcp_resources": 242,
-        "http_routes": 3,
-        "cli_paths": 0,
+        "capabilities": 10,
+        "mcp_tools": 10,
+        "mcp_resources": 245,
+        "http_routes": 10,
+        "cli_paths": 7,
         "commands": 1,
-        "objects": 241,
+        "objects": 243,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5794,7 +5891,7 @@
           "rejected": 1
         },
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 3
         }
       }
     },
@@ -8527,12 +8624,16 @@
       {
         "id": "intent_realization",
         "title": "Intent realization",
-        "features": []
+        "features": [
+          "planning"
+        ]
       },
       {
         "id": "intents",
         "title": "Intent",
-        "features": []
+        "features": [
+          "planning"
+        ]
       },
       {
         "id": "lifecycle",
@@ -8969,7 +9070,9 @@
       {
         "id": "intent",
         "title": "intent (2)",
-        "features": []
+        "features": [
+          "planning"
+        ]
       },
       {
         "id": "issue",
@@ -9813,6 +9916,11 @@
       "id": "continuity",
       "title": "Continuity",
       "route": "/cockpit/continuity"
+    },
+    {
+      "id": "intents",
+      "title": "Intents",
+      "route": "/cockpit/intents"
     },
     {
       "id": "worktrees",

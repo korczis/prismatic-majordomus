@@ -58,6 +58,8 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
 | `/cockpit/continuity` | what this checkout's lifecycle is holding, and what the subsystem around it is doing: the open episode the briefing is about, the active task, the records that resolve here with their labels, the blockers — then every open episode of the store, this process against the repository, recovery, the providers, and the tracked records | `continuity.state`, `lifecycle.episodes`, `lifecycle.runtime`, `lifecycle.recovery`, `lifecycle.providers`, `lifecycle.closed` |
+| `/cockpit/intents` | every intent with its derived stage, the criteria with current evidence, the work and providers realising it, and the findings — closed work the evidence contradicts among them | `intent_realization.work` |
+| `/cockpit/intents/<id>` | one intent: how far reality is from it, each criterion with its evidence state, a link to the test object it names, the issues serving it and the command that reproduces it; the milestones; every task, session record and peer claim realising it with the provenance of its link, its providers and handovers; and why it stands where it stands | `intent_realization.explain` |
 | `/cockpit/health` | one check per dimension, each with the engine that decided it and the command that reproduces it | `health.report` |
 | `/cockpit/api` | every HTTP route the registry projects, and the projection's own | the registry |
 | `/cockpit/search` | capabilities and objects matching one query | the registry, `objects.search` |

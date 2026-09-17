@@ -163,7 +163,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/design.md` | `design` | markdown | 9232 | `083f7ceb25f13746` |
 | `docs/generated/design.yaml` | `design` | yaml | 102269 | `9842d08e5c11f93a` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
-| `docs/generated/graph.json` | `graph` | json | 2120473 | `75ebe23d1dc3bf3e` |
+| `docs/generated/graph.json` | `graph` | json | 2120610 | `ed14f1de798e0410` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7616 | `72d15f5c4a9efc7b` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `7a868225421a095f` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `d1756848aa3467f2` |
@@ -266,9 +266,9 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `78a5d8af59bf7055` |
 | `site/data/registry/design.json` | `site-design` | json | 9987 | `f2aa57f921982ab3` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `67715cc11b62368e` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 70383 | `62046a8a48a28745` |
-| `site/data/registry/product.json` | `site-product` | json | 347321 | `ce9a0240becb68d6` |
-| `site/data/registry/registry.json` | `site-registry` | json | 3716178 | `e72fe5fa6f1a9538` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 72641 | `f7b130428dd36d19` |
+| `site/data/registry/product.json` | `site-product` | json | 351980 | `3e194d602d025340` |
+| `site/data/registry/registry.json` | `site-registry` | json | 3716178 | `ad8d4d619c995642` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `ba28783906e4a27e` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a3aa369ada292dc5` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `6cc0896d832bf7a7` |

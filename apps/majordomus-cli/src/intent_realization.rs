@@ -42,9 +42,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::capability::builtin::continuity::{document, read_task};
 use crate::index::Index;
-use crate::intent::{
-    IntentEvidenceState, IntentFinding, IntentStage, IntentView, Intents, WARN,
-};
+use crate::intent::{IntentEvidenceState, IntentFinding, IntentStage, IntentView, Intents, WARN};
 use crate::intent_plan::{CoverageStrength, CriterionCoverage, IntentCoverage};
 use crate::ledger::Entry;
 use crate::peers::Peer;
@@ -122,6 +120,22 @@ pub enum IntentWorkKind {
     SessionRecord,
 }
 
+impl IntentWorkKind {
+    /// The word every surface prints.
+    ///
+    /// ```
+    /// use majordomus_cli::intent_realization::IntentWorkKind;
+    /// assert_eq!(IntentWorkKind::SessionRecord.as_str(), "session_record");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntentWorkKind::Task => "task",
+            IntentWorkKind::PeerClaim => "peer_claim",
+            IntentWorkKind::SessionRecord => "session_record",
+        }
+    }
+}
+
 /// The fact a link was read from.
 ///
 /// ```
@@ -145,6 +159,21 @@ pub enum IntentLinkVia {
 }
 
 impl IntentLinkVia {
+    /// The word every surface prints.
+    ///
+    /// ```
+    /// use majordomus_cli::intent_realization::IntentLinkVia;
+    /// assert_eq!(IntentLinkVia::ScopeOverlap.as_str(), "scope_overlap");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            IntentLinkVia::NamedIssue => "named_issue",
+            IntentLinkVia::MovedIssue => "moved_issue",
+            IntentLinkVia::BranchIssue => "branch_issue",
+            IntentLinkVia::ScopeOverlap => "scope_overlap",
+        }
+    }
+
     /// The provenance this kind of fact carries. One mapping, so no reader can grade the same
     /// fact two ways.
     ///
@@ -404,7 +433,10 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
             if matches!(i.status.as_str(), "DONE" | "CANCELLED" | "SUPERSEDED") {
                 continue;
             }
-            if i.scope.iter().any(|s| unit.scope.iter().any(|p| overlap(s, p))) {
+            if i.scope
+                .iter()
+                .any(|s| unit.scope.iter().any(|p| overlap(s, p)))
+            {
                 best.insert(i.id.clone(), IntentLinkVia::ScopeOverlap);
             }
         }
@@ -418,7 +450,10 @@ pub fn link(unit: IntentWorkUnit, intents: &Intents, plan: &Plan) -> IntentReali
         };
         let serving = intents.serving(&pi.milestone);
         if serving.is_empty() {
-            unserved.entry(pi.milestone.clone()).or_default().push(issue.clone());
+            unserved
+                .entry(pi.milestone.clone())
+                .or_default()
+                .push(issue.clone());
         }
         for intent in serving {
             let prefix = format!("{}#", intent.id);
@@ -626,8 +661,11 @@ pub fn drift(view: &IntentView, plan: &Plan) -> Vec<IntentFinding> {
     let mut out = Vec::new();
     for c in view.satisfaction.iter().filter(|c| !c.met) {
         let key = format!("{}#{}", view.id, c.id);
-        let serving: Vec<&crate::plan::PlanIssue> =
-            plan.issues.iter().filter(|i| i.serves.contains(&key)).collect();
+        let serving: Vec<&crate::plan::PlanIssue> = plan
+            .issues
+            .iter()
+            .filter(|i| i.serves.contains(&key))
+            .collect();
         match view.stage {
             IntentStage::Verifying
                 if matches!(
@@ -920,7 +958,10 @@ pub fn explain(
         .collect();
     for c in &view.satisfaction {
         let mut s = if c.met {
-            format!("`{}` is met: its {} `{}` has current evidence", c.id, c.evidence, c.reference)
+            format!(
+                "`{}` is met: its {} `{}` has current evidence",
+                c.id, c.evidence, c.reference
+            )
         } else {
             format!(
                 "`{}` is not met: its {} `{}` has {}",
@@ -1047,7 +1088,10 @@ pub fn tasks_from_ledger(
     // the episode's own start line names its provider since ADR 0075; a provider event names it
     // for episodes opened before that
     for e in entries.iter().filter(|e| {
-        matches!(e.event.as_str(), "session.started" | "provider.event.received")
+        matches!(
+            e.event.as_str(),
+            "session.started" | "provider.event.received"
+        )
     }) {
         let provider = payload_str(e, "provider");
         if let (Some(s), false) = (&e.session, provider.is_empty()) {
@@ -1159,7 +1203,11 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
     if let Some(a) = &active {
         if !units.iter().any(|u| u.id == a.id) {
             let mut u = IntentWorkUnit::new(IntentWorkKind::Task, &a.id);
-            u.outcome = if a.outcome.is_empty() { "active".into() } else { a.outcome.clone() };
+            u.outcome = if a.outcome.is_empty() {
+                "active".into()
+            } else {
+                a.outcome.clone()
+            };
             units.push(u);
         }
     }
@@ -1185,18 +1233,33 @@ pub fn gather(root: &Path, index: &Index, peers: &[Peer]) -> (Vec<IntentWorkUnit
         .collect();
     let strings = |v: Option<&serde_json::Value>| -> Vec<String> {
         v.and_then(|v| v.as_array())
-            .map(|a| a.iter().filter_map(|x| x.as_str().map(str::to_string)).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|x| x.as_str().map(str::to_string))
+                    .collect()
+            })
             .unwrap_or_default()
     };
     for o in index.objects.iter().filter(|o| o.kind == "session") {
         let m = &o.metadata;
-        let sid = m.get("session_id").and_then(|v| v.as_str()).unwrap_or_default();
+        let sid = m
+            .get("session_id")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default();
         if sid.is_empty() || held.contains(sid) {
             continue;
         }
         let mut u = IntentWorkUnit::new(IntentWorkKind::SessionRecord, sid);
-        u.title = m.get("title").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-        u.outcome = m.get("outcome").and_then(|v| v.as_str()).unwrap_or_default().to_string();
+        u.title = m
+            .get("title")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
+        u.outcome = m
+            .get("outcome")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
         push_once(
             &mut u.branches,
             m.get("branch").and_then(|v| v.as_str()).unwrap_or_default(),

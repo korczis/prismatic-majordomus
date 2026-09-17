@@ -31,6 +31,8 @@ const PAGES: &[&str] = &[
     // renders only when a query string selects something is a page whose failure nobody
     // sees, and each of these is one arm of the same match.
     "/cockpit/worktrees",
+    "/cockpit/intents",
+    "/cockpit/intents/fixture-intent",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",

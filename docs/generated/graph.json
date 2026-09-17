@@ -12554,6 +12554,9 @@
             "github-projection",
             "task-dependencies"
           ],
+          "cockpit": [
+            "intents"
+          ],
           "commands": [
             "plan"
           ],
@@ -12565,10 +12568,13 @@
           "headline": "An issue records what happened to it and the engine derives whether it is blocked, ready, active, verifying or done from the dependency graph, so the roadmap cannot disagree with the plan.",
           "kinds": [
             "milestone",
-            "issue"
+            "issue",
+            "intent"
           ],
           "modules": [
-            "trace"
+            "trace",
+            "intents",
+            "intent_realization"
           ],
           "related": [
             "worktrees",

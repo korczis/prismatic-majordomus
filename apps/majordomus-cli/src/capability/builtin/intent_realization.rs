@@ -26,9 +26,7 @@ use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
 use crate::intent::{IntentFinding, Intents, RepositoryEvidence, INTENT};
-use crate::intent_realization::{
-    explain, gather, realize, IntentExplanation, IntentRealization,
-};
+use crate::intent_realization::{explain, gather, realize, IntentExplanation, IntentRealization};
 use crate::plan::Plan;
 use crate::{capability, module};
 
@@ -60,7 +58,10 @@ fn first_intent(ctx: &CaseContext<'_>) -> Option<String> {
 
 impl BenchmarkCases for IntentRealizationInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
-        let mut cases = vec![NamedCase::new("every-intent", IntentRealizationInput::default())];
+        let mut cases = vec![NamedCase::new(
+            "every-intent",
+            IntentRealizationInput::default(),
+        )];
         if let Some(id) = first_intent(ctx) {
             cases.push(NamedCase::new(
                 "first-intent",
@@ -89,7 +90,11 @@ impl BenchmarkCases for IntentExplainInput {
     fn benchmark_cases(ctx: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         let id = first_intent(ctx);
         vec![NamedCase::new(
-            if id.is_some() { "first-intent" } else { "absent" },
+            if id.is_some() {
+                "first-intent"
+            } else {
+                "absent"
+            },
             IntentExplainInput {
                 id: id.unwrap_or_else(|| "absent".into()),
             },
@@ -131,7 +136,12 @@ fn realization_work(
     input: IntentRealizationInput,
 ) -> Result<IntentRealization, CapabilityError> {
     let (_, intents, mut r) = derived(ctx)?;
-    let Some(id) = input.intent.as_deref().map(str::trim).filter(|s| !s.is_empty()) else {
+    let Some(id) = input
+        .intent
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+    else {
         return Ok(r);
     };
     if intents.intent(id).is_none() {
@@ -149,7 +159,9 @@ fn realization_explain(
     input: IntentExplainInput,
 ) -> Result<IntentExplanation, CapabilityError> {
     let (plan, intents, r) = derived(ctx)?;
-    let view = intents.intent(input.id.trim()).ok_or_else(|| not_found(&input.id))?;
+    let view = intents
+        .intent(input.id.trim())
+        .ok_or_else(|| not_found(&input.id))?;
     let coverage = Intents::coverage(&ctx.index, &plan);
     Ok(explain(view, &coverage, &r))
 }
