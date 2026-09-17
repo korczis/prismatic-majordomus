@@ -11,6 +11,7 @@ weight: 45
 featured: true
 areas: [coordination]
 modules: [mesh]
+kinds: [mesh-declaration]
 rules: [project.mesh-is-observation-not-authority, project.mesh-cooperation-is-authenticated]
 docs: [docs/MESH.md]
 adrs: [adr-0050, adr-0067]

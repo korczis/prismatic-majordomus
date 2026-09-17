@@ -6,23 +6,23 @@
     "version": "0.8.0"
   },
   "registry": {
-    "fingerprint": "14a267e6252c2ac500e30dad4cd2c86562bce4f4576dce259ea567bdd555f0ed",
+    "fingerprint": "70860824614ae8a08eb5cf8269454dc7a1036172b1410e34e481512df4a412f9",
     "summary": {
-      "total": 1496,
+      "total": 1498,
       "builtin": 129,
-      "declarative": 1367,
+      "declarative": 1369,
       "by_kind": {
         "command": 18,
         "query": 111,
-        "resource": 1367
+        "resource": 1369
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 23,
-        "implemented": 1373
+        "implemented": 1375
       },
       "mcp_tools": 124,
-      "mcp_resources": 1408,
+      "mcp_resources": 1410,
       "http_routes": 128,
       "cli_commands": 52,
       "modules": 66,
@@ -45537,7 +45537,7 @@
         "title": "document",
         "description": "Declarative objects of kind 'document' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 253,
+        "capabilities": 255,
         "capability_ids": []
       },
       {
@@ -45799,7 +45799,7 @@
       {
         "id": "plan",
         "title": "The plan and its derivations",
-        "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
+        "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
         "stability": "behaviorally_verified",
         "source": "builtin",
         "capabilities": 9,
@@ -46080,7 +46080,7 @@
     ]
   },
   "index": {
-    "fingerprint": "461b2cefc2d121dab2e22cb3cdcf561e1e52a93c859e3f6627eec4298038422e",
+    "fingerprint": "ed266731f8a430e7d9d82e7d67370f6218458252175bff44a5386928daaaf9f1",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -46112,7 +46112,7 @@
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 253,
+      "document": 255,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -46895,7 +46895,7 @@
         "path": ".ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 13224,
+        "bytes": 13228,
         "tags": [
           "release",
           "versioning",
@@ -49870,7 +49870,7 @@
         "title": "AGENTS.md",
         "path": "AGENTS.md",
         "source_class": "readme",
-        "bytes": 6864
+        "bytes": 6928
       },
       {
         "uri": "majordomus://document/CLAUDE.md",
@@ -49879,7 +49879,7 @@
         "title": "CLAUDE.md",
         "path": "CLAUDE.md",
         "source_class": "readme",
-        "bytes": 6153
+        "bytes": 6217
       },
       {
         "uri": "majordomus://document/CONTRIBUTING.md",
@@ -49987,7 +49987,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 35974
+        "bytes": 36289
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -50023,7 +50023,7 @@
         "title": "Concepts",
         "path": "docs/CONCEPTS.md",
         "source_class": "document",
-        "bytes": 13338
+        "bytes": 22522
       },
       {
         "uri": "majordomus://document/docs/CONTEXT.md",
@@ -50197,6 +50197,24 @@
         "bytes": 24373
       },
       {
+        "uri": "majordomus://document/docs/GUIDE.md",
+        "kind": "document",
+        "identity": "docs/GUIDE.md",
+        "title": "Guide — what Majordomus does for a team, how each part works, and the tests that prove it",
+        "path": "docs/GUIDE.md",
+        "source_class": "document",
+        "bytes": 26756
+      },
+      {
+        "uri": "majordomus://document/docs/HOW_IT_WORKS.md",
+        "kind": "document",
+        "identity": "docs/HOW_IT_WORKS.md",
+        "title": "How Majordomus works — one repository model, many projections",
+        "path": "docs/HOW_IT_WORKS.md",
+        "source_class": "document",
+        "bytes": 72343
+      },
+      {
         "uri": "majordomus://document/docs/INSTALL.md",
         "kind": "document",
         "identity": "docs/INSTALL.md",
@@ -50212,7 +50230,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 41612
+        "bytes": 41711
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -50293,7 +50311,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 18103
+        "bytes": 18958
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -50401,7 +50419,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 24483
+        "bytes": 24658
       },
       {
         "uri": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -52053,7 +52071,7 @@
         "path": ".ai/repo/features/cockpit.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2231,
+        "bytes": 2239,
         "tags": [
           "cockpit",
           "interface"
@@ -52084,7 +52102,7 @@
         "path": ".ai/repo/features/context.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2255,
+        "bytes": 2267,
         "tags": [
           "context",
           "scope"
@@ -52099,7 +52117,7 @@
         "path": ".ai/repo/features/continuity.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2906,
+        "bytes": 2951,
         "tags": [
           "sessions",
           "handover",
@@ -52146,7 +52164,7 @@
         "path": ".ai/repo/features/declare-once.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2931,
+        "bytes": 2940,
         "tags": [
           "architecture",
           "projections"
@@ -52209,7 +52227,7 @@
         "path": ".ai/repo/features/finish-contract.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2438,
+        "bytes": 2468,
         "tags": [
           "verification",
           "contract"
@@ -52224,7 +52242,7 @@
         "path": ".ai/repo/features/install.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2138,
+        "bytes": 2172,
         "tags": [
           "install",
           "distribution",
@@ -52240,7 +52258,7 @@
         "path": ".ai/repo/features/interfaces.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2835,
+        "bytes": 2870,
         "tags": [
           "mcp",
           "http",
@@ -52273,7 +52291,7 @@
         "path": ".ai/repo/features/mesh.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 3984,
+        "bytes": 4010,
         "tags": [
           "mesh",
           "discovery",
@@ -52308,7 +52326,7 @@
         "path": ".ai/repo/features/planning.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2252,
+        "bytes": 2267,
         "tags": [
           "plan",
           "milestones",
@@ -52460,7 +52478,7 @@
         "identity": "lib/bench.sh",
         "path": "lib/bench.sh",
         "source_class": "library",
-        "bytes": 18924
+        "bytes": 19153
       },
       {
         "uri": "majordomus://implementation/lib/capture.sh",
@@ -52572,7 +52590,7 @@
         "identity": "lib/evidence.sh",
         "path": "lib/evidence.sh",
         "source_class": "library",
-        "bytes": 28295
+        "bytes": 28303
       },
       {
         "uri": "majordomus://implementation/lib/finish.sh",
@@ -52596,7 +52614,7 @@
         "identity": "lib/handover.sh",
         "path": "lib/handover.sh",
         "source_class": "library",
-        "bytes": 6613
+        "bytes": 7164
       },
       {
         "uri": "majordomus://implementation/lib/history.sh",
@@ -57563,7 +57581,7 @@
         "path": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 4510,
+        "bytes": 5371,
         "tags": [
           "web",
           "homepage",
@@ -58788,7 +58806,7 @@
         "identity": "test/cases/04_start_check.sh",
         "path": "test/cases/04_start_check.sh",
         "source_class": "case",
-        "bytes": 5631
+        "bytes": 6210
       },
       {
         "uri": "majordomus://test/test/cases/05_handover.sh",
@@ -58796,7 +58814,7 @@
         "identity": "test/cases/05_handover.sh",
         "path": "test/cases/05_handover.sh",
         "source_class": "case",
-        "bytes": 2816
+        "bytes": 3426
       },
       {
         "uri": "majordomus://test/test/cases/06_finish.sh",
@@ -59292,7 +59310,7 @@
         "identity": "test/cases/15_command_surface.sh",
         "path": "test/cases/15_command_surface.sh",
         "source_class": "case",
-        "bytes": 4860
+        "bytes": 5640
       },
       {
         "uri": "majordomus://test/test/cases/16_profiles.sh",
@@ -59708,7 +59726,7 @@
         "identity": "test/cases/333_homepage_narrative.sh",
         "path": "test/cases/333_homepage_narrative.sh",
         "source_class": "case",
-        "bytes": 7807
+        "bytes": 10318
       },
       {
         "uri": "majordomus://test/test/cases/334_ui_audit_hears_uncaught_errors.sh",
@@ -61091,7 +61109,7 @@
       "front_matter": "optional",
       "schema": "majordomus.document/v1",
       "identity": [],
-      "objects": 253
+      "objects": 255
     },
     {
       "name": "feature",

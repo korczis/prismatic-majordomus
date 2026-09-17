@@ -9866,6 +9866,22 @@
         "source": "docs/GITHUB_PAGES_PERFORMANCE.md"
       },
       {
+        "id": "majordomus://document/docs/GUIDE.md",
+        "kind": "document",
+        "label": "docs/GUIDE.md",
+        "summary": "Guide — what Majordomus does for a team, how each part works, and the tests that prove it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FGUIDE.md",
+        "source": "docs/GUIDE.md"
+      },
+      {
+        "id": "majordomus://document/docs/HOW_IT_WORKS.md",
+        "kind": "document",
+        "label": "docs/HOW_IT_WORKS.md",
+        "summary": "How Majordomus works — one repository model, many projections",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FHOW_IT_WORKS.md",
+        "source": "docs/HOW_IT_WORKS.md"
+      },
+      {
         "id": "majordomus://document/docs/INSTALL.md",
         "kind": "document",
         "label": "docs/INSTALL.md",
@@ -11627,7 +11643,8 @@
           ],
           "featured": true,
           "modules": [
-            "health"
+            "health",
+            "design"
           ],
           "related": [
             "interfaces",
@@ -11737,7 +11754,8 @@
           ],
           "modules": [
             "directories",
-            "repository"
+            "repository",
+            "devcontext"
           ],
           "related": [
             "continuity",
@@ -11806,7 +11824,8 @@
             "handover",
             "session",
             "capture",
-            "prompt"
+            "prompt",
+            "recover"
           ],
           "docs": [
             "docs/CONTINUITY.md",
@@ -11819,7 +11838,10 @@
             "prompt"
           ],
           "modules": [
-            "continuity"
+            "continuity",
+            "lifecycle",
+            "session_domain",
+            "recover"
           ],
           "related": [
             "knowledge",
@@ -12018,7 +12040,8 @@
           "modules": [
             "capabilities",
             "artifacts",
-            "product"
+            "product",
+            "quality"
           ],
           "related": [
             "interfaces",
@@ -12236,6 +12259,10 @@
           ],
           "featured": true,
           "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, and nothing is written to the record until all of them pass.",
+          "modules": [
+            "gates",
+            "obligations"
+          ],
           "related": [
             "doctrine",
             "coordination"
@@ -12291,7 +12318,8 @@
           "commands": [
             "init",
             "migrate",
-            "version"
+            "version",
+            "archive"
           ],
           "docs": [
             "docs/INSTALL.md",
@@ -12300,10 +12328,12 @@
           "featured": false,
           "headline": "The installer downloads one archive for your machine, verifies its digest against the release metadata before unpacking anything, and installs atomically; no git, no Rust, no Node, no root.",
           "kinds": [
-            "distribution-model"
+            "distribution-model",
+            "release-record"
           ],
           "modules": [
-            "distribution"
+            "distribution",
+            "release"
           ],
           "related": [
             "policy"
@@ -12372,7 +12402,10 @@
           "modules": [
             "repository",
             "objects",
-            "web"
+            "web",
+            "environment",
+            "executions",
+            "commands"
           ],
           "related": [
             "declare-once",
@@ -12518,6 +12551,9 @@
             "docs/MESH.md"
           ],
           "featured": true,
+          "kinds": [
+            "mesh-declaration"
+          ],
           "modules": [
             "mesh"
           ],
@@ -12622,7 +12658,9 @@
             "issue"
           ],
           "modules": [
-            "trace"
+            "trace",
+            "plan",
+            "devtask"
           ],
           "related": [
             "worktrees",
@@ -44143,6 +44181,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/GUIDE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/HOW_IT_WORKS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/INSTALL.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -55644,8 +55692,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1762,
-      "edges": 3963,
+      "nodes": 1764,
+      "edges": 3965,
       "acyclic": true,
       "truncated": false
     }
