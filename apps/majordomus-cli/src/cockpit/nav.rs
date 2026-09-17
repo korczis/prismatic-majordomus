@@ -47,6 +47,8 @@ pub enum Area {
     Executions,
     /// What this checkout's lifecycle is holding.
     Continuity,
+    /// What must become true, how far reality is from it, and the work realising it.
+    Intents,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
     /// The discovered nodes of the mesh, and the machinery that observes them.
@@ -133,6 +135,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Continuity",
             href: "/cockpit/continuity",
             area: Area::Continuity,
+        },
+        AreaInfo {
+            id: "intents",
+            label: "Intents",
+            href: "/cockpit/intents",
+            area: Area::Intents,
         },
         AreaInfo {
             id: "worktrees",

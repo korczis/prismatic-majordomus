@@ -488,7 +488,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "53 object(s) of the layer",
+      "summary": "54 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -555,10 +555,17 @@
       "source": "share/kinds.yaml"
     },
     {
+      "id": "kind:intent",
+      "kind": "kind",
+      "label": "intent",
+      "summary": "2 object(s) of the layer",
+      "source": "share/kinds.yaml"
+    },
+    {
       "id": "kind:issue",
       "kind": "kind",
       "label": "issue",
-      "summary": "219 object(s) of the layer",
+      "summary": "220 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -607,7 +614,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "139 object(s) of the layer",
+      "summary": "140 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -724,6 +731,24 @@
       "summary": "Health",
       "route": "/registry/modules/health/",
       "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:intent_realization",
+      "kind": "module",
+      "label": "intent_realization",
+      "summary": "Intent realization",
+      "route": "/registry/modules/intent-realization/",
+      "source": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:intents",
+      "kind": "module",
+      "label": "intents",
+      "summary": "Intent",
+      "route": "/registry/modules/intents/",
+      "source": "apps/majordomus-cli/src/capability/builtin/intents.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1627,12 +1652,27 @@
     },
     {
       "source": "feature:planning",
+      "target": "kind:intent",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:planning",
       "target": "kind:issue",
       "kind": "made_of"
     },
     {
       "source": "feature:planning",
       "target": "kind:milestone",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:planning",
+      "target": "module:intent_realization",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:planning",
+      "target": "module:intents",
       "kind": "made_of"
     },
     {
@@ -1941,6 +1981,16 @@
       "kind": "exposed_through"
     },
     {
+      "source": "kind:intent",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "kind:intent",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "kind:issue",
       "target": "surface:cockpit",
       "kind": "exposed_through"
@@ -2222,6 +2272,46 @@
     },
     {
       "source": "module:health",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intent_realization",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intent_realization",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intent_realization",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intent_realization",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intents",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intents",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intents",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:intents",
       "target": "surface:mcp",
       "kind": "exposed_through"
     },
@@ -2462,8 +2552,8 @@
     }
   ],
   "metadata": {
-    "nodes": 102,
-    "edges": 317,
+    "nodes": 105,
+    "edges": 330,
     "acyclic": false,
     "truncated": false
   },

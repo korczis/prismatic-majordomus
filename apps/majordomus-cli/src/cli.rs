@@ -151,6 +151,19 @@ pub enum IntentCommand {
         #[arg(long = "path")]
         paths: Vec<String>,
     },
+    /// Which work realises which intent — tasks, episodes, providers, handovers, peer claims —
+    /// each link with its provenance, and each intent's unmet criteria and drift; exit 10 when
+    /// an intent whose milestones are all DONE is contradicted by its evidence
+    Realization {
+        /// Only this intent and the work linked to it
+        #[arg(long)]
+        intent: Option<String>,
+    },
+    /// Why an intent stands where it stands: its stage, each criterion, the work realising it
+    Explain {
+        /// The intent's id
+        id: String,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -3138,6 +3151,38 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["intent", "preflight", "--issue", "I0001"],
             setup: &[],
             expect: Expect::StdoutContains(&["serves", "fixture-intent"]),
+        }],
+    },
+    CommandExamples {
+        command: "intent realization",
+        examples: &[
+            ExampleDoc {
+                id: "intent-realization",
+                title: "Which work realises which intent, and what each still lacks",
+                description: "Every intent with its unmet criteria and the work realising it, then every task, session record and peer claim with its strongest link — declared, observed, derived or inferred — or the first missing link. Exit 10 when an intent whose milestones are all DONE is contradicted by its evidence.",
+                argv: &["intent", "realization"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["fixture-intent", "unit(s) of work"]),
+            },
+            ExampleDoc {
+                id: "intent-realization-json",
+                title: "The same, as the shape the API and MCP answer with",
+                description: "What `GET /api/v1/intents/realization` returns and the `majordomus_intent_realization` tool answers: each intent's unmet criteria, work and providers, and each unit of work with its links.",
+                argv: &["intent", "realization", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/intents/0/stage", "/intents/0/unmet", "/work", "/orphans"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "intent explain",
+        examples: &[ExampleDoc {
+            id: "intent-explain",
+            title: "Why an intent stands where it stands",
+            description: "A sentence for the stage naming each milestone's derived status, one per criterion naming its evidence state and coverage, and one for the work realising it — all derived, none stored.",
+            argv: &["intent", "explain", "fixture-intent"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-intent", "the-case-passes"]),
         }],
     },
     CommandExamples {

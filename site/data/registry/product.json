@@ -5,19 +5,19 @@
     "id": "majordomus-cli",
     "version": "0.7.0"
   },
-  "fingerprint": "fa9c4d8b15fe4d2ba5c5bc0c3888f96d75d6c5b6fcc6050e4d96a1900b486c72",
+  "fingerprint": "cd2b306425d7dc2b0abe87d1a1d7574296bcc5bd92824da51b1aad4ef63c6eef",
   "route": "/features/",
   "counts": {
     "features": 24,
     "features_all": 25,
     "featured": 13,
     "providers": 6,
-    "modules": 38,
-    "modules_covered": 22,
+    "modules": 39,
+    "modules_covered": 24,
     "commands": 30,
     "commands_covered": 28,
     "kinds": 29,
-    "kinds_covered": 22
+    "kinds_covered": 23
   },
   "surfaces": [
     {
@@ -2804,7 +2804,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 53
+          "objects": 54
         },
         {
           "name": "knowledge",
@@ -3061,11 +3061,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 302,
+        "mcp_resources": 303,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 301,
+        "objects": 302,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3275,7 +3275,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 139
+          "objects": 140
         }
       ],
       "rule_refs": [
@@ -3639,11 +3639,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 141,
+        "mcp_resources": 142,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 139,
+        "objects": 140,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -5527,14 +5527,17 @@
       ],
       "audiences": [],
       "modules": [
-        "trace"
+        "trace",
+        "intents",
+        "intent_realization"
       ],
       "commands": [
         "plan"
       ],
       "kinds": [
         "milestone",
-        "issue"
+        "issue",
+        "intent"
       ],
       "rules": [
         "majordomus.project-integrity",
@@ -5561,7 +5564,9 @@
         "deliver-issues-in-waves",
         "complete-an-issue-only-with-its-evidence"
       ],
-      "cockpit": [],
+      "cockpit": [
+        "intents"
+      ],
       "web": [],
       "related": [
         "worktrees",
@@ -5615,6 +5620,88 @@
               "route": "GET /api/v1/trace"
             }
           ]
+        },
+        {
+          "id": "intents",
+          "title": "Intent",
+          "description": "What must become true above the milestones that realise it: each intent's statement, invariants and satisfaction criteria, its stage derived from the plan's milestone status, and each criterion's state derived from the evidence ledger. Nothing is stored and nothing transitions; an intent added under the project model is answered by all of these without a registration anywhere.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/intents.rs",
+          "capabilities": [
+            {
+              "id": "intents.coverage",
+              "title": "Which work carries which criterion, and why each issue exists",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_coverage",
+              "route": "GET /api/v1/intents/coverage",
+              "cli": "majordomus intent coverage"
+            },
+            {
+              "id": "intents.list",
+              "title": "Every intent, with its derived stage",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intents",
+              "resource": "majordomus://intents",
+              "route": "GET /api/v1/intents",
+              "cli": "majordomus intent list"
+            },
+            {
+              "id": "intents.preflight",
+              "title": "Which intent a piece of work serves",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_preflight",
+              "route": "GET /api/v1/intents/preflight",
+              "cli": "majordomus intent preflight"
+            },
+            {
+              "id": "intents.record",
+              "title": "One intent, with everything derived about it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_record",
+              "route": "GET /api/v1/intents/record",
+              "cli": "majordomus intent show"
+            },
+            {
+              "id": "intents.validate",
+              "title": "What the intent model refuses",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_validate",
+              "route": "GET /api/v1/intents/validate",
+              "cli": "majordomus intent validate"
+            }
+          ]
+        },
+        {
+          "id": "intent_realization",
+          "title": "Intent realization",
+          "description": "Which work realises which intent: every task of this checkout's ledger with the episodes, providers and handovers that carried it, every closed session record and every claim on the peer board, joined through the plan to the intents they serve, each link marked declared, observed, derived or inferred; each intent's unmet criteria with the issues serving them; and the drift between closed work and current evidence. Derived on every read and stored nowhere, so an intent outlives every session and provider that worked on it.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+          "capabilities": [
+            {
+              "id": "intent_realization.explain",
+              "title": "Why an intent stands where it stands",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_explain",
+              "route": "GET /api/v1/intents/explain",
+              "cli": "majordomus intent explain"
+            },
+            {
+              "id": "intent_realization.work",
+              "title": "Which work realises which intent, and what each still lacks",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_intent_realization",
+              "route": "GET /api/v1/intents/realization",
+              "cli": "majordomus intent realization"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -5632,7 +5719,11 @@
         },
         {
           "name": "issue",
-          "objects": 219
+          "objects": 220
+        },
+        {
+          "name": "intent",
+          "objects": 2
         }
       ],
       "rule_refs": [
@@ -5731,7 +5822,13 @@
           "category": "completion"
         }
       ],
-      "cockpit_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "intents",
+          "title": "Intents",
+          "route": "/cockpit/intents"
+        }
+      ],
       "web_refs": [],
       "moments": [
         {
@@ -5773,13 +5870,13 @@
       ],
       "backlinks": [],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 3,
-        "mcp_resources": 241,
-        "http_routes": 3,
-        "cli_paths": 0,
+        "capabilities": 10,
+        "mcp_tools": 10,
+        "mcp_resources": 245,
+        "http_routes": 10,
+        "cli_paths": 7,
         "commands": 1,
-        "objects": 240,
+        "objects": 243,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -5794,7 +5891,7 @@
           "rejected": 1
         },
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 3
         }
       }
     },
@@ -8525,9 +8622,18 @@
         ]
       },
       {
+        "id": "intent_realization",
+        "title": "Intent realization",
+        "features": [
+          "planning"
+        ]
+      },
+      {
         "id": "intents",
         "title": "Intent",
-        "features": []
+        "features": [
+          "planning"
+        ]
       },
       {
         "id": "lifecycle",
@@ -8885,7 +8991,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (53)",
+        "title": "adr (54)",
         "features": [
           "knowledge"
         ]
@@ -8964,11 +9070,13 @@
       {
         "id": "intent",
         "title": "intent (2)",
-        "features": []
+        "features": [
+          "planning"
+        ]
       },
       {
         "id": "issue",
-        "title": "issue (219)",
+        "title": "issue (220)",
         "features": [
           "planning"
         ]
@@ -9027,7 +9135,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (139)",
+        "title": "rule (140)",
         "features": [
           "doctrine"
         ]
@@ -9810,6 +9918,11 @@
       "route": "/cockpit/continuity"
     },
     {
+      "id": "intents",
+      "title": "Intents",
+      "route": "/cockpit/intents"
+    },
+    {
       "id": "worktrees",
       "title": "Worktrees",
       "route": "/cockpit/worktrees"
@@ -9851,19 +9964,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1489,
-    "builtin": 118,
-    "declarative": 1371,
-    "modules": 38,
-    "mcp_tools": 115,
-    "mcp_resources": 1413,
-    "http_routes": 117,
-    "cli_commands": 121,
+    "capabilities": 1495,
+    "builtin": 120,
+    "declarative": 1375,
+    "modules": 39,
+    "mcp_tools": 117,
+    "mcp_resources": 1417,
+    "http_routes": 119,
+    "cli_commands": 123,
     "shell_commands": 30,
     "kinds": 32,
-    "objects": 1371,
+    "objects": 1375,
     "by_kind": {
-      "adr": 53,
+      "adr": 54,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -9878,7 +9991,7 @@
       "gap": 1,
       "implementation": 49,
       "intent": 2,
-      "issue": 219,
+      "issue": 220,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 21,
@@ -9887,12 +10000,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 4,
-      "rule": 139,
+      "rule": 140,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 218,
+      "test": 219,
       "use-case": 46,
       "workspace": 1
     },

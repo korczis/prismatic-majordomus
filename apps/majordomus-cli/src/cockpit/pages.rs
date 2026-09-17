@@ -62,7 +62,7 @@ pub struct Page {
 }
 
 impl Page {
-    fn new(area: Area, title: impl Into<String>, main: El) -> Self {
+    pub(super) fn new(area: Area, title: impl Into<String>, main: El) -> Self {
         Page {
             area,
             title: title.into(),
@@ -73,11 +73,11 @@ impl Page {
             scripts: Vec::new(),
         }
     }
-    fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+    pub(super) fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
         self
     }
-    fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
+    pub(super) fn trail(mut self, trail: Vec<(&str, Option<&str>)>) -> Self {
         self.breadcrumbs = trail
             .into_iter()
             .map(|(l, h)| (l.to_string(), h.map(str::to_string)))
@@ -88,7 +88,7 @@ impl Page {
         self.scripts.push(name);
         self
     }
-    fn status(mut self, status: u16) -> Self {
+    pub(super) fn status(mut self, status: u16) -> Self {
         self.status = status;
         self
     }
@@ -105,13 +105,17 @@ fn word<T: serde::Serialize>(value: &T) -> String {
 }
 
 /// Ask the executor for a capability's output, typed.
-fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
+pub(super) fn ask<T: serde::de::DeserializeOwned>(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+) -> Result<T, String> {
     let value = ctx.execute(id, input).map_err(|e| e.to_string())?;
     serde_json::from_value(value).map_err(|e| format!("{id} answered something unexpected: {e}"))
 }
 
 /// A page that says what went wrong instead of showing a blank one.
-fn failed(area: Area, title: &str, reason: String) -> Page {
+pub(super) fn failed(area: Area, title: &str, reason: String) -> Page {
     Page::new(
         area,
         title,

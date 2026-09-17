@@ -518,6 +518,24 @@
         "status": "query"
       },
       {
+        "id": "capability:intent_realization.explain",
+        "kind": "capability",
+        "label": "intent_realization.explain",
+        "summary": "Why an intent stands where it stands",
+        "route": "/cockpit/capabilities/intent_realization.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:intent_realization.work",
+        "kind": "capability",
+        "label": "intent_realization.work",
+        "summary": "Which work realises which intent, and what each still lacks",
+        "route": "/cockpit/capabilities/intent_realization.work",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:intents.coverage",
         "kind": "capability",
         "label": "intents.coverage",
@@ -1484,6 +1502,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+        "kind": "file",
+        "label": "intent_realization.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/intents.rs",
         "kind": "file",
         "label": "intents.rs",
@@ -1809,6 +1835,14 @@
         "label": "intent_plan.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/intent_plan.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/intent_realization.rs",
+        "kind": "file",
+        "label": "intent_realization.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/intent_realization.rs",
         "external": true
       },
       {
@@ -4135,6 +4169,34 @@
             "intent",
             "project",
             "planning"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0075",
+        "kind": "adr",
+        "label": "adr-0075",
+        "summary": "Which work realises an intent is a join over the records the lifecycle already keeps, and closed work does not outrank evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0075",
+        "source": ".ai/repo/adrs/0075-intent-realization-is-a-join-and-closed-work-does-not-outrank-evidence.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-17",
+          "related": [
+            "rule:project.an-intent-outlives-its-sessions",
+            "rule:project.work-serves-a-declared-intent",
+            "file:.ai/repo/adrs/0070-intent-is-a-typed-record-and-satisfaction-is-derived-from-evidence.md",
+            "file:.ai/repo/adrs/0073-an-issue-names-the-intent-criterion-it-serves-and-coverage-is-derived.md",
+            "file:apps/majordomus-cli/src/intent_realization.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+            "file:lib/session.sh",
+            "test:test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+          ],
+          "tags": [
+            "intent",
+            "session",
+            "handover",
+            "evidence"
           ]
         }
       },
@@ -12492,6 +12554,9 @@
             "github-projection",
             "task-dependencies"
           ],
+          "cockpit": [
+            "intents"
+          ],
           "commands": [
             "plan"
           ],
@@ -12503,10 +12568,13 @@
           "headline": "An issue records what happened to it and the engine derives whether it is blocked, ready, active, verifying or done from the dependency graph, so the roadmap cannot disagree with the plan.",
           "kinds": [
             "milestone",
-            "issue"
+            "issue",
+            "intent"
           ],
           "modules": [
-            "trace"
+            "trace",
+            "intents",
+            "intent_realization"
           ],
           "related": [
             "worktrees",
@@ -13255,8 +13323,10 @@
           "created_at": "2026-09-15",
           "governance": [
             "rule:project.work-serves-a-declared-intent",
+            "rule:project.an-intent-outlives-its-sessions",
             "rule:project.derived-once",
-            "adr:adr-0070"
+            "adr:adr-0070",
+            "adr:adr-0075"
           ],
           "invariants": [
             "No intent status is stored and nothing transitions an intent; the plan remains the only lifecycle of work",
@@ -23327,6 +23397,51 @@
         }
       },
       {
+        "id": "majordomus://issue/I1903",
+        "kind": "issue",
+        "label": "I1903",
+        "summary": "The work realising an intent is joined across episodes, providers and handovers",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fissue%2FI1903",
+        "source": ".ai/repo/project/issues/I1903.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One task carried by two providers across a handover is one unit of work linked to the intent, with both providers",
+            "Each link is declared, observed, derived or inferred from one mapping, and the strongest per issue is kept",
+            "An intent whose milestones are all DONE while a criterion's recorded run fails exits 10 naming the criterion, and a repair clears it"
+          ],
+          "created_at": "2026-09-17",
+          "current_state": "No capability says which task, episode, provider or handover realises an intent; a closed episode forgets its provider; verifying intents are silent.",
+          "depends_on": [
+            "I1900"
+          ],
+          "desired_state": "majordomus intent realization and intent explain answer the lineage and the drift on every surface, and the intent-realization gate refuses closed_work_contradicted.",
+          "evidence_required": [
+            "intent_lineage_joined",
+            "closed_work_contradicted_refused"
+          ],
+          "milestone": "intent-lifecycle",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/intent_realization.rs",
+            "apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+            "lib/session.sh",
+            "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+          ],
+          "serves": [
+            "intent-lifecycle#lineage-survives-providers"
+          ],
+          "slug": "intent-realization",
+          "updated_at": "2026-09-17",
+          "validation": [
+            "cargo test --test intent_realization",
+            "bash test/run.sh 388_an_intent_is_realised_across_providers_and_held_to_reality"
+          ],
+          "why": "An intent's lineage lived in whichever session was working on it, so a handover to another provider lost it, and an intent whose closed work regressed read as finished (ADR 0075)."
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -28688,6 +28803,29 @@
         }
       },
       {
+        "id": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "kind": "rule",
+        "label": "project.an-intent-outlives-its-sessions@1",
+        "summary": "An intent outlives the sessions and providers that realise it, and closed work does not outrank evidence",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.an-intent-outlives-its-sessions%401",
+        "source": ".ai/repo/rules/project/an-intent-outlives-its-sessions.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-serves-a-declared-intent@1",
+            "project.derived-once@1"
+          ],
+          "tags": [
+            "intent",
+            "session",
+            "handover",
+            "provenance",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.benchmarkable-commands@1",
         "kind": "rule",
         "label": "project.benchmarkable-commands@1",
@@ -33306,6 +33444,13 @@
         "source": "test/cases/387_no_payload_is_passed_through_argv.sh"
       },
       {
+        "id": "majordomus://test/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+        "kind": "test",
+        "label": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
+        "source": "test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "label": "test/cases/40_project_model.sh",
@@ -35926,6 +36071,11 @@
         "label": "health"
       },
       {
+        "id": "module:intent_realization",
+        "kind": "module",
+        "label": "intent_realization"
+      },
+      {
         "id": "module:intents",
         "kind": "module",
         "label": "intents"
@@ -36926,6 +37076,46 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.work",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.work",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.work",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:intent_realization.work",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -39832,6 +40022,51 @@
       {
         "source": "majordomus://adr/adr-0073",
         "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/intent_realization.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "file:apps/majordomus-cli/src/intent_realization.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "majordomus://adr/adr-0070",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "majordomus://adr/adr-0073",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "majordomus://implementation/lib/session.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0075",
+        "target": "majordomus://test/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
         "kind": "put_in_force"
       },
       {
@@ -49180,6 +49415,21 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1903",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1903",
+        "target": "majordomus://issue/I1900",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1903",
+        "target": "majordomus://milestone/intent-lifecycle",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -50247,6 +50497,21 @@
       {
         "source": "majordomus://rule/project.accumulation-is-measured@2",
         "target": "majordomus://rule/project.worktree-topology@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.an-intent-outlives-its-sessions@1",
+        "target": "majordomus://rule/project.work-serves-a-declared-intent@1",
         "kind": "depends_on"
       },
       {
@@ -52026,6 +52291,11 @@
       },
       {
         "source": "majordomus://test/test/cases/387_no_payload_is_passed_through_argv.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/388_an_intent_is_realised_across_providers_and_held_to_reality.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -55380,6 +55650,16 @@
         "kind": "composes"
       },
       {
+        "source": "module:intent_realization",
+        "target": "capability:intent_realization.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:intent_realization",
+        "target": "capability:intent_realization.work",
+        "kind": "composes"
+      },
+      {
         "source": "module:intents",
         "target": "capability:intents.coverage",
         "kind": "composes"
@@ -55721,8 +56001,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1760,
-      "edges": 3931,
+      "nodes": 1769,
+      "edges": 3957,
       "acyclic": true,
       "truncated": false
     }

@@ -1,7 +1,7 @@
 +++
 title = "intents.list"
 description = "Every intent the project model declares, each with the status the plan derives for its milestones, the state of the evidence behind each satisfaction criterion, and the stage those two derive: declared, planned, executing, verifying or satisfied — or cancelled or superseded, when the record says so."
-weight = 52
+weight = 54
 slug = "intents-list"
 [extra]
 id = "intents.list"

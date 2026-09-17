@@ -11,8 +11,9 @@ weight: 130
 featured: false
 areas: [work-tracking]
 commands: [plan]
-modules: [trace]
-kinds: [milestone, issue]
+modules: [trace, intents, intent_realization]
+kinds: [milestone, issue, intent]
+cockpit: [intents]
 rules: [majordomus.project-integrity, majordomus.dag-integrity, majordomus.roadmap-integrity]
 docs: [docs/PLANNING.md, docs/ROADMAP.md]
 claims: [project-schema, project-status-derived, dag-validation, execution-waves, evidence-gates-done, roadmap-derived, github-projection, task-dependencies]

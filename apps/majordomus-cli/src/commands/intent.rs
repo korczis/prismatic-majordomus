@@ -59,7 +59,126 @@ pub fn run(args: IntentArgs) -> Result<u8> {
                 EXIT_INVALID
             })
         }
+        IntentCommand::Realization { intent } => {
+            let mut input = json!({});
+            if let Some(intent) = intent {
+                input["intent"] = json!(intent);
+            }
+            let v = call(&app, &["intent", "realization"], input)?;
+            emit(format, &v, realization_text)?;
+            let regressed = v["findings"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .any(|f| f["code"] == "closed_work_contradicted");
+            Ok(if regressed { EXIT_INVALID } else { 0 })
+        }
+        IntentCommand::Explain { id } => {
+            let v = call(&app, &["intent", "explain"], json!({ "id": id }))?;
+            emit(format, &v, explain_text)?;
+            Ok(0)
+        }
     }
+}
+
+/// Each intent with how far reality is from it and who realises it, then every unit of work
+/// with its strongest link or the reason it has none.
+fn realization_text(v: &Value) -> String {
+    let mut out = Vec::new();
+    for i in v["intents"].as_array().into_iter().flatten() {
+        out.push(format!(
+            "{}  {}  {}/{} met  {}",
+            s(i, "intent"),
+            s(i, "stage"),
+            i["met"],
+            i["criteria"],
+            s(i, "title")
+        ));
+        for c in i["unmet"].as_array().into_iter().flatten() {
+            let issues: Vec<&str> = c["issues"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
+            out.push(format!(
+                "  unmet     {}  {}{}",
+                s(c, "id"),
+                s(c, "state"),
+                if issues.is_empty() {
+                    String::new()
+                } else {
+                    format!("  served by {}", issues.join(" "))
+                }
+            ));
+        }
+        for w in i["work"].as_array().into_iter().flatten() {
+            let providers: Vec<&str> = w["providers"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect();
+            out.push(format!(
+                "  work      {} {}  {}  {}  handovers {}{}",
+                s(w, "kind"),
+                s(w, "id"),
+                s(w, "outcome"),
+                s(w, "provenance"),
+                w["handovers"],
+                if providers.is_empty() {
+                    String::new()
+                } else {
+                    format!("  by {}", providers.join(", "))
+                }
+            ));
+        }
+    }
+    let work = v["work"].as_array().cloned().unwrap_or_default();
+    if !work.is_empty() {
+        out.push(String::new());
+    }
+    for w in &work {
+        let unit = &w["work"];
+        let link = w["links"].as_array().and_then(|l| l.first()).map(|l| {
+            format!(
+                "{} via {} {} ({})",
+                s(l, "intent"),
+                s(l, "issue"),
+                s(l, "via"),
+                s(l, "provenance")
+            )
+        });
+        out.push(format!(
+            "{} {}  {}  {}",
+            s(unit, "kind"),
+            s(unit, "id"),
+            s(unit, "outcome"),
+            link.unwrap_or_else(|| format!("unlinked: {}", s(w, "unlinked")))
+        ));
+    }
+    findings_text(&mut out, &v["findings"]);
+    out.push(format!(
+        "{} intent(s), {} unit(s) of work, {} serving no intent",
+        v["intents"].as_array().map_or(0, Vec::len),
+        work.len(),
+        v["orphans"]
+    ));
+    out.join("\n")
+}
+
+fn explain_text(v: &Value) -> String {
+    let i = &v["intent"];
+    let mut out = vec![
+        format!("{}  {}", s(i, "id"), s(i, "title")),
+        String::new(),
+        format!("  {}", s(i, "statement")),
+        String::new(),
+    ];
+    for b in v["because"].as_array().into_iter().flatten() {
+        out.push(format!("  - {}", b.as_str().unwrap_or("")));
+    }
+    out.join("\n")
 }
 
 fn call(app: &App, path: &[&str], input: Value) -> Result<Value> {
