@@ -5969,6 +5969,36 @@
         }
       },
       {
+        "id": "majordomus://claim/live-scenario-evidence-is-local",
+        "kind": "claim",
+        "label": "live-scenario-evidence-is-local",
+        "summary": "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered; an undischarged obligation is reported unmet, never failed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Flive-scenario-evidence-is-local",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/usecase.sh",
+          "responsibility": "doctor",
+          "source": "docs/USE_CASES.md",
+          "test": "test/cases/359_live_scenarios.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/live-scenario-is-read-only",
+        "kind": "claim",
+        "label": "live-scenario-is-read-only",
+        "summary": "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one; every other shape is refused by usecase validate with exit 10",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Flive-scenario-is-read-only",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/usecase.sh",
+          "responsibility": "doctor",
+          "source": "docs/USE_CASES.md",
+          "test": "test/cases/359_live_scenarios.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/local-state-ignored",
         "kind": "claim",
         "label": "local-state-ignored",
@@ -10672,6 +10702,22 @@
         "summary": "A repository on the pre-.ai layout is migrated once, explicitly, with a previewed plan and a verified backup of its local state, and the command is idempotent afterwards",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Flegacy-migration.md",
         "source": "docs/claims/legacy-migration.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/live-scenario-evidence-is-local.md",
+        "kind": "document",
+        "label": "docs/claims/live-scenario-evidence-is-local.md",
+        "summary": "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Flive-scenario-evidence-is-local.md",
+        "source": "docs/claims/live-scenario-evidence-is-local.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/live-scenario-is-read-only.md",
+        "kind": "document",
+        "label": "docs/claims/live-scenario-is-read-only.md",
+        "summary": "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Flive-scenario-is-read-only.md",
+        "source": "docs/claims/live-scenario-is-read-only.md"
       },
       {
         "id": "majordomus://document/docs/claims/local-state-ignored.md",
@@ -33084,11 +33130,25 @@
         "source": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh"
       },
       {
+        "id": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "kind": "test",
+        "label": "test/cases/359_live_scenarios.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F359_live_scenarios.sh",
+        "source": "test/cases/359_live_scenarios.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/35_future_command.sh",
         "kind": "test",
         "label": "test/cases/35_future_command.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F35_future_command.sh",
         "source": "test/cases/35_future_command.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
+        "kind": "test",
+        "label": "test/cases/360_the_crate_boundary_is_measured.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F360_the_crate_boundary_is_measured.sh",
+        "source": "test/cases/360_the_crate_boundary_is_measured.sh"
       },
       {
         "id": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
@@ -33110,6 +33170,27 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F37_responsibility_surface.sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "kind": "test",
+        "label": "test/cases/389_cockpit_projection.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F389_cockpit_projection.sh",
+        "source": "test/cases/389_cockpit_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
+        "kind": "test",
+        "label": "test/cases/390_unresolved_relation_refuses_generation.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F390_unresolved_relation_refuses_generation.sh",
+        "source": "test/cases/390_unresolved_relation_refuses_generation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/402_argv_limit.sh",
+        "kind": "test",
+        "label": "test/cases/402_argv_limit.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F402_argv_limit.sh",
+        "source": "test/cases/402_argv_limit.sh"
       },
       {
         "id": "majordomus://test/test/cases/40_project_model.sh",
@@ -41406,6 +41487,46 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "majordomus://document/docs/USE_CASES.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "majordomus://implementation/lib/usecase.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "majordomus://document/docs/USE_CASES.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "majordomus://implementation/lib/usecase.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/local-state-ignored",
         "target": "kind:claim",
         "kind": "is_a"
@@ -44682,6 +44803,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/legacy-migration.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/live-scenario-evidence-is-local.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/live-scenario-is-read-only.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51926,7 +52057,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/35_future_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -51942,6 +52083,21 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/402_argv_limit.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -55692,8 +55848,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1764,
-      "edges": 3965,
+      "nodes": 1773,
+      "edges": 3980,
       "acyclic": true,
       "truncated": false
     }

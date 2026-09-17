@@ -21,7 +21,7 @@ use crate::capability::{
 use crate::command_graph::CommandNode;
 use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
-use crate::graph::Graph;
+use crate::graph::{Graph, NodeState, ObservedGraph, RuntimeState};
 use crate::http::router::percent_encode;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
@@ -810,7 +810,7 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
     let cases = ctx
         .registry
         .cases(c.id.as_str())
-        .map(|provider| provider(&crate::capability::CaseContext { index: &ctx.index }))
+        .map(|provider| provider(&crate::capability::CaseContext::of(ctx)))
         .unwrap_or_default();
     let examples = if cases.is_empty() {
         card(
@@ -1293,9 +1293,13 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
             "kind",
             "Kind",
             kind.as_deref(),
-            ctx.index
-                .kinds()
-                .into_keys()
+            // the kinds of the listing the capability already answered with, rather than a
+            // second reading of the index (ADR 0012): the same objects, so the same kinds
+            list.objects
+                .iter()
+                .map(|o| o.kind.as_str())
+                .collect::<std::collections::BTreeSet<_>>()
+                .into_iter()
                 .map(|k| (k.to_string(), k.to_string()))
                 .collect(),
         ))
@@ -1324,7 +1328,7 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
     .subtitle(format!(
         "{} of {} objects. Each is a file the layer's sources.yaml maps to a kind, read and validated at startup.",
         matching.len(),
-        ctx.index.objects.len()
+        list.count
     ))
     .trail(vec![("Cockpit", Some("/cockpit")), ("Objects", None)])
 }
@@ -1475,6 +1479,40 @@ pub fn graphs(ctx: &Context) -> Page {
     .trail(vec![("Cockpit", Some("/cockpit")), ("Graphs", None)])
 }
 
+/// What this process observes right now about the things a graph draws.
+///
+/// The observation is not this page's opinion: `health.report` already decides every
+/// dimension of what this process serves, each by the engine that owns it, and a check's
+/// id names a module of this executable. Where the two meet — `server`, `peers`, `scope`
+/// and whatever else health grows a check for — the graph's module node gains what the
+/// process saw. Where they do not, there is no entry, and the column reads as absent
+/// rather than as healthy.
+///
+/// A process that cannot answer its own health yields no observations at all. That is the
+/// honest empty state: the definitions still render, and no node claims a status nothing
+/// measured.
+fn observed_now(ctx: &Context) -> RuntimeState {
+    let health: Health = match ask(ctx, "health.report", json!({})) {
+        Ok(h) => h,
+        Err(_) => return RuntimeState::default(),
+    };
+    RuntimeState {
+        nodes: health
+            .checks
+            .iter()
+            .map(|c| {
+                (
+                    format!("module:{}", c.id),
+                    NodeState {
+                        status: c.status.as_str().to_string(),
+                        detail: Some(c.detail.clone()),
+                    },
+                )
+            })
+            .collect(),
+    }
+}
+
 /// One graph: the nodes and edges as a list, which is what a reader without JavaScript
 /// gets, and a canvas the script fills when the drawing library is there.
 pub fn graph(ctx: &Context, id: &str) -> Page {
@@ -1495,6 +1533,16 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
         Ok(g) => g,
         Err(e) => return failed(Area::Graphs, "Graph", e.to_string()),
     };
+
+    // The second projection. What `graph.get` answered is the definitions, the same bytes
+    // a published page holds; this is the overlay only a process can fill, kept beside them
+    // rather than merged into a node — a node that carried a status would carry it into the
+    // static artifact, where nobody could refresh it and a reader could not tell a current
+    // value from a stale one. `RuntimeView` drops every observation that names no node of
+    // this graph, so each lookup below resolves or is honestly absent.
+    let view = ObservedGraph::new(g, &observed_now(ctx));
+    let g = &view.graph;
+    let now = &view.runtime;
 
     let vocabulary = card(
         "What the shapes mean",
@@ -1578,6 +1626,22 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                     Some(s) => word_badge(s),
                     None => el("span").text("-"),
                 }),
+                // declared status and observed status are two columns, never one: the
+                // first is what a file says and the second what this process saw, and
+                // their disagreement is the case worth reading
+                cell(match now.of(&n.id) {
+                    Some(state) => el("span").child(word_badge(&state.status)).when(
+                        state.detail.is_some(),
+                        |s| {
+                            s.child(
+                                el("span")
+                                    .class("mj-note")
+                                    .text(state.detail.clone().unwrap_or_default()),
+                            )
+                        },
+                    ),
+                    None => el("span").text("-"),
+                }),
                 cell(match &n.source {
                     Some(s) => mono(s),
                     None => el("span").text("-"),
@@ -1632,7 +1696,10 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
             .child(vocabulary)
             .child(card(
                 "Nodes",
-                table(&["Node", "Kind", "Summary", "Status", "Source"], node_rows),
+                table(
+                    &["Node", "Kind", "Summary", "Status", "Now", "Source"],
+                    node_rows,
+                ),
             ))
             .child(card("Edges", table(&["From", "Edge", "To"], edge_rows))),
     )

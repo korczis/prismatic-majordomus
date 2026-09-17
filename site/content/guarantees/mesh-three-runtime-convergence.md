@@ -1,7 +1,7 @@
 +++
 title = "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop"
 description = "A is linked to B and B to C; A and C never talk. A claim made on A is held on C, a claim"
-weight = 184
+weight = 186
 [extra]
 claim_id = "mesh-three-runtime-convergence"
 status = "guaranteed"
