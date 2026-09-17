@@ -102,7 +102,22 @@ fn post(s: &Served, path: &str, body: Value) -> (u16, Value) {
     (status, serde_json::from_str(&text).unwrap_or(Value::Null))
 }
 
+/// How much longer than the written bound to wait. These tests run real servers over real
+/// sockets, so every bound here is wall-clock; under coverage instrumentation the same work
+/// takes several times as long and a bound that is generous on a developer's machine expires
+/// on the runner. `MAJORDOMUS_TEST_PATIENCE` lets the slow environment say so, rather than
+/// every bound being written for the slowest one — which would turn a real hang into a
+/// ten-minute wait for everybody.
+fn patience() -> u32 {
+    std::env::var("MAJORDOMUS_TEST_PATIENCE")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .filter(|f| (1..=20).contains(f))
+        .unwrap_or(1)
+}
+
 fn wait_until<F: FnMut() -> bool>(what: &str, timeout: Duration, mut check: F) {
+    let timeout = timeout * patience();
     let deadline = Instant::now() + timeout;
     while Instant::now() < deadline {
         if check() {

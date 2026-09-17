@@ -121,7 +121,12 @@ if [ -z "$FROM" ]; then
   # that vocabulary; it is cargo's own error wearing this gate's name. So the failure is
   # caught here, and the export is judged on whether it exists and parses.
   cov_status=0
-  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
+  # Instrumented binaries run several times slower, and the suite's networked tests are
+  # bounded by the wall clock: a bound that is generous uninstrumented expires here, and the
+  # run then reports a coverage failure for what is really a stopwatch. The tests read this
+  # and stretch their own bounds rather than every bound being written for the slowest case.
+  ( cd "$CRATE" && RUSTFLAGS='' MAJORDOMUS_TEST_PATIENCE="${MAJORDOMUS_TEST_PATIENCE:-4}" \
+      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
   if [ ! -s "$FROM" ]; then
     printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and wrote no export\n' "$cov_status" >&2
     exit 12
