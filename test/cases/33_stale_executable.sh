@@ -28,7 +28,7 @@
 BIN="$ROOT/apps/majordomus-cli/target/release/majordomus"
 [ -x "$BIN" ] || BIN="${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
 [ -n "${MAJORDOMUS_BIN:-}" ] && BIN="$MAJORDOMUS_BIN"
-[ -x "$BIN" ] || { echo "    no built executable; skipping"; exit 0; }
+[ -x "$BIN" ] || skip_case "no built executable"
 CRATE="$ROOT/apps/majordomus-cli"
 MANIFEST="$CRATE/Cargo.toml"
 expect_file "$MANIFEST"

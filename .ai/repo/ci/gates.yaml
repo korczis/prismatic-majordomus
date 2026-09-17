@@ -104,7 +104,7 @@ gates:
 
   - id: shell-suite
     job: suite
-    runs: MJ_TEST_JOBS=4 bash test/run.sh
+    runs: MJ_TEST_JOBS=4 bash test/run.sh --no-skips
     summary: every behavioural case, in a disposable repository each, four at a time
 
   - id: rust-integration
@@ -409,7 +409,7 @@ gates:
   - id: macos
     job: macos
     on-demand: true
-    runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
+    runs: MJ_TEST_JOBS=3 bash test/run.sh --no-skips && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
   # The release's own declarations, which `generate --check` cannot reach: it proves the

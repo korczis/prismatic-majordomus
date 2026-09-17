@@ -132,6 +132,13 @@ expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL doctrine +ci .* does not let it fail the job'
 restore
 
+# 8b. CI runs the suite and lets it fail, but a case that skipped itself counts as validated
+sed 's#bash test/run.sh --no-skips#bash test/run.sh#' "$ROOT/.github/workflows/validate.yml" > "$CI"
+gone "$CI" "bash test/run.sh --no-skips"
+expect_exit 10 "$MJ" doctor
+expect_grep 'FAIL doctrine +ci .* without --no-skips'
+restore
+
 # 9. the runner stops globbing, so a new case would silently not run
 sed 's#cases/\*\.sh#cases/01_init.sh#' "$ROOT/test/run.sh" > "$RUN"
 gone "$RUN" "cases/*.sh"

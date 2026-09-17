@@ -816,6 +816,10 @@ mj_validate_doctrine_wiring() {
     elif ! grep -qE 'bash test/run\.sh' "$ci"; then mj_doctrine_fail doctrine "ci" "validate.yml does not run test/run.sh" "grep -n 'test/run.sh' .github/workflows/validate.yml"; bad=1
     elif grep -E 'bash test/run\.sh' "$ci" | grep -qE '\|\|[[:space:]]*(true|:)|continue-on-error'; then
       mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh but does not let it fail the job" "grep -n -A2 'test/run.sh' .github/workflows/validate.yml"; bad=1
+    elif grep -E 'bash test/run\.sh' "$ci" | grep -vqE 'bash test/run\.sh( [^|;&]*)? --no-skips'; then
+      # a case that skipped itself (skip_case, exit 77) is not evidence; without the flag the
+      # runner reports it and exits 0, so a runner missing a tool would validate green
+      mj_doctrine_fail doctrine "ci" "validate.yml runs test/run.sh without --no-skips; a case that skipped would count as validated" "grep -n 'bash test/run.sh' .github/workflows/validate.yml"; bad=1
     fi
     # and the runner must run every case, not a list that a new case can miss
     if ! grep -qE 'cases/\*\.sh|cases/\*' "$root/test/run.sh"; then
