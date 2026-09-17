@@ -268,12 +268,20 @@ impl SharedServer {
     }
 
     /// Stop serving and release the lease.
+    ///
+    /// The order is what matters. Telling the mesh to stop is immediate, but draining its
+    /// link table needs a lock a worker can hold across a dial that waits out the link
+    /// timeout — several seconds. Everything a waiting `serve stop` measures happens before
+    /// that: the listeners close and the lease is released, and only then does the mesh
+    /// drain. A lease released late is read by the next process as a server still holding
+    /// the port, which is what `serve stop` answers 10 for.
     pub fn stop(self) {
-        self.mesh.stop();
+        self.mesh.begin_stop();
         self.stopping.store(true, Ordering::SeqCst);
         self.endpoint.close_all();
         self.running.stop();
         self.lease.release();
+        self.mesh.stop();
         tracing::info!("shared server stopped");
     }
 }

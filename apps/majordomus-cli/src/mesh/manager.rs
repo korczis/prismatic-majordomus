@@ -475,6 +475,19 @@ impl MeshRuntime {
         outcome
     }
 
+    /// Tell the mesh to stop, without waiting for anything: every loop and handler reads the
+    /// flag at once, and the draining that needs locks is left to [`stop`](Self::stop). A
+    /// process that is shutting down calls this first, does the work that must not be
+    /// delayed — closing its listeners, releasing its lease — and only then drains.
+    pub fn begin_stop(&self) {
+        if let Some(cooperation) = self.cooperation.lock().expect("mesh cooperation").as_ref() {
+            cooperation.begin_stop();
+        }
+        if let Some(active) = self.state.lock().expect("mesh state").as_ref() {
+            active.stop.store(true, Ordering::SeqCst);
+        }
+    }
+
     /// Stop the mesh. Every provider thread and the manager end at their next bounded
     /// wait; the registry keeps what it saw for whoever still asks.
     pub fn stop(&self) {

@@ -1463,8 +1463,11 @@ impl Cooperation {
     /// assert!(cooperation.stopped());
     /// assert_eq!(cooperation.state().claims.len(), 1, "the record survives the runtime");
     /// ```
+    ///
+    /// [`begin_stop`](Self::begin_stop) is the half of this that takes no lock, for a caller
+    /// that must not be delayed.
     pub fn stop(&self) {
-        self.stop.store(true, Ordering::SeqCst);
+        self.begin_stop();
         let mut table = self.table.lock().expect("cooperation table");
         for flag in table.workers.values() {
             flag.store(true, Ordering::SeqCst);
@@ -1475,6 +1478,37 @@ impl Cooperation {
             peer.outbound = None;
             peer.inbound = None;
         }
+    }
+
+    /// Tell every part of this runtime to stop, and return at once.
+    ///
+    /// [`stop`](Self::stop) also empties the link table, and to do that it must take the
+    /// table's lock — which a worker can be holding across a dial that waits out the link
+    /// timeout. A server shutting down must not wait for that: it has a lease to release,
+    /// and a lease released late reads to the next process as a server that is still there.
+    /// So the flag, which every loop and every handler checks, is set without any lock, and
+    /// the draining is left to `stop`.
+    ///
+    /// ```
+    /// # use std::sync::Arc;
+    /// # use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+    /// # use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+    /// # use majordomus_cli::mesh::link::HttpTransport;
+    /// # use majordomus_cli::mesh::registry::MeshRegistry;
+    /// # use majordomus_cli::mesh::repository::of_root_commits;
+    /// # let cooperation = Cooperation::new(CooperationSetup {
+    /// #     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: "0000000000000001".into(),
+    /// #     repository: of_root_commits(&["root".into()]), endpoints: vec!["127.0.0.1:9".into()],
+    /// #     version: "doc".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),
+    /// #     journal_path: None, registry: Arc::new(MeshRegistry::new()),
+    /// #     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),
+    /// # }).unwrap();
+    /// cooperation.begin_stop();
+    /// assert!(cooperation.stopped(), "every loop and handler sees it immediately");
+    /// ```
+    pub fn begin_stop(&self) {
+        self.stop.store(true, Ordering::SeqCst);
     }
 
     /// Whether this runtime has been told to stop. It is checked at the top of every
