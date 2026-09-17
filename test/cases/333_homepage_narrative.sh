@@ -9,6 +9,9 @@
 # homepage, an install section missing a command the distribution model gives, a page below an
 # unlisted section without noindex, a page below an unlisted section in the sitemap, and an
 # indexable page absent from the sitemap, a page loading the Mermaid runtime with no diagram,
+# a provider of the model the page does not name, a name the model does not carry, the worker
+# tools named nowhere, a trust card that disagrees with its dataset, a trust card missing, and a
+# trust card reading as known when its dataset is gone,
 # the homepage's scripts or inline JSON over the declared budget, no budget declared, and a
 # linked asset the build did not produce. Rule: project.homepage-tells-a-declared-story.
 . "$ROOT/test/lib.sh"
@@ -24,11 +27,21 @@ fresh() {
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
   printf '<html><head><title>d</title><script src="https://x.test/js/mermaid.min.js"></script></head><body><pre class="mermaid">graph TD</pre></body></html>\n' > "$F/site/public/docs/diagram/index.html"
   printf '[[groups]]\nlabel = "Plan"\nhref = "/plan/"\n\n[indexing]\nunlisted = ["plan"]\n' > "$F/site/data/nav.toml"
-  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}]}' > "$F/site/data/registry/product.json"
-  printf '%s\n' '{"install_command":"curl -fsSL https://x.test/install.sh | sh","next_command":"majordomus init","verify_command":"majordomus --version"}' > "$F/site/data/registry/distribution.json"
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}]}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"install_command":"curl -fsSL https://x.test/install.sh | sh","next_command":"majordomus init","verify_command":"majordomus --version","latest":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/registry/distribution.json"
+  mkdir -p "$F/site/data/generated"
+  printf '%s\n' '{"use_cases":[{"id":"a"},{"id":"b"},{"id":"c"}],"categories":[{"id":"x"},{"id":"y"}]}' > "$F/site/data/generated/catalogue.json"
+  printf '%s\n' '{"commit":"abcdef1234567890","dirty":false}' > "$F/site/data/build.json"
   cat > "$F/site/public/index.html" <<'HTML'
 <html><head><title>home</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
-<section id="hero"><h1>t</h1><a href="/features/good/">good</a></section>
+<section id="hero"><h1>t</h1><a href="/features/good/">good</a>
+<dl><dt>generated for</dt><dd data-providers><span>Tool One</span><a href="/providers/two/">Tool Two</a></dd></dl>
+<dl data-trust>
+<div data-trust-key="release"><dt>release</dt><dd>9.9.9</dd></div>
+<div data-trust-key="verify"><dt>confirm</dt><dd>majordomus --version</dd></div>
+<div data-trust-key="commit"><dt>commit</dt><dd>abcdef1</dd></div>
+<div data-trust-key="use-cases"><dt>use cases</dt><dd>3</dd><dd>2 areas</dd></div>
+</dl></section>
 <section id="how"><dl><dt>x</dt><dd>7</dd></dl></section>
 <section id="install"><code>curl -fsSL https://x.test/install.sh | sh</code> then <code>majordomus init</code>, check with <code>majordomus --version</code> <a href="/getting-started/">go</a></section>
 </main></body></html>
@@ -52,7 +65,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty install runtime weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty install runtime providers trust weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -78,6 +91,24 @@ expect_finding 10 'does not carry the distribution model.s verify_command' "a mi
 fresh; sed -i.bak 's#<title>p</title>#<title>p</title><script src="https://x.test/js/mermaid.min.js"></script>#' "$F/site/public/docs/plain/index.html"
 expect_finding 10 'load the Mermaid runtime with no diagram to render: /docs/plain/' "a page loading Mermaid for nothing"
 grep -q '/docs/diagram/' out.txt && { echo "    a page with a diagram was reported as loading Mermaid for nothing"; cat out.txt; exit 1; }
+
+# --- providers: the worker tools named are the model's, both ways
+fresh; sed -i.bak 's#<span>Tool One</span>##' "$F/site/public/index.html"
+expect_finding 10 'names worker tool\(s\) the homepage does not: Tool One' "a provider of the model the page does not name"
+fresh; sed -i.bak 's#<dd data-providers>#<dd data-providers><span>Tool Three</span>#' "$F/site/public/index.html"
+expect_finding 10 'names worker tool\(s\) the product model does not: Tool Three' "a name the model does not carry"
+fresh; sed -i.bak 's# data-providers##' "$F/site/public/index.html"
+expect_finding 10 'carries no <dd data-providers>' "the worker tools named nowhere"
+
+# --- trust: every card carries what its dataset says, and says unknown when it says nothing
+fresh; sed -i.bak 's#<dd>9.9.9</dd>#<dd>1.2.3</dd>#' "$F/site/public/index.html"
+expect_finding 10 "release does not carry '9.9.9'" "a trust card disagreeing with its dataset"
+fresh; sed -i.bak 's# data-trust-key="commit"##' "$F/site/public/index.html"
+expect_finding 10 'carries no trust card for: commit' "a trust card missing"
+fresh; rm "$F/site/data/build.json"
+expect_finding 10 "commit does not carry 'unknown'" "a commit card reading as known with no build.json"
+fresh; rm "$F/site/data/generated/catalogue.json"
+expect_finding 10 "use-cases does not carry 'unknown'" "a use-case card reading as known with no catalogue"
 
 # --- weight: over the asset budget, over the inline JSON budget, no budget, a linked asset missing
 fresh; printf 'x%.0s' $(seq 1 200) > "$F/site/public/js/app.js"
