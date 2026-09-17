@@ -201,6 +201,25 @@ looked up in the command registry through <code>mj_cmdreg_class</code>, and anyt
 a setup, a live step running a <code>state-mutating</code> command, an obligation step in a fixture, an
 unknown obligation token, and a step that both runs and asserts — and requires exit 10 with
 the message that names the cause.</p>
+<h2 id="what-it-does-not-cover"><a class="zola-anchor" href="#what-it-does-not-cover" aria-label="Anchor link for: what-it-does-not-cover">What it does not cover</a></h2>
+<p>It decides a shape, not a behaviour. <code>class: read-only</code> in <code>share/commands.yaml</code> is a
+declaration, so a command declared read-only that nevertheless writes is refused by nothing
+here — the registry's own truthfulness is what <code>share/commands.yaml</code> and its reviewers owe,
+and <code>31_command_coverage</code> is where a command's declaration is held to the command graph.</p>
+<p>It binds a scenario, not a session. A live scenario cannot mutate the repository it asks
+about; a worker holding the same repository open can, at the same moment, and this claim
+says nothing about that. The task's scope, <code>check --overlap</code> and the pre-push hook are what
+speak there.</p>
+<p>It says nothing about what a live run observes. Whether the answer is current, whether the
+obligation it asserts was discharged for this tree rather than an older one, is the subject
+of the obligation vocabulary and of <code>live-scenario-evidence-is-local</code>, not of this refusal.</p>
+<h2 id="why-it-exists"><a class="zola-anchor" href="#why-it-exists" aria-label="Anchor link for: why-it-exists">Why it exists</a></h2>
+<p>A scenario could only run <code>majordomus</code>, so no use case could show the tool refusing a stray
+edit, and the first attempt to write one reached for a step that would have run a mutating
+command against the author's own checkout. The safe answer was already in the tree: every
+command declares its class, and every obligation declares what establishes it. Deciding a
+live scenario from those two declarations makes the dangerous shape unrepresentable rather
+than discouraged — the author cannot write it, so no reviewer has to catch it.</p>
 </article>
     <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/claims/live-scenario-is-read-only.md" class="font-mono underline">docs/claims/live-scenario-is-read-only.md</a>.</p>
 
@@ -318,7 +337,7 @@ the message that names the cause.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/05af3139749c86207e70df851f6a9c15d0f26485" class="font-mono underline">05af313</a> · inputs <span class="font-mono">cc29e05da9a5</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/05ea69b31d32baa7b8ae547c1c5d25ad8a86521e" class="font-mono underline">05ea69b</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
