@@ -201,14 +201,14 @@
         the scenarios executed to record every transcript above. Each value is a dataset's; one
         that is not known here says so rather than disappearing. -#}
     <dl class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-trust>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">latest release the installer resolves</dt>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="release"><dt class="text-xs text-body">latest release the installer resolves</dt>
         {%- if dist.latest %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ dist.latest.notes_url }}" class="hover:underline">{{ dist.latest.version }}</a></dd><dd class="mt-1 text-xs text-body">published {{ dist.latest.published_at | truncate(length=10, end="") }}</dd>
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">commit this page was built from</dt>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt>
         {%- if build and build.commit and build.commit != "unknown" %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="hover:underline">{{ build.commit | truncate(length=7, end="") }}</a></dd><dd class="mt-1 text-xs text-body">{% if build.dirty %}with uncommitted changes · {% endif %}<a href="{{ get_url(path="build.json") }}" class="text-fg-brand hover:underline">served as build.json</a></dd>
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ get_url(path="/use-cases/", trailing_slash=true) }}" class="hover:underline">{{ cat.use_cases | length }}</a></dd><dd class="mt-1 text-xs text-body">{{ cat.categories | length }} areas</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="use-cases"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ get_url(path="/use-cases/", trailing_slash=true) }}" class="hover:underline">{{ cat.use_cases | length }}</a></dd><dd class="mt-1 text-xs text-body">{{ cat.categories | length }} areas</dd></div>
     </dl>
     <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
       <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every claim, with the test that settles it &rarr;</a>
@@ -240,7 +240,7 @@
             added there is named here, and none is typed in this template -#}
         <dl class="mt-4 border-t border-brand-subtle pt-4">
           <dt class="text-xs font-semibold uppercase tracking-wide text-fg-brand-strong">instruction files generated for</dt>
-          <dd class="mt-2 flex flex-wrap gap-2">
+          <dd class="mt-2 flex flex-wrap gap-2" data-providers>
             {%- for pv in model.providers %}
             {%- if pv.route %}<a href="{{ base }}{{ pv.route }}" class="rounded-base border border-brand-subtle bg-neutral-primary px-2 py-1 text-sm text-heading hover:underline">{{ pv.title }}</a>
             {%- else %}<span class="rounded-base border border-brand-subtle bg-neutral-primary px-2 py-1 text-sm text-heading">{{ pv.title }}</span>{% endif %}
