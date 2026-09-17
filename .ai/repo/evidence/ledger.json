@@ -2,6 +2,19 @@
   "version": 1,
   "executions": [
     {
+      "test": "crate:skills",
+      "runner": "crate",
+      "source": "apps/majordomus-cli/tests/skills.rs",
+      "outcome": "pass",
+      "seconds": 3,
+      "commit": "773cb6da5f499f08e93ad161c95d4ff8324bb9ee",
+      "working_tree": "clean",
+      "digest": "sha256:cbccfc2b3c897e67cd75899744a52f5fdbc7e292eda13f72a2381ccba5bb4b6a",
+      "at": "2026-09-17T01:14:59Z",
+      "origin": "local",
+      "command": "cargo test --test skills"
+    },
+    {
       "test": "suite:124_evidence",
       "runner": "suite",
       "source": "test/cases/124_evidence.sh",
@@ -78,6 +91,19 @@
       "at": "2026-09-12T10:36:18Z",
       "origin": "local",
       "command": "bash test/run.sh 274_commit_policy"
+    },
+    {
+      "test": "suite:391_skills_are_proven_capabilities",
+      "runner": "suite",
+      "source": "test/cases/391_skills_are_proven_capabilities.sh",
+      "outcome": "pass",
+      "seconds": 43,
+      "commit": "773cb6da5f499f08e93ad161c95d4ff8324bb9ee",
+      "working_tree": "clean",
+      "digest": "sha256:4614e4c4f4fca6e7ce5fcb1c4c658af43b240cfc3b2f51712a261becddb17f8b",
+      "at": "2026-09-17T01:14:59Z",
+      "origin": "local",
+      "command": "bash test/run.sh 391_skills_are_proven_capabilities"
     }
   ]
 }
