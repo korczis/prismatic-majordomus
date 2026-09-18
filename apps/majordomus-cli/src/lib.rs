@@ -89,6 +89,23 @@ pub const PROFILE: &str = env!("MAJORDOMUS_PROFILE");
 /// in order to say what it is.
 pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
 
+/// Whether the tree [`COMMIT`] names carried uncommitted changes when this executable was
+/// built: `Some(true)` or `Some(false)` when the build knew, `None` when it did not — a
+/// commit handed in through `MAJORDOMUS_BUILD_COMMIT` without `MAJORDOMUS_BUILD_DIRTY`, or
+/// a build outside a work tree.
+///
+/// Read with `option_env!`: a build-script output that predates the flag (a target directory
+/// shared across checkouts reuses one) must still compile, and what it did not record is
+/// unknown rather than a build failure.
+pub const DIRTY: Option<bool> = match option_env!("MAJORDOMUS_DIRTY") {
+    Some(v) => match v.as_bytes() {
+        b"true" => Some(true),
+        b"false" => Some(false),
+        _ => None,
+    },
+    None => None,
+};
+
 /// The generation this executable was built from: the digest `generation::crate_generation`
 /// takes over the crate sources, compiled in by `build.rs`, or `unknown` when the build
 /// could not read them.

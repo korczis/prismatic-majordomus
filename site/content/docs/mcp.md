@@ -75,6 +75,9 @@ A server serves a checkout. A linked worktree is a checkout of its own — it ha
 manifest, so it has a root, a lease and a server of its own — and until ADR 0035 nothing
 said that two such servers belonged to one repository. Now the index route (`GET /`) names
 the git repository the checkout belongs to beside the checkout's own identity:
+`commit` is the commit the executable answering was built from, in full or `unknown`, and
+`dirty` whether its tree carried uncommitted changes (`null` when the build did not know) —
+the same two fields `GET /api/v1/live` and `GET /api/v1/ready` answer;
 `repository_id` is the checkout's (a digest of its root, what the lease probe compares),
 `git_repository_id` is the repository's (a digest of the git directory every worktree
 shares; absent where git cannot be asked), `linked_worktree` says whether this is the

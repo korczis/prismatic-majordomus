@@ -22090,11 +22090,23 @@
           "version": {
             "type": "string",
             "description": "This executable's version, so a rolling deployment can tell which build answered."
+          },
+          "commit": {
+            "type": "string",
+            "description": "The commit this executable was built from, in full, or `unknown` when the build could\nnot name one. A version is what a build calls itself and two revisions share it; this\nis what a deployment is checked against. Never omitted: an absent field would read as\na server too old to say, and `unknown` is a different, truthful answer."
+          },
+          "dirty": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether that commit's tree carried uncommitted changes when this executable was built;\n`null` when the build did not know."
           }
         },
         "required": [
           "alive",
-          "version"
+          "version",
+          "commit"
         ],
         "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for."
       },
@@ -26734,6 +26746,17 @@
             "type": "string",
             "description": "This executable's version."
           },
+          "commit": {
+            "type": "string",
+            "description": "The commit this executable was built from, or `unknown`; the same value `health.live`\nanswers."
+          },
+          "dirty": {
+            "type": [
+              "boolean",
+              "null"
+            ],
+            "description": "Whether the build's tree was dirty; `null` when the build did not know."
+          },
           "capabilities": {
             "type": "integer",
             "format": "uint",
@@ -26754,6 +26777,7 @@
         "required": [
           "ready",
           "version",
+          "commit",
           "capabilities",
           "objects",
           "layer"

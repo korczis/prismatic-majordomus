@@ -139,7 +139,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `apps/majordomus-cli/src/cockpit/logo-mark.svg` | `design-mark` | text | 903 | `98cd79184ee4d852` |
 | `apps/majordomus-cli/src/design/tokens.yaml` | `design-declaration` | yaml | 16876 | `c4d00d57b6b0f004` |
 | `apps/majordomus-cli/src/web/tokens.css` | `design-tokens` | text | 5692 | `9b60d22e7774ccd4` |
-| `deploy/Dockerfile` | `deployment` | text | 1429 | `bd5ae89f838bd0ea` |
+| `deploy/Dockerfile` | `deployment` | text | 1866 | `05e4fe64011ca785` |
 | `docs/INSTALL.md` | `install-guide` | markdown | 9524 | `44b41c2ff6bdfe5c` |
 | `docs/generated/artifacts.json` | `artifacts` | json | — | — (this file) |
 | `docs/generated/artifacts.md` | `artifacts` | markdown | — | — (this file) |
@@ -158,7 +158,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/design.md` | `design` | markdown | 9232 | `b402a89f93e144cd` |
 | `docs/generated/design.yaml` | `design` | yaml | 102269 | `f32ea3e2e2516ed4` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
-| `docs/generated/graph.json` | `graph` | json | 2081392 | `f223a9ce16609093` |
+| `docs/generated/graph.json` | `graph` | json | 2081923 | `fbc1725c35114de2` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7616 | `b93b72571eb5077d` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `26bb12065a5b8bc5` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `6f067d962e1d2850` |
@@ -197,13 +197,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1462 | `c8aea540eb65c082` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6121 | `5e8729226111d73a` |
 | `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 4892 | `468083adab20ad9d` |
-| `docs/generated/openapi.json` | `openapi` | json | 1306293 | `e6a06570b9a34bae` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 1051141 | `171278a27caa38d9` |
+| `docs/generated/openapi.json` | `openapi` | json | 1307438 | `ccee4fcadc0a7e96` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 1052126 | `24db30772817d0c7` |
 | `docs/generated/providers.json` | `providers` | json | 2008 | `84c18c19093fd628` |
 | `docs/generated/providers.md` | `providers` | markdown | 2301 | `a9d17afe301bf018` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 1753 | `a22f95e232aea0a8` |
-| `docs/generated/registry.json` | `registry` | json | 1728571 | `4c45099d8e2aa867` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 1383976 | `df502588962461a0` |
+| `docs/generated/registry.json` | `registry` | json | 1729764 | `25e6c35013deab83` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 1384997 | `514b50d54444dd68` |
 | `docs/generated/web.json` | `web` | json | 4472 | `263ec967f851312d` |
 | `docs/generated/web.yaml` | `web` | yaml | 3429 | `f3d6b00c9d496e02` |
 | `fly.toml` | `deployment` | text | 919 | `5a88e46d6a0cf98e` |
@@ -257,8 +257,8 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/design.json` | `site-design` | json | 9987 | `c389d5728ee80545` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `67715cc11b62368e` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 83337 | `adc9abebcb253a9f` |
-| `site/data/registry/product.json` | `site-product` | json | 374974 | `54fcaf56150801f3` |
-| `site/data/registry/registry.json` | `site-registry` | json | 3520007 | `21f0b2168150ad79` |
+| `site/data/registry/product.json` | `site-product` | json | 374974 | `e79b233bb5c5f797` |
+| `site/data/registry/registry.json` | `site-registry` | json | 3521562 | `f9e65cf26caab479` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `918a2fe4aae619cf` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `ad73a19b02df0925` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `98cd79184ee4d852` |

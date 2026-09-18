@@ -6,23 +6,23 @@
     "version": "0.7.1"
   },
   "registry": {
-    "fingerprint": "3754c9e211224d8f4ab7e92efa0948651be0aad5075be57c610486d0cc45deb5",
+    "fingerprint": "d14e0b070a861242601af5fdba16914cdb036832bc319d216b72ff1adae884e5",
     "summary": {
-      "total": 1476,
+      "total": 1477,
       "builtin": 113,
-      "declarative": 1363,
+      "declarative": 1364,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1363
+        "resource": 1364
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1369
+        "implemented": 1370
       },
       "mcp_tools": 110,
-      "mcp_resources": 1404,
+      "mcp_resources": 1405,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -19345,11 +19345,23 @@
               "version": {
                 "type": "string",
                 "description": "This executable's version, so a rolling deployment can tell which build answered."
+              },
+              "commit": {
+                "type": "string",
+                "description": "The commit this executable was built from, in full, or `unknown` when the build could\nnot name one. A version is what a build calls itself and two revisions share it; this\nis what a deployment is checked against. Never omitted: an absent field would read as\na server too old to say, and `unknown` is a different, truthful answer."
+              },
+              "dirty": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Whether that commit's tree carried uncommitted changes when this executable was built;\n`null` when the build did not know."
               }
             },
             "required": [
               "alive",
-              "version"
+              "version",
+              "commit"
             ],
             "description": "The answer to \"is this process alive\": the cheapest true thing this executable can\nsay about itself. Deliberately not a summary of anything — a probe that grew an\nopinion would stop reporting the one fact the platform polls it for.",
             "title": "Liveness"
@@ -19413,6 +19425,17 @@
                 "type": "string",
                 "description": "This executable's version."
               },
+              "commit": {
+                "type": "string",
+                "description": "The commit this executable was built from, or `unknown`; the same value `health.live`\nanswers."
+              },
+              "dirty": {
+                "type": [
+                  "boolean",
+                  "null"
+                ],
+                "description": "Whether the build's tree was dirty; `null` when the build did not know."
+              },
               "capabilities": {
                 "type": "integer",
                 "format": "uint",
@@ -19433,6 +19456,7 @@
             "required": [
               "ready",
               "version",
+              "commit",
               "capabilities",
               "objects",
               "layer"
@@ -40802,7 +40826,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 220,
+        "capabilities": 221,
         "capability_ids": []
       },
       {
@@ -40882,7 +40906,7 @@
     ]
   },
   "index": {
-    "fingerprint": "73c3cc6e8b225e491e00d5a4bc52bbcbda11945a84b2c4217ad8527ffe71f9a3",
+    "fingerprint": "3661611e0f6818c16f546a66445df49e2d692f07d86e2076ada4af9a80ed7187",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40931,7 +40955,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 220,
+      "test": 221,
       "use-case": 46,
       "workspace": 1
     },
@@ -44975,7 +44999,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 41711
+        "bytes": 41966
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -54523,6 +54547,14 @@
         "bytes": 3865
       },
       {
+        "uri": "majordomus://test/test/cases/370_the_runtime_names_its_commit.sh",
+        "kind": "test",
+        "identity": "test/cases/370_the_runtime_names_its_commit.sh",
+        "path": "test/cases/370_the_runtime_names_its_commit.sh",
+        "source_class": "case",
+        "bytes": 6883
+      },
+      {
         "uri": "majordomus://test/test/cases/37_responsibility_surface.sh",
         "kind": "test",
         "identity": "test/cases/37_responsibility_surface.sh",
@@ -56010,7 +56042,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 220
+      "objects": 221
     },
     {
       "name": "use-case",
