@@ -34,4 +34,14 @@ fixture test/cases/64_knowledge_discovery.sh a case creating a file whose name c
 fixture scripts/ci/english-only-check the check carries the list of letters it tests for; it cannot express the rule without containing what the rule refuses
 fixture docs/claims/authored-files-are-english.md the claim page names the letters the check looks for, so a reader knows what is decidable and what is not
 fixture test/cases/138_governance_gates.sh the case mutates a file into another language to prove the check goes red, which requires writing that language
+fixture test/cases/403_published_translation.sh the case writes a page in another language to prove the translation exemption refuses an undeclared one, which requires writing that language
 fixture site/content/guarantees/authored-files-are-english.md the generated rendering of docs/claims/authored-files-are-english.md, which is itself a declared fixture; the derived copy inherits the letters the source names
+
+# Published translations (project.english-only v2, ADR 0077). Each names its language and its
+# reason, and each page declares the same language in its own front matter — the check compares
+# the two, so an entry that is not true of its page is refused rather than honoured. The
+# generated projection under site/content/ is declared beside its source, as the fixture pair
+# above is: the projector copies the front matter verbatim, so the derived copy declares the
+# same language the entry claims.
+translation site/content-src/dokumentace-kterou-lze-odmitnout.md cs a long-form article written for Czech readers, published beside its English counterpart rather than translated from it
+translation site/content/dokumentace-kterou-lze-odmitnout.md cs the generated projection of the Czech article above

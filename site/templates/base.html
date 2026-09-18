@@ -6,14 +6,31 @@
 {#- the design contract, generated from share/design/tokens.yaml: the theme class and storage key the toggle honours, the pre-paint statement, the fingerprint the probes compare with the stylesheet's. -#}
 {%- set design = load_data(path="data/registry/design.json") -%}
 {%- set page_url = current_url or config.base_url -%}
+{#- The language this page is written in. Every page of this site is English but for the
+    published translations project.english-only v2 permits, and each of those declares its own
+    language in its front matter (ADR 0077). A page that declared nothing used to be served as
+    `lang="en"` whatever it was written in, which misreports it to a screen reader and to a
+    search engine; the declaration the language gate already requires is the one read here, so
+    the two cannot disagree. -#}
+{%- set page_lang = "en" -%}
+{%- if page is defined and page.extra.lang is defined -%}{%- set_global page_lang = page.extra.lang -%}{%- endif -%}
 <!doctype html>
-<html lang="en" class="scroll-smooth" data-theme-key="{{ design.theme.storage_key }}" data-theme-class="{{ design.theme.class }}" data-design="{{ design.design }}">
+<html lang="{{ page_lang }}" class="scroll-smooth" data-theme-key="{{ design.theme.storage_key }}" data-theme-class="{{ design.theme.class }}" data-design="{{ design.design }}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ project.name }} — {{ project.tagline | lower | trim_end(pat=".") }}{% endblock title %}</title>
 <meta name="description" content="{% block description %}{{ project.tagline }}{% endblock description %}">
 <link rel="canonical" href="{{ page_url }}">
+{#- A page that names a counterpart in another language links to it both ways round: itself
+    under its own language, and the counterpart under that one. Emitted through get_url, which
+    scripts/site-basepath-check requires of every route a template writes, and resolved as an
+    internal link by scripts/ci/link-check — so a counterpart that is not built is a finding
+    rather than a dead alternate. -#}
+{%- if page is defined and page.extra.alternate is defined %}
+<link rel="alternate" hreflang="{{ page_lang }}" href="{{ page_url }}">
+<link rel="alternate" hreflang="{{ page.extra.alternate_lang }}" href="{{ get_url(path=page.extra.alternate, trailing_slash=true) }}">
+{%- endif %}
 {#- Indexing: a page is kept out of search when its own front matter says so, or when it sits
     below a section site/data/nav.toml lists under [indexing] unlisted — the receipts, reachable
     and linked but not ranked. templates/sitemap.xml applies the same test, and
