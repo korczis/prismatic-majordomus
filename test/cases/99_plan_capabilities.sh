@@ -158,9 +158,14 @@ pj_issue I0006 M001 I0005
 # a cancelled issue is out of the denominator and out of every wave's ready set
 pj_issue I0007 M000
 printf 'cancelled: true\n' >> .ai/repo/project/issues/I0007.yaml
-# a completion without its evidence stays in VERIFY and says why
+# a completion without its evidence stays in VERIFY and says why. The completion is written
+# by the transition, sealed, and the evidence is then taken away: a completed_at typed into
+# the record would prove nothing and fail both engines instead (case 375).
 pj_issue I0008 M000
-printf 'completed_at: 2026-01-01T00:00:00Z\n' >> .ai/repo/project/issues/I0008.yaml
+"$MJ" plan start I0008 >/dev/null
+"$MJ" plan evidence I0008 --covers proof --type test --command true --result ok >/dev/null
+"$MJ" plan "done" I0008 >/dev/null
+sed '/^evidence:/,$d' .ai/repo/project/issues/I0008.yaml > "$S/I0008" && cat "$S/I0008" > .ai/repo/project/issues/I0008.yaml
 # and two issues of one wave whose scope overlaps are serialised by it
 # two issues of one wave that touch the same paths are serialised. The scope entry is
 # replaced, never appended: a second `scope:` key is a duplicate mapping key, which the

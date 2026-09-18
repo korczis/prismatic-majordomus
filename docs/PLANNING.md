@@ -54,6 +54,16 @@ An issue records what happened to it — `started_at`, `verified_at`, `completed
 | `BLOCKED` | a dependency is not `DONE` |
 | `READY` | nothing above applies |
 
+A stamp counts only when its transition wrote it. `majordomus plan start|verify|done` (and
+the `plan.transition` capability) write the stamp together with its seal — `started_event`,
+`verified_event`, `completed_event`: the SHA-256 of the event, the issue and the stamp — and
+append the `plan_*` event to the checkout's ledger. The ledger is never tracked, so the seal
+is the part of the event a clone can check. A stamp without its seal moves no status and is a
+`stamp_without_event` failure of `plan validate`; the stamps recorded before seals existed
+are named in each record's `unsealed_stamps`, a list that only shrinks
+(`project.no-plan-stamp-without-its-event`, ADR 0072). `done` is refused unless the issue is
+ACTIVE or VERIFY.
+
 A milestone's status follows from its issues and its own evidence:
 
 | status | when |

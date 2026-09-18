@@ -6,23 +6,23 @@
     "version": "0.7.1"
   },
   "registry": {
-    "fingerprint": "3754c9e211224d8f4ab7e92efa0948651be0aad5075be57c610486d0cc45deb5",
+    "fingerprint": "f5b4fda5a14ba1bbc7a6afadc2f8926dbbb56f4f0bc4672003992f8da2294008",
     "summary": {
-      "total": 1476,
+      "total": 1480,
       "builtin": 113,
-      "declarative": 1363,
+      "declarative": 1367,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1363
+        "resource": 1367
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1369
+        "implemented": 1373
       },
       "mcp_tools": 110,
-      "mcp_resources": 1404,
+      "mcp_resources": 1408,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -26206,7 +26206,7 @@
         "module": "plan",
         "kind": "command",
         "title": "Move one issue through the lifecycle",
-        "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
+        "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped, the seal of its event is written beside it, and the event is appended to the ledger; a stamp without that seal moves no status. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one that was never started, whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
         "input": {
           "name": "PlanTransitionInput",
           "schema": {
@@ -26369,7 +26369,7 @@
         "module": "plan",
         "kind": "query",
         "title": "What the model refuses",
-        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a lifecycle stamp its transition did not write (no seal of its plan_* event beside it), a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -40132,7 +40132,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 51,
+        "capabilities": 52,
         "capability_ids": []
       },
       {
@@ -40723,7 +40723,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 137,
+        "capabilities": 138,
         "capability_ids": []
       },
       {
@@ -40802,7 +40802,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 220,
+        "capabilities": 222,
         "capability_ids": []
       },
       {
@@ -40882,7 +40882,7 @@
     ]
   },
   "index": {
-    "fingerprint": "73c3cc6e8b225e491e00d5a4bc52bbcbda11945a84b2c4217ad8527ffe71f9a3",
+    "fingerprint": "e5fc98127d2cd508035d941e326c332d5dc9c5f7dc7dc6e6e6c7f929bc4f38fc",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40905,7 +40905,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -40926,12 +40926,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 4,
-      "rule": 137,
+      "rule": 138,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 220,
+      "test": 222,
       "use-case": 46,
       "workspace": 1
     },
@@ -41769,6 +41769,23 @@
           "safety",
           "worktrees",
           "ci"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0072",
+        "kind": "adr",
+        "identity": "adr-0072",
+        "title": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
+        "description": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
+        "path": ".ai/repo/adrs/0072-a-plan-stamp-carries-the-seal-of-its-event.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 5763,
+        "tags": [
+          "plan",
+          "lifecycle",
+          "events",
+          "integrity"
         ]
       },
       {
@@ -43838,7 +43855,7 @@
         "description": "The repository's architecture decisions as objects: list, show, ask for the next free identity, propose one with provenance, and validate the whole set against this tree and every other ref.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/archive",
@@ -43848,7 +43865,7 @@
         "description": "Take a snapshot of the tracked tree that can be read, or checked, somewhere else.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/bench",
@@ -43858,7 +43875,7 @@
         "description": "Time every public command of the registry, cold and warm, and compare with the baseline.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/capture",
@@ -43868,7 +43885,7 @@
         "description": "Record the person's raw prompts from a provider hook as a record with its renderings, draw the episode boundary from the provider's own lifecycle hooks, install those hooks, reconcile and prune the archive, and report what each provider actually does here.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/check",
@@ -43878,7 +43895,7 @@
         "description": "Is the current task still consistent with its policy, its scope and this checkout?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/checkpoint",
@@ -43888,7 +43905,7 @@
         "description": "Record compact progress inside the active task, so the next worker does not start over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/context",
@@ -43898,7 +43915,7 @@
         "description": "What the next worker needs to know now, in authority order and within a budget.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/decision",
@@ -43908,7 +43925,7 @@
         "description": "Record a decision that was made between real alternatives, with its reason, and read them back.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/doctor",
@@ -43918,7 +43935,7 @@
         "description": "Is Majordomus itself healthy, and is every enforcement it declares actually wired here?",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/doctrine",
@@ -43928,7 +43945,7 @@
         "description": "What rules are enforced, by what, and whether each one is actually wired.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/evidence",
@@ -43938,7 +43955,7 @@
         "description": "Record evidence against the active task: one obligation it declared, discharged, or one validation gate of the CI model that has reported — each as a ledger line carrying the hash of the files it was taken over.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/finish",
@@ -43948,7 +43965,7 @@
         "description": "Evaluate the finish contract and refuse the outcome if any line of it is unmet.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/handover",
@@ -43958,7 +43975,7 @@
         "description": "Write an append-only continuation record, and resolve the most relevant prior one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/help",
@@ -43968,7 +43985,7 @@
         "description": "Print the usage text, which is the list of every public command.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/history",
@@ -43978,7 +43995,7 @@
         "description": "Read the append-only ledger back, filtered by task, event or time.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/init",
@@ -43988,7 +44005,7 @@
         "description": "Create the .ai/ layer in this repository, and refuse to overwrite an existing one.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/knowledge",
@@ -43998,7 +44015,7 @@
         "description": "The compiled index over what this repository states.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/migrate",
@@ -44008,7 +44025,7 @@
         "description": "Move pre-.ai project data from .majordomus/ into .ai/, explicitly and backed up.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/plan",
@@ -44018,7 +44035,7 @@
         "description": "The milestone and issue model — validate it, read it, and move one issue through it.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/prompt",
@@ -44028,7 +44045,7 @@
         "description": "List, show and render the repository's own prompt assets, substituting known tokens only.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/question",
@@ -44038,7 +44055,7 @@
         "description": "Open a question that blocks acceptance, resolve it, and list what is still open.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/recover",
@@ -44048,7 +44065,7 @@
         "description": "Close episodes nobody ended, fold duplicate records, classify the stores' stray files.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/rules",
@@ -44058,7 +44075,7 @@
         "description": "The effective rule set, vendored baseline plus project rules.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/search",
@@ -44068,7 +44085,7 @@
         "description": "Find a durable record without reading all of them, in authority order.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/session",
@@ -44078,7 +44095,7 @@
         "description": "Open, inspect and close one execution episode.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/skills",
@@ -44088,7 +44105,7 @@
         "description": "The repository's skills — provider-neutral procedures under the skills section — listed, shown and checked from the one catalogue every surface reads.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/start",
@@ -44098,7 +44115,7 @@
         "description": "Begin one scoped task under a profile, and refuse while another is active.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/update",
@@ -44108,7 +44125,7 @@
         "description": "Regenerate every provider instruction file from the one policy, deterministically.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/usecase",
@@ -44118,7 +44135,7 @@
         "description": "The executable use cases: list, show, validate, run against the real tool, coverage, impact, scaffold.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/version",
@@ -44128,7 +44145,7 @@
         "description": "Print the version, without needing a repository or an installation.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://command/watch",
@@ -44138,7 +44155,7 @@
         "description": "What has drifted since the last update — policy, projections, state, retention.",
         "path": "share/commands.yaml",
         "source_class": "command",
-        "bytes": 30160
+        "bytes": 30164
       },
       {
         "uri": "majordomus://context/ai.layer",
@@ -45020,7 +45037,7 @@
         "title": "Planning — milestones, issues, and the graph between them",
         "path": "docs/PLANNING.md",
         "source_class": "document",
-        "bytes": 15177
+        "bytes": 15918
       },
       {
         "uri": "majordomus://document/docs/PLAN_STATUS.md",
@@ -47393,7 +47410,7 @@
         "identity": "lib/plan.sh",
         "path": "lib/plan.sh",
         "source_class": "library",
-        "bytes": 25100
+        "bytes": 26563
       },
       {
         "uri": "majordomus://implementation/lib/plan_json.awk",
@@ -47409,7 +47426,7 @@
         "identity": "lib/project.awk",
         "path": "lib/project.awk",
         "source_class": "engine",
-        "bytes": 19417
+        "bytes": 20717
       },
       {
         "uri": "majordomus://implementation/lib/project.sh",
@@ -47417,7 +47434,7 @@
         "identity": "lib/project.sh",
         "path": "lib/project.sh",
         "source_class": "library",
-        "bytes": 15176
+        "bytes": 16319
       },
       {
         "uri": "majordomus://implementation/lib/prompt.sh",
@@ -47532,7 +47549,7 @@
         "path": ".ai/repo/project/issues/I0001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1900
+        "bytes": 2028
       },
       {
         "uri": "majordomus://issue/I0002",
@@ -47543,7 +47560,7 @@
         "path": ".ai/repo/project/issues/I0002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1925
+        "bytes": 2053
       },
       {
         "uri": "majordomus://issue/I0003",
@@ -47554,7 +47571,7 @@
         "path": ".ai/repo/project/issues/I0003.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1740
+        "bytes": 1868
       },
       {
         "uri": "majordomus://issue/I0004",
@@ -47565,7 +47582,7 @@
         "path": ".ai/repo/project/issues/I0004.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1516
+        "bytes": 1644
       },
       {
         "uri": "majordomus://issue/I0005",
@@ -47576,7 +47593,7 @@
         "path": ".ai/repo/project/issues/I0005.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1642
+        "bytes": 1770
       },
       {
         "uri": "majordomus://issue/I0006",
@@ -47587,7 +47604,7 @@
         "path": ".ai/repo/project/issues/I0006.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1437
+        "bytes": 1565
       },
       {
         "uri": "majordomus://issue/I0007",
@@ -47598,7 +47615,7 @@
         "path": ".ai/repo/project/issues/I0007.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1777
+        "bytes": 1905
       },
       {
         "uri": "majordomus://issue/I0008",
@@ -47609,7 +47626,7 @@
         "path": ".ai/repo/project/issues/I0008.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2432
+        "bytes": 2560
       },
       {
         "uri": "majordomus://issue/I0009",
@@ -47620,7 +47637,7 @@
         "path": ".ai/repo/project/issues/I0009.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1980
+        "bytes": 2108
       },
       {
         "uri": "majordomus://issue/I0010",
@@ -47631,7 +47648,7 @@
         "path": ".ai/repo/project/issues/I0010.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1512
+        "bytes": 1640
       },
       {
         "uri": "majordomus://issue/I0011",
@@ -47642,7 +47659,7 @@
         "path": ".ai/repo/project/issues/I0011.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2266
+        "bytes": 2394
       },
       {
         "uri": "majordomus://issue/I0012",
@@ -47653,7 +47670,7 @@
         "path": ".ai/repo/project/issues/I0012.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1522
+        "bytes": 1650
       },
       {
         "uri": "majordomus://issue/I0013",
@@ -47664,7 +47681,7 @@
         "path": ".ai/repo/project/issues/I0013.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1641
+        "bytes": 1769
       },
       {
         "uri": "majordomus://issue/I0014",
@@ -47675,7 +47692,7 @@
         "path": ".ai/repo/project/issues/I0014.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1868
+        "bytes": 1996
       },
       {
         "uri": "majordomus://issue/I0015",
@@ -47686,7 +47703,7 @@
         "path": ".ai/repo/project/issues/I0015.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2319
+        "bytes": 2447
       },
       {
         "uri": "majordomus://issue/I0101",
@@ -47697,7 +47714,7 @@
         "path": ".ai/repo/project/issues/I0101.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2167
+        "bytes": 2295
       },
       {
         "uri": "majordomus://issue/I0102",
@@ -47708,7 +47725,7 @@
         "path": ".ai/repo/project/issues/I0102.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1941
+        "bytes": 2069
       },
       {
         "uri": "majordomus://issue/I0103",
@@ -47719,7 +47736,7 @@
         "path": ".ai/repo/project/issues/I0103.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2082
+        "bytes": 2210
       },
       {
         "uri": "majordomus://issue/I0104",
@@ -47730,7 +47747,7 @@
         "path": ".ai/repo/project/issues/I0104.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1953
+        "bytes": 2081
       },
       {
         "uri": "majordomus://issue/I0201",
@@ -48049,7 +48066,7 @@
         "path": ".ai/repo/project/issues/I0801.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3676
+        "bytes": 3767
       },
       {
         "uri": "majordomus://issue/I0802",
@@ -48060,7 +48077,7 @@
         "path": ".ai/repo/project/issues/I0802.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3280
+        "bytes": 3335
       },
       {
         "uri": "majordomus://issue/I0803",
@@ -48071,7 +48088,7 @@
         "path": ".ai/repo/project/issues/I0803.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3464
+        "bytes": 3519
       },
       {
         "uri": "majordomus://issue/I0804",
@@ -48082,7 +48099,7 @@
         "path": ".ai/repo/project/issues/I0804.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4156
+        "bytes": 4247
       },
       {
         "uri": "majordomus://issue/I0805",
@@ -48093,7 +48110,7 @@
         "path": ".ai/repo/project/issues/I0805.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3249
+        "bytes": 3340
       },
       {
         "uri": "majordomus://issue/I0806",
@@ -48115,7 +48132,7 @@
         "path": ".ai/repo/project/issues/I0807.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3353
+        "bytes": 3444
       },
       {
         "uri": "majordomus://issue/I0808",
@@ -48126,7 +48143,7 @@
         "path": ".ai/repo/project/issues/I0808.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3986
+        "bytes": 4077
       },
       {
         "uri": "majordomus://issue/I0809",
@@ -48137,7 +48154,7 @@
         "path": ".ai/repo/project/issues/I0809.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4456
+        "bytes": 4547
       },
       {
         "uri": "majordomus://issue/I0810",
@@ -48225,7 +48242,7 @@
         "path": ".ai/repo/project/issues/I0817.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1921
+        "bytes": 2049
       },
       {
         "uri": "majordomus://issue/I0818",
@@ -48236,7 +48253,7 @@
         "path": ".ai/repo/project/issues/I0818.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2245
+        "bytes": 2373
       },
       {
         "uri": "majordomus://issue/I0819",
@@ -48247,7 +48264,7 @@
         "path": ".ai/repo/project/issues/I0819.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2184
+        "bytes": 2312
       },
       {
         "uri": "majordomus://issue/I0820",
@@ -48291,7 +48308,7 @@
         "path": ".ai/repo/project/issues/I0823.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2966
+        "bytes": 3094
       },
       {
         "uri": "majordomus://issue/I0824",
@@ -48302,7 +48319,7 @@
         "path": ".ai/repo/project/issues/I0824.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1903
+        "bytes": 2031
       },
       {
         "uri": "majordomus://issue/I0825",
@@ -48313,7 +48330,7 @@
         "path": ".ai/repo/project/issues/I0825.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2143
+        "bytes": 2271
       },
       {
         "uri": "majordomus://issue/I0826",
@@ -48324,7 +48341,7 @@
         "path": ".ai/repo/project/issues/I0826.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2195
+        "bytes": 2323
       },
       {
         "uri": "majordomus://issue/I0827",
@@ -48335,7 +48352,7 @@
         "path": ".ai/repo/project/issues/I0827.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 1951
+        "bytes": 2079
       },
       {
         "uri": "majordomus://issue/I0828",
@@ -48357,7 +48374,7 @@
         "path": ".ai/repo/project/issues/I0829.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2229
+        "bytes": 2357
       },
       {
         "uri": "majordomus://issue/I0830",
@@ -48368,7 +48385,7 @@
         "path": ".ai/repo/project/issues/I0830.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2234
+        "bytes": 2362
       },
       {
         "uri": "majordomus://issue/I0831",
@@ -48401,7 +48418,7 @@
         "path": ".ai/repo/project/issues/I0833.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2265
+        "bytes": 2393
       },
       {
         "uri": "majordomus://issue/I0834",
@@ -48874,7 +48891,7 @@
         "path": ".ai/repo/project/issues/I1001.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3552
+        "bytes": 3643
       },
       {
         "uri": "majordomus://issue/I1002",
@@ -48885,7 +48902,7 @@
         "path": ".ai/repo/project/issues/I1002.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3307
+        "bytes": 3398
       },
       {
         "uri": "majordomus://issue/I1003",
@@ -48896,7 +48913,7 @@
         "path": ".ai/repo/project/issues/I1003.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3425
+        "bytes": 3516
       },
       {
         "uri": "majordomus://issue/I1004",
@@ -48907,7 +48924,7 @@
         "path": ".ai/repo/project/issues/I1004.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3415
+        "bytes": 3506
       },
       {
         "uri": "majordomus://issue/I1005",
@@ -48918,7 +48935,7 @@
         "path": ".ai/repo/project/issues/I1005.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3577
+        "bytes": 3668
       },
       {
         "uri": "majordomus://issue/I1006",
@@ -49028,7 +49045,7 @@
         "path": ".ai/repo/project/issues/I1015.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2574
+        "bytes": 2627
       },
       {
         "uri": "majordomus://issue/I1016",
@@ -49138,7 +49155,7 @@
         "path": ".ai/repo/project/issues/I1025.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2760
+        "bytes": 2851
       },
       {
         "uri": "majordomus://issue/I1026",
@@ -49556,7 +49573,7 @@
         "path": ".ai/repo/project/issues/I1301.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 4164
+        "bytes": 4292
       },
       {
         "uri": "majordomus://issue/I1302",
@@ -49666,7 +49683,7 @@
         "path": ".ai/repo/project/issues/I1401.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3952
+        "bytes": 4080
       },
       {
         "uri": "majordomus://issue/I1402",
@@ -49677,7 +49694,7 @@
         "path": ".ai/repo/project/issues/I1402.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3868
+        "bytes": 3996
       },
       {
         "uri": "majordomus://issue/I1403",
@@ -49699,7 +49716,7 @@
         "path": ".ai/repo/project/issues/I1404.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3675
+        "bytes": 3803
       },
       {
         "uri": "majordomus://issue/I1405",
@@ -49710,7 +49727,7 @@
         "path": ".ai/repo/project/issues/I1405.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3804
+        "bytes": 3932
       },
       {
         "uri": "majordomus://issue/I1406",
@@ -49721,7 +49738,7 @@
         "path": ".ai/repo/project/issues/I1406.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3592
+        "bytes": 3720
       },
       {
         "uri": "majordomus://issue/I1407",
@@ -49732,7 +49749,7 @@
         "path": ".ai/repo/project/issues/I1407.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2498
+        "bytes": 2626
       },
       {
         "uri": "majordomus://issue/I1408",
@@ -49743,7 +49760,7 @@
         "path": ".ai/repo/project/issues/I1408.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 2543
+        "bytes": 2671
       },
       {
         "uri": "majordomus://issue/I1409",
@@ -49897,7 +49914,7 @@
         "path": ".ai/repo/project/issues/I1520.yaml",
         "section": "project",
         "source_class": "issue",
-        "bytes": 3566
+        "bytes": 3609
       },
       {
         "uri": "majordomus://knowledge/start-here",
@@ -52532,6 +52549,23 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
+        "kind": "rule",
+        "identity": "project.no-plan-stamp-without-its-event@1",
+        "title": "No plan stamp without its event",
+        "description": "A lifecycle stamp of an issue — started_at, verified_at, completed_at — is a fact only when the transition that appends its plan_* event wrote it, and the record proves that with the seal the transition writes beside the stamp; a stamp without its seal moves no status and fails plan validate.",
+        "path": ".ai/repo/rules/project/no-plan-stamp-without-its-event.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4051,
+        "tags": [
+          "plan",
+          "lifecycle",
+          "events",
+          "integrity"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.operation-transport-parity@1",
         "kind": "rule",
         "identity": "project.operation-transport-parity@1",
@@ -53808,7 +53842,7 @@
         "identity": "test/cases/129_executable_issues.sh",
         "path": "test/cases/129_executable_issues.sh",
         "source_class": "case",
-        "bytes": 14149
+        "bytes": 14375
       },
       {
         "uri": "majordomus://test/test/cases/12_site_build.sh",
@@ -53920,7 +53954,7 @@
         "identity": "test/cases/133_plan_transition.sh",
         "path": "test/cases/133_plan_transition.sh",
         "source_class": "case",
-        "bytes": 10839
+        "bytes": 11123
       },
       {
         "uri": "majordomus://test/test/cases/133_rule_graph.sh",
@@ -54456,7 +54490,7 @@
         "identity": "test/cases/33_event_registry.sh",
         "path": "test/cases/33_event_registry.sh",
         "source_class": "case",
-        "bytes": 7521
+        "bytes": 8092
       },
       {
         "uri": "majordomus://test/test/cases/33_stale_executable.sh",
@@ -54523,6 +54557,22 @@
         "bytes": 3865
       },
       {
+        "uri": "majordomus://test/test/cases/375_no_plan_stamp_without_its_event.sh",
+        "kind": "test",
+        "identity": "test/cases/375_no_plan_stamp_without_its_event.sh",
+        "path": "test/cases/375_no_plan_stamp_without_its_event.sh",
+        "source_class": "case",
+        "bytes": 8348
+      },
+      {
+        "uri": "majordomus://test/test/cases/376_the_done_guard_holds_in_both_engines.sh",
+        "kind": "test",
+        "identity": "test/cases/376_the_done_guard_holds_in_both_engines.sh",
+        "path": "test/cases/376_the_done_guard_holds_in_both_engines.sh",
+        "source_class": "case",
+        "bytes": 5368
+      },
+      {
         "uri": "majordomus://test/test/cases/37_responsibility_surface.sh",
         "kind": "test",
         "identity": "test/cases/37_responsibility_surface.sh",
@@ -54568,7 +54618,7 @@
         "identity": "test/cases/41_project_status.sh",
         "path": "test/cases/41_project_status.sh",
         "source_class": "case",
-        "bytes": 4978
+        "bytes": 5207
       },
       {
         "uri": "majordomus://test/test/cases/42_dag_waves.sh",
@@ -55208,7 +55258,7 @@
         "identity": "test/cases/99_plan_capabilities.sh",
         "path": "test/cases/99_plan_capabilities.sh",
         "source_class": "case",
-        "bytes": 13545
+        "bytes": 13940
       },
       {
         "uri": "majordomus://test/test/cases/99_work_graph_chain.sh",
@@ -55216,7 +55266,7 @@
         "identity": "test/cases/99_work_graph_chain.sh",
         "path": "test/cases/99_work_graph_chain.sh",
         "source_class": "case",
-        "bytes": 8467
+        "bytes": 8608
       },
       {
         "uri": "majordomus://use-case/accept-or-refuse-finished-work",
@@ -55745,7 +55795,7 @@
       "identity": [
         "id"
       ],
-      "objects": 51
+      "objects": 52
     },
     {
       "name": "application",
@@ -55955,7 +56005,7 @@
         "id",
         "version"
       ],
-      "objects": 137
+      "objects": 138
     },
     {
       "name": "scope",
@@ -56010,7 +56060,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 220
+      "objects": 222
     },
     {
       "name": "use-case",
@@ -74692,7 +74742,7 @@
         "name": "majordomus_plan_transition",
         "id": "plan.transition",
         "title": "Move one issue through the lifecycle",
-        "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
+        "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped, the seal of its event is written beside it, and the event is appended to the ledger; a stamp without that seal moves no status. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one that was never started, whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so.",
         "kind": "command",
         "read_only": false,
         "input": "PlanTransitionInput",
@@ -74702,7 +74752,7 @@
         "name": "majordomus_plan_validate",
         "id": "plan.validate",
         "title": "What the model refuses",
-        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
+        "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a lifecycle stamp its transition did not write (no seal of its plan_* event beside it), a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",

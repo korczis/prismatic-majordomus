@@ -56,12 +56,20 @@ pj_issue I0003 M000 I0002
 # a fan-in: I0004 waits on three heads, one of which is already closed
 pj_issue I0004 M000 I0001 I0002 I0003
 # a closed dependency: I0006 depends on I0005, which is DONE, so I0006 is ready
+# Completions are written by the transition, which seals them; a completed_at typed into
+# the record is not a completion (case 375).
+complete() { # <issue>
+  "$MJ" plan start "$1" >/dev/null
+  "$MJ" plan evidence "$1" --covers proof --type test --command true --result ok >/dev/null
+  "$MJ" plan "done" "$1" >/dev/null
+}
 pj_issue I0005 M000
-printf 'completed_at: 2026-01-01T00:00:00Z\nevidence:\n  - covers: proof\n    type: test\n    command: "true"\n    result: ok\n' >> .ai/repo/project/issues/I0005.yaml
+complete I0005
 pj_issue I0006 M000 I0005
 # a completion recorded without the evidence the record requires
 pj_issue I0007 M000
-printf 'completed_at: 2026-01-01T00:00:00Z\n' >> .ai/repo/project/issues/I0007.yaml
+complete I0007
+sed '/^evidence:/,$d' .ai/repo/project/issues/I0007.yaml > "$S/I0007" && cat "$S/I0007" > .ai/repo/project/issues/I0007.yaml
 # the milestone gate: everything in M001 waits on M000
 pj_issue I0008 M001
 git add -A >/dev/null && git commit -qm fixture >/dev/null

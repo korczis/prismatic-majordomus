@@ -435,43 +435,64 @@ mj_plan_evidence_table() {
 }
 
 # ---------------------------------------------------------------- transitions
-# A transition writes one field. It refuses when the graph says the move is illegal, so
-# an issue cannot be started before its dependencies or completed without its evidence.
+# A transition writes one stamp and its seal. It refuses when the graph says the move is
+# illegal, so an issue cannot be started before its dependencies or completed without its
+# evidence or without having been started. The guards and the bytes written are those of
+# plan::check and plan::transition in apps/majordomus-cli/src/plan.rs, held equal by
+# test/cases/133_plan_transition.sh and 376_the_done_guard_holds_in_both_engines.sh.
 mj_plan_transition() {
-  local id="$1" what="$2" st bb f
+  local id="$1" what="$2" st bb f now
   [ -n "$id" ] || mj_die "$MJ_EX_USAGE" "plan $what needs an issue id"
   f="$MJ_PROJECT_DIR/issues/$id.yaml"
   [ -f "$f" ] || mj_die "$MJ_EX_MISSING" "no issue '$id'"
   st="$(mj_pj_i_status "$id")"; bb="$(mj_pj_i_blocked "$id")"
+  now="$(mj_now)"
   case "$what" in
     start)
       [ "$st" = READY ] || mj_die "$MJ_EX_REFUSED" "$id is $st, not READY${bb:+ (waiting on $bb)}"
-      mj_pj_set_field "$id" started_at "$(mj_now)"
-      mj_pj_set_field "$id" updated_at "$(mj_now)"
-      mj_ledger_append plan_start "\"issue\":\"$id\""
+      mj_plan_stamp "$id" started_at started_event plan_start "$now"
       printf 'plan: %s ACTIVE\n' "$id" ;;
     verify)
       case "$st" in ACTIVE|VERIFY) ;; *) mj_die "$MJ_EX_REFUSED" "$id is $st; only an ACTIVE issue can move to VERIFY" ;; esac
-      mj_pj_set_field "$id" verified_at "$(mj_now)"
-      mj_pj_set_field "$id" updated_at "$(mj_now)"
-      mj_ledger_append plan_verify "\"issue\":\"$id\""
+      mj_plan_stamp "$id" verified_at verified_event plan_verify "$now"
       printf 'plan: %s VERIFY\n' "$id" ;;
     done)
       [ -n "$bb" ] && mj_die "$MJ_EX_REFUSED" "$id cannot be DONE while $bb is not DONE"
+      case "$st" in ACTIVE|VERIFY) ;; *) mj_die "$MJ_EX_REFUSED" "$id is $st; only an ACTIVE or VERIFY issue can move to DONE" ;; esac
       local need missing=""
       for need in $(mj_pj_list "$id" evidence_required); do
         mj_plan_has_evidence "$id" "$need" || missing="$missing $need"
       done
       [ -n "$missing" ] && mj_die "$MJ_EX_CONTRACT" "$id has no evidence for:$missing (run: majordomus plan evidence $id --covers <token> ...)"
-      mj_pj_set_field "$id" completed_at "$(mj_now)"
-      mj_pj_set_field "$id" updated_at "$(mj_now)"
-      mj_ledger_append plan_done "\"issue\":\"$id\""
+      mj_plan_stamp "$id" completed_at completed_event plan_done "$now"
       printf 'plan: %s DONE\n' "$id" ;;
   esac
   mj_project_unload
   mj_project_load >/dev/null 2>&1 || true
   local nxt; nxt="$(mj_pj_next_ready)"
   printf 'next ready issue: %s\n' "${nxt:-none}"
+}
+
+# mj_ledger_append-writes: plan_start plan_verify plan_done
+#
+# The line above is read by test/cases/33_event_registry.sh, which holds every declared event
+# to something that writes it. This helper appends the event its caller names, so the name is
+# a variable at the one call site and a literal at three; the declaration is how a scan that
+# reads source rather than runs it can still see which events reach the ledger from here.
+#
+# mj_plan_stamp <issue> <stamp-field> <seal-field> <event> <now>
+# The stamp, the seal that proves it, `updated_at`, then the event — the order plan::transition
+# writes them in. The seal is `seal()` of plan.rs: the SHA-256 of the event, the issue and the
+# stamp. It is what a clone carries of the event, because the ledger never leaves this checkout
+# (ADR 0072); `plan validate` refuses a stamp without it.
+mj_plan_stamp() {
+  local id="$1" field="$2" sealf="$3" ev="$4" now="$5" seal
+  seal="$(printf 'majordomus.plan-event/v1\n%s\n%s\n%s\n' "$ev" "$id" "$now" | mj_sha256 /dev/stdin)"
+  [ -n "$seal" ] || mj_die "$MJ_EX_INTERNAL" "could not seal $field of $id; nothing was written"
+  mj_pj_set_field "$id" "$field" "$now"
+  mj_pj_set_field "$id" "$sealf" "sha256:$seal"
+  mj_pj_set_field "$id" updated_at "$now"
+  mj_ledger_append "$ev" "\"issue\":\"$id\""
 }
 
 mj_plan_has_evidence() {
