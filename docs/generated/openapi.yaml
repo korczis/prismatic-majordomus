@@ -14975,6 +14975,11 @@ components:
           format: uint
           minimum: 0
           description: How many files the layer declared that did not become objects.
+        refused:
+          type: array
+          items:
+            "$ref": "#/components/schemas/Diagnostic"
+          description: "Which ones, and what decided it: the index's own error diagnostics, each naming the\nfile, the code and the constraint it failed. A count says something is wrong; only\nthis says what and where, and a reader that has the count and not the list has to go\nlooking through a log for the answer the index already produced."
         degraded:
           type:
             - boolean
