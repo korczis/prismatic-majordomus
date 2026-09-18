@@ -308,14 +308,24 @@ impl Server {
     pub fn instructions(&self) -> String {
         let index = self.surface.index();
         let summary = self.surface.registry().summary();
+        // Which tools write is measured from the declared effects, in registry order: this
+        // sentence used to be the constant "Nothing here writes to the repository" while two
+        // of the tools it introduced did.
+        let registry = self.surface.registry();
+        let writers: Vec<&str> = registry
+            .iter()
+            .filter(|c| c.execution.effect == crate::capability::Effect::RepositoryMutation)
+            .filter_map(|c| c.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()))
+            .collect();
         let mut text = format!(
-            "{} This repository: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. Nothing here writes to the repository.",
+            "{} This repository: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. {}",
             crate::about::SUMMARY,
             index.objects.len(),
             summary.total,
             summary.mcp_tools,
             summary.mcp_resources,
-            match index.state { crate::index::State::Ok => "ok", crate::index::State::Degraded => "degraded" }
+            match index.state { crate::index::State::Ok => "ok", crate::index::State::Degraded => "degraded" },
+            crate::about::writes(&writers)
         );
         if let Some(url) = &self.endpoint {
             text.push_str(&format!(

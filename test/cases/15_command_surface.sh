@@ -21,12 +21,21 @@ for c in $COMMANDS version; do
 done
 expect_grep 'exit codes: 0 ok'
 
-# every command answers --help and says what it is
+# every command answers --help, says what it is, and does nothing else: no stderr, before and
+# after init. Checking the exit status and the usage line alone once let `evidence --help`
+# execute three backtick spans of an unquoted heredoc as commands (one of them
+# `majordomus check`), and let `bench --help` refuse outside an initialised repository, while
+# both still printed their usage and exited 0.
+help_is_only_usage() {
+  local c="$1" err="$T/help-$1.err" out="$T/help-$1.out" got=0
+  "$MJ" "$c" --help >"$out" 2>"$err" || got=$?
+  [ "$got" = 0 ] || { echo "    $c --help exited $got ($2)"; cat "$err"; return 1; }
+  grep -q "usage: majordomus $c" "$out" || { echo "    $c --help does not print its usage ($2)"; return 1; }
+  [ ! -s "$err" ] || { echo "    $c --help wrote to stderr ($2):"; sed 's/^/      /' "$err"; return 1; }
+}
+for c in $COMMANDS; do help_is_only_usage "$c" "before init" || exit 1; done
 "$MJ" init >/dev/null
-for c in $COMMANDS; do
-  expect_exit 0 "$MJ" "$c" --help
-  expect_grep "usage: majordomus $c" || { echo "    $c --help does not print its usage"; exit 1; }
-done
+for c in $COMMANDS; do help_is_only_usage "$c" "after init" || exit 1; done
 
 # version needs no installation and is the string the rest of the project derives from
 expect_exit 0 "$MJ" version
