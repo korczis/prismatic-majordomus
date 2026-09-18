@@ -1442,13 +1442,22 @@ claims:
     note: '`majordomus doctrine` asks whether the repository satisfies a rule now; the proof graph asks whether the rule is in a state where it could be satisfied at all. Ten states, and the ones that must not collapse are `proven` (a passing run and nothing changed since), `gated` (an executable check a CI gate runs, with no verdict recorded here) and `reviewed` (a declared exemption). A rule''s state is the weakest of its parts, so one dangling case makes the rule dangling however many others pass.'
 
   - id: authored-files-are-english
-    claim: Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check
+    claim: Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check
     source: docs/DOCTRINE.md
     implementation: scripts/ci/english-only-check
     test: test/cases/138_governance_gates.sh
     status: guaranteed
     responsibility: none
     note: 'The check is an alphabet test and says so: a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, is not English whatever else is true of the file. English prose carrying a sentence of another language spelled in ASCII passes it, and always will — the rule stays wider than the gate, which is the honest relation between the two. The two exemptions are declared with a reason: `name` for a proper noun, `fixture` for a file that uses a foreign string as data to prove the program handles one.'
+
+  - id: published-translation-is-declared
+    claim: A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself
+    source: .ai/repo/rules/project/english-only.v2.md
+    implementation: scripts/ci/english-only-check
+    test: test/cases/403_published_translation.sh
+    status: guaranteed
+    responsibility: none
+    note: 'project.english-only v2 (ADR 0077) keeps the repository''s own artifacts English with no exceptions and names one population apart: content published for a reader in that reader''s language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding.'
 
   - id: a-finding-names-how-to-see-it-again
     claim: Every finding a command reports names the command that reproduces it

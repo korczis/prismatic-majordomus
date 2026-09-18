@@ -1448,11 +1448,20 @@
     {
       "id": "claim:authored-files-are-english",
       "kind": "claim",
-      "label": "Every authored file in this repository is spelled in English, and a proper noun or a test fixture that is not carries its reason beside the check",
+      "label": "Every authored file in this repository is spelled in English, and a proper noun, a test fixture or a published translation that is not carries its reason beside the check",
       "status": "guaranteed",
       "route": "/guarantees/authored-files-are-english/",
       "external": false,
       "note": "The check is an alphabet test and says so: a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, is not English whatever else is true of the file. English prose carrying a sentence of another language spelled in ASCII passes it, and always will — the rule stays wider than the gate, which is the honest relation between the two. The two exemptions are declared with a reason: `name` for a proper noun, `fixture` for a file that uses a foreign string as data to prove the program handles one."
+    },
+    {
+      "id": "claim:published-translation-is-declared",
+      "kind": "claim",
+      "label": "A page of the published site written in a reader's language is declared with that language and a reason, and is refused unless the page declares the same language itself",
+      "status": "guaranteed",
+      "route": "/guarantees/published-translation-is-declared/",
+      "external": false,
+      "note": "project.english-only v2 (ADR 0077) keeps the repository''s own artifacts English with no exceptions and names one population apart: content published for a reader in that reader''s language. The permission costs three declarations that must agree — the path is under site/content-src/ or its projection, the allow list carries the language and a required reason, and the page itself declares the same language. The third is what stops an allow list from being a file an entry can be appended to in order to silence a finding."
     },
     {
       "id": "claim:a-finding-names-how-to-see-it-again",
@@ -2262,6 +2271,13 @@
       "external": false
     },
     {
+      "id": "source:.ai/repo/rules/project/english-only.v2.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/english-only.v2.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
@@ -2883,6 +2899,13 @@
       "label": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/401_the_rust_artifact_carries_its_provenance.sh"
+    },
+    {
+      "id": "test:test/cases/403_published_translation.sh",
+      "kind": "test",
+      "label": "test/cases/403_published_translation.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/403_published_translation.sh"
     },
     {
       "id": "test:test/cases/40_project_model.sh",
@@ -3960,6 +3983,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:published-translation-is-declared",
+      "target": "source:.ai/repo/rules/project/english-only.v2.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:a-finding-names-how-to-see-it-again",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
@@ -4786,6 +4814,11 @@
     },
     {
       "source": "claim:authored-files-are-english",
+      "target": "impl:scripts/ci/english-only-check",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:published-translation-is-declared",
       "target": "impl:scripts/ci/english-only-check",
       "kind": "implemented_by"
     },
@@ -5617,6 +5650,11 @@
     {
       "source": "claim:authored-files-are-english",
       "target": "test:test/cases/138_governance_gates.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:published-translation-is-declared",
+      "target": "test:test/cases/403_published_translation.sh",
       "kind": "proved_by"
     },
     {
