@@ -5,14 +5,14 @@
     "id": "majordomus-cli",
     "version": "0.7.1"
   },
-  "fingerprint": "81b3225285329f320877c7b1df4b6f36d26e4b09cebfa137b4b1afaf1b61a3cd",
+  "fingerprint": "83fe1eddca682ecd5d907d360820467769ee4450e21cfd44d65077fe00d55fc5",
   "route": "/features/",
   "counts": {
     "features": 24,
     "features_all": 25,
     "featured": 13,
     "providers": 6,
-    "modules": 37,
+    "modules": 38,
     "modules_covered": 36,
     "commands": 30,
     "commands_covered": 30,
@@ -3073,7 +3073,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 51
+          "objects": 52
         },
         {
           "name": "knowledge",
@@ -3081,7 +3081,7 @@
         },
         {
           "name": "document",
-          "objects": 251
+          "objects": 252
         }
       ],
       "rule_refs": [
@@ -3330,11 +3330,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 304,
+        "mcp_resources": 306,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 303,
+        "objects": 305,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -8160,7 +8160,8 @@
       ],
       "audiences": [],
       "modules": [
-        "deploy"
+        "deploy",
+        "delivery"
       ],
       "commands": [],
       "kinds": [
@@ -8169,8 +8170,12 @@
       "rules": [
         "majordomus.deployment-contract"
       ],
-      "docs": [],
-      "adrs": [],
+      "docs": [
+        "docs/DELIVERY.md"
+      ],
+      "adrs": [
+        "adr-0071"
+      ],
       "claims": [],
       "use_cases": [],
       "cockpit": [],
@@ -8182,11 +8187,11 @@
       "route": "/features/deployments/",
       "source": ".ai/repo/features/deployments.md",
       "surfaces": {
-        "cli": false,
+        "cli": true,
         "api": true,
         "mcp": true,
         "cockpit": true,
-        "docs": false
+        "docs": true
       },
       "module_refs": [
         {
@@ -8222,6 +8227,33 @@
               "route": "GET /api/v1/deployments"
             }
           ]
+        },
+        {
+          "id": "delivery",
+          "title": "Delivery",
+          "description": "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+          "capabilities": [
+            {
+              "id": "delivery.feature",
+              "title": "Does this feature exist",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_delivery_feature",
+              "route": "GET /api/v1/delivery/feature",
+              "cli": "majordomus delivery show"
+            },
+            {
+              "id": "delivery.report",
+              "title": "Does each feature exist",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_delivery",
+              "route": "GET /api/v1/delivery",
+              "cli": "majordomus delivery report"
+            }
+          ]
         }
       ],
       "command_refs": [],
@@ -8241,8 +8273,20 @@
           "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
         }
       ],
-      "doc_refs": [],
-      "adr_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/DELIVERY.md",
+          "title": "Delivery"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0071",
+          "title": "A feature exists only when its delivery is computed and every dimension passes",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md"
+        }
+      ],
       "claim_refs": [],
       "use_case_refs": [],
       "cockpit_refs": [],
@@ -8250,17 +8294,17 @@
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 3,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 2,
-        "http_routes": 3,
-        "cli_paths": 0,
+        "http_routes": 5,
+        "cli_paths": 2,
         "commands": 0,
         "objects": 1,
         "rules": 1,
         "enforced_rules": 1,
-        "docs": 0,
-        "adrs": 0,
+        "docs": 1,
+        "adrs": 1,
         "claims": 0,
         "use_cases": 0,
         "moments": 0
@@ -8268,7 +8312,8 @@
       "evidence": {
         "claims": {},
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 1,
+          "experimental": 1
         }
       }
     },
@@ -8958,16 +9003,18 @@
         "route": "/features/deployments/",
         "status": "draft",
         "surfaces": {
-          "cli": false,
+          "cli": true,
           "api": true,
           "mcp": true,
           "cockpit": true,
-          "docs": false
+          "docs": true
         },
         "exposed": [
+          "cli",
           "api",
           "mcp",
-          "cockpit"
+          "cockpit",
+          "docs"
         ]
       },
       {
@@ -9026,6 +9073,11 @@
         "features": [
           "continuity"
         ]
+      },
+      {
+        "id": "delivery",
+        "title": "Delivery",
+        "features": []
       },
       {
         "id": "deploy",
@@ -9484,7 +9536,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (51)",
+        "title": "adr (52)",
         "features": [
           "knowledge"
         ]
@@ -10439,19 +10491,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1476,
-    "builtin": 113,
-    "declarative": 1363,
-    "modules": 37,
-    "mcp_tools": 110,
-    "mcp_resources": 1404,
-    "http_routes": 112,
-    "cli_commands": 116,
+    "capabilities": 1482,
+    "builtin": 115,
+    "declarative": 1367,
+    "modules": 38,
+    "mcp_tools": 112,
+    "mcp_resources": 1408,
+    "http_routes": 114,
+    "cli_commands": 118,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1363,
+    "objects": 1367,
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -10460,7 +10512,7 @@
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 251,
+      "document": 252,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -10477,7 +10529,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 220,
+      "test": 222,
       "use-case": 46,
       "workspace": 1
     },

@@ -13290,3 +13290,270 @@ cli:
               setup: []
               expectation: "exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path"
           subcommands: []
+    - path:
+        - majordomus
+        - delivery
+      route: /docs/cli/delivery/
+      executable: false
+      usage: "majordomus delivery [OPTIONS] <COMMAND>"
+      about: "Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass"
+      args:
+        - name: repo
+          long: repo
+          positional: false
+          help: "Start the search for the repository root here (default: the current directory)"
+          value_name: PATH
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: discovery
+          long: discovery
+          positional: false
+          help: How declarative files are enumerated
+          value_name: DISCOVERY
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: vcs
+              help: "Tracked files, through the version-control index (the layer's contract)"
+            - name: filesystem
+              help: A walk of the work tree with the same glob semantics; untracked files included
+          defaults:
+            - vcs
+        - name: strict
+          long: strict
+          positional: false
+          help: Refuse to proceed when any file of the layer carries an error diagnostic
+          value_name: STRICT
+          takes_value: false
+          required: false
+          global: true
+          possible_values: []
+          defaults:
+            - "false"
+        - name: share
+          long: share
+          positional: false
+          help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+          value_name: DIR
+          takes_value: true
+          required: false
+          global: true
+          possible_values: []
+          defaults: []
+        - name: format
+          long: format
+          positional: false
+          help: Output shape
+          value_name: FORMAT
+          takes_value: true
+          required: false
+          global: true
+          possible_values:
+            - name: text
+              help: Lines for a person
+            - name: json
+              help: "One JSON document, deterministic"
+          defaults:
+            - text
+      examples: []
+      subcommands:
+        - path:
+            - majordomus
+            - delivery
+            - report
+          route: /docs/cli/delivery/report/
+          executable: true
+          usage: "majordomus delivery report [OPTIONS]"
+          about: "Every feature against every dimension, with the development stage of what does not exist"
+          args:
+            - name: check
+              long: check
+              positional: false
+              help: Exit 10 when any feature does not exist
+              value_name: CHECK
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: delivery-report-json
+              title: "Does each feature exist, dimension by dimension"
+              description: "The same answer `GET /api/v1/delivery` and the MCP tool `majordomus_delivery` return: every feature ordered by id, each of the six dimensions with its verdict, reason and remediation, the development stage of a feature that does not exist, the paths it is implemented by, and the publication read once for all of them. A repository with no site and no trunk says unknown, and unknown is never a pass, so nothing here exists."
+              argv:
+                - delivery
+                - report
+                - "--format"
+                - json
+              command: majordomus delivery report --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /features/0/dimensions, /tallies/exists, /publication/identity/state"
+          subcommands: []
+        - path:
+            - majordomus
+            - delivery
+            - show
+          route: /docs/cli/delivery/show/
+          executable: true
+          usage: "majordomus delivery show [OPTIONS] <ID>"
+          about: "One feature: every dimension with its reason and remediation"
+          args:
+            - name: id
+              positional: true
+              help: "The feature's id, as `product list` gives it"
+              value_name: ID
+              takes_value: true
+              required: true
+              global: false
+              possible_values: []
+              defaults: []
+            - name: check
+              long: check
+              positional: false
+              help: Exit 10 when the feature does not exist
+              value_name: CHECK
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: delivery-show
+              title: "One feature, and what stands between it and existing"
+              description: "Every dimension of one feature with the sentence that decided it and what would change it. `--check` turns the conjunction into the exit code: 10 unless every dimension passes. An id the layer does not declare is not found, never reported as not delivered."
+              argv:
+                - delivery
+                - show
+                - fixture-feature
+              command: majordomus delivery show fixture-feature
+              setup: []
+              expectation: "exits 0; prints fixture-feature, on_master, NOT DELIVERED"
+          subcommands: []
