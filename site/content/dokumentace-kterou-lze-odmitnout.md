@@ -138,7 +138,7 @@ Tohle myslím spustitelnou governance. Ne že někde stojí, že na pravidlech z
 
 ## Důkazy
 
-Všechna čísla výše jsem změřil 18. září 2026, na commitu, ze kterého je tahle stránka publikovaná — jmenuje ho `build.json` na tomhle webu — a u každého je příkaz, který ho vypsal. Repozitář je veřejný.
+Všechna čísla výše jsem změřil v září 2026, na commitu, ze kterého je tahle stránka publikovaná — jmenuje ho `build.json` na tomhle webu — a u každého je příkaz, který ho vypsal. Repozitář je veřejný.
 
 - Počty capabilit a projekcí, nepokryté příkazy: `majordomus capabilities projections --format json`
 - Počty tvrzení a stavy důkazů: `majordomus evidence show --format json`

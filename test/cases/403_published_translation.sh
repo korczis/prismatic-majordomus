@@ -128,3 +128,35 @@ expect_exit 0 "$ROOT/scripts/ci/english-only-check" --strict
 expect_grep 'every authored file is spelled in English'
 grep -q '^translation site/content-src/' "$ROOT/scripts/ci/english-only-allow.txt" \
   || { echo "    no published translation is declared; this case is measuring nothing"; exit 1; }
+
+# ------------------------------------------------- 8. the pair agrees on its figures
+# The failure mode the exemption creates. Before v2 the site spoke one language and a number
+# on it could be wrong but not *inconsistent*; a pair of pages written for two audiences can
+# now disagree with each other, and the half a reviewer does not read is the half that drifts.
+# Neither page is a translation of the other — they are composed separately from one evidence
+# base — so what has to hold is not their words but their arithmetic: every figure one of them
+# states, the other states too.
+#
+# Nothing here is a number this case knows. The expected set is whatever the English page
+# says, measured from the page; the assertion is that the Czech page's set is the same one.
+# That is what keeps this from being a hardcoded count: updating one page and not the other is
+# exactly the mutation it fails on, and updating both keeps it green without touching the case.
+figures() {
+  awk 'BEGIN{n=0} /^\+\+\+$/{n++; next} n>=2' "$1" \
+    | grep -oE '(^|[^[:alnum:].])[0-9]{2,4}([^[:alnum:].]|$)' \
+    | grep -oE '[0-9]{2,4}' | LC_ALL=C sort -u
+}
+PAIR_EN="$ROOT/site/content-src/proof-carrying-documentation.md"
+PAIR_CS="$ROOT/site/content-src/dokumentace-kterou-lze-odmitnout.md"
+[ -f "$PAIR_EN" ] && [ -f "$PAIR_CS" ] \
+  || { echo "    the published pair is not where this case expects it"; exit 1; }
+en_only="$(LC_ALL=C comm -23 <(figures "$PAIR_EN") <(figures "$PAIR_CS"))"
+cs_only="$(LC_ALL=C comm -13 <(figures "$PAIR_EN") <(figures "$PAIR_CS"))"
+if [ -n "$en_only" ] || [ -n "$cs_only" ]; then
+  echo "    the two articles do not state the same figures"
+  [ -n "$en_only" ] && { echo "    only in the English page:"; printf '      %s\n' $en_only; }
+  [ -n "$cs_only" ] && { echo "    only in the Czech page:"; printf '      %s\n' $cs_only; }
+  exit 1
+fi
+[ "$(figures "$PAIR_EN" | grep -c .)" -ge 5 ] \
+  || { echo "    the pair states almost no figures; this assertion is measuring nothing"; exit 1; }

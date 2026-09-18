@@ -142,7 +142,7 @@ Three things, in descending order of confidence.
 
 ## Evidence
 
-Every number above was measured on 18 September 2026, at the commit this page was published from — `build.json` on this site names it — with the command that produced it beside each one. The repository is public.
+Every number above was measured in September 2026, at the commit this page was published from — `build.json` on this site names it — with the command that produced it beside each one. The repository is public.
 
 - Capability counts, projections, unbacked commands: `majordomus capabilities projections --format json`
 - Claim counts and proof states: `majordomus evidence show --format json`
