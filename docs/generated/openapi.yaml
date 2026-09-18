@@ -1,13 +1,13 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.7.0
+# Generator: majordomus-cli 0.7.1
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.7.0"
-  summary: "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry."
-  description: "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
+  version: "0.7.1"
+  summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
+  description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
     name: MIT
     identifier: MIT
@@ -70,7 +70,7 @@ tags:
   - name: perf
     description: "This process's work counters and phase timings: what happened once at startup and what happens per call, for the structural tests and the benchmark evidence."
   - name: plan
-    description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository."
+    description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
   - name: product
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
   - name: quality
@@ -164,6 +164,7 @@ paths:
         policy: process
         max_entries: 8
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_artifacts
         resource:
@@ -234,6 +235,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 16
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_capabilities
       x-majordomus-cli: capabilities list
@@ -305,6 +307,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 8
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_projections
       x-majordomus-cli: capabilities projections
@@ -366,6 +369,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_capability
       x-majordomus-cli: capabilities describe
@@ -427,6 +431,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_changelog
         resource:
@@ -490,6 +495,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_command
   "/api/v1/commands":
@@ -565,6 +571,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_commands
         resource:
@@ -619,6 +626,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_command_graph
   "/api/v1/commit/history":
@@ -680,6 +688,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_commit_history
       x-majordomus-cli: commit history
@@ -732,6 +741,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_commit_plan
         resource:
@@ -787,6 +797,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_commit_scopes
         resource:
@@ -863,6 +874,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_commit_validate
       x-majordomus-cli: commit validate
@@ -917,6 +929,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_continuity
         resource:
@@ -980,6 +993,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_deployment
   "/api/v1/deployments":
@@ -1031,6 +1045,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_deployments
         resource:
@@ -1087,6 +1102,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_deploy_check
   "/api/v1/design":
@@ -1138,6 +1154,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_design
         resource:
@@ -1192,6 +1209,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_design_contrast
   "/api/v1/design/explain":
@@ -1254,6 +1272,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_design_explain
   "/api/v1/design/tokens":
@@ -1316,6 +1335,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_design_tokens
   "/api/v1/devcontext":
@@ -1440,6 +1460,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 16
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_devcontext
       x-majordomus-cli: devcontext compile
@@ -1567,6 +1588,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 8
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_devcontext_explain
       x-majordomus-cli: devcontext explain
@@ -1619,6 +1641,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_devcontext_policy
         resource:
@@ -1696,6 +1719,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_devtask
       x-majordomus-cli: devtask issue
@@ -1757,6 +1781,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_devtask_milestone
       x-majordomus-cli: devtask milestone
@@ -1840,6 +1865,7 @@ paths:
         policy: process
         max_entries: 8
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_directories
         resource:
@@ -1894,6 +1920,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_distribution
       x-majordomus-cli: distribution show
@@ -1964,6 +1991,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_artifact
       x-majordomus-cli: distribution artifact
@@ -2016,6 +2044,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_build
       x-majordomus-cli: distribution build
@@ -2068,6 +2097,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_releases
       x-majordomus-cli: distribution releases
@@ -2120,6 +2150,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_install_status
       x-majordomus-cli: distribution status
@@ -2182,6 +2213,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_environment
         resource:
@@ -2245,6 +2277,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_environment_explain
   "/api/v1/evidence":
@@ -2319,6 +2352,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_evidence
         resource:
@@ -2383,6 +2417,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_evidence_claim
       x-majordomus-cli: evidence claim
@@ -2444,6 +2479,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_evidence_test
       x-majordomus-cli: evidence proves
@@ -2521,6 +2557,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_executions
         resource:
@@ -2589,6 +2626,7 @@ paths:
         reason: transient_state
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: process_state
       x-majordomus-mcp:
         tool: majordomus_execution_cancel
       x-majordomus-cli: executions cancel
@@ -2673,6 +2711,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_demonstrate_execution
   "/api/v1/executions/events":
@@ -2747,6 +2786,7 @@ paths:
         reason: transient_state
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_execution_events
       x-majordomus-cli: executions events
@@ -2806,6 +2846,7 @@ paths:
         reason: transient_state
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_execution
       x-majordomus-cli: executions show
@@ -2858,6 +2899,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_execution_protocol
         resource:
@@ -2932,6 +2974,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: process_state
       x-majordomus-mcp:
         tool: majordomus_execution_start
       x-majordomus-cli: run
@@ -2986,6 +3029,7 @@ paths:
         policy: process
         max_entries: 4
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_gates
         resource:
@@ -3073,6 +3117,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_completion
         resource:
@@ -3151,6 +3196,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 16
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_graph
   "/api/v1/graphs":
@@ -3202,6 +3248,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_graphs
         resource:
@@ -3258,6 +3305,7 @@ paths:
         policy: process
         max_entries: 4
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_health
         resource:
@@ -3314,6 +3362,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 30
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_lifecycle_closed
   "/api/v1/lifecycle/episodes":
@@ -3367,6 +3416,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_lifecycle_episodes
         resource:
@@ -3422,6 +3472,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_lifecycle_providers
   "/api/v1/lifecycle/recovery":
@@ -3475,6 +3526,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_lifecycle_recovery
         resource:
@@ -3531,6 +3583,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_lifecycle_runtime
   "/api/v1/live":
@@ -3582,6 +3635,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
   "/api/v1/mesh":
     get:
       operationId: mesh.status
@@ -3631,6 +3685,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_mesh
         resource:
@@ -3685,6 +3740,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_mesh_doctor
       x-majordomus-cli: mesh doctor
@@ -3737,6 +3793,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_mesh_identity
       x-majordomus-cli: mesh identity
@@ -3789,6 +3846,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_mesh_nodes
   "/api/v1/mesh/register":
@@ -3857,6 +3915,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: process_state
       x-majordomus-mcp:
         tool: majordomus_mesh_register
   "/api/v1/models":
@@ -3937,6 +3996,7 @@ paths:
         policy: process
         max_entries: 4
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_models
         resource:
@@ -4027,6 +4087,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_models_route
       x-majordomus-cli: models route
@@ -4090,6 +4151,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_get
   "/api/v1/objects":
@@ -4156,6 +4218,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_list
   "/api/v1/objects/verify":
@@ -4224,6 +4287,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_verify_objects
   "/api/v1/obligations":
@@ -4276,6 +4340,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_obligations
         resource:
@@ -4332,6 +4397,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_obligation_closure
         resource:
@@ -4396,6 +4462,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_peers
   "/api/v1/peers/announce":
@@ -4465,6 +4532,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: process_state
       x-majordomus-mcp:
         tool: majordomus_announce
   "/api/v1/perf":
@@ -4516,6 +4584,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_perf
   "/api/v1/plan":
@@ -4567,6 +4636,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan
         resource:
@@ -4647,6 +4717,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_issues
   "/api/v1/plan/next":
@@ -4707,6 +4778,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_next
   "/api/v1/plan/record":
@@ -4769,6 +4841,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_record
   "/api/v1/plan/roadmap":
@@ -4820,6 +4893,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_roadmap
   "/api/v1/plan/status":
@@ -4880,6 +4954,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_status
   "/api/v1/plan/transition":
@@ -4949,6 +5024,7 @@ paths:
         precondition: plan_holds_an_issue
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: repository_mutation
       x-majordomus-mcp:
         tool: majordomus_plan_transition
   "/api/v1/plan/validate":
@@ -5000,6 +5076,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_validate
   "/api/v1/plan/waves":
@@ -5060,6 +5137,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_plan_waves
   "/api/v1/product/feature":
@@ -5121,6 +5199,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 64
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_feature
       x-majordomus-cli: product show
@@ -5222,6 +5301,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 32
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_features
         resource:
@@ -5278,6 +5358,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_product_matrix
         resource:
@@ -5334,6 +5415,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_providers
         resource:
@@ -5390,6 +5472,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_product_validate
       x-majordomus-cli: product validate
@@ -5476,6 +5559,7 @@ paths:
         policy: process
         max_entries: 8
         ttl_seconds: 10
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_quality
         resource:
@@ -5531,6 +5615,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
   "/api/v1/recover/orphans":
     post:
       operationId: recover.orphans
@@ -5601,6 +5686,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: repository_mutation
       x-majordomus-mcp:
         tool: majordomus_recover_orphans
   "/api/v1/release/analysis":
@@ -5659,6 +5745,7 @@ paths:
         reason: published_history
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_release_analysis
   "/api/v1/release/version":
@@ -5710,6 +5797,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_release_version
   "/api/v1/repository":
@@ -5761,6 +5849,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_repository
         resource:
@@ -5849,6 +5938,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_rules
         resource:
@@ -5913,6 +6003,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_rule_proves
       x-majordomus-cli: rules proves
@@ -5974,6 +6065,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_rule
       x-majordomus-cli: rules show
@@ -6026,6 +6118,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_scope
         resource:
@@ -6098,6 +6191,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_scope_classify
   "/api/v1/search":
@@ -6179,6 +6273,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 64
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_search
   "/api/v1/server":
@@ -6242,6 +6337,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_server
         resource:
@@ -6299,6 +6395,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_session_identity
         resource:
@@ -6355,6 +6452,7 @@ paths:
         policy: process
         max_entries: 1
         ttl_seconds: 600
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_session_machine
         resource:
@@ -6420,6 +6518,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_traceability
         resource:
@@ -6483,6 +6582,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_trace_commit
   "/api/v1/trace/issue":
@@ -6543,6 +6643,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_trace_issue
   "/api/v1/web/surfaces":
@@ -6596,6 +6697,7 @@ paths:
         policy: process
         max_entries: 2
         ttl_seconds: 5
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_web_surfaces
         resource:
@@ -6723,6 +6825,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 32
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_why
         resource:
@@ -6779,6 +6882,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 4
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_why_areas
         resource:
@@ -6835,6 +6939,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 4
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_why_audiences
         resource:
@@ -6901,6 +7006,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 32
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_why_diagnose
       x-majordomus-cli: why diagnose
@@ -6963,6 +7069,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 64
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_why_moment
       x-majordomus-cli: why show
@@ -7016,6 +7123,7 @@ paths:
       x-majordomus-cache:
         policy: process
         max_entries: 2
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_why_validate
       x-majordomus-cli: why validate
@@ -7068,6 +7176,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_worktrees
         resource:
@@ -7132,6 +7241,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_worktree_inspect
       x-majordomus-cli: worktree inspect
@@ -7184,6 +7294,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_worktree_migration_plan
       x-majordomus-cli: worktree migrate
@@ -7245,6 +7356,7 @@ paths:
         policy: required
       x-majordomus-cache:
         policy: disabled
+      x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_worktree_status
       x-majordomus-cli: worktree status
@@ -23143,7 +23255,7 @@ components:
         - diagnostics
       description: "One work tree, as the topology sees it."
 x-majordomus:
-  generator: majordomus-cli 0.7.0
+  generator: majordomus-cli 0.7.1
   infrastructure:
     - id: home
       path: /
@@ -23188,4 +23300,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.7.0
+x-majordomus-generator: majordomus-cli 0.7.1
