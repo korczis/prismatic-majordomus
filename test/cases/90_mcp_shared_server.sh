@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: mcp-client-autostart, mcp-shared-server
 # The shared MCP server through the launcher a client configuration names: bin/majordomus-mcp
 # builds the Rust executable when it must and starts `majordomus mcp` inside a repository the
 # shell tool's own `init` wrote. The first client gets the server (Swagger UI and MCP over HTTP

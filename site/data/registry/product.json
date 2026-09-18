@@ -1021,7 +1021,7 @@
         },
         {
           "id": "cli-documentation-executable",
-          "claim": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+          "claim": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
           "status": "guaranteed"
         }
       ],
@@ -2683,7 +2683,7 @@
         },
         {
           "id": "no-transcripts",
-          "claim": "Handovers carry durable facts, never conversation transcripts",
+          "claim": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
           "status": "guaranteed"
         },
         {
@@ -10439,17 +10439,17 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1476,
+    "capabilities": 1478,
     "builtin": 113,
-    "declarative": 1363,
+    "declarative": 1365,
     "modules": 37,
     "mcp_tools": 110,
-    "mcp_resources": 1404,
+    "mcp_resources": 1406,
     "http_routes": 112,
     "cli_commands": 116,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1363,
+    "objects": 1365,
     "by_kind": {
       "adr": 51,
       "application": 5,
@@ -10477,7 +10477,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 220,
+      "test": 222,
       "use-case": 46,
       "workspace": 1
     },

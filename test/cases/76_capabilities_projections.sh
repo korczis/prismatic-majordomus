@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: generated-projections-checked, interfaces-are-projections, schema-driven-kinds
 # One capability, every interface. The Rust executable is built from this tree and started
 # inside a repository the shell tool's own `init` wrote; then the same capability is read
 # back through the registry's introspection on the command line, through MCP over pipes,
