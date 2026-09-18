@@ -11,6 +11,7 @@ weight: 80
 featured: true
 areas: [verification]
 commands: [start, check, finish, question]
+modules: [gates, obligations]
 rules: [majordomus.verification-integrity, majordomus.define-done-first, majordomus.verify-outcomes, majordomus.blocker-resolution, majordomus.note-integrity, majordomus.state-consistency, project.finding-carries-reproduce]
 docs: [docs/CLI.md, docs/DESIGN.md]
 claims: [finish-contract, typed-outcome, open-question-gate, consistency-check, reproduce-command, exit-code-contract, blocker-store, blocker-survives-handover]

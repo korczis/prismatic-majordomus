@@ -1,7 +1,7 @@
 +++
 title = "CLI specification"
 description = "every command: behaviour, reads, writes, exit-code contract, target output"
-weight = 11
+weight = 13
 [extra]
 source = "docs/CLI.md"
 +++
