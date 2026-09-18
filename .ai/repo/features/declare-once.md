@@ -10,7 +10,7 @@ status: stable
 weight: 10
 featured: true
 areas: [documentation, governance]
-modules: [capabilities, artifacts, product]
+modules: [capabilities, artifacts, product, quality]
 commands: [update, doctor]
 kinds: [feature, command, claim]
 rules: [project.interfaces-are-projections, project.rust-canonical-declaration, project.derived-files-regenerated, project.generated-artifacts-are-typed, project.derived-once]

@@ -11,7 +11,7 @@ weight: 130
 featured: false
 areas: [work-tracking]
 commands: [plan]
-modules: [trace]
+modules: [trace, plan, devtask]
 kinds: [milestone, issue]
 rules: [majordomus.project-integrity, majordomus.dag-integrity, majordomus.roadmap-integrity]
 docs: [docs/PLANNING.md, docs/ROADMAP.md]

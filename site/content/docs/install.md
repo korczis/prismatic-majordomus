@@ -1,7 +1,7 @@
 +++
 title = "Installing Majordomus"
 description = "installing the tool: the one-line installer, pinning a version, choosing where it goes, the supported platforms, upgrading, uninstalling, CI use, the security model and troubleshooting"
-weight = 22
+weight = 24
 [extra]
 source = "docs/INSTALL.md"
 +++
@@ -10,7 +10,7 @@ source = "docs/INSTALL.md"
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 
 ## Quick install
 
