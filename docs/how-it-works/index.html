@@ -197,28 +197,28 @@ differently, filter it, or join it with others. It may not hold a second opinion
 <h2 id="the-architecture-in-one-picture"><a class="zola-anchor" href="#the-architecture-in-one-picture" aria-label="Anchor link for: the-architecture-in-one-picture">The architecture in one picture</a></h2>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  A["Authored canonical state: rules, ADRs, policy, claims, milestones, issues, capability declarations"]
-  G["Git and the filesystem"]
-  R["Runtime: server leases, MCP sessions, mesh datagrams"]
-  A --&gt; D["Discovery: kinds.yaml + sources.yaml + the capability composition"]
-  G --&gt; D
-  D --&gt; I["Object index: typed objects with canonical identity"]
-  D --&gt; CR["Capability registry: one descriptor per operation"]
-  I --&gt; CR
-  CR --&gt; X["One executor: Context::execute"]
-  R --&gt; O["Observed state: peers, standing, mesh nodes"]
-  X --&gt; V["Derived state: rule proof, claim evidence, plan status, waves, environment"]
-  O --&gt; V
-  V --&gt; P{"Projections"}
-  P --&gt; CLI["Command line: clap tree checked against the registry"]
-  P --&gt; MCP["MCP: tools and resources"]
-  P --&gt; HTTP["HTTP under /api/v1"]
-  HTTP --&gt; OA["OpenAPI 3.1"]
-  OA --&gt; SW["Swagger UI"]
-  P --&gt; CK["Cockpit: server-rendered pages"]
-  P --&gt; GEN["docs/generated and site data"]
-  GEN --&gt; SITE["majordomus.dev"]
-  GEN --&gt; CHK["generate --check, derive-check, projection tests"]
+  d1_A["Authored canonical state: rules, ADRs, policy, claims, milestones, issues, capability declarations"]
+  d1_G["Git and the filesystem"]
+  d1_R["Runtime: server leases, MCP sessions, mesh datagrams"]
+  d1_A --&gt; d1_D["Discovery: kinds.yaml + sources.yaml + the capability composition"]
+  d1_G --&gt; d1_D
+  d1_D --&gt; d1_I["Object index: typed objects with canonical identity"]
+  d1_D --&gt; d1_CR["Capability registry: one descriptor per operation"]
+  d1_I --&gt; d1_CR
+  d1_CR --&gt; d1_X["One executor: Context::execute"]
+  d1_R --&gt; d1_O["Observed state: peers, standing, mesh nodes"]
+  d1_X --&gt; d1_V["Derived state: rule proof, claim evidence, plan status, waves, environment"]
+  d1_O --&gt; d1_V
+  d1_V --&gt; d1_P{"Projections"}
+  d1_P --&gt; d1_CLI["Command line: clap tree checked against the registry"]
+  d1_P --&gt; d1_MCP["MCP: tools and resources"]
+  d1_P --&gt; d1_HTTP["HTTP under /api/v1"]
+  d1_HTTP --&gt; d1_OA["OpenAPI 3.1"]
+  d1_OA --&gt; d1_SW["Swagger UI"]
+  d1_P --&gt; d1_CK["Cockpit: server-rendered pages"]
+  d1_P --&gt; d1_GEN["docs/generated and site data"]
+  d1_GEN --&gt; d1_SITE["majordomus.dev"]
+  d1_GEN --&gt; d1_CHK["generate --check, derive-check, projection tests"]
 </pre>
 <p>Read it from the top. Humans and workers author a small set of canonical files. Discovery finds
 them through declarations rather than hand-kept lists, the index gives each one a typed identity,
@@ -326,12 +326,12 @@ same schema. There is no hand-written JSON Schema for any capability, no TypeScr
 and no separate Swagger definition.</p>
 <pre class="mermaid" tabindex="0">
 flowchart LR
-  T["Rust type with derive JsonSchema"] --&gt; S["CanonicalSchema"]
-  S --&gt; M["MCP inputSchema and outputSchema"]
-  S --&gt; O["OpenAPI components"]
-  S --&gt; F["Cockpit runner form"]
-  S --&gt; J["docs/generated/registry.json"]
-  S --&gt; Q["HTTP query coercion"]
+  d2_T["Rust type with derive JsonSchema"] --&gt; d2_S["CanonicalSchema"]
+  d2_S --&gt; d2_M["MCP inputSchema and outputSchema"]
+  d2_S --&gt; d2_O["OpenAPI components"]
+  d2_S --&gt; d2_F["Cockpit runner form"]
+  d2_S --&gt; d2_J["docs/generated/registry.json"]
+  d2_S --&gt; d2_Q["HTTP query coercion"]
 </pre>
 <p><strong>Repository documents.</strong> Each kind declared in <code>share/kinds.yaml</code> names a schema identity of
 the form <code>&lt;vendor&gt;.&lt;name&gt;/v&lt;n&gt;</code>. The schemas live under <code>share/schemas/majordomus/&lt;kind&gt;/</code>.
@@ -476,16 +476,16 @@ command graph, which composes the clap tree, <code>share/commands.yaml</code> fo
 clap tree — so the reference cannot list a command the program does not have.</p>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  CAP["capability! declaration with CliExposure"] --&gt; CL["closure check: path exists and runs"]
-  CLAP["clap tree in cli.rs"] --&gt; CL
-  CLAP --&gt; LOC["cli::LOCAL reasons for non-capability commands"]
-  LOC --&gt; PAR["quality::parity both directions"]
-  CLAP --&gt; CJ["docs/generated/cli.json"]
-  CJ --&gt; REF["/docs/cli/ reference pages"]
-  CLAP --&gt; CG["command graph"]
-  SC["share/commands.yaml"] --&gt; CG
-  JU["just recipes"] --&gt; CG
-  CG --&gt; COMP["completion"]
+  d3_CAP["capability! declaration with CliExposure"] --&gt; d3_CL["closure check: path exists and runs"]
+  d3_CLAP["clap tree in cli.rs"] --&gt; d3_CL
+  d3_CLAP --&gt; d3_LOC["cli::LOCAL reasons for non-capability commands"]
+  d3_LOC --&gt; d3_PAR["quality::parity both directions"]
+  d3_CLAP --&gt; d3_CJ["docs/generated/cli.json"]
+  d3_CJ --&gt; d3_REF["/docs/cli/ reference pages"]
+  d3_CLAP --&gt; d3_CG["command graph"]
+  d3_SC["share/commands.yaml"] --&gt; d3_CG
+  d3_JU["just recipes"] --&gt; d3_CG
+  d3_CG --&gt; d3_COMP["completion"]
 </pre>
 <h3 id="the-cockpit"><a class="zola-anchor" href="#the-cockpit" aria-label="Anchor link for: the-cockpit">The Cockpit</a></h3>
 <p>The Cockpit is not another application, database or domain model. ADR 0012 calls it a
@@ -550,15 +550,15 @@ places the checks watch.</p>
 A renderer decides only how that looks. The rule proof shows the split:</p>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  RF["rule files"] --&gt; IDX["object index"]
-  GY[".ai/repo/ci/gates.yaml"] --&gt; ENG["rules engine: apps/majordomus-cli/src/rules"]
-  IDX --&gt; ENG
-  LED[".ai/repo/evidence/ledger.json"] --&gt; ENG
-  ENG --&gt; RD["RuleDetail value"]
-  RD --&gt; T1["text renderer: rules show"]
-  RD --&gt; T2["JSON: rules show --json and GET /api/v1/rules/rule"]
-  RD --&gt; T3["MCP tool majordomus_rule"]
-  RD --&gt; T4["Cockpit runner"]
+  d4_RF["rule files"] --&gt; d4_IDX["object index"]
+  d4_GY[".ai/repo/ci/gates.yaml"] --&gt; d4_ENG["rules engine: apps/majordomus-cli/src/rules"]
+  d4_IDX --&gt; d4_ENG
+  d4_LED[".ai/repo/evidence/ledger.json"] --&gt; d4_ENG
+  d4_ENG --&gt; d4_RD["RuleDetail value"]
+  d4_RD --&gt; d4_T1["text renderer: rules show"]
+  d4_RD --&gt; d4_T2["JSON: rules show --json and GET /api/v1/rules/rule"]
+  d4_RD --&gt; d4_T3["MCP tool majordomus_rule"]
+  d4_RD --&gt; d4_T4["Cockpit runner"]
 </pre>
 <p>No renderer computes whether a rule is proven. The frontend is not an authority over
 repository semantics: the Cockpit does not infer rule relationships, issue readiness or
@@ -681,14 +681,14 @@ what the block names (ADR 0048):</p>
 <h3 id="the-lifecycle-of-a-rule"><a class="zola-anchor" href="#the-lifecycle-of-a-rule" aria-label="Anchor link for: the-lifecycle-of-a-rule">The lifecycle of a rule</a></h3>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  AU["authored: a .vN.md file"] --&gt; PA["parsed against rule.v1"]
-  PA --&gt; IX["indexed: majordomus://rule/id@version"]
-  IX --&gt; MO["mode derived from x-majordomus"]
-  MO --&gt; GB["gates bound: tests matched to what gates.yaml runs"]
-  GB --&gt; EX["executed: a gate or a command runs"]
-  EX --&gt; RC["recorded: evidence ledger row with commit and digest"]
-  RC --&gt; ST["state derived against the current tree"]
-  ST --&gt; SF["surfaces: rules report, rules show, MCP, Cockpit, site"]
+  d5_AU["authored: a .vN.md file"] --&gt; d5_PA["parsed against rule.v1"]
+  d5_PA --&gt; d5_IX["indexed: majordomus://rule/id@version"]
+  d5_IX --&gt; d5_MO["mode derived from x-majordomus"]
+  d5_MO --&gt; d5_GB["gates bound: tests matched to what gates.yaml runs"]
+  d5_GB --&gt; d5_EX["executed: a gate or a command runs"]
+  d5_EX --&gt; d5_RC["recorded: evidence ledger row with commit and digest"]
+  d5_RC --&gt; d5_ST["state derived against the current tree"]
+  d5_ST --&gt; d5_SF["surfaces: rules report, rules show, MCP, Cockpit, site"]
 </pre>
 <h2 id="a-rule-existing-is-not-a-rule-being-enforced"><a class="zola-anchor" href="#a-rule-existing-is-not-a-rule-being-enforced" aria-label="Anchor link for: a-rule-existing-is-not-a-rule-being-enforced">A rule existing is not a rule being enforced</a></h2>
 <p>This is the central governance idea, and the implementation types it. A rule can stand at any
@@ -729,12 +729,12 @@ the surfaces say <code>not run</code>.</p>
 <p>Evidence is a recorded execution, not a test path that happens to exist (<code>docs/EVIDENCE.md</code>).</p>
 <pre class="mermaid" tabindex="0">
 flowchart LR
-  TR["test run"] --&gt; REC["majordomus-cli evidence record"]
-  REC --&gt; LED[".ai/repo/evidence/ledger.json: latest run per test"]
-  LED --&gt; JOIN["join: claim or rule to its tests"]
-  TREE["git: diff from the recorded commit"] --&gt; JOIN
-  JOIN --&gt; STATE["proof state"]
-  STATE --&gt; OUT["evidence report, rules show, Cockpit, site guarantees"]
+  d6_TR["test run"] --&gt; d6_REC["majordomus-cli evidence record"]
+  d6_REC --&gt; d6_LED[".ai/repo/evidence/ledger.json: latest run per test"]
+  d6_LED --&gt; d6_JOIN["join: claim or rule to its tests"]
+  d6_TREE["git: diff from the recorded commit"] --&gt; d6_JOIN
+  d6_JOIN --&gt; d6_STATE["proof state"]
+  d6_STATE --&gt; d6_OUT["evidence report, rules show, Cockpit, site guarantees"]
 </pre>
 <p>The ledger is committed and holds the latest execution per test: runner, outcome, seconds,
 commit, working-tree state, a digest, the origin (local, CI or release) and the command. A
@@ -885,13 +885,13 @@ dependencies, scope, acceptance criteria, validation, the evidence it requires a
 of its transitions. <strong>It has no status field.</strong> Status is derived:</p>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  I["issues: depends_on, timestamps, evidence_required, evidence covers"] --&gt; S["status per issue"]
-  S --&gt; W["waves: Kahn layering of the dependency DAG"]
-  W --&gt; C["scope_conflict warnings: same wave, shared paths"]
-  M["milestones: required issues, milestone dependencies"] --&gt; MS["milestone status"]
-  S --&gt; MS
-  MS --&gt; N["active milestone and next issue"]
-  N --&gt; P["docs/PLAN_STATUS.md, plan capabilities, Cockpit, site"]
+  d7_I["issues: depends_on, timestamps, evidence_required, evidence covers"] --&gt; d7_S["status per issue"]
+  d7_S --&gt; d7_W["waves: Kahn layering of the dependency DAG"]
+  d7_W --&gt; d7_C["scope_conflict warnings: same wave, shared paths"]
+  d7_M["milestones: required issues, milestone dependencies"] --&gt; d7_MS["milestone status"]
+  d7_S --&gt; d7_MS
+  d7_MS --&gt; d7_N["active milestone and next issue"]
+  d7_N --&gt; d7_P["docs/PLAN_STATUS.md, plan capabilities, Cockpit, site"]
 </pre>
 <p>An issue is done when it is not cancelled, has a completion time, and every evidence token it
 requires is covered; otherwise it is the first of verify, active, blocked or ready that its
@@ -932,13 +932,13 @@ its own scope fail <code>check</code> and a completed <code>finish</code>, and <
 hook. <code>scripts/collision-check</code> scans pushed branches for paths a new piece of work would create.</p>
 <pre class="mermaid" tabindex="0">
 flowchart LR
-  A["worker A: task scope, announced claim"] --&gt; B["board in A's server"]
-  C["worker B in another worktree"] --&gt; D["board in B's server"]
-  B --&gt; G["peers.list gathers every checkout's board"]
-  D --&gt; G
-  G --&gt; O["overlap: scopes equal or nested"]
-  O --&gt; V["CLI context, MCP peers, Cockpit"]
-  T["task scope in current.yaml"] --&gt; SC["scope doctrine at check, finish, pre-push"]
+  d8_A["worker A: task scope, announced claim"] --&gt; d8_B["board in A's server"]
+  d8_C["worker B in another worktree"] --&gt; d8_D["board in B's server"]
+  d8_B --&gt; d8_G["peers.list gathers every checkout's board"]
+  d8_D --&gt; d8_G
+  d8_G --&gt; d8_O["overlap: scopes equal or nested"]
+  d8_O --&gt; d8_V["CLI context, MCP peers, Cockpit"]
+  d8_T["task scope in current.yaml"] --&gt; d8_SC["scope doctrine at check, finish, pre-push"]
 </pre>
 <h3 id="the-mesh-who-exists"><a class="zola-anchor" href="#the-mesh-who-exists" aria-label="Anchor link for: the-mesh-who-exists">The mesh: who exists</a></h3>
 <p>The mesh answers a different question: which Majordomus nodes exist and can be reached
@@ -978,11 +978,11 @@ proves a port answers and nothing more.</p>
 <h3 id="from-a-merge-to-a-public-page"><a class="zola-anchor" href="#from-a-merge-to-a-public-page" aria-label="Anchor link for: from-a-merge-to-a-public-page">From a merge to a public page</a></h3>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  M["merge to master"] --&gt; B["scripts/pages build: refuse stale source hash, render without regenerating"]
-  B --&gt; K["scripts/pages check: site-check and the never-published check"]
-  K --&gt; P["scripts/site-deploy pushes site/public to gh-pages"]
-  P --&gt; V["scripts/pages verify --commit SHA: poll majordomus.dev/build.json"]
-  V --&gt; G["pages-live gate: served commit is on master, nothing owed past the window"]
+  d9_M["merge to master"] --&gt; d9_B["scripts/pages build: refuse stale source hash, render without regenerating"]
+  d9_B --&gt; d9_K["scripts/pages check: site-check and the never-published check"]
+  d9_K --&gt; d9_P["scripts/site-deploy pushes site/public to gh-pages"]
+  d9_P --&gt; d9_V["scripts/pages verify --commit SHA: poll majordomus.dev/build.json"]
+  d9_V --&gt; d9_G["pages-live gate: served commit is on master, nothing owed past the window"]
 </pre>
 <p>The publication path (<code>.github/workflows/pages.yml</code>, modelled in <code>.ai/repo/ci/pages.yaml</code>) does
 not regenerate: the committed projections are already checked, so publishing renders them. Three
@@ -1140,15 +1140,15 @@ site's marketing copy.</li>
 <h2 id="why-this-matters"><a class="zola-anchor" href="#why-this-matters" aria-label="Anchor link for: why-this-matters">Why this matters</a></h2>
 <pre class="mermaid" tabindex="0">
 flowchart LR
-  W["more workers"] --&gt; D["more descriptions of the repository"]
-  S["more interfaces"] --&gt; D
-  MD["more metadata"] --&gt; D
-  D --&gt; X["more drift, faster"]
-  ONE["one model"] --&gt; P1["command line"]
-  ONE --&gt; P2["MCP"]
-  ONE --&gt; P3["HTTP and OpenAPI"]
-  ONE --&gt; P4["Cockpit"]
-  ONE --&gt; P5["docs and site"]
+  d10_W["more workers"] --&gt; d10_D["more descriptions of the repository"]
+  d10_S["more interfaces"] --&gt; d10_D
+  d10_MD["more metadata"] --&gt; d10_D
+  d10_D --&gt; d10_X["more drift, faster"]
+  d10_ONE["one model"] --&gt; d10_P1["command line"]
+  d10_ONE --&gt; d10_P2["MCP"]
+  d10_ONE --&gt; d10_P3["HTTP and OpenAPI"]
+  d10_ONE --&gt; d10_P4["Cockpit"]
+  d10_ONE --&gt; d10_P5["docs and site"]
 </pre>
 <p>Majordomus is not a collection of commands, dashboards and agent integrations. It is a
 repository-native model from which those surfaces are derived.</p>
@@ -1228,7 +1228,7 @@ accumulating seven incompatible descriptions of itself.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1170f13b5a35a5802b1b767ed068ec55ffb7d0d8" class="font-mono underline">1170f13</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751eb3a581791f022f12e40667b047513ff4465f" class="font-mono underline">751eb3a</a> · inputs <span class="font-mono">def4e88cf207</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

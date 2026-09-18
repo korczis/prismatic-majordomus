@@ -164,7 +164,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="mj-badge mj-badge--described">described</span>
+      <span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span>
       <a href="https://majordomus.dev/use-cases/extension/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Extension</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">intermediate</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="mj-badge mj-badge--neutral">writes state</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
@@ -215,8 +215,125 @@
 <span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">a draft can run but cannot cover: status is authored, maturity is observed</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p><code>usecase scaffold</code> writes a draft with the facts the tool already has, <code>usecase run</code> executes its scenario against the real tool and records the evidence, and <code>usecase coverage</code> says what is still missing. The draft counts for nothing until it is made active.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
-    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
+    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">installed</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>Majordomus installed; the skeleton seeds the use-case section with no use case yet</span></li></ul>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
+        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus usecase list</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus usecase coverage</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus usecase scaffold --for command:doctor</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-words font-mono text-xs">majordomus usecase validate</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">5</span><code class="min-w-0 break-words font-mono text-xs">majordomus usecase run doctor-draft</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">6</span><code class="min-w-0 break-words font-mono text-xs">majordomus usecase coverage</code></li></ol>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>a use case is a file; everything else (the page, the links, the tally) follows</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>a draft can run but cannot cover: status is authored, maturity is observed</span></li></ul>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
+    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 6 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
+    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">1</span>
+          <a href="https://majordomus.dev/commands/usecase/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus usecase list</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the section exists and is empty</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>use cases: 0 in .ai/repo/use-cases</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /use cases: 0 in/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">2</span>
+          <a href="https://majordomus.dev/commands/usecase/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus usecase coverage</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">every public command is a target; a fresh policy reports gaps and fails on none</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>command   init                                         0   0   0  gap      advisory
+command   update                                       0   0   0  gap      advisory
+command   doctor                                       0   0   0  gap      advisory
+command   watch                                        0   0   0  gap      advisory
+command   start                                        0   0   0  gap      advisory
+command   context                                      0   0   0  gap      advisory
+command   checkpoint                                   0   0   0  gap      advisory
+command   handover                                     0   0   0  gap      advisory
+command   check                                        0   0   0  gap      advisory
+command   finish                                       0   0   0  gap      advisory
+command   history                                      0   0   0  gap      advisory
+command   decision                                     0   0   0  gap      advisory
+command   question                                     0   0   0  gap      advisory
+command   prompt                                       0   0   0  gap      advisory
+command   evidence                                     0   0   0  gap      advisory
+command   skills                                       0   0   0  gap      advisory
+command   capture                                      0   0   0  gap      advisory
+command   search                                       0   0   0  gap      advisory
+command   doctrine                                     0   0   0  gap      advisory
+command   plan                                         0   0   0  gap      advisory
+command   version                                      0   0   0  gap      advisory
+command   session                                      0   0   0  gap      advisory
+command   knowledge                                    0   0   0  gap      advisory
+command   adr                                          0   0   0  gap      advisory
+command   usecase                                      0   0   0  gap      advisory
+command   rules                                        0   0   0  gap      advisory
+command   migrate                                      0   0   0  gap      advisory
+command   recover                                      0   0   0  gap      advisory
+command   bench                                        0   0   0  gap      advisory
+command   archive                                      0   0   0  gap      advisory
+usecase coverage: 30 target(s), 0 covered, 0 partial, 0 required gap(s)  (columns: use cases, executable, evidence)</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^command +doctor +0 +0 +0 +gap +advisory/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">3</span>
+          <a href="https://majordomus.dev/commands/usecase/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus usecase scaffold --for command:doctor</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a draft from what the registry, the fixture and the claims already know; nothing in it is verified</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>wrote: .ai/repo/use-cases/doctor-draft.md (draft; complete the narrative and the assertions, then set status: active)
+usecase scaffold: 1 draft(s) written</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /wrote: \.ai/repo/use-cases/doctor-draft\.md/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">4</span>
+          <a href="https://majordomus.dev/commands/usecase/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus usecase validate</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the draft resolves: its command, setup and category exist</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   use-case    1 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, application, category, setup and stdin resolves; every scenario step names a listed command
+usecase validate: 0 failure(s)</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /usecase validate: 0 failure/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">5</span>
+          <a href="https://majordomus.dev/commands/usecase/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus usecase run doctor-draft</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the scaffolded scenario executes the real command in a disposable repository</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>doctor-draft                           pass  1 step(s)
+usecase run: 1 scenario(s), 0 failed, 0 unmet, 0 not run; evidence under .ai/local/evidence/use-cases/</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /doctor-draft +pass/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">6</span>
+          <a href="https://majordomus.dev/commands/usecase/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus usecase coverage</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a draft never counts; coverage moves when the use case is active</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>command   init                                         0   0   0  gap      advisory
+command   update                                       0   0   0  gap      advisory
+command   doctor                                       0   0   0  gap      advisory
+command   watch                                        0   0   0  gap      advisory
+command   start                                        0   0   0  gap      advisory
+command   context                                      0   0   0  gap      advisory
+command   checkpoint                                   0   0   0  gap      advisory
+command   handover                                     0   0   0  gap      advisory
+command   check                                        0   0   0  gap      advisory
+command   finish                                       0   0   0  gap      advisory
+command   history                                      0   0   0  gap      advisory
+command   decision                                     0   0   0  gap      advisory
+command   question                                     0   0   0  gap      advisory
+command   prompt                                       0   0   0  gap      advisory
+command   evidence                                     0   0   0  gap      advisory
+command   skills                                       0   0   0  gap      advisory
+command   capture                                      0   0   0  gap      advisory
+command   search                                       0   0   0  gap      advisory
+command   doctrine                                     0   0   0  gap      advisory
+command   plan                                         0   0   0  gap      advisory
+command   version                                      0   0   0  gap      advisory
+command   session                                      0   0   0  gap      advisory
+command   knowledge                                    0   0   0  gap      advisory
+command   adr                                          0   0   0  gap      advisory
+command   usecase                                      0   0   0  gap      advisory
+command   rules                                        0   0   0  gap      advisory
+command   migrate                                      0   0   0  gap      advisory
+command   recover                                      0   0   0  gap      advisory
+command   bench                                        0   0   0  gap      advisory
+command   archive                                      0   0   0  gap      advisory
+usecase coverage: 30 target(s), 0 covered, 0 partial, 0 required gap(s)  (columns: use cases, executable, evidence)</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^command +doctor +0 +0 +0 +gap/</li></ul>
+      </li></ol>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -257,7 +374,7 @@
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/add-a-use-case-and-prove-it.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -339,7 +456,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1170f13b5a35a5802b1b767ed068ec55ffb7d0d8" class="font-mono underline">1170f13</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751eb3a581791f022f12e40667b047513ff4465f" class="font-mono underline">751eb3a</a> · inputs <span class="font-mono">def4e88cf207</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

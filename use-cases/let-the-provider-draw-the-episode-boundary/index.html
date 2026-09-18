@@ -164,7 +164,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="mj-badge mj-badge--described">described</span>
+      <span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span>
       <a href="https://majordomus.dev/use-cases/continuity/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Sessions and handover</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">operator</span><span class="mj-badge mj-badge--neutral">writes state</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
@@ -250,8 +250,151 @@
 <p>The open freezes what the context builder resolved, next to a section for the worker's own notes, and writes a briefing to standard output — which the provider adds to the context it is about to build. That is the step that makes the record readable as well as written: a continuation package nothing loads is one nobody reads. A compaction records a derived checkpoint, because the conversation is about to stop holding what it knows. An end with the task still active writes a derived handover before the envelope closes, so the next worker inherits both an index of the episode and something to act on.</p>
 <p><code>doctor</code> holds the repository to the wiring by driving a payload through the shim, and refuses a working context that carries a conversation. <code>majordomus_continuity</code> reads the same state back over MCP, over HTTP and in the Cockpit, with the same two tiers and the same four divergence labels — and never writes, because the lifecycle has one writer.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
-    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
+    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">provider-reachable</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>Majordomus installed, no session open, no provider hook wired</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>work about to begin, which is what the compaction and end events have to describe</span></li></ul>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
+        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus capture status</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus capture install</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus capture status</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-words font-mono text-xs">majordomus session start</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">5</span><code class="min-w-0 break-words font-mono text-xs">majordomus session context</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">6</span><code class="min-w-0 break-words font-mono text-xs">majordomus start Prove the lifecycle runs itself --scope lib</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">7</span><code class="min-w-0 break-words font-mono text-xs">majordomus checkpoint --derive</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">8</span><code class="min-w-0 break-words font-mono text-xs">majordomus handover --derive</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">9</span><code class="min-w-0 break-words font-mono text-xs">majordomus handover --resolve</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">10</span><code class="min-w-0 break-words font-mono text-xs">majordomus session close</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">11</span><code class="min-w-0 break-words font-mono text-xs">majordomus session close --if-none ignore</code></li></ol>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the episode boundary exists without a worker choosing to draw it</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>what the worker was told at the open is evidence rather than recollection</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>the continuation record exists whether or not anybody was willing to type one</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>the next episode is handed that record, with the label that says how far to trust it</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>the working context stays under the ignored half of the layer and never becomes a transcript</span></li></ul>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
+    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 11 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
+    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">1</span>
+          <a href="https://majordomus.dev/commands/capture/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus capture status</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a repository that wires nothing says so; it is never presented as an episode boundary that happens to be quiet</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>claude-code            unconfigured .claude/settings.json does not exist (run: majordomus capture install)
+claude-code:session    unconfigured .claude/settings.json does not exist (run: majordomus capture install)
+(no adapter)           n/a          this tool ships no capture adapter for: agents bb codex gemini generic; they read the model and lose the automation</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /claude-code:session +unconfigured/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">2</span>
+          <a href="https://majordomus.dev/commands/capture/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus capture install</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">one shim per event, and the entries that make the provider run them</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>INFO capture     .claude/hooks/majordomus-capture — written and made executable (inline)
+INFO capture     .claude/hooks/majordomus-session-start — written and made executable (inline)
+INFO capture     .claude/hooks/majordomus-session-end — written and made executable (inline)
+INFO capture     .claude/hooks/majordomus-session-compact — written and made executable (inline)
+INFO capture     .claude/settings.json — written with the UserPromptSubmit, SessionStart, SessionEnd, PreCompact hook(s)</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /majordomus-session-start/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /majordomus-session-end/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /majordomus-session-compact/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists .claude/hooks/majordomus-session-start</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists .claude/hooks/majordomus-session-end</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">file_exists .claude/hooks/majordomus-session-compact</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">3</span>
+          <a href="https://majordomus.dev/commands/capture/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus capture status</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">verified means a synthetic payload went through the end shim and reached the command, with the mutation left out</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>claude-code            verified     .claude/hooks/majordomus-capture is wired, and a synthetic payload through it produced one record and its rendering
+claude-code:session    verified     .claude/hooks/majordomus-session-start, .claude/hooks/majordomus-session-end, .claude/hooks/majordomus-session-compact are wired, and a synthetic payload through the end shim reached the command
+(no adapter)           n/a          this tool ships no capture adapter for: agents bb codex gemini generic; they read the model and lose the automation</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /claude-code:session +verified/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">4</span>
+          <a href="https://majordomus.dev/commands/session/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus session start</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the open freezes the context the builder resolved into the store the layer names</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>session s-&lt;id&gt; opened at &lt;time&gt; (head &lt;head&gt;)
+working context: .ai/local/session-contexts/&lt;time&gt;--s-&lt;id&gt;.md
+next: majordomus plan next; majordomus context; majordomus session close when the episode ends</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /working context: \.ai/local/session-contexts//</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">5</span>
+          <a href="https://majordomus.dev/commands/session/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus session context</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the path, not the document: local evidence is never poured into a terminal where a context can pick it up</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>.ai/local/session-contexts/&lt;time&gt;--s-&lt;id&gt;.md</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^\.ai/local/session-contexts/2[0-9]+T[0-9]+Z--s-/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">6</span>
+          <a href="https://majordomus.dev/commands/start/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus start Prove the lifecycle runs itself --scope lib</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a checkpoint is a progress note inside a task, so the two events below have something to be about</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>started t-&lt;id&gt;  profile=implementation  scope=lib
+next: majordomus context; checkpoint every 15m; majordomus check before claiming anything</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">7</span>
+          <a href="https://majordomus.dev/commands/checkpoint/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus checkpoint --derive</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">what the compaction event runs: a progress note composed from git and the ledger, because at that moment nobody is being asked anything</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>.ai/local/state/checkpoints/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^\.ai/local/state/checkpoints//</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">8</span>
+          <a href="https://majordomus.dev/commands/handover/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus handover --derive</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">and what the end event writes when the task is still active: the sections the policy requires, derived from records that already exist, with no model called</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>.ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^\.ai/local/state/handovers//</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">9</span>
+          <a href="https://majordomus.dev/commands/handover/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus handover --resolve</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the record the start event quotes into the next episode, with the label that says how far to trust it</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>Handover: .ai/local/state/handovers/&lt;time&gt;--main--&lt;head&gt;--&lt;hash&gt;.md
+Match: same_worktree_same_branch
+Git state: exact
+Created: &lt;time&gt; (&lt;age&gt; ago)
+Task: t-&lt;id&gt;
+Freshness: fresh — &lt;age&gt; ago
+---
+
+# Objective
+
+Prove the lifecycle runs itself
+
+Profile implementation. Declared scope: lib.
+
+# Current State
+
+On main at &lt;head&gt;, working tree dirty.
+
+2 file(s) changed since the task started:
+
+- .claude/
+- .majordomus/
+
+Recorded in this episode: 1 checkpoint(s), 0 decision(s), 0 question(s) opened, 0 handover(s).
+
+The newest checkpoint (&lt;age&gt; ago), quoted whole:
+
+&gt; At &lt;head&gt; on main, working tree dirty; 2 file(s) changed since the task started.
+&gt; Derived, not authored: `majordomus checkpoint --derive`.
+
+# Next Action
+
+Run `majordomus context` for the briefing this record is a projection of, then `majordomus check` to see whether the task is consistent with its scope and state.
+
+# Decisions
+
+None recorded in this checkout.
+
+# Open Questions
+
+None. Nothing on this branch is blocking acceptance.
+
+# Verification
+
+Not run by this record. Nothing here asserts a test result; `majordomus finish --verify-command` is what records one.
+
+---
+
+Derived by `majordomus handover --derive` from the task record, the ledger, git and the open questions. It asserts nothing that is not in one of those, and no model wrote it.</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /Match: same_worktree_same_branch/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /Git state: exact/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">10</span>
+          <a href="https://majordomus.dev/commands/session/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus session close</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the shared record; the working context learns the outcome in the same document it was opened with</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>.ai/repo/sessions/&lt;time&gt;--s-&lt;id&gt;--main--&lt;head&gt;--&lt;hash&gt;.md</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^\.ai/repo/sessions//</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">11</span>
+          <a href="https://majordomus.dev/commands/session/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus session close --if-none ignore</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">what the provider&#39;&#39;s end event passes: the episode may have been closed by hand, or never opened, and neither is a failure</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code></code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li></ul>
+      </li></ol>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -280,7 +423,7 @@
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -362,7 +505,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1170f13b5a35a5802b1b767ed068ec55ffb7d0d8" class="font-mono underline">1170f13</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751eb3a581791f022f12e40667b047513ff4465f" class="font-mono underline">751eb3a</a> · inputs <span class="font-mono">def4e88cf207</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

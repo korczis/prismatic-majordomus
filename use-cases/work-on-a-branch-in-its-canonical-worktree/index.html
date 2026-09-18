@@ -164,7 +164,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="mj-badge mj-badge--described">described</span>
+      <span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span>
       <a href="https://majordomus.dev/use-cases/workers/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Parallel workers</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">intermediate</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="mj-badge mj-badge--read-only">read-only</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
@@ -207,8 +207,114 @@ and a reviewer all find the same checkout. A worktree somewhere else is a typed 
 with a remedy, and the migration that repairs it proves it lost nothing. Nothing is
 registered, nothing is configured, and adding a branch edits nothing.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
-    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
+    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">installed-wired</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the layer installed and the hooks wired; the shell tool proves the wiring, the executable proves the topology</span></li></ul>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
+        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus doctor</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus context</code></li></ol>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the executable derives &lt;repo&gt;-wt/&lt;branch&gt; for any branch from git identity alone; test/cases/96_worktree_topology.sh drives it end to end</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>a misplaced worktree migrates with its staged, unstaged and untracked work, verified by a fingerprint before and after</span></li></ul>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
+    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 2 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
+    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">1</span>
+          <a href="https://majordomus.dev/commands/doctor/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus doctor</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">every declared enforcement entry is wired, the worktree guard among them once the policy declares it</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   layout      .ai/manifest.yaml — schema ai-repository/v1
+OK   layout      .ai/repo/scope.yaml — version 1; 21 in pathspec(s); every key is one the schema declares
+OK   layout      .ai/local/ — ignored, and nothing under it is tracked
+OK   layout      .ai/ — every section the manifest names exists; the layer is readable without the tool
+OK   layout      .ai/repo/prompts — present
+OK   layout      .ai/local/state/handovers — present, 0 record(s)
+OK   layout      .ai/local/state/checkpoints — present, 0 record(s)
+OK   records     ledger.jsonl — every line is a well-formed event
+OK   policy      29 key(s) — every policy value the code reads is declared, with no reader-side default
+OK   bootstrap   3 projection(s) — each points at .ai/README.md and carries no rule of its own
+OK   catalogue   0 use case(s), 0 application(s) — every command, doctrine, claim, responsibility, category, setup and cross-reference resolves, both directions
+OK   context     .ai/ — 18 context document(s) carry the contract; ids unique, references resolve, no final document superseded, no cycle  [reproduce: majordomus context validate]
+OK   policy      .ai/repo/policy.yaml — parsed, version 1
+OK   profiles    4 files — parsed; default &#39;implementation&#39; exists
+INFO adr         .ai/repo/adrs/ — no decisions; nothing to validate
+OK   records     decisions.md — every entry is attributable
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   command     surface — 30 public command(s), reconciled against the dispatch table  [reproduce: majordomus doctor]
+OK   doctrine    45 of 56 rule(s) carry a validator — validator, dispatch, propagation, test and CI resolve for every one of the 45; the remaining 11 declare no validator and this check does not examine them
+OK   wiring      doctor-on-commit — wired via .githooks/pre-commit
+OK   wiring      finish-on-push — wired via .githooks/pre-push
+OK   command     coverage — every public command is exercised and refuted  [reproduce: bash test/run.sh 31_command_coverage]
+OK   resolver    handovers — no record for this worktree and branch (absence, not a stale match)  [reproduce: majordomus handover --resolve]
+OK   lifecycle   activity — 0 episode(s) opened here; too few to judge whether the writers stopped
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   projection  AGENTS.md — content matches its stamp
+OK   projection  CLAUDE.md — content matches its stamp
+OK   projection  GEMINI.md — content matches its stamp
+OK   budget      AGENTS.md — 42 lines, budget 150
+OK   links       AGENTS.md — all references resolve
+OK   counts      AGENTS.md — no hardcoded counts
+OK   context     builder — 18 lines, budget 300  [reproduce: majordomus context]
+OK   capture     share/schemas/majordomus/capture/capture.v1 — 2 file(s) describe majordomus.capture/v1 at the path the identifier derives: the record as JSON Schema, the document as protobuf
+OK   capture     .ai/local/prompts — ignored and untracked
+OK   capture     .ai/local/prompts — no records yet; the archive is empty
+OK   capture     .ai/local/prompts — every prompt is present as all three: the record, the Markdown and the YAML
+OK   prompts     .ai/local/prompts — the archive and every record in it are readable by their owner only
+OK   prompts     .ai/local/prompts — no records yet; the archive is empty
+OK   prompt      4 asset(s) — front matter valid, every token known
+OK   records     open-questions.md — every entry parses
+OK   retention   ledger — 1 lines, cap 5000
+OK   retention   handovers — 0 files, cap 200
+OK   retention   checkpoints — 0 files, cap 500
+INFO project     .ai/repo/project — no canonical project model here; nothing to validate
+OK   rules       .ai/repo/rules/vendor/majordomus — every file matches the manifest (1 (0.6.0))
+OK   rules       56 rule(s) — resolve in one deterministic order; vendored baseline plus project rules, no override — 46 carry a validator, 10 are normative text this tool does not check
+OK   rules       blocking — all 41 blocking rule(s) carry a validator
+OK   schema      rules — 56 rule(s) resolve in one order: the vendored baseline in manifest order, then the project&#39;s, as a dependency graph
+OK   schema      share/kinds.yaml — 31 kind(s); every one that carries metadata declares a schema
+OK   schema      share/schemas — 46 schema(s), each valid JSON and each applied — by a kind, through an allow-list the tool reads, by a validator that names it, or as a generated document&#39;s contract (13)
+OK   records     0 record(s) — every changed_files names work, not generated or local state
+OK   session     .ai/local/session-contexts — ignored and untracked
+OK   session     .ai/local/session-contexts — no working contexts yet; the store is empty
+INFO skill       .ai/repo/skills/ — no skills; nothing to validate
+INFO use-case    30 advisory gap(s) — not covered by an active use case, and the policy does not require it: command:init command:update command:doctor command:watch command:start command:context command:checkpoint command:handover command:check command:finish command:history command:decision command:question command:prompt command:evidence command:skills command:capture command:search command:doctrine command:plan command:version command:session command:knowledge command:adr command:usecase command:rules command:migrate command:recover command:bench command:archive  [reproduce: majordomus usecase coverage]
+OK   use-case    0 of 30 target(s) covered — every public command the policy requires is named and run by an active use case (policy use_cases.coverage)
+INFO env         - — bash &lt;version&gt;, git &lt;version&gt;, jq &lt;version&gt;, shellcheck present
+WARN clone       unpushed — commits on no remote: main(2) — work on one disk is invisible to every other session and cannot be integrated  [reproduce: git push -u origin &lt;branch&gt;]
+·    budget      doctor — &lt;timed against the policy budget&gt;
+doctor: 0 failure(s)</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /doctor: 0 failure/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">2</span>
+          <a href="https://majordomus.dev/commands/context/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus context</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the briefing is about this worktree and branch and never about somebody else&#39;&#39;s</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code># Majordomus context — &lt;time&gt;
+# a projection of durable state, not a source of truth: validate every line against git
+
+## GIT
+repository   &lt;repo&gt;
+branch       main
+head         &lt;sha&gt;
+working_tree dirty
+
+## TASK
+none active — run: majordomus start &quot;&lt;task&gt;&quot; --scope &lt;paths&gt;
+
+## EXCLUDED
+- context documents — no active task names a scope; run: majordomus context resolve &lt;path&gt;
+- handover — no record for this worktree and branch — absence, not a stale match
+
+## BUDGET
+18 of 300 lines</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li></ul>
+      </li></ol>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -243,7 +349,7 @@ registered, nothing is configured, and adding a branch edits nothing.</p>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -325,7 +431,7 @@ registered, nothing is configured, and adding a branch edits nothing.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1170f13b5a35a5802b1b767ed068ec55ffb7d0d8" class="font-mono underline">1170f13</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751eb3a581791f022f12e40667b047513ff4465f" class="font-mono underline">751eb3a</a> · inputs <span class="font-mono">def4e88cf207</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

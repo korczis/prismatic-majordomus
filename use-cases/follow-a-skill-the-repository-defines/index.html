@@ -164,7 +164,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0"><div class="flex flex-wrap items-center gap-2 text-xs">
-      <span><span class="mj-badge mj-badge--described">described</span>
+      <span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span>
       <a href="https://majordomus.dev/use-cases/extension/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-heading hover:bg-neutral-secondary-medium">Extension</a><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">basic</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">maintainer</span><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">agent</span><span class="mj-badge mj-badge--read-only">read-only</span>
     </div><article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-6 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full" tabindex="0"><h2 id="situation"><a class="zola-anchor" href="#situation" aria-label="Anchor link for: situation">Situation</a></h2>
@@ -209,8 +209,84 @@
 <span class="giallo-l"><span>  -</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">adding a skill is adding its directory; removing it removes the skill from every surface</span><span class="z-l-8 z-d-8">&#39;</span></span></code></pre><h2 id="outcome"><a class="zola-anchor" href="#outcome" aria-label="Anchor link for: outcome">Outcome</a></h2>
 <p>Each procedure is one directory under the layer's skills section holding <code>SKILL.md</code>, discovered because the file exists. <code>skills list</code> is the inventory, <code>skills show</code> is the procedure as written with the path it came from, and <code>skills check</code> reports what it examined — skills, examples and references — so a pass is evidence rather than a word. The same catalogue is what the website's skills pages and the MCP resources are projected from, so no surface keeps its own list.</p>
 </article>
-    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">No scenario yet</h2>
-    <p class="mt-2 text-sm text-body">This use case is described, not proved: it names its commands and rules, and nothing executes it. It cannot be more than <em>described</em> until a scenario is added.</p>
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">The scenario</h2>
+    <p class="mt-2 text-sm text-body">Executed against the real tool, in a repository prepared by <code class="font-mono text-heading">installed-skill</code>, every time this site is generated. What follows is not a description of what should happen; it is what happened.</p>
+    <div class="mt-4 grid gap-4 sm:grid-cols-3">
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">given</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>a repository whose skills section holds one skill directory with SKILL.md and one example, tracked in git</span></li></ul>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">when</h3>
+        <ol class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">1</span><code class="min-w-0 break-words font-mono text-xs">majordomus skills list</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">2</span><code class="min-w-0 break-words font-mono text-xs">majordomus skills show release-notes</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">3</span><code class="min-w-0 break-words font-mono text-xs">majordomus skills show release-notes --json</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">4</span><code class="min-w-0 break-words font-mono text-xs">majordomus skills check</code></li><li class="flex gap-2"><span class="font-mono text-xs text-body-subtle">5</span><code class="min-w-0 break-words font-mono text-xs">majordomus skills show nosuch</code></li></ol>
+      </div>
+      <div class="min-w-0 break-words rounded-base border border-default bg-neutral-primary-soft p-4">
+        <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">then</h3>
+        <ul class="mt-2 space-y-1 text-sm text-heading"><li class="flex gap-2"><span aria-hidden="true">·</span><span>the listing, the catalogue the site renders and the resources the MCP server serves all come from the same discovery</span></li><li class="flex gap-2"><span aria-hidden="true">·</span><span>adding a skill is adding its directory; removing it removes the skill from every surface</span></li></ul>
+      </div>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">What the tool did</h2>
+    <p class="mt-2 text-sm text-body">Evidence of the run this page was generated from: <span class="font-mono">pass</span>, 5 step(s). Output is normalised: the repository's path, timestamps, ids and durations are placeholders; nothing else is edited.</p>
+    <ol class="mt-4 space-y-4"><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">1</span>
+          <a href="https://majordomus.dev/commands/skills/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus skills list</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the inventory is the directory: what is tracked is what is listed</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>release-notes          active     v1   Write the release notes for a tagged version from the ledger and the closed issues, never from memory.</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^release-notes +active +v1 /</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">2</span>
+          <a href="https://majordomus.dev/commands/skills/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus skills show release-notes</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the canonical path, then the file as written — the procedure, not a paraphrase</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>.ai/repo/skills/release-notes/SKILL.md
+---
+schema: skill/v1
+id: release-notes
+version: 1
+title: Release notes
+description: Write the release notes for a tagged version from the ledger and the closed issues, never from memory.
+status: active
+tags: [release, documentation]
+inputs:
+  - the tag being released and the previous tag
+outputs:
+  - a release-notes section per closed issue, each naming its evidence
+---
+# Purpose
+
+Turn what the ledger and the plan record into the notes a reader of the tag needs.
+
+# Procedure
+
+1. List the issues closed between the two tags with `majordomus plan list`.
+2. For each, quote its outcome and the evidence attached to it.
+3. Refuse to describe a change that no closed issue records.
+
+# Output
+
+One section per issue: title, what changed, the evidence, in plan order.</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^\.ai/repo/skills/release-notes/SKILL\.md$/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^# Procedure$/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">3</span>
+          <a href="https://majordomus.dev/commands/skills/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus skills show release-notes --json</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">the same skill for a program: metadata, provenance, examples and the body</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>{&quot;id&quot;:&quot;release-notes&quot;,&quot;uri&quot;:&quot;majordomus://skill/release-notes&quot;,&quot;title&quot;:&quot;Release notes&quot;,&quot;description&quot;:&quot;Write the release notes for a tagged version from the ledger and the closed issues, never from memory.&quot;,&quot;status&quot;:&quot;active&quot;,&quot;version&quot;:1,&quot;tags&quot;:[&quot;release&quot;,&quot;documentation&quot;],&quot;related&quot;:[],&quot;inputs&quot;:[&quot;the tag being released and the previous tag&quot;],&quot;outputs&quot;:[&quot;a release-notes section per closed issue, each naming its evidence&quot;],&quot;path&quot;:&quot;.ai/repo/skills/release-notes/SKILL.md&quot;,&quot;sha256&quot;:&quot;&lt;sha&gt;&lt;hash16&gt;2743ea3a&quot;,&quot;examples&quot;:[&quot;.ai/repo/skills/release-notes/examples/notes-for-a-tag.md&quot;],&quot;valid&quot;:true,&quot;body&quot;:&quot;# Purpose\n\nTurn what the ledger and the plan record into the notes a reader of the tag needs.\n\n# Procedure\n\n1. List the issues closed between the two tags with `majordomus plan list`.\n2. For each, quote its outcome and the evidence attached to it.\n3. Refuse to describe a change that no closed issue records.\n\n# Output\n\nOne section per issue: title, what changed, the evidence, in plan order.\n&quot;}</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /&quot;uri&quot;:&quot;majordomus://skill/release-notes&quot;/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /&quot;path&quot;:&quot;.ai/repo/skills/release-notes/SKILL.md&quot;/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /&quot;valid&quot;:true/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">4</span>
+          <a href="https://majordomus.dev/commands/skills/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus skills check</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 0</span></div><p class="mt-2 text-sm text-body">a clean result states what it examined; a repository with no skills is reported, never passed</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>OK   skill       1 skill(s) — every one parses, matches its directory and carries its sections
+OK   skill       1 reference(s) — every related id and every example resolves
+skills: 1 discovered, 1 valid; examples: 1; references: 1 checked; failures: 0</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 0</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /^OK   skill/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /skills: 1 discovered/</li></ul>
+      </li><li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+        <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="font-mono text-xs text-body-subtle">5</span>
+          <a href="https://majordomus.dev/commands/skills/" class="min-w-0 break-words font-mono text-sm font-medium text-fg-brand hover:underline">$ majordomus skills show nosuch</a>
+          <span class="rounded border px-1.5 py-0.5 font-mono text-xs border-success-subtle bg-success-soft text-fg-success-strong">exit 12</span></div><p class="mt-2 text-sm text-body">a skill that does not exist is named, with the command that lists what does</p><pre class="mt-3 max-h-80 overflow-auto whitespace-pre-wrap break-words rounded border border-default bg-neutral-secondary-soft p-3 text-xs leading-relaxed text-heading" tabindex="0"><code>majordomus: no skill &#39;nosuch&#39; (.ai/repo/skills/nosuch/SKILL.md); try: majordomus skills list</code></pre>
+        <ul class="mt-3 flex flex-wrap gap-1.5 text-xs"><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">exit 12</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /no skill &#39;nosuch&#39;/</li><li class="rounded border px-1.5 py-0.5 font-mono border-success-subtle bg-success-soft text-fg-success-strong">stdout_contains /majordomus skills list/</li></ul>
+      </li></ol>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Why the tool knows this</h2>
     <p class="mt-2 text-sm text-body">The chain from this page to the code: the use case names commands, rules and claims; each rule is dispatched from the registry and each claim names the test that proves it; the scenario above executed the commands. Nothing in this chain is prose about intent.</p>
@@ -235,7 +311,7 @@
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">source</dt><dd class="min-w-0 break-words font-mono text-heading">.ai/repo/use-cases/follow-a-skill-the-repository-defines.md</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">status</dt><dd class="font-mono text-heading">active</dd></div>
         <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">target</dt><dd class="font-mono text-heading">guaranteed</dd></div>
-        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">described</dd></div>
+        <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">observed</dt><dd class="font-mono text-heading">guaranteed</dd></div>
       </dl>
     </div>
     <div class="rounded-base border border-default bg-neutral-primary-soft p-5">
@@ -317,7 +393,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1170f13b5a35a5802b1b767ed068ec55ffb7d0d8" class="font-mono underline">1170f13</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751eb3a581791f022f12e40667b047513ff4465f" class="font-mono underline">751eb3a</a> · inputs <span class="font-mono">def4e88cf207</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

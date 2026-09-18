@@ -165,80 +165,80 @@
   <div class="max-w-4xl">
   <p class="text-base leading-relaxed text-body">Stopping and resuming work across sessions and workers from durable state, never a transcript.</p>
   <dl class="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">11</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">described</dt><dd class="font-mono text-heading">11</dd></div></dl>
+    <div class="flex gap-1.5"><dt class="text-body-subtle">use cases</dt><dd class="font-mono text-heading">11</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">guaranteed</dt><dd class="font-mono text-heading">9</dd></div><div class="flex gap-1.5"><dt class="text-body-subtle">verified</dt><dd class="font-mono text-heading">2</dd></div></dl>
   <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list">
     <li><a href="https://majordomus.dev/use-cases/capture-the-prompts-that-started-the-work/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Keep the prompts that started the work, below the model rather than around it</h2>
       <p class="text-sm leading-relaxed text-body">Wire the provider hook, prove it by running a payload through it, and see that a prompt the tool could not parse is reported rather than silently dropped.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">capture</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/carry-a-blocker-across-a-handover/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">intermediate</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Hand work over with a question still open, and keep it blocking</h2>
       <p class="text-sm leading-relaxed text-body">Close a task into a handover while a question is unresolved, start the follow-up task, and see the same question still refuse acceptance there.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">handover · start · check · question · finish</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/checkpoint-long-work/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Checkpoint long work so a stop costs minutes, not the day</h2>
       <p class="text-sm leading-relaxed text-body">Record compact progress inside the active task at the profile interval, so a session that ends without warning leaves the next one a place to start.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">checkpoint · check · context</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/hand-work-between-sessions/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--verified">verified</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Hand unfinished work to the next session</h2>
       <p class="text-sm leading-relaxed text-body">Stop mid-task and leave the next worker something to act on that is not a transcript.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">checkpoint · handover · context · check</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/keep-decisions-out-of-the-transcript/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Record a decision so the next worker can find it</h2>
       <p class="text-sm leading-relaxed text-body">Write down what was decided and why as state, then find it again without reading a conversation.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">decision · search · history</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/let-the-provider-draw-the-episode-boundary/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Have the session opened and closed without anybody remembering to</h2>
       <p class="text-sm leading-relaxed text-body">Wire the provider&#39;&#39;s own session events, and the episode opens when the sitting begins, hands the worker what the last one left, records what a compaction is about to discard, and closes with a continuation record beside its envelope.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">capture · session · doctor · start · checkpoint · handover</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/open-and-close-a-session/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Record what one worker did in one sitting</h2>
       <p class="text-sm leading-relaxed text-body">Open a session, do the work under whatever tasks it touches, and close it into an envelope that references what it produced and copies nothing.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">session · history · knowledge</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/read-only-the-context-that-fits/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">intermediate</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Read only the context that fits the budget, and know what was dropped</h2>
       <p class="text-sm leading-relaxed text-body">Assemble the context a worker needs now in authority order, cut it to a line budget, and see every dropped section named with its reason.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">context · check</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/recover-an-episode-nobody-closed/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">intermediate</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Close an episode whose client never came back</h2>
       <p class="text-sm leading-relaxed text-body">A killed provider sends no end event. Close the episode it left open by evidence, exactly once, without claiming work it did not do.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">recover</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/resume-from-a-prompt-asset/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--verified">verified</span>
 </span><span class="font-mono text-xs text-body-subtle">basic</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Start a session from a rendered framing, not a pasted transcript</h2>
       <p class="text-sm leading-relaxed text-body">List the prompt assets the repository ships, render one against the durable state, and read the context it embeds.</p>
       <span class="mt-auto pt-3 font-mono text-xs text-body-subtle">prompt · context</span>
     </a></li>
     <li><a href="https://majordomus.dev/use-cases/resume-in-the-right-worktree/" class="flex h-full flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
-      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--described">described</span>
+      <div class="mb-2 flex flex-wrap items-center gap-2"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="font-mono text-xs text-body-subtle">intermediate</span></div>
       <h2 class="mb-2 text-lg font-semibold tracking-tight text-heading">Resume in the right worktree, never against somebody else’s task</h2>
       <p class="text-sm leading-relaxed text-body">Find the handover that belongs to this worktree and branch, and see a task record from another checkout reported as foreign rather than enforced here.</p>
@@ -312,7 +312,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1170f13b5a35a5802b1b767ed068ec55ffb7d0d8" class="font-mono underline">1170f13</a> · inputs <span class="font-mono">d881e537cd0b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/751eb3a581791f022f12e40667b047513ff4465f" class="font-mono underline">751eb3a</a> · inputs <span class="font-mono">def4e88cf207</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
