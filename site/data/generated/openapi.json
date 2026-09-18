@@ -54,11 +54,27 @@
     "op-lifecycle-providers": "docs/api/lifecycle/",
     "op-lifecycle-recovery": "docs/api/lifecycle/",
     "op-lifecycle-runtime": "docs/api/lifecycle/",
+    "op-mesh-claim": "docs/api/mesh/",
+    "op-mesh-cooperation": "docs/api/mesh/",
     "op-mesh-doctor": "docs/api/mesh/",
+    "op-mesh-events": "docs/api/mesh/",
+    "op-mesh-handover-consume": "docs/api/mesh/",
+    "op-mesh-handover-publish": "docs/api/mesh/",
     "op-mesh-identity": "docs/api/mesh/",
+    "op-mesh-link-hello": "docs/api/mesh/",
+    "op-mesh-link-sync": "docs/api/mesh/",
     "op-mesh-nodes": "docs/api/mesh/",
+    "op-mesh-peer": "docs/api/mesh/",
+    "op-mesh-peers": "docs/api/mesh/",
     "op-mesh-register": "docs/api/mesh/",
+    "op-mesh-release": "docs/api/mesh/",
+    "op-mesh-review-answer": "docs/api/mesh/",
+    "op-mesh-review-request": "docs/api/mesh/",
+    "op-mesh-session-close": "docs/api/mesh/",
+    "op-mesh-session-open": "docs/api/mesh/",
+    "op-mesh-state": "docs/api/mesh/",
     "op-mesh-status": "docs/api/mesh/",
+    "op-mesh-verify": "docs/api/mesh/",
     "op-models-list": "docs/api/models/",
     "op-models-route": "docs/api/models/",
     "op-objects-get": "docs/api/objects/",
@@ -168,7 +184,12 @@
     "schema-CheckState": "docs/api/distribution/",
     "schema-Checkouts": "docs/api/shared/",
     "schema-ClaimEvidence": "docs/api/evidence/",
+    "schema-ClaimInput": "docs/api/mesh/",
+    "schema-ClaimMode": "docs/api/mesh/",
+    "schema-ClaimOverlap": "docs/api/mesh/",
     "schema-ClaimRef": "docs/api/product/",
+    "schema-ClaimState": "docs/api/mesh/",
+    "schema-ClaimView": "docs/api/mesh/",
     "schema-Classification": "docs/api/repository/",
     "schema-CliExposure": "docs/api/capabilities/",
     "schema-ClientInfo": "docs/api/peers/",
@@ -218,11 +239,15 @@
     "schema-Concurrency": "docs/api/deploy/",
     "schema-Confidence": "docs/api/environment/",
     "schema-Conflict": "docs/api/devcontext/",
+    "schema-ConsumeAnswer": "docs/api/mesh/",
     "schema-ContainerView": "docs/api/worktree/",
     "schema-ContextEntry": "docs/api/devcontext/",
     "schema-Continuity": "docs/api/continuity/",
     "schema-ContractView": "docs/api/directories/",
     "schema-ContrastReport": "docs/api/design/",
+    "schema-CooperationCounters": "docs/api/mesh/",
+    "schema-CooperationState": "docs/api/mesh/",
+    "schema-CooperationStatus": "docs/api/mesh/",
     "schema-CounterSnapshot": "docs/api/perf/",
     "schema-Counts": "docs/api/why/",
     "schema-CpuKind": "docs/api/deploy/",
@@ -262,6 +287,7 @@
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
     "schema-EffectiveEntry": "docs/api/directories/",
+    "schema-Empty": "docs/api/mesh/",
     "schema-EntryProvenance": "docs/api/devcontext/",
     "schema-Envelope": "docs/api/mesh/",
     "schema-EnvironmentProvenance": "docs/api/environment/",
@@ -273,6 +299,7 @@
     "schema-ErrorBody": "docs/api/shared/",
     "schema-ErrorDetail": "docs/api/shared/",
     "schema-EventHistory": "docs/api/executions/",
+    "schema-EventList": "docs/api/mesh/",
     "schema-Evidence": "docs/api/obligations/",
     "schema-EvidenceClaimProof": "docs/api/evidence/",
     "schema-EvidenceExecution": "docs/api/shared/",
@@ -337,6 +364,10 @@
     "schema-GraphInfo": "docs/api/graph/",
     "schema-GraphList": "docs/api/graph/",
     "schema-GraphMetadata": "docs/api/graph/",
+    "schema-HandoverBody": "docs/api/mesh/",
+    "schema-HandoverConsumeInput": "docs/api/mesh/",
+    "schema-HandoverPublishInput": "docs/api/mesh/",
+    "schema-HandoverView": "docs/api/mesh/",
     "schema-Health": "docs/api/health/",
     "schema-HealthCheck": "docs/api/health/",
     "schema-HealthRoutes": "docs/api/deploy/",
@@ -356,6 +387,7 @@
     "schema-Integration": "docs/api/trace/",
     "schema-Interface": "docs/api/deploy/",
     "schema-IssueTrace": "docs/api/trace/",
+    "schema-JournalTallies": "docs/api/mesh/",
     "schema-JudgedCommit": "docs/api/commit/",
     "schema-KindCount": "docs/api/environment/",
     "schema-KindRef": "docs/api/product/",
@@ -363,9 +395,13 @@
     "schema-LeaseView": "docs/api/server/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
+    "schema-LinkRefusal": "docs/api/mesh/",
+    "schema-LinkReply": "docs/api/mesh/",
+    "schema-LinkState": "docs/api/mesh/",
     "schema-Listen": "docs/api/deploy/",
     "schema-Liveness": "docs/api/health/",
     "schema-LogStream": "docs/api/executions/",
+    "schema-MachineNode": "docs/api/mesh/",
     "schema-MachineReport": "docs/api/session-domain/",
     "schema-Machines": "docs/api/deploy/",
     "schema-Match": "docs/api/continuity/",
@@ -375,10 +411,16 @@
     "schema-McpResource": "docs/api/capabilities/",
     "schema-Measured": "docs/api/design/",
     "schema-MeshDoctorReport": "docs/api/mesh/",
+    "schema-MeshEvent": "docs/api/mesh/",
     "schema-MeshIdentityReport": "docs/api/mesh/",
     "schema-MeshProviderState": "docs/api/mesh/",
+    "schema-MeshRepositoryBasis": "docs/api/mesh/",
+    "schema-MeshRepositoryIdentity": "docs/api/mesh/",
     "schema-MeshSource": "docs/api/mesh/",
+    "schema-MeshStateAnswer": "docs/api/mesh/",
     "schema-MeshStatus": "docs/api/mesh/",
+    "schema-MeshVerifyCheck": "docs/api/mesh/",
+    "schema-MeshVerifyReport": "docs/api/mesh/",
     "schema-MigrationAction": "docs/api/worktree/",
     "schema-MigrationPlan": "docs/api/worktree/",
     "schema-MigrationStep": "docs/api/worktree/",
@@ -422,8 +464,12 @@
     "schema-PathChange": "docs/api/commit/",
     "schema-Peer": "docs/api/peers/",
     "schema-PeerCheckout": "docs/api/peers/",
+    "schema-PeerDetail": "docs/api/mesh/",
     "schema-PeerId": "docs/api/peers/",
     "schema-PeerList": "docs/api/peers/",
+    "schema-PeerTree": "docs/api/mesh/",
+    "schema-PeerVerdict": "docs/api/mesh/",
+    "schema-PeerView": "docs/api/mesh/",
     "schema-PhaseTotals": "docs/api/perf/",
     "schema-Plan": "docs/api/plan/",
     "schema-PlanCounts": "docs/api/plan/",
@@ -487,7 +533,9 @@
     "schema-RecoverOrphansResult": "docs/api/recover/",
     "schema-Recovery": "docs/api/lifecycle/",
     "schema-Refusal": "docs/api/deploy/",
+    "schema-RefusalCode": "docs/api/mesh/",
     "schema-Refusals": "docs/api/mesh/",
+    "schema-RefusedView": "docs/api/mesh/",
     "schema-RegisterAnswer": "docs/api/mesh/",
     "schema-RegisterInput": "docs/api/mesh/",
     "schema-ReleaseArtifactView": "docs/api/distribution/",
@@ -502,6 +550,7 @@
     "schema-ReleaseDecision": "docs/api/release/",
     "schema-ReleaseDiagnostic": "docs/api/release/",
     "schema-ReleaseImpact": "docs/api/release/",
+    "schema-ReleaseInput": "docs/api/mesh/",
     "schema-ReleasePolicy": "docs/api/release/",
     "schema-ReleasePolicyMode": "docs/api/release/",
     "schema-ReleaseProducedBy": "docs/api/release/",
@@ -527,6 +576,11 @@
     "schema-ResolvedRefs": "docs/api/product/",
     "schema-ResourceView": "docs/api/objects/",
     "schema-Resources": "docs/api/deploy/",
+    "schema-ReviewAnswer": "docs/api/mesh/",
+    "schema-ReviewAnswerInput": "docs/api/mesh/",
+    "schema-ReviewRequestInput": "docs/api/mesh/",
+    "schema-ReviewState": "docs/api/mesh/",
+    "schema-ReviewView": "docs/api/mesh/",
     "schema-Route": "docs/api/deploy/",
     "schema-RoutingDecision": "docs/api/models/",
     "schema-Row": "docs/api/capabilities/",
@@ -545,6 +599,7 @@
     "schema-RuleTestProof": "docs/api/rules/",
     "schema-RuleValidator": "docs/api/rules/",
     "schema-RulesReport": "docs/api/rules/",
+    "schema-RuntimeNode": "docs/api/mesh/",
     "schema-RuntimeView": "docs/api/lifecycle/",
     "schema-ScopeConflict": "docs/api/devtask/",
     "schema-ScopeReport": "docs/api/repository/",
@@ -562,9 +617,16 @@
     "schema-ServerView": "docs/api/server/",
     "schema-ServiceAvailability": "docs/api/environment/",
     "schema-ServiceState": "docs/api/environment/",
+    "schema-SessionCloseInput": "docs/api/mesh/",
+    "schema-SessionInfo": "docs/api/mesh/",
+    "schema-SessionInput": "docs/api/mesh/",
+    "schema-SessionNode": "docs/api/mesh/",
+    "schema-SessionState": "docs/api/mesh/",
+    "schema-SessionView": "docs/api/mesh/",
     "schema-Severity": "docs/api/shared/",
     "schema-Sighting": "docs/api/mesh/",
     "schema-Signal": "docs/api/why/",
+    "schema-Signed": "docs/api/mesh/",
     "schema-Source": "docs/api/design/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
@@ -580,6 +642,9 @@
     "schema-Stray": "docs/api/recover/",
     "schema-StrayKind": "docs/api/recover/",
     "schema-StrayVerdict": "docs/api/recover/",
+    "schema-StreamId": "docs/api/mesh/",
+    "schema-StreamLiveness": "docs/api/mesh/",
+    "schema-StreamView": "docs/api/mesh/",
     "schema-Summary": "docs/api/shared/",
     "schema-Surface": "docs/api/web/",
     "schema-SurfaceAvailability": "docs/api/web/",
@@ -639,6 +704,7 @@
     "schema-WorktreeFingerprint": "docs/api/worktree/",
     "schema-WorktreeKind": "docs/api/worktree/",
     "schema-WorktreeState": "docs/api/worktree/",
+    "schema-Written": "docs/api/mesh/",
     "tag-artifacts": "docs/api/artifacts/",
     "tag-capabilities": "docs/api/capabilities/",
     "tag-commands": "docs/api/commands/",
@@ -679,8 +745,8 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 112,
-    "schemas": 527,
+    "operations": 128,
+    "schemas": 577,
     "tags": 37
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -710,7 +776,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.7.1",
+  "generated_by": "majordomus-cli 0.8.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -719,7 +785,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.7.1"
+    "version": "0.8.0"
   },
   "infrastructure": [
     {
@@ -820,11 +886,27 @@
     "lifecycle.providers": "lifecycle",
     "lifecycle.recovery": "lifecycle",
     "lifecycle.runtime": "lifecycle",
+    "mesh.claim": "mesh",
+    "mesh.cooperation": "mesh",
     "mesh.doctor": "mesh",
+    "mesh.events": "mesh",
+    "mesh.handover.consume": "mesh",
+    "mesh.handover.publish": "mesh",
     "mesh.identity": "mesh",
+    "mesh.link.hello": "mesh",
+    "mesh.link.sync": "mesh",
     "mesh.nodes": "mesh",
+    "mesh.peer": "mesh",
+    "mesh.peers": "mesh",
     "mesh.register": "mesh",
+    "mesh.release": "mesh",
+    "mesh.review.answer": "mesh",
+    "mesh.review.request": "mesh",
+    "mesh.session.close": "mesh",
+    "mesh.session.open": "mesh",
+    "mesh.state": "mesh",
     "mesh.status": "mesh",
+    "mesh.verify": "mesh",
     "models.list": "models",
     "models.route": "models",
     "objects.get": "objects",
@@ -938,7 +1020,12 @@
     "CheckState": "distribution",
     "Checkouts": "shared",
     "ClaimEvidence": "evidence",
+    "ClaimInput": "mesh",
+    "ClaimMode": "mesh",
+    "ClaimOverlap": "mesh",
     "ClaimRef": "product",
+    "ClaimState": "mesh",
+    "ClaimView": "mesh",
     "Classification": "repository",
     "CliExposure": "capabilities",
     "ClientInfo": "peers",
@@ -988,11 +1075,15 @@
     "Concurrency": "deploy",
     "Confidence": "environment",
     "Conflict": "devcontext",
+    "ConsumeAnswer": "mesh",
     "ContainerView": "worktree",
     "ContextEntry": "devcontext",
     "Continuity": "continuity",
     "ContractView": "directories",
     "ContrastReport": "design",
+    "CooperationCounters": "mesh",
+    "CooperationState": "mesh",
+    "CooperationStatus": "mesh",
     "CounterSnapshot": "perf",
     "Counts": "why",
     "CpuKind": "deploy",
@@ -1032,6 +1123,7 @@
     "Edge": "graph",
     "EdgeRule": "devcontext",
     "EffectiveEntry": "directories",
+    "Empty": "mesh",
     "EntryProvenance": "devcontext",
     "Envelope": "mesh",
     "EnvironmentProvenance": "environment",
@@ -1043,6 +1135,7 @@
     "ErrorBody": "shared",
     "ErrorDetail": "shared",
     "EventHistory": "executions",
+    "EventList": "mesh",
     "Evidence": "obligations",
     "EvidenceClaimProof": "evidence",
     "EvidenceExecution": "shared",
@@ -1107,6 +1200,10 @@
     "GraphInfo": "graph",
     "GraphList": "graph",
     "GraphMetadata": "graph",
+    "HandoverBody": "mesh",
+    "HandoverConsumeInput": "mesh",
+    "HandoverPublishInput": "mesh",
+    "HandoverView": "mesh",
     "Health": "health",
     "HealthCheck": "health",
     "HealthRoutes": "deploy",
@@ -1126,6 +1223,7 @@
     "Integration": "trace",
     "Interface": "deploy",
     "IssueTrace": "trace",
+    "JournalTallies": "mesh",
     "JudgedCommit": "commit",
     "KindCount": "environment",
     "KindRef": "product",
@@ -1133,9 +1231,13 @@
     "LeaseView": "server",
     "Libc": "distribution",
     "LimitsView": "executions",
+    "LinkRefusal": "mesh",
+    "LinkReply": "mesh",
+    "LinkState": "mesh",
     "Listen": "deploy",
     "Liveness": "health",
     "LogStream": "executions",
+    "MachineNode": "mesh",
     "MachineReport": "session-domain",
     "Machines": "deploy",
     "Match": "continuity",
@@ -1145,10 +1247,16 @@
     "McpResource": "capabilities",
     "Measured": "design",
     "MeshDoctorReport": "mesh",
+    "MeshEvent": "mesh",
     "MeshIdentityReport": "mesh",
     "MeshProviderState": "mesh",
+    "MeshRepositoryBasis": "mesh",
+    "MeshRepositoryIdentity": "mesh",
     "MeshSource": "mesh",
+    "MeshStateAnswer": "mesh",
     "MeshStatus": "mesh",
+    "MeshVerifyCheck": "mesh",
+    "MeshVerifyReport": "mesh",
     "MigrationAction": "worktree",
     "MigrationPlan": "worktree",
     "MigrationStep": "worktree",
@@ -1192,8 +1300,12 @@
     "PathChange": "commit",
     "Peer": "peers",
     "PeerCheckout": "peers",
+    "PeerDetail": "mesh",
     "PeerId": "peers",
     "PeerList": "peers",
+    "PeerTree": "mesh",
+    "PeerVerdict": "mesh",
+    "PeerView": "mesh",
     "PhaseTotals": "perf",
     "Plan": "plan",
     "PlanCounts": "plan",
@@ -1257,7 +1369,9 @@
     "RecoverOrphansResult": "recover",
     "Recovery": "lifecycle",
     "Refusal": "deploy",
+    "RefusalCode": "mesh",
     "Refusals": "mesh",
+    "RefusedView": "mesh",
     "RegisterAnswer": "mesh",
     "RegisterInput": "mesh",
     "ReleaseArtifactView": "distribution",
@@ -1272,6 +1386,7 @@
     "ReleaseDecision": "release",
     "ReleaseDiagnostic": "release",
     "ReleaseImpact": "release",
+    "ReleaseInput": "mesh",
     "ReleasePolicy": "release",
     "ReleasePolicyMode": "release",
     "ReleaseProducedBy": "release",
@@ -1297,6 +1412,11 @@
     "ResolvedRefs": "product",
     "ResourceView": "objects",
     "Resources": "deploy",
+    "ReviewAnswer": "mesh",
+    "ReviewAnswerInput": "mesh",
+    "ReviewRequestInput": "mesh",
+    "ReviewState": "mesh",
+    "ReviewView": "mesh",
     "Route": "deploy",
     "RoutingDecision": "models",
     "Row": "capabilities",
@@ -1315,6 +1435,7 @@
     "RuleTestProof": "rules",
     "RuleValidator": "rules",
     "RulesReport": "rules",
+    "RuntimeNode": "mesh",
     "RuntimeView": "lifecycle",
     "ScopeConflict": "devtask",
     "ScopeReport": "repository",
@@ -1332,9 +1453,16 @@
     "ServerView": "server",
     "ServiceAvailability": "environment",
     "ServiceState": "environment",
+    "SessionCloseInput": "mesh",
+    "SessionInfo": "mesh",
+    "SessionInput": "mesh",
+    "SessionNode": "mesh",
+    "SessionState": "mesh",
+    "SessionView": "mesh",
     "Severity": "shared",
     "Sighting": "mesh",
     "Signal": "why",
+    "Signed": "mesh",
     "Source": "design",
     "Spelling": "session-domain",
     "Stability": "shared",
@@ -1350,6 +1478,9 @@
     "Stray": "recover",
     "StrayKind": "recover",
     "StrayVerdict": "recover",
+    "StreamId": "mesh",
+    "StreamLiveness": "mesh",
+    "StreamView": "mesh",
     "Summary": "shared",
     "Surface": "web",
     "SurfaceAvailability": "web",
@@ -1408,7 +1539,8 @@
     "WorkingTreeState": "commit",
     "WorktreeFingerprint": "worktree",
     "WorktreeKind": "worktree",
-    "WorktreeState": "worktree"
+    "WorktreeState": "worktree",
+    "Written": "mesh"
   },
   "schemas": [
     {
@@ -4384,6 +4516,132 @@
       "variants": []
     },
     {
+      "description": "The input of `mesh.claim`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ClaimInput",
+      "properties": [
+        {
+          "description": "The claiming session; the calling MCP session's own when omitted. Opened when new.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The client, for a session this opens; `cli` when omitted.",
+          "name": "client",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Repository-relative paths.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What the claim is for.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`exclusive` (the default) or `advisory`.",
+          "name": "mode",
+          "refs": [
+            "ClaimMode"
+          ],
+          "required": false,
+          "type": "ClaimMode | null"
+        },
+        {
+          "description": "The issue the claim is for.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The task, for a session this opens.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.claim"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a claim excludes others or only tells them. Both are useful and they answer\ndifferent questions: an exclusive claim is a worker saying \"do not edit this while I\nam\", an advisory one is saying \"I am here\". Exclusive is the default because a claim\ntaken without a thought about the mode is a claim somebody expects to be respected.\n\n```\nuse majordomus_cli::mesh::journal::ClaimMode;\n\nassert_eq!(ClaimMode::default(), ClaimMode::Exclusive);\nassert_eq!(serde_json::to_value(ClaimMode::Advisory).unwrap(), serde_json::json!(\"advisory\"));\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "ClaimMode",
+      "properties": [],
+      "type": "\"exclusive\" | \"advisory\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ClaimInput",
+        "ClaimView"
+      ],
+      "values": [
+        {
+          "description": "Exclusive: a second exclusive claim meeting this scope is refused while this one\nlives, on every runtime that knows of it.",
+          "value": "exclusive"
+        },
+        {
+          "description": "Advisory: an announcement, like the peer board's. Overlaps are reported, never\nrefused.",
+          "value": "advisory"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Two live claims of different sessions whose scopes meet, at least one advisory:\nreported, never refused.\n\nAn overlap is information, not a verdict — it is how two workers find out they are in\nthe same place without either being stopped. The meeting paths are listed pairwise\nrather than summarized, because the useful question is which path of mine meets which\npath of theirs.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimOverlap};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nfor (claim, session, mode) in [\n    (\"c1\", \"s1\", ClaimMode::Exclusive),\n    (\"c2\", \"s2\", ClaimMode::Advisory),\n] {\n    j.append_own(EventBody::ClaimAcquired { claim: claim.into(), session: session.into(),\n        scope: vec![\"apps\".into()], intent: None, mode, issue: None }).unwrap();\n}\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet overlap: &ClaimOverlap = &state.overlaps[0];\nassert_ne!(overlap.first, overlap.second, \"two claims, two sessions\");\nassert_eq!(overlap.paths, [(\"apps\".to_string(), \"apps\".to_string())]);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ClaimOverlap",
+      "properties": [
+        {
+          "description": "The earlier claim's key.",
+          "name": "first",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The later claim's key.",
+          "name": "second",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The paths that meet, as `first ↔ second` pairs.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of array of any"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One claim the feature names, with the status the matrix gives it.",
       "home": "product",
       "is_enum": false,
@@ -4415,6 +4673,186 @@
       "used_by": [],
       "used_by_schemas": [
         "ResolvedRefs"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A claim's standing, and — where it ended or lost — what ended it. The two variants that\ncarry a string exist because the bare verdict is not actionable: a worker told its claim\nexpired needs to know whether its session closed or its runtime stopped beating, and one\ntold its claim is conflicted needs the key of the claim that beat it, which is the same\nkey on every runtime.\n\n```\nuse majordomus_cli::mesh::state::ClaimState;\n\nassert!(ClaimState::Held.is_live());\nassert!(ClaimState::Conflicted(\"s/c1\".into()).is_live(), \"still held, and not the winner\");\nassert!(!ClaimState::Released.is_live());\n\n// the detail travels with the verdict, so a reader is never left asking who won\nlet value = serde_json::to_value(ClaimState::Conflicted(\"s/c1\".into())).unwrap();\nassert_eq!(value[\"state\"], \"conflicted\");\nassert_eq!(value[\"detail\"], \"s/c1\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ClaimState",
+      "properties": [],
+      "type": "one of 4 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "ClaimView"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Live; for an exclusive claim, the winner of its scope.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"held\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Released by its holder.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"released\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Ended without a release: the holder's session closed or its runtime expired.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"expired\""
+            },
+            {
+              "description": "",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Live, exclusive, and beaten to its scope by the claim whose key this names.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"conflicted\""
+            },
+            {
+              "description": "",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "One claim anywhere in the mesh: who took what, for what, and where it stands. The\nacquisition's Lamport stamp and sequence are carried rather than derived on demand,\nbecause they are what exclusivity is decided by — every runtime ranks two competing\nclaims by the same triple and so names the same winner, with no message passing and no\n\"last packet wins\".\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ClaimState, ClaimView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ClaimAcquired { claim: \"c1\".into(), session: \"s1\".into(),\n    scope: vec![\"apps/majordomus-cli\".into()], intent: Some(\"document the mesh\".into()),\n    mode: ClaimMode::Exclusive, issue: Some(\"#184\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet claim: &ClaimView = &state.claims[0];\nassert_eq!(claim.scope, [\"apps/majordomus-cli\"]);\nassert_eq!(claim.state, ClaimState::Held);\nassert!(claim.acquired_lamport > 0, \"the order exclusivity is decided in\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ClaimView",
+      "properties": [
+        {
+          "description": "`<stream>/<claim>`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The writing stream.",
+          "name": "stream",
+          "refs": [
+            "StreamId"
+          ],
+          "required": true,
+          "type": "StreamId"
+        },
+        {
+          "description": "`<node>-<runtime>`.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The holding session's key.",
+          "name": "session",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The claimed paths.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What it is for.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Exclusive or advisory.",
+          "name": "mode",
+          "refs": [
+            "ClaimMode"
+          ],
+          "required": true,
+          "type": "ClaimMode"
+        },
+        {
+          "description": "The issue it is for.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The Lamport stamp of the acquisition.",
+          "name": "acquired_lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The sequence of the acquisition within its stream: with the stamp and the stream,\nthe total order in which exclusivity is decided.",
+          "name": "acquired_seq",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Its standing.",
+          "name": "state",
+          "refs": [
+            "ClaimState"
+          ],
+          "required": true,
+          "type": "ClaimState"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationState",
+        "SessionNode"
       ],
       "values": [],
       "variants": []
@@ -7018,6 +7456,46 @@
       "variants": []
     },
     {
+      "description": "The answer of `mesh.handover.consume`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ConsumeAnswer",
+      "properties": [
+        {
+          "description": "The handover, as the journal holds it.",
+          "name": "handover",
+          "refs": [
+            "HandoverView"
+          ],
+          "required": true,
+          "type": "HandoverView"
+        },
+        {
+          "description": "The consumption event.",
+          "name": "written",
+          "refs": [
+            "Written"
+          ],
+          "required": true,
+          "type": "Written"
+        },
+        {
+          "description": "The local record written, relative to the repository root, when materialized.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.handover.consume"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The container, as the topology reports it.",
       "home": "worktree",
       "is_enum": false,
@@ -7478,6 +7956,339 @@
       "type": "object",
       "used_by": [
         "design.contrast"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The link and replication counters since start: what this runtime did, not what it\nholds. They are monotonic and never reset, so two readings a minute apart are a rate —\nwhich is the only way to tell a mesh that is working from one that is retrying, since\nboth show the same peers in the same states.\n\nThe counts are split by direction throughout (`handshakes_out` against\n`handshakes_in`, `refused_in` against `refused_out`) because a runtime that refuses\neveryone and one that everyone refuses need opposite remedies.\n\n```\n#### use std::collections::BTreeMap;\n#### use std::sync::{Arc, Mutex, Weak};\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::*;\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n#### use majordomus_cli::mesh::trust::TrustPolicy;\n#### #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n#### impl LinkTransport for Net {\n####   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n####     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n####         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n####     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n#### let net = Arc::new(Net::default());\n#### let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(),\n####     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n####     registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n####     checkout: CheckoutFacts::default() }).unwrap();\n####   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n#### let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\nlet key = a.dial(&[\"b:1\".into()]).unwrap();\na.sync_with(&key).unwrap();\n\nlet dialer: CooperationCounters = a.status().counters;\nlet answerer = b.status().counters;\nassert_eq!((dialer.handshakes_out, dialer.syncs_out), (1, 1));\nassert_eq!((answerer.handshakes_in, answerer.syncs_in), (1, 1), \"the other side of it\");\nassert_eq!(answerer.handshakes_out, 0, \"B never dialed anybody\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "CooperationCounters",
+      "properties": [
+        {
+          "description": "Handshakes this runtime completed as the dialer.",
+          "name": "handshakes_out",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Handshakes this runtime accepted.",
+          "name": "handshakes_in",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Dials that reached no endpoint.",
+          "name": "dial_failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Sync rounds this runtime completed as the dialer.",
+          "name": "syncs_out",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Sync rounds that failed in transport.",
+          "name": "syncs_failed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Sync rounds this runtime answered.",
+          "name": "syncs_in",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events pushed in sync requests.",
+          "name": "events_sent",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events served in sync answers.",
+          "name": "events_served",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Re-handshakes after an expiry or a dropped link.",
+          "name": "reconnects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Peer restarts observed.",
+          "name": "restarts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Links expired.",
+          "name": "peers_expired",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Claims refused for a conflict.",
+          "name": "claims_refused",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Cooperation threads alive now.",
+          "name": "threads",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Hellos and syncs this runtime refused, by code.",
+          "name": "refused_in",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint64)"
+        },
+        {
+          "description": "Refusals this runtime received or applied to a welcome, by code.",
+          "name": "refused_out",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole folded state, every collection in key order, and its digest: two runtimes\nthat agree print the same digest.\n\nThe digest is the point. Convergence is otherwise a claim nobody can check from one\nmachine; with it, two operators compare one short string and know whether their\nruntimes are looking at the same world. `opaque_events` is the other half of that\nhonesty: events of kinds this executable does not interpret are counted and relayed\nrather than dropped, so a newer peer's traffic is visible instead of silently missing.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, CooperationState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"cli\") }).unwrap();\n\nlet events = j.events();\nlet state: CooperationState = fold(&events, &|_| StreamLiveness::Own);\nassert_eq!(state.digest.len(), 32);\n\n// the same events in another order, and twice over, are the same state\nlet mut shuffled = events.clone();\nshuffled.reverse();\nshuffled.extend(events);\nassert_eq!(fold(&shuffled, &|_| StreamLiveness::Own).digest, state.digest);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "CooperationState",
+      "properties": [
+        {
+          "description": "Every session.",
+          "name": "sessions",
+          "refs": [
+            "SessionView"
+          ],
+          "required": true,
+          "type": "array of SessionView"
+        },
+        {
+          "description": "Every claim.",
+          "name": "claims",
+          "refs": [
+            "ClaimView"
+          ],
+          "required": true,
+          "type": "array of ClaimView"
+        },
+        {
+          "description": "Advisory overlaps between live claims.",
+          "name": "overlaps",
+          "refs": [
+            "ClaimOverlap"
+          ],
+          "required": true,
+          "type": "array of ClaimOverlap"
+        },
+        {
+          "description": "Every handover.",
+          "name": "handovers",
+          "refs": [
+            "HandoverView"
+          ],
+          "required": true,
+          "type": "array of HandoverView"
+        },
+        {
+          "description": "Every review request.",
+          "name": "reviews",
+          "refs": [
+            "ReviewView"
+          ],
+          "required": true,
+          "type": "array of ReviewView"
+        },
+        {
+          "description": "Events of kinds this executable does not interpret.",
+          "name": "opaque_events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "32 hex of the SHA-256 of the canonical JSON of everything above.",
+          "name": "digest",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStateAnswer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The whole cooperation runtime, as every surface reports it: the command line, the HTTP\nsurface and MCP all render this one value, so that a person and an agent asking the same\nquestion of the same runtime are never told different things.\n\nIt answers in one reading the three questions a mesh raises — is this runtime\ncooperating at all, what does it speak, and who is it linked to — and it stays\nanswerable when the answer is no: an inactive runtime still reports its protocol range\nand the reason, rather than an absence the caller has to interpret.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::CooperationStatus;\n\nlet running: CooperationStatus = cooperation.status();\nassert_eq!(running.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert!(running.peers.is_empty(), \"nothing is dialed until something dials\");\n\n// and where there is no runtime at all, the same shape says why\nlet none = CooperationStatus::inactive(\"the mesh declaration is disabled\");\nassert_eq!(none.protocol, running.protocol, \"still answerable about what it speaks\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "CooperationStatus",
+      "properties": [
+        {
+          "description": "Whether cooperation runs in this process.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, when it does not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This runtime, `<node>-<runtime>`.",
+          "name": "runtime",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This runtime's current stream.",
+          "name": "stream",
+          "refs": [
+            "StreamId"
+          ],
+          "required": false,
+          "type": "StreamId | null"
+        },
+        {
+          "description": "The repository identity links are matched on.",
+          "name": "repository",
+          "refs": [
+            "MeshRepositoryIdentity"
+          ],
+          "required": false,
+          "type": "MeshRepositoryIdentity | null"
+        },
+        {
+          "description": "The link protocol range spoken.",
+          "name": "protocol",
+          "refs": [],
+          "required": true,
+          "type": "array of any"
+        },
+        {
+          "description": "The link features carried.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Seconds between heartbeats.",
+          "name": "heartbeat_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Seconds of silence before expiry.",
+          "name": "expiry_seconds",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Where this runtime answers.",
+          "name": "endpoints",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The declared seeds.",
+          "name": "seeds",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Every linked peer, by runtime key.",
+          "name": "peers",
+          "refs": [
+            "PeerView"
+          ],
+          "required": true,
+          "type": "array of PeerView"
+        },
+        {
+          "description": "Candidates refused, by endpoint.",
+          "name": "refused",
+          "refs": [
+            "RefusedView"
+          ],
+          "required": true,
+          "type": "array of RefusedView"
+        },
+        {
+          "description": "Counters.",
+          "name": "counters",
+          "refs": [
+            "CooperationCounters"
+          ],
+          "required": true,
+          "type": "CooperationCounters"
+        },
+        {
+          "description": "The journal's tallies.",
+          "name": "journal",
+          "refs": [
+            "JournalTallies"
+          ],
+          "required": true,
+          "type": "JournalTallies"
+        },
+        {
+          "description": "When cooperation started, RFC 3339.",
+          "name": "started_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.cooperation"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -9704,6 +10515,20 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "What a failure or a limitation means for the mesh.",
+          "name": "impact",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What to do about it.",
+          "name": "remediation",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",
@@ -10037,6 +10862,20 @@
       "variants": []
     },
     {
+      "description": "No input.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "Empty",
+      "properties": [],
+      "type": "object",
+      "used_by": [
+        "mesh.verify"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where the selected thing lives, as the index knows it. Nothing here is authored: every\nfield is the index's own `crate::model::Provenance`, carried rather than restated.\n\nIt is a copy of the index's provenance and not a re-derivation of it, which is the\nproperty worth relying on: no path here was constructed by this module, so a path in an\nanswer is a path the index discovered, and the two cannot disagree about where something\nlives.\n\n`bytes` is the measured half of an entry's cost — the estimate on top of it is\n`tokens_for` — so this is also where the budget's arithmetic starts.\n\n```\nuse majordomus_cli::devcontext::{tokens_for, EntryProvenance};\nuse serde_json::json;\n\nlet p: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \".ai/repo/adrs/0052-the-episode-is-the-boundary.md\",\n    \"directory\": \".ai/repo/adrs\",\n    \"source_class\": \"adr\",\n    \"section\": \"adrs\",\n    \"bytes\": 8_192,\n})).unwrap();\n\n// the size is what the cost is computed from, and the estimate says so of itself\nassert_eq!(tokens_for(p.bytes), 2_048);\n\n// a file under no manifest section — a root README, say — carries none rather than \"\"\nlet rootish: EntryProvenance = serde_json::from_value(json!({\n    \"path\": \"README.md\",\n    \"directory\": \".\",\n    \"source_class\": \"readme\",\n    \"bytes\": 4_000,\n})).unwrap();\nassert!(rootish.section.is_none());\nassert_eq!(rootish.directory, \".\", \"the root is `.`, not the empty string\");\n```",
       "home": "devcontext",
       "is_enum": false,
@@ -10151,7 +10990,7 @@
           "type": "array of string"
         },
         {
-          "description": "The repositories this node serves, as the same 32-hex git-repository digests\n`server.status` reports. A digest discloses nothing about a path; a reader that\nserves the same repository recognises it, anyone else learns only \"some repo\".",
+          "description": "The repositories this node serves, as mesh repository ids (32 hex, see\n`super::repository`): derived from the repository's root commits or its declared\nidentity, never from a path, so that one repository cloned on two machines is\nrecognised as one. A digest discloses nothing; a reader that serves the same\nrepository recognises it, anyone else learns only \"some repo\".",
           "name": "repos",
           "refs": [],
           "required": false,
@@ -10160,6 +10999,13 @@
         {
           "description": "The executable version, informational.",
           "name": "ver",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "The runtime slot (16 hex): which server of this node — one per checkout. Empty in\nversion 1. Omitted from the signed bytes when empty, so a version-1 signature\nverifies unchanged.",
+          "name": "rt",
           "refs": [],
           "required": false,
           "type": "string"
@@ -10637,10 +11483,26 @@
         "lifecycle.runtime",
         "health.live",
         "mesh.status",
+        "mesh.claim",
+        "mesh.release",
+        "mesh.cooperation",
         "mesh.doctor",
+        "mesh.events",
+        "mesh.handover.publish",
+        "mesh.handover.consume",
         "mesh.identity",
+        "mesh.link.hello",
+        "mesh.link.sync",
         "mesh.nodes",
+        "mesh.peer",
+        "mesh.peers",
         "mesh.register",
+        "mesh.review.request",
+        "mesh.review.answer",
+        "mesh.session.open",
+        "mesh.session.close",
+        "mesh.state",
+        "mesh.verify",
         "models.list",
         "models.route",
         "objects.get",
@@ -10784,6 +11646,51 @@
       "type": "object",
       "used_by": [
         "executions.events"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.events`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "EventList",
+      "properties": [
+        {
+          "description": "Whether cooperation runs.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "How many events this answer carries.",
+          "name": "count",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The highest Lamport stamp the journal has seen: the `after` of the next page.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The events, in Lamport order.",
+          "name": "events",
+          "refs": [
+            "MeshEvent"
+          ],
+          "required": true,
+          "type": "array of MeshEvent"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.events"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -14437,6 +15344,218 @@
       "variants": []
     },
     {
+      "description": "A handover as the mesh carries it: the record's facts and its body, bounded.\n\nWhat travels is the writing, plus the few facts that let a receiver file it — the task,\nthe issue, the branch, the commit. No path of the author's disk is among them, because\nthe checkout that reads this is somewhere else and a path from another machine is at\nbest noise. Identity is the digest of the body, so a handover published twice by a\nretry or by two runtimes is one handover everywhere.\n\n```\nuse majordomus_cli::mesh::journal::HandoverBody;\n\nlet body = \"# Objective\\nship the mesh\\n\".to_string();\nlet handover = HandoverBody {\n    id: HandoverBody::digest_of(&body),\n    task: Some(\"t-1\".into()),\n    issue: Some(\"#184\".into()),\n    milestone: None,\n    branch: Some(\"feature/mesh-cooperation\".into()),\n    head: None,\n    created_at: None,\n    name: None,\n    body,\n};\nassert_eq!(handover.id, HandoverBody::digest_of(&handover.body));\n\nlet wire = serde_json::to_value(&handover).unwrap();\nassert!(wire.get(\"milestone\").is_none(), \"what it does not say is omitted\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HandoverBody",
+      "properties": [
+        {
+          "description": "The content digest (32 hex): the same handover published twice is one handover.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The task the handover closes or continues.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue it belongs to.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone it belongs to.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch it was written on.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit it was written at.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "When it was written, RFC 3339, as its author's clock said.",
+          "name": "created_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The record's file name at its origin, informational.",
+          "name": "name",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The Markdown body (`# Objective`, `# Current State`, `# Next Action`, ...).",
+          "name": "body",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "HandoverView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.handover.consume`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HandoverConsumeInput",
+      "properties": [
+        {
+          "description": "The handover's id (its content digest).",
+          "name": "handover",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The consuming session; the calling MCP session's own when omitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether to write it as a local handover record `majordomus handover --resolve`\nfinds (default true).",
+          "name": "materialize",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.handover.consume"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.handover.publish`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HandoverPublishInput",
+      "properties": [
+        {
+          "description": "The record, relative to the repository root and inside\n`.ai/local/state/handovers/`; the newest record when omitted. Nothing outside that\ndirectory is ever read by this command.",
+          "name": "path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue the handover belongs to.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone it belongs to.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.handover.publish"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A handover anywhere in the mesh, with everyone who has taken it. The id is the digest\nof the body, so the same handover published twice — by a retry, or by two runtimes that\nboth saw it — is one handover here; and `consumed_by` is what keeps two workers from\nsilently picking up the same continuity, since the list is folded from events every\nruntime holds.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, HandoverView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet body = \"# Objective\\nship\\n\".to_string();\nlet handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,\n    milestone: None, branch: Some(\"feature/x\".into()), head: None, created_at: None,\n    name: None, body };\nlet id = handover.id.clone();\nj.append_own(EventBody::HandoverPublished { handover }).unwrap();\nj.append_own(EventBody::HandoverConsumed { handover: id.clone(), session: \"s1\".into() })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &HandoverView = &state.handovers[0];\nassert_eq!(view.id, id, \"identified by what it says, not by who said it\");\nassert_eq!(view.consumed_by.len(), 1, \"somebody has picked this one up\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "HandoverView",
+      "properties": [
+        {
+          "description": "The content digest.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The stream that first published it.",
+          "name": "stream",
+          "refs": [
+            "StreamId"
+          ],
+          "required": true,
+          "type": "StreamId"
+        },
+        {
+          "description": "`<node>-<runtime>` of the publisher.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The Lamport stamp of the first publication.",
+          "name": "published_lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The record's facts and body.",
+          "name": "handover",
+          "refs": [
+            "HandoverBody"
+          ],
+          "required": true,
+          "type": "HandoverBody"
+        },
+        {
+          "description": "Every session that consumed it, by key, in Lamport order.",
+          "name": "consumed_by",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ConsumeAnswer",
+        "CooperationState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The health of what this process serves.",
       "home": "health",
       "is_enum": false,
@@ -15298,6 +16417,91 @@
       "variants": []
     },
     {
+      "description": "The journal's counters since start: how much it holds, how much it has written,\nreceived, absorbed, refused, held back and compacted away. They are what makes a\nreplication problem diagnosable from one machine — a runtime whose `received` never\nrises is not linked, one whose `rejected` rises is being sent something it will not\ntake, and one whose `pending` stays high is missing an event ahead of what it has.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, JournalTallies};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nlet before: JournalTallies = j.tallies();\nassert_eq!((before.written, before.events), (0, 0));\n\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\nlet after = j.tallies();\nassert_eq!((after.written, after.events, after.streams), (1, 1, 1));\nassert!(after.lamport > before.lamport);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "JournalTallies",
+      "properties": [
+        {
+          "description": "Streams tracked.",
+          "name": "streams",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Events held.",
+          "name": "events",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Events written by this runtime since start.",
+          "name": "written",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events received and stored.",
+          "name": "received",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Duplicate deliveries absorbed.",
+          "name": "duplicates",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events refused.",
+          "name": "rejected",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events held for a gap right now.",
+          "name": "pending",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Events dropped by compaction since start.",
+          "name": "compacted",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Events of a kind this executable does not interpret, held and relayed.",
+          "name": "opaque",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "The highest Lamport stamp seen.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One commit of the history, judged.\n```\nuse majordomus_cli::commit::verdict::JudgedCommit;\n// what a history report lists: only the commits that have something to say\nlet row = JudgedCommit {\n    commit: \"a1b2c3d4e\".into(),\n    subject: \"update stuff\".into(),\n    passed: false,\n    exempt: None,\n    findings: Vec::new(),\n};\nassert!(!row.passed);\n```",
       "home": "commit",
       "is_enum": false,
@@ -15597,6 +16801,122 @@
       "variants": []
     },
     {
+      "description": "A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser's protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \"the key is not in the allowlist\");\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \"untrusted: the key is not in the allowlist\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "LinkRefusal",
+      "properties": [
+        {
+          "description": "The rule that refused.",
+          "name": "code",
+          "refs": [
+            "RefusalCode"
+          ],
+          "required": true,
+          "type": "RefusalCode"
+        },
+        {
+          "description": "Why, in words.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The refuser's oldest protocol.",
+          "name": "proto_min",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The refuser's newest protocol.",
+          "name": "proto_max",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "LinkReply",
+        "RefusedView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a hello or a sync answers over the wire: a signed message or a refusal. Both are\nsuccessful replies — the transport carries them the same way and neither is an error —\nbecause a refusal is a decision this protocol wants recorded and shown, and an answer\nthat arrived as an HTTP failure would be indistinguishable from a peer that is down.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, Domain, LinkReply, RefusalCode};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet accepted = LinkReply::accepted(sign(&node, Domain::Welcome, serde_json::json!({})));\nassert!(accepted.signed.is_some() && accepted.refusal.is_none());\n\nlet refused = LinkReply::refused(RefusalCode::SelfLink, \"this runtime dialled itself\");\nassert!(refused.signed.is_none());\nassert_eq!(refused.refusal.unwrap().code, RefusalCode::SelfLink);\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "LinkReply",
+      "properties": [
+        {
+          "description": "The signed welcome or sync answer, when accepted.",
+          "name": "signed",
+          "refs": [
+            "Signed"
+          ],
+          "required": false,
+          "type": "Signed | null"
+        },
+        {
+          "description": "The refusal, when not.",
+          "name": "refusal",
+          "refs": [
+            "LinkRefusal"
+          ],
+          "required": false,
+          "type": "LinkRefusal | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.link.hello",
+        "mesh.link.sync"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A link's standing, from this runtime's side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&LinkState::Unreachable), \"the worst link shows\");\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \"connected\");\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "LinkState",
+      "properties": [],
+      "type": "\"connecting\" | \"connected\" | \"degraded\" | \"unreachable\" | \"expired\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PeerVerdict",
+        "PeerView"
+      ],
+      "values": [
+        {
+          "description": "Handshaking, or never yet exchanged.",
+          "value": "connecting"
+        },
+        {
+          "description": "An exchange within two heartbeats.",
+          "value": "connected"
+        },
+        {
+          "description": "Rounds are failing; the last exchange is under half the expiry old.",
+          "value": "degraded"
+        },
+        {
+          "description": "The last exchange is over half the expiry old; the link is about to expire.",
+          "value": "unreachable"
+        },
+        {
+          "description": "No exchange within the expiry: the link is dropped and will be re-dialed.",
+          "value": "expired"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The address the process listens on.",
       "home": "deploy",
       "is_enum": false,
@@ -15683,6 +17003,51 @@
           "value": "handler"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One machine in the peer tree.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MachineNode",
+      "properties": [
+        {
+          "description": "The node id.",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its display name, when a card or this node said.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it is this machine.",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Its runtimes.",
+          "name": "runtimes",
+          "refs": [
+            "RuntimeNode"
+          ],
+          "required": true,
+          "type": "array of RuntimeNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PeerTree"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -16126,6 +17491,86 @@
       "variants": []
     },
     {
+      "description": "One event as the wire and the store carry it. The body is kept as JSON so that an\nevent of an unknown kind survives storage and relay byte-for-byte; `MeshEvent::body`\ninterprets it.\n\nEvery field above the signature is covered by it, which is what makes a relay harmless:\na runtime that forwards an event cannot alter its stream, its sequence, its repository\nor its body without the next reader noticing, and so vouches for nothing. The wall\nclock is the one field nothing is decided by — freshness is measured with beats and\nmonotonic clocks, never by comparing two machines' idea of the time.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, MeshEvent};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionClosed { session: \"s1\".into() }).unwrap();\n\nlet event: &MeshEvent = &j.events()[0];\nassert_eq!(event.seq, 1, \"dense from 1 within its stream\");\nassert_eq!(event.kind(), \"session_closed\");\nassert_eq!(event.id(), format!(\"{}/1\", event.stream));\n\n// a relayed byte changed anywhere under the signature is a different event\nlet mut tampered = event.clone();\ntampered.repo = \"another-repository\".into();\nassert_ne!(tampered.signing_bytes(), event.signing_bytes());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshEvent",
+      "properties": [
+        {
+          "description": "The event format version.",
+          "name": "v",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The stream that wrote it.",
+          "name": "stream",
+          "refs": [
+            "StreamId"
+          ],
+          "required": true,
+          "type": "StreamId"
+        },
+        {
+          "description": "Dense from 1 within the stream.",
+          "name": "seq",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The Lamport stamp: above every stamp its writer had seen.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The writer's wall clock, seconds since the Unix epoch. Informational only: nothing\nis decided by comparing it with another machine's clock.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The mesh repository id the event belongs to.",
+          "name": "repo",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The writer's Ed25519 public key, hex; its digest is the stream's node.",
+          "name": "pk",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The body, `kind` tagged.",
+          "name": "body",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "Ed25519 over the canonical bytes of everything above, hex.",
+          "name": "sig",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EventList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer of `mesh.identity`: this machine's node identity, public half only.",
       "home": "mesh",
       "is_enum": false,
@@ -16198,6 +17643,67 @@
       "variants": []
     },
     {
+      "description": "What the repository identity was derived from, which a reader needs in order to judge\nit: an identity taken from the root commits is a fact about the history two clones\nshare, while a declared one is a decision somebody made, and only the second can be\nchanged by editing a file.\n\n```\nuse majordomus_cli::mesh::repository::{declared, of_root_commits, MeshRepositoryBasis};\n\nassert_eq!(declared(\"majordomus\").unwrap().basis, MeshRepositoryBasis::Declared);\nassert_eq!(\n    of_root_commits(&[\"a\".repeat(40)]).basis,\n    MeshRepositoryBasis::RootCommits,\n);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "MeshRepositoryBasis",
+      "properties": [],
+      "type": "\"declared\" | \"root_commits\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshRepositoryIdentity"
+      ],
+      "values": [
+        {
+          "description": "`cooperation.repository` in the mesh declaration.",
+          "value": "declared"
+        },
+        {
+          "description": "The repository's root commits.",
+          "value": "root_commits"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "A repository's mesh identity, carried by every advertisement, link and event, together\nwith the account of where it came from. The `detail` exists so that a person told two\ncheckouts are not the same repository can see what each one was derived from instead of\ncomparing two opaque digests.\n\n```\nuse majordomus_cli::mesh::repository::MeshRepositoryIdentity;\nuse majordomus_cli::mesh::repository::of_root_commits;\n\nlet identity: MeshRepositoryIdentity = of_root_commits(&[\"a\".repeat(40)]);\nassert_eq!(identity.id.len(), 32, \"32 hex characters, on every machine\");\nassert_eq!(identity.detail, \"aaaaaaaaaaaa\", \"the evidence, short enough to read\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshRepositoryIdentity",
+      "properties": [
+        {
+          "description": "32 hex: what advertisements, links and events carry.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it was derived from.",
+          "name": "basis",
+          "refs": [
+            "MeshRepositoryBasis"
+          ],
+          "required": true,
+          "type": "MeshRepositoryBasis"
+        },
+        {
+          "description": "The evidence, human-readable: the declared value, or the root commits.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where an observation came from. A record accumulates these; provenance is the answer\nto \"why do I see this node\".",
       "home": "mesh",
       "is_enum": true,
@@ -16226,6 +17732,53 @@
           "value": "synthetic"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.state`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshStateAnswer",
+      "properties": [
+        {
+          "description": "Whether cooperation runs.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The folded state, when cooperation runs.",
+          "name": "state",
+          "refs": [
+            "CooperationState"
+          ],
+          "required": false,
+          "type": "CooperationState | null"
+        },
+        {
+          "description": "Every stream's liveness.",
+          "name": "streams",
+          "refs": [
+            "StreamView"
+          ],
+          "required": true,
+          "type": "array of StreamView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.state"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -16302,6 +17855,110 @@
       "type": "object",
       "used_by": [
         "mesh.status"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One verification check: what was checked, whether it holds, the evidence, and — when\nsomething is wrong or limited — the impact and what to do about it.\n\nThe impact and the remedy are carried with the verdict rather than left to whoever\nrenders it, so that a failing check is actionable wherever it is read — in a terminal,\nin a JSON answer, or by an agent that has never seen the mesh before. A check that\nholds carries neither, because there is nothing to do.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyCheck;\n\nlet report = cooperation.verify();\nlet first: &MeshVerifyCheck = &report.checks[0];\nassert_eq!(first.check, \"cooperation\");\nassert!(first.detail.contains(cooperation.runtime_key()), \"the evidence, not a verdict\");\nassert!(first.remediation.is_none(), \"a check that holds asks for nothing\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshVerifyCheck",
+      "properties": [
+        {
+          "description": "What was checked.",
+          "name": "check",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether it holds.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The evidence.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the failure or limitation means for cooperation.",
+          "name": "impact",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What to do.",
+          "name": "remediation",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshVerifyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What `mesh verify` found: the local checks, every peer's round, and the state digest\nafterwards. The digest is what makes the report worth running on two machines — two\nruntimes that print the same digest have the same sessions, claims, handovers and\nreviews, and two that do not have something to reconcile, whatever their links say.\n\n`ok` is the conjunction of everything below it, so a caller may act on the one field\nand a person may read the rest to find out which part of it was false.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::MeshVerifyReport;\n\nlet report: MeshVerifyReport = cooperation.verify();\nassert_eq!(report.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert_eq!(report.digest, Some(cooperation.state().digest), \"what a peer is compared to\");\nassert_eq!(report.ok, report.checks.iter().all(|c| c.ok), \"one field for every check\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "MeshVerifyReport",
+      "properties": [
+        {
+          "description": "Whether every check holds and every round succeeded.",
+          "name": "ok",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "This runtime.",
+          "name": "runtime",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checks, in the order they ran.",
+          "name": "checks",
+          "refs": [
+            "MeshVerifyCheck"
+          ],
+          "required": true,
+          "type": "array of MeshVerifyCheck"
+        },
+        {
+          "description": "Every linked peer's verdict.",
+          "name": "peers",
+          "refs": [
+            "PeerVerdict"
+          ],
+          "required": true,
+          "type": "array of PeerVerdict"
+        },
+        {
+          "description": "The state digest after the rounds.",
+          "name": "digest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.verify"
       ],
       "used_by_schemas": [],
       "values": [],
@@ -17762,6 +19419,13 @@
           "type": "NodeId"
         },
         {
+          "description": "The runtime slot: which server of the node (one per checkout), 16 hex; empty for a\nversion-1 advertisement. A record is one runtime: two worktrees of one machine are\ntwo records under one node id and one key.",
+          "name": "runtime",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
           "description": "The Ed25519 public key that proved this record's advertisements.",
           "name": "public_key",
           "refs": [],
@@ -19069,6 +20733,60 @@
       "variants": []
     },
     {
+      "description": "The answer of `mesh.peer`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "PeerDetail",
+      "properties": [
+        {
+          "description": "Whether the runtime is known here.",
+          "name": "found",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, when it is not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The machine it runs on.",
+          "name": "machine",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The runtime, its link and its sessions.",
+          "name": "runtime",
+          "refs": [
+            "RuntimeNode"
+          ],
+          "required": false,
+          "type": "RuntimeNode | null"
+        },
+        {
+          "description": "Refusals recorded against it.",
+          "name": "refused",
+          "refs": [
+            "RefusedView"
+          ],
+          "required": true,
+          "type": "array of RefusedView"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.peer"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A peer's identity for the life of the server: `p1`, `p2`, ... in attachment order.\n`p1` is the session that started the server.",
       "home": "peers",
       "is_enum": false,
@@ -19147,6 +20865,314 @@
         "peers.list"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The answer of `mesh.peers`: machine → runtime → session → claim, every level from the\none journal and the one link table.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "PeerTree",
+      "properties": [
+        {
+          "description": "Whether cooperation runs.",
+          "name": "active",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "This runtime.",
+          "name": "runtime",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The mesh repository id.",
+          "name": "repository",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The machines, local first.",
+          "name": "machines",
+          "refs": [
+            "MachineNode"
+          ],
+          "required": true,
+          "type": "array of MachineNode"
+        },
+        {
+          "description": "Candidates refused, with the rule.",
+          "name": "refused",
+          "refs": [
+            "RefusedView"
+          ],
+          "required": true,
+          "type": "array of RefusedView"
+        },
+        {
+          "description": "The digest of the cooperation state: equal digests, equal state.",
+          "name": "digest",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.peers"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What one sync round, run now rather than remembered, said about one peer. Verification\ndoes not report the link's standing and stop there: it exchanges with the peer and says\nwhether the exchange worked and whether both sides ended holding the same marks, which\nis the difference between a peer that answers and a peer that agrees.\n\n`round_trip` and `converged` are optional because a peer this runtime does not dial is\nnot asked — an absent answer is not a failed one, and reporting `false` there would\nmake an inbound-only link look broken every time.\n\n```\n#### use std::collections::BTreeMap;\n#### use std::sync::{Arc, Mutex, Weak};\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::*;\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n#### use majordomus_cli::mesh::trust::TrustPolicy;\n#### #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n#### impl LinkTransport for Net {\n####   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n####     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n####         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n####     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n#### let net = Arc::new(Net::default());\n#### let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(),\n####     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n####     registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n####     checkout: CheckoutFacts::default() }).unwrap();\n####   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n#### let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\na.dial(&[\"b:1\".into()]).unwrap();\n\nlet dialer: &PeerVerdict = &a.verify().peers[0];\nassert_eq!(dialer.round_trip, Some(true), \"asked, and answered\");\n\nlet answerer = &b.verify().peers[0];\nassert!(!answerer.dialed, \"B does not dial A, so B asks nothing of it\");\nassert_eq!(answerer.round_trip, None, \"and reports no verdict it did not earn\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "PeerVerdict",
+      "properties": [
+        {
+          "description": "The peer's runtime key.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The link's standing after the round.",
+          "name": "state",
+          "refs": [
+            "LinkState"
+          ],
+          "required": true,
+          "type": "LinkState"
+        },
+        {
+          "description": "Whether this runtime dials the peer (and so ran a round with it now).",
+          "name": "dialed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the round succeeded; `None` when the peer dials this runtime instead.",
+          "name": "round_trip",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The round trip, milliseconds.",
+          "name": "rtt_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Whether both sides hold the same high-water mark of every stream after the round.",
+          "name": "converged",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "What happened.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshVerifyReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n#### use std::collections::BTreeMap;\n#### use std::sync::{Arc, Mutex, Weak};\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::*;\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n#### use majordomus_cli::mesh::trust::TrustPolicy;\n#### #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n#### impl LinkTransport for Net {\n####   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n####     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n####         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n####     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n#### let net = Arc::new(Net::default());\n#### let runtime = |endpoint: &str| { let c = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(),\n####     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n####     registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n####     checkout: CheckoutFacts::default() }).unwrap();\n####   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n#### let (a, b) = (runtime(\"a:1\"), runtime(\"b:1\"));\na.dial(&[\"b:1\".into()]).unwrap();\n\nlet peer: &PeerView = &a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \"the durable identity, not the endpoint\");\nassert!(peer.outbound, \"this runtime dials it\");\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \"the peer's process has not died under the link\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "PeerView",
+      "properties": [
+        {
+          "description": "`<node>-<runtime>`: the peer's durable identity.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The node (machine key digest).",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The current instance.",
+          "name": "instance",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The node's display name.",
+          "name": "name",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The executable version.",
+          "name": "version",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the peer runs on this machine (the same node key).",
+          "name": "local",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The trust verdict the link was admitted under.",
+          "name": "trust",
+          "refs": [
+            "TrustState"
+          ],
+          "required": true,
+          "type": "TrustState"
+        },
+        {
+          "description": "The negotiated link protocol.",
+          "name": "protocol",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The link features the peer carries.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Where the peer answers.",
+          "name": "endpoints",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The link's standing.",
+          "name": "state",
+          "refs": [
+            "LinkState"
+          ],
+          "required": true,
+          "type": "LinkState"
+        },
+        {
+          "description": "Whether this runtime dials the peer.",
+          "name": "outbound",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether the peer dials this runtime.",
+          "name": "inbound",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The endpoint this runtime dials, when it does.",
+          "name": "endpoint",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Milliseconds since the last successful exchange in either direction.",
+          "name": "last_exchange_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The last round trip, milliseconds.",
+          "name": "rtt_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Consecutive failed rounds.",
+          "name": "failures",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The last failure, in words.",
+          "name": "last_error",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Handshakes completed with this peer.",
+          "name": "handshakes",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Handshakes after an expiry or a dropped link.",
+          "name": "reconnects",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "New instances of the peer seen (its process restarted).",
+          "name": "restarts",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "When the current link was established, RFC 3339.",
+          "name": "linked_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationStatus",
+        "RuntimeNode"
+      ],
       "values": [],
       "variants": []
     },
@@ -22266,6 +24292,73 @@
       "variants": []
     },
     {
+      "description": "Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code's identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \"repository_mismatch\");\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\"untrusted\"),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "RefusalCode",
+      "properties": [],
+      "type": "\"malformed\" | \"oversized\" | \"protocol_unsupported\" | \"signature\" | \"stale\" | \"replay\" | \"repository_mismatch\" | \"untrusted\" | \"self_link\" | \"not_active\" | \"unknown_link\" | \"capacity\" | \"feature_unsupported\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "LinkRefusal"
+      ],
+      "values": [
+        {
+          "description": "Not the shape of the message.",
+          "value": "malformed"
+        },
+        {
+          "description": "Over `MAX_LINK_MESSAGE`.",
+          "value": "oversized"
+        },
+        {
+          "description": "The protocol ranges do not meet.",
+          "value": "protocol_unsupported"
+        },
+        {
+          "description": "The signature does not verify.",
+          "value": "signature"
+        },
+        {
+          "description": "The timestamp is outside the skew window.",
+          "value": "stale"
+        },
+        {
+          "description": "A nonce or a counter already seen.",
+          "value": "replay"
+        },
+        {
+          "description": "The peer serves another repository: the isolation rule.",
+          "value": "repository_mismatch"
+        },
+        {
+          "description": "The peer's key is not trusted by this runtime's policy: discovery is not trust.",
+          "value": "untrusted"
+        },
+        {
+          "description": "The peer is this very runtime.",
+          "value": "self_link"
+        },
+        {
+          "description": "This runtime's cooperation is not active.",
+          "value": "not_active"
+        },
+        {
+          "description": "The link id is unknown here: the answerer restarted or expired the link; say hello.",
+          "value": "unknown_link"
+        },
+        {
+          "description": "A bound of this runtime is full.",
+          "value": "capacity"
+        },
+        {
+          "description": "The peer lacks a feature the operation needs.",
+          "value": "feature_unsupported"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Refused datagrams, by reason. The diagnosis of a hostile or misconfigured network:\na mesh that hears garbage says so, with numbers, instead of being quietly empty.",
       "home": "mesh",
       "is_enum": false,
@@ -22325,6 +24418,60 @@
       "used_by": [],
       "used_by_schemas": [
         "MeshStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n#### use std::collections::BTreeMap;\n#### use std::sync::{Arc, Mutex, Weak};\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::*;\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n#### use majordomus_cli::mesh::trust::TrustPolicy;\n#### #[derive(Default)] struct Net(Mutex<BTreeMap<String, Weak<Cooperation>>>);\n#### impl LinkTransport for Net {\n####   fn post(&self, e: &str, p: &str, m: &Signed) -> Result<LinkReply, String> {\n####     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n####         .ok_or_else(|| format!(\"{e}: nobody there\"))?;\n####     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n#### let net = Arc::new(Net::default());\n#### let runtime = |endpoint: &str, policy: TrustPolicy| {\n####   let c = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![endpoint.into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(),\n####     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n####     registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::clone(&net) as Arc<dyn LinkTransport>, board: None,\n####     checkout: CheckoutFacts::default() }).unwrap();\n####   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&c)); c };\n#### let a = runtime(\"a:1\", TrustPolicy::Tofu);\n#### let strict = runtime(\"s:1\", TrustPolicy::DenyUnknown);\na.dial(&[\"s:1\".into()]).expect_err(\"reachable, and not trusted\");\n\nlet refused: &RefusedView = &strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \"inbound\", \"this runtime refused the hello\");\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "RefusedView",
+      "properties": [
+        {
+          "description": "The endpoint dialed, or `inbound:<runtime>` for a refused hello.",
+          "name": "endpoint",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`outbound` (this runtime refused the peer's welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer's hello).",
+          "name": "direction",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The peer's runtime key, when its card said.",
+          "name": "runtime",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The refusal.",
+          "name": "refusal",
+          "refs": [
+            "LinkRefusal"
+          ],
+          "required": true,
+          "type": "LinkRefusal"
+        },
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationStatus",
+        "PeerDetail",
+        "PeerTree"
       ],
       "values": [],
       "variants": []
@@ -22976,6 +25123,28 @@
           "value": "major"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.release`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReleaseInput",
+      "properties": [
+        {
+          "description": "The claim's key, `<stream>/<claim>`, as `mesh.claim` answered it.",
+          "name": "claim",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.release"
+      ],
+      "used_by_schemas": [],
+      "values": [],
       "variants": []
     },
     {
@@ -24681,6 +26850,233 @@
       "variants": []
     },
     {
+      "description": "One answer to a review request: who answered, what they decided, and why. The verdict\nis one of the three declared words, so a requester can act on it without reading the\nnote; the note is where the reasoning goes and is optional, because \"approved\" often\nneeds none.\n\n```\nuse majordomus_cli::mesh::state::ReviewAnswer;\n\nlet answer = ReviewAnswer {\n    session: \"a1b2c3d4-r1-0f/s2\".into(),\n    verdict: \"changes_requested\".into(),\n    note: Some(\"the fold is not deterministic\".into()),\n};\nassert_eq!(answer.verdict, \"changes_requested\");\n\n// the note is omitted rather than carried empty when there is nothing to say\nlet bare = ReviewAnswer { note: None, ..answer };\nlet value = serde_json::to_value(&bare).unwrap();\nassert!(value.get(\"note\").is_none());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewAnswer",
+      "properties": [
+        {
+          "description": "The answering session's key.",
+          "name": "session",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The verdict.",
+          "name": "verdict",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The note.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReviewView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.review.answer`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewAnswerInput",
+      "properties": [
+        {
+          "description": "The request's key, `<stream>/<review>`.",
+          "name": "request",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The answering session; the calling MCP session's own when omitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "`approved`, `changes_requested` or `commented`.",
+          "name": "verdict",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The note.",
+          "name": "note",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.review.answer"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.review.request`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewRequestInput",
+      "properties": [
+        {
+          "description": "The requesting session; the calling MCP session's own when omitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What to review: a branch, a commit, a pull request.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The paths it covers.",
+          "name": "scope",
+          "refs": [],
+          "required": false,
+          "type": "array of string"
+        },
+        {
+          "description": "The issue.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The runtime asked (`<node>-<runtime>`); anyone when omitted.",
+          "name": "reviewer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.review.request"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A review request's standing: whether anybody has answered it yet. There is deliberately\nno `Approved` or `Rejected` here — a request may be answered by several runtimes and the\nverdicts are the answers' own, so collapsing them into one state would throw away the\ndisagreement that makes a second reviewer worth asking.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/x\".into(), scope: vec![], issue: None, reviewer: None }).unwrap();\nlet asked = fold(&j.events(), &|_| StreamLiveness::Own);\nassert_eq!(asked.reviews[0].state, ReviewState::Open);\n\nlet request = asked.reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: None }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].state, ReviewState::Answered);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "ReviewState",
+      "properties": [],
+      "type": "\"open\" | \"answered\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ReviewView"
+      ],
+      "values": [
+        {
+          "description": "Nobody has answered.",
+          "value": "open"
+        },
+        {
+          "description": "At least one answer.",
+          "value": "answered"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One review request anywhere in the mesh, with every answer it has drawn. A request with\nno `reviewer` is an offer to the whole mesh rather than to nobody, which is why the\nanswers are a list: any linked runtime carrying the `reviews` feature may add one, and\nthey are kept in Lamport order so that every runtime reads them in the same sequence.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, ReviewView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::ReviewRequested { review: \"r1\".into(), session: \"s1\".into(),\n    subject: \"feature/mesh-cooperation\".into(), scope: vec![\"src/mesh\".into()],\n    issue: Some(\"#184\".into()), reviewer: None }).unwrap();\nlet request = fold(&j.events(), &|_| StreamLiveness::Own).reviews[0].key.clone();\nj.append_own(EventBody::ReviewAnswered { request, session: \"s2\".into(),\n    verdict: \"approved\".into(), note: Some(\"reads well\".into()) }).unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet review: &ReviewView = &state.reviews[0];\nassert_eq!(review.subject, \"feature/mesh-cooperation\");\nassert_eq!(review.reviewer, None, \"offered to the mesh, not addressed\");\nassert_eq!(review.answers[0].verdict, \"approved\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "ReviewView",
+      "properties": [
+        {
+          "description": "`<stream>/<review>`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The requesting session's key.",
+          "name": "session",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What is to be reviewed.",
+          "name": "subject",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Paths it covers.",
+          "name": "scope",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The issue.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The runtime asked, when one was.",
+          "name": "reviewer",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its standing.",
+          "name": "state",
+          "refs": [
+            "ReviewState"
+          ],
+          "required": true,
+          "type": "ReviewState"
+        },
+        {
+          "description": "The answers, in Lamport order.",
+          "name": "answers",
+          "refs": [
+            "ReviewAnswer"
+          ],
+          "required": true,
+          "type": "array of ReviewAnswer"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "A route a platform polls: an absolute path on this service, never a URL. The host is\nthe deployment's to know and not the object's to state.",
       "home": "deploy",
       "is_enum": false,
@@ -25740,6 +28136,70 @@
       "variants": []
     },
     {
+      "description": "One runtime in the peer tree.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "RuntimeNode",
+      "properties": [
+        {
+          "description": "`<node>-<runtime>`.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether this is the runtime answering.",
+          "name": "this_runtime",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Whether its stream beats: own, live, or expired.",
+          "name": "liveness",
+          "refs": [
+            "StreamLiveness"
+          ],
+          "required": true,
+          "type": "StreamLiveness"
+        },
+        {
+          "description": "Milliseconds since its beat last rose, on this runtime's clock.",
+          "name": "last_beat_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "This runtime's link to it, when there is one.",
+          "name": "link",
+          "refs": [
+            "PeerView"
+          ],
+          "required": false,
+          "type": "PeerView | null"
+        },
+        {
+          "description": "Its sessions.",
+          "name": "sessions",
+          "refs": [
+            "SessionNode"
+          ],
+          "required": true,
+          "type": "array of SessionNode"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MachineNode",
+        "PeerDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \"the\nrepository is fine\" but \"the answers you are reading are about the tree you are looking\nat\". When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &str, repo: &str, agree: bool| -> RuntimeView {\n    serde_json::from_value(json!({\n        \"root\": \"example/repo\",\n        \"served_head\": served, \"served_branch\": \"master\", \"served_working_tree\": \"clean\",\n        \"repository_head\": repo, \"repository_branch\": \"master\",\n        \"repository_working_tree\": \"clean\",\n        \"agree\": agree, \"objects\": 1319, \"index_state\": \"ok\",\n        \"note\": \"as measured on this call\",\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\"a1b2c3d\", \"a1b2c3d\", true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \"ok\");\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\"a1b2c3d\", \"9f8e7d6\", false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```",
       "home": "lifecycle",
       "is_enum": false,
@@ -26564,6 +29024,374 @@
       "variants": []
     },
     {
+      "description": "The input of `mesh.session.close`.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "SessionCloseInput",
+      "properties": [
+        {
+          "description": "The session; the calling MCP session's own when omitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.session.close"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What a session tells the mesh about itself. Every field is a public fact about work in\nprogress; none is a path on the author's disk, a secret or a credential.\n\nAlmost everything here is optional, and that is the design: a session says what it\nknows, and a field it leaves out is omitted rather than carried empty, so a reader can\ntell \"no task\" from \"a task called nothing\". Opening the same session id again replaces\nthis record, which is how a session that learns its branch later tells the mesh.\n\n```\nuse majordomus_cli::mesh::journal::SessionInfo;\n\nlet mut info = SessionInfo::named(\"s1\", \"claude-code\");\nassert_eq!(info.task, None);\nassert!(serde_json::to_value(&info).unwrap().get(\"task\").is_none(), \"unsaid, not empty\");\n\ninfo.branch = Some(\"feature/mesh-cooperation\".into());\nassert_eq!(serde_json::to_value(&info).unwrap()[\"branch\"], \"feature/mesh-cooperation\");\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "SessionInfo",
+      "properties": [
+        {
+          "description": "The session's id within its stream.",
+          "name": "session",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The client: `claude-code`, `codex`, `cli`, ...",
+          "name": "client",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worker's own name for itself, when it gave one.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the session says it is doing.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The task id (`t-...`) the session works under.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue (`I0001`, `#184`) the work belongs to.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone the work belongs to.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The checkout id (a digest, never a path).",
+          "name": "checkout",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch checked out.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The commit checked out.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the working tree had uncommitted changes when this was said.",
+          "name": "dirty",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The context revision the session works from (a digest the context compiler names).",
+          "name": "context",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionNode",
+        "SessionView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The input of `mesh.session.open`: what a session says about itself.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "SessionInput",
+      "properties": [
+        {
+          "description": "The session id within this runtime; the calling MCP session's own when omitted.",
+          "name": "session",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The client (`claude-code`, `codex`, `cli`); `cli` when omitted.",
+          "name": "client",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The worker's name for itself.",
+          "name": "worker",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What it is doing.",
+          "name": "intent",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The task id.",
+          "name": "task",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The issue.",
+          "name": "issue",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The milestone.",
+          "name": "milestone",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The branch.",
+          "name": "branch",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The head.",
+          "name": "head",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Whether the working tree is dirty.",
+          "name": "dirty",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "The context revision it works from.",
+          "name": "context",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.session.open"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One session in the peer tree.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "SessionNode",
+      "properties": [
+        {
+          "description": "`<stream>/<session>`.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the session last said about itself.",
+          "name": "info",
+          "refs": [
+            "SessionInfo"
+          ],
+          "required": true,
+          "type": "SessionInfo"
+        },
+        {
+          "description": "Its standing.",
+          "name": "state",
+          "refs": [
+            "SessionState"
+          ],
+          "required": true,
+          "type": "SessionState"
+        },
+        {
+          "description": "The claims it holds or held.",
+          "name": "claims",
+          "refs": [
+            "ClaimView"
+          ],
+          "required": true,
+          "type": "array of ClaimView"
+        },
+        {
+          "description": "The review requests it opened, by key.",
+          "name": "reviews",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeNode"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A session's standing, as every runtime of the mesh reads it. The distinction that\nmatters is between `Closed` and `Expired`: the first is a session that said it was\nfinished, the second one whose runtime stopped beating and can no longer say anything.\nBoth end the session's claims, but only the second is a machine nobody should expect an\nanswer from.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionState};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"cli\") }).unwrap();\nassert_eq!(fold(&j.events(), &|_| StreamLiveness::Own).sessions[0].state, SessionState::Active);\n\n// the same events, read on a runtime that no longer hears the writer\nlet gone = fold(&j.events(), &|_| StreamLiveness::Expired);\nassert_eq!(gone.sessions[0].state, SessionState::Expired);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "SessionState",
+      "properties": [],
+      "type": "\"active\" | \"closed\" | \"expired\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "SessionNode",
+        "SessionView"
+      ],
+      "values": [
+        {
+          "description": "Open, and its runtime is alive.",
+          "value": "active"
+        },
+        {
+          "description": "Closed by its own runtime.",
+          "value": "closed"
+        },
+        {
+          "description": "Never closed, but its runtime stopped beating: gone, as far as anyone can tell.",
+          "value": "expired"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One session anywhere in the mesh, as the fold sees it: what the session said about\nitself, where it is writing from, and whether it still counts. The key is\n`<stream>/<session>` rather than the session's own id, because two runtimes may both\ncall a session `s1` and the mesh has to hold them apart.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, SessionInfo, StreamLiveness};\nuse majordomus_cli::mesh::state::{fold, SessionView};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \"0000000000000001\",\n    \"repo\".into(), None).unwrap();\nj.append_own(EventBody::SessionOpened { info: SessionInfo::named(\"s1\", \"claude-code\") })\n    .unwrap();\n\nlet state = fold(&j.events(), &|_| StreamLiveness::Own);\nlet view: &SessionView = &state.sessions[0];\nassert!(view.key.ends_with(\"/s1\"), \"qualified by the stream that wrote it: {}\", view.key);\nassert_eq!(view.info.client, \"claude-code\");\nassert_eq!(view.runtime, view.stream.runtime_key());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "SessionView",
+      "properties": [
+        {
+          "description": "`<stream>/<session>`: unique across the mesh.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The writing stream.",
+          "name": "stream",
+          "refs": [
+            "StreamId"
+          ],
+          "required": true,
+          "type": "StreamId"
+        },
+        {
+          "description": "`<node>-<runtime>`.",
+          "name": "runtime",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The node (machine).",
+          "name": "node",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the session last said about itself.",
+          "name": "info",
+          "refs": [
+            "SessionInfo"
+          ],
+          "required": true,
+          "type": "SessionInfo"
+        },
+        {
+          "description": "Its standing.",
+          "name": "state",
+          "refs": [
+            "SessionState"
+          ],
+          "required": true,
+          "type": "SessionState"
+        },
+        {
+          "description": "The Lamport stamp of its latest word.",
+          "name": "updated_lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "CooperationState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither.",
       "home": "shared",
       "is_enum": true,
@@ -26657,6 +29485,38 @@
       "used_by": [],
       "used_by_schemas": [
         "MomentDetail"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "A signed message: a JSON body and the Ed25519 signature over its canonical bytes under\nthe message's domain. The body stays JSON so that fields a newer peer adds survive\nverification here unchanged.\n\nKeeping the body as JSON rather than as the bytes that were signed is what makes the\nprotocol extensible: a field a newer peer added is carried through verification\nuntouched, because the signature is checked over the canonical form of whatever is\nthere rather than over a shape this version knows.\n\n```\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::link::{sign, verify_signed, Domain, Signed};\n\nlet node = NodeIdentity::ephemeral().unwrap();\nlet signed: Signed = sign(&node, Domain::SyncRequest, serde_json::json!({ \"b\": 2, \"a\": 1 }));\nassert_eq!(signed.sig.len(), 128, \"hex Ed25519\");\n\n// key order is not content, so a round trip through JSON still verifies\nlet wire = serde_json::to_string(&signed).unwrap();\nlet back: Signed = serde_json::from_str(&wire).unwrap();\nassert!(verify_signed(&node.public.public_key, Domain::SyncRequest, &back));\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "Signed",
+      "properties": [
+        {
+          "description": "The message.",
+          "name": "body",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "Hex Ed25519 over the domain and the canonical JSON of `body`.",
+          "name": "sig",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.link.hello",
+        "mesh.link.sync"
+      ],
+      "used_by_schemas": [
+        "LinkReply"
       ],
       "values": [],
       "variants": []
@@ -27259,6 +30119,93 @@
           "value": "unmeasurable"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One stream: a run of one runtime of one node. `<node 32 hex>-<runtime 16 hex>-<instance\n16 hex>`. The node is the machine's key, the runtime is one checkout's server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"c\".repeat(16)).unwrap();\nassert_eq!(id.node(), \"a\".repeat(32));\nassert_eq!(id.runtime(), \"b\".repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&\"a\".repeat(32), &\"b\".repeat(16), &\"d\".repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "StreamId",
+      "properties": [],
+      "type": "string",
+      "used_by": [],
+      "used_by_schemas": [
+        "ClaimView",
+        "CooperationStatus",
+        "HandoverView",
+        "MeshEvent",
+        "SessionView",
+        "StreamView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Whether a stream is speaking now, on this runtime's clock. It is a verdict about a\nstream and not about a link: a runtime reachable only through a relay is alive, and a\nruntime that crashed stops beating for everyone at once. `Own` is kept apart from `Live`\nbecause a runtime's own stream needs no evidence — it is the thing doing the beating.\n\n```\nuse majordomus_cli::mesh::journal::StreamLiveness;\n\nassert!(StreamLiveness::Own.is_alive() && StreamLiveness::Live.is_alive());\nassert!(!StreamLiveness::Expired.is_alive());\nassert_eq!(\n    serde_json::to_value(StreamLiveness::Expired).unwrap(),\n    serde_json::json!(\"expired\"),\n);\n```",
+      "home": "mesh",
+      "is_enum": true,
+      "name": "StreamLiveness",
+      "properties": [],
+      "type": "\"own\" | \"live\" | \"expired\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "RuntimeNode",
+        "StreamView"
+      ],
+      "values": [
+        {
+          "description": "This runtime's own current stream.",
+          "value": "own"
+        },
+        {
+          "description": "Its beat rose within the expiry.",
+          "value": "live"
+        },
+        {
+          "description": "Its beat has not risen within the expiry, or was never heard.",
+          "value": "expired"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One stream's liveness.",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "StreamView",
+      "properties": [
+        {
+          "description": "The stream.",
+          "name": "stream",
+          "refs": [
+            "StreamId"
+          ],
+          "required": true,
+          "type": "StreamId"
+        },
+        {
+          "description": "Own, live or expired.",
+          "name": "liveness",
+          "refs": [
+            "StreamLiveness"
+          ],
+          "required": true,
+          "type": "StreamLiveness"
+        },
+        {
+          "description": "Milliseconds since its beat rose.",
+          "name": "last_beat_ms",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "MeshStateAnswer"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -29329,7 +32276,8 @@
       "type": "one of 3 variants",
       "used_by": [],
       "used_by_schemas": [
-        "NodeRecord"
+        "NodeRecord",
+        "PeerView"
       ],
       "values": [],
       "variants": [
@@ -30458,6 +33406,50 @@
         "InspectReport",
         "RepositoryTopology",
         "StatusReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What an operation wrote, as its answer to the caller. Every mesh operation is an event\nappended to this runtime's journal, and the caller is handed the three facts it cannot\nwork out for itself: the mesh-wide key of the thing it created, the event that says so,\nand the Lamport stamp that places it against everyone else's events.\n\nThe key is what a later operation is addressed by — a claim is released by the key its\nacquisition returned, never by the local name it was given — and the stamp is what a\ncaller waiting for a peer to catch up compares against.\n\n```\n#### use std::sync::Arc;\n#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n#### use majordomus_cli::mesh::identity::NodeIdentity;\n#### use majordomus_cli::mesh::link::HttpTransport;\n#### use majordomus_cli::mesh::registry::MeshRegistry;\n#### use majordomus_cli::mesh::repository::of_root_commits;\n#### let cooperation = Cooperation::new(CooperationSetup {\n####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \"0000000000000001\".into(),\n####     repository: of_root_commits(&[\"root\".into()]), endpoints: vec![\"127.0.0.1:9\".into()],\n####     version: \"doc\".into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n####     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n#### }).unwrap();\nuse majordomus_cli::mesh::cooperation::Written;\nuse majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};\n\nlet session = SessionInfo::named(\"s1\", \"cli\");\nlet written: Written = cooperation\n    .claim(&session, vec![\"docs\".into()], None, ClaimMode::Advisory, None)\n    .unwrap();\nassert!(written.lamport > 0, \"placed against every other runtime's events\");\n\n// and the key it returned is how the claim is addressed from here on\ncooperation.release(&written.key).unwrap();\n```",
+      "home": "mesh",
+      "is_enum": false,
+      "name": "Written",
+      "properties": [
+        {
+          "description": "`<stream>/<local id>` of what was created or changed.",
+          "name": "key",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "`<stream>/<seq>` of the event that says so.",
+          "name": "event",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The event's Lamport stamp.",
+          "name": "lamport",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "mesh.claim",
+        "mesh.release",
+        "mesh.handover.publish",
+        "mesh.review.request",
+        "mesh.review.answer",
+        "mesh.session.open",
+        "mesh.session.close"
+      ],
+      "used_by_schemas": [
+        "ConsumeAnswer"
       ],
       "values": [],
       "variants": []
@@ -34309,7 +37301,7 @@
       "slug": "lifecycle"
     },
     {
-      "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+      "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
       "name": "mesh",
       "operations": [
         {
@@ -34370,6 +37362,188 @@
           "summary": "The mesh, at a glance"
         },
         {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "exclusive",
+              "json": "{\"session\":\"bench\",\"scope\":[\"docs\"]}"
+            }
+          ],
+          "body_schema": "ClaimInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/claims\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"scope\":[\"docs\"]}'",
+          "description": "Claim repository paths for a session. An exclusive claim that meets a live exclusive claim of another session — on this runtime or any runtime this one has heard — is refused as `claim_conflict` with the claims it meets; an advisory claim is recorded and its overlaps reported. A claim lives while its session is open and its runtime beats: a crashed holder's claim expires everywhere on its own. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.claim",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_claim",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/claims",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Claim a scope across the mesh: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Claim a scope across the mesh"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "unknown",
+              "json": "{\"claim\":\"none/c-0\"}"
+            }
+          ],
+          "body_schema": "ReleaseInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/claims/release\" -H \"content-type: application/json\" -d '{\"claim\":\"none/c-0\"}'",
+          "description": "Release a claim this runtime's current run holds, by its key. A claim written elsewhere is refused as `not_own`: only its holder releases it, and a dead holder's claim expires instead. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.release",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_release",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/claims/release",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Release a claim: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Release a claim"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/cooperation\"",
+          "description": "Whether this runtime cooperates and why not when it does not: its runtime and stream, the repository identity links are matched on, the link protocol and features, the heartbeat and expiry, every linked peer with its link state, last exchange, round trip and failures, every refused candidate with the rule that refused it, and the counters of handshakes, syncs, reconnects, expiries, replicated and refused events.",
+          "home": "mesh",
+          "id": "mesh.cooperation",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_cooperation",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh/cooperation",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Cooperation, at a glance: the result.",
+              "schema": "CooperationStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "CooperationStatus",
+          "stability": "experimental",
+          "summary": "Cooperation, at a glance"
+        },
+        {
           "benchmark": "required",
           "benchmark_reason": "",
           "body_examples": [],
@@ -34378,7 +37552,7 @@
           "cache_detail": "",
           "cli": "mesh doctor",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor\"",
-          "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies end to end in memory. Deterministic, no second node required.",
+          "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, the repository has a mesh identity, the advertised endpoints are reachable from beyond this machine, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory. Each failed check names its impact and its remedy. Deterministic, no second node required.",
           "home": "mesh",
           "id": "mesh.doctor",
           "kind": "query",
@@ -34422,6 +37596,208 @@
           "result_schema": "MeshDoctorReport",
           "stability": "experimental",
           "summary": "The mesh self-check"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/events?limit=100\"",
+          "description": "The journal's events above a Lamport stamp, in Lamport order, at most a page: each with its stream, sequence, stamp, repository, signing key, kind and body. The answer's lamport is the next page's `after`.",
+          "home": "mesh",
+          "id": "mesh.events",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_events",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "Only events whose Lamport stamp is above this.",
+              "examples": [],
+              "name": "after",
+              "required": false,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "At most this many (default 100, at most 1000).",
+              "examples": [
+                {
+                  "case": "default",
+                  "value": "100"
+                }
+              ],
+              "name": "limit",
+              "required": false,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/mesh/events",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The cooperation journal: the result.",
+              "schema": "EventList",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "EventList",
+          "stability": "experimental",
+          "summary": "The cooperation journal"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "latest",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "HandoverPublishInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/handovers\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Publish a handover record of this checkout — the newest, or the one named under .ai/local/state/handovers/ — to every linked runtime: its task, branch, head and time from its front matter, the issue and milestone given, and its Markdown body, bounded and identified by the body's digest. No path of this machine travels, and no file outside the handovers directory is ever read.",
+          "home": "mesh",
+          "id": "mesh.handover.publish",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_handover_publish",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/handovers",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Publish a handover to the mesh: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Publish a handover to the mesh"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "unknown",
+              "json": "{\"handover\":\"00000000000000000000000000000000\",\"session\":\"bench\",\"materialize\":false}"
+            }
+          ],
+          "body_schema": "HandoverConsumeInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/handovers/consume\" -H \"content-type: application/json\" -d '{\"handover\":\"00000000000000000000000000000000\",\"session\":\"bench\",\"materialize\":false}'",
+          "description": "Take a handover another runtime published: record the consumption on the mesh, and write it into this checkout's handovers directory as a record `majordomus handover --resolve` finds on the same branch — once, however often it is consumed.",
+          "home": "mesh",
+          "id": "mesh.handover.consume",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_handover_consume",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/handovers/consume",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Consume a handover from the mesh: the result.",
+              "schema": "ConsumeAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ConsumeAnswer",
+          "stability": "experimental",
+          "summary": "Consume a handover from the mesh"
         },
         {
           "benchmark": "required",
@@ -34480,13 +37856,141 @@
         {
           "benchmark": "required",
           "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "malformed",
+              "json": "{\"body\":{},\"sig\":\"\"}"
+            }
+          ],
+          "body_schema": "Signed",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/link/hello\" -H \"content-type: application/json\" -d '{\"body\":{},\"sig\":\"\"}'",
+          "description": "The link handshake another runtime posts: a signed hello carrying its runtime card, a fresh nonce and its protocol range. Refused, typed, when malformed, oversized, mis-signed, stale, replayed, of an unsupported protocol, of another repository, untrusted, or this runtime itself; otherwise answered with a signed welcome: this runtime's card, a link id, its marks and the echoed nonce. Changes this process's link table only.",
+          "home": "mesh",
+          "id": "mesh.link.hello",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/link/hello",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Open a link (the handshake): the result.",
+              "schema": "LinkReply",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LinkReply",
+          "stability": "experimental",
+          "summary": "Open a link (the handshake)"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [
+            {
+              "case": "malformed",
+              "json": "{\"body\":{},\"sig\":\"\"}"
+            }
+          ],
+          "body_schema": "Signed",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/link/sync\" -H \"content-type: application/json\" -d '{\"body\":{},\"sig\":\"\"}'",
+          "description": "The replication round a linked runtime posts every heartbeat, signed under its link id with a rising counter: its marks and the events this runtime lacks. Ingested — verified end to end, deduplicated, applied in stream order — and answered, signed, with this runtime's marks and the events the peer lacks. An unknown link or a restarted peer is told to say hello again.",
+          "home": "mesh",
+          "id": "mesh.link.sync",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/link/sync",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One sync round of a link: the result.",
+              "schema": "LinkReply",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "LinkReply",
+          "stability": "experimental",
+          "summary": "One sync round of a link"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
           "body_examples": [],
           "body_schema": "",
           "cache": "disabled",
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/nodes\"",
-          "description": "Every node this process has observed, deduplicated by node identity across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
+          "description": "Every runtime this process has observed, one record per node and runtime slot, deduplicated across every discovery source, in node-id order: identity, trust, presence, endpoints, capabilities, repositories, provenance and versions. In memory, gone with the process.",
           "home": "mesh",
           "id": "mesh.nodes",
           "kind": "query",
@@ -34530,6 +38034,127 @@
           "result_schema": "NodeList",
           "stability": "experimental",
           "summary": "The discovered nodes"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/peer?runtime=0000000000000000000000000000000000000000000000000\"",
+          "description": "One runtime by its key (`<node>-<runtime>`, or a node id for its first runtime): the machine it runs on, its liveness, its link from here, its sessions and claims, and any refusal recorded against it. Not found is an answer with the reason.",
+          "home": "mesh",
+          "id": "mesh.peer",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_peer",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The runtime, `<node>-<runtime>` (a node id alone matches its first runtime).",
+              "examples": [
+                {
+                  "case": "unknown",
+                  "value": "\"0000000000000000000000000000000000000000000000000\""
+                }
+              ],
+              "name": "runtime",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/mesh/peer",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "One runtime: the result.",
+              "schema": "PeerDetail",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PeerDetail",
+          "stability": "experimental",
+          "summary": "One runtime"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/peers\"",
+          "description": "Machine → runtime → session → claim: every runtime this one is linked to or has heard through the journal, grouped by machine, local first; each runtime with its liveness, the milliseconds since its beat rose and its link, each session with what it said and its claims. Remote and local runtimes share one shape, and the state digest closes the answer: equal digests, equal state.",
+          "home": "mesh",
+          "id": "mesh.peers",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_peers",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh/peers",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Who cooperates, machine by machine: the result.",
+              "schema": "PeerTree",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "PeerTree",
+          "stability": "experimental",
+          "summary": "Who cooperates, machine by machine"
         },
         {
           "benchmark": "required",
@@ -34594,6 +38219,380 @@
           "result_schema": "RegisterAnswer",
           "stability": "experimental",
           "summary": "Register with this node's mesh"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "open",
+              "json": "{\"session\":\"bench\",\"subject\":\"feature/bench\",\"scope\":[]}"
+            }
+          ],
+          "body_schema": "ReviewRequestInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"subject\":\"feature/bench\",\"scope\":[]}'",
+          "description": "Ask for a review of a branch, commit or pull request, optionally of one named runtime — which must be linked and carry the `reviews` feature, or the request is refused as `feature_unsupported`. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.review.request",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_review_request",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/reviews",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Ask the mesh for a review: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Ask the mesh for a review"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "unknown",
+              "json": "{\"request\":\"none/r-0\",\"session\":\"bench\",\"verdict\":\"commented\"}"
+            }
+          ],
+          "body_schema": "ReviewAnswerInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/reviews/answer\" -H \"content-type: application/json\" -d '{\"request\":\"none/r-0\",\"session\":\"bench\",\"verdict\":\"commented\"}'",
+          "description": "Answer a review request from any runtime with approved, changes_requested or commented, and a note. Replicated to every linked runtime. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.review.answer",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_review_answer",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/reviews/answer",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Answer a review request: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Answer a review request"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "named",
+              "json": "{\"session\":\"bench\",\"intent\":\"benchmark\"}"
+            }
+          ],
+          "body_schema": "SessionInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/sessions\" -H \"content-type: application/json\" -d '{\"session\":\"bench\",\"intent\":\"benchmark\"}'",
+          "description": "Say what a session of this runtime is: its client, worker, intent, task, issue, milestone, branch, head, dirtiness and context revision. Replicated to every linked runtime; a later word replaces an earlier one. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.session.open",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_session_open",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/sessions",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Open or update a session on the mesh: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Open or update a session on the mesh"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "transient_state",
+          "body_examples": [
+            {
+              "case": "named",
+              "json": "{\"session\":\"bench\"}"
+            }
+          ],
+          "body_schema": "SessionCloseInput",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/sessions/close\" -H \"content-type: application/json\" -d '{\"session\":\"bench\"}'",
+          "description": "End a session of this runtime; every claim it holds ends with it, on every linked runtime. Writes this runtime's journal only.",
+          "home": "mesh",
+          "id": "mesh.session.close",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_session_close",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/sessions/close",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Close a session on the mesh: the result.",
+              "schema": "Written",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "Written",
+          "stability": "experimental",
+          "summary": "Close a session on the mesh"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/state\"",
+          "description": "The journal folded: every session, every claim with its standing (held, released, expired, conflicted with its winner), the advisory overlaps, every handover with who consumed it, every review request with its answers, and the digest two runtimes compare. Plus every stream's liveness on this runtime's clock.",
+          "home": "mesh",
+          "id": "mesh.state",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_state",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/mesh/state",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The state every linked runtime converges on: the result.",
+              "schema": "MeshStateAnswer",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshStateAnswer",
+          "stability": "experimental",
+          "summary": "The state every linked runtime converges on"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [
+            {
+              "case": "default",
+              "json": "{}"
+            }
+          ],
+          "body_schema": "Empty",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "",
+          "curl": "curl -s -X POST \"http://127.0.0.1:8741/api/v1/mesh/verify\" -H \"content-type: application/json\" -d '{}'",
+          "description": "Run a live verification: cooperation is active, the repository identity resolves, the endpoints are reachable beyond loopback, the heartbeat beats, the journal holds no stuck gap; then one sync round with every peer this runtime dials, timed, and whether both sides now hold the same high-water marks. Each failed check names its impact and remedy. Changes nothing but the journal's replication.",
+          "home": "mesh",
+          "id": "mesh.verify",
+          "kind": "command",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_mesh_verify",
+          "method": "POST",
+          "parameters": [],
+          "path": "/api/v1/mesh/verify",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::mesh",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Prove cooperation now: the result.",
+              "schema": "MeshVerifyReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`refused`: The command was understood and turned down for the reason the message gives.",
+              "schema": "ErrorBody",
+              "status": "422"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "MeshVerifyReport",
+          "stability": "experimental",
+          "summary": "Prove cooperation now"
         }
       ],
       "slug": "mesh"

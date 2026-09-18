@@ -20,8 +20,10 @@
 //! prints where it stands. Run twice, it starts nothing the second time; run by three
 //! shells at once, the election lets one of the three servers bind and the others defer.
 //! `stop` signals the server this checkout's lease names, when it answers for this
-//! checkout, and waits for the lease to go. Nothing here kills a server of another checkout,
-//! and nothing kills a server that was not asked for by name.
+//! checkout, and waits for *that server's* lease to go — the lease it read, by its token,
+//! and not merely the path, which another process may occupy in the same instant.
+//! Nothing here kills a server of another checkout, and nothing kills a server that was not
+//! asked for by name.
 
 use std::fs;
 use std::io::{Read, Write};
@@ -618,16 +620,44 @@ fn stop(repo: &Repository, wait: Duration) -> Result<u8> {
     signal_stop(doc.pid)?;
     let deadline = Instant::now() + wait;
     while Instant::now() < deadline {
-        if matches!(LeaseFile::read(&path), LeaseFile::Absent) {
-            say(&mut out, format!("stopped {url} (pid {})", doc.pid))?;
-            return Ok(0);
+        // What this command ends is *the server the lease named*, and what it waits for is
+        // that server's lease — not the path. The two are the same thing right up until
+        // another process takes the checkout over in the same instant, and then they are
+        // not: a `serve` started a moment ago by a concurrent `serve ensure` may still be
+        // in `lease::elect`, waiting for the very server this command just signalled, and
+        // the file it finds freed is a file it creates again within milliseconds under a
+        // token of its own. The path is then occupied without pause and this loop, reading
+        // the path, waited out its whole bound and reported a server that would not stop —
+        // of a server that had stopped before the first tick. So the token decides.
+        match LeaseFile::read(&path).document() {
+            None => {
+                say(&mut out, format!("stopped {url} (pid {})", doc.pid))?;
+                return Ok(0);
+            }
+            Some(d) if d.token != doc.token => {
+                say(
+                    &mut out,
+                    format!(
+                        "stopped {url} (pid {}); another process has taken this checkout's \
+                         lease since (pid {}{})",
+                        doc.pid,
+                        d.pid,
+                        d.url
+                            .as_deref()
+                            .map(|u| format!(" at {u}"))
+                            .unwrap_or_else(|| ", still binding".into())
+                    ),
+                )?;
+                return Ok(0);
+            }
+            Some(_) => {}
         }
         std::thread::sleep(Duration::from_millis(100));
     }
     say(
         &mut out,
         format!(
-            "asked pid {} at {url} to stop; the lease is still there after {} second(s)",
+            "asked pid {} at {url} to stop; its lease is still there after {} second(s)",
             doc.pid,
             wait.as_secs()
         ),

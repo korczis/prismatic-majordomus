@@ -1,7 +1,7 @@
 +++
 title = "majordomus models list"
 description = "Every declared vendor and model, optionally narrowed; the order is the declaration's, which is routing's preference order"
-weight = 117
+weight = 133
 [extra]
 route = "/docs/cli/models/list/"
 command = "majordomus models list"

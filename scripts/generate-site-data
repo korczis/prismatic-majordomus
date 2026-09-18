@@ -629,7 +629,11 @@ EOF
 # used to become blob/master/<path>, which 404s for all of the local state and for every
 # directory; scripts/ci/link-check refuses both.
 forge_paths() {
-  jq -Rn --arg files "$(git -C "$ROOT" ls-files)" '
+  # The listing reaches jq through the file line 446 already wrote, never through argv:
+  # Linux caps a single argv string at MAX_ARG_STRLEN (131072 bytes), and this tree's
+  # `git ls-files` is 132621. Over that, execve answers E2BIG, jq never runs, and the site
+  # data fails to regenerate — on the runner only, because macOS has no cap of that shape.
+  jq -Rn --rawfile files "$LINK_TRACKED" '
     ($files | split("\n") | map(select(. != ""))) as $tracked
     | ($tracked | map(split("/") | . as $p | range(1; length) | $p[:.] | join("/")) | unique) as $dirs
     | [inputs | select(. != "") | rtrimstr("/") as $p

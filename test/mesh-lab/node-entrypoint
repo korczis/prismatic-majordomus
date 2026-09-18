@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Start one lab node: unpack the repository once (a restarted container keeps its checkout
+# and its key, which is what a rebooted machine keeps), write the node's mesh declaration,
+# and serve beyond loopback so the other nodes can dial it.
+#
+# Environment: REPO_ID (the declared mesh repository identity), TRUST (tofu|deny_unknown),
+# ALLOW (space-separated keys), SEEDS (space-separated http://host:port), MULTICAST
+# (true|false), HEARTBEAT, EXPIRY.
+set -euo pipefail
+
+mkdir -p /work/repo /state
+cd /work/repo
+if [ ! -d .git ]; then
+  tar -xf /lab/repo.tar
+  git init -q .
+  git -c user.email=lab@mesh.invalid -c user.name=mesh-lab add -A
+  git -c user.email=lab@mesh.invalid -c user.name=mesh-lab commit -q -m "mesh lab checkout"
+fi
+
+mkdir -p .ai/repo/mesh
+{
+  printf 'schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: true\n'
+  printf 'multicast:\n  enabled: %s\n  interval_seconds: 2\n' "${MULTICAST:-true}"
+  printf 'trust:\n  policy: %s\n' "${TRUST:-tofu}"
+  if [ -n "${ALLOW:-}" ]; then
+    printf '  allow:\n'
+    for key in $ALLOW; do printf '    - %s\n' "$key"; done
+  fi
+  printf 'cooperation:\n  heartbeat_seconds: %s\n  expiry_seconds: %s\n  repository: %s\n' \
+    "${HEARTBEAT:-1}" "${EXPIRY:-6}" "${REPO_ID:?REPO_ID names the repository}"
+  if [ -n "${SEEDS:-}" ]; then
+    printf '  seeds:\n'
+    for seed in $SEEDS; do printf '    - %s\n' "$seed"; done
+  fi
+} > .ai/repo/mesh/majordomus.yaml
+
+# stdin is not a pipe here, so with --idle 0 the server runs until the container stops.
+exec majordomus serve --host 0.0.0.0 --port 8741 --idle 0 --discovery filesystem

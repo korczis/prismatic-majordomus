@@ -425,7 +425,7 @@
       "id": "feature:mesh",
       "kind": "feature",
       "label": "Mesh",
-      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "summary": "Each runtime is a key-authenticated participant; discovery (multicast, broadcast, rendezvous, seeds) only finds candidates, and a signed handshake admits a link only for the same repository, a compatible protocol and a trusted key. Linked runtimes replicate one signed event journal every heartbeat and fold it into the same state everywhere, so an exclusive claim on one machine refuses an overlapping claim on another, a handover published on one is consumed on another, and a runtime that crashes expires everywhere on its own. The CLI, HTTP, OpenAPI, MCP and the Cockpit render the same state, and every guarantee is held by tests over real processes and a container lab on a real network.",
       "route": "/features/mesh/",
       "source": ".ai/repo/features/mesh.md",
       "status": "featured"
@@ -506,7 +506,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "51 object(s) of the layer",
+      "summary": "52 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -534,7 +534,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "175 object(s) of the layer",
+      "summary": "181 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -562,7 +562,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "251 object(s) of the layer",
+      "summary": "257 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -639,7 +639,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "137 object(s) of the layer",
+      "summary": "138 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -2978,6 +2978,6 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the features, what they are made of, and the interfaces that follow, as the derived `product` graph; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.7.1"
+    "version": "0.8.0"
   }
 }

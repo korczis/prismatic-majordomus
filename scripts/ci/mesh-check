@@ -1,23 +1,30 @@
 #!/usr/bin/env bash
-# mesh-check — the mesh stays one subsystem: sockets under src/mesh/, one registry,
-# and a declaration whose kind and schema exist together.
+# mesh-check — the mesh stays one subsystem: sockets, links and the journal under
+# src/mesh/, one registry, surfaces that ask the mesh capabilities, and a declaration whose
+# kind, schema and rules exist together.
 #
-# ADR 0043 gives network discovery three boundaries a grep can hold: the crate opens
-# UDP sockets only inside apps/majordomus-cli/src/mesh/ (a socket anywhere else is a
-# second discovery mechanism growing outside the provider contract); the one peer
-# store is mesh::registry::MeshRegistry, constructed only inside the mesh module (a
-# second construction site is a second truth about who exists); and the `mesh`
-# declaration's kind, schema and rule move together (a kind without its schema is an
-# object nothing validates). What a grep cannot hold — that a trust verdict grants
-# nothing — lives in the tests the rule project.mesh-is-observation-not-authority
-# names, not here.
+# ADR 0050 gives network discovery boundaries a grep can hold, and ADR 0067 extends them to
+# cooperation: the crate opens UDP sockets only inside apps/majordomus-cli/src/mesh/ (a
+# socket anywhere else is a second discovery mechanism growing outside the provider
+# contract); the one peer store is mesh::registry::MeshRegistry and the one journal is
+# mesh::journal::Journal, each constructed only inside the mesh module (a second
+# construction site is a second truth about who exists or what was claimed); a link
+# transport is implemented and a link message is answered only by the mesh module and the
+# mesh capability module (a handler elsewhere is a second admission path that skips the
+# handshake's checks); no Cockpit page reads the mesh runtime directly (a page that does
+# can show a connection state no capability answers); and the `mesh` declaration's kind,
+# schema and rules move together. What a grep cannot hold — that a refused hello links
+# nothing, that a claim excludes everywhere — lives in the tests the rules
+# project.mesh-is-observation-not-authority and project.mesh-cooperation-is-authenticated
+# name, not here.
 #
-#   scripts/ci/mesh-check              report; exit 10 on a finding
+#   scripts/ci/mesh-check                report; exit 10 on a finding
 #   MJ_ROOT=<dir> scripts/ci/mesh-check  measure another tree
 #
-# Exempt by kind: documentation (*.md, docs/, site/, .ai/) describes the mesh and
-# opens nothing; the crate's tests may bind sockets to prove behaviour — the subject
-# under test is not a discovery mechanism.
+# Exempt by kind: documentation (*.md, docs/, site/, .ai/) describes the mesh and opens
+# nothing; the crate's tests (apps/majordomus-cli/tests/) may bind sockets, implement a
+# transport or construct a journal to prove behaviour — the subject under test is not a
+# second mechanism.
 
 set -euo pipefail
 
@@ -30,34 +37,83 @@ finding() {
   fail=1
 }
 
+# Files of the crate's source (not its tests) that match an extended pattern.
+matching() {
+  (cd "$root" && grep -rlE "$1" "$crate" --include='*.rs' 2>/dev/null || true)
+}
+
 # 1. UDP sockets only under src/mesh/.
 while IFS= read -r file; do
+  [ -n "$file" ] || continue
   case "$file" in
     "$crate"/mesh/*) ;;
     *) finding "$file opens a UDP socket outside $crate/mesh/ — a discovery transport belongs behind the provider contract" ;;
   esac
-done < <(cd "$root" && grep -rl "UdpSocket" "$crate" --include='*.rs' 2>/dev/null || true)
+done < <(matching 'UdpSocket')
 
-# 2. One registry, constructed inside the mesh module alone.
+# 2. One registry and one journal, constructed inside the mesh module alone.
 while IFS= read -r file; do
+  [ -n "$file" ] || continue
   case "$file" in
     "$crate"/mesh/*) ;;
     *) finding "$file constructs MeshRegistry — the one peer store is built inside src/mesh/ and reached through the runtime" ;;
   esac
-done < <(cd "$root" && grep -rl "MeshRegistry::new" "$crate" --include='*.rs' 2>/dev/null || true)
+done < <(matching 'MeshRegistry::new')
+while IFS= read -r file; do
+  [ -n "$file" ] || continue
+  case "$file" in
+    "$crate"/mesh/*) ;;
+    *) finding "$file opens a mesh Journal — the one journal of a runtime is opened by mesh::cooperation and reached through it" ;;
+  esac
+done < <(matching 'Journal::open')
 
-# 3. The declaration's kind, schema and rule exist together.
+# 3. Link transports and link handlers only in the mesh module and its capability module.
+while IFS= read -r file; do
+  [ -n "$file" ] || continue
+  case "$file" in
+    "$crate"/mesh/*) ;;
+    *) finding "$file implements LinkTransport — a link travels through the transports of src/mesh/, or it skips the handshake's checks" ;;
+  esac
+done < <(matching 'impl LinkTransport for')
+while IFS= read -r file; do
+  [ -n "$file" ] || continue
+  case "$file" in
+    "$crate"/mesh/*|"$crate"/capability/builtin/mesh.rs) ;;
+    *) finding "$file answers a link message — admission is mesh::cooperation's, projected by the mesh capability module alone" ;;
+  esac
+done < <(matching '\.accept_(hello|sync)\(')
+
+# 4. The Cockpit renders mesh state through the mesh capabilities, never the runtime.
+while IFS= read -r file; do
+  [ -n "$file" ] || continue
+  finding "$file reads the mesh runtime directly — a Cockpit page asks mesh.status, mesh.peers, mesh.state or mesh.cooperation, so it cannot show a state no capability answers"
+done < <(cd "$root" && grep -rlE 'ctx\.mesh\b|\.cooperation\(\)' "$crate/cockpit" --include='*.rs' 2>/dev/null || true)
+for capability in mesh.status mesh.peers mesh.state mesh.cooperation; do
+  grep -q "\"$capability\"" "$root/$crate/cockpit/pages.rs" 2>/dev/null \
+    || finding "the Cockpit's mesh page does not ask $capability — the page is a projection of the mesh capabilities"
+done
+
+# 5. The declaration's kind, schema and rules exist together.
 kind_declared=0
 grep -q '^  mesh-declaration:' "$root/share/kinds.yaml" 2>/dev/null && kind_declared=1
 schema_present=0
 [ -f "$root/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json" ] && schema_present=1
-rule_present=0
-[ -f "$root/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md" ] && rule_present=1
-if [ "$kind_declared$schema_present$rule_present" != "111" ]; then
-  finding "the mesh declaration is incomplete: kind=$kind_declared schema=$schema_present rule=$rule_present — the kind in share/kinds.yaml, its schema and the rule move together"
+rules_present=0
+[ -f "$root/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md" ] \
+  && [ -f "$root/.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md" ] && rules_present=1
+cooperation_schema=0
+grep -q '"cooperation"' "$root/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json" 2>/dev/null && cooperation_schema=1
+if [ "$kind_declared$schema_present$rules_present$cooperation_schema" != "1111" ]; then
+  finding "the mesh declaration is incomplete: kind=$kind_declared schema=$schema_present rules=$rules_present cooperation-schema=$cooperation_schema — the kind in share/kinds.yaml, its schema (with the cooperation section) and both rules move together"
 fi
+
+# 6. Every repository `majordomus init` creates can read its mesh declaration: the
+#    skeleton's source classes carry the mesh-declaration class. Without it the kind, the
+#    schema and the rules exist and no repository but this one ever discovers a declaration.
+grep -q 'kind: mesh-declaration' "$root/share/skeleton/ai/repo/knowledge/sources.yaml" 2>/dev/null \
+  || finding "share/skeleton/ai/repo/knowledge/sources.yaml has no mesh-declaration class — an initialised repository would never read .ai/repo/mesh/*.yaml"
 
 if [ "$fail" -ne 0 ]; then
   exit 10
 fi
-printf 'mesh-check: OK   sockets under src/mesh/, one registry, declaration complete\n'
+printf 'mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete\n'

@@ -88,6 +88,7 @@ jobs:
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
+      mesh_lab: ${{ steps.plan.outputs.mesh_lab }}
       installer_live: ${{ steps.plan.outputs.installer_live }}
       pages_live: ${{ steps.plan.outputs.pages_live }}
     steps:
@@ -494,6 +495,42 @@ jobs:
           path: timings.tsv
           retention-days: 14
 
+  # ------------------------------------------------------------------ mesh-lab
+  # Mesh cooperation over a real network (test/mesh-lab/run, claim mesh-network-acceptance):
+  # four Linux containers on one docker bridge, multicast discovery with no seeds, links, a
+  # claim and a handover across nodes, a node disconnected from the network and healed, a
+  # node killed and restarted, and `mesh verify` inside a node. The executable is built here
+  # and copied into the node image, so the lab tests exactly what the crate builds; the
+  # evidence file is kept as an artifact.
+  mesh-lab:
+    needs: plan
+    if: needs.plan.outputs.mesh_lab == 'true'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable the nodes run
+        run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
+      - name: the lab
+        run: MESH_LAB_BIN="$PWD/apps/majordomus-cli/target/debug/majordomus" scripts/ci/timed --bound 1500 mesh-lab mesh-lab timings.tsv test/mesh-lab/run
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mesh-lab-evidence
+          path: target/mesh-lab/evidence.json
+          if-no-files-found: warn
+          retention-days: 30
+      - if: always()
+        run: scripts/ci/summary --job mesh-lab --timings timings.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-mesh-lab
+          path: timings.tsv
+          retention-days: 14
+
   # ------------------------------------------------------------------ macos
   # The behaviour that depends on the platform: the suite under the stock macOS shell
   # (bash 3.2) and BSD userland, and the crate's own suites there (files, signals, the
@@ -600,7 +637,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, cockpit, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

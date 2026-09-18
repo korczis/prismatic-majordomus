@@ -4,7 +4,7 @@ description = "The model catalogue the distribution declares, and the explainabl
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 116
+weight = 132
 [extra]
 route = "/docs/cli/models/"
 command = "majordomus models"

@@ -1,7 +1,7 @@
 +++
 title = "majordomus rules proves"
 description = "One test: every rule it proves, and the rules that would be left with none"
-weight = 127
+weight = 143
 [extra]
 route = "/docs/cli/rules/proves/"
 command = "majordomus rules proves"
