@@ -4,8 +4,8 @@
 # Helpers come from test/lib.sh, which every case sources first.
 #
 #   bash test/run.sh                    every case, one after the other, output streamed
-#   bash test/run.sh <name>             one case (a name that matches nothing is exit 2)
-#   bash test/run.sh --no-skips [<name>]
+#   bash test/run.sh <name>...          only these cases (any name that matches nothing is exit 2)
+#   bash test/run.sh --no-skips [<name>...]
 #                                       a skipped case fails the run. CI passes this flag on
 #                                       every invocation of the suite (doctor asserts it)
 #   MJ_TEST_JOBS=4 bash test/run.sh     bounded parallel run: four cases at a time, each
@@ -153,15 +153,18 @@ if [ "${MJ_TEST_WORKER:-}" = 1 ]; then
   exit 0
 fi
 
+# Every argument names one case. Only the first was ever read, so `run.sh a b c` ran `a`,
+# reported one pass and exited 0 as if `b` and `c` had passed too. A name that matches nothing
+# is still a usage error, for each name rather than for the set. `--no-skips` is the one
+# option: with it a case that skips fails the run, which is what CI passes.
 only=""; no_skips=0
-while [ "$#" -gt 0 ]; do
-  case "$1" in
-    --no-skips) no_skips=1 ;;
-    -*) echo "run.sh: unknown option '$1' (the one option is --no-skips)" >&2; exit 2 ;;
-    *) [ -z "$only" ] || { echo "run.sh: one case name at most, got '$only' and '$1'" >&2; exit 2; }
-       only="$1" ;;
+for n in "$@"; do
+  case "$n" in
+    --no-skips) no_skips=1; continue ;;
+    -*) echo "run.sh: unknown option '$n' (the one option is --no-skips)" >&2; exit 2 ;;
   esac
-  shift
+  [ -f "$ROOT/test/cases/$n.sh" ] || { echo "run.sh: no case matches '$n' (test/cases/$n.sh does not exist)" >&2; exit 2; }
+  only="$only $n "
 done
 jobs="${MJ_TEST_JOBS:-1}"
 case "$jobs" in ''|*[!0-9]*|0) echo "run.sh: MJ_TEST_JOBS must be a positive integer, got '$jobs'" >&2; exit 2 ;; esac
@@ -172,7 +175,7 @@ report="${MJ_TEST_REPORT:-}"
 parallel_names=""; exclusive_names=""
 for case in "$ROOT"/test/cases/*.sh; do
   name="$(basename "$case" .sh)"
-  [ -n "$only" ] && [ "$name" != "$only" ] && continue
+  if [ -n "$only" ]; then case "$only" in *" $name "*) ;; *) continue ;; esac; fi
   if grep -q '^# majordomus-exclusive:' "$case"; then exclusive_names="$exclusive_names $name"
   else parallel_names="$parallel_names $name"; fi
 done

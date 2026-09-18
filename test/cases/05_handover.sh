@@ -35,6 +35,18 @@ expect_exit 0 "$MJ" handover --resolve
 expect_grep '^Match: same_worktree_same_branch'
 expect_grep '^Git state: exact'
 expect_grep '^# Objective'
+# the verdict, not only the age: a record written a moment ago is fresh and is not history...
+expect_grep '^Freshness: fresh'
+expect_no_grep '^History:'
+# ...and the same record, aged past the policy's stale threshold, is said to be history
+expect_exit 0 "$MJ" handover --resolve --path
+rec="$LAST_OUT"
+cp "$rec" "$T/record.keep"
+sed 's/^created_at: .*/created_at: 2020-01-01T00:00:00Z/' "$T/record.keep" > "$rec"
+expect_exit 0 "$MJ" handover --resolve
+expect_grep '^Freshness: stale — .*past the .* this repository calls stale'
+expect_grep '^History: read this record as context'
+cp "$T/record.keep" "$rec"
 git commit -qam more
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^Git state: advanced'
