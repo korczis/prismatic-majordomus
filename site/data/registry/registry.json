@@ -6,7 +6,7 @@
     "version": "0.8.0"
   },
   "registry": {
-    "fingerprint": "a4a7df9f10f6c4068e01c0adf86f9b32a6f63e03154310bcf2fbf2fddab3e42a",
+    "fingerprint": "7186fe57d1fdb6e61a12f19ab681d3ba757ab97888bd8876215d808a2036467b",
     "summary": {
       "total": 1507,
       "builtin": 129,
@@ -46080,7 +46080,7 @@
     ]
   },
   "index": {
-    "fingerprint": "0e28419644a4620c0374b2a063155b6ca454daf63f7890404d02bdad3d22b07f",
+    "fingerprint": "7ee412179c311dd515b300a99a91c64e653e9b0c6bf8c66a3c38f71cfb0c0130",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -50250,7 +50250,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 41711
+        "bytes": 42013
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -62091,7 +62091,7 @@
             "route": "/docs/cli/serve/stop/",
             "executable": true,
             "usage": "majordomus serve stop [OPTIONS]",
-            "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go",
+            "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo",
             "args": [
               {
                 "name": "wait",
@@ -62173,7 +62173,7 @@
               {
                 "id": "serve-stop-nothing",
                 "title": "Stop this checkout's server, when there is one",
-                "description": "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+                "description": "Signals the server this checkout's lease names, when it answers for this checkout, and waits for that server's lease to go — the one it read, by its token, so a second process taking the checkout over in the same instant is reported rather than mistaken for a server that would not stop. A checkout with no lease has nothing to stop, and says so.",
                 "argv": [
                   "serve",
                   "stop"

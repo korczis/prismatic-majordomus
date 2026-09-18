@@ -547,7 +547,7 @@
           "route": "/docs/cli/serve/ensure/"
         },
         {
-          "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go",
+          "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo",
           "command": "majordomus serve stop",
           "name": "stop",
           "route": "/docs/cli/serve/stop/"
@@ -909,7 +909,7 @@
       "usage": "majordomus serve ensure [OPTIONS]"
     },
     {
-      "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go",
+      "about": "Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo",
       "ancestors": [
         {
           "command": "majordomus",
@@ -1009,7 +1009,7 @@
             "stop"
           ],
           "command": "majordomus serve stop",
-          "description": "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+          "description": "Signals the server this checkout's lease names, when it answers for this checkout, and waits for that server's lease to go — the one it read, by its token, so a second process taking the checkout over in the same instant is reported rather than mistaken for a server that would not stop. A checkout with no lease has nothing to stop, and says so.",
           "expectation": "exits 0; prints nothing to stop",
           "id": "serve-stop-nothing",
           "setup": [],

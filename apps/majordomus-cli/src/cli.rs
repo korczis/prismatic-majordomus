@@ -1966,7 +1966,7 @@ pub enum ServeCommand {
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         format: OutputFormat,
     },
-    /// Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go
+    /// Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo
     Stop {
         /// How long to wait for the server to end
         #[arg(long, value_name = "SECONDS", default_value_t = 10)]
@@ -3613,7 +3613,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "serve-stop-nothing",
             title: "Stop this checkout's server, when there is one",
-            description: "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+            description: "Signals the server this checkout's lease names, when it answers for this checkout, and waits for that server's lease to go — the one it read, by its token, so a second process taking the checkout over in the same instant is reported rather than mistaken for a server that would not stop. A checkout with no lease has nothing to stop, and says so.",
             argv: &["serve", "stop"],
             setup: &[],
             expect: Expect::StdoutContains(&["nothing to stop"]),
