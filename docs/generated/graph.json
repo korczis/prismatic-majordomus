@@ -1324,6 +1324,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/knowledge/sources.yaml",
+        "kind": "file",
+        "label": "sources.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/knowledge/sources.yaml",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/order-baseline.txt",
         "kind": "file",
         "label": "order-baseline.txt",
@@ -2937,6 +2945,12 @@
         "status": "proposed",
         "facts": {
           "date": "2026-09-05",
+          "related": [
+            "file:share/kinds.yaml",
+            "file:.ai/repo/knowledge/sources.yaml",
+            "test:test/cases/64_knowledge_discovery.sh",
+            "test:test/cases/73_knowledge_nodes.sh"
+          ],
           "tags": [
             "knowledge"
           ]
@@ -37582,8 +37596,28 @@
       },
       {
         "source": "majordomus://adr/adr-0010",
+        "target": "file:.ai/repo/knowledge/sources.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
+        "target": "file:share/kinds.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
+        "target": "majordomus://test/test/cases/64_knowledge_discovery.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
+        "target": "majordomus://test/test/cases/73_knowledge_nodes.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0011",
@@ -55002,8 +55036,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1743,
-      "edges": 3880,
+      "nodes": 1744,
+      "edges": 3884,
       "acyclic": true,
       "truncated": false
     }
