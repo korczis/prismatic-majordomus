@@ -1,7 +1,7 @@
 +++
 title = "Delivery"
 description = "whether a product feature exists, computed rather than recorded: the six dimensions of the delivery invariant, the three verdicts and why unknown is never pass, delivery and the development stage as two types, how each dimension is derived from git and the public identity, the reuse of `scripts/pages`, and what phase 1 leaves unknown"
-weight = 57
+weight = 59
 [extra]
 source = "docs/DELIVERY.md"
 +++
