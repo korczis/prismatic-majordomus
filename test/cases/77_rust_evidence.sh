@@ -143,8 +143,18 @@ recipe_body() {
   printf '%s' "$dump" | jq -r --arg r "$1" '[.recipes[$r].body // [] | .. | strings] | join(" ")'
 }
 
-printf '%s' "$dump" | jq -e '[.recipes.test.dependencies[]?.recipe] | index("rust-check")' >/dev/null 2>&1 \
-  || { echo "    just test does not depend on rust-check"; exit 1; }
+# `just test` is the plan CI runs, through the dispatcher CI's jobs run, and nothing besides:
+# a dependency recipe would be a suite the plan did not select, run anyway — the second
+# declaration of the plan that once let `just test` omit six structure gates CI runs. The
+# Rust gate is reached because the model selects it, which is asserted from the model.
+recipe_body test | grep -q 'scripts/ci/run-plan' \
+  || { echo "    just test does not run scripts/ci/run-plan, the dispatcher CI runs"; exit 1; }
+[ "$(printf '%s' "$dump" | jq -r '.recipes.test.dependencies | length')" = 0 ] \
+  || { echo "    just test has dependency recipes; the plan is the only list of what it runs"; exit 1; }
+grep -q 'scripts/ci/run-plan' "$ROOT/.github/workflows/validate.yml" \
+  || { echo "    validate.yml does not dispatch through scripts/ci/run-plan"; exit 1; }
+grep -qE '^ +runs: scripts/rust-check( |$)' "$ROOT/.ai/repo/ci/gates.yaml" \
+  || { echo "    the CI model declares no gate running scripts/rust-check"; exit 1; }
 recipe_exists rust-check
 recipe_body rust-check | grep -q 'scripts/rust-check' \
   || { echo "    just rust-check does not run scripts/rust-check"; exit 1; }
