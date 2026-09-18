@@ -1,0 +1,209 @@
+#!/usr/bin/env bash
+# crate-boundary — the Rust crate did not grow network code.
+#
+# ADR 0032 decides that an external workspace is not a provider, and that the code which
+# reaches one does not enter `majordomus-cli`:
+#
+#   "majordomus-cli acquires no dependency from this work — not an async runtime, not an
+#    HTTP client, not TLS, not a CDP client — and a gate proves it."
+#
+# and, in its consequences:
+#
+#   "A gate must assert that majordomus-cli's dependency list did not grow, or the boundary
+#    is a sentence rather than a constraint."
+#
+# This is that gate. Until it existed the boundary was held by the manifest's comments and
+# by whoever read the diff — which is to say by nobody, on the day nobody read it.
+#
+# What it measures, and why it reads two files
+#
+#   apps/majordomus-cli/Cargo.toml   the dependency list. Every dependency of every
+#                                    dependency table is held to the allow-list below:
+#                                    one that is not on it is a list that grew. The list
+#                                    lives here rather than in a baseline file because a
+#                                    baseline is a thing that grows quietly and this is a
+#                                    boundary that should cost a deliberate edit, with a
+#                                    reason, in the same commit that crosses it.
+#
+#   apps/majordomus-cli/Cargo.lock   what is actually in the tree. The manifest alone
+#                                    cannot answer the question the ADR asks: the crate
+#                                    takes `jsonschema` with `default-features = false`
+#                                    precisely "because nothing may resolve over the
+#                                    network", and turning those features back on pulls an
+#                                    HTTP client and a TLS stack in without adding one
+#                                    line to the dependency list. A feature flag is a way
+#                                    to cross a boundary silently; the lock is where the
+#                                    crossing shows.
+#
+# The forbidden set is the one the ADR names — an async runtime, an HTTP client, TLS, a CDP
+# client — spelled as the crates that are those things. It is deliberately a list of names
+# and not a heuristic: a gate that guesses at a category from a crate's description would
+# refuse something for a reason nobody could argue with.
+#
+# Two things that look like the forbidden set and are not, so that a reader does not "fix"
+# them:
+#
+#   tiny_http       an HTTP *server*, synchronous, for the loopback `serve` command. The
+#                   ADR blesses it by name. A client reaches out; this listens.
+#   ed25519-dalek   signatures, and the manifest says so: "no encryption, no TLS, no key
+#                   exchange". The mesh treats a datagram as hostile input and a public key
+#                   is the only identity a node can prove. That is not a TLS stack.
+#
+#   scripts/ci/crate-boundary                 measure this checkout
+#   MJ_ROOT=<dir> scripts/ci/crate-boundary   measure another tree (the case does)
+#
+# Exit: 0 the boundary holds, 10 it is crossed, 12 the gate could not measure.
+#
+# `pipefail` with `set -e`: a pipeline's failure is the script's failure, so a broken parse
+# reports as a break rather than as an empty and therefore clean result.
+set -eu
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+[ $# -eq 0 ] || { echo "crate-boundary: takes no options" >&2; exit 2; }
+
+CRATE="apps/majordomus-cli"
+MANIFEST="$CRATE/Cargo.toml"
+LOCK="$CRATE/Cargo.lock"
+
+# A gate that cannot reach its subject says so and refuses; it does not pass. An absent
+# manifest is not an absence of forbidden dependencies, it is an absence of measurement.
+for f in "$MANIFEST" "$LOCK"; do
+  [ -f "$f" ] || { echo "crate-boundary: cannot measure: $ROOT/$f does not exist" >&2; exit 12; }
+done
+
+# ------------------------------------------------------------------ the allow-list
+#
+# Every dependency the crate declares, in any dependency table, with the shortest form of
+# the argument the manifest makes for it at length. A name absent here fails the gate: add
+# it in the same commit that adds the dependency, with its reason, or do not add it.
+#
+# Ordered as the manifest orders them: runtime, build, dev.
+ALLOWED="
+clap                  the command line is parsed once, derived from the typed inputs
+serde                 every declarative object and every typed output is (de)serialised
+serde_json            JSON is the transport of the registry, MCP and the HTTP surface
+thiserror             a typed error per subsystem, with the message beside the variant
+tracing               structured diagnostics the surfaces can filter
+tracing-subscriber    the one subscriber, without the default features
+jsonschema            validates an object against its kind's schema; no network resolution
+schemars              derives the canonical JSON Schema every projection is taken from
+tiny_http             a synchronous HTTP/1.1 *server* for the loopback serve command
+sha2                  registry and index fingerprints, stable across processes
+libc                  unlink of the lease file inside the signal handler
+syn                   the quality subsystem reads this crate's source as a syntax tree
+proc-macro2           span locations, so a quality finding can name a line
+ed25519-dalek         mesh identity: signatures only, no encryption, no TLS, no key exchange
+getrandom             OS entropy for the node's signing key and instance ids
+tempfile              tests and benches that need a scratch tree
+criterion             the benchmark harness
+proptest              the property-based harnesses
+"
+
+# ------------------------------------------------------------------ the forbidden set
+#
+# ADR 0032's four categories, as the crates that are those things. Matched against the
+# lockfile, so a transitive arrival is caught as surely as a declared one.
+#
+# Order is load-bearing: `tokio-rustls` is a TLS stack and `tokio-tungstenite` a WebSocket
+# client, and both would read as "an async runtime" if the `tokio-*` glob were tested first.
+# The compound names are therefore matched before the globs that would swallow them, which
+# is what shellcheck's SC2221/SC2222 are for.
+forbidden_category() { # crate name -> category, or empty
+  case "$1" in
+    tokio-rustls|hyper-tls|rustls|rustls-*|native-tls|openssl|openssl-sys|webpki|webpki-roots) printf 'a TLS stack' ;;
+    tokio-tungstenite|tungstenite|chromiumoxide|chromiumoxide-*|headless_chrome|fantoccini|thirtyfour|websocket|ws) printf 'a browser/CDP client' ;;
+    reqwest|hyper|hyper-*|ureq|curl|curl-sys|isahc|surf|minreq|attohttpc|http-client) printf 'an HTTP client' ;;
+    tokio|tokio-*|async-std|async-io|async-executor|async-global-executor|smol|mio) printf 'an async runtime' ;;
+    *) : ;;
+  esac
+}
+
+# ------------------------------------------------------------------ 1. the list did not grow
+#
+# Every dependency table of the manifest: `[dependencies]`, `[dev-dependencies]`,
+# `[build-dependencies]`, a target-specific `[target.'cfg(..)'.dependencies]`, and the
+# sub-table spelling `[dependencies.foo]`. A table this gate does not recognise as a
+# dependency table is simply not one; a dependency inside one it does recognise is measured
+# whichever spelling declared it.
+declared="$(awk '
+  /^[[:space:]]*\[/ {
+    line = $0
+    sub(/^[[:space:]]*\[/, "", line); sub(/\].*$/, "", line)
+    table = line
+    # [dependencies.foo] and [target."cfg(x)".dev-dependencies.foo] declare foo itself
+    if (table ~ /(^|\.)(dependencies|dev-dependencies|build-dependencies)\.[^.]+$/) {
+      name = table; sub(/^.*\./, "", name)
+      print name
+      in_deps = 0
+      next
+    }
+    in_deps = (table ~ /(^|\.)(dependencies|dev-dependencies|build-dependencies)$/)
+    next
+  }
+  !in_deps { next }
+  /^[[:space:]]*#/ { next }
+  /^[[:space:]]*$/ { next }
+  {
+    key = $0
+    sub(/[[:space:]]*=.*$/, "", key)
+    gsub(/^[[:space:]]+|[[:space:]]+$/, "", key)
+    gsub(/"/, "", key)
+    sub(/\..*$/, "", key)          # `foo.workspace = true`
+    if (key != "") print key
+  }
+' "$MANIFEST" | LC_ALL=C sort -u)"
+
+[ -n "$declared" ] || { echo "crate-boundary: cannot measure: $MANIFEST declares no dependency, which cannot be right" >&2; exit 12; }
+
+allowed_names="$(printf '%s\n' "$ALLOWED" | awk 'NF { print $1 }' | LC_ALL=C sort -u)"
+grew="$(LC_ALL=C comm -23 <(printf '%s\n' "$declared") <(printf '%s\n' "$allowed_names") || true)"
+
+# ------------------------------------------------------------------ 2. nothing forbidden is in the tree
+crossed=""
+while IFS= read -r pkg; do
+  [ -n "$pkg" ] || continue
+  what="$(forbidden_category "$pkg")"
+  [ -n "$what" ] && crossed="$crossed$pkg	$what
+"
+done <<EOF
+$(awk -F'"' '/^name = "/ { print $2 }' "$LOCK" | LC_ALL=C sort -u)
+EOF
+
+# ------------------------------------------------------------------ the verdict
+locked="$(awk -F'"' '/^name = "/ { print $2 }' "$LOCK" | LC_ALL=C sort -u | grep -c '[^[:space:]]' || true)"
+declared_n="$(printf '%s\n' "$declared" | grep -c '[^[:space:]]' || true)"
+
+if [ -z "$grew" ] && [ -z "$crossed" ]; then
+  echo "crate-boundary: the crate declares $declared_n dependency(ies), all argued for, and links no async runtime, HTTP client, TLS stack or CDP client ($locked package(s) in the lock)"
+  exit 0
+fi
+
+if [ -n "$crossed" ]; then
+  echo >&2
+  printf '%s' "$crossed" | while IFS="	" read -r pkg what; do
+    [ -n "$pkg" ] || continue
+    echo "crate-boundary: $pkg is $what, inside the boundary ADR 0032 draws around $CRATE" >&2
+    echo "  where: $LOCK — declared by the crate, or reached through one of its dependencies" >&2
+    echo "  why:   the network half of a workspace adapter lives in the Node tooling that already" >&2
+    echo "         drives Chrome (scripts/lib/*.mjs), not in the one executable every agent" >&2
+    echo "         session builds on demand." >&2
+    echo "  fix:   put the transport in scripts/lib/*.mjs, or turn off the feature that pulled" >&2
+    echo "         this in (jsonschema is taken with default-features = false for this reason)." >&2
+    echo "         If the boundary itself should move, amend ADR 0032 first." >&2
+  done
+fi
+
+if [ -n "$grew" ]; then
+  echo >&2
+  printf '%s\n' "$grew" | grep -v '^$' | while IFS= read -r dep; do
+    echo "crate-boundary: $dep is a dependency this gate was never told about" >&2
+    echo "  where: $MANIFEST" >&2
+    echo "  why:   ADR 0032 asks that the crate's dependency list did not grow; a list that" >&2
+    echo "         grows without an argument is the boundary becoming a sentence." >&2
+    echo "  fix:   add $dep to ALLOWED in scripts/ci/crate-boundary with the reason it is" >&2
+    echo "         there, in the commit that adds it — or do not add it." >&2
+  done
+fi
+
+exit 10

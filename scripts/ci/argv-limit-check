@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# argv-limit-check — a whole file's JSON may not travel to jq on the command line.
+#
+# Linux caps a SINGLE argument at MAX_ARG_STRLEN — 32 pages, 131072 bytes — and that cap is
+# separate from ARG_MAX, which bounds the whole list. A payload under ARG_MAX still fails:
+# the kernel refuses the exec, the command never runs, and the caller sees
+# "Argument list too long" from a command line that looks perfectly ordinary.
+#
+# That is what broke `scripts/generate-site-data`. It passed the claims matrix as one
+# `--argjson`; the array was 129593 bytes on master and 131363 once two claims were added,
+# so it crossed the cap by 291 bytes and jq never ran. Everything projected from that pass
+# failed with it — a gate, a CI job and twelve suite cases — and the message named none of
+# the cause.
+#
+# **Why the failure is invisible on the machine this code is written on.** macOS applies no
+# per-argument cap; its ARG_MAX is 1048576 and a 131 KB argument fits inside it comfortably.
+# Every local run passed, on every developer machine, while CI failed on Linux. A runtime
+# probe written here could therefore never fail here, which is why this check is static: it
+# reads the shape of the call rather than the size of one day's data, and so it is decidable
+# on the machine the code is written on, as well as on the one that runs it.
+#
+# What is refused: an `--arg` or `--argjson` whose value is a command substitution that reads
+# a whole collection out of a file — `jq -c` over a path, or `cat`. A collection grows with
+# the repository, so its size is not a property of the call site and no reviewer can bound it
+# by eye. The correction is `--slurpfile`/`--rawfile` from the file, or stdin: every other
+# whole-file payload in these generators already travels that way.
+#
+# What is NOT refused, deliberately: a substitution that extracts a scalar (`jq -r '.version'`,
+# a `yv`/`jbool` helper). Those are bounded by what they name, and refusing them would make
+# this a sweep over 51 call sites rather than a ratchet at zero. The blind spot is a shell
+# function that returns a collection without naming a file; if one appears, it belongs here.
+#
+#   scripts/ci/argv-limit-check     report and refuse
+#
+# MJ_ROOT points the scan at another tree, which is how the case drives it over a fixture.
+#
+# Exit: 0 no finding, 10 a whole-file payload on argv, 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+[ -d "$ROOT" ] || { echo "argv-limit-check: $ROOT is not a directory" >&2; exit 12; }
+cd "$ROOT"
+
+# Linux's per-argument cap, stated once: 32 pages of 4096 bytes. The number is the kernel's,
+# not this repository's, and it is written here so a reader of a finding knows what was hit.
+LIMIT=131072
+
+# The denominator is measured from the tree, never listed here: every shell script the
+# repository runs, by its shebang rather than by its extension or by a list in this file.
+scripts_that_run_jq() {
+  find scripts lib bin -type f 2>/dev/null | LC_ALL=C sort | while IFS= read -r f; do
+    head -1 "$f" 2>/dev/null | grep -q '^#!.*sh' || continue
+    grep -q 'jq ' "$f" || continue
+    printf '%s\n' "$f"
+  done
+}
+
+findings=0
+while IFS= read -r f; do
+  [ -n "$f" ] || continue
+  # A whole collection read out of a file and handed to jq as one argument. Two spellings:
+  # a `jq -c` over a path, and a `cat`. Both yield something whose size the repository's
+  # contents decide, not the call site.
+  while IFS= read -r hit; do
+    [ -n "$hit" ] || continue
+    line="${hit%%:*}"
+    text="${hit#*:}"
+    findings=$((findings + 1))
+    printf '%s:%s\n' "$f" "$line"
+    printf '  found:      %s\n' "$(printf '%s' "$text" | sed 's/^[[:space:]]*//')"
+    printf '  problem:    a whole collection reaches jq as one argument; Linux refuses a single argument over %s bytes (MAX_ARG_STRLEN), whatever ARG_MAX says\n' "$LIMIT"
+    printf '  correction: pass the file instead — --slurpfile NAME FILE (then read $NAME[0]) or --rawfile, or send it on stdin\n'
+  done <<EOF
+$(grep -nE -- '--arg(json)? [A-Za-z_][A-Za-z0-9_]* "\$\((jq [^)]*-c|cat )' "$f" 2>/dev/null || true)
+EOF
+done <<EOF
+$(scripts_that_run_jq)
+EOF
+
+if [ "$findings" -gt 0 ]; then
+  echo "argv-limit-check: $findings whole-file payload(s) on a jq command line"
+  exit 10
+fi
+echo "argv-limit-check: no whole-file payload reaches jq on a command line"
