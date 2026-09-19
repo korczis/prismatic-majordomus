@@ -1,7 +1,7 @@
 +++
 title = "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason"
 description = "Every push to master runs the behavioural suite, the crate's tests and the coverage"
-weight = 169
+weight = 171
 [extra]
 claim_id = "evidence-recorded-in-ci"
 status = "guaranteed"
