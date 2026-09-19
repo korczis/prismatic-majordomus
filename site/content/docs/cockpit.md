@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit"
 description = "the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline"
-weight = 43
+weight = 45
 [extra]
 source = "docs/COCKPIT.md"
 +++
@@ -91,7 +91,7 @@ are read a page at a time and entered by their parts:
   and never an error. The control under the table says which rows are being shown, and
   offers the first page, the last, the neighbours of this one, and a gap for the rest.
 - **Above the table are the listing's own parts** — the registry's modules on
-  `/cockpit/capabilities`, the index's kinds on `/cockpit/objects` — each with how many
+  `/cockpit/capabilities`, the listing's own kinds on `/cockpit/objects` — each with how many
   it holds *under the filters in force*. They are the same catalogues the sidebar shows,
   put where the listing is: a set of nine hundred rows is entered by its module or its
   kind rather than scrolled.
@@ -164,9 +164,19 @@ the HTTP routes make. It is counted in the same perf counters, answered from the
 and bound by the same validation. `tests/cockpit.rs` asserts that serving every page moves
 none of the counters that must only move at startup.
 
-**Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the
-index's kinds and the graph derivation table. The capability explorer is the registry
-filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
+**No page reads the index.** The other half of the sentence above, and the one that was
+documentation only until `scripts/ci/cockpit-projection-check` (gate `cockpit-projection`,
+ADR 0012) began refusing it: a view layer that reaches into the index because it is in the
+same process reads the repository outside the executor, outside the cache, outside the
+counters and outside the validation, and the day it disagrees with the capability neither
+answer is wrong in its own terms. The gate greps the Cockpit's own files, test modules
+included, and `test/cases/389_cockpit_projection.sh` drives it against fixture trees. The
+object count and the kind catalogue come from `repository.info`, a listing from
+`objects.list`, one object from `objects.get`.
+
+**Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the kinds
+`repository.info` reports and the graph derivation table. The capability explorer is the
+registry filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
 and takes the Cockpit's own pages out of the navigation the server already rendered.
 
 **The runner is generic.** A capability's form is generated from its input schema: the
@@ -393,8 +403,11 @@ data the page also prints.
   Only a closed set of text media types is served.
 - **Loopback by default.** `serve` binds `127.0.0.1`; binding anything else logs what it
   means.
-- **Nothing writes.** Every capability the Cockpit can reach is a query, or the one command
-  that changes this process's own memory. Nothing in it writes to the repository.
+- **What writes is declared.** The runner can reach every capability, including the commands
+  whose declared effect is `repository_mutation`. The Run card derives its warning from that
+  effect, so a command that writes tracked files says so before it is sent, always as a
+  `POST` from the page's origin. Every other capability either reads or changes only this
+  process's own memory.
 
 ## Assets
 
@@ -522,11 +535,12 @@ decides whether what this process *serves* is sound. Different subjects with dif
 engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
 A reader who wants both runs both; each names the other's territory.
 
-**No write path.** Every capability the Cockpit can reach is a query, or a command that
-changes this process's own memory — starting an execution and cancelling one are two of
-those. Nothing in it writes to the repository, and a capability that did would need its own
-decision (ADR 12 says so explicitly) and would say so in its own execution policy, which is
-what the confirmation on the Run button reads.
+**The write path is declared, not absent.** Most capabilities the Cockpit can reach are
+queries or commands that change this process's own memory; starting an execution and
+cancelling one are two of those. The ones that write the repository declare the effect
+`repository_mutation` in their execution policy, and that policy is what the warning on the
+Run card reads. ADR 12 requires such a capability to be its own decision, and a unit test in
+`builtin` pins the set of them, so a new one shows up in a diff.
 
 ## In a browser
 

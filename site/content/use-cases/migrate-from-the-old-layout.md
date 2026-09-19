@@ -6,7 +6,7 @@ weight = 41
 id = "migrate-from-the-old-layout"
 source = ".ai/repo/use-cases/migrate-from-the-old-layout.md"
 category = "adoption"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

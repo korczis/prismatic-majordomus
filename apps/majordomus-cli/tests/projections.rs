@@ -3,6 +3,8 @@
 //! projection that the registry does not hold; and a change to one canonical type
 //! changes every projection without a projection being edited.
 
+// claims: site-registry-dataset
+
 mod common;
 
 use std::collections::BTreeSet;
