@@ -6,7 +6,7 @@ weight = 27
 id = "complete-an-issue-only-with-its-evidence"
 source = ".ai/repo/use-cases/complete-an-issue-only-with-its-evidence.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

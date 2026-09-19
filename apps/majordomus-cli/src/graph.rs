@@ -1484,6 +1484,134 @@ pub struct NodeState {
     pub detail: Option<String>,
 }
 
+impl RuntimeState {
+    /// The observations that name a node of this graph, and no others.
+    ///
+    /// An observing process knows about subsystems, not about one graph's vocabulary, so
+    /// what it offers is wider than what any graph can show. Narrowing here rather than at
+    /// each consumer is what keeps the overlay keyed by node id: an entry that survives
+    /// names a node, and a renderer can look every key up.
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{Builder, Node, NodeState, RuntimeState};
+    /// let mut b = Builder::new("g", "G", "one node", "the composed registry")
+    ///     .node_kind("module", "a subsystem");
+    /// b.node(Node {
+    ///     id: "module:mesh".into(), kind: "module".into(), label: "mesh".into(),
+    ///     summary: None, route: None, source: None, status: None, external: false,
+    ///     facts: Default::default(),
+    /// });
+    /// let graph = b.finish();
+    ///
+    /// let mut observed = RuntimeState::default();
+    /// for id in ["module:mesh", "module:not-in-this-graph"] {
+    ///     observed.nodes.insert(id.into(), NodeState { status: "ok".into(), detail: None });
+    /// }
+    ///
+    /// let overlay = observed.narrowed_to(&graph);
+    /// assert_eq!(overlay.nodes.keys().map(String::as_str).collect::<Vec<_>>(), ["module:mesh"]);
+    /// ```
+    pub fn narrowed_to(&self, graph: &Graph) -> RuntimeState {
+        let ids: BTreeSet<&str> = graph.nodes.iter().map(|n| n.id.as_str()).collect();
+        RuntimeState {
+            nodes: self
+                .nodes
+                .iter()
+                .filter(|(id, _)| ids.contains(id.as_str()))
+                .map(|(id, state)| (id.clone(), state.clone()))
+                .collect(),
+        }
+    }
+
+    /// What the process says about one node now, if anything.
+    ///
+    /// `None` is the ordinary answer, not a failure: a graph names more than any one
+    /// process observes, so a renderer draws the declared status alone for those nodes.
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{NodeState, RuntimeState};
+    /// let mut observed = RuntimeState::default();
+    /// observed.nodes.insert(
+    ///     "module:mesh".into(),
+    ///     NodeState { status: "ready".into(), detail: Some("2 peers".into()) },
+    /// );
+    ///
+    /// assert_eq!(observed.of("module:mesh").map(|s| s.status.as_str()), Some("ready"));
+    /// assert!(observed.of("module:nothing-observed-it").is_none());
+    /// ```
+    pub fn of(&self, node_id: &str) -> Option<&NodeState> {
+        self.nodes.get(node_id)
+    }
+}
+
+/// The second projection of a graph: the definitions a static build publishes, and beside
+/// them what a process observes about them now.
+///
+/// The two are held apart on purpose. `graph` is byte-for-byte the value
+/// [`derive()`] produced, so a reader can compare a served graph against a published one and
+/// get equality; `runtime` is the overlay, which no published artifact carries and which
+/// nothing but a live process can fill. A consumer that merged them would produce a
+/// document that looks like the static projection, cannot be compared with it, and carries
+/// values that go stale the moment they are written.
+///
+/// ```
+/// use majordomus_cli::graph::{Builder, Node, NodeState, ObservedGraph, RuntimeState};
+/// let mut b = Builder::new("g", "G", "one node", "the composed registry")
+///     .node_kind("module", "a subsystem");
+/// b.node(Node {
+///     id: "module:mesh".into(), kind: "module".into(), label: "mesh".into(),
+///     summary: None, route: None, source: None, status: Some("declared".into()),
+///     external: false, facts: Default::default(),
+/// });
+/// let graph = b.finish();
+///
+/// let mut observed = RuntimeState::default();
+/// observed.nodes.insert("module:mesh".into(), NodeState { status: "ready".into(), detail: None });
+/// let served = ObservedGraph::new(graph.clone(), &observed);
+///
+/// // the definitions are the published value, byte for byte; the observation sits beside them
+/// assert_eq!(served.graph, graph);
+/// assert_eq!(served.graph.nodes[0].status.as_deref(), Some("declared"));
+/// assert_eq!(served.runtime.of("module:mesh").map(|s| s.status.as_str()), Some("ready"));
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ObservedGraph {
+    /// The composed definitions, unchanged.
+    pub graph: Graph,
+    /// What this process observes about them, keyed by node id, narrowed to nodes the
+    /// graph holds.
+    pub runtime: RuntimeState,
+}
+
+impl ObservedGraph {
+    /// Lay an observation over a graph. The graph is not touched, and observations that
+    /// name no node of it are dropped.
+    ///
+    /// ```
+    /// use majordomus_cli::graph::{Builder, Node, NodeState, ObservedGraph, RuntimeState};
+    /// let mut b = Builder::new("g", "G", "one node", "the composed registry")
+    ///     .node_kind("module", "a subsystem");
+    /// b.node(Node {
+    ///     id: "module:mesh".into(), kind: "module".into(), label: "mesh".into(),
+    ///     summary: None, route: None, source: None, status: None, external: false,
+    ///     facts: Default::default(),
+    /// });
+    ///
+    /// let mut observed = RuntimeState::default();
+    /// for id in ["module:mesh", "module:a-subsystem-this-graph-does-not-name"] {
+    ///     observed.nodes.insert(id.into(), NodeState { status: "ok".into(), detail: None });
+    /// }
+    ///
+    /// let served = ObservedGraph::new(b.finish(), &observed);
+    /// assert_eq!(served.runtime.nodes.len(), 1);
+    /// assert!(served.runtime.of("module:a-subsystem-this-graph-does-not-name").is_none());
+    /// ```
+    pub fn new(graph: Graph, observed: &RuntimeState) -> ObservedGraph {
+        let runtime = observed.narrowed_to(&graph);
+        ObservedGraph { graph, runtime }
+    }
+}
+
 /// A string field of an object's parsed front matter.
 fn metadata_string(metadata: &Value, key: &str) -> Option<String> {
     metadata
@@ -2348,5 +2476,79 @@ mod tests {
         let found = unresolved_relations(&registry(), &named_wrongly);
         assert_eq!(found.len(), 1);
         assert!(found[0].correction.contains("MCP tool"));
+    }
+
+    /// The second projection is the first one plus an overlay, and nothing else: strip the
+    /// runtime half and what is left is byte-for-byte the graph a static build publishes.
+    /// This is the property that lets a reader compare a served graph with a published one;
+    /// a consumer that decorated the nodes instead would break it silently.
+    #[test]
+    fn the_runtime_projection_is_the_static_one_with_an_overlay_beside_it() {
+        let objects = vec![object_with("use-case", "a-scenario", serde_json::json!({}))];
+        let static_graph = compose(&registry(), &objects);
+        let observed = RuntimeState {
+            nodes: [(
+                "majordomus://use-case/a-scenario".to_string(),
+                NodeState {
+                    status: "ok".into(),
+                    detail: Some("this process answered for it".into()),
+                },
+            )]
+            .into_iter()
+            .collect(),
+        };
+
+        let observed_graph = ObservedGraph::new(static_graph.clone(), &observed);
+
+        assert_eq!(
+            observed_graph.graph, static_graph,
+            "the definitions are untouched by the overlay"
+        );
+        assert_eq!(
+            serde_json::to_value(&observed_graph.graph).expect("the graph serialises"),
+            serde_json::to_value(&static_graph).expect("the graph serialises"),
+            "stripping the runtime half yields the published document"
+        );
+        assert!(
+            !serde_json::to_string(&static_graph)
+                .expect("the graph serialises")
+                .contains("this process answered for it"),
+            "no observation reaches the static projection"
+        );
+    }
+
+    /// An observing process knows about subsystems, not about one graph's vocabulary, so
+    /// it offers more than any graph can show. What survives names a node — which is what
+    /// lets a renderer look every key up instead of guarding each one.
+    #[test]
+    fn an_observation_that_names_no_node_is_dropped() {
+        let objects = vec![object_with("use-case", "a-scenario", serde_json::json!({}))];
+        let g = compose(&registry(), &objects);
+        let state = |word: &str| NodeState {
+            status: word.into(),
+            detail: None,
+        };
+        let observed = RuntimeState {
+            nodes: [
+                ("majordomus://use-case/a-scenario".to_string(), state("ok")),
+                ("module:not-in-this-graph".to_string(), state("degraded")),
+            ]
+            .into_iter()
+            .collect(),
+        };
+
+        let narrowed = observed.narrowed_to(&g);
+
+        assert_eq!(narrowed.nodes.len(), 1);
+        assert_eq!(
+            narrowed
+                .of("majordomus://use-case/a-scenario")
+                .map(|s| s.status.as_str()),
+            Some("ok")
+        );
+        assert!(
+            narrowed.of("module:not-in-this-graph").is_none(),
+            "an observation about something this graph does not draw is not shown on it"
+        );
     }
 }

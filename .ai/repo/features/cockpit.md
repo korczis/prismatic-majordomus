@@ -10,7 +10,7 @@ status: stable
 weight: 100
 featured: true
 areas: [observability]
-modules: [health]
+modules: [health, design]
 rules: [project.interfaces-are-projections]
 docs: [docs/COCKPIT.md]
 adrs: [adr-0012, adr-0020]

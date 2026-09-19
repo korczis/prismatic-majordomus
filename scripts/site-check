@@ -547,7 +547,14 @@ jq -r '.use_cases[] | .id as $u | .commands[] | "\($u) \(.)"' "$SITE/data/genera
 done < "$PAGEROWS.found"
 # every use case with a scenario shows the evidence of its run: the command lines the tool
 # executed, and the result; a page that shows a demonstration nobody ran is what this refuses
-jq -r '.use_cases[] | select(.scenario != null) | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
+# A live scenario (ADR 38) asks about this repository as it is and is never run by the generator,
+# so it carries no evidence here: its page must say so rather than show a run.
+jq -r '.use_cases[] | select(.scenario != null and .scenario.mode == "live") | .id' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.live"
+while read -r u; do
+  grep -q 'no run of it is shown here' "$PUB/use-cases/$u/index.html" \
+    || bad evidence "use case $u has a live scenario and its page does not say that no run is shown"
+done < "$PAGEROWS.live"; rm -f "$PAGEROWS.live"
+jq -r '.use_cases[] | select(.scenario != null and .scenario.mode != "live") | .id as $u | .evidence as $e | "\($u) \($e.result // "none") \($e.steps | length)"' "$SITE/data/generated/catalogue.json" > "$PAGEROWS.found"; while read -r u res n; do
   [ "$res" = pass ] || bad evidence "use case $u carries evidence '$res'; a page shows only a scenario that passed"
   [ "$(grep -c '\$ majordomus ' "$PUB/use-cases/$u/index.html")" -ge "$n" ] || bad evidence "use case $u renders fewer executed commands than its evidence has ($n)"
 done < "$PAGEROWS.found"

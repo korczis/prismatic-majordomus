@@ -1,3 +1,4 @@
+# claims: no-network
 # The tool's own source must contain none of the constructs SECURITY.md forbids.
 # This is a source scan, not a behavioural test; it exists because there is no behavioural
 # way to prove the absence of a network call.
