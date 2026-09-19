@@ -210,6 +210,34 @@
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="use-cases"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ get_url(path="/use-cases/", trailing_slash=true) }}" class="hover:underline">{{ cat.use_cases | length }}</a></dd><dd class="mt-1 text-xs text-body">{{ cat.categories | length }} areas</dd></div>
     </dl>
+    {#- one declaration, every surface: a capability is declared once in the executable, and its
+        command line, its HTTP operation and its MCP tool are projections of that declaration. The
+        one shown without JavaScript is derived — the first, in the registry's own order, that
+        reaches all three — and the picker fetches the published
+        slice (graphs/surfaces.json, written by scripts/site-build) instead of carrying the
+        registry. Nothing is named here; homepage-check holds what is shown to the registry. -#}
+    {%- set reg = load_data(path="data/registry/registry.json") -%}
+    {%- set exe = load_data(path="data/generated/executable.json") -%}
+    {%- set everywhere = [c for c in reg.registry.builtin if c.exposure.cli and c.exposure.http and c.exposure.mcp] -%}
+    {%- if everywhere %}{% set shown = everywhere[0] %}{% else %}{% set shown = reg.registry.builtin[0] %}{% endif -%}
+    {%- set shown_e = [e for e in exe.capabilities if e.id == shown.id][0] -%}
+    <div class="mt-8 min-w-0 rounded-base border border-default bg-neutral-primary p-5" data-surfaces
+         x-data="{ list: null, cap: null, async load() { if (!this.list) { const r = await fetch('{{ get_url(path="graphs/surfaces.json") }}'); this.list = await r.json(); } }, async choose(id) { await this.load(); this.cap = this.list.find((c) => c.id === id) || null; } }">
+      <h3 class="text-base font-semibold tracking-tight text-heading">One declaration, every surface</h3>
+      <p class="mt-1 text-sm leading-relaxed text-body">A capability is declared once in the executable. Its command, its HTTP operation and its MCP tool are generated from that declaration, never written beside it.</p>
+      <label class="mt-4 block text-xs text-body">capability
+        <select data-surface-picker x-on:focus="load()" x-on:change="choose($event.target.value)" class="mt-1 block w-full max-w-md rounded-base border border-default bg-neutral-primary-soft px-2 py-1 font-mono text-sm text-heading">
+          {%- for c in reg.registry.builtin %}<option value="{{ c.id }}"{% if c.id == shown.id %} selected{% endif %}>{{ c.id }}</option>{% endfor %}
+        </select>
+      </label>
+      <dl class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="min-w-0"><dt class="text-xs text-body">declared as</dt><dd class="mt-1 break-all font-mono text-sm text-heading"><a data-surface-id="{{ shown.id }}" x-bind:data-surface-id="cap ? cap.id : '{{ shown.id }}'" href="{{ base }}{{ shown_e.route }}" x-effect="if (cap) { $el.textContent = cap.id; $el.href = '{{ base }}' + cap.route }" class="hover:underline">{{ shown.id }}</a></dd></div>
+        <div class="min-w-0"><dt class="text-xs text-body">command line</dt><dd class="mt-1 break-all font-mono text-sm text-heading" data-surface="cli" x-effect="if (cap) $el.textContent = cap.cli || 'not exposed'">{% if shown.exposure.cli %}{{ shown_e.cli }}{% else %}not exposed{% endif %}</dd></div>
+        <div class="min-w-0"><dt class="text-xs text-body">HTTP</dt><dd class="mt-1 break-all font-mono text-sm text-heading"><a data-surface="http" href="{{ base }}{% if shown.exposure.http %}{{ shown_e.api_anchor }}{% else %}/docs/api/{% endif %}" x-effect="if (cap) { $el.textContent = cap.http ? cap.http.method + ' ' + cap.http.path : 'not exposed'; $el.href = '{{ base }}' + (cap.http ? cap.http.anchor : '/docs/api/') }" class="hover:underline">{% if shown.exposure.http %}{{ shown.exposure.http.method }} {{ shown.exposure.http.path }}{% else %}not exposed{% endif %}</a></dd></div>
+        <div class="min-w-0"><dt class="text-xs text-body">MCP tool</dt><dd class="mt-1 break-all font-mono text-sm text-heading" data-surface="mcp" x-effect="if (cap) $el.textContent = cap.mcp || 'not exposed'">{% if shown.exposure.mcp %}{{ shown.exposure.mcp.tool }}{% else %}not exposed{% endif %}</dd></div>
+      </dl>
+      <p class="mt-4 text-sm"><a href="{{ get_url(path="/registry/capabilities/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">Every capability, with the surfaces it reaches &rarr;</a></p>
+    </div>
     <p class="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium">
       <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every claim, with the test that settles it &rarr;</a>
       <a href="{{ get_url(path="/doctrines/", trailing_slash=true) }}" class="text-fg-brand hover:underline">Every rule, with its validator &rarr;</a>

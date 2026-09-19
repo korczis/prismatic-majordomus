@@ -25,6 +25,10 @@
 #               installer resolves, the verification command, the commit this build was made from
 #               and the executed use cases — and `unknown` where a dataset carries nothing, so an
 #               empty card cannot read as a known one
+#   surfaces    the capability the homepage shows is the registry's first reaching the command
+#               line, HTTP and MCP, each surface printed is its exposure, the picker offers exactly
+#               the registry's capabilities, and the published graphs/surfaces.json matches the
+#               registry — one declaration shown reaching every surface, with nothing typed
 #   weight      the scripts and stylesheets the homepage loads from this site, plus any graph data
 #               it carries inline, weigh no more than site/data/homepage.toml's [budget] declares
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
@@ -207,6 +211,79 @@ if wrong:
     bad("trust", "the trust strip disagrees with the datasets it reads: " + "; ".join(wrong))
 if not short and not wrong:
     ok("trust", f"the trust strip carries what its datasets say: release {expect['release'][0]}, the verification command, commit {expect['commit'][0]}, and {expect['use-cases'][0]} executed use case(s)")
+
+# ---------------------------------------------------------------- surfaces
+# One declaration, every surface: the capability the homepage shows is the registry's — the first,
+# in the registry's own order, that reaches the command line, HTTP and MCP — and each surface it
+# prints is that capability's exposure. The picker offers exactly the registry's capabilities, and
+# the slice it fetches (graphs/surfaces.json) carries every capability with its own exposures and
+# no other. A capability typed into the template, a surface that drifted from the registry, or a
+# published slice that lags it each fail.
+reg_path = os.path.join(root, "site", "data", "registry", "registry.json")
+if not os.path.exists(reg_path):
+    bad("surfaces", "site/data/registry/registry.json missing; what the homepage shows cannot be held to the registry")
+else:
+    with open(reg_path) as f:
+        builtin = (json.load(f).get("registry") or {}).get("builtin") or []
+    def surfaces_of(c):
+        e = c.get("exposure") or {}
+        return {
+            "cli": ("majordomus " + " ".join(e["cli"]["path"])) if e.get("cli") else "not exposed",
+            "http": f'{e["http"]["method"]} {e["http"]["path"]}' if e.get("http") else "not exposed",
+            "mcp": (e.get("mcp") or {}).get("tool") or "not exposed",
+        }
+    by_id = {c["id"]: c for c in builtin}
+    everywhere = [c for c in builtin if all(k in (c.get("exposure") or {}) for k in ("cli", "http", "mcp"))]
+    default = (everywhere or builtin or [{}])[0].get("id")
+    block = re.search(r"<div\b[^>]*\bdata-surfaces\b[^>]*>(.*?)</dl>", home, re.S)
+    problems = []
+    if not builtin:
+        problems.append("the registry lists no capability; the homepage would show none")
+    elif not block:
+        problems.append("the homepage carries no data-surfaces block; one declaration reaching every surface is shown nowhere")
+    else:
+        body = block.group(1)
+        sid = re.search(r'\sdata-surface-id="([^"]+)"', body)
+        shown = sid.group(1) if sid else None
+        if shown != default:
+            problems.append(f"the homepage shows {shown!r}; the registry's first capability reaching every surface is {default!r}")
+        if shown in by_id:
+            want = surfaces_of(by_id[shown])
+            for key in ("cli", "http", "mcp"):
+                m = re.search(r'\bdata-surface="' + key + r'"[^>]*>(.*?)</(?:dd|a)>', body, re.S)
+                got = html.unescape(re.sub(r"<[^>]+>", "", m.group(1))).strip() if m else None
+                if got != want[key]:
+                    problems.append(f"{shown}'s {key} reads {got!r}, the registry says {want[key]!r}")
+        picker = re.search(r"<select\b[^>]*\bdata-surface-picker\b[^>]*>(.*?)</select>", body, re.S)
+        if not picker:
+            problems.append("the homepage offers no data-surface-picker; only one capability can be shown")
+        else:
+            offered = re.findall(r'<option\b[^>]*\bvalue="([^"]+)"', picker.group(1))
+            if offered != [c["id"] for c in builtin]:
+                gone = sorted(set(by_id) - set(offered)); typed = sorted(set(offered) - set(by_id))
+                problems.append("the picker offers other capabilities than the registry" + (": missing " + ", ".join(gone[:4]) if gone else "") + (": not in the registry " + ", ".join(typed[:4]) if typed else "") + ("" if gone or typed else ": in another order"))
+        pub_slice = os.path.join(pub, "graphs", "surfaces.json")
+        if not os.path.exists(pub_slice):
+            problems.append("graphs/surfaces.json was not published; the picker has nothing to fetch")
+        else:
+            with open(pub_slice) as f:
+                slice_ = json.load(f)
+            if [s.get("id") for s in slice_] != [c["id"] for c in builtin]:
+                problems.append(f"graphs/surfaces.json carries {len(slice_)} capabilities, the registry {len(builtin)}, or another order")
+            else:
+                drift = []
+                for s in slice_:
+                    want = surfaces_of(by_id[s["id"]])
+                    got = {"cli": s.get("cli") or "not exposed",
+                           "http": f'{s["http"]["method"]} {s["http"]["path"]}' if s.get("http") else "not exposed",
+                           "mcp": s.get("mcp") or "not exposed"}
+                    drift += [f'{s["id"]} {k}' for k in want if want[k] != got[k]]
+                if drift:
+                    problems.append("graphs/surfaces.json disagrees with the registry on " + ", ".join(drift[:4]))
+    for p in problems:
+        bad("surfaces", p)
+    if not problems:
+        ok("surfaces", f"the homepage shows {default} on every surface the registry gives it, the picker offers all {len(builtin)} capabilities, and the published slice matches the registry")
 
 # ---------------------------------------------------------------- weight
 # Only what this page decides: the same-origin scripts and stylesheets it links, and graph data
