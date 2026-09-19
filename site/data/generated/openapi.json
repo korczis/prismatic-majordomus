@@ -281,6 +281,7 @@
     "schema-EvidenceOrigin": "docs/api/shared/",
     "schema-EvidenceOutcome": "docs/api/shared/",
     "schema-EvidenceReport": "docs/api/evidence/",
+    "schema-EvidenceRun": "docs/api/shared/",
     "schema-EvidenceRunner": "docs/api/shared/",
     "schema-EvidenceSubject": "docs/api/evidence/",
     "schema-Example": "docs/api/why/",
@@ -680,7 +681,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 112,
-    "schemas": 527,
+    "schemas": 528,
     "tags": 37
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -710,7 +711,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.7.1",
+  "generated_by": "majordomus-cli 0.8.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -719,7 +720,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.7.1"
+    "version": "0.8.0"
   },
   "infrastructure": [
     {
@@ -1051,6 +1052,7 @@
     "EvidenceOrigin": "shared",
     "EvidenceOutcome": "shared",
     "EvidenceReport": "evidence",
+    "EvidenceRun": "shared",
     "EvidenceRunner": "shared",
     "EvidenceSubject": "evidence",
     "Example": "why",
@@ -10972,7 +10974,7 @@
       "variants": []
     },
     {
-      "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n#### Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```",
+      "description": "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n    run: None,\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n#### Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n    run: None,\n};\nassert!(e.outcome.proves());\n```",
       "home": "shared",
       "is_enum": false,
       "name": "EvidenceExecution",
@@ -11059,6 +11061,15 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The continuous-integration run the execution was recorded in, when it was recorded in\none that could name itself. Absent for a local run, and absent from every row recorded\nbefore runs were named, which is why the ledger's version did not change.",
+          "name": "run",
+          "refs": [
+            "EvidenceRun"
+          ],
+          "required": false,
+          "type": "EvidenceRun | null"
         }
       ],
       "type": "object",
@@ -11305,6 +11316,63 @@
         "evidence.report"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "EvidenceRun",
+      "properties": [
+        {
+          "description": "The provider that ran it, as the adapter that recorded it names it.",
+          "name": "provider",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The provider's identifier of the run.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which attempt of the run, counted from 1.",
+          "name": "attempt",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The workflow the run belongs to.",
+          "name": "workflow",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The job within the run that recorded the execution.",
+          "name": "job",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where a reader finds the run, as the provider addressed it at the time.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EvidenceExecution"
+      ],
       "values": [],
       "variants": []
     },

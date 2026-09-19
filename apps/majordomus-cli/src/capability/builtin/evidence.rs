@@ -539,10 +539,17 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
             ))
         })?,
     };
+    // A CI run names itself from its environment; a local run has no run to name, and a
+    // local recording inside a CI job's shell is still not that job's evidence.
+    let run = match origin {
+        Origin::Ci => evidence::RunRef::from_env(|k| std::env::var(k).ok()),
+        Origin::Local | Origin::Release => None,
+    };
     let req = RecordRequest {
         suite: input.suite.map(std::path::PathBuf::from),
         crate_output: input.crate_output.map(std::path::PathBuf::from),
         origin,
+        run,
     };
     let got = evidence::record(&root, &req).map_err(|e| match e {
         crate::error::Error::InvalidSurface { reason, .. } => CapabilityError::Refused(reason),

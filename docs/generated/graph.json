@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.7.1",
+  "generator": "majordomus-cli 0.8.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -2132,6 +2132,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/evidence-collect",
+        "kind": "file",
+        "label": "evidence-collect",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/evidence-collect",
+        "external": true
+      },
+      {
         "id": "file:scripts/ci/finding-reproduce-check",
         "kind": "file",
         "label": "finding-reproduce-check",
@@ -4018,6 +4026,31 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0068",
+        "kind": "adr",
+        "label": "adr-0068",
+        "summary": "CI evidence is kept where the run happened, and published with the commit it proves",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0068",
+        "source": ".ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "file:docs/EVIDENCE.md",
+            "file:scripts/ci/evidence-collect",
+            "file:scripts/pages",
+            "file:.github/workflows/validate.yml",
+            "file:.github/workflows/pages.yml"
+          ],
+          "tags": [
+            "evidence",
+            "verification",
+            "ci",
+            "pages"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -5461,6 +5494,22 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/124_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-recorded-in-ci",
+        "kind": "claim",
+        "label": "evidence-recorded-in-ci",
+        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fevidence-recorded-in-ci",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+          "implementation": "scripts/ci/evidence-collect",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/357_ci_records_evidence.sh"
         }
       },
       {
@@ -10273,6 +10322,14 @@
         "summary": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fevidence-proof-is-an-execution.md",
         "source": "docs/claims/evidence-proof-is-an-execution.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-recorded-in-ci.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-recorded-in-ci.md",
+        "summary": "CI records what it ran, with the run it happened in, and the site publishes it with the commit it proves",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fevidence-recorded-in-ci.md",
+        "source": "docs/claims/evidence-recorded-in-ci.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-unsupported-guarantee-is-reported.md",
@@ -32791,6 +32848,13 @@
         "source": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh"
       },
       {
+        "id": "majordomus://test/test/cases/357_ci_records_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/357_ci_records_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F357_ci_records_evidence.sh",
+        "source": "test/cases/357_ci_records_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/359_live_scenarios.sh",
         "kind": "test",
         "label": "test/cases/359_live_scenarios.sh",
@@ -39225,6 +39289,36 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0068",
+        "target": "file:.github/workflows/pages.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0068",
+        "target": "file:.github/workflows/validate.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0068",
+        "target": "file:scripts/ci/evidence-collect",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0068",
+        "target": "file:scripts/pages",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0068",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0068",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -40487,6 +40581,26 @@
       {
         "source": "majordomus://claim/evidence-proof-is-an-execution",
         "target": "majordomus://test/test/cases/124_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-recorded-in-ci",
+        "target": "file:scripts/ci/evidence-collect",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-recorded-in-ci",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-recorded-in-ci",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-recorded-in-ci",
+        "target": "majordomus://test/test/cases/357_ci_records_evidence.sh",
         "kind": "tested_by"
       },
       {
@@ -44001,6 +44115,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-proof-is-an-execution.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-recorded-in-ci.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51320,6 +51439,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/357_ci_records_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/359_live_scenarios.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -55036,8 +55160,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1744,
-      "edges": 3884,
+      "nodes": 1749,
+      "edges": 3896,
       "acyclic": true,
       "truncated": false
     }

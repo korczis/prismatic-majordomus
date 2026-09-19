@@ -51,6 +51,18 @@ if os.path.isfile(proj):
     if rm: REPO = urllib.parse.urlsplit(rm.group(1).rstrip('/'))
 if REPO is None: print('link-check: site/data/generated/project.json names no repository_url', file=sys.stderr); sys.exit(12)
 
+# The CI run the publication's own evidence names (scripts/pages evidence). That run produced the
+# evidence, so a link to it is decided by provenance: the one Actions link this check accepts.
+RUNS = set()
+ev = os.path.join(ROOT, 'site', 'data', 'evidence.json')
+if os.path.isfile(ev):
+    import json
+    try:
+        run = (json.load(open(ev, encoding='utf-8')) or {}).get('run') or {}
+        if str(run.get('id', '')).isdigit(): RUNS.add(str(run['id']))
+    except ValueError:
+        pass
+
 def git(*args):
     return subprocess.run(['git', '-C', ROOT, *args], capture_output=True, text=True)
 
@@ -156,6 +168,12 @@ def decide(page, raw):
             if shallow: undecided.append(raw); return ('repository', None)
             bad = [x for x in (a, b) if not is_ref(urllib.parse.unquote(x))]
             return ('repository', f'{raw}: {", ".join(bad)} is no ref of this repository' if bad else None)
+        if kind == 'actions':
+            # A run is decided by provenance rather than by the network: the one run the
+            # publication's own evidence names produced that evidence, so it exists. Any other
+            # run link is as undecidable offline as it ever was.
+            rm_ = re.fullmatch(r'runs/(\d+)(?:/attempts/\d+)?/?', tail)
+            if rm_ and rm_.group(1) in RUNS: return ('repository', None)
         if kind in ('issues', 'pull', 'actions', 'milestones', 'discussions'):
             return ('refused', f'{raw}: a {kind} link cannot be decided offline')
         return ('refused', f'{raw}: a forge path this check does not know how to decide')

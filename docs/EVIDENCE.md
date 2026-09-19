@@ -104,6 +104,7 @@ thing a badge must never be derived from.
 | `at` | RFC 3339, UTC, to the second |
 | `origin` | `local`, `ci` or `release` |
 | `command` | the exact command that runs this one test again |
+| `run` | the CI run it was recorded in — provider, identifier, attempt, workflow, job and address — for a `ci` recording made inside one; absent otherwise (see *Recorded in CI*) |
 
 Only `pass` proves anything. The runner's word is read case-insensitively (`ok`, `pass`,
 `passed`; `fail`, `failed`; `skip`, `skipped`; `timeout`) and **anything unrecognised is
@@ -431,6 +432,85 @@ only arrangement in which the evidence is worth anything to anybody but the pers
 the tests. `test/cases/124_evidence.sh` proves it on a fixture whose ledger is tracked
 exactly as this repository's is.
 
+## Recorded in CI
+
+The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, but
+they are kept where they happened rather than committed. A run cannot commit what it proved
+without adding a commit after the one it proved, on a trunk that moves faster than the suite
+finishes. The decision is
+[ADR 68](../.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md).
+
+```mermaid
+flowchart LR
+  suite["suite job<br>suite.tsv"]
+  crate["rust job<br>cargo-test.txt"]
+  cov["coverage job<br>coverage.json"]
+  collect["evidence job<br>scripts/ci/evidence-collect"]
+  artifact["artifact `evidence`<br>ledger · report · coverage · manifest"]
+  pages["pages.yml<br>scripts/pages evidence"]
+  site["/evidence/<br>current · stale · unavailable"]
+  suite --> collect
+  crate --> collect
+  cov --> collect
+  collect --> artifact --> pages --> site
+  collect -. "commit still the tip: dispatch" .-> pages
+```
+
+**What the collector does.** `scripts/ci/evidence-collect` takes the raw reports the jobs left
+and records the suite's and the crate's results through `majordomus evidence record --origin ci`.
+It derives the report through `majordomus evidence show` and summarises the coverage export
+through `scripts/rust-coverage --summary-json`. It writes `manifest.json`, naming:
+
+- the commit;
+- the run;
+- the outcomes of that run's executions;
+- which reports were absent.
+
+An absent report is named, never counted as a pass. The job keeps the directory as the artifact
+`evidence` for ninety days. It is not a gate: it reads jobs that have already decided, and a red
+suite is exactly the evidence worth keeping.
+
+**An execution names its run.** A `ci` recording made inside a GitHub Actions environment stamps
+every execution with `run`: the provider, the run's identifier, its attempt, the workflow, the
+job and the address the provider gave. `RunRef::from_env` is the only place that knows the
+environment's names. A local recording names no run, even inside a CI shell, and rows recorded
+before runs were named have no `run` at all.
+
+```json
+"run": {
+  "provider": "github_actions",
+  "id": "<run id>",
+  "attempt": 1,
+  "workflow": "validate",
+  "job": "evidence",
+  "url": "https://github.com/korczis/prismatic-majordomus/actions/runs/<run id>/attempts/1"
+}
+```
+
+**What a publication says about it.** Before the build, `scripts/pages evidence` finds the
+`evidence` artifact recorded against the commit being published or its nearest ancestor. It
+chooses the nearest ancestor by history, not the newest upload. It writes
+`site/data/evidence.json`, which is never committed. It says exactly one of three things:
+
+| state | when | what the page says |
+|---|---|---|
+| current | the evidence was recorded against the published commit | CURRENT, with the commit and the run |
+| stale | the evidence is of an ancestor | STALE, with how many commits and changed files lie between |
+| unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
+
+None of the three stops a publication. When a master run's evidence is kept while its commit is
+still the tip, the job dispatches `pages.yml`, and that publication says current. When master
+has moved on, the newer publication already carries the evidence as stale and the newer run
+will refresh it.
+
+```
+scripts/pages evidence                          # this commit, fetched with gh
+scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+scripts/ci/evidence-collect --out <dir> --suite suite.tsv --crate-output cargo-test.txt --coverage coverage.json
+```
+
+The behavioural proof is `test/cases/357_ci_records_evidence.sh`.
+
 ## What this is not
 
 **It is not tamper-proof, and it does not pretend to be.** The ledger is a tracked file. A
@@ -502,6 +582,8 @@ passed against this commit. Whether the test tests the claim is a question for r
 | the declaration yields exactly the projections it claims; only the recorder writes, and it is not on the network | implemented, unit tests in `src/capability/builtin/evidence.rs` |
 | the whole path end to end in a fixture repository — nothing recorded, provenance, a partial run, `stale` with the path named, `proven` against `inputs_unchanged`, `failing` and the exit code, both directions, the refusals | behaviourally verified (`test/cases/124_evidence.sh`) |
 | the gate planned on every push, and the paths that can change the answer | declared in `.ai/repo/ci/gates.yaml`; the planner that reads it is behaviourally verified (`test/cases/94_ci_plan.sh`) |
-| CI recording its own runs into the ledger | not implemented; the report is written and uploaded, nothing records it and nothing commits it |
+| CI recording its own runs, stamped with the run, into the `evidence` artifact of the commit | behaviourally verified (`test/cases/357_ci_records_evidence.sh`); see *Recorded in CI* |
+| the site publishing that evidence as current, stale with its distance, or unavailable with its reason | behaviourally verified (`test/cases/357_ci_records_evidence.sh`); rendered on `/evidence/` |
+| CI's evidence committed into the tracked ledger | refused — ADR 68: a run cannot commit what it proved without adding a commit after the one it proved |
 | the site rendering a claim's proof state beside its status | not implemented; the guarantees page still shows the declared status alone |
 | tamper resistance, a signed ledger, a run history, captured output | not implemented, and refused — see *What this is not* and ADR 40 |

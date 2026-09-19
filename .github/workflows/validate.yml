@@ -270,7 +270,16 @@ jobs:
         if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
+          # the crate's results, for the evidence job to record (ADR 68)
+          MJ_CARGO_TEST_OUTPUT: ${{ github.workspace }}/cargo-test.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-crate
+          path: cargo-test.txt
+          if-no-files-found: ignore
+          retention-days: 14
       - uses: actions/download-artifact@v4
         with:
           name: ci-plan
@@ -332,6 +341,56 @@ jobs:
           retention-days: 14
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
+
+  # ------------------------------------------------------------------ evidence
+  # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68). The suite, the crate
+  # and the coverage jobs each leave a raw report; scripts/ci/evidence-collect records the first
+  # two into the ledger as `ci` executions stamped with this run, derives the report, summarises
+  # the coverage, and this job keeps the result as the artifact `evidence`. It is not a gate and
+  # the verdict does not need it: it reads jobs that have already decided, and a red suite is
+  # exactly the evidence worth keeping. It runs whenever the suite or the crate produced
+  # anything, whatever they concluded.
+  #
+  # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
+  # site that was published at once with the nearest older evidence (labelled stale) republishes
+  # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
+  evidence:
+    needs: [plan, suite, rust, coverage]
+    if: always() && (needs.suite.result == 'success' || needs.suite.result == 'failure' || needs.rust.result == 'success' || needs.rust.result == 'failure')
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # `gh workflow run pages.yml`, and nothing else of Actions
+      actions: write
+    steps:
+      # the whole history: the report compares each execution's commit with the tree
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-crate}'
+          path: reports
+          merge-multiple: true
+      - name: gather
+        run: scripts/ci/evidence-collect --out evidence --suite reports/suite.tsv --crate-output reports/cargo-test.txt --coverage reports/coverage.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: evidence
+          retention-days: 90
+      - name: refresh the publication
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/evidence-collect --refresh-publication
 
   # ------------------------------------------------------------------ bench
   # The benchmark check against the committed baseline of its platform (.ai/repo/benchmarks/
