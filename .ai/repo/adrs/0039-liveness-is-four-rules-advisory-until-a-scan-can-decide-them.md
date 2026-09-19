@@ -107,3 +107,24 @@ what a later worker reads to know the gap was chosen rather than overlooked.
 The upstream stall is not tracked here. If it is to be reported again it belongs in a fresh
 issue against `anthropics/claude-code` with a repro on 2.1.267, since the three existing ones
 are closed and locked.
+
+### Amendment, 2026-09-20: both scans exist, and the two rules that wanted them are blocking
+
+The follow-up this record left open is done. `scripts/liveness-check` reads every tracked shell
+file for three shapes — a network call with no bound (`unbounded-network`), a background process
+whose completion nothing records (`unsupervised-spawn`), and a git subcommand that pages to a
+terminal (`pager-blocks`) — gated `always: true` in the `structure` job with its debt ratcheted
+in `.ai/repo/liveness-baseline.txt`; `test/cases/08_no_forbidden_constructs.sh` scans nine
+interactive constructs at command position and plants each one in a fixture to prove the scan
+finds it.
+
+So `project.commands-run-non-interactively` and `project.every-wait-is-bounded` are version 2
+and `blocking`, each naming the scan that decides it. The count of blocking rules moved 109 to
+111 of 137, and no tree went red: both scans were already running and already clean.
+
+The other two stay `advisory` for the reason given above, and each now says so in its own
+`reviewed_because` rather than in this record alone — `execution-state-is-authoritative` because
+no program here observes another's render loop, `recovery-is-idempotent` because nothing can
+detect that a retry was about to duplicate a side effect. `test/cases/121_liveness_doctrine.sh`
+holds that split from both sides: a raised rule may not be lowered back while its scan exists,
+and a reviewed rule may not be raised while review is all that decides it.
