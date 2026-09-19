@@ -1,3 +1,4 @@
+# claims: site-deploys-from-verified-run
 # The Pages fast path, held to what makes it fast and to what keeps it honest.
 #
 # A performance property that nothing checks is a property the next edit removes without

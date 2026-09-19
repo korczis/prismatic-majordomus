@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: scope-declared
 # The repository scope through the built executable and the shell tool, in a repository
 # the shell tool's own `init` wrote: the seeded declaration passes doctor and is the one
 # the executable reads; a source outside the scope (a document over the limit, a binary
@@ -10,14 +11,10 @@
 #
 # Skips itself when cargo is absent, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
 command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
-MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj93.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-# where cargo just put it: CARGO_TARGET_DIR is how worktrees share one build
-# directory, and the composed path then names a file that was never written
-RB="${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
+# the executable MAJORDOMUS_BIN names, or the one rust_bin builds when it names none
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 # --- the distribution seeds the declaration, and the two tools agree it is well-formed

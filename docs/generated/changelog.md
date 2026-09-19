@@ -1,11 +1,90 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.7.1 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.7.0**
+Current version: **0.7.1**
+
+## v0.7.0 — 2026-09-15
+
+### Added
+
+- **site**: every link resolves and every control does what a spec says, held by a blocking rule (`7d5fe591a`)
+- **site**: the HTTP API reference is an index, a page per tag and a page of shared types (`aa48fef52`)
+- **site**: the homepage tells the product's story in a declared order, and a rule holds it (`75729f35c`)
+- **recover**: the stray-file sweep is a capability, and the command asks it (`c9dc7a945`)
+- **site**: the homepage replays runs that happened, and shows what the tool refuses (`094d34e3b`)
+- **site**: the homepage carries the evidence and commit chapters, at 0.6.1 (`11744faf8`)
+
+### Fixed
+
+- **ci**: a step that runs out of time says so itself (`b3e261428`)
+- **pages**: the deploy fetches the history and tags its link check reads, so master deploys again (`593cbde3e`)
+- **ci**: the terminal refusals apply where scenarios ran, and a log assertion waits (`af0dfd49a`)
+- **site**: the links and controls change passes what CI found on it (`3bf9b9f37`)
+- **cockpit**: a card title breaks a long identifier instead of widening the page (`9d44b1f40`)
+- **site**: the diagram theming writes no colour of its own, so the design gate holds (`167f46ed0`)
+- **ci**: site-check counts every failure it prints, and shell-lint refuses the shape that lost them (`0dab3ff51`)
+- **docs**: the differential coverage mapping is a table, not a hand-drawn diagram (`2fc1a80ab`)
+- **ci**: three reds that CI found on #310's own tree (`30403bcc7`)
+- **coverage**: the crate floor is a ratchet, the coverage measured, and only rises (`f15bb4e47`)
+- **test**: case 318 forces the SIGPIPE it measures instead of hoping for it (`e01d4013f`)
+- **test**: case 135 gives the executable its share, and names the failure (`38b21c221`)
+- **ci**: three always-on reds that #310's own fixes leave standing (`bb3138114`)
+- **mesh**: the loopback socket tests are host-independent (`f5800b3a7`)
+- **coverage**: the crate floor stays where its rule holds it, and only the domain ratchets (`b3d1c2fe2`)
+- **coverage**: the coverage floors are the coverage measured, and only rise (`d5dd4b967`)
+- **ci**: the benchmark comparison runs where its baseline is, and the rust job fits its budget (`b253a0643`)
+- **site**: an example heading is anchored under the type that documents it (`33f2faf2d`)
+- **site**: rendered doc comments repeat no id, and case 09 judges each <pre> (`5ae3e808f`)
+- **session**: ten closes at once no longer leave the pointer aiming at nothing (`e1a3ab937`)
+- **knowledge**: a contract is the kind it declares, and it is that kind once (`47a4477b1`)
+- **adr**: the identity survey runs before the lock, not inside it (`f03c1a316`)
+- **test**: three suite cases read a tree that is correct as stale or incomplete (`e33566f5c`)
+- **site**: a transcript box names the axis that widens a phone (`ecdade1c7`)
+- **site**: a rendered doc comment demotes its headings and its functions carry examples (`8b6436fca`)
+- **test**: case 12 asserts the hero title, not a markup it never had (`b752ff9b7`)
+- **test**: a restored target keeps its cache tag, and the fixture runs CI's cargo (`fd80ca045`)
+- **bench**: plan.transition is required where the plan holds an issue, and says so elsewhere (`00128ff63`)
+- **site**: capability prose renders its rustdoc instead of publishing it (`7b6421c8d`)
+- **ci**: english-only-check sees every script, in any locale (`561d1c1e8`)
+- **site**: capability descriptions render rustdoc markup instead of publishing it raw (`caa82f0b9`)
+- **rust**: news_digest carries the example its behaviour owes (`26c326ee0`)
+- **site**: an enum value's description takes its own line, and stops the API page overflowing (`94ca7ff91`)
+- **site**: the panel a reader lands on is the one with the most to show (`106c4e088`)
+- **reap**: the reaper survives its own worktree listing, and a consent names its subject (`fc4cad858`)
+- **release**: the record reaches master through review, not through a protected push (`11a027868`)
+- **events**: task.gate names the module that writes it, and every event is documented (`16e084243`)
+- **coverage**: the coverage gate states its own verdict (`3ad3fa014`)
+- **docs**: the coverage mapping is a table, and the claim names its case (`55dcc2be6`)
+
+### Documentation
+
+- **coverage**: the merge keeps master's table and this branch's ratchet (`e2d375793`)
+- **capability**: the benchmark policy and its precondition carry examples (`796fe233e`)
+- **recover**: four examples that prove what the prose asserts (`0ab4e8722`)
+- **ci**: english-only-check names the locale CI actually runs, and its real ranges (`1110f2e6f`)
+
+### Housekeeping
+
+- **derive**: the projections follow the merge with master (`1388ad2c3`)
+- **release**: 0.7.0, the version the public contract requires (`3dfccb0ff`)
+- **derive**: regenerate derived data over the #348 fold (`616c1a55f`)
+- **mesh**: mark the host-independent test fix under this task (`9e005ef75`)
+- **derive**: the status documents and the registry follow the three case fixes (`59d747ea9`)
+- **derive**: the projections follow the merge with master 19b275520 (`f3ad6d694`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.7.0-aarch64-apple-darwin.tar.gz (`3f8a635bd7fe`)
+- `macos-x86_64` — majordomus-v0.7.0-x86_64-apple-darwin.tar.gz (`729455c0af63`)
+- `linux-x86_64-gnu` — majordomus-v0.7.0-x86_64-unknown-linux-gnu.tar.gz (`2a7dd5997444`)
+- `linux-x86_64-musl` — majordomus-v0.7.0-x86_64-unknown-linux-musl.tar.gz (`9267cf684dc0`)
+- `linux-aarch64-gnu` — majordomus-v0.7.0-aarch64-unknown-linux-gnu.tar.gz (`9d8b18e1fb21`)
+- `linux-aarch64-musl` — majordomus-v0.7.0-aarch64-unknown-linux-musl.tar.gz (`375bb5f8cbba`)
+
 
 ## v0.6.0 — 2026-09-12
 
