@@ -71,6 +71,18 @@ cp "$SITE/graph.js" "$SITE/static/js/graph.js"
 # list instead of carrying the graph inline (the homepage); byte for byte the committed dataset
 mkdir -p "$SITE/static/graphs"
 cp "$SITE/data/registry/product-graph.json" "$SITE/static/graphs/product.json"
+# every capability and the surfaces it reaches — its command line, its HTTP operation, its MCP
+# tool — for the homepage's picker, which fetches this on first use rather than carrying the
+# registry. A slice of what the executable wrote (the exposures) joined to the site's own routes
+# (executable.json): no fact is added here, and homepage-check holds it to the registry.
+jq -c --slurpfile exe "$SITE/data/generated/executable.json" '
+  ($exe[0].capabilities | map({key: .id, value: .}) | from_entries) as $x
+  | [ .registry.builtin[] | $x[.id] as $e
+      | { id, title, route: $e.route,
+          cli: (if .exposure.cli then $e.cli else null end),
+          http: (if .exposure.http then {method: .exposure.http.method, path: .exposure.http.path, anchor: $e.api_anchor} else null end),
+          mcp: (.exposure.mcp.tool // null) } ]' \
+  "$SITE/data/registry/registry.json" > "$SITE/static/graphs/surfaces.json"
 cp "$SITE/api-anchors.js" "$SITE/static/js/api-anchors.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
