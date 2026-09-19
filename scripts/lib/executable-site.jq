@@ -10,7 +10,9 @@
 # claims that speak about each surface — computed from ids and paths, never from prose.
 #
 # input:  docs/generated/registry.json
-# args:   $claims (the claims array), $repo_url (the repository on GitHub), $branch
+# args:   $caps (the claims matrix, slurped from site/data/generated/capabilities.json rather
+#         than passed on argv: the claims array is larger than a single argument may be on
+#         Linux), $repo_url (the repository on GitHub), $branch
 #
 # A claim is attached by the path of its implementation: a claim implemented in the file a
 # module's descriptors are composed in belongs to that module and each of its capabilities;
@@ -43,7 +45,7 @@ def claim_ref: { id: .id, status: .status, route: ("/guarantees/" + .id + "/"), 
 
 . as $reg
 | ($reg.modules | map(select(.source == "builtin"))) as $modules
-| ($claims | map(select((.implementation // "") | startswith(crate)) | . + { surface: surface_of(.implementation) })) as $crate_claims
+| ($caps[0].claims | map(select((.implementation // "") | startswith(crate)) | . + { surface: surface_of(.implementation) })) as $crate_claims
 | {
     schema: 1,
     source: "docs/generated/registry.json",

@@ -1,5 +1,6 @@
 # majordomus-exclusive: reads and briefly mutates docs/generated/ of this checkout
 # majordomus-covers: none
+# claims: generated-artifacts-typed
 # Every generated artifact of *this* checkout is typed, and the manifest is the tree.
 #
 # apps/majordomus-cli/tests/generated_documents.rs proves the property over a plan the
@@ -21,6 +22,14 @@ jq -e '.generated | startswith("GENERATED FILE")' "$MAN" >/dev/null \
   || { echo "    the manifest does not say it is generated"; exit 1; }
 n="$(jq '.artifacts | length' "$MAN")"
 [ "$n" -gt 20 ] || { echo "    the manifest lists only $n artifacts"; exit 1; }
+
+# --- every artifact declares the document it projects, the encoding it is written in and
+#     its source (generated-artifacts-typed); the schema is checked below where one is named
+untyped="$(jq -r '.artifacts[] | select((.document // "") == "" or (.format // "") == ""
+  or (.source // "") == "") | .path' "$MAN")"
+[ -z "$untyped" ] || {
+  echo "    artifact(s) declaring no document, encoding or source:"
+  printf '%s\n' "$untyped" | sed 's/^/      /'; exit 1; }
 
 # --- every file it names exists, and its bytes and hash are what the manifest recorded
 jq -r '.artifacts[] | [.path, (.bytes // "-"), (.sha256 // "-"), .format, .document] | @tsv' "$MAN" \

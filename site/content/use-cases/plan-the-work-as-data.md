@@ -6,7 +6,7 @@ weight = 43
 id = "plan-the-work-as-data"
 source = ".ai/repo/use-cases/plan-the-work-as-data.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

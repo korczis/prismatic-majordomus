@@ -1,6 +1,8 @@
 //! The registry's invariants: one canonical identity, explicit collisions, explicit
 //! refusals, every party's provenance named, and the same registry twice.
 
+// claims: capability-registry, capability-modules
+
 mod common;
 
 use majordomus_cli::capability::handler::handler;
@@ -188,7 +190,8 @@ fn every_projection_collision_is_explicit() {
         query("a.two", route("/api/v1/x"), Stability::Implemented, "m"),
     ]);
     assert!(
-        matches!(&errs[..], [RegistryError::DuplicateHttpRoute { method, path, .. }] if method == "GET" && path == "/api/v1/x"),
+        matches!(&errs[..], [RegistryError::DuplicateHttpRoute { method, path, first, second }]
+            if method == "GET" && path == "/api/v1/x" && first == "a.one" && second == "a.two"),
         "{errs:?}"
     );
 
@@ -204,7 +207,8 @@ fn every_projection_collision_is_explicit() {
         query("a.two", cli("x"), Stability::Implemented, "m"),
     ]);
     assert!(
-        matches!(&errs[..], [RegistryError::DuplicateCliPath { path, .. }] if path == "x"),
+        matches!(&errs[..], [RegistryError::DuplicateCliPath { path, first, second }]
+            if path == "x" && first == "a.one" && second == "a.two"),
         "{errs:?}"
     );
 
@@ -226,7 +230,8 @@ fn every_projection_collision_is_explicit() {
     };
     let errs = errors_of(vec![readable("a.one"), readable("a.two")]);
     assert!(
-        matches!(&errs[..], [RegistryError::DuplicateMcpUri { uri, .. }] if uri == "majordomus://x"),
+        matches!(&errs[..], [RegistryError::DuplicateMcpUri { uri, first, second }]
+            if uri == "majordomus://x" && first == "a.one" && second == "a.two"),
         "{errs:?}"
     );
 }
@@ -385,6 +390,31 @@ fn every_builtin_module_composes_only_its_own_namespace_and_the_registry_lists_i
     assert_eq!(
         builtin::all().len(),
         modules.iter().map(|m| m.capabilities.len()).sum::<usize>()
+    );
+    // declared once: every executable the root composes is one capability of the registry
+    // the application builds, in the module its namespace names, and that module is one the
+    // root composed rather than one the registry derived
+    let f = common::Fixture::new();
+    let app = common::load_app(&f);
+    let mut seen = std::collections::BTreeSet::new();
+    for e in builtin::all() {
+        let id = e.capability.id.to_string();
+        assert!(seen.insert(id.clone()), "{id} is declared in two places");
+        let c = app
+            .registry()
+            .get(&id)
+            .expect("a composed capability is served");
+        assert_eq!(c.module.as_str(), c.id.namespace(), "{id}");
+        let info = app.registry().module(c.module.as_str()).unwrap();
+        assert_eq!(info.source, ModuleSource::Builtin, "{id}");
+    }
+    assert_eq!(
+        app.registry()
+            .modules()
+            .filter(|m| m.source == ModuleSource::Builtin)
+            .count(),
+        modules.len(),
+        "the application's builtin modules are exactly the root's composition"
     );
 }
 
