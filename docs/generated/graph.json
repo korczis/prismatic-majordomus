@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.7.0",
+  "generator": "majordomus-cli 0.7.1",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -1324,6 +1324,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/knowledge/sources.yaml",
+        "kind": "file",
+        "label": "sources.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/knowledge/sources.yaml",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/order-baseline.txt",
         "kind": "file",
         "label": "order-baseline.txt",
@@ -1996,11 +2004,35 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/tests/cli_docs.rs",
+        "id": "file:apps/majordomus-cli/tests/bench_units.rs",
         "kind": "file",
-        "label": "cli_docs.rs",
+        "label": "bench_units.rs",
         "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/cli_docs.rs",
+        "source": "apps/majordomus-cli/tests/bench_units.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/cli_examples.rs",
+        "kind": "file",
+        "label": "cli_examples.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/cli_examples.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/executor.rs",
+        "kind": "file",
+        "label": "executor.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/executor.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/http_serve.rs",
+        "kind": "file",
+        "label": "http_serve.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/http_serve.rs",
         "external": true
       },
       {
@@ -2009,6 +2041,14 @@
         "label": "lease_lost.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/lease_lost.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/mcp_shared.rs",
+        "kind": "file",
+        "label": "mcp_shared.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/mcp_shared.rs",
         "external": true
       },
       {
@@ -2033,6 +2073,14 @@
         "label": "projections.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/projections.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/registry.rs",
+        "kind": "file",
+        "label": "registry.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/registry.rs",
         "external": true
       },
       {
@@ -2897,6 +2945,12 @@
         "status": "proposed",
         "facts": {
           "date": "2026-09-05",
+          "related": [
+            "file:share/kinds.yaml",
+            "file:.ai/repo/knowledge/sources.yaml",
+            "test:test/cases/64_knowledge_discovery.sh",
+            "test:test/cases/73_knowledge_nodes.sh"
+          ],
           "tags": [
             "knowledge"
           ]
@@ -4661,7 +4715,7 @@
           "implementation": "apps/majordomus-cli/src/bench/coverage.rs",
           "responsibility": "none",
           "source": "docs/CAPABILITIES.md",
-          "test": "test/cases/91_canonical_architecture.sh"
+          "test": "apps/majordomus-cli/tests/bench_units.rs"
         }
       },
       {
@@ -4744,7 +4798,7 @@
           "implementation": "apps/majordomus-cli/src/capability/module.rs",
           "responsibility": "none",
           "source": "docs/CAPABILITIES.md",
-          "test": "test/cases/91_canonical_architecture.sh"
+          "test": "apps/majordomus-cli/tests/registry.rs"
         }
       },
       {
@@ -4760,7 +4814,7 @@
           "implementation": "apps/majordomus-cli/src/capability/registry.rs",
           "responsibility": "none",
           "source": "docs/CAPABILITIES.md",
-          "test": "test/cases/76_capabilities_projections.sh"
+          "test": "apps/majordomus-cli/tests/registry.rs"
         }
       },
       {
@@ -4864,7 +4918,7 @@
         "id": "majordomus://claim/cli-documentation-executable",
         "kind": "claim",
         "label": "cli-documentation-executable",
-        "summary": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+        "summary": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcli-documentation-executable",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -4872,7 +4926,7 @@
           "implementation": "apps/majordomus-cli/src/cli.rs",
           "responsibility": "none",
           "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
-          "test": "apps/majordomus-cli/tests/cli_docs.rs"
+          "test": "apps/majordomus-cli/tests/cli_examples.rs"
         }
       },
       {
@@ -5163,7 +5217,7 @@
           "implementation": "scripts/derive",
           "responsibility": "none",
           "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
-          "test": "test/cases/51_derived_artifacts_committed.sh"
+          "test": "test/cases/400_derivation_is_one_graph.sh"
         }
       },
       {
@@ -5453,7 +5507,7 @@
           "implementation": "apps/majordomus-cli/src/capability/executor.rs",
           "responsibility": "none",
           "source": "docs/CAPABILITIES.md",
-          "test": "test/cases/91_canonical_architecture.sh"
+          "test": "apps/majordomus-cli/tests/executor.rs"
         }
       },
       {
@@ -5721,16 +5775,15 @@
         "id": "majordomus://claim/landing-page-is-a-projection",
         "kind": "claim",
         "label": "landing-page-is-a-projection",
-        "summary": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
+        "summary": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Flanding-page-is-a-projection",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
           "implementation": "site/templates/index.html",
           "responsibility": "none",
           "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
-          "test": "test/cases/12_site_build.sh"
+          "test": "test/cases/400_derivation_is_one_graph.sh"
         }
       },
       {
@@ -5764,6 +5817,36 @@
           "responsibility": "layer",
           "source": "docs/CLI.md",
           "test": "test/cases/66_migrate_legacy.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/live-scenario-evidence-is-local",
+        "kind": "claim",
+        "label": "live-scenario-evidence-is-local",
+        "summary": "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered; an undischarged obligation is reported unmet, never failed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Flive-scenario-evidence-is-local",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/usecase.sh",
+          "responsibility": "doctor",
+          "source": "docs/USE_CASES.md",
+          "test": "test/cases/359_live_scenarios.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/live-scenario-is-read-only",
+        "kind": "claim",
+        "label": "live-scenario-is-read-only",
+        "summary": "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one; every other shape is refused by usecase validate with exit 10",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Flive-scenario-is-read-only",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/usecase.sh",
+          "responsibility": "doctor",
+          "source": "docs/USE_CASES.md",
+          "test": "test/cases/359_live_scenarios.sh"
         }
       },
       {
@@ -5859,7 +5942,7 @@
           "implementation": "apps/majordomus-cli/src/lease.rs",
           "responsibility": "none",
           "source": "docs/MCP.md",
-          "test": "test/cases/90_mcp_shared_server.sh"
+          "test": "apps/majordomus-cli/tests/mcp_shared.rs"
         }
       },
       {
@@ -5920,7 +6003,7 @@
           "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
           "responsibility": "none",
           "source": "docs/MCP.md",
-          "test": "test/cases/72_rust_mcp.sh"
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
         }
       },
       {
@@ -5999,7 +6082,7 @@
           "implementation": "apps/majordomus-cli/src/models/mod.rs",
           "responsibility": "none",
           "source": "docs/MODELS.md",
-          "test": "apps/majordomus-cli/src/models/mod.rs"
+          "test": "test/cases/131_models.sh"
         }
       },
       {
@@ -6102,12 +6185,11 @@
         "id": "majordomus://claim/no-transcripts",
         "kind": "claim",
         "label": "no-transcripts",
-        "summary": "Handovers carry durable facts, never conversation transcripts",
+        "summary": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fno-transcripts",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "Handovers carry durable facts, never conversation transcripts",
           "implementation": "lib/handover.sh",
           "responsibility": "handover",
           "source": "docs/DESIGN.md",
@@ -6728,7 +6810,7 @@
           "implementation": "scripts/rust-check",
           "responsibility": "none",
           "source": "docs/CI.md",
-          "test": "test/cases/94_ci_plan.sh"
+          "test": "test/cases/401_the_rust_artifact_carries_its_provenance.sh"
         }
       },
       {
@@ -7216,7 +7298,7 @@
           "note": "Removing the file removes it from all of them, which is what a hidden registry would fail.",
           "responsibility": "layer",
           "source": "docs/WHY.md",
-          "test": "test/cases/98_why_catalogue.sh"
+          "test": "apps/majordomus-cli/tests/why.rs"
         }
       },
       {
@@ -9569,6 +9651,22 @@
         "source": "docs/GITHUB_PAGES_PERFORMANCE.md"
       },
       {
+        "id": "majordomus://document/docs/GUIDE.md",
+        "kind": "document",
+        "label": "docs/GUIDE.md",
+        "summary": "Guide — what Majordomus does for a team, how each part works, and the tests that prove it",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FGUIDE.md",
+        "source": "docs/GUIDE.md"
+      },
+      {
+        "id": "majordomus://document/docs/HOW_IT_WORKS.md",
+        "kind": "document",
+        "label": "docs/HOW_IT_WORKS.md",
+        "summary": "How Majordomus works — one repository model, many projections",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2FHOW_IT_WORKS.md",
+        "source": "docs/HOW_IT_WORKS.md"
+      },
+      {
         "id": "majordomus://document/docs/INSTALL.md",
         "kind": "document",
         "label": "docs/INSTALL.md",
@@ -9924,7 +10022,7 @@
         "id": "majordomus://document/docs/claims/cli-documentation-executable.md",
         "kind": "document",
         "label": "docs/claims/cli-documentation-executable.md",
-        "summary": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+        "summary": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcli-documentation-executable.md",
         "source": "docs/claims/cli-documentation-executable.md"
       },
@@ -10369,6 +10467,22 @@
         "source": "docs/claims/legacy-migration.md"
       },
       {
+        "id": "majordomus://document/docs/claims/live-scenario-evidence-is-local.md",
+        "kind": "document",
+        "label": "docs/claims/live-scenario-evidence-is-local.md",
+        "summary": "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Flive-scenario-evidence-is-local.md",
+        "source": "docs/claims/live-scenario-evidence-is-local.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/live-scenario-is-read-only.md",
+        "kind": "document",
+        "label": "docs/claims/live-scenario-is-read-only.md",
+        "summary": "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Flive-scenario-is-read-only.md",
+        "source": "docs/claims/live-scenario-is-read-only.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/local-state-ignored.md",
         "kind": "document",
         "label": "docs/claims/local-state-ignored.md",
@@ -10540,7 +10654,7 @@
         "id": "majordomus://document/docs/claims/no-transcripts.md",
         "kind": "document",
         "label": "docs/claims/no-transcripts.md",
-        "summary": "Handovers carry durable facts, never conversation transcripts",
+        "summary": "A handover is a state record, not a transcript",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fno-transcripts.md",
         "source": "docs/claims/no-transcripts.md"
       },
@@ -11290,7 +11404,8 @@
           ],
           "featured": true,
           "modules": [
-            "health"
+            "health",
+            "design"
           ],
           "related": [
             "interfaces",
@@ -11400,7 +11515,8 @@
           ],
           "modules": [
             "directories",
-            "repository"
+            "repository",
+            "devcontext"
           ],
           "related": [
             "continuity",
@@ -11469,7 +11585,8 @@
             "handover",
             "session",
             "capture",
-            "prompt"
+            "prompt",
+            "recover"
           ],
           "docs": [
             "docs/CONTINUITY.md",
@@ -11482,7 +11599,10 @@
             "prompt"
           ],
           "modules": [
-            "continuity"
+            "continuity",
+            "lifecycle",
+            "session_domain",
+            "recover"
           ],
           "related": [
             "knowledge",
@@ -11681,7 +11801,8 @@
           "modules": [
             "capabilities",
             "artifacts",
-            "product"
+            "product",
+            "quality"
           ],
           "related": [
             "interfaces",
@@ -11899,6 +12020,10 @@
             "docs/DESIGN.md"
           ],
           "featured": true,
+          "modules": [
+            "gates",
+            "obligations"
+          ],
           "related": [
             "doctrine",
             "coordination"
@@ -11954,7 +12079,8 @@
           "commands": [
             "init",
             "migrate",
-            "version"
+            "version",
+            "archive"
           ],
           "docs": [
             "docs/INSTALL.md",
@@ -11963,10 +12089,12 @@
           "featured": false,
           "headline": "The installer downloads one archive for your machine, verifies its digest against the release metadata before unpacking anything, and installs atomically; no git, no Rust, no Node, no root.",
           "kinds": [
-            "distribution-model"
+            "distribution-model",
+            "release-record"
           ],
           "modules": [
-            "distribution"
+            "distribution",
+            "release"
           ],
           "related": [
             "policy"
@@ -12035,7 +12163,10 @@
           "modules": [
             "repository",
             "objects",
-            "web"
+            "web",
+            "environment",
+            "executions",
+            "commands"
           ],
           "related": [
             "declare-once",
@@ -12175,6 +12306,9 @@
           ],
           "featured": true,
           "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
+          "kinds": [
+            "mesh-declaration"
+          ],
           "modules": [
             "mesh"
           ],
@@ -12276,7 +12410,9 @@
             "issue"
           ],
           "modules": [
-            "trace"
+            "trace",
+            "plan",
+            "devtask"
           ],
           "related": [
             "worktrees",
@@ -32679,11 +32815,25 @@
         "source": "test/cases/352_the_version_the_site_shows_is_one_you_can_get.sh"
       },
       {
+        "id": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "kind": "test",
+        "label": "test/cases/359_live_scenarios.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F359_live_scenarios.sh",
+        "source": "test/cases/359_live_scenarios.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/35_future_command.sh",
         "kind": "test",
         "label": "test/cases/35_future_command.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F35_future_command.sh",
         "source": "test/cases/35_future_command.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
+        "kind": "test",
+        "label": "test/cases/360_the_crate_boundary_is_measured.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F360_the_crate_boundary_is_measured.sh",
+        "source": "test/cases/360_the_crate_boundary_is_measured.sh"
       },
       {
         "id": "majordomus://test/test/cases/36_command_doctrines.sh",
@@ -32698,6 +32848,41 @@
         "label": "test/cases/37_responsibility_surface.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F37_responsibility_surface.sh",
         "source": "test/cases/37_responsibility_surface.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "kind": "test",
+        "label": "test/cases/389_cockpit_projection.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F389_cockpit_projection.sh",
+        "source": "test/cases/389_cockpit_projection.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
+        "kind": "test",
+        "label": "test/cases/390_unresolved_relation_refuses_generation.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F390_unresolved_relation_refuses_generation.sh",
+        "source": "test/cases/390_unresolved_relation_refuses_generation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
+        "kind": "test",
+        "label": "test/cases/400_derivation_is_one_graph.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F400_derivation_is_one_graph.sh",
+        "source": "test/cases/400_derivation_is_one_graph.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+        "kind": "test",
+        "label": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F401_the_rust_artifact_carries_its_provenance.sh",
+        "source": "test/cases/401_the_rust_artifact_carries_its_provenance.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/402_argv_limit.sh",
+        "kind": "test",
+        "label": "test/cases/402_argv_limit.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F402_argv_limit.sh",
+        "source": "test/cases/402_argv_limit.sh"
       },
       {
         "id": "majordomus://test/test/cases/40_project_model.sh",
@@ -37435,8 +37620,28 @@
       },
       {
         "source": "majordomus://adr/adr-0010",
+        "target": "file:.ai/repo/knowledge/sources.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
+        "target": "file:share/kinds.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
+        "target": "majordomus://test/test/cases/64_knowledge_discovery.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0010",
+        "target": "majordomus://test/test/cases/73_knowledge_nodes.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://adr/adr-0011",
@@ -39395,6 +39600,11 @@
       },
       {
         "source": "majordomus://claim/benchmark-coverage-derived",
+        "target": "file:apps/majordomus-cli/tests/bench_units.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/benchmark-coverage-derived",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -39402,11 +39612,6 @@
         "source": "majordomus://claim/benchmark-coverage-derived",
         "target": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/benchmark-coverage-derived",
-        "target": "majordomus://test/test/cases/91_canonical_architecture.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/blocker-store",
@@ -39495,6 +39700,11 @@
       },
       {
         "source": "majordomus://claim/capability-modules",
+        "target": "file:apps/majordomus-cli/tests/registry.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/capability-modules",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -39502,11 +39712,6 @@
         "source": "majordomus://claim/capability-modules",
         "target": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/capability-modules",
-        "target": "majordomus://test/test/cases/91_canonical_architecture.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/capability-registry",
@@ -39515,6 +39720,11 @@
       },
       {
         "source": "majordomus://claim/capability-registry",
+        "target": "file:apps/majordomus-cli/tests/registry.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/capability-registry",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -39522,11 +39732,6 @@
         "source": "majordomus://claim/capability-registry",
         "target": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/capability-registry",
-        "target": "majordomus://test/test/cases/76_capabilities_projections.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/catalogue-resolves",
@@ -39645,7 +39850,7 @@
       },
       {
         "source": "majordomus://claim/cli-documentation-executable",
-        "target": "file:apps/majordomus-cli/tests/cli_docs.rs",
+        "target": "file:apps/majordomus-cli/tests/cli_examples.rs",
         "kind": "tested_by"
       },
       {
@@ -40005,7 +40210,7 @@
       },
       {
         "source": "majordomus://claim/derivation-one-graph",
-        "target": "majordomus://test/test/cases/51_derived_artifacts_committed.sh",
+        "target": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "tested_by"
       },
       {
@@ -40355,6 +40560,11 @@
       },
       {
         "source": "majordomus://claim/execution-cache-equivalence",
+        "target": "file:apps/majordomus-cli/tests/executor.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/execution-cache-equivalence",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -40362,11 +40572,6 @@
         "source": "majordomus://claim/execution-cache-equivalence",
         "target": "majordomus://document/docs/CAPABILITIES.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/execution-cache-equivalence",
-        "target": "majordomus://test/test/cases/91_canonical_architecture.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/execution-waves",
@@ -40705,7 +40910,7 @@
       },
       {
         "source": "majordomus://claim/landing-page-is-a-projection",
-        "target": "majordomus://test/test/cases/12_site_build.sh",
+        "target": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
         "kind": "tested_by"
       },
       {
@@ -40746,6 +40951,46 @@
       {
         "source": "majordomus://claim/legacy-migration",
         "target": "majordomus://test/test/cases/66_migrate_legacy.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "majordomus://document/docs/USE_CASES.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "majordomus://implementation/lib/usecase.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-evidence-is-local",
+        "target": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "majordomus://document/docs/USE_CASES.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "majordomus://implementation/lib/usecase.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/live-scenario-is-read-only",
+        "target": "majordomus://test/test/cases/359_live_scenarios.sh",
         "kind": "tested_by"
       },
       {
@@ -40855,6 +41100,11 @@
       },
       {
         "source": "majordomus://claim/mcp-lease-resilience",
+        "target": "file:apps/majordomus-cli/tests/mcp_shared.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-lease-resilience",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -40862,11 +41112,6 @@
         "source": "majordomus://claim/mcp-lease-resilience",
         "target": "majordomus://document/docs/MCP.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mcp-lease-resilience",
-        "target": "majordomus://test/test/cases/90_mcp_shared_server.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mcp-peers",
@@ -40935,6 +41180,11 @@
       },
       {
         "source": "majordomus://claim/mcp-uri-resolution",
+        "target": "file:apps/majordomus-cli/tests/http_serve.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mcp-uri-resolution",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -40942,11 +41192,6 @@
         "source": "majordomus://claim/mcp-uri-resolution",
         "target": "majordomus://document/docs/MCP.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mcp-uri-resolution",
-        "target": "majordomus://test/test/cases/72_rust_mcp.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-observation-not-authority",
@@ -41035,11 +41280,6 @@
       },
       {
         "source": "majordomus://claim/models-no-secret-fields",
-        "target": "file:apps/majordomus-cli/src/models/mod.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/models-no-secret-fields",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -41047,6 +41287,11 @@
         "source": "majordomus://claim/models-no-secret-fields",
         "target": "majordomus://document/docs/MODELS.md",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/models-no-secret-fields",
+        "target": "majordomus://test/test/cases/131_models.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/models-one-declaration",
@@ -41925,7 +42170,7 @@
       },
       {
         "source": "majordomus://claim/rust-binary-artifact",
-        "target": "majordomus://test/test/cases/94_ci_plan.sh",
+        "target": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
         "kind": "tested_by"
       },
       {
@@ -42485,6 +42730,11 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
+        "target": "file:apps/majordomus-cli/tests/why.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -42492,11 +42742,6 @@
         "source": "majordomus://claim/why-catalogue-discovered",
         "target": "majordomus://document/docs/WHY.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "majordomus://test/test/cases/98_why_catalogue.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
@@ -43404,6 +43649,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/GUIDE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/HOW_IT_WORKS.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/INSTALL.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -43900,6 +44155,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/legacy-migration.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/live-scenario-evidence-is-local.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/live-scenario-is-read-only.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51104,7 +51369,17 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/359_live_scenarios.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/35_future_command.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/360_the_crate_boundary_is_measured.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -51115,6 +51390,31 @@
       },
       {
         "source": "majordomus://test/test/cases/37_responsibility_surface.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/390_unresolved_relation_refuses_generation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/400_derivation_is_one_graph.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/402_argv_limit.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -54785,8 +55085,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1727,
-      "edges": 3866,
+      "nodes": 1746,
+      "edges": 3889,
       "acyclic": true,
       "truncated": false
     }

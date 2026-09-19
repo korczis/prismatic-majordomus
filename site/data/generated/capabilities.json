@@ -535,7 +535,7 @@
     },
     {
       "id": "no-transcripts",
-      "claim": "Handovers carry durable facts, never conversation transcripts",
+      "claim": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
       "source": "docs/DESIGN.md",
       "implementation": "lib/handover.sh",
       "test": "test/cases/05_handover.sh",
@@ -1253,13 +1253,13 @@
       "claim": "Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties",
       "source": "docs/CAPABILITIES.md",
       "implementation": "apps/majordomus-cli/src/capability/registry.rs",
-      "test": "test/cases/76_capabilities_projections.sh",
+      "test": "apps/majordomus-cli/tests/registry.rs",
       "status": "guaranteed",
       "note": "Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision.",
       "responsibility": "none",
       "source_route": "/docs/capabilities/",
       "command": null,
-      "test_case": "76_capabilities_projections"
+      "test_case": "apps/majordomus-cli/tests/registry.rs"
     },
     {
       "id": "interfaces-are-projections",
@@ -1331,13 +1331,13 @@
       "claim": "Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies",
       "source": "docs/MCP.md",
       "implementation": "apps/majordomus-cli/src/lease.rs",
-      "test": "test/cases/90_mcp_shared_server.sh",
+      "test": "apps/majordomus-cli/tests/mcp_shared.rs",
       "status": "guaranteed",
       "note": "The election classifies the lease on every attempt and is bounded by time; commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.",
       "responsibility": "none",
       "source_route": "/docs/mcp/",
       "command": null,
-      "test_case": "90_mcp_shared_server"
+      "test_case": "apps/majordomus-cli/tests/mcp_shared.rs"
     },
     {
       "id": "mcp-lease-lost",
@@ -1383,13 +1383,13 @@
       "claim": "A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin",
       "source": "docs/MCP.md",
       "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
-      "test": "test/cases/72_rust_mcp.sh",
+      "test": "apps/majordomus-cli/tests/http_serve.rs",
       "status": "guaranteed",
       "note": "One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects.rs covers every branch at the library level.",
       "responsibility": "none",
       "source_route": "/docs/mcp/",
       "command": null,
-      "test_case": "72_rust_mcp"
+      "test_case": "apps/majordomus-cli/tests/http_serve.rs"
     },
     {
       "id": "rust-evidence-gates",
@@ -1435,26 +1435,26 @@
       "claim": "A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace",
       "source": "docs/CAPABILITIES.md",
       "implementation": "apps/majordomus-cli/src/capability/module.rs",
-      "test": "test/cases/91_canonical_architecture.sh",
+      "test": "apps/majordomus-cli/tests/registry.rs",
       "status": "guaranteed",
       "note": "capability!, module! and compose_modules! build plain values handed to the registry builder; adding a capability to an existing module touches that module's file alone, and MCP, HTTP, OpenAPI, Swagger UI, the CLI, the benchmark targets, the cache and the generated reference follow. The crate's tests/registry.rs holds the invariants, tests/projections.rs the propagation.",
       "responsibility": "none",
       "source_route": "/docs/capabilities/",
       "command": null,
-      "test_case": "91_canonical_architecture"
+      "test_case": "apps/majordomus-cli/tests/registry.rs"
     },
     {
       "id": "benchmark-coverage-derived",
       "claim": "Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check",
       "source": "docs/CAPABILITIES.md",
       "implementation": "apps/majordomus-cli/src/bench/coverage.rs",
-      "test": "test/cases/91_canonical_architecture.sh",
+      "test": "apps/majordomus-cli/tests/bench_units.rs",
       "status": "guaranteed",
       "note": "Each required executable is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations are targets declared once; waivers are typed and never counted. Runners time the executor, a real loopback socket and a real majordomus mcp child; results are majordomus/benchmark-result/v1; the baseline is per platform under .ai/repo/benchmarks/rust/ and the policy is data.",
       "responsibility": "none",
       "source_route": "/docs/capabilities/",
       "command": null,
-      "test_case": "91_canonical_architecture"
+      "test_case": "apps/majordomus-cli/tests/bench_units.rs"
     },
     {
       "id": "hot-path-no-rebuild",
@@ -1474,13 +1474,13 @@
       "claim": "A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint",
       "source": "docs/CAPABILITIES.md",
       "implementation": "apps/majordomus-cli/src/capability/executor.rs",
-      "test": "test/cases/91_canonical_architecture.sh",
+      "test": "apps/majordomus-cli/tests/executor.rs",
       "status": "guaranteed",
       "note": "One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs.",
       "responsibility": "none",
       "source_route": "/docs/capabilities/",
       "command": null,
-      "test_case": "91_canonical_architecture"
+      "test_case": "apps/majordomus-cli/tests/executor.rs"
     },
     {
       "id": "provider-projections-one-renderer",
@@ -1565,13 +1565,13 @@
       "claim": "The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one",
       "source": "docs/CI.md",
       "implementation": "scripts/rust-check",
-      "test": "test/cases/94_ci_plan.sh",
+      "test": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
       "status": "guaranteed",
       "note": "scripts/rust-check --artifact DIR copies the debug executable beside a majordomus-cli.json naming the commit, the target triple, the toolchain and the Cargo.lock digest; the workflow uploads it as majordomus-cli-<target>. rust_bin in test/lib.sh hands a case MAJORDOMUS_BIN when set, refuses one that is not executable, builds once with cargo when unset, and asks the case to skip when there is neither; the launcher bin/majordomus-mcp honours the same variable.",
       "responsibility": "none",
       "source_route": "/docs/ci/",
       "command": null,
-      "test_case": "94_ci_plan"
+      "test_case": "401_the_rust_artifact_carries_its_provenance"
     },
     {
       "id": "site-deploys-from-verified-run",
@@ -1652,6 +1652,32 @@
       "test_case": "94_use_cases"
     },
     {
+      "id": "live-scenario-is-read-only",
+      "claim": "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one; every other shape is refused by usecase validate with exit 10",
+      "source": "docs/USE_CASES.md",
+      "implementation": "lib/usecase.sh",
+      "test": "test/cases/359_live_scenarios.sh",
+      "status": "guaranteed",
+      "note": "The class is read from share/commands.yaml, the declaration the reference semantics already come from, so safety is a property of the declaration and not of the author's care (ADR 38). An obligation step is refused in a fixture scenario, because a disposable repository owes nothing, and a step that both runs a command and asserts an obligation is refused as neither.",
+      "responsibility": "doctor",
+      "source_route": "/docs/use-cases/",
+      "command": "usecase",
+      "test_case": "359_live_scenarios"
+    },
+    {
+      "id": "live-scenario-evidence-is-local",
+      "claim": "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered; an undischarged obligation is reported unmet, never failed",
+      "source": "docs/USE_CASES.md",
+      "implementation": "lib/usecase.sh",
+      "test": "test/cases/359_live_scenarios.sh",
+      "status": "guaranteed",
+      "note": "A live result describes one tree on one machine at one minute, so it is written to .ai/local/evidence/live/<id>.json rather than beside the committed fixture evidence, and coverage counts it as naming a command and never as covering it. The run separates the two verdicts, because a failing fixture scenario is a defect in the tool and an unmet obligation is work not done (ADR 38).",
+      "responsibility": "doctor",
+      "source_route": "/docs/use-cases/",
+      "command": "usecase",
+      "test_case": "359_live_scenarios"
+    },
+    {
       "id": "site-deploy-one-path",
       "claim": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
       "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
@@ -1695,13 +1721,13 @@
       "claim": "Every committed derived artifact of the repository is regenerated by one command in dependency order and checked by one read-only command that names every stale artifact, a second regeneration on a clean tree changes nothing, and no derived file records the commit it lands in",
       "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
       "implementation": "scripts/derive",
-      "test": "test/cases/51_derived_artifacts_committed.sh",
+      "test": "test/cases/400_derivation_is_one_graph.sh",
       "status": "guaranteed",
       "note": "scripts/derive runs majordomus generate (the code-only projections), scripts/generate-site-data (the site's data and content and the derived documents, reading the registry manifest and the OpenAPI document), and majordomus generate again (the site dataset and the benchmark matrix over the index the documents joined); no stage reads its own output. scripts/derive-check composes generate --check and generate-site-data --check and exits 10 with both reports. The commit a page was built from is a fact of the build (site/data/build.json, served at /build.json, never committed), so source.json no longer carries it and the generator is idempotent on a clean tree. just derive, just derive-check and the Pages workflow call the scripts; just test runs the check.",
       "responsibility": "none",
       "source_route": "/docs/github-pages-architecture/",
       "command": null,
-      "test_case": "51_derived_artifacts_committed"
+      "test_case": "400_derivation_is_one_graph"
     },
     {
       "id": "skill-catalogue",
@@ -1773,13 +1799,13 @@
       "claim": "An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed",
       "source": "docs/WHY.md",
       "implementation": "apps/majordomus-cli/src/why.rs",
-      "test": "test/cases/98_why_catalogue.sh",
+      "test": "apps/majordomus-cli/tests/why.rs",
       "status": "guaranteed",
       "note": "Removing the file removes it from all of them, which is what a hidden registry would fail.",
       "responsibility": "layer",
       "source_route": "/docs/why/",
       "command": null,
-      "test_case": "98_why_catalogue"
+      "test_case": "apps/majordomus-cli/tests/why.rs"
     },
     {
       "id": "why-references-resolve",
@@ -1887,16 +1913,16 @@
     },
     {
       "id": "cli-documentation-executable",
-      "claim": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+      "claim": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
       "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
       "implementation": "apps/majordomus-cli/src/cli.rs",
-      "test": "apps/majordomus-cli/tests/cli_docs.rs",
+      "test": "apps/majordomus-cli/tests/cli_examples.rs",
       "status": "guaranteed",
       "note": "The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.",
       "responsibility": "none",
       "source_route": null,
       "command": null,
-      "test_case": "apps/majordomus-cli/tests/cli_docs.rs"
+      "test_case": "apps/majordomus-cli/tests/cli_examples.rs"
     },
     {
       "id": "web-surface-declared-once",
@@ -2004,16 +2030,16 @@
     },
     {
       "id": "landing-page-is-a-projection",
-      "claim": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
+      "claim": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged",
       "source": "docs/GITHUB_PAGES_ARCHITECTURE.md",
       "implementation": "site/templates/index.html",
-      "test": "test/cases/12_site_build.sh",
+      "test": "test/cases/400_derivation_is_one_graph.sh",
       "status": "guaranteed",
       "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository.",
       "responsibility": "none",
       "source_route": "/docs/github-pages-architecture/",
       "command": null,
-      "test_case": "12_site_build"
+      "test_case": "400_derivation_is_one_graph"
     },
     {
       "id": "evidence-proof-is-an-execution",
@@ -2215,13 +2241,13 @@
       "claim": "The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in",
       "source": "docs/MODELS.md",
       "implementation": "apps/majordomus-cli/src/models/mod.rs",
-      "test": "apps/majordomus-cli/src/models/mod.rs",
+      "test": "test/cases/131_models.sh",
       "status": "guaranteed",
       "note": "credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.",
       "responsibility": "none",
       "source_route": "/docs/models/",
       "command": null,
-      "test_case": "apps/majordomus-cli/src/models/mod.rs"
+      "test_case": "131_models"
     },
     {
       "id": "new-code-is-covered",
