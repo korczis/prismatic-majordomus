@@ -54,7 +54,11 @@ echo "    a README that declares kind: context is a context node, not an instanc
 # node becomes is what the class says, which is what "the declaration decides" has to mean.
 sed '/^kind: context$/d' "$C" > "$C.tmp" && mv "$C.tmp" "$C"
 git add -A && git -c user.email=t@t -c user.name=t commit -qm "the contract stops declaring itself" >/dev/null
-gone="$(nodes)"
+# Without its declaration the file is an instance of its class's kind, a rule, and a README is
+# not a valid rule: the index refuses it, and since the knowledge reader asks the index which
+# files it refused (ADR 0010, case 405) the refusal now reaches this command as exit 10. The
+# subject here is only that the file stopped being a context node, so the exit is not.
+gone="$(nodes)" || true
 printf '%s\n' "$gone" | grep -qE "^context .*context:$C" \
   && { echo "    $C is still a context node after its declaration was removed; the kind is not being read from the file"; exit 1; }
 echo "    removing the declaration returns the file to its class's kind"
