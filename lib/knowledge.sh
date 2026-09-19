@@ -387,18 +387,64 @@ mj_knowledge_flat_rows() {
   rm -f "$flat"
 }
 
+# The files the index refused, one `<path>\t<code>\t<message>` line each, as the index
+# decided them. Returns 2, printing nothing, when the index could not be asked.
+#
+# Whether a file conforms to its kind's schema has one judge: the executable's index, which
+# validates every discovered file against the schema its kind names and turns each failure
+# into an error diagnostic instead of an object. This reader used to have no opinion at all
+# — it read a curated note as prose, so a note the schema refuses (no `class`, or a `class`
+# outside the closed enum) was a node here and nothing in the index, and the two readers of
+# one layer disagreed about what the layer holds (ADR 0010). Teaching awk JSON Schema would
+# have made a second judge that drifts from the first; asking the first is the move ADR 0035
+# made for the lease, and the direction the repository takes shell automation in general.
+#
+# Never a build: an executable that is not there is not compiled for a read, as `context`
+# does not. The caller says the schema went unchecked rather than implying it passed.
+mj_knowledge_refused() {
+  mj_has jq || return 2
+  local bin share out
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || return 2
+  share="$(mj_rust_share "$MJ_HOME")"
+  out="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+            "$bin" run repository.info --repo "$MJ_ROOT" --format json ) 2>/dev/null )" || return 2
+  printf '%s' "$out" | jq -r '
+    .output.diagnostics[]? | select(.severity == "error" and (.path // "") != "")
+    | [.path, .code, (.message | gsub("[\t\n]"; " "))] | @tsv' 2>/dev/null || return 2
+}
+
 # The node set, sorted. Sorting happens here rather than in the awk because awk has no
 # portable sort, and it is done under the C collation so that two machines with different
 # locales produce the same bytes.
 mj_knowledge_nodes() {
-  local scope="${1:-all}" disc rows
+  local scope="${1:-all}" disc rows refused rc
   disc="$(mktemp "${TMPDIR:-/tmp}/mj.kd.XXXXXX")"
   rows="$(mktemp "${TMPDIR:-/tmp}/mj.kr.XXXXXX")"
+  refused="$(mktemp "${TMPDIR:-/tmp}/mj.kf.XXXXXX")"
   local t0
   t0="$(mj_phase_begin knowledge:discover)"
-  mj_knowledge_discover "$scope" > "$disc" || { rm -f "$disc" "$rows"; return "$MJ_EX_INTERNAL"; }
-  mj_phase_end knowledge:discover "$t0"; t0="$(mj_phase_begin knowledge:rows)"
-  mj_knowledge_rows "$disc" > "$rows"
+  mj_knowledge_discover "$scope" > "$disc" || { rm -f "$disc" "$rows" "$refused"; return "$MJ_EX_INTERNAL"; }
+  mj_phase_end knowledge:discover "$t0"; t0="$(mj_phase_begin knowledge:refused)"
+  # A file the index refused is not a node here either: its discovery row is dropped and the
+  # index's own verdict is reported against it, code and message as the index wrote them.
+  rc=0; mj_knowledge_refused > "$refused" || rc=$?
+  if [ "$rc" = 0 ] && [ -s "$refused" ]; then
+    awk -F'\t' 'NR == FNR { r[$1] = 1; next } !($5 in r)' "$refused" "$disc" > "$disc.kept"
+    mv "$disc.kept" "$disc"
+  fi
+  mj_phase_end knowledge:refused "$t0"; t0="$(mj_phase_begin knowledge:rows)"
+  {
+    if [ "$rc" = 0 ]; then
+      awk -F'\t' '{ printf "X\tFAIL\trefused_source\t%s\tthe index refused it (%s): %s; no node was extracted from it\n", $1, $2, $3 }' "$refused"
+    else
+      printf 'X\tWARN\tschema_unchecked\t.\tthe index could not be asked (no executable built, or no jq), so no file was checked against the schema of its kind; run bin/majordomus-cli once to build it\n'
+    fi
+    mj_knowledge_rows "$disc"
+  } > "$rows"
+  rm -f "$refused"
   mj_phase_end knowledge:rows "$t0"; t0="$(mj_phase_begin knowledge:extract)"
   awk -f "$MJ_LIB_DIR/knowledge.awk" "$rows" | LC_ALL=C sort
   mj_phase_end knowledge:extract "$t0"

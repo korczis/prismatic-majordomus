@@ -54,10 +54,17 @@ echo "    a README that declares kind: context is a context node, not an instanc
 # node becomes is what the class says, which is what "the declaration decides" has to mean.
 sed '/^kind: context$/d' "$C" > "$C.tmp" && mv "$C.tmp" "$C"
 git add -A && git -c user.email=t@t -c user.name=t commit -qm "the contract stops declaring itself" >/dev/null
-gone="$(nodes)"
-printf '%s\n' "$gone" | grep -qE "^context .*context:$C" \
-  && { echo "    $C is still a context node after its declaration was removed; the kind is not being read from the file"; exit 1; }
-echo "    removing the declaration returns the file to its class's kind"
+# Without its declaration the file is a contract the manifest names that no longer says it is
+# one, and the index refuses it (`missing_context_contract`). The knowledge reader asks the index
+# which files it refused (ADR 0010, case 405), so that verdict is what this command must now
+# give: exit 10, the file named as refused, and no node of any kind for it.
+rc=0; gone="$(nodes)" || rc=$?
+[ "$rc" = 10 ] || { echo "    a contract stripped of its declaration made knowledge nodes exit $rc, not 10"; exit 1; }
+printf '%s\n' "$gone" | grep -qE "^FAIL .*$C — the index refused it \(missing_context_contract\)" \
+  || { echo "    $C was not reported as refused by the index:"; printf '%s\n' "$gone" | grep -F "$C" | head -3; exit 1; }
+printf '%s\n' "$gone" | grep -qE "^[a-z-]+ +[a-z]+ +[0-9a-f]+ +[a-z-]+:$C( |$)" \
+  && { echo "    $C is still a node after its declaration was removed"; printf '%s\n' "$gone" | grep -F "$C" | head -2; exit 1; }
+echo "    removing the declaration makes the contract a refused file, reported with exit 10 and never a node"
 # From the commit before the mutation, not from the index: the mutation was committed, so
 # `git checkout -- <path>` would restore the mutated file and the guard below would be the
 # only thing that noticed. The commit is allowed to be empty-handed for the same reason a
