@@ -238,8 +238,14 @@ it compiles.</p>
 desktop end; one page per section takes the full sweep across every boundary. On a built
 surface a section is the first path segment, because that is where templates change; on a
 crawled surface it is the <em>family</em> — the shape a route shares with its siblings, <code>?</code>-keys
-when it has a query and the parent path when it does not. Both are where a renderer changes,
-so the sweep buys structural coverage without anybody naming a page.</p>
+when it has a query and the parent path when it does not. A route can vary in both at once —
+<code>/cockpit/graphs/composed?nodes=3</code> is a record in its path and a view in its query — and the
+crawled set is what settles it: a directory the crawl reached under more than one name, below
+the entry, holds records, and its children collapse to <code>*</code> like any other. The entry's own
+children are the surface's areas and never collapse, so <code>/cockpit/objects?page</code> and
+<code>/cockpit/capabilities?page</code> stay two renderers while eight graph pages each paging two
+tables stay one family instead of twenty-four. Both are where a renderer changes, so the
+sweep buys structural coverage without anybody naming a page.</p>
 <p><strong>The sample</strong> is derived as well, and only a crawled surface has one. Every route the
 surface advertises is visited, because each of those is its own page; of every family the
 audit takes four members spread across the sorted set, because a family is one renderer over
@@ -518,7 +524,7 @@ the element's tag and attributes, and <code>exercise(ctx)</code> drives each cla
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/63455ee6d1bca4bd4a661443b32c740accca0d0d" class="font-mono underline">63455ee</a> · inputs <span class="font-mono">11253ef746fe</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1a3f528bf742487cb678589569dc36540b37cd5f" class="font-mono underline">1a3f528</a> · inputs <span class="font-mono">172fab151491</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

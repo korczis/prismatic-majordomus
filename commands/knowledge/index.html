@@ -356,6 +356,17 @@ rather than at each producer. Every tracked pathspec carries the <code>:(glob)</
 which <code>*</code> does not cross a directory separator. That is not tidiness: without it,
 <code>docs/*.md</code> also matches <code>docs/claims/*.md</code>, two classes silently overlap, and one file
 becomes two nodes. <code>test/cases/64_knowledge_discovery.sh</code> fails on that mutation.</p>
+<p>One overlap is settled by the file rather than by the classes. A section's <code>README.md</code> matches
+both <code>.ai/**/README.md</code>, the <code>context</code> class, and its section's own pathspec
+(<code>.ai/repo/features/*.md</code>, <code>.ai/repo/rules/**/*.md</code>, and so on). It declares <code>kind: context</code>, so
+it is a <code>context</code> node, once: a second class discovering it adds nothing. The index applies the
+same precedence in <code>apps/majordomus-cli/src/discovery/mod.rs</code>, and
+<code>test/cases/330_a_contract_is_the_kind_it_declares.sh</code> proves it for <code>knowledge nodes</code>. Where no
+file declares a kind, two classes over one path remain a refusal (case 73's <code>twin</code>).</p>
+<p><code>init</code> declares the <code>context</code> class first, so a new repository's contracts are objects of its
+index from the start. Without it <code>context resolve</code>, which reads the files, and every capability
+that reads the index disagreed about what applies to a path;
+<code>test/cases/130_context_compiler.sh</code> fails without the class.</p>
 <p>A class marked <code>required</code> that discovers nothing is reported as a <code>WARN</code>. The cost of a
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable
 from a repository that does not have that file unless something says so.</p>
@@ -466,7 +477,7 @@ from a repository that does not have that file unless something says so.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/63455ee6d1bca4bd4a661443b32c740accca0d0d" class="font-mono underline">63455ee</a> · inputs <span class="font-mono">11253ef746fe</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/1a3f528bf742487cb678589569dc36540b37cd5f" class="font-mono underline">1a3f528</a> · inputs <span class="font-mono">172fab151491</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
