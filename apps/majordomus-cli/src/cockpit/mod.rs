@@ -192,7 +192,7 @@ impl Cockpit {
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
                     pages::command(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
-                    pages::graph(ctx, &percent_decode(id))
+                    pages::graph(ctx, &percent_decode(id), query)
                 } else {
                     pages::not_found(other)
                 }
