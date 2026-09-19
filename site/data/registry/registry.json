@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.7.1"
+    "version": "0.8.0"
   },
   "registry": {
-    "fingerprint": "bd31d4db32fc12238b63d5c97092a417ba323aa0677c99a4e3d33873b16c8820",
+    "fingerprint": "deea71ca9aa3db1c6fac177a2ff5074ce49288dad95c52dd4e34e127d94a2b6c",
     "summary": {
-      "total": 1478,
+      "total": 1479,
       "builtin": 113,
-      "declarative": 1365,
+      "declarative": 1366,
       "by_kind": {
         "command": 7,
         "query": 106,
-        "resource": 1365
+        "resource": 1366
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1371
+        "implemented": 1372
       },
       "mcp_tools": 110,
-      "mcp_resources": 1406,
+      "mcp_resources": 1407,
       "http_routes": 112,
       "cli_commands": 52,
       "modules": 66,
@@ -13059,6 +13059,13 @@
                     "minimum": 0,
                     "description": "How many files the layer declared that did not become objects."
                   },
+                  "refused": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/Diagnostic"
+                    },
+                    "description": "Which ones, and what decided it: the index's own error diagnostics, each naming the\nfile, the code and the constraint it failed. A count says something is wrong; only\nthis says what and where, and a reader that has the count and not the list has to go\nlooking through a log for the answer the index already produced."
+                  },
                   "degraded": {
                     "type": [
                       "boolean",
@@ -13111,6 +13118,56 @@
                   "count"
                 ],
                 "description": "How many valid objects of one kind the layer holds."
+              },
+              "Diagnostic": {
+                "type": "object",
+                "properties": {
+                  "severity": {
+                    "$ref": "#/$defs/Severity",
+                    "description": "How bad."
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
+                  },
+                  "path": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Repository-relative path of the file concerned, when there is one."
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "What is wrong, for a person; the code is for a program."
+                  }
+                },
+                "required": [
+                  "severity",
+                  "code",
+                  "message"
+                ],
+                "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+              },
+              "Severity": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "info",
+                    "description": "Worth knowing; changes nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warning",
+                    "description": "Something to look at; the object is still served."
+                  },
+                  {
+                    "type": "string",
+                    "const": "error",
+                    "description": "The file is excluded and the index is degraded."
+                  }
+                ],
+                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
               },
               "WorkflowCatalogue": {
                 "type": "object",
@@ -13359,56 +13416,6 @@
                   }
                 ],
                 "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions."
-              },
-              "Diagnostic": {
-                "type": "object",
-                "properties": {
-                  "severity": {
-                    "$ref": "#/$defs/Severity",
-                    "description": "How bad."
-                  },
-                  "code": {
-                    "type": "string",
-                    "description": "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
-                  },
-                  "path": {
-                    "type": [
-                      "string",
-                      "null"
-                    ],
-                    "description": "Repository-relative path of the file concerned, when there is one."
-                  },
-                  "message": {
-                    "type": "string",
-                    "description": "What is wrong, for a person; the code is for a program."
-                  }
-                },
-                "required": [
-                  "severity",
-                  "code",
-                  "message"
-                ],
-                "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
-              },
-              "Severity": {
-                "oneOf": [
-                  {
-                    "type": "string",
-                    "const": "info",
-                    "description": "Worth knowing; changes nothing."
-                  },
-                  {
-                    "type": "string",
-                    "const": "warning",
-                    "description": "Something to look at; the object is still served."
-                  },
-                  {
-                    "type": "string",
-                    "const": "error",
-                    "description": "The file is excluded and the index is degraded."
-                  }
-                ],
-                "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
               },
               "FieldSource": {
                 "type": "object",
@@ -40802,7 +40809,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 222,
+        "capabilities": 223,
         "capability_ids": []
       },
       {
@@ -40882,7 +40889,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2f953df28ee29e62a1019568e70ccf4ad616d2bd21f53cb5d842e4e216e1f187",
+    "fingerprint": "d15947cbe13fde46963ad9d656d46e158747304874bf91eb1be1b72c4b756e81",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -40931,7 +40938,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 222,
+      "test": 223,
       "use-case": 46,
       "workspace": 1
     },
@@ -54571,6 +54578,14 @@
         "bytes": 3703
       },
       {
+        "uri": "majordomus://test/test/cases/404_refused_files_are_named.sh",
+        "kind": "test",
+        "identity": "test/cases/404_refused_files_are_named.sh",
+        "path": "test/cases/404_refused_files_are_named.sh",
+        "source_class": "case",
+        "bytes": 4348
+      },
+      {
         "uri": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "identity": "test/cases/40_project_model.sh",
@@ -56026,7 +56041,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 222
+      "objects": 223
     },
     {
       "name": "use-case",
