@@ -75,8 +75,21 @@ n="$(grep -cF 'a file with spaces' shared.txt)"
 #     root-document pathspec makes * cross a directory separator, at which point *.md also
 #     matches .ai/local/state/handovers/*.md — and every handover in the checkout is
 #     discovered as shared repository knowledge. The mutation was run; this case fails on it.
-dupes="$(awk '{print $NF}' shared.txt | LC_ALL=C sort | uniq -d)"
+#
+#     One overlap is declared rather than accidental: the directory contracts. `init` declares
+#     the `context` class over `.ai/**/README.md` (so a new repository indexes the contracts
+#     `context resolve` reads), and a section's own class — rules, prompts, sessions — also
+#     matches the README in its directory. The kind a README declares decides the node once,
+#     however many classes discover it (case 330), which is exactly what this repository's own
+#     sources.yaml relies on. So the contract class is held to itself — no README twice — and
+#     every other class to the boundary above; the mutation still fails, because the unglobbed
+#     `*.md` of the root documents would claim docs/*.md beside the documents class.
+dupes="$(awk '$1 != "context" {print $NF}' shared.txt | LC_ALL=C sort | uniq -d)"
 [ -z "$dupes" ] || { echo "    a file was discovered by two classes: $dupes"; exit 1; }
+cdupes="$(awk '$1 == "context" {print $NF}' shared.txt | LC_ALL=C sort | uniq -d)"
+[ -z "$cdupes" ] || { echo "    the contract class discovered a file twice: $cdupes"; exit 1; }
+awk '$1 == "context" && $NF !~ /(^|\/)README\.md$/ {bad=1; print "    the contract class claimed " $NF} END {exit bad}' shared.txt \
+  || { echo "    the contract class reaches past the directory contracts"; exit 1; }
 
 # --- a required class that finds nothing is a finding, not a silence
 rm -f .ai/repo/profiles/*.yaml
