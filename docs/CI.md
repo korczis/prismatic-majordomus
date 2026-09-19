@@ -19,8 +19,10 @@ flowchart LR
   plan --> coverage["coverage"]
   plan --> bench["bench (macOS)"]
   plan --> site["site"]
+  plan --> interactions["interactions"]
+  plan --> ui["ui"]
   plan --> macos["macos"]
-  structure & suite & rust & coverage & bench & site & macos --> ci["ci<br>the verdict; the one<br>required status"]
+  structure & suite & rust & coverage & bench & site & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
 
 and beside it, on the same commit, never after it:
