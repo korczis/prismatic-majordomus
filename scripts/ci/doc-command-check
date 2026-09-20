@@ -1,0 +1,201 @@
+#!/usr/bin/env bash
+# doc-command-check — a command this project documents is one this project runs.
+#
+# The documents publish 345 fenced blocks; before this gate exactly one line in them was
+# executed by anything — the installer one-liner, which `scripts/ci/install-check` runs
+# against the published site. Everything else was a promise: a reader copies a line out of
+# docs/ and finds out whether it still works. /docs/ is the largest section of the site, so
+# these were the most-read unproven examples the project ships.
+#
+# **What owes a proof, and why not every fence does.** A fence is classified by its tag,
+# which is the signal this repository already uses: ```mermaid is a diagram
+# (project.a-diagram-is-drawn-not-typed), ```console is literal recorded output, ```yaml,
+# ```json, ```rust, ```markdown, ```text and ```http are data or shapes. None of those is an
+# instruction to a reader. The command fences are ```bash, ```sh and ```just, and only the
+# lines inside them are asked for a proof. A gate that demanded execution of every fence
+# would be wrong about what most of them are, and would be worked around within a week.
+#
+# Inside a command fence, a line owes a proof when it invokes this project's own tools —
+# `majordomus`, a `scripts/…` entry point, `test/run.sh`, `just` — and carries no `<placeholder>`.
+# A line with a placeholder is a shape, not a command: nothing can run `majordomus start
+# "<task>" --scope <paths>` as written. A line that calls somebody else's tool (`git`, `curl`,
+# `mktemp`, `printf`) is not this project's to prove; its behaviour is not ours to keep.
+#
+# **What counts as proof, in order of preference — join first, write last.** The repository
+# already executes commands in two corpora, and the documents should point at them rather
+# than grow a third:
+#
+#   1. a recorded use-case step — `site/data/generated/catalogue.json` carries 173 steps with
+#      the command, its exit status and its captured output, produced by `lib/usecase.sh`;
+#   2. an executed command-line example — `docs/generated/cli.json` carries the `argv` of every
+#      `ExampleDoc`, each one run by `apps/majordomus-cli/tests/cli_examples.rs`;
+#   3. an explicit marker, `<!-- majordomus:unrun <reason> -->` on the line before the fence,
+#      for a block that cannot be run here and says why — a deploy that needs a domain, a
+#      command that needs a second machine. The reason is required: a bare exemption is a
+#      silent promise again, and the text is what a later reader argues with.
+#
+# **A ratchet, not a backfill.** 147 documented commands had no proof on the day this landed;
+# they are listed in `.ai/repo/doc-command-baseline.txt` and the gate refuses anything not on
+# that list. The baseline may only shrink: a line leaves it when the command joins the
+# use-case corpus, gains a command-line example, or is marked with its reason. The gate also
+# reports a baseline line that no longer matches any document, so the list cannot rot.
+#
+#   scripts/ci/doc-command-check              report and refuse
+#   scripts/ci/doc-command-check --list       every documented command and its proof
+#
+# MJ_ROOT points the scan at another tree, which is how case 412 drives it over fixtures.
+#
+# Exit: 0 no finding, 10 a documented command with no proof, 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+[ -d "$ROOT" ] || { echo "doc-command-check: $ROOT is not a directory" >&2; exit 12; }
+cd "$ROOT"
+
+LIST=0
+[ "${1:-}" = "--list" ] && LIST=1
+
+BASELINE=".ai/repo/doc-command-baseline.txt"
+CATALOGUE="site/data/generated/catalogue.json"
+CLI_DOC="docs/generated/cli.json"
+
+command -v jq >/dev/null 2>&1 || { echo "doc-command-check: jq is not installed" >&2; exit 12; }
+
+# The documents this gate reads: the published prose, never docs/claims (a claim page's "How
+# to see it" is a different corpus with its own gate) and never docs/generated (projections,
+# whose examples are proven where they are declared).
+documents() {
+  { find docs -maxdepth 1 -name '*.md' -type f 2>/dev/null
+    [ -f README.md ] && printf 'README.md\n'
+  } | LC_ALL=C sort
+}
+
+# Every command line of every ```bash / ```sh / ```just fence, with its file and the marker
+# that precedes its fence, as "file<TAB>marker<TAB>command". A fence with no marker prints a
+# lone "-": a tab is IFS whitespace, so a run of them collapses and an empty field would be
+# read as the command's first word.
+documented_commands() {
+  documents | while IFS= read -r f; do
+    awk -v F="$f" '
+      /^[[:space:]]*<!--[[:space:]]*majordomus:unrun/ {
+        m = $0
+        sub(/^[[:space:]]*<!--[[:space:]]*majordomus:unrun[[:space:]]*/, "", m)
+        sub(/[[:space:]]*-->[[:space:]]*$/, "", m)
+        marker = (m == "" ? "(no reason)" : m)
+        next
+      }
+      /^```/ {
+        if (!inb) {
+          t = substr($0, 4); gsub(/[ \t]+$/, "", t)
+          inb = 1; cmd = (t == "bash" || t == "sh" || t == "just")
+        } else { inb = 0; cmd = 0; marker = "-" }
+        next
+      }
+      !inb { if ($0 !~ /^[[:space:]]*$/) marker = "-" ; next }
+      cmd {
+        line = $0
+        sub(/^[[:space:]]+/, "", line)
+        if (line == "" || line ~ /^#/) next
+        print F "\t" (marker == "" ? "-" : marker) "\t" line
+      }
+    ' "$f"
+  done
+}
+
+# A command line is normalised to the form the corpora record: the trailing comment a
+# document adds for the reader is not part of the command, and the several spellings of this
+# repository's own executable are one command.
+normalise() {
+  sed -e 's/[[:space:]]*#.*$//' \
+      -e 's/[[:space:]]*$//' \
+      -e 's|^"\$T/\.local/bin/majordomus"|majordomus|' \
+      -e 's|^[^[:space:]]*bin/majordomus-cli|majordomus|' \
+      -e 's|^[^[:space:]]*bin/majordomus|majordomus|'
+}
+
+# The proofs, measured from the tree rather than listed here: what the use cases recorded
+# themselves running, and what the command line's own examples run.
+proofs() {
+  [ -f "$CATALOGUE" ] && jq -r '.use_cases[]?|.evidence?|.steps[]?|.command // empty' "$CATALOGUE" 2>/dev/null
+  [ -f "$CLI_DOC" ] && jq -r '..|objects|select(has("argv"))|"majordomus "+(.argv|join(" "))' "$CLI_DOC" 2>/dev/null
+  return 0
+}
+
+PROOFS="$(mktemp)"; trap 'rm -f "$PROOFS" "$SEEN"' EXIT
+SEEN="$(mktemp)"
+proofs | LC_ALL=C sort -u > "$PROOFS"
+[ -s "$PROOFS" ] || { echo "doc-command-check: no recorded proofs to compare against — the corpora are missing or empty" >&2; exit 12; }
+
+findings=0
+listed=0
+while IFS="$(printf '\t')" read -r file marker raw; do
+  [ -n "${raw:-}" ] || continue
+  # A shape, not a command: nothing can run a placeholder as written.
+  case "$raw" in *'<'*'>'*) continue;; esac
+  # Somebody else's tool is not this project's to prove.
+  case "$raw" in
+    majordomus*|just\ *|scripts/*|test/run.sh*|bin/majordomus*|*bin/majordomus*|*scripts/*|*test/run.sh*) : ;;
+    *) continue ;;
+  esac
+  cmd="$(printf '%s\n' "$raw" | normalise)"
+  [ -n "$cmd" ] || continue
+  printf '%s\t%s\n' "$file" "$cmd" >> "$SEEN"
+
+  if [ "$marker" != "-" ]; then
+    [ "$marker" = "(no reason)" ] && {
+      printf '%s: <!-- majordomus:unrun --> carries no reason\n' "$file"
+      printf '  command %s\n' "$cmd"
+      printf '  correction: say why it cannot be run here, so a later reader can argue with it\n'
+      findings=$((findings + 1))
+      continue
+    }
+    [ "$LIST" = 1 ] && printf '%s\tunrun\t%s\t%s\n' "$file" "$cmd" "$marker"
+    listed=$((listed + 1))
+    continue
+  fi
+
+  if grep -qxF -- "$cmd" "$PROOFS"; then
+    [ "$LIST" = 1 ] && printf '%s\texecuted\t%s\n' "$file" "$cmd"
+    listed=$((listed + 1))
+    continue
+  fi
+
+  if [ -f "$BASELINE" ] && grep -qxF -- "$file	$cmd" "$BASELINE"; then
+    [ "$LIST" = 1 ] && printf '%s\tknown-debt\t%s\n' "$file" "$cmd"
+    listed=$((listed + 1))
+    continue
+  fi
+
+  printf '%s: a documented command nothing runs\n' "$file"
+  printf '  command %s\n' "$cmd"
+  printf '  correction: have a use-case scenario or a command-line example run it, or mark the fence <!-- majordomus:unrun <reason> --> with the reason it cannot run here\n'
+  findings=$((findings + 1))
+done <<EOF
+$(documented_commands)
+EOF
+
+# A baseline line that matches nothing is debt that was paid without the list being told;
+# reporting it is what keeps the list from rotting into permission.
+stale=0
+if [ -f "$BASELINE" ]; then
+  while IFS= read -r line; do
+    case "$line" in ''|'#'*) continue;; esac
+    grep -qxF -- "$line" "$SEEN" || {
+      printf '%s: baseline line matches no documented command any more\n' "$BASELINE"
+      printf '  entry %s\n' "$line"
+      printf '  correction: remove it; the debt it named is gone\n'
+      stale=$((stale + 1))
+    }
+  done < "$BASELINE"
+fi
+
+total=$((listed + findings))
+if [ "$findings" -eq 0 ] && [ "$stale" -eq 0 ]; then
+  echo "doc-command-check: OK, $total documented command(s), each executed, marked, or known debt"
+  exit 0
+fi
+
+[ "$stale" -gt 0 ] && echo "doc-command-check: $stale stale baseline line(s)"
+[ "$findings" -gt 0 ] && echo "doc-command-check: $findings documented command(s) with no proof"
+exit 10

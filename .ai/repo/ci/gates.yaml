@@ -60,6 +60,12 @@ gates:
     runs: scripts/ci/argv-limit-check
     summary: a whole file's JSON may not travel to jq on the command line — Linux refuses a single argument over 131072 bytes and macOS never will, so the shape is checked rather than the size
 
+  - id: doc-command-check
+    job: structure
+    always: true
+    runs: scripts/ci/doc-command-check
+    summary: a command the documents tell a reader to run is executed by a use-case scenario or a command-line example, or marked with the reason it cannot run here; a ratchet over the prose that still promises without proof
+
   - id: liveness-check
     job: structure
     always: true
@@ -560,8 +566,8 @@ classes:
 
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
-    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
-    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check]
+    paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**, scripts/ci/doc-command-check, .ai/repo/doc-command-baseline.txt, test/cases/412_a_documented_command_is_run.sh]
+    gates: [shell-suite, rust-integration, site-build, site-probe, worktree-topology, ui-audit, providers-data, diagram-check, doc-command-check]
 
   # the site: templates, assets, styles, scripts, its build dependencies and its scripts
   - id: site
