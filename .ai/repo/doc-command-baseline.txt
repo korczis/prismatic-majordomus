@@ -1,0 +1,147 @@
+# doc-command-check baseline — the documented commands nothing ran when the gate landed.
+# A line here is known debt, not permission: it leaves when a use-case scenario or a
+# command-line example runs the command, or when the fence is marked with its reason.
+# The gate reports a line that matches no document any more, so the list cannot rot.
+README.md	just bench-coverage
+README.md	just bench-run
+README.md	just build
+README.md	just capabilities
+README.md	just cockpit
+README.md	just cockpit-assets
+README.md	just derive
+README.md	just derive-check
+README.md	just home
+README.md	just mcp
+README.md	just serve
+README.md	just site-docs
+README.md	majordomus finish --outcome completed --verify-command "make test"
+README.md	majordomus start "fix OAuth callback" --scope lib/auth --profile debugging
+docs/ADOPTION_FIRST_RUN.md	majordomus doctor; echo "exit $?"
+docs/ADOPTION_FIRST_RUN.md	printf '
+docs/CAPABILITIES.md	majordomus bench --check
+docs/CAPABILITIES.md	majordomus bench [id] [--transport direct|mcp|http|system] [--profile quick|full|ci] [--format json] [--no-write]
+docs/CAPABILITIES.md	majordomus bench baseline update [--profile full] [--allow-dirty]
+docs/CAPABILITIES.md	majordomus bench coverage [--format json] [--check]
+docs/CI.md	MJ_TEST_JOBS=4 bash test/run.sh
+docs/CI.md	SITE_PROBE_JOBS=4 scripts/site-probe
+docs/CI.md	bash test/run.sh
+docs/CI.md	just ci-fast
+docs/CI.md	just ci-full
+docs/CI.md	just ci-structure
+docs/CI.md	just coverage
+docs/CI.md	printf 'docs/DESIGN.md\n' | scripts/ci-plan --files - --format text
+docs/CI.md	scripts/ci-baseline --runs 10
+docs/CI.md	scripts/ci-plan --base origin/master --head HEAD
+docs/CI.md	scripts/ci-plan --check
+docs/CI.md	scripts/ci-plan --format text
+docs/CI.md	scripts/ci-plan --full "why" | jq .selected
+docs/CI.md	scripts/ci/core-check
+docs/CI.md	scripts/ci/providers-check
+docs/CI.md	scripts/ci/run-plan --job structure --plan plan.json
+docs/CI.md	scripts/ci/shell-lint
+docs/CI.md	scripts/ci/worktree-check
+docs/CI.md	scripts/rust-check --ci
+docs/CI.md	scripts/rust-check --integration
+docs/CI.md	scripts/site-build && scripts/site-check
+docs/CI.md	scripts/site-build && scripts/site-check && SITE_PROBE_JOBS=4 scripts/site-probe
+docs/CLI.md	majordomus doctor || exit $?
+docs/CLI.md	majordomus finish --check || exit $?
+docs/COCKPIT.md	COCKPIT_PROBE_URL=http://127.0.0.1:8741 scripts/cockpit-probe
+docs/COCKPIT.md	just cockpit-probe
+docs/COCKPIT.md	just cockpit-probe --quick
+docs/COCKPIT.md	just cockpit-probe --status
+docs/COCKPIT.md	majordomus serve
+docs/COCKPIT.md	scripts/cockpit-assets
+docs/COCKPIT.md	scripts/cockpit-assets --check
+docs/COCKPIT_IDE_AUDIT.md	majordomus run objects.verify & while …; do curl -s "$B/api/v1/executions"; done
+docs/COCKPIT_IDE_AUDIT.md	majordomus serve ensure
+docs/COCKPIT_IDE_AUDIT.md	majordomus start "…" --scope …   ;   bin/majordomus check
+docs/COMMANDS.md	eval "$(bin/majordomus-env enter --shell direnv)"
+docs/COMMANDS.md	majordomus commands bridge --check
+docs/COMMANDS.md	majordomus commands show executable.serve
+docs/COMMANDS.md	majordomus completion install --shell zsh
+docs/COMMIT.md	bash test/run.sh 274_commit_policy
+docs/COMMIT.md	scripts/ci/commit-policy
+docs/DEVELOPMENT_RUNTIME.md	grep -rln 'docs/generated' lib/ bin/ scripts/
+docs/DEVELOPMENT_RUNTIME.md	grep -rln 'project/issues\|project/milestones' lib/ bin/ scripts/
+docs/DEVELOPMENT_RUNTIME.md	grep -rn '\.ai/\|bin/majordomus' apps/majordomus-cli/src/cockpit/ share/cockpit/*.js
+docs/DEVELOPMENT_RUNTIME.md	majordomus --help
+docs/DEVELOPMENT_RUNTIME.md	majordomus capabilities list --format json > caps.json
+docs/DEVELOPMENT_RUNTIME.md	majordomus commands graph --format json > cg.json
+docs/DEVELOPMENT_RUNTIME.md	majordomus executions list
+docs/DEVELOPMENT_RUNTIME.md	majordomus executions protocol
+docs/DEVELOPMENT_RUNTIME.md	majordomus generate --help
+docs/DEVELOPMENT_RUNTIME.md	majordomus rules list --json
+docs/DEVELOPMENT_RUNTIME.md	scripts/development-semantics-check
+docs/DISTRIBUTION.md	$EDITOR apps/majordomus-cli/Cargo.toml bin/majordomus
+docs/DISTRIBUTION.md	bash test/run.sh 84_distribution_model
+docs/DISTRIBUTION.md	just derive
+docs/DISTRIBUTION.md	scripts/ci/install-check --base http://127.0.0.1:8099
+docs/DISTRIBUTION.md	scripts/release-fixture --out /tmp/rel --base-url http://127.0.0.1:8099
+docs/DISTRIBUTION.md	scripts/release-version --check --tag v0.3.0
+docs/EVIDENCE.md	MJ_TEST_REPORT=suite.tsv bash test/run.sh
+docs/EVIDENCE.md	majordomus evidence claim distribution-canonical-model
+docs/EVIDENCE.md	majordomus evidence proves suite:84_distribution_model
+docs/EVIDENCE.md	majordomus evidence proves test/cases/84_distribution_model.sh
+docs/EVIDENCE.md	majordomus evidence record --crate-output crate.log --origin local
+docs/EVIDENCE.md	majordomus evidence record --suite suite.tsv --origin local
+docs/EVIDENCE.md	scripts/evidence-check
+docs/EVIDENCE.md	scripts/evidence-check --baseline
+docs/EVIDENCE.md	scripts/evidence-check --json
+docs/EVIDENCE.md	scripts/evidence-check --repo PATH
+docs/EVIDENCE.md	scripts/evidence-check --strict
+docs/EXECUTIONS.md	majordomus executions list
+docs/EXECUTIONS.md	majordomus executions protocol
+docs/EXECUTIONS.md	majordomus run health.report
+docs/EXECUTIONS.md	majordomus run objects.verify --input '{"limit":50}' --format json
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/generate-site-data --fingerprint
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages benchmark -n 5
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages benchmark -n 5 --write-baseline
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages budget
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages budget --json
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages build
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages check
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages current
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages paths
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages paths | sed 's/^/      - /'
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/pages verify --commit "$(git rev-parse HEAD)"
+docs/GITHUB_PAGES_PERFORMANCE.md	scripts/site-deploy
+docs/INSTALL.md	majordomus --version
+docs/INSTALL.md	rm -f $HOME/.local/bin/majordomus $HOME/.local/bin/majordomus-mcp
+docs/MCP.md	majordomus-mcp
+docs/PLANNING.md	--command "bash test/run.sh 44_model_doctrine" --result "1 passed"
+docs/PLANNING.md	majordomus plan done I0007
+docs/PLANNING.md	majordomus plan evidence I0007 --covers doctrine_test --type test \
+docs/PLANNING.md	majordomus plan show I0007
+docs/PLANNING.md	majordomus plan start I0007
+docs/PLANNING.md	majordomus plan verify I0007
+docs/PRODUCT.md	just derive
+docs/QUALITY.md	majordomus quality report
+docs/QUALITY.md	majordomus quality report --code RUST_MODULE_MISSING_EXAMPLE
+docs/QUALITY.md	majordomus quality report --format json
+docs/QUALITY.md	majordomus quality report --path apps/majordomus-cli/src/web
+docs/QUALITY.md	majordomus quality report --write-baseline
+docs/RELEASE.md	majordomus release analyze
+docs/RELEASE.md	majordomus release analyze --explain
+docs/RELEASE.md	majordomus release bump
+docs/RELEASE.md	scripts/ci/version-matches-surface
+docs/SCOPE.md	majordomus scope --check --format json a b
+docs/SCOPE.md	majordomus scope docs/CLI.md .env target/x
+docs/USE_CASES.md	majordomus usecase coverage [--json] [--check]
+docs/USE_CASES.md	majordomus usecase run
+docs/USE_CASES.md	majordomus usecase run --live
+docs/USE_CASES.md	majordomus usecase run know-whether-this-work-is-finished
+docs/USE_CASES.md	majordomus usecase run prove-a-rule-is-enforced --keep
+docs/USE_CASES.md	majordomus usecase scaffold --for command:pack
+docs/USE_CASES.md	majordomus usecase scaffold --missing
+docs/USE_CASES.md	majordomus usecase scaffold --missing --dry-run
+docs/USE_CASES.md	majordomus usecase show prove-a-rule-is-enforced
+docs/WEB.md	majordomus web compose
+docs/WEB.md	majordomus web explain docs
+docs/WEB.md	majordomus web list --format json
+docs/WEB.md	majordomus web validate --artifacts
+docs/WHY.md	just derive && git add -A
+docs/WHY.md	majordomus why diagnose --signal same-subsystem-twice --format json
+docs/WHY.md	majordomus why list --audience solo-builder --severity high
+docs/WHY.md	majordomus why show two-agents-one-bug
+docs/WORKTREES.md	majordomus worktree migrate

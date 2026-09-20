@@ -5,7 +5,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is [`GITHUB_PAGES_PERFORMANCE.md`](GITHUB_PAGES_PERFORMANCE.md).
 
-Generated from canonical inputs `6ffda06ea32f`.
+Generated from canonical inputs `8aeec124214f`.
 
 ## Controlled budget
 
@@ -32,6 +32,7 @@ publication path itself. `scripts/pages paths` prints this list and the workflow
 held to it.
 
 - `.ai/**`
+- `.ai/repo/doc-command-baseline.txt`
 - `.ai/repo/evidence-baseline.txt`
 - `.ai/repo/evidence/**`
 - `.envrc`
@@ -61,6 +62,7 @@ held to it.
 - `package-lock.json`
 - `package.json`
 - `scripts/ci/design-check`
+- `scripts/ci/doc-command-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
 - `scripts/evidence-check`
@@ -92,6 +94,7 @@ held to it.
 - `site/data/registry/**`
 - `site/data/registry/design.json`
 - `test/**`
+- `test/cases/412_a_documented_command_is_run.sh`
 
 ## Measured
 
