@@ -1,0 +1,10 @@
+{#- The proof of one tile. `tile` is a key of site/data/proofs.toml; the declaration there
+    says what the tile shows and what proves it, so a tile inherits this link by naming its
+    key rather than by carrying a path of its own. A tile that states no fact declares
+    `none` and renders nothing. `lead` optionally replaces the sentence before the links. -#}
+{%- set proofs = load_data(path="data/proofs.toml") -%}
+{%- set decl = proofs.tiles[tile] -%}
+{%- if decl.tests -%}
+<p class="mt-1 text-xs text-body-subtle">{% if lead %}{{ lead }}{% else %}Verified by{% endif %}
+  {%- for t in decl.tests %} <a href="{{ project.repository_url }}/blob/master/{{ t }}" class="break-all font-mono text-fg-brand underline inline-block py-1">{{ t }}</a>{% if not loop.last %},{% endif %}{% endfor %}, which {{ decl.runs }}.</p>
+{%- endif -%}
