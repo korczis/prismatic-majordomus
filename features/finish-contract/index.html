@@ -164,7 +164,7 @@
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
-    <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, and nothing is written to the record until all of them pass.</p>
+    <p class="mb-6 rounded-base border border-brand-subtle bg-brand-softer p-4 text-base font-medium text-fg-brand-strong">A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, the task is not accepted until all of them pass, and every time it was claimed done and was not is on the record.</p>
 
     <dl class="mb-6 flex flex-wrap items-baseline gap-x-6 gap-y-3 border-y border-default py-3 text-xs">
       <div class="flex items-baseline gap-2"><dt class="font-mono uppercase tracking-wide text-body-subtle">status</dt><dd><span class="mj-badge mj-badge--stable">stable</span>
@@ -185,12 +185,19 @@
 <p>The outcome of a task is a typed field with a closed vocabulary, never a sentence.
 <code>majordomus finish --outcome completed</code> runs the verification command the profile requires,
 walks every line the policy selects, prints each as pass or fail with the command that
-reproduces a failure, and writes nothing when any line fails; the task stays open. An open
+reproduces a failure, and accepts nothing when any line fails; the task stays open. An open
 question that names the task blocks acceptance until it is resolved, and a blocker survives
 a handover rather than being lost with the conversation.</p>
 <p><code>no_match</code> and <code>failed</code> are different facts: the thing sought does not exist, or the work
 could not be done. A supervisor that cannot tell them apart cannot decide whether to retry,
 escalate or accept, so the field decides and prose never does.</p>
+<p>Every refusal is recorded. Each refused <code>finish</code> appends a <code>task.refused</code> line to the ledger
+with the outcome that was claimed, how many contract lines were unmet and which doctrines
+refused, and <code>majordomus history --event task.refused</code> lists them. A task accepted after
+four refusals and one accepted first time used to leave the same record; now the four false
+claims of <em>done</em> are there, in order, before the one that held. That is what makes the
+contract's value countable rather than asserted: each refusal later satisfied is a false
+<em>done</em> the tool caught. <code>finish --check</code> asks without claiming, and records nothing.</p>
 <h2 id="what-it-does-not-do"><a class="zola-anchor" href="#what-it-does-not-do" aria-label="Anchor link for: what-it-does-not-do">What it does not do</a></h2>
 <p>It does not prevent a worker from touching a file outside its scope while it works; it
 detects the file at check and at finish and refuses to accept the work. The regression-test
@@ -337,6 +344,11 @@ line is a path heuristic and says so. Nothing here measures tokens or cost.</p>
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
         <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 
+        <a href="https://majordomus.dev/guarantees/finish-refusal-is-recorded/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none</a>
+      </li>
+      <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
+        <span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+
         <a href="https://majordomus.dev/guarantees/typed-outcome/" class="min-w-0 text-sm text-heading hover:text-fg-brand hover:underline">An outcome is a value from a closed vocabulary, not free text</a>
       </li>
       <li class="flex flex-wrap items-baseline gap-x-3 gap-y-1 p-3">
@@ -383,7 +395,7 @@ line is a path heuristic and says so. Nothing here measures tokens or cost.</p>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">MCP tools</dt><dd class="font-mono text-sm text-heading">4</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">HTTP routes</dt><dd class="font-mono text-sm text-heading">4</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">rules</dt><dd class="font-mono text-sm text-heading">7</dd></div>
-      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">8</dd></div>
+      <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">claims</dt><dd class="font-mono text-sm text-heading">9</dd></div>
       <div class="flex items-baseline justify-between gap-3 px-3 py-2"><dt class="text-xs text-body">moments answered</dt><dd class="font-mono text-sm text-heading">20</dd></div>
     </dl>
     <h2 class="mt-6 text-sm font-semibold uppercase tracking-wide text-body-subtle">Read further</h2>
@@ -459,7 +471,7 @@ line is a path heuristic and says so. Nothing here measures tokens or cost.</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/67fbb1635ab9e2a086981ecb62034053b52e36c1" class="font-mono underline">67fbb16</a> · inputs <span class="font-mono">4e079017659a</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.7.1 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/5c0f6a1c17bf19d8655adbdeff4f255c03c2b112" class="font-mono underline">5c0f6a1</a> · inputs <span class="font-mono">7affe362b49b</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
