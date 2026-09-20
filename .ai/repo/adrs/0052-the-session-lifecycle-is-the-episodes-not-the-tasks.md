@@ -143,3 +143,36 @@ place to make it, and no surface may carry a second copy of the numbers.
 
 The briefing gets longer by at most two lines when a record is stale, and shorter by the
 length of a `Next Action` it no longer quotes — which is the point.
+
+### Amendment, 2026-09-20: the receipt names the provider's event in a field, not in its id
+
+The decision above names three receipt events — `provider.session_start.received`,
+`provider.pre_compact.received`, `provider.session_end.received`. The vocabulary carries one
+pair instead, `provider.event.received` and `provider.event.failed`, each requiring
+`provider` and `provider_event`. That is the better shape, and this record overspecified.
+
+`SessionStart`, `SessionEnd` and `PreCompact` are **one provider's** event names. They are
+declared as data, in `share/providers.yaml` under `claude-code.lifecycle`, precisely so that
+nothing in the tool enumerates them; `project.providers-are-data` makes that a blocking rule.
+Three ids built from them would have compiled one provider's vocabulary into the ledger every
+provider writes to, and the next adapter — Codex, Gemini, a worker with no convention of its
+own — would have had either a receipt whose id names an event it does not have, or a fourth
+id nobody could derive. The id says what happened to *this repository*: a provider lifecycle
+event arrived. Which event, and from whom, is data the line carries.
+
+The consequences the decision drew from the receipts are unchanged and hold today. The
+pairing is what health reads: `lib/doctor.sh` counts `provider.event.received` against
+`provider.event.failed` and reports a receipt with no resulting record. The three-way
+distinction is available where a reader needs it, and is asserted in both directions —
+`test/cases/130_lifecycle_survives_a_stale_task.sh` requires a receipt carrying
+`provider_event` of `start`, `compact` and `end` in turn, and
+`test/cases/282_the_ledger_envelope_is_reserved.sh` requires the pair to declare
+`requires: [provider, provider_event]`. The `provider_event` name itself is the second
+correction: the field was `event` until 2026-09-12, which collided with the ledger
+envelope's own key, and `mj_ledger_append` now refuses that collision outright.
+
+What was missing was a check that keeps the vocabulary provider-neutral, since the shape this
+amendment settles was a convention no gate held.
+`test/cases/408_a_receipt_is_provider_neutral.sh` refuses an event id in `share/events.yaml`
+built from any provider's declared lifecycle event, and requires the receipt pair to keep
+carrying the provider and its event as fields.
