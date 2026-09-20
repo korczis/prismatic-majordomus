@@ -1,0 +1,51 @@
+# What the behavioural suite costs, what it may cost, and the bound that backstops it.
+# `scripts/ci/suite-budget` reads this file and nothing else; the `suite` job of
+# .github/workflows/validate.yml is an adapter over that script, and
+# test/cases/417_the_suite_finishes_inside_its_bound.sh holds the two to each other.
+#
+# Why this file exists. The bound was set once, from a cost that has since doubled, and
+# nothing measured the drift: a suite that outgrows its bound is not reported as slow, it is
+# `cancelled` — indistinguishable in GitHub's own interface from a run somebody superseded.
+# That is how master went days without a suite verdict and nobody noticed. A budget turns
+# the growth into a failure a reader can act on, while the bound still has room; the bound
+# alone only decides how long the repository waits before losing the verdict entirely.
+version: 1
+
+# ---------------------------------------------------------------- the bound
+# `timeout-minutes` of the suite job. It is a backstop against a wedged runner, not a target:
+# every case already carries its own `majordomus-timeout:`. One declaration, two readers —
+# the workflow and this file must agree, and case 417 refuses it when they do not.
+#
+# Measured, eleven consecutive runs on ubuntu-latest, 2026-09-19 to 2026-09-20 (wall minutes
+# of the `suite` job, from the GitHub jobs API):
+#
+#   94.2  98.4  121.8  126.1  142.3  142.9  144.7  145.0  145.3  145.4  148.3
+#
+# The old bound of 150 was set from a 93-100 minute cost with a ~50% margin. The cost is now
+# 148.3 at its worst, so that margin had become 1.7 minutes — under two minutes of runner
+# weather between a verdict and a silent cut. 225 restores the same doctrine against the cost
+# actually measured (148.3 x 1.5), and the budgets below are what keep it from being eaten
+# again in silence.
+bound_minutes: 225
+
+# ---------------------------------------------------------------- what a healthy run costs
+# Seconds of case time, summed over every case the runner executed, from MJ_TEST_REPORT.
+# Not wall clock: wall depends on MJ_TEST_JOBS and on the runner's cores, and a budget that
+# moved with either would fail on GitHub's weather rather than on a regression anybody can
+# fix. Case time is the quantity this repository controls.
+#
+# Measured over two complete runs on 2026-09-20:
+#
+#   run 35483875283   27103 s over 223 cases   slowest 2295 s (95_executable_reference)
+#   run 35484107998   26748 s over 224 cases   slowest 2245 s (95_executable_reference)
+#
+# The budgets sit about a tenth above the worse of the two, so a suite that grows by more
+# than that fails here — loudly, with the case named — while the bound above still holds
+# roughly a third of its margin in reserve. Raising a number here is a decision that cites a
+# measurement, the way the bound above does.
+budget:
+  # every case, summed
+  cases_seconds: 30000
+  # the single slowest case; one case that runs away is invisible in the total until it is
+  # most of it, and it is also what decides whether the parallel phase can still be packed
+  slowest_case_seconds: 2700

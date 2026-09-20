@@ -183,21 +183,26 @@ jobs:
   suite:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
-    # 150, not 100. The bound is a backstop against a wedged runner, and every case already
-    # carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound only has
-    # to sit above what a healthy run costs. It did not. The suite costs 93 to 100 minutes,
-    # and two branches cut a minute apart on 2026-09-11 decided it:
+    # 225, re-measured. The bound is a backstop against a wedged runner, and every case
+    # already carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound
+    # only has to sit above what a healthy run costs. It kept not doing that. 150 was set
+    # from a 93-100 minute cost after two branches cut a minute apart on 2026-09-11 decided
+    # it — #209 finished in 92m 48s with a verdict, #208 was killed at 100m 22s without one —
+    # and that comment asked for the cost to be re-measured from the first run allowed to
+    # finish. Measured, eleven consecutive runs on 2026-09-19/20:
     #
-    #   #209  10:01:37Z -> 11:34:25Z   92m 48s   failure    (a verdict)
-    #   #208  10:02:38Z -> 11:43:00Z  100m 22s   cancelled  (killed at the bound)
+    #   94.2  98.4  121.8  126.1  142.3  142.9  144.7  145.0  145.3  145.4  148.3   minutes
     #
-    # Seventy-nine seconds of runner variance settled whether a pull request was validated
-    # at all. A margin of 7% is a coin flip, not a bound; 150 makes it about 60%. And a
-    # cancelled job carries no verdict while looking, in GitHub's own interface, exactly
-    # like one a person abandoned — which is how master's suite went days without reporting
-    # and nobody noticed. The true cost should be re-measured from the first run that is
-    # allowed to finish, and this number set from that.
-    timeout-minutes: 150
+    # The margin had fallen to 1.7 minutes, so runner weather again decided whether a pull
+    # request was validated at all — and a cancelled job carries no verdict while looking, in
+    # GitHub's own interface, exactly like one a person abandoned. 225 restores the same ~50%
+    # doctrine against the cost actually measured.
+    #
+    # Raising a bound only buys time, so it is not the whole change: .ai/repo/ci/suite.yaml
+    # declares this number and what a healthy run may cost in case seconds, and the
+    # suite-budget step below refuses growth while the bound still has room. One declaration,
+    # two readers — test/cases/417 refuses the workflow and the model when they disagree.
+    timeout-minutes: 225
     runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
@@ -232,6 +237,11 @@ jobs:
         run: bash test/run.sh
       - if: always()
         run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost. After the
+      # summary, so the table a reader wants is already in the job summary when this refuses.
+      - name: the suite finishes inside its bound
+        if: always()
+        run: scripts/ci/suite-budget --report suite.tsv
       - if: always()
         uses: actions/upload-artifact@v4
         with:
