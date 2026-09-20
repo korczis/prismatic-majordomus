@@ -1,0 +1,39 @@
+# What proves each tile of the site.
+#
+# A tile is a panel, card or section that shows a fact, an example or a capability. Every
+# one of them names the test that proves what it shows, and the reader is one click from
+# it. This file is where that link is declared once; `partials/proof.html` renders it, so
+# a tile inherits the behaviour by naming its key rather than by copying a link.
+#
+# A tile declares exactly one of:
+#   tests = [...]   the repository-relative paths that prove it; each must exist
+#   none  = "..."   why it has nothing to prove — the only accepted reason is that the
+#                   tile states no fact of its own (navigation, or a heading over tiles
+#                   that each carry their own proof)
+#
+# test/cases/409_every_tile_names_its_proof.sh holds both directions: a declared path that
+# does not exist fails, and a tile whose subject has a test but shows no link fails.
+
+[tiles.cli-examples]
+shows = "the examples of one command-line command"
+tests = ["apps/majordomus-cli/tests/cli_examples.rs"]
+runs = "runs the command against the built executable and asserts what the page states"
+
+[tiles.api-operation]
+shows = "one HTTP operation, its parameters, its curl line and its responses"
+tests = ["apps/majordomus-cli/tests/http_serve.rs"]
+runs = "replays the route with these values against a server on a real socket"
+
+[tiles.command-demonstration]
+shows = "a recorded session of one shell command"
+tests = ["test/cases/34_command_fixtures.sh"]
+runs = "replays the fixture and compares it with what the command prints"
+
+[tiles.use-case-evidence]
+shows = "the steps of a use case, each with the output its run captured"
+tests = ["test/cases/94_use_cases.sh"]
+runs = "runs every scenario and refuses a step whose recorded output is not what it produced"
+
+[tiles.registry-nav]
+shows = "the sections of the registry"
+none = "navigation only: it names pages and states no fact of its own"
