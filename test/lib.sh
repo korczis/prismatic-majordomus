@@ -1,5 +1,23 @@
 # Sourced by every test case. Provides expect_exit / expect_grep / expect_no_grep.
 LAST_OUT=""
+
+# The exit status a case uses to say it declined to run. It is not 0 and it is not 1: the
+# runner maps it to SKIP, and every other non-zero status stays a failure.
+#
+# A case that cannot meet a precondition -- no jq, no zola, no built executable -- used to
+# say so with `echo "    skip: ..."; exit 0`, and exit 0 is the word the runner writes for a
+# case that ran and asserted everything it was written to assert. The two then became one
+# `ok` in the TSV, `majordomus evidence record` entered that `ok` into the ledger, and the
+# claim the case proves read as supported on the strength of a run that proved nothing. The
+# ledger already had the word for this (`Outcome::Skip`, which does not prove); what was
+# missing was a runner that could ever write it.
+#
+#   command -v jq >/dev/null 2>&1 || skip "no jq"
+MJ_SKIP_STATUS=4
+skip() {
+  printf '    skip: %s\n' "$*"
+  exit "$MJ_SKIP_STATUS"
+}
 expect_exit() {
   local want="$1"; shift
   local got=0
@@ -93,7 +111,7 @@ rust_bin() {
 }
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
-rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
+rust_bin_exit() { [ "$1" = 3 ] && skip "no cargo and no MAJORDOMUS_BIN"; exit 1; }
 
 # The whole workflow declaration of this repository, written to a file a case can grep.
 #

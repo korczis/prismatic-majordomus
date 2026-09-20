@@ -6,7 +6,7 @@
 # runner with a private harness of throwaway cases.
 . "$ROOT/test/lib.sh"
 PLAN="$ROOT/scripts/ci-plan"; VERDICT="$ROOT/scripts/ci/verdict"; MODEL="$ROOT/.ai/repo/ci/gates.yaml"
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq absent"
 plan() { printf '%s\n' "$@" | "$PLAN" --files - ; }
 selected() { plan "$@" | jq -r '.selected | join(" ")'; }
 # the same plan, asked for the gates whose runner is not available on demand (the macOS ones):

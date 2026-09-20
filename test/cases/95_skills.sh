@@ -195,7 +195,7 @@ expect_grep 'skills: 2 discovered, 2 valid'
 expect_exit 12 "$MJ" skills show omega
 
 # ---------------------------------------------------------------- the site is a projection of the same catalogue
-command -v jq >/dev/null || { echo "    (jq absent: the site half is skipped)"; exit 0; }
+command -v jq >/dev/null || skip "(jq absent: the site half is skipped)"
 F="$S/site"; fixture_repo "$F" AGENTS.md docs
 rm -rf "$F/.ai/repo/skills"; mkdir -p "$F/.ai/repo/skills"
 cp -R "$ROOT/.ai/repo/skills/README.md" "$F/.ai/repo/skills/" 2>/dev/null || true

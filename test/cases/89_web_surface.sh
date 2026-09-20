@@ -20,7 +20,7 @@
 # claims: web-namespaces-reserved
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "no curl"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE

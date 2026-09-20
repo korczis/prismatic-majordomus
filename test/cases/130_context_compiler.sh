@@ -19,8 +19,8 @@
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
+command -v curl >/dev/null 2>&1 || skip "no curl"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj130.XXXXXX")"
