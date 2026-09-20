@@ -11,7 +11,7 @@
 #
 # Skips itself when cargo is absent, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj93.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 # the executable MAJORDOMUS_BIN names, or the one rust_bin builds when it names none
 RB="$(rust_bin)" || rust_bin_exit $?

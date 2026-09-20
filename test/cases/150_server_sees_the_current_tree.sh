@@ -23,8 +23,8 @@
 # repository's.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: curl not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
+command -v curl >/dev/null 2>&1 || skip "curl not installed"
 
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 MAJORDOMUS_LOG=warn; export MAJORDOMUS_LOG

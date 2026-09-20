@@ -31,7 +31,11 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
-pass=0; fail=0; failed_names=""
+pass=0; fail=0; skipped=0; failed_names=""
+# The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
+# Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
+# number whose only job is to be neither 0 nor a failure.
+MJ_SKIP_STATUS=4
 
 # ---------------------------------------------------------------- one case
 # Runs one case in a fresh repository. The case's output streams through; the status is
@@ -76,7 +80,7 @@ run_case() {
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then
-    wait "$pid" || rc=1
+    wait "$pid" || rc=$?
   else
     waited=0
     while kill -0 "$pid" 2>/dev/null; do
@@ -94,10 +98,18 @@ run_case() {
       fi
       sleep 1; waited=$((waited+1))
     done
-    wait "$pid" || rc=1
+    wait "$pid" || rc=$?
   fi
   rm -rf "$T"
-  return "$rc"
+  # Only two statuses mean anything to the caller besides 0: the skip the case declared, and
+  # failure. A case's own exit 2 or 3 is a failure of that case and must not be read as this
+  # function's "the fixture could not be set up" or "the bound fired", which are the
+  # runner's own words and are returned above.
+  case "$rc" in
+    0) return 0 ;;
+    "$MJ_SKIP_STATUS") return 4 ;;
+    *) return 1 ;;
+  esac
 }
 verdict() {   # name status seconds phase -> counts it, prints its line, records it
   local name="$1" rc="$2" sec="$3" phase="$4"
@@ -105,9 +117,13 @@ verdict() {   # name status seconds phase -> counts it, prints its line, records
     0) pass=$((pass+1)); echo "ok   $name" ;;
     2) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name (setup)" ;;
     3) fail=$((fail+1)); failed_names="$failed_names $name"; echo "TIMEOUT $name" ;;
+    4) skipped=$((skipped+1)); echo "skip $name" ;;
     *) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name" ;;
   esac
-  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; *) word=FAIL ;; esac
+  # The word the ledger reads back. A skip is written as a skip: `majordomus evidence
+  # record` maps it to an outcome that does not prove, so a case that declined can never
+  # enter the ledger as the proof of the claim it names.
+  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; 4) word=SKIP ;; *) word=FAIL ;; esac
   [ -n "${report:-}" ] && printf '%s\t%s\t%s\t%s\n' "$name" "$word" "$sec" "$phase" >> "$report"
   return 0
 }
@@ -125,6 +141,7 @@ if [ "${MJ_TEST_WORKER:-}" = 1 ]; then
   case "$rc" in
     0) printf 'ok      %s  %ss\n' "$name" "$sec" ;;
     3) printf 'TIMEOUT %s  %ss\n' "$name" "$sec" ;;
+    4) printf 'skip    %s  %ss\n' "$name" "$sec" ;;
     *) printf 'FAIL    %s  %ss\n' "$name" "$sec" ;;
   esac
   exit 0
@@ -183,7 +200,7 @@ else
   for name in $(printf '%s\n' $parallel_names $exclusive_names | LC_ALL=C sort); do
     phase=parallel; case " $exclusive_names " in *" $name "*) phase=exclusive ;; esac
     rc="$(cat "$L/$name.rc" 2>/dev/null || echo 2)"; sec="$(cat "$L/$name.sec" 2>/dev/null || echo 0)"
-    [ "$rc" = 0 ] || [ "$rc" = 2 ] || cat "$L/$name.log" 2>/dev/null
+    [ "$rc" = 0 ] || [ "$rc" = 2 ] || [ "$rc" = 4 ] || cat "$L/$name.log" 2>/dev/null
     verdict "$name" "$rc" "$sec" "$phase"
   done
   rm -rf "$L"
@@ -192,15 +209,18 @@ else
     echo "FAIL run.sh: the checkout changed during the parallel phase: ${dirtied}— a case that writes into the checkout declares '# majordomus-exclusive: <reason>' and runs alone (or something else edited the checkout while the suite ran)"
   fi
 fi
-echo "tests: $pass passed, $fail failed"
+echo "tests: $pass passed, $fail failed, $skipped skipped"
 [ -n "$failed_names" ] && echo "failed:$failed_names"
 # A filter that matched nothing is not a pass. `run.sh 51_something` on a repository
 # without that case printed "0 passed, 0 failed" and exited 0, and that zero was read as
 # success — the same shape as a green CI that never ran the suite. Selecting a case that
 # does not exist is a usage error, not an empty success.
-if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ]; then
+# A case that declined counts as having run, here and below: `run.sh 09_site_mobile_first`
+# on a machine without zola selects a case that exists and declines, which is neither a
+# filter that matched nothing nor an empty suite.
+if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ] && [ "$skipped" = 0 ]; then
   echo "run.sh: no case matches '$only' (test/cases/$only.sh does not exist)" >&2
   exit 2
 fi
-[ "$pass" = 0 ] && [ "$fail" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
+[ "$pass" = 0 ] && [ "$fail" = 0 ] && [ "$skipped" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
 [ "$fail" = 0 ]

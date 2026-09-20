@@ -19,7 +19,7 @@
 # checkout. Several sessions share this machine and run servers of their own.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
 
 # The repository is nested one level down: its worktree container is by definition its
 # sibling, so a repository at $T would leave a container beside $T. Paths are resolved,

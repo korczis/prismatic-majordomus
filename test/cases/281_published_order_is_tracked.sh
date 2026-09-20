@@ -63,7 +63,7 @@ rec "$B" s-20260910211853-bbbb
 rec "$C" s-20260910212104-cccc
 
 ids() { jq -r '.sessions[].session_id' "$1"; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
 
 # ---------------------------------------------------------------- a clone that knows nothing
 run_quiet "$T/clean.err" "$MJ" --json session list --all > "$T/clean.json"

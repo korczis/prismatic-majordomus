@@ -1,6 +1,6 @@
 # The site data normaliser: canonical files in, stable JSON out, and --check detects drift.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip "jq absent"
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 expect_exit 0 "$T/scripts/generate-site-data"

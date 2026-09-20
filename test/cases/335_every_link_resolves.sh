@@ -10,7 +10,7 @@
 # javascript:, and a bare "#". And a shallow clone refuses to report clean rather than skip what it
 # cannot see.
 . "$ROOT/test/lib.sh"
-command -v python3 >/dev/null 2>&1 || { echo "    skip: no python3"; exit 0; }
+command -v python3 >/dev/null 2>&1 || skip "no python3"
 CHECK="$ROOT/scripts/ci/link-check"
 REPO=https://github.com/owner/fixture
 

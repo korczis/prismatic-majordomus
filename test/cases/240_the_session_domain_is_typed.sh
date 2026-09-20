@@ -28,8 +28,8 @@
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
+command -v curl >/dev/null 2>&1 || skip "no curl"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
