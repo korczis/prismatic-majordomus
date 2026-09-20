@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.8.0"
   },
-  "fingerprint": "81b3225285329f320877c7b1df4b6f36d26e4b09cebfa137b4b1afaf1b61a3cd",
+  "fingerprint": "70acacaafb32e8850c685f18a6f9c9dc87fcdaf8471d6f9a56b033572e13f0a1",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -294,7 +294,7 @@
         },
         {
           "name": "claim",
-          "objects": 175
+          "objects": 176
         }
       ],
       "rule_refs": [
@@ -558,11 +558,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 236,
+        "mcp_resources": 237,
         "http_routes": 10,
         "cli_paths": 9,
         "commands": 2,
-        "objects": 231,
+        "objects": 232,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3081,7 +3081,7 @@
         },
         {
           "name": "document",
-          "objects": 251
+          "objects": 252
         }
       ],
       "rule_refs": [
@@ -3330,11 +3330,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 304,
+        "mcp_resources": 305,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 303,
+        "objects": 304,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4035,7 +4035,7 @@
       "id": "finish-contract",
       "title": "Done is a contract, evaluated line by line and refused when unmet",
       "short_title": "Finish contract",
-      "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, and nothing is written to the record until all of them pass.",
+      "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, the task is not accepted until all of them pass, and every time it was claimed done and was not is on the record.",
       "summary": "A task starts with a declared scope and a profile; check reports whether the task is consistent with policy, scope and state; finish evaluates the policy's contract — scope respected, verification ran, state updated, no open blockers, a note present — and refuses with the reproducing command when any line fails.",
       "status": "stable",
       "weight": 80,
@@ -4071,6 +4071,7 @@
       "adrs": [],
       "claims": [
         "finish-contract",
+        "finish-refusal-is-recorded",
         "typed-outcome",
         "open-question-gate",
         "consistency-check",
@@ -4259,6 +4260,11 @@
         {
           "id": "finish-contract",
           "claim": "finish evaluates the finish contract line by line and refuses when any line is unmet",
+          "status": "guaranteed"
+        },
+        {
+          "id": "finish-refusal-is-recorded",
+          "claim": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
           "status": "guaranteed"
         },
         {
@@ -4454,13 +4460,13 @@
         "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
-        "claims": 8,
+        "claims": 9,
         "use_cases": 3,
         "moments": 20
       },
       "evidence": {
         "claims": {
-          "guaranteed": 8
+          "guaranteed": 9
         },
         "modules": {
           "behaviorally_verified": 2
@@ -9512,7 +9518,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (175)",
+        "title": "claim (176)",
         "features": [
           "declare-once"
         ]
@@ -10439,28 +10445,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1479,
+    "capabilities": 1481,
     "builtin": 113,
-    "declarative": 1366,
+    "declarative": 1368,
     "modules": 37,
     "mcp_tools": 110,
-    "mcp_resources": 1407,
+    "mcp_resources": 1409,
     "http_routes": 112,
     "cli_commands": 116,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1366,
+    "objects": 1368,
     "by_kind": {
       "adr": 51,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 175,
+      "claim": 176,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 251,
+      "document": 252,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
