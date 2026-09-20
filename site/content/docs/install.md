@@ -10,7 +10,7 @@ source = "docs/INSTALL.md"
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/install/INSTALL.md.in (the prose) and share/distribution.yaml (every platform, name and URL);
      regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.1 -->
+     Generator: majordomus-cli 0.8.0 -->
 
 ## Quick install
 
