@@ -49,7 +49,7 @@ outcome: "An outcome."
 acceptance_criteria:
   - It is reached
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 claims:
@@ -69,7 +69,7 @@ scope:
 acceptance_criteria:
   - Done
 validation:
-  - true
+  - "true"
 evidence_required:
   - proof
 EOF
