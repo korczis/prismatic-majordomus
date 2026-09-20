@@ -41,11 +41,17 @@ fresh() {
 <div data-trust-key="verify"><dt>confirm</dt><dd>majordomus --version</dd></div>
 <div data-trust-key="commit"><dt>commit</dt><dd>abcdef1</dd></div>
 <div data-trust-key="use-cases"><dt>use cases</dt><dd>3</dd><dd>2 areas</dd></div>
-</dl></section>
+</dl>
+<div data-surfaces x-data="{}"><select data-surface-picker><option value="one.show" selected>one.show</option></select>
+<dl><div><dd><a data-surface-id="one.show" href="/r/">one.show</a></dd></div><div><dd data-surface="cli">majordomus one show</dd></div><div><dd><a data-surface="http" href="/docs/api/">GET /api/v1/one</a></dd></div><div><dd data-surface="mcp">majordomus_one</dd></div></dl></div></section>
 <section id="how"><dl><dt>x</dt><dd>7</dd></dl></section>
 <section id="install"><code>curl -fsSL https://x.test/install.sh | sh</code> then <code>majordomus init</code>, check with <code>majordomus --version</code> <a href="/getting-started/">go</a></section>
 </main></body></html>
 HTML
+  # one capability on every surface, and the slice the picker fetches (case 406 exercises these)
+  printf '%s\n' '{"registry":{"builtin":[{"id":"one.show","exposure":{"cli":{"path":["one","show"]},"http":{"method":"GET","path":"/api/v1/one"},"mcp":{"tool":"majordomus_one"}}}]}}' > "$F/site/data/registry/registry.json"
+  mkdir -p "$F/site/public/graphs"
+  printf '%s\n' '[{"id":"one.show","cli":"majordomus one show","http":{"method":"GET","path":"/api/v1/one"},"mcp":"majordomus_one"}]' > "$F/site/public/graphs/surfaces.json"
   printf '<html><head><title>plan</title></head><body>plan</body></html>\n' > "$F/site/public/plan/index.html"
   printf '<html><head><title>i</title><meta name="robots" content="noindex"></head><body>i</body></html>\n' > "$F/site/public/plan/i0001/index.html"
   printf '<html><head><title>g</title></head><body>g</body></html>\n' > "$F/site/public/features/good/index.html"
@@ -65,7 +71,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty install runtime providers trust weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty install runtime providers trust surfaces weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
