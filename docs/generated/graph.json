@@ -6284,7 +6284,7 @@
           "implementation": "test/mesh-lab/run",
           "responsibility": "none",
           "source": "docs/MESH.md",
-          "test": "test/mesh-lab/run"
+          "test": "test/cases/414_mesh_lab_evidence.sh"
         }
       },
       {
@@ -6331,7 +6331,7 @@
           "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
           "responsibility": "none",
           "source": "docs/MESH.md",
-          "test": "test/cases/130_mesh.sh"
+          "test": "apps/majordomus-cli/tests/mesh.rs"
         }
       },
       {
@@ -33297,6 +33297,13 @@
         "source": "test/cases/40_project_model.sh"
       },
       {
+        "id": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/414_mesh_lab_evidence.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F414_mesh_lab_evidence.sh",
+        "source": "test/cases/414_mesh_lab_evidence.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/41_project_status.sh",
         "kind": "test",
         "label": "test/cases/41_project_status.sh",
@@ -41930,11 +41937,6 @@
       },
       {
         "source": "majordomus://claim/mesh-network-acceptance",
-        "target": "file:test/mesh-lab/run",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/mesh-network-acceptance",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -41942,6 +41944,11 @@
         "source": "majordomus://claim/mesh-network-acceptance",
         "target": "majordomus://document/docs/MESH.md",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-network-acceptance",
+        "target": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-observation-not-authority",
@@ -41990,6 +41997,11 @@
       },
       {
         "source": "majordomus://claim/mesh-one-registry",
+        "target": "file:apps/majordomus-cli/tests/mesh.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-one-registry",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -41997,11 +42009,6 @@
         "source": "majordomus://claim/mesh-one-registry",
         "target": "majordomus://document/docs/MESH.md",
         "kind": "defined_in"
-      },
-      {
-        "source": "majordomus://claim/mesh-one-registry",
-        "target": "majordomus://test/test/cases/130_mesh.sh",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-repository-isolation",
@@ -52264,6 +52271,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/41_project_status.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -56005,8 +56017,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1784,
-      "edges": 3992,
+      "nodes": 1785,
+      "edges": 3993,
       "acyclic": true,
       "truncated": false
     }

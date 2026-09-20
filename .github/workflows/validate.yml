@@ -536,6 +536,13 @@ jobs:
         run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
       - name: the lab
         run: MESH_LAB_BIN="$PWD/apps/majordomus-cli/target/debug/majordomus" scripts/ci/timed --bound 1500 mesh-lab mesh-lab timings.tsv test/mesh-lab/run
+      # The lab does not judge itself: this reads the record it wrote and refuses anything
+      # short of a complete acceptance — a dropped scenario, a pass that measured nothing,
+      # an executable no node could name. `always()` so that a failing lab's record is read
+      # too, and the step names which half is wrong.
+      - name: the record the lab wrote
+        if: always()
+        run: scripts/ci/mesh-lab-evidence
       - if: always()
         uses: actions/upload-artifact@v4
         with:

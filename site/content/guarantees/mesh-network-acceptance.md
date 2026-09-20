@@ -30,11 +30,23 @@ ten scenarios: `multicast_discovery`, `handshake`, `repository_isolation`,
 cooperation status and log tail, write the evidence with the failing verdict, and exit 10.
 The `mesh-lab` CI job runs it on every change to the crate or the lab.
 
+The lab does not judge itself. `scripts/ci/mesh-lab-evidence` reads
+`target/mesh-lab/evidence.json` afterwards and refuses it unless the record is a complete
+acceptance: the schema it claims, an overall `passed`, all ten scenarios present with a
+`pass` verdict and a detail that says what was measured, four nodes, both transports, and
+an executable and a platform read out of a node. The CI job runs the reader as its own
+step, so a lab that exits 0 having asserted less than it promises is a red job.
+`test/cases/414_mesh_lab_evidence.sh` covers that reader — it feeds it a complete record
+and nine incomplete ones, and holds its required set equal to the scenarios
+`test/mesh-lab/run` reaches, so neither side can shrink without a failing case.
+
 ## How to see it
 
 ```
 test/mesh-lab/run                           # builds, runs, tears down (docker required)
 jq . target/mesh-lab/evidence.json
+scripts/ci/mesh-lab-evidence                # judges that record; exit 10 if it is not an acceptance
+test/run.sh 414_mesh_lab_evidence           # covers the reader, no docker needed
 MESH_LAB_KEEP=1 test/mesh-lab/run           # leaves the nodes up for inspection
 ```
 

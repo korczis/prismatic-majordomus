@@ -288,7 +288,7 @@ gates:
   - id: mesh-lab
     job: mesh-lab
     runs: test/mesh-lab/run
-    summary: separate Linux nodes on a real bridge discover each other by multicast, link, share claims and handovers, converge, and recover from a partition and a crash (project.mesh-cooperation-is-authenticated, claim mesh-network-acceptance)
+    summary: separate Linux nodes on a real bridge discover each other by multicast, link, share claims and handovers, converge, and recover from a partition and a crash, and scripts/ci/mesh-lab-evidence then judges the record the lab wrote — a complete acceptance or nothing (project.mesh-cooperation-is-authenticated, claim mesh-network-acceptance)
 
   # ADR 0032 keeps the network half of a workspace adapter out of the crate and asks for a
   # gate, "or the boundary is a sentence rather than a constraint". It reads the manifest
@@ -491,7 +491,7 @@ classes:
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050 and ADR 0067, the network lab that accepts it, and the architecture document
   - id: mesh
-    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, test/mesh-lab/**, docs/MESH.md]
+    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, scripts/ci/mesh-lab-evidence, test/mesh-lab/**, test/cases/414_mesh_lab_evidence.sh, apps/majordomus-cli/src/mesh/**, docs/MESH.md, docs/claims/mesh-*.md]
     gates: [mesh-check, mesh-lab, rust-integration, shell-suite]
 
   # projections of the registry and the policy: generate --check decides whether they are

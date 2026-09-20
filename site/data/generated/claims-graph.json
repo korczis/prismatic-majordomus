@@ -1524,7 +1524,7 @@
       "status": "guaranteed",
       "route": "/guarantees/mesh-one-registry/",
       "external": false,
-      "note": "The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site. Since discovery protocol 2 (ADR 0067) a record is one runtime of a node, so two worktrees of one machine are two records under one key."
+      "note": "tests/mesh.rs proves the convergence to one record over a real socket, and the registry unit tests prove multi-source deduplication, replay drops, restart handling and the eviction bound; test/cases/130_mesh.sh covers the operator's path without a network and carries no part of this claim; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site. Since discovery protocol 2 (ADR 0067) a record is one runtime of a node, so two worktrees of one machine are two records under one key."
     },
     {
       "id": "claim:mesh-cooperation-links",
@@ -1578,7 +1578,7 @@
       "status": "guaranteed",
       "route": "/guarantees/mesh-network-acceptance/",
       "external": false,
-      "note": "Four containers on one docker bridge, no seeds; nine scenarios with measured timings written to target/mesh-lab/evidence.json; the mesh-lab CI job runs it. One layer-2 segment and one kernel — not a routed, NATed or WAN topology; physical machines are a documented manual procedure."
+      "note": "Four containers on one docker bridge, no seeds; ten scenarios with measured timings written to target/mesh-lab/evidence.json; the mesh-lab CI job runs the lab and then scripts/ci/mesh-lab-evidence, which refuses a record that is not a complete acceptance — the lab does not judge itself. Case 414 covers that reader and holds its required set equal to the scenarios the lab reaches. One layer-2 segment and one kernel — not a routed, NATed or WAN topology; physical machines are a documented manual procedure."
     },
     {
       "id": "claim:mesh-observation-not-authority",
@@ -2801,13 +2801,6 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_archive.sh"
     },
     {
-      "id": "test:test/cases/130_mesh.sh",
-      "kind": "test",
-      "label": "test/cases/130_mesh.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_mesh.sh"
-    },
-    {
       "id": "test:test/cases/131_models.sh",
       "kind": "test",
       "label": "test/cases/131_models.sh",
@@ -3009,6 +3002,13 @@
       "label": "test/cases/40_project_model.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/40_project_model.sh"
+    },
+    {
+      "id": "test:test/cases/414_mesh_lab_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/414_mesh_lab_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/414_mesh_lab_evidence.sh"
     },
     {
       "id": "test:test/cases/41_project_status.sh",
@@ -3275,13 +3275,6 @@
       "label": "test/cases/99_adr.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/99_adr.sh"
-    },
-    {
-      "id": "test:test/mesh-lab/run",
-      "kind": "test",
-      "label": "test/mesh-lab/run",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/mesh-lab/run"
     }
   ],
   "edges": [
@@ -5852,7 +5845,7 @@
     },
     {
       "source": "claim:mesh-one-registry",
-      "target": "test:test/cases/130_mesh.sh",
+      "target": "test:apps/majordomus-cli/tests/mesh.rs",
       "kind": "proved_by"
     },
     {
@@ -5882,7 +5875,7 @@
     },
     {
       "source": "claim:mesh-network-acceptance",
-      "target": "test:test/mesh-lab/run",
+      "target": "test:test/cases/414_mesh_lab_evidence.sh",
       "kind": "proved_by"
     },
     {
