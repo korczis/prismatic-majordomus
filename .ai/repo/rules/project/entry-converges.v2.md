@@ -7,7 +7,7 @@ description: An agent entering the repository is owed a ready shared server befo
 statement: Both entry paths converge on one ready shared server through one implementation, neither builds nor ensures from a stale executable nor waits for readiness nor exits non-zero, the entry file starts nothing itself and makes one call, entry stays inside a declared budget, the briefing has one author, and a server nobody owns has a bounded life.
 status: active
 class: blocking
-depends_on: [project.envrc-is-an-adapter@2, project.shared-server-resilience@1, project.interfaces-are-projections@1, project.the-lease-is-read-once@1, project.every-wait-is-bounded@1]
+depends_on: [project.envrc-is-an-adapter@2, project.shared-server-resilience@1, project.interfaces-are-projections@1, project.the-lease-is-read-once@1, project.every-wait-is-bounded@2]
 tags: [entry, mcp, environment, enforcement, performance]
 
 x-majordomus:

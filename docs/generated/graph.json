@@ -28246,7 +28246,7 @@
             "project.work-is-claimed-before-it-is-built@1",
             "project.destructive-sweeps-fail-closed@1",
             "project.reclaim-only-what-you-own@1",
-            "project.every-wait-is-bounded@1"
+            "project.every-wait-is-bounded@2"
           ],
           "tags": [
             "operations",
@@ -28379,15 +28379,15 @@
         }
       },
       {
-        "id": "majordomus://rule/project.commands-run-non-interactively@1",
+        "id": "majordomus://rule/project.commands-run-non-interactively@2",
         "kind": "rule",
-        "label": "project.commands-run-non-interactively@1",
+        "label": "project.commands-run-non-interactively@2",
         "summary": "A command runs with nobody at the keyboard",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.commands-run-non-interactively%401",
-        "source": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.commands-run-non-interactively%402",
+        "source": ".ai/repo/rules/project/commands-run-non-interactively.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
             "project.portable-shell@1",
             "project.execution-state-is-authoritative@1"
@@ -28635,7 +28635,7 @@
             "project.shared-server-resilience@1",
             "project.interfaces-are-projections@1",
             "project.the-lease-is-read-once@1",
-            "project.every-wait-is-bounded@1"
+            "project.every-wait-is-bounded@2"
           ],
           "tags": [
             "entry",
@@ -28693,15 +28693,15 @@
         }
       },
       {
-        "id": "majordomus://rule/project.every-wait-is-bounded@1",
+        "id": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "rule",
-        "label": "project.every-wait-is-bounded@1",
+        "label": "project.every-wait-is-bounded@2",
         "summary": "Every wait is bounded",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.every-wait-is-bounded%401",
-        "source": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.every-wait-is-bounded%402",
+        "source": ".ai/repo/rules/project/every-wait-is-bounded.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
             "project.execution-state-is-authoritative@1",
             "project.never-reported-is-not-green@1"
@@ -38577,7 +38577,7 @@
       },
       {
         "source": "majordomus://adr/adr-0039",
-        "target": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "majordomus://rule/project.commands-run-non-interactively@2",
         "kind": "put_in_force"
       },
       {
@@ -38587,7 +38587,7 @@
       },
       {
         "source": "majordomus://adr/adr-0039",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "put_in_force"
       },
       {
@@ -39232,7 +39232,7 @@
       },
       {
         "source": "majordomus://adr/adr-0055",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "put_in_force"
       },
       {
@@ -49622,7 +49622,7 @@
       },
       {
         "source": "majordomus://rule/project.accumulation-is-measured@2",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "depends_on"
       },
       {
@@ -49706,17 +49706,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "majordomus://rule/project.execution-state-is-authoritative@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "majordomus://rule/project.portable-shell@1",
         "kind": "depends_on"
       },
@@ -49862,7 +49862,7 @@
       },
       {
         "source": "majordomus://rule/project.entry-converges@2",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "depends_on"
       },
       {
@@ -49921,17 +49921,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "source": "majordomus://rule/project.every-wait-is-bounded@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "source": "majordomus://rule/project.every-wait-is-bounded@2",
         "target": "majordomus://rule/project.execution-state-is-authoritative@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "source": "majordomus://rule/project.every-wait-is-bounded@2",
         "target": "majordomus://rule/project.never-reported-is-not-green@1",
         "kind": "depends_on"
       },
