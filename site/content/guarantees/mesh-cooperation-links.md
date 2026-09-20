@@ -1,7 +1,7 @@
 +++
 title = "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible"
 description = "Being heard on the network is not being linked. A runtime that wants to cooperate"
-weight = 182
+weight = 183
 [extra]
 claim_id = "mesh-cooperation-links"
 status = "guaranteed"

@@ -314,9 +314,10 @@ it, and must not be built twice. F, G, H follow.
 Delete or merge:
 
 - the four hand parsers of the lease (item 13): done for the executable's three by
-  `LeaseFile::read`; the two shell readers remain until stage 09;
-- `lib/context.sh`'s own lease reader and board fetch (`:344-370`), once the executable
-  reports the board and the shell tool asks it — one reader, not two.
+  `LeaseFile::read`, and ~~the two shell readers remain until stage 09~~ — they moved in
+  `534e8fb7bc` onto `serve status`, and `scripts/ci/lease-reader-check` reports one reader;
+- ~~`lib/context.sh`'s own lease reader~~ (moved in `534e8fb7bc`) and its board fetch,
+  once the executable reports the board and the shell tool asks it — one reader, not two.
 - `.just/serve.just:12-20` (`mcp-status`, `open`) parsing the lease with `sed`; the recipes
   stay and call the status command.
 - the four independent readiness answers (P0 item 5); one remains and the others call it.
@@ -363,7 +364,7 @@ Preserve, and build on:
 | 06 | the Codex and Gemini lifecycle adapters (data in `share/providers.yaml`, not code) | `feature/lifecycle-adapters` | parallel |
 | 07 | rule `project.entry-converges` with a gate; `docs/ENTRY.md`; `HARDCODING_LEDGER.yaml` rows for item 15; the bootstrap template names the launcher | `feature/entry-convergence` | with 03 |
 | 08 | cold start through `.mcp.json` on the default port as an exclusive case; storm; crash at the shell level; two worktrees, one server; two providers; drift injection into the board | `feature/entry-gates` | after 05 |
-| 09 | delete the readers in `lib/context.sh` and `.just/serve.just`; ~~the three readiness answers~~ (named, not merged: `feature/health-names-the-server`, with the `server` check on `health.report`); the documents in item 14 | `feature/entry-convergence`, `feature/health-names-the-server` | last |
+| 09 | ~~delete the readers in `lib/context.sh` and `.just/serve.just`~~ (done early, in `534e8fb7bc`, with the rule `project.the-lease-is-read-once`, the gate `scripts/ci/lease-reader-check` and case 110); ~~the three readiness answers~~ (named, not merged: `feature/health-names-the-server`, with the `server` check on `health.report`); the documents in item 14 | `feature/entry-convergence`, `feature/health-names-the-server` | last |
 
 </div>
 

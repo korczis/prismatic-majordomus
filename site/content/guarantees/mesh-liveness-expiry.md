@@ -1,7 +1,7 @@
 +++
 title = "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate"
 description = "Presence is current, never \"seen once this morning\". A runtime killed without a shutdown"
-weight = 185
+weight = 186
 [extra]
 claim_id = "mesh-liveness-expiry"
 status = "guaranteed"

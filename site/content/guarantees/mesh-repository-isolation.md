@@ -1,7 +1,7 @@
 +++
 title = "Runtimes serving different repositories never form a cooperative link, even when they discover each other"
 description = "Two Majordomus servers on the same network, same version, same trusted keys — one serving"
-weight = 184
+weight = 185
 [extra]
 claim_id = "mesh-repository-isolation"
 status = "guaranteed"

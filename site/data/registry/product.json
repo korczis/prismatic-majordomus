@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.8.0"
   },
-  "fingerprint": "a62894a784c3e84d306595ab49aaa8499871c43c7fdc61d2005b5fe4e23435b3",
+  "fingerprint": "824657e22fc63713e5822a1117584e6a860976346c614df8f2b8e233887e5b8c",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -294,7 +294,7 @@
         },
         {
           "name": "claim",
-          "objects": 181
+          "objects": 182
         }
       ],
       "rule_refs": [
@@ -558,11 +558,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 242,
+        "mcp_resources": 243,
         "http_routes": 10,
         "cli_paths": 9,
         "commands": 2,
-        "objects": 237,
+        "objects": 238,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -1021,7 +1021,7 @@
         },
         {
           "id": "cli-documentation-executable",
-          "claim": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+          "claim": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
           "status": "guaranteed"
         }
       ],
@@ -2863,7 +2863,7 @@
         },
         {
           "id": "no-transcripts",
-          "claim": "Handovers carry durable facts, never conversation transcripts",
+          "claim": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
           "status": "guaranteed"
         },
         {
@@ -3261,7 +3261,7 @@
         },
         {
           "name": "document",
-          "objects": 257
+          "objects": 258
         }
       ],
       "rule_refs": [
@@ -3510,11 +3510,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 311,
+        "mcp_resources": 312,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 310,
+        "objects": 311,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4215,7 +4215,7 @@
       "id": "finish-contract",
       "title": "Done is a contract, evaluated line by line and refused when unmet",
       "short_title": "Finish contract",
-      "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, and nothing is written to the record until all of them pass.",
+      "headline": "A worker does not get to define its own successful completion: every line of the finish contract is printed pass or fail, the task is not accepted until all of them pass, and every time it was claimed done and was not is on the record.",
       "summary": "A task starts with a declared scope and a profile; check reports whether the task is consistent with policy, scope and state; finish evaluates the policy's contract — scope respected, verification ran, state updated, no open blockers, a note present — and refuses with the reproducing command when any line fails.",
       "status": "stable",
       "weight": 80,
@@ -4251,6 +4251,7 @@
       "adrs": [],
       "claims": [
         "finish-contract",
+        "finish-refusal-is-recorded",
         "typed-outcome",
         "open-question-gate",
         "consistency-check",
@@ -4439,6 +4440,11 @@
         {
           "id": "finish-contract",
           "claim": "finish evaluates the finish contract line by line and refuses when any line is unmet",
+          "status": "guaranteed"
+        },
+        {
+          "id": "finish-refusal-is-recorded",
+          "claim": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
           "status": "guaranteed"
         },
         {
@@ -4634,13 +4640,13 @@
         "enforced_rules": 5,
         "docs": 2,
         "adrs": 0,
-        "claims": 8,
+        "claims": 9,
         "use_cases": 3,
         "moments": 20
       },
       "evidence": {
         "claims": {
-          "guaranteed": 8
+          "guaranteed": 9
         },
         "modules": {
           "behaviorally_verified": 2
@@ -9692,7 +9698,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (181)",
+        "title": "claim (182)",
         "features": [
           "declare-once"
         ]
@@ -10627,28 +10633,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1507,
+    "capabilities": 1512,
     "builtin": 129,
-    "declarative": 1378,
+    "declarative": 1383,
     "modules": 37,
     "mcp_tools": 124,
-    "mcp_resources": 1419,
+    "mcp_resources": 1424,
     "http_routes": 128,
     "cli_commands": 129,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1378,
+    "objects": 1383,
     "by_kind": {
       "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 181,
+      "claim": 182,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 257,
+      "document": 258,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -10665,7 +10671,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 221,
+      "test": 224,
       "use-case": 46,
       "workspace": 1
     },

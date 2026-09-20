@@ -398,29 +398,6 @@ jobs:
       - name: probe the site in a browser
         if: needs.plan.outputs.site_probe == 'true'
         run: CHROME_BIN=google-chrome SITE_PROBE_JOBS=4 scripts/ci/timed --bound 2700 site-probe site-probe timings.tsv scripts/site-probe
-      # Every discovered page at every width the compiled theme implies, in a browser,
-      # against the responsive, semantic, component and WCAG invariants. It drives the
-      # repository's own server, so it needs the executable; the Rust cache makes that a
-      # restore rather than a build in nearly every run.
-      - id: rust
-        if: needs.plan.outputs.ui_audit == 'true'
-        uses: ./.github/actions/setup-rust
-      - name: the executable the audit drives
-        if: needs.plan.outputs.ui_audit == 'true'
-        run: |
-          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
-          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
-      - name: audit the UI in a browser
-        if: needs.plan.outputs.ui_audit == 'true'
-        run: scripts/ci/timed --bound 2700 ui-audit ui-audit timings.tsv scripts/ui audit --report
-      - if: always() && needs.plan.outputs.ui_audit == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-audit
-          path: |
-            target/web/run-ui.json
-            target/web/tests/ui
-          retention-days: 14
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()
@@ -458,6 +435,50 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-interactions
+          path: timings.tsv
+          retention-days: 14
+
+  # ----------------------------------------------------------------- ui
+  # Every discovered page at every width the compiled theme implies, in a browser, against the
+  # responsive, semantic, component and WCAG invariants. Its own job, for the reason the
+  # interactions job has one: in the site job the audit started after about 30 minutes of
+  # build, check and probe, then took 1,042 s and 1,155 s over 4,151 visits (runs 35171586937
+  # and 35156274863), and on most runs of 2026-09-16 and 17 the job reached its 50-minute bound
+  # mid-audit and was reported cancelled with no finding. It drives the repository's own server,
+  # so it needs the executable; the Rust cache makes that a restore in nearly every run.
+  ui:
+    needs: plan
+    if: needs.plan.outputs.ui_audit == 'true'
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: site
+        uses: ./.github/actions/setup-site
+      - name: build the site
+        run: scripts/ci/timed --bound 2400 ui-audit site-build timings.tsv scripts/site-build --no-data
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable the audit drives
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - name: audit the UI in a browser
+        run: scripts/ci/timed --bound 2400 ui-audit ui-audit timings.tsv scripts/ui audit --report
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-audit
+          path: |
+            target/web/run-ui.json
+            target/web/tests/ui
+          retention-days: 14
+      - if: always()
+        run: scripts/ci/summary --job ui --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-ui
           path: timings.tsv
           retention-days: 14
 
@@ -637,7 +658,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, cockpit, mesh-lab, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

@@ -191,8 +191,8 @@ gates:
   - id: claim-proof
     job: structure
     always: true
-    runs: scripts/ci/claim-proof-check
-    summary: a claim marked guaranteed names a test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and the set may not grow
+    runs: scripts/ci/claim-proof-check --strict
+    summary: every claim marked guaranteed names a runnable test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and with the debt at zero any exception fails
 
   - id: rust-quality
     job: structure
@@ -361,8 +361,10 @@ gates:
     runs: scripts/site-build --no-data && scripts/interaction-probe
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
+  # A job of its own for the same reason as interaction-probe: after the site job's build, check and
+  # probe, the audit no longer fit that job's bound and was killed mid-run.
   - id: ui-audit
-    job: site
+    job: ui
     requires: [site-build]
     runs: scripts/ui audit --report
     summary: every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui

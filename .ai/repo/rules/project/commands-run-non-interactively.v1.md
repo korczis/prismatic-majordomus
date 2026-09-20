@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.portable-shell@1, project.execution-state-is-authoritative@1]
 tags: [shell, process, agents]
+
+x-majordomus:
+  tests: [test/cases/08_no_forbidden_constructs.sh]
 ---
 
 # Rationale
@@ -54,12 +57,18 @@ flag decided in advance rather than as a prompt answered by whoever happens to b
 
 # Failure behaviour
 
-Advisory today. The mechanical form — a scan of this repository's scripts and workflows for
-the interactive constructs named above, in the manner of
-`test/cases/08_no_forbidden_constructs.sh` — is the follow-up recorded in ADR 0039 and would
-make this rule blocking. Until it exists, review decides.
+`test/cases/08_no_forbidden_constructs.sh` fails when anything that runs unattended — `scripts/`,
+`lib/`, the suite, `bin/` and the CI definitions — starts one of the constructs named above at
+command position: a pager at the end of a pipe, an editor, a full-screen monitor, a `read -p`
+prompt, an interactive git mode, `npx` without `--yes`, an interactive login, `sudo` that may ask
+(a hosted runner's sudo cannot, so workflows are exempt from that one), or a container given a
+terminal. The finding names the construct, the file and the line. The scan is tested against
+itself first: each construct is planted in a fixture and must be found, and the prose and
+non-interactive forms beside it must not be.
+
+What the scan cannot see stays with review: a program whose documented behaviour is to wait for
+a keypress but whose name is not on the list, and a command a person runs by hand.
 
 # Verification
 
-Review. `test/cases/08_no_forbidden_constructs.sh` already scans for constructs the repository
-forbids and is where the interactive-command scan belongs when it is written.
+`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there.

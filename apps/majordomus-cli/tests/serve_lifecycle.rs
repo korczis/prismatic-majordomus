@@ -1,5 +1,6 @@
 //! The server's lifecycle as a person or a hook converges on it: `serve ensure` starts one
-//! server and finds it the next time, three at once share one, a stale lease and a killed
+//! server and finds it the next time, three at once start one process and share it, a start
+//! in progress holds another off while a dead one does not, a stale lease and a killed
 //! server are both recovered, an idle server ends by itself, a taken port is not a failure,
 //! `serve stop` ends the server this checkout's lease names and leaves another checkout's
 //! alone.
@@ -160,6 +161,18 @@ fn three_ensures_at_once_share_one_server() {
     let (_, s) = get(urls.iter().next().unwrap(), "/api/v1/server").unwrap();
     let s: Value = serde_json::from_str(&s).unwrap();
     assert_eq!(s["servers"].as_array().unwrap().len(), 1);
+    // One call started a process; the other two waited for its lease. Before the start
+    // claim each of the three started its own, and a loser that reached the election after
+    // `stop` below became a second server of a stopped checkout.
+    let started = answers
+        .iter()
+        .filter(|(_, v, _)| v["started"] == true)
+        .count();
+    assert_eq!(started, 1, "exactly one call starts a process: {answers:?}");
+    assert!(
+        !f.path(".ai/local/state/mcp/server.spawn").exists(),
+        "the started process released its claim once it had elected"
+    );
     // Two of the three lost the election and may still be waiting in it, ready to take the
     // lease the instant this stop frees it. That used to fail here — `stop` waited for the
     // path to be absent and never saw it absent — and the wait was raised to sixty seconds
@@ -167,7 +180,65 @@ fn three_ensures_at_once_share_one_server() {
     // whole bound either way, which is what proved the theory wrong. `stop` now waits for
     // the lease it read rather than for the path, so the default bound is honest again.
     let (code, out, err) = mj(&root, &["serve", "stop"]);
-    assert_eq!(code, 0, "stdout: {out}\nstderr: {err}");
+    assert_eq!(code, 0, "{out}{err}");
+    assert!(out.starts_with("stopped "), "{out}");
+    // a stopped checkout stays stopped: no process of this executable serves it any more
+    wait_until(
+        "every server of the checkout ends",
+        Duration::from_secs(10),
+        || server_processes(&root) == 0,
+    );
+    assert_eq!(LeaseFile::read(&lease_path(&f)), LeaseFile::Absent);
+}
+
+/// How many processes of this executable are serving the checkout at `root`, read from the
+/// process table by the arguments `ensure` starts them with — never by name alone, because
+/// other servers of other checkouts run on the same machine.
+fn server_processes(root: &Path) -> usize {
+    let out = Command::new("ps")
+        .args(["-Ao", "command="])
+        .output()
+        .expect("ps");
+    let needle = format!("{BIN} serve --repo {}", root.display());
+    String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .filter(|l| l.starts_with(&needle))
+        .count()
+}
+
+#[test]
+fn a_start_in_progress_holds_another_start_off_and_a_dead_one_does_not() {
+    let f = Fixture::new();
+    let claim = f.path(".ai/local/state/mcp/server.spawn");
+    std::fs::create_dir_all(claim.parent().unwrap()).unwrap();
+
+    // a claim naming a live process (this one) is a start somebody else is making: this
+    // call starts nothing, and says the server is not there yet
+    std::fs::write(&claim, std::process::id().to_string()).unwrap();
+    let (code, a, err) = ensure_waiting(&f.root(), 1);
+    assert_eq!(code, 10, "{a}\n{err}");
+    assert_eq!(
+        a["started"], false,
+        "a start in progress is not repeated: {a}"
+    );
+    assert_eq!(LeaseFile::read(&lease_path(&f)), LeaseFile::Absent);
+    assert_eq!(server_processes(&f.root()), 0, "no process was started");
+
+    // a claim naming a process that has ended describes nothing: it is taken over
+    let mut gone = Command::new("true").spawn().unwrap();
+    let dead = gone.id();
+    gone.wait().unwrap();
+    std::fs::write(&claim, dead.to_string()).unwrap();
+    let (code, b, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{b}\n{err}");
+    assert_eq!(b["standing"], "ready");
+    assert_eq!(
+        b["started"], true,
+        "the abandoned claim was taken over: {b}"
+    );
+    assert!(!claim.exists(), "the new server released its own claim");
+    let (code, _, _) = mj(&f.root(), &["serve", "stop"]);
+    assert_eq!(code, 0);
 }
 
 /// `serve stop` ends the server the lease named, and says so even when the path it freed is
@@ -227,6 +298,20 @@ fn stop_answers_for_the_server_it_named_even_when_the_lease_is_taken_again_at_on
     );
     assert!(taker.join().unwrap(), "the path was freed and taken again");
     let _ = std::fs::remove_file(&lease);
+}
+
+/// `serve ensure` bounded by `wait` seconds, for a call that is expected not to converge.
+fn ensure_waiting(cwd: &Path, wait: u64) -> (i32, Value, String) {
+    let wait = wait.to_string();
+    let (code, out, err) = mj(
+        cwd,
+        &[
+            "serve", "ensure", "--format", "json", "--idle", "120", "--wait", &wait,
+        ],
+    );
+    let v: Value = serde_json::from_str(&out)
+        .unwrap_or_else(|e| panic!("ensure printed no JSON ({e}): {out}\nstderr: {err}"));
+    (code, v, err)
 }
 
 #[test]

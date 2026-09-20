@@ -1,11 +1,14 @@
 # majordomus-covers: finish
 # majordomus-negative: finish
+# claims: finish-contract, typed-outcome
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib test && echo a > lib/a && echo t > test/a_test && git add . && git commit -qm base
 # --check with no task is not a failure
 expect_exit 0 "$MJ" finish --check
 expect_grep 'nothing to enforce'
+LEDGER=.ai/local/state/ledger.jsonl
+refusals() { grep -c '"event":"task.refused"' "$LEDGER" 2>/dev/null || true; }
 expect_exit 12 "$MJ" finish --outcome completed
 "$MJ" start "t1" --scope lib,test --profile debugging >/dev/null
 expect_exit 2 "$MJ" finish
@@ -18,9 +21,19 @@ expect_grep 'FAIL verification .* requires --verify-command'
 expect_grep 'FAIL note .* no handover'
 expect_grep 'finish: refused, 3 unmet'
 expect_grep '^outcome: active$' .ai/local/state/current.yaml
+# claim finish-refusal-is-recorded: the refusal is a record, naming the outcome claimed, how
+# much was unmet and which doctrines refused — not only a line on a terminal that scrolls away
+[ "$(refusals)" = 1 ] || { echo "    a refused finish left $(refusals) task.refused line(s), not 1"; exit 1; }
+expect_grep '"event":"task.refused".*"outcome":"completed".*"unmet":3.*"refused":\[[^]]*verification[^]]*\]' "$LEDGER"
+expect_no_grep '"event":"task.finished"' "$LEDGER"
 # failing verify command is recorded as a failure
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "false"
 expect_grep 'FAIL verification .* false — exit 1'
+# every refusal is its own line: the second claim of done is the second record
+[ "$(refusals)" = 2 ] || { echo "    two refused finishes left $(refusals) task.refused line(s)"; exit 1; }
+# a check asks and does not claim, so it writes nothing
+"$MJ" finish --check >/dev/null 2>&1 || true
+[ "$(refusals)" = 2 ] || { echo "    finish --check wrote a refusal; a check is a question, not a claim"; exit 1; }
 # handover supplies the note; regression test path is required by debugging profile
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
@@ -32,6 +45,14 @@ expect_grep 'OK +regression'
 expect_grep 'finish: t-.* completed'
 expect_grep '^outcome: completed$' .ai/local/state/current.yaml
 expect_grep '"event":"task.finished".*"outcome":"completed".*"majordomus.verification-integrity":"pass".*"verify":\{"command":"true","exit":0' .ai/local/state/ledger.jsonl
+# the point of the record: a task accepted after refusals is no longer indistinguishable from
+# one accepted first try — its false dones are still there, in order, before the one that held
+[ "$(refusals)" = 3 ] || { echo "    the accepted task's history lost its refusals: $(refusals) left"; exit 1; }
+last_two="$(grep -E '"event":"task\.(refused|finished)"' "$LEDGER" | tail -n 2 | sed 's/.*"event":"\([^"]*\)".*/\1/' | tr '\n' ' ')"
+[ "$last_two" = "task.refused task.finished " ] || { echo "    ledger order is '$last_two', not refused then finished"; exit 1; }
+# and history shows a refusal as what it is
+expect_exit 0 "$MJ" history --event task.refused --all
+expect_grep 'task.refused .* outcome=completed unmet='
 # finishing twice is refused; --check on a finished task passes
 expect_exit 15 "$MJ" finish --outcome completed
 expect_exit 0 "$MJ" finish --check

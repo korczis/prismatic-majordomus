@@ -16,6 +16,17 @@
 version: 1
 
 sources:
+  # The directory contracts. `init` writes `.ai/README.md` and a README.md into every section,
+  # and a file is an object only when a class names its path: without this class the
+  # contracts sat on disk while the index had never heard of them, so `context resolve`, which
+  # reads the files, and every capability that reads the index disagreed about what applies to
+  # a path. Declared first, so the precedence is also the reading order.
+  - id: context
+    kind: context
+    discovery: vcs
+    pathspec: ':(glob).ai/**/README.md'
+    required: true
+
   - id: policy
     kind: policy
     discovery: vcs

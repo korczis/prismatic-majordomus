@@ -1,5 +1,6 @@
 # majordomus-covers: plan
 # majordomus-negative: plan
+# claims: dag-validation, execution-waves
 # The dependency graph: what it refuses, what it derives, and what it draws.
 #
 # A dependency list without validation is a suggestion. Each negative case below is a

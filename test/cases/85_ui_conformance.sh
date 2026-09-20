@@ -115,6 +115,52 @@ expect_grep '^spread \["a","c","e"\]$' -           # the first, the last, and th
 expect_grep 'routes 33 nav 2 families 4 fetched 1[0-6] ' -
 expect_grep '^sample 11$' -                        # the entry, what it advertises, four per family
 
+# ------------------------------------------- a record page that carries view parameters
+# The shape one route cannot be read for: the record is in the *path* and the view is in
+# the *query*, so the query rule matches first and the record stays in the family. Six
+# records paging two tables independently are one renderer, not eighteen; filed per record
+# the audit spends its per-family budget on every one of them and its browser sweep grows
+# with the number of records, which is exactly what it is a sample to avoid.
+#
+# The pager here is bounded — first, previous, the current page's neighbours, last — which
+# is what a listing must render and is not what multiplies anything. The multiplication is
+# in the reading of the routes.
+cat > records.mjs <<'MJS'
+import { crawl, sample, collections, shape, family } from "@UI@/ui-routes.mjs";
+
+const GRAPHS = ["g0", "g1", "g2", "g3", "g4", "g5"], PAGES = 5;
+const link = (href) => `<a href="${href}">t</a>`;
+const around = (p) => [...new Set([1, Math.max(1, p - 1), p, Math.min(PAGES, p + 1), PAGES])];
+const fetchText = async (route) => {
+  if (route === "/panel") return GRAPHS.map((g) => link(`/panel/graphs/${g}`)).join("");
+  const [path, q = ""] = route.split("?");
+  if (!GRAPHS.includes(path.replace("/panel/graphs/", ""))) return null;
+  const at = new URLSearchParams(q);
+  const nodes = Number(at.get("nodes") || 1), edges = Number(at.get("edges") || 1);
+  if (nodes > PAGES || edges > PAGES) return null;
+  const to = (k, n) => { const p = new URLSearchParams(q); p.set(k, String(n)); return link(`${path}?${p}`); };
+  return [link("/panel"), ...around(nodes).map((n) => to("nodes", n)), ...around(edges).map((n) => to("edges", n))].join("");
+};
+
+const derived = await crawl({ mount: "/panel", mounts: ["/panel"], fetchText });
+const views = Object.keys(derived.families).filter((f) => f.includes("?")).sort();
+console.log(`records ${[...collections(derived.routes, "/panel")].sort().join(",")}`);
+console.log(`views ${views.length} ${views.join(" ")}`);
+console.log(`visiting ${sample(derived, 4).length} of ${derived.routes.length} truncated ${derived.truncated}`);
+console.log(`perroute ${new Set(derived.routes.filter((r) => r.includes("?")).map(family)).size}`);
+console.log(`areas ${shape("/panel/list?page=2", collections(derived.routes, "/panel"))}`);
+MJS
+sed "s|@UI@|$UI|" records.mjs > records.run.mjs
+expect_exit 0 node records.run.mjs
+# the entry's children are the surface's areas; a directory the crawl reached under more
+# than one name holds records, and only its children collapse
+expect_grep '^records /panel/graphs$' -
+expect_grep '^views 3 /panel/graphs/\*\?edges /panel/graphs/\*\?edges&nodes /panel/graphs/\*\?nodes$' -
+expect_grep '^areas /panel/list\?page$' -           # an area keeps its name, so two listings never merge
+# read one route at a time the same set is eighteen families and four times as many visits
+expect_grep '^perroute 18$' -
+expect_grep '^visiting 19 of [0-9]* truncated false$' -
+
 # and a crawled surface reaches the plan: its pages are tiered by family, because a family
 # is where the renderer changes, exactly as a directory is on a built surface
 cat > native.mjs <<'MJS'

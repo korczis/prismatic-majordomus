@@ -947,6 +947,22 @@ UC_DIR="$ROOT/$(mj_rel "$MJ_AI_DIR")/$(mj_man sections.use-cases)"; AP_DIR="$ROO
 front_json() { # markdown file -> JSON object of its front matter
   local fm; fm="$(mktemp "${TMPDIR:-/tmp}/mj.fm.XXXXXX")"
   mj_record_front "$1" > "$fm.yaml"; mj_yaml_flatten "$fm.yaml" > "$fm" || { echo "generate-site-data: $1: front matter does not parse" >&2; exit 10; }
+  flat_json "$fm"
+  rm -f "$fm" "$fm.yaml"
+}
+# a use case as the tool itself reads it: the front matter with the `# Scenario` section folded
+# in under `scenario`. The scenario moved out of the front matter into the body, and reading
+# the front matter alone left every use case scenario-less here, so every page showed it as
+# `described` with no steps while `usecase run` executed the same scenario.
+# shellcheck source=../lib/usecase.sh
+. "$ROOT/lib/usecase.sh"
+use_case_json() { # use-case markdown file -> JSON object, scenario included
+  local fl
+  fl="$(mj_uc_flat "$1")" || { echo "generate-site-data: $1: front matter does not parse" >&2; exit 10; }
+  flat_json "$fl"
+  rm -f "$fl"
+}
+flat_json() { # flattened key=value file -> nested JSON object
   jq -R -n '
     def seg: if test("^[0-9]+$") then tonumber else . end;
     reduce inputs as $l ({};
@@ -956,8 +972,7 @@ front_json() { # markdown file -> JSON object of its front matter
       | setpath($p; if $v == "[]" then []
                     elif ($p[-1] | type) == "string" and ($p[-1] | IN("exit","weight","order","max_bytes","budget_ms")) and ($v | test("^[0-9]+$")) then ($v | tonumber)
                     else $v end))
-    | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$fm"
-  rm -f "$fm" "$fm.yaml"
+    | walk(if type == "object" and (keys | all(test("^[0-9]+$"))) and (keys | length) > 0 then to_entries | sort_by(.key | tonumber) | map(.value) else . end)' "$1"
 }
 body_of() { mj_record_body "$1"; }
 # every use case: front matter, body, and the evidence of its scenario
@@ -965,7 +980,7 @@ body_of() { mj_record_body "$1"; }
 for f in "$UC_DIR"/*.md; do
   [ -f "$f" ] || continue
   grep -q '^kind: context$' "$f" && continue
-  front_json "$f" | jq -c --arg path "$(mj_rel "$f")" '. + {path: $path}' >> "$STAGE/uc.jsonl"
+  use_case_json "$f" | jq -c --arg path "$(mj_rel "$f")" '. + {path: $path}' >> "$STAGE/uc.jsonl"
   mkdir -p "$STAGE/uc-bodies"; body_of "$f" > "$STAGE/uc-bodies/$(basename "$f")"
 done
 : > "$STAGE/ap.jsonl"

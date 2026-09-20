@@ -1,7 +1,7 @@
 +++
 title = "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs"
 description = "Loopback tests prove the protocol; they cannot prove a network. The mesh lab starts four"
-weight = 187
+weight = 188
 [extra]
 claim_id = "mesh-network-acceptance"
 status = "guaranteed"
