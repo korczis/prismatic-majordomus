@@ -5,8 +5,9 @@ fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 expect_exit 0 "$T/scripts/generate-site-data"
 for f in project profiles policy capabilities lifecycle docs diagrams source context; do [ -f "$T/site/data/generated/$f.json" ]; jq -e '.schema == 1' "$T/site/data/generated/$f.json" >/dev/null; done
-# version comes from the CLI, profiles from the skeleton, claims from CLAIMS.yaml
-[ "$(jq -r .version "$T/site/data/generated/project.json")" = "$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")" ]
+# version comes from the one place it is authored (read by its one shell reader, never parsed
+# here), profiles from the skeleton, claims from CLAIMS.yaml
+[ "$(jq -r .version "$T/site/data/generated/project.json")" = "$("$ROOT/scripts/release-version")" ]
 [ "$(jq '.profiles | length' "$T/site/data/generated/profiles.json")" = "$(ls "$ROOT"/share/skeleton/profiles/*.yaml | wc -l | tr -d ' ')" ]
 # count the claims section only: docs/CLAIMS.yaml also declares its statuses as `- id:` entries
 [ "$(jq '.claims | length' "$T/site/data/generated/capabilities.json")" = "$(awk '/^claims:/{c=1;next} c&&/^  - id: /{n++} END{print n+0}' "$ROOT/docs/CLAIMS.yaml")" ]
