@@ -14,9 +14,10 @@
 #      disagree, and the one nobody reads is the one that is wrong.
 #
 #   3. The same drift one level down. test/run.sh bounds every case at 2400 s unless the
-#      case declares otherwise; by 2026-09-24 the slowest case cost up to 2416 s, and this
-#      pull request's own run failed on a case killed at that bound — while the per-case
-#      budget of 2700 s sat above it, a budget no case could reach before being killed.
+#      case declares otherwise; by 2026-09-24 the slowest case was killed at 2415-2418 s in
+#      four runs — a cost of at least that, censored by the bound — and this pull request's
+#      own run failed on one of them, while the per-case budget of 2700 s sat above the
+#      bound, a budget no case could reach before being killed.
 #
 # So: each bound is declared once and its two readers agree, a budget sits below the bound
 # it warns about, and scripts/ci/suite-budget must refuse a run that costs more than the

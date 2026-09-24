@@ -38,10 +38,13 @@ pass=0; fail=0; failed_names=""
 # 0 passed, 1 failed, 2 the fixture could not be set up.
 # The bound one case runs under: its own "# majordomus-timeout:" header when it declares
 # one, else MJ_TEST_CASE_TIMEOUT, else 3600 seconds. The slowest cases legitimately take
-# about forty minutes — 95_executable_reference cost up to 2416 s on CI on 2026-09-24 and was
-# killed at the 2400 this default used to be — so the default is generous; the point of the
-# bound is that a wedged case ends, not that a slow one is rushed. The number is declared in
-# .ai/repo/ci/suite.yaml as case_bound_seconds, and test/cases/417 holds the two together.
+# about forty minutes — on CI 95_executable_reference was killed at 2415-2418 s, the 2400 this
+# default used to be plus its grace, in four runs between 2026-09-20 and 2026-09-24, so what it
+# costs there is at least that and not yet measured — so the default is generous; the point of
+# the bound is that a wedged case ends, not that a slow one is rushed. The number is declared
+# in .ai/repo/ci/suite.yaml as case_bound_seconds, and test/cases/417 holds the two together.
+# It is where a case is killed, not what it may cost: on CI the suite job fails any case over
+# budget.slowest_case_seconds in that file, which sits below this bound.
 # Only the header block is read -- the leading run of comments, up to the first line of
 # actual script. A case that builds another case in a heredoc has the header's own text in
 # its body, and scanning the whole file made such a case inherit the bound it was writing
