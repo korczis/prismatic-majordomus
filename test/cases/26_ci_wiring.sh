@@ -158,6 +158,37 @@ for g in $(jq -r '.gates[] | select(.job != "structure") | .id' full.json); do
   awk -v j="  $job:" '$0 == j {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -qE "needs\.plan\.outputs\.$(printf '%s' "$g" | tr '-' '_') == 'true'" \
     || { echo "    job $job is not gated on the plan's output for $g"; exit 1; }
 done
+# A job's own `if:` is enough when the job carries one gate: the job runs when the gate is
+# planned and the gate is what the job does. When a job carries several, the job-level `if:`
+# satisfies a per-gate search while saying nothing about whether any step runs the gate — so
+# each gate needs its own step-level `if:`, or the job must run scripts/ci/run-plan, which
+# executes every planned gate of a job by itself. coverage-differential had neither: the
+# coverage job named it in its `if:` and ran only the floor, and the gate of a guaranteed
+# claim executed nowhere.
+for job in $(jq -r '.gates[] | select(.job != "structure") | .job' full.json | LC_ALL=C sort -u); do
+  n="$(jq -r --arg j "$job" '[.gates[] | select(.job == $j)] | length' full.json)"
+  [ "$n" -gt 1 ] || continue
+  blk="$(awk -v j="  $job:" '$0 == j {f=1; next} /^  [a-z][a-z_-]*:$/ {f=0} f' "$W")"
+  printf '%s\n' "$blk" | grep -q "run-plan .*--job $job" && continue
+  for g in $(jq -r --arg j "$job" '.gates[] | select(.job == $j) | .id' full.json); do
+    o="$(printf '%s' "$g" | tr '-' '_')"
+    printf '%s\n' "$blk" | grep -E '^      - if:|^        if:' | grep -q "needs\.plan\.outputs\.$o" \
+      || { echo "    job $job carries $n gates and no step of it is gated on $g; the job-level if would run the job without ever running this gate"; exit 1; }
+  done
+done
+
+# The step that writes the plan emits one output per gate, generated from the model; the
+# job's `outputs:` map that publishes them to the other jobs is written by hand. A gate
+# missing from that map is produced and never exposed: every `needs.plan.outputs.<gate>`
+# reading it is the empty string, the job it gates never runs, and nothing says so — which is
+# how coverage-differential, a gate of a guaranteed claim, sat wired at both ends and dead in
+# the middle. The hand-written half must cover the generated one.
+plan_outputs="$(awk '$0 == "  plan:" {f=1} f && /^    steps:/ {exit} f' "$W" | sed -n 's/^      \([a-z_]*\):.*/\1/p')"
+for g in $(jq -r '.gates[] | select(.job != "structure") | .id' full.json); do
+  printf '%s\n' "$plan_outputs" | grep -qx "$(printf '%s' "$g" | tr '-' '_')" \
+    || { echo "    the plan job publishes no output for gate $g; every job gated on it would read the empty string"; exit 1; }
+done
+
 ci_needs="$(awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | sed -n 's/^    needs: \[\(.*\)\]$/\1/p' | tr -d ' ' | tr ',' '\n')"
 for j in plan $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }

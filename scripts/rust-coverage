@@ -126,6 +126,15 @@ if [ -z "$FROM" ]; then
     printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and the export is not readable JSON\n' "$cov_status" >&2
     exit 12; }
   [ "$cov_status" = 0 ] || printf 'rust-coverage: the suite failed (cargo exit %s); the coverage below is measured from the export it still wrote\n' "$cov_status" >&2
+else
+  # --from reads a measurement another step made. In CI the floor reads the export the
+  # coverage job's one instrumented run wrote, and runs even when that run could not write
+  # one — so a missing or unreadable export is the same verdict as an instrumentation that
+  # wrote none: exit 12, the measurement could not be trusted. Not python's traceback and
+  # exit 1, which is a crashed tool wearing this gate's name.
+  { [ -s "$FROM" ] && python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$FROM" 2>/dev/null; } || {
+    printf 'rust-coverage: the measurement could not be trusted: the export %s is missing or not readable JSON\n' "$FROM" >&2
+    exit 12; }
 fi
 [ -z "$EXPORT" ] || cp "$FROM" "$EXPORT"
 

@@ -95,6 +95,16 @@ grep -q 'exit 12' "$ROOT/scripts/rust-coverage" \
   || { echo "    rust-coverage no longer declares exit 12"; exit 1; }
 grep -q 'cov_status=\$?' "$ROOT/scripts/rust-coverage" \
   || { echo "    the cargo llvm-cov call is unguarded again: a failing suite exits 101"; exit 1; }
+# The floor reads --from the export the coverage job's one instrumented run wrote, and it runs
+# even when that run wrote none (.github/workflows/validate.yml) — so a missing, empty or torn
+# export is the same 12 as an instrumentation that wrote nothing, never python's traceback
+# and exit 1.
+expect_exit 12 "$W/scripts/rust-coverage" --from "$T/no-such-export.json"
+expect_grep "the measurement could not be trusted"
+: > "$T/empty-export.json"
+expect_exit 12 "$W/scripts/rust-coverage" --from "$T/empty-export.json"
+printf '{"data": [' > "$T/torn-export.json"
+expect_exit 12 "$W/scripts/rust-coverage" --from "$T/torn-export.json"
 
 # ------------------------------- 7. the changed-line read refuses rather than reading nothing
 #
