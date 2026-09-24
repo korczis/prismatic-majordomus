@@ -2,8 +2,8 @@
 
 `majordomus serve` and `majordomus mcp` bind one shared server per repository. What that
 server serves is not written down anywhere as a list. It is **discovered**: from the
-executable's own declarations, from the site's configuration, and from a `surface.json` a
-producer writes beside its output. One resolution then feeds the router, the home page, the
+executable's own declarations, from the site's configuration, from the crate itself, and
+from a `surface.json` a producer writes beside its output. One resolution then feeds the router, the home page, the
 machine-readable index, the validator, the publication and the generated reference.
 
 The decision is
@@ -17,6 +17,7 @@ flowchart TD
   subgraph producers["PRODUCERS"]
     decl["capability! declarations"]
     config["site/config.toml"]
+    crate["the crate, apps/majordomus-cli"]
     surfacejson["target/web/&lt;id&gt;/surface.json"]
   end
   resolution["ONE RESOLUTION<br>web::discover → Topology,<br>validated, narrowed per process"]
@@ -42,6 +43,7 @@ Every path below is the mount its surface declares. Nothing in this table is typ
 |---|---|---|---|
 | `/` | `home` | This process, and everything it serves | route |
 | `/docs/` | `docs` | This repository's documentation | directory |
+| `/rustdoc/` | `rustdoc` | The crate's rustdoc reference, served and published | directory |
 | `/swagger` | `swagger` | Swagger UI over the OpenAPI document | route |
 | `/openapi.json` | `openapi` | The OpenAPI document, generated from the registry | route |
 | `/api/v1/` | `api` | The capability routes | route |
@@ -168,6 +170,26 @@ The generated tree lives under `target/web/`, which is ignored: it is derived st
 same status as every other generated tree here — reproducible, never read as source, and a
 stale artifact is a `majordomus web validate --artifacts` finding rather than a diff.
 
+## How `/rustdoc` is built, served and published
+
+The crate's rustdoc reference is available in both worlds: a running process serves it and
+the publication carries it, from the same bytes. Like `docs`, it is declared by
+discovery rather than by its `surface.json` — from the crate, so it is in the topology whether
+or not its producer has run — and the committed `docs/generated/web.json` omits its
+`built_from` for the same reason. `scripts/rust-check --doc` writes `target/web/rustdoc/`
+with the same `cargo doc` invocation the gate proves warning-free; `majordomus serve` answers
+`/rustdoc/` from it through `web::files`; `majordomus quality rustdoc` joins it against the
+crate's own inventory of exported items.
+
+Publication is composition, and composition reads the topology. `scripts/site-build` copies
+every published static surface other than the site itself into `site/public` at its mount,
+from the list in `docs/generated/web.json`, and refuses with exit 12, naming the producer, when
+one's artifact is absent. `scripts/site-check` judges the composed surfaces' presence and
+revision (section 13m) and leaves their pages to their own check. After the deploy,
+`scripts/pages verify-rustdoc` verifies the public reference against the deployed commit.
+[`RUSTDOC.md`](RUSTDOC.md) is the whole path, with the troubleshooting for each stage;
+ADR 86 is the decision.
+
 ## Static file serving
 
 `/docs/**` is served by `web::files`. A request path is decomposed into segments and every
@@ -215,4 +237,7 @@ and would make every clone report drift.
 | The home page covers every public served surface | `web::home` tests, and case 89 over a real socket |
 | `docs/generated/web.json` current | `majordomus generate --check` |
 | No origin-absolute link forces the two builds apart | `scripts/site-basepath-check` |
+| Every published static surface is in the publication, built from the site's commit | `scripts/site-build` (exit 12 naming the producer), `scripts/site-check` §13m |
+| Every exported item has its rustdoc page, and the tree is `HEAD`'s | `majordomus quality rustdoc`, the `rustdoc` gate |
+| The public reference is the deployed commit's | `scripts/pages verify-rustdoc` in `pages.yml`, the `pages-live` gate |
 | The new routes are timed | `SystemTarget::HttpHome`, `HttpSwagger`, `HttpIndex` |

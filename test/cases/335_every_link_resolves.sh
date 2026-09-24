@@ -9,6 +9,12 @@
 # commit outside the published history, a tag that does not exist, a host nothing can decide offline,
 # javascript:, and a bare "#". And a shallow clone refuses to report clean rather than skip what it
 # cannot see.
+#
+# The fixture's topology composes a surface at /ref (ADR 0086): its pages are that surface's own and
+# are not scanned — one of them carries a link to nowhere and the clean site still passes — while a
+# site page's link INTO /ref is resolved against the composed files, a missing page and a missing
+# fragment there being findings. The exemption is the topology's alone: undeclared, the same page is
+# scanned and fails; with no topology the check refuses to decide (12).
 . "$ROOT/test/lib.sh"
 command -v python3 >/dev/null 2>&1 || { echo "    skip: no python3"; exit 0; }
 CHECK="$ROOT/scripts/ci/link-check"
@@ -19,6 +25,8 @@ fresh() {
   printf 'base_url = "https://example.test"\n' > "$F/site/config.toml"
   printf '{"repository_url": "%s"}\n' "$REPO" > "$F/site/data/generated/project.json"
   printf '# guide\n' > "$F/docs/GUIDE.md"
+  mkdir -p "$F/docs/generated"
+  printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"},{"id":"ref","kind":"static-directory","mount":"/ref","artifact":"target/web/ref","availability":"both"}]}' > "$F/docs/generated/web.json"
   # the branch is named, not left to init.defaultBranch: the links below point at master
   git -C "$F" init -q -b master && git -C "$F" add -A && git -C "$F" -c user.name=t -c user.email=t@t commit -qm first
   FIRST="$(git -C "$F" rev-parse HEAD)"
@@ -31,6 +39,16 @@ fresh() {
 HTML
   printf '<!doctype html><html><body><h2 id="install">install</h2><a href="https://example.test/">home</a></body></html>' > "$F/site/public/docs/guide/index.html"
   printf 'body{}' > "$F/site/public/app.css"
+  # the composed surface: a page the site links into, by path and by fragment, and a page of its
+  # own whose broken link is that surface's business, not the site's
+  mkdir -p "$F/site/public/ref/api"
+  printf '<!doctype html><html><body><a href="/nowhere-in-ref/">x</a></body></html>' > "$F/site/public/ref/index.html"
+  printf '<!doctype html><html><body><h2 id="thing">thing</h2></body></html>' > "$F/site/public/ref/api/index.html"
+  python3 - "$F/site/public/index.html" <<'PY3'
+import sys
+p = sys.argv[1]; s = open(p).read()
+open(p, 'w').write(s.replace('</body>', '<a href="https://example.test/ref/api/#thing">reference</a></body>', 1))
+PY3
   printf '<?xml version="1.0"?><urlset><url><loc>https://example.test/</loc></url><url><loc>https://example.test/docs/guide/</loc></url></urlset>' > "$F/site/public/sitemap.xml"
 }
 # the suite runs a case under `bash -e`, so an exit the case expects is captured, never left to abort it
@@ -82,6 +100,20 @@ break_with bare '<a href="#">x</a>'
 expect_finding 10 'FAIL refused .*a bare "#" goes nowhere' 'a bare fragment'
 fresh sitemap; sed -i.bak 's|</urlset>|<url><loc>https://example.test/gone/</loc></url></urlset>|' "$F/site/public/sitemap.xml"; rm -f "$F/site/public/sitemap.xml.bak"
 expect_finding 10 'FAIL internal +/sitemap\.xml: https://example\.test/gone/ resolves to no file' 'a sitemap entry with no page'
+
+# ---------------------------------------------------------------- the composed surface
+fresh composed; run
+[ "$(cat rc.txt)" = 0 ] || { echo "    a clean site with a composed surface did not pass"; cat out.txt; exit 1; }
+expect_grep 'the 2 page\(s\) under /ref/ are composed surfaces' out.txt
+break_with intoref '<a href="https://example.test/ref/missing/">x</a>'
+expect_finding 10 'FAIL internal .*/ref/missing/ resolves to no file' 'a site link into the composed mount with no page there'
+break_with reffrag '<a href="https://example.test/ref/api/#nothing">x</a>'
+expect_finding 10 'FAIL fragment .*#nothing, which /ref/api/ does not carry' 'a site link to a fragment the composed page lacks'
+fresh undeclared
+printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"}]}' > "$F/docs/generated/web.json"
+expect_finding 10 'FAIL internal +/ref/: /nowhere-in-ref/ resolves to no file' 'a page under a mount the topology does not compose is scanned'
+fresh notopology; rm "$F/docs/generated/web.json"
+expect_finding 12 'web.json is missing' 'no topology to tell the site from a composed surface'
 
 # ---------------------------------------------------------------- a shallow clone cannot decide
 fresh deep; git -C "$F" -c user.name=t -c user.email=t@t commit -q --allow-empty -m second

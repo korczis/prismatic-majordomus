@@ -10,9 +10,19 @@
 # the code that is under test rather than over the code plus the tests. One script, so that
 # CI and a person run the same gates in the same order.
 #
+# The rustdoc step is a gate and a producer at once. The pages it proves warning-free are the
+# pages the public site serves at /rustdoc (ADR 0086), so wherever it runs its output is
+# handed off as the `rustdoc` web surface: copied into target/web/rustdoc beside the
+# surface.json that declares it and a landing page. One invocation of rustdoc, never a second
+# variant of it for publication — what is published is what the gate proved.
+#
 #   scripts/rust-check                  every gate (coverage when cargo-llvm-cov is installed)
 #   scripts/rust-check --ci             every gate but coverage (its own CI job), plus the
 #                                       benchmark check against this platform's baseline
+#   scripts/rust-check --doc            the rustdoc step alone, and its handoff: the producer
+#                                       of the rustdoc surface, which scripts/site-build
+#                                       composes into the site and which pages.yml and the
+#                                       site job run through .github/actions/rustdoc
 #   scripts/rust-check --integration    the executable built and the registry checks only:
 #                                       capabilities validate, generate --check, bench
 #                                       coverage --check, web validate, quality report. What a change outside the crate
@@ -32,11 +42,16 @@ MODE=all; ARTIFACT=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --ci) MODE=ci; shift ;;
+    --doc) MODE=doc; shift ;;
     --integration) MODE=integration; shift ;;
     --artifact) ARTIFACT="$2"; shift 2 ;;
     *) echo "rust-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
+# --doc builds the documentation and nothing else, so there is no executable to hand over
+if [ "$MODE" = doc ] && [ -n "$ARTIFACT" ]; then
+  echo "rust-check: --artifact needs the executable, and --doc builds only the documentation" >&2; exit 2
+fi
 cd "$CRATE"
 # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
 RUSTFLAGS=''; export RUSTFLAGS
@@ -49,11 +64,84 @@ step() {
   fi
   printf '==> %s\n' "$*"; last="$*"; t_step="$now"
 }
+
+# The handoff of the rustdoc step: its output published as the `rustdoc` web surface.
+#
+# cargo writes the pages into ITS target directory, which is not necessarily under this
+# checkout — several worktrees share one through CARGO_TARGET_DIR, and a .cargo/config.toml
+# can name another — so the directory is asked of cargo, never composed and never guessed: a
+# guess would publish a tree cargo did not write. The pages are copied into this checkout's
+# own generated web root, where discovery, `majordomus serve` and scripts/site-build read
+# them, after emptying it, because a module the crate no longer has must not survive as a
+# page nobody can reach from the index.
+#
+# Two files are ours, beside rustdoc's. surface.json is the declaration (web-surface/v1) that
+# makes the directory a surface, and built_from is the commit of THIS checkout: what lets
+# scripts/site-check refuse a stale tree and `scripts/pages verify-rustdoc` prove the public
+# one is this commit's. index.html is the landing page, because rustdoc writes an index per
+# crate and none at the root of its output — the mount would otherwise answer with nothing.
+# Every link on it is relative, so the same bytes work at /rustdoc on the published site and
+# on the executable's own server, and no path of this machine reaches it.
+rustdoc_surface() {
+  local target out version commit
+  command -v jq >/dev/null 2>&1 || { echo "rust-check: jq is required to declare the rustdoc surface" >&2; exit 12; }
+  target="$(cargo metadata --format-version 1 --no-deps | jq -r .target_directory)"
+  [ -n "$target" ] && [ -f "$target/doc/majordomus_cli/index.html" ] || {
+    echo "rust-check: rustdoc left no majordomus_cli/index.html under ${target:-its target directory}/doc" >&2; exit 12; }
+  out="$ROOT/target/web/rustdoc"
+  rm -rf "$out"; mkdir -p "$out"
+  cp -R "$target/doc/." "$out/"
+  # cargo's own lock file on the directory it writes, not a page
+  rm -f "$out/.lock"
+  version="$(sed -n 's/^version = "\(.*\)"$/\1/p' "$CRATE/Cargo.toml" | head -n 1)"
+  commit="$(git -C "$ROOT" rev-parse HEAD)"
+  jq -n --arg built "$commit" \
+    '{schema: "web-surface/v1", id: "rustdoc", mount: "/rustdoc",
+      title: "The Rust API reference of the crate, as rustdoc renders it",
+      index: "index.html", producer: "scripts/rust-check --doc",
+      availability: "both", category: "documentation", visibility: "public",
+      built_from: $built}' > "$out/surface.json"
+  cat > "$out/index.html" <<HTML
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>majordomus-cli $version — Rust API reference</title>
+<meta name="description" content="The rustdoc reference of majordomus-cli $version, built from commit $commit: the public items of the library and of the executable, and the source they were built from.">
+<style>body{margin:0;font:16px/1.6 system-ui,sans-serif}main{max-width:44rem;margin:0 auto;padding:1rem}code{overflow-wrap:anywhere}@media (prefers-color-scheme:dark){body{background:#111;color:#eee}a{color:#8ab4f8}}</style>
+</head>
+<body>
+<main>
+<h1>majordomus-cli $version — Rust API reference</h1>
+<p>Version <strong>$version</strong>, built from commit <code>$commit</code>.</p>
+<p>This is the rustdoc output of the crate that is the majordomus executable: every public item of its library and of the executable, documented and warning-free, with the source each page was built from. It is a reference to the code as it stands at that commit and not a semver contract: the crate is not published (<code>publish = false</code>), and its Rust items may change in any release. The public contract of majordomus is its capability registry.</p>
+<ul>
+<li><a href="majordomus_cli/index.html">The library, majordomus_cli</a></li>
+<li><a href="majordomus_cli/all.html">Every item of the library</a></li>
+<li><a href="majordomus/index.html">The executable, majordomus</a></li>
+<li><a href="../">The site</a></li>
+</ul>
+</main>
+</body>
+</html>
+HTML
+  printf '    %s file(s) in %s, built from %s\n' \
+    "$(find "$out" -type f | wc -l | tr -d ' ')" "${out#"$ROOT"/}" "$commit"
+}
+
 if [ "$MODE" != integration ]; then
-  step "cargo fmt --check";            cargo fmt --check
-  step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
-  step "cargo test";                   cargo test --no-fail-fast
+  if [ "$MODE" != doc ]; then
+    step "cargo fmt --check";            cargo fmt --check
+    step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
+    step "cargo test";                   cargo test --no-fail-fast
+  fi
   step "cargo doc -D warnings";        RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --quiet
+  step "rustdoc surface";              rustdoc_surface
+  if [ "$MODE" = doc ]; then
+    step "rust-check: the rustdoc surface is in target/web/rustdoc"
+    exit 0
+  fi
   step "cargo bench --no-run";         cargo bench --no-run --quiet
 fi
 step "cargo build";                  cargo build --quiet

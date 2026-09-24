@@ -58,11 +58,13 @@ therefore went public tens of minutes after the push that changed it.
 What is on the publication path is everything that can make the published bytes wrong:
 
 - the committed derived data is current for this tree,
-- the site builds from it,
+- the crate's rustdoc reference is produced from this commit — it is part of the published
+  bytes and is never committed ([`RUSTDOC.md`](RUSTDOC.md)),
+- the site builds from both, with the reference composed at `/rustdoc`,
 - every static check over the output passes (`scripts/site-check`: metadata and landmarks on
   every route, no unrendered template delimiter, every internal link resolving, no remote
   asset, no credential, every tile a page, the graphs connected, the served provenance this
-  commit's).
+  commit's, every composed surface present and built from this commit).
 
 What is not, and why it is safe: the behavioural suite, the crate's gates, coverage, the
 macOS suite, the benchmark check and the browser probe. Each of those guards *the repository*
@@ -288,6 +290,14 @@ That wait is GitHub's own "pages build and deployment", which serves the branch.
 reported as external latency; it fails nothing, because GitHub being slow to serve is not this
 repository failing.
 
+What the site serves once it serves this commit is a different question, and it is enforced.
+`/build.json` names only the commit the site was built from, so a deployment that had lost the
+crate's reference, or carried one from an older build, would pass the wait above.
+`scripts/pages verify-rustdoc --commit "$(git rev-parse HEAD)"` reads the public reference
+itself — the composed surface recorded in `/build.json`, the landing page and the library's
+index, and the crate's `COMMIT` constant page — and the deploy fails when any of them is absent
+or names another commit ([`RUSTDOC.md`](RUSTDOC.md)).
+
 The job summary of every deployment therefore carries the phases against their budgets, the
 controlled total against its budget, the queue and the Pages build beside them, and one
 verdict line:
@@ -359,6 +369,7 @@ The same commands CI runs. There is no GitHub-only build semantics.
 
 ```bash
 scripts/pages current            # is the committed derived data current for this tree?
+scripts/rust-check --doc         # the crate's reference, which the build composes at /rustdoc
 scripts/pages build              # render it
 scripts/pages check              # every static check over the output
 scripts/pages benchmark -n 5     # the controlled path, as JSON
@@ -434,6 +445,9 @@ trade is worth revisiting — with the measurement, not with the preference.
   that.
 - Nothing measured after the push to `gh-pages` may become the run's verdict. The run is red
   for a failed deployment and for nothing else; a latency finding is a `::warning`, a summary
-  and a machine-readable line.
+  and a machine-readable line. A public reference at `/rustdoc/` that is absent, broken or
+  built from another commit is a failed deployment rather than a measurement, which is why
+  `scripts/pages verify-rustdoc` is a hard step (ADR 86) while `scripts/pages verify`, whose
+  wait is GitHub's, stays a report.
 - A new check over the published bytes goes into `scripts/site-check`, which the publication
   path runs. A new check over the repository goes into the gate model, which it does not.

@@ -21,13 +21,22 @@
 # clone cannot say whether a commit is in the published history, so the check refuses to report
 # clean there (exit 12) rather than pass over what it did not see.
 #
+# The pages SCANNED are the site's own. A surface scripts/site-build composes into the build at its
+# mount (ADR 0086; the mounts are docs/generated/web.json's, through lib/common.sh's mj_web_composed)
+# carries another producer's pages and links, which that surface's own check decides — but a link a
+# site page makes INTO such a mount is the site's, and it is resolved against the composed files like
+# any other: a site link to a reference page that is not there is a finding here.
+#
 # Usage: scripts/ci/link-check [--list]   --list prints every link and its class
 # Exit 0 clean, 10 findings, 12 inputs missing or a clone too shallow to decide.
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 LIST=0
 for a in "$@"; do case "$a" in --list) LIST=1 ;; *) echo "link-check: unknown option $a" >&2; exit 2 ;; esac; done
-export MJ_LINK_ROOT="$ROOT" MJ_LINK_LIST="$LIST"
+# shellcheck source=../../lib/common.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/common.sh"
+MJ_LINK_COMPOSED="$(mj_web_composed "$ROOT" mounts)" || exit 12
+export MJ_LINK_ROOT="$ROOT" MJ_LINK_LIST="$LIST" MJ_LINK_COMPOSED
 exec python3 - <<'PY'
 import collections, html, os, re, subprocess, sys, urllib.parse
 
@@ -55,19 +64,29 @@ def git(*args):
     return subprocess.run(['git', '-C', ROOT, *args], capture_output=True, text=True)
 
 # ------------------------------------------------------------------ the built site
-pages = {}          # route -> html
-files = set()       # every file under site/public, as a path relative to it
+# the composed mounts, relative to the build: "/rustdoc" -> "rustdoc"
+COMPOSED = [m.strip('/') for m in os.environ.get('MJ_LINK_COMPOSED', '').split() if m.strip('/')]
+def composed_under(rel): return any(rel == m or rel.startswith(m + '/') for m in COMPOSED)
+
+pages = {}          # route -> html, the site's own pages: the ones whose links are scanned
+composed_pages = {} # route -> path, a composed surface's pages: read only for the ids a site link names
+files = set()       # every file under site/public, composed ones included, as a path relative to it
 for dirpath, _, names in os.walk(PUB):
     for n in names:
         rel = os.path.relpath(os.path.join(dirpath, n), PUB).replace(os.sep, '/')
         files.add(rel)
         if n == 'index.html':
             route = '/' + os.path.dirname(rel) + '/' if os.path.dirname(rel) else '/'
+            if composed_under(rel): composed_pages[route] = os.path.join(dirpath, n); continue
             pages[route] = open(os.path.join(dirpath, n), encoding='utf-8', errors='replace').read()
 if not pages: print('link-check: site/public holds no page', file=sys.stderr); sys.exit(12)
 
 ID_RX = re.compile(r'\sid="([^"]+)"')
 ids = {r: set(ID_RX.findall(t)) for r, t in pages.items()}
+def ids_of(route):
+    if route not in ids and route in composed_pages:
+        ids[route] = set(ID_RX.findall(open(composed_pages[route], encoding='utf-8', errors='replace').read()))
+    return ids.get(route, set())
 # every attribute that makes the browser go somewhere; srcset is split into its URLs
 # quote-aware: an attribute value may hold ">" (an Alpine handler's `() => {...}`), which [^>]* would end the tag on
 ATTR_RX = re.compile(r'<(a|link|script|img|source|iframe|area)\b((?:\s+[^\s"\'>/=]+(?:\s*=\s*(?:"[^"]*"|\'[^\']*\'|[^\s"\'>]+))?)*)\s*/?>', re.I)
@@ -176,7 +195,7 @@ def decide(page, raw):
         r = route_of(target)
         if r is None: return ('fragment', None)
         frag = urllib.parse.unquote(u.fragment)
-        if frag not in ids.get(r, set()):
+        if frag not in ids_of(r):
             return ('fragment', f'{raw} names #{frag}, which {r} does not carry')
         return ('fragment', None)
     return ('internal', None)
@@ -200,5 +219,7 @@ if undecided:
 if fails:
     print(f'link-check: {len(fails)} finding(s) over {total} link(s) on {len(pages)} page(s): {summary}')
     sys.exit(10)
-ok('links', f'{total} link(s) on {len(pages)} page(s) resolve: {summary}')
+scope = (f'; the {len(composed_pages)} page(s) under {", ".join("/" + m + "/" for m in COMPOSED)} are composed surfaces\' own'
+         ' and were not scanned, and every link into them was resolved against their files') if COMPOSED else ''
+ok('links', f'{total} link(s) on {len(pages)} page(s) resolve: {summary}{scope}')
 PY

@@ -1,0 +1,29 @@
+name: rustdoc
+description: >-
+  The crate's Rust API reference, produced the one way it is produced everywhere (ADR 0086):
+  the toolchain and build cache of ./.github/actions/setup-rust, then `scripts/rust-check --doc`
+  — the rustdoc step the rust gate runs, warnings denied, byte for byte the same invocation —
+  and its handoff into target/web/rustdoc as the `rustdoc` web surface, with the surface.json
+  that names the commit it was built from. scripts/site-build composes that tree into the site
+  and refuses to build without it, so every job that builds the site runs this first: the
+  rustdoc job of pages.yml, and the site, interactions, ui and suite jobs of validate.yml.
+inputs:
+  setup:
+    description: >-
+      whether to set up the toolchain and the build cache here. A job that has already run
+      ./.github/actions/setup-rust for its own build passes "false", so that one job restores
+      one cache under one key rather than two over the same target directory.
+    required: false
+    default: "true"
+outputs:
+  cache-hit:
+    description: whether the build cache was restored from an exact key (empty when setup is false)
+    value: ${{ steps.rust.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - id: rust
+      if: inputs.setup == 'true'
+      uses: ./.github/actions/setup-rust
+    - shell: bash
+      run: scripts/rust-check --doc
