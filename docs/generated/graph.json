@@ -1892,6 +1892,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/release/version.rs",
+        "kind": "file",
+        "label": "version.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/release/version.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/rules/mod.rs",
         "kind": "file",
         "label": "mod.rs",
@@ -2161,6 +2169,14 @@
         "label": "order-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci/order-check",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/release-check",
+        "kind": "file",
+        "label": "release-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/release-check",
         "external": true
       },
       {
@@ -4014,6 +4030,37 @@
             "safety",
             "worktrees",
             "ci"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0085",
+        "kind": "adr",
+        "label": "adr-0085",
+        "summary": "The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0085",
+        "source": ".ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-24",
+          "related": [
+            "rule:project.release-is-a-projection",
+            "rule:project.the-version-is-measured",
+            "rule:project.distribution-canonical",
+            "rule:project.generated-artifacts-are-typed",
+            "file:apps/majordomus-cli/src/release/version.rs",
+            "file:apps/majordomus-cli/src/generate.rs",
+            "file:bin/majordomus",
+            "file:scripts/release-version",
+            "file:scripts/ci/release-check",
+            "test:test/cases/484_the_version_is_authored_once.sh",
+            "test:test/cases/103_release_projection.sh"
+          ],
+          "tags": [
+            "release",
+            "versioning",
+            "projections",
+            "distribution"
           ]
         }
       },
@@ -29367,12 +29414,12 @@
         }
       },
       {
-        "id": "majordomus://rule/project.release-is-a-projection@1",
+        "id": "majordomus://rule/project.release-is-a-projection@2",
         "kind": "rule",
-        "label": "project.release-is-a-projection@1",
-        "summary": "The changelog is composed and the version has one writer",
-        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.release-is-a-projection%401",
-        "source": ".ai/repo/rules/project/release-is-a-projection.v1.md",
+        "label": "project.release-is-a-projection@2",
+        "summary": "The changelog is composed, and the version is authored once",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Frule%2Fproject.release-is-a-projection%402",
+        "source": ".ai/repo/rules/project/release-is-a-projection.v2.md",
         "status": "active",
         "facts": {
           "class": "blocking",
@@ -29653,7 +29700,7 @@
           "depends_on": [
             "project.land-and-publish@1",
             "project.interfaces-are-projections@1",
-            "project.release-is-a-projection@1"
+            "project.release-is-a-projection@2"
           ],
           "tags": [
             "release",
@@ -32969,6 +33016,13 @@
         "label": "test/cases/47_mutation.sh",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F47_mutation.sh",
         "source": "test/cases/47_mutation.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/484_the_version_is_authored_once.sh",
+        "kind": "test",
+        "label": "test/cases/484_the_version_is_authored_once.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F484_the_version_is_authored_once.sh",
+        "source": "test/cases/484_the_version_is_authored_once.sh"
       },
       {
         "id": "majordomus://test/test/cases/48_roadmap_graph.sh",
@@ -39045,7 +39099,7 @@
       },
       {
         "source": "majordomus://adr/adr-0051",
-        "target": "majordomus://rule/project.release-is-a-projection@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
         "kind": "put_in_force"
       },
       {
@@ -39276,6 +39330,66 @@
       {
         "source": "majordomus://adr/adr-0055",
         "target": "majordomus://test/test/cases/276_disk_is_bounded.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "file:apps/majordomus-cli/src/generate.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "file:apps/majordomus-cli/src/release/version.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "file:scripts/ci/release-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "file:scripts/release-version",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://implementation/bin/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://rule/project.distribution-canonical@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://rule/project.generated-artifacts-are-typed@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://rule/project.the-version-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://test/test/cases/103_release_projection.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0085",
+        "target": "majordomus://test/test/cases/484_the_version_is_authored_once.sh",
         "kind": "put_in_force"
       },
       {
@@ -50309,17 +50423,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.release-is-a-projection@1",
+        "source": "majordomus://rule/project.release-is-a-projection@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.release-is-a-projection@1",
+        "source": "majordomus://rule/project.release-is-a-projection@2",
         "target": "majordomus://rule/project.generated-artifacts-are-typed@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.release-is-a-projection@1",
+        "source": "majordomus://rule/project.release-is-a-projection@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "depends_on"
       },
@@ -50455,7 +50569,7 @@
       },
       {
         "source": "majordomus://rule/project.the-version-is-measured@2",
-        "target": "majordomus://rule/project.release-is-a-projection@1",
+        "target": "majordomus://rule/project.release-is-a-projection@2",
         "kind": "depends_on"
       },
       {
@@ -51495,6 +51609,11 @@
       },
       {
         "source": "majordomus://test/test/cases/47_mutation.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/484_the_version_is_authored_once.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -55125,8 +55244,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1748,
-      "edges": 3891,
+      "nodes": 1752,
+      "edges": 3904,
       "acyclic": true,
       "truncated": false
     }

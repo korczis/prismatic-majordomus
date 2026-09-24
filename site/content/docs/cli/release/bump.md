@@ -1,6 +1,6 @@
 +++
 title = "majordomus release bump"
-description = "Raise the version in both places at once, to at least what the public contract requires"
+description = "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest"
 weight = 97
 [extra]
 route = "/docs/cli/release/bump/"
