@@ -403,7 +403,7 @@ pub fn working_tree(root: &Path) -> Option<WorkingTreeState> {
         }
     }
     tree.in_progress = in_progress(root);
-    tree.changes.sort();
+    crate::order::canonical(&mut tree.changes);
     tree.changes
         .dedup_by(|a, b| a.path == b.path && a.stage == b.stage);
     Some(tree)
@@ -553,7 +553,7 @@ pub fn group(
         let scope_from = vocabulary.suggest(&sources).filter(|s| !s.ambiguous);
         let kind = kind_of(&sources);
         let mut all = paths.to_vec();
-        all.sort();
+        crate::order::canonical_strings(&mut all);
         all.dedup();
         let would_have = natural.len();
         return vec![CommitGroup {
@@ -604,20 +604,23 @@ fn group_by_scope(paths: &[String], vocabulary: &ScopeVocabulary) -> Vec<CommitG
     // Paths within a group are ordered by name, so that a plan is a function of the tree
     // and not of the order git happened to report it in.
     for group in by_scope.values_mut() {
-        group.sort();
+        crate::order::canonical_strings(group);
         group.dedup();
     }
     // Deterministic: named scopes first, in vocabulary order, then the unrecognised group.
     let order = vocabulary.words();
-    let mut keys: Vec<Option<String>> = by_scope.keys().cloned().collect();
-    keys.sort_by_key(|k| match k {
-        Some(s) => (
-            0,
-            order.iter().position(|w| w == s).unwrap_or(usize::MAX),
-            s.clone(),
-        ),
-        None => (1, 0, String::new()),
-    });
+    let mut keys: Vec<ScopeKey> = by_scope
+        .keys()
+        .map(|k| ScopeKey {
+            position: k
+                .as_ref()
+                .and_then(|s| order.iter().position(|w| w == s))
+                .map_or(i64::MAX, |p| p as i64),
+            scope: k.clone(),
+        })
+        .collect();
+    crate::order::canonical(&mut keys);
+    let keys: Vec<Option<String>> = keys.into_iter().map(|k| k.scope).collect();
     keys.into_iter()
         .map(|scope| {
             let paths = by_scope.remove(&scope).unwrap_or_default();
@@ -666,6 +669,30 @@ fn group_by_scope(paths: &[String], vocabulary: &ScopeVocabulary) -> Vec<CommitG
             }
         })
         .collect()
+}
+
+/// A plan's changes in canonical order: by path, then by the status git reported, so the
+/// halves of one path stay adjacent and `dedup_by` sees them together.
+impl crate::order::Ordered for PathChange {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.path, &self.status)
+    }
+}
+
+/// A group's scope with its place in the vocabulary: named scopes keep the vocabulary's
+/// order, and the unrecognised group comes last.
+struct ScopeKey {
+    scope: Option<String>,
+    position: i64,
+}
+
+impl crate::order::Ordered for ScopeKey {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        match &self.scope {
+            Some(s) => crate::order::OrderKey::grouped("named", s, s).ranked(self.position),
+            None => crate::order::OrderKey::plain("", ""),
+        }
+    }
 }
 
 #[cfg(test)]

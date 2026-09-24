@@ -21,7 +21,7 @@ use crate::capability::{
 use crate::command_graph::CommandNode;
 use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
-use crate::graph::Graph;
+use crate::graph::{Graph, NodeState, ObservedGraph, RuntimeState};
 use crate::http::router::percent_encode;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
@@ -408,9 +408,15 @@ fn href_with(base: &str, query: &[(String, String)], set: &[(&str, Option<&str>)
 
 /// The page a listing was asked for. Anything that is not a page number is page one.
 fn asked_page(query: &[(String, String)]) -> usize {
+    asked_page_of(query, "page")
+}
+
+/// The page asked for under one parameter, for a view that pages more than one listing at
+/// once: each listing keeps its own position, so paging one never moves the other.
+fn asked_page_of(query: &[(String, String)], key: &str) -> usize {
     query
         .iter()
-        .find(|(k, _)| k == "page")
+        .find(|(k, _)| k == key)
         .and_then(|(_, v)| v.parse().ok())
         .unwrap_or(1)
 }
@@ -721,6 +727,9 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
                 "Benchmark",
                 Node::Element(mono(match &c.benchmark {
                     crate::capability::BenchmarkPolicy::Required => "required".to_string(),
+                    crate::capability::BenchmarkPolicy::RequiredWhen { precondition } => {
+                        format!("required when: {}", word(precondition))
+                    }
                     crate::capability::BenchmarkPolicy::Waived { reason } => {
                         format!("waived: {}", word(reason))
                     }
@@ -807,7 +816,7 @@ pub fn capability(ctx: &Context, id: &str) -> Page {
     let cases = ctx
         .registry
         .cases(c.id.as_str())
-        .map(|provider| provider(&crate::capability::CaseContext { index: &ctx.index }))
+        .map(|provider| provider(&crate::capability::CaseContext::of(ctx)))
         .unwrap_or_default();
     let examples = if cases.is_empty() {
         card(
@@ -1290,9 +1299,13 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
             "kind",
             "Kind",
             kind.as_deref(),
-            ctx.index
-                .kinds()
-                .into_keys()
+            // the kinds of the listing the capability already answered with, rather than a
+            // second reading of the index (ADR 0012): the same objects, so the same kinds
+            list.objects
+                .iter()
+                .map(|o| o.kind.as_str())
+                .collect::<std::collections::BTreeSet<_>>()
+                .into_iter()
                 .map(|k| (k.to_string(), k.to_string()))
                 .collect(),
         ))
@@ -1321,7 +1334,7 @@ pub fn objects(ctx: &Context, query: &[(String, String)]) -> Page {
     .subtitle(format!(
         "{} of {} objects. Each is a file the layer's sources.yaml maps to a kind, read and validated at startup.",
         matching.len(),
-        ctx.index.objects.len()
+        list.count
     ))
     .trail(vec![("Cockpit", Some("/cockpit")), ("Objects", None)])
 }
@@ -1472,9 +1485,43 @@ pub fn graphs(ctx: &Context) -> Page {
     .trail(vec![("Cockpit", Some("/cockpit")), ("Graphs", None)])
 }
 
+/// What this process observes right now about the things a graph draws.
+///
+/// The observation is not this page's opinion: `health.report` already decides every
+/// dimension of what this process serves, each by the engine that owns it, and a check's
+/// id names a module of this executable. Where the two meet — `server`, `peers`, `scope`
+/// and whatever else health grows a check for — the graph's module node gains what the
+/// process saw. Where they do not, there is no entry, and the column reads as absent
+/// rather than as healthy.
+///
+/// A process that cannot answer its own health yields no observations at all. That is the
+/// honest empty state: the definitions still render, and no node claims a status nothing
+/// measured.
+fn observed_now(ctx: &Context) -> RuntimeState {
+    let health: Health = match ask(ctx, "health.report", json!({})) {
+        Ok(h) => h,
+        Err(_) => return RuntimeState::default(),
+    };
+    RuntimeState {
+        nodes: health
+            .checks
+            .iter()
+            .map(|c| {
+                (
+                    format!("module:{}", c.id),
+                    NodeState {
+                        status: c.status.as_str().to_string(),
+                        detail: Some(c.detail.clone()),
+                    },
+                )
+            })
+            .collect(),
+    }
+}
+
 /// One graph: the nodes and edges as a list, which is what a reader without JavaScript
 /// gets, and a canvas the script fills when the drawing library is there.
-pub fn graph(ctx: &Context, id: &str) -> Page {
+pub fn graph(ctx: &Context, id: &str, query: &[(String, String)]) -> Page {
     let value = match ctx.execute("graph.get", json!({ "id": id })) {
         Ok(v) => v,
         Err(e) => {
@@ -1492,6 +1539,16 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
         Ok(g) => g,
         Err(e) => return failed(Area::Graphs, "Graph", e.to_string()),
     };
+
+    // The second projection. What `graph.get` answered is the definitions, the same bytes
+    // a published page holds; this is the overlay only a process can fill, kept beside them
+    // rather than merged into a node — a node that carried a status would carry it into the
+    // static artifact, where nobody could refresh it and a reader could not tell a current
+    // value from a stale one. `RuntimeView` drops every observation that names no node of
+    // this graph, so each lookup below resolves or is honestly absent.
+    let view = ObservedGraph::new(g, &observed_now(ctx));
+    let g = &view.graph;
+    let now = &view.runtime;
 
     let vocabulary = card(
         "What the shapes mean",
@@ -1558,10 +1615,16 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                 .text("The drawing is an enhancement. Everything it shows is in the lists below, which is what a reader without JavaScript, a crawler and a screen reader get."),
         );
 
-    // both tables list everything: the drawing is an enhancement, and what a reader
-    // without JavaScript, a crawler and a screen reader get is these lists whole
-    let node_rows = g
-        .nodes
+    // Both tables list everything, a window at a time: the drawing is an enhancement, and
+    // what a reader without JavaScript, a crawler and a screen reader get is every node and
+    // every edge, reachable through the pages. Whole, the composed graph was 5586 rows and
+    // 45 thousand elements in one document — a page no accessibility engine finished
+    // reading within its visit deadline, and the file dump every other listing here is
+    // paged to avoid. Each table keeps its own position in the URL.
+    let here = format!("/cockpit/graphs/{}", percent_encode(&g.id));
+    let node_window = Window::new(asked_page_of(query, "nodes"), PER_PAGE, g.nodes.len());
+    let edge_window = Window::new(asked_page_of(query, "edges"), PER_PAGE, g.edges.len());
+    let node_rows = g.nodes[node_window.range()]
         .iter()
         .map(|n| {
             row(vec![
@@ -1575,6 +1638,22 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
                     Some(s) => word_badge(s),
                     None => el("span").text("-"),
                 }),
+                // declared status and observed status are two columns, never one: the
+                // first is what a file says and the second what this process saw, and
+                // their disagreement is the case worth reading
+                cell(match now.of(&n.id) {
+                    Some(state) => el("span").child(word_badge(&state.status)).when(
+                        state.detail.is_some(),
+                        |s| {
+                            s.child(
+                                el("span")
+                                    .class("mj-note")
+                                    .text(state.detail.clone().unwrap_or_default()),
+                            )
+                        },
+                    ),
+                    None => el("span").text("-"),
+                }),
                 cell(match &n.source {
                     Some(s) => mono(s),
                     None => el("span").text("-"),
@@ -1583,8 +1662,7 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
         })
         .collect();
 
-    let edge_rows = g
-        .edges
+    let edge_rows = g.edges[edge_window.range()]
         .iter()
         .map(|e| {
             row(vec![
@@ -1629,9 +1707,23 @@ pub fn graph(ctx: &Context, id: &str) -> Page {
             .child(vocabulary)
             .child(card(
                 "Nodes",
-                table(&["Node", "Kind", "Summary", "Status", "Source"], node_rows),
+                el("div")
+                    .child(table(
+                        &["Node", "Kind", "Summary", "Status", "Now", "Source"],
+                        node_rows,
+                    ))
+                    .child(pagination(node_window, |n| {
+                        href_with(&here, query, &[("nodes", Some(&n.to_string()))])
+                    })),
             ))
-            .child(card("Edges", table(&["From", "Edge", "To"], edge_rows))),
+            .child(card(
+                "Edges",
+                el("div")
+                    .child(table(&["From", "Edge", "To"], edge_rows))
+                    .child(pagination(edge_window, |n| {
+                        href_with(&here, query, &[("edges", Some(&n.to_string()))])
+                    })),
+            )),
     )
     .subtitle(g.description.clone())
     .trail(vec![
@@ -2583,7 +2675,7 @@ pub fn mesh(ctx: &Context) -> Page {
         Err(e) => return failed(Area::Mesh, "Mesh", e),
     };
 
-    let mut this_node = facts(vec![(
+    let this_node = facts(vec![(
         "Mesh",
         Node::Element(word_badge(if status.active {
             "active"
@@ -2591,10 +2683,14 @@ pub fn mesh(ctx: &Context) -> Page {
             "inactive"
         })),
     )]);
-    if let Some(reason) = &status.reason {
-        this_node = this_node.child(el("p").class("mj-prose").text(reason));
-    }
     let mut overview = el("div").child(this_node);
+    // Beside the list rather than inside it. `.mj-facts` is a grid whose first column is
+    // `max-content`, so a paragraph placed among its rows becomes a grid item that sizes
+    // that column to the whole sentence: the card then overflows a 320px viewport, which is
+    // what the Cockpit probe measured. A `<p>` is also not a child a `<dl>` may have.
+    if let Some(reason) = &status.reason {
+        overview = overview.child(el("p").class("mj-prose").text(reason));
+    }
     if let Some(identity) = &status.identity {
         overview = overview.child(facts(vec![
             ("Node", Node::Element(mono(identity.node_id.to_string()))),

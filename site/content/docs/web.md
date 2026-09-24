@@ -1,7 +1,7 @@
 +++
 title = "The web surface"
 description = "the web surface: every surface discovered from its producer rather than registered, the two reserved namespaces (`/docs` is documentation, `/swagger` is Swagger UI), what a surface declares, how to add one, how the documentation is built for its mount and served safely, and what is enforced where"
-weight = 44
+weight = 46
 [extra]
 source = "docs/WEB.md"
 +++
@@ -15,7 +15,7 @@ producer writes beside its output. One resolution then feeds the router, the hom
 machine-readable index, the validator, the publication and the generated reference.
 
 The decision is
-[ADR 13](../.ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md);
+[ADR 13](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md);
 the rule that owns the invariant is `project.web-surface-declared-once`. Behaviour as
 implemented and tested; where this document and the executable disagree, the document is
 wrong and changes in the same commit.

@@ -1,7 +1,7 @@
 +++
 title = "A projection that stops being applied turns a build red, and a gate that cannot reach GitHub reports that it cannot rather than passing"
 description = "The neighbouring claim — [GitHub milestones and issues are generated from the canonical"
-weight = 105
+weight = 106
 [extra]
 claim_id = "github-projection-gated"
 status = "guaranteed"
@@ -12,7 +12,7 @@ source = "docs/claims/github-projection-gated.md"
 ## What it means
 
 The neighbouring claim — [GitHub milestones and issues are generated from the canonical
-model](github-projection.md) — is about what `scripts/github-sync` *renders* and what it
+model](@/guarantees/github-projection.md) — is about what `scripts/github-sync` *renders* and what it
 *refuses*. It says nothing about whether GitHub has actually received any of it. This claim
 is the other half: that the two agree now, and that a build fails when they stop agreeing.
 
@@ -50,7 +50,7 @@ Ratcheted against `.ai/repo/ci/github-drift-baseline.txt`:
 
 
 The baseline may fall and may never rise. Writing it is a deliberate act, in the same idiom
-[`.ai/repo/claim-proof-baseline.txt`](../../.ai/repo/claim-proof-baseline.txt) already uses
+[`.ai/repo/claim-proof-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/claim-proof-baseline.txt) already uses
 for the rules and claims that name nothing a machine can run.
 
 A gate that cannot reach the remote — no `gh`, no token, no permission — exits 12 and names
@@ -97,5 +97,5 @@ model and never projected breaks the ratchet, a backlog at its baseline passes, 
 region and an unmanaged remote issue are refused, and a gate with no baseline refuses to
 guess one. `test/cases/45_github_projection.sh` proves the six states it reads.
 
-The rule is [`project.github-projection-gated@1`](../../.ai/repo/rules/project/github-projection-gated.v1.md).
+The rule is [`project.github-projection-gated@1`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/github-projection-gated.v1.md).
 {% endraw %}

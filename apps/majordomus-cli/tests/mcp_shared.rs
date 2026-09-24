@@ -7,6 +7,8 @@
 //! clients released in the same instant still leaves one server, one board and a
 //! repository nobody wrote to.
 
+// claims: mcp-lease-resilience
+
 mod common;
 
 use std::io::{BufRead, BufReader, Read, Write};
@@ -100,6 +102,33 @@ impl Mcp {
             self.seen_err.push(line);
         }
         self.seen_err.join("\n")
+    }
+
+    /// Wait until stderr has carried a line containing each of `needles`, in any order, and
+    /// return everything read so far. stdout and stderr are read on separate threads, so a
+    /// reply can arrive before the line logged just ahead of it has been read: a line a test
+    /// asserts is waited for, never drained. Lines an earlier wait already read count.
+    fn wait_log_all(&mut self, needles: &[&str]) -> String {
+        let deadline = Instant::now() + WAIT;
+        let mut missing: Vec<&str> = needles
+            .iter()
+            .copied()
+            .filter(|n| !self.seen_err.iter().any(|l| l.contains(n)))
+            .collect();
+        while !missing.is_empty() {
+            let left = deadline.saturating_duration_since(Instant::now());
+            match self.err.recv_timeout(left) {
+                Ok(line) => {
+                    missing.retain(|n| !line.contains(n));
+                    self.seen_err.push(line);
+                }
+                Err(_) => panic!(
+                    "no stderr line containing {missing:?} within {WAIT:?}; stderr so far:\n{}",
+                    self.seen_err.join("\n")
+                ),
+            }
+        }
+        self.drain_log()
     }
 
     /// The URL from a `listening on http://...` or `already running at http://...` line.
@@ -585,6 +614,7 @@ fn a_stale_lease_is_taken_over() {
     let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
     let line = a.wait_log("stale lease");
     assert!(line.contains(&format!("127.0.0.1:{port}")), "{line}");
+    assert!(line.contains("taking it over"), "{line}");
     let url = Mcp::url_in(&a.wait_log("listening on http://"));
     let lease: Value =
         serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
@@ -666,7 +696,11 @@ fn a_bridged_peer_takes_over_when_its_server_dies() {
         "the request after the crash is answered: {repo}"
     );
     assert_eq!(repo["structuredContent"]["state"], "ok");
-    let log = b.drain_log();
+    let log = b.wait_log_all(&[
+        "electing again",
+        "took over as the shared server",
+        "listening on http://",
+    ]);
     assert!(log.contains("electing again"), "{log}");
     assert!(log.contains("took over as the shared server"), "{log}");
     let line = log
@@ -713,8 +747,10 @@ fn a_bridged_peer_re_attaches_when_another_process_took_the_lease_first() {
     c.initialize("gemini-cli");
     let repo = b.call("majordomus_repository", json!({}));
     assert_eq!(repo["isError"], false, "{repo}");
-    let log = b.drain_log();
-    assert!(log.contains("re-attached to the shared server"), "{log}");
+    // Waited for, not drained: stdout and stderr are read on separate threads, so the reply
+    // can arrive before the line logged just ahead of it has been read. Draining at that
+    // moment misses a line the process did write, which is how this failed on a loaded runner.
+    let log = b.wait_log_all(&["re-attached to the shared server"]);
     assert!(log.contains(&url_c), "{log}");
     let peers = c.call("majordomus_peers", json!({}));
     let names: Vec<&str> = peers["structuredContent"]["peers"]
@@ -759,7 +795,7 @@ fn a_peer_that_cannot_serve_the_layer_says_so_instead_of_taking_over() {
         message.contains("refusing to serve under --strict"),
         "{message}"
     );
-    let log = b.drain_log();
+    let log = b.wait_log_all(&["cannot take over as the shared server"]);
     assert!(
         log.contains("cannot take over as the shared server"),
         "{log}"
@@ -850,7 +886,11 @@ fn an_abandoned_lease_is_taken_over_without_waiting_when_it_is_old() {
     let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
     let line = a.wait_log("abandoned lease");
     assert!(line.contains("never published a URL"), "{line}");
-    a.wait_log("listening on http://");
+    assert!(line.contains("taking it over"), "{line}");
+    let url = Mcp::url_in(&a.wait_log("listening on http://"));
+    let lease: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(lease["url"], url, "the lease is now the live server's");
     assert!(
         started.elapsed() < Duration::from_secs(10),
         "{:?}",
@@ -935,6 +975,37 @@ fn sigterm_removes_the_lease_before_the_process_dies() {
         "{log}"
     );
     assert_eq!(b.close(), 0);
+}
+
+/// Ctrl-C and a closing terminal are the other two ways a client's server dies, and the
+/// claim is that a signal removes the lease, not that SIGTERM does.
+#[test]
+fn sigint_and_sighup_remove_the_lease_before_the_process_dies() {
+    use std::os::unix::process::ExitStatusExt;
+    let f = Fixture::new();
+    for (name, number) in [("INT", 2), ("HUP", 1)] {
+        let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+        a.wait_log("listening on http://");
+        assert!(
+            lease_path(&f).exists(),
+            "SIG{name}: the server holds a lease"
+        );
+        let sent = Command::new("kill")
+            .args([&format!("-{name}"), &a.child.id().to_string()])
+            .status()
+            .unwrap();
+        assert!(sent.success(), "kill -{name}");
+        let status = a.child.wait().unwrap();
+        assert_eq!(
+            status.signal(),
+            Some(number),
+            "died of SIG{name}: {status:?}"
+        );
+        assert!(
+            !lease_path(&f).exists(),
+            "SIG{name}: the handler removed the lease before the process died"
+        );
+    }
 }
 
 #[test]
@@ -1162,7 +1233,10 @@ fn an_announcement_outlives_the_server_it_was_made_to() {
     a.child.kill().unwrap();
     let _ = a.child.wait();
     let peers = b.call("majordomus_peers", json!({}));
-    let log = b.drain_log();
+    let log = b.wait_log_all(&[
+        "took over as the shared server",
+        "announcement was carried onto this server's board",
+    ]);
     assert!(log.contains("took over as the shared server"), "{log}");
     assert!(
         log.contains("announcement was carried onto this server's board"),

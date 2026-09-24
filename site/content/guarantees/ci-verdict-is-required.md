@@ -1,7 +1,7 @@
 +++
 title = "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it"
 description = "The ci status computed by ci-verdict would be a *required* status check on"
-weight = 131
+weight = 132
 [extra]
 claim_id = "ci-verdict-is-required"
 status = "planned"
@@ -11,7 +11,7 @@ source = "docs/claims/ci-verdict-is-required.md"
 
 ## What it means
 
-The `ci` status computed by [ci-verdict](ci-verdict.md) would be a *required* status check on
+The `ci` status computed by [ci-verdict](@/guarantees/ci-verdict.md) would be a *required* status check on
 `master`, so a pull request whose gates did not pass could not be merged. That is what makes a
 gate a gate rather than a report.
 

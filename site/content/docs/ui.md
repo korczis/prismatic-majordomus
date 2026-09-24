@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 53
+weight = 55
 [extra]
 source = "docs/UI.md"
 +++
@@ -94,8 +94,14 @@ it compiles.
 desktop end; one page per section takes the full sweep across every boundary. On a built
 surface a section is the first path segment, because that is where templates change; on a
 crawled surface it is the *family* — the shape a route shares with its siblings, `?`-keys
-when it has a query and the parent path when it does not. Both are where a renderer changes,
-so the sweep buys structural coverage without anybody naming a page.
+when it has a query and the parent path when it does not. A route can vary in both at once —
+`/cockpit/graphs/composed?nodes=3` is a record in its path and a view in its query — and the
+crawled set is what settles it: a directory the crawl reached under more than one name, below
+the entry, holds records, and its children collapse to `*` like any other. The entry's own
+children are the surface's areas and never collapse, so `/cockpit/objects?page` and
+`/cockpit/capabilities?page` stay two renderers while eight graph pages each paging two
+tables stay one family instead of twenty-four. Both are where a renderer changes, so the
+sweep buys structural coverage without anybody naming a page.
 
 **The sample** is derived as well, and only a crawled surface has one. Every route the
 surface advertises is visited, because each of those is its own page; of every family the
@@ -124,7 +130,10 @@ Beyond the accessibility engine (axe-core, the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 A
   `data-accordion-target`, `data-tabs-toggle`, `data-tooltip-target`, `data-popover-target`,
   and the toggles beside them) names a target that exists and has an accessible name.
 - **`runtime.console-error` / `runtime.asset-failed`** — the page loaded without an error and
-  without a same-origin request failing. A *cancelled* request is not a failed one:
+  without a same-origin request failing. An exception no script catches counts as an error
+  (reported with the prefix `uncaught:`): the browser raises it as a page error rather than a
+  console message, and a sweep that listened to the console alone missed Mermaid throwing on
+  every diagram page. A *cancelled* request is not a failed one:
   `net::ERR_ABORTED` is the browser saying it no longer needs the response, which is what a
   lazily loaded asset in flight when the audit moves on produces, and it says nothing about
   the site.
@@ -271,4 +280,60 @@ An invariant: add it to `scripts/lib/ui-audit.mjs` if it needs a browser, or to
 `scripts/lib/ui-static.mjs` if it can be decided from markup, and give it a rule name in the
 same `area.thing` shape as the others. Nothing else changes — not the report, not the gate,
 not this document's tables, because none of them enumerate rules.
+
+## Every link resolves, and every control does what it says
+
+The rule is `project.every-link-and-control-is-tested`. Both halves are discovered from the build, so a page,
+a link or a control added tomorrow is checked tomorrow with no list to update.
+
+**Links.** `scripts/ci/link-check` decides every href and src the built site emits, and every sitemap entry,
+without the network:
+- A same-origin URL must resolve to a file under `site/public`.
+- A fragment must name an id on the page it lands on.
+- A link into this repository on GitHub resolves against git: `blob/` a tracked file, `tree/` a tracked
+  directory, `commit/` a commit in the published history, and `releases/tag/` and `compare/` real refs.
+- A host nothing can decide offline, `javascript:`, an empty href and a bare `#` are refused. So is a verdict
+  from a shallow clone, which cannot see the history.
+
+`scripts/site-check` runs it; `--list` prints every link and its class.
+
+A projected document's relative links are resolved at their source by `scripts/lib/project-links.awk`, against
+the directory of the file they came from:
+- A document with a page becomes its route.
+- A claim document becomes its guarantee page.
+- A tracked file or directory becomes its `blob` or `tree` on GitHub.
+- A path git does not track, such as checkout-local state under `.ai/local`, keeps its text and loses its link.
+
+**Controls.** A control is anything a reader can operate:
+- a button, a field, a summary
+- an element an Alpine directive or a Flowbite binding makes act
+- an ARIA widget role
+- a graph binding
+- a keyboard-reachable scroll region
+
+Plain links are the link check's. Disabled elements are not controls, and a control inside `<template>` counts.
+
+- `scripts/ci/interaction-check` requires every control on every page to be claimed by exactly one behaviour
+  spec under `scripts/lib/interaction-specs/`, and every spec to claim something. `--inventory` lists every
+  control signature with its spec. `scripts/site-check` runs it.
+  - It also requires every Alpine expression to compile. Never interpolate text into a JavaScript string in a
+    template, as in `'{{ title }}'.includes(q)`: one apostrophe in the text drops the directive silently.
+  - Put the text in a data attribute instead, `data-text="{{ title | lower }}"`, and read `$el.dataset.text`.
+- `scripts/interaction-probe` opens every page with a control, serving the build at its published origin, and
+  each spec drives every control it claims. A page fails when:
+  - a behaviour does not hold
+  - the live count of a spec's controls differs from the markup
+  - the console reports an error or an exception goes uncaught
+  - a request leaves the site's origin
+  - a spec drives fewer controls than it claims
+
+  `--only '<routes>'` and `--spec <id>` narrow a local loop. It runs in CI as the `interaction-probe` gate, in
+  the `interactions` job.
+- `MJ_PROBE_LIVE=1 scripts/interaction-probe` drives the published site itself. After a deployment, run it
+  against the commit `scripts/pages verify` reports.
+
+**Adding a control.** Build the page and run `scripts/ci/interaction-check --inventory`. A control no spec
+claims is listed as `UNCLAIMED`. Either it is an instance of a behaviour a spec already asserts, and that spec's
+`claims()` should include it, or it is new. A new behaviour needs a new spec: `claims(el)` is a pure function of
+the element's tag and attributes, and `exercise(ctx)` drives each claimed control and returns how many it drove.
 {% endraw %}

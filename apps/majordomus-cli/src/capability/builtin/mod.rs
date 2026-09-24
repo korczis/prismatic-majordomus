@@ -58,6 +58,7 @@ pub(crate) mod perf;
 pub mod plan;
 pub(crate) mod product;
 pub mod quality;
+pub mod recover;
 pub mod release;
 pub mod repository;
 pub mod rules;
@@ -170,6 +171,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         session_domain,
         perf,
         plan,
+        recover,
         directories,
         devcontext,
         artifacts,
@@ -270,6 +272,9 @@ mod tests {
             .filter(|e| e.capability.execution.effect == Effect::RepositoryMutation)
             .map(|e| e.capability.id.as_str())
             .collect();
-        assert_eq!(writers.into_iter().collect::<Vec<_>>(), ["plan.transition"]);
+        assert_eq!(
+            writers.into_iter().collect::<Vec<_>>(),
+            ["plan.transition", "recover.orphans"]
+        );
     }
 }

@@ -1,7 +1,7 @@
 +++
 title = "Product"
 description = "the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused"
-weight = 39
+weight = 41
 [extra]
 source = "docs/PRODUCT.md"
 +++
@@ -15,9 +15,9 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 23](../.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
+[ADR 23](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
 the rule is `project.product-surface-derived`; the directory's own contract is
-[`.ai/repo/features/README.md`](../.ai/repo/features/README.md).
+[`.ai/repo/features/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/features/README.md).
 
 ## The kind
 
@@ -69,7 +69,7 @@ the only place any of this is decided.
 `apps/majordomus-cli/src/capability/builtin/product.rs` declares five capabilities over it
 with `capability!`, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
-([ADR 2](../.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
+([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -123,6 +123,95 @@ templates read the dataset and name nothing:
 labels, held to a line budget, carrying no number and no capability claim. Routes that
 moved are declared once in `site/data/nav.toml` under `[[redirects]]` and become Zola
 aliases on the page they point at.
+
+## The terminal on the homepage
+
+The page shows the tool running, and every transcript on it is a run that happened.
+
+`scripts/generate-site-data` writes `site/data/generated/terminal.json` by joining two
+datasets it has already written: `lifecycle.json`, the ordered lifecycle the tool declares,
+and `catalogue.json`, whose `use_cases[].evidence.steps[]` carry the command line, the exit
+status and the stdout of every use-case scenario the same run executed. The output was
+redacted when it was captured — `lib/usecase.sh` replaces the repository path, the clock,
+the identifiers and the tool versions with placeholders — so a transcript names no machine
+and reproduces byte for byte on another one.
+
+Nothing in the dataset, the generator or the template names a command:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Field | How it is decided |
+|---|---|
+| the order of the tabs | the lifecycle's own order |
+| which run illustrates a step | among that command's passing scenario steps: one that succeeded before one that was refused, then the longest body, then use case and step id |
+| which panel opens first | the one with the most output |
+| what is in the refusals | every recorded step of a lifecycle command that exited non-zero, deduplicated by command, status and body, ordered by the lifecycle |
+| the sentence beside a refusal | the first `FAIL` line the run printed, else its last line, up to the reproduce command |
+
+</div>
+
+
+Two refusals are built into the generation. A lifecycle step no scenario ran fails it,
+because a page that quietly drops a stage claims a lifecycle nobody walks; and a corpus with
+no recorded refusal fails it, because the section that says the tool refuses may not be
+empty. `scripts/site-check`'s `terminal` check then reads the built HTML in both directions:
+every panel the dataset holds is on the page, every panel on the page is a run, each matched
+by its command line, its exit status and its verdict line, and every panel links the scenario
+it was recorded in.
+
+The consequence worth stating: the homepage cannot show the tool doing something the tool
+does not do, and it cannot keep showing something that stopped happening. A command that
+stops refusing disappears from the page on the next generation, and a transcript edited by
+hand fails the check rather than the reader.
+
+## The homepage's story, and what search engines are shown
+
+The homepage is an argument with an order, and the order is data: `site/data/homepage.toml`
+lists the ids of the sections the page renders — hero, recognise, how, refuses, chapters, proof,
+built, install — which is what hurts, how this answers it, what it refuses, what it does for the
+part that hurts you, what proves it, what is not built, and how to try it. Nothing about the
+order is decided in `site/templates/index.html`.
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Section | What it shows | Where it comes from |
+|---|---|---|
+| `hero` | the positioning, and the lifecycle replayed | `marketing.toml`, `terminal.json` |
+| `recognise` | the pain, in the first person | the Why catalogue's featured moments |
+| `how` | declare, derive, verify, each with a figure | `manifesto.toml` `[how]`, the rules, the product telemetry, the recorded refusals |
+| `refuses` | every recorded refusal of a lifecycle command | `terminal.json` |
+| `chapters` | every stable feature, grouped by the area it serves, and the composed graph | `product.json`, the Why catalogue's areas |
+| `proof` | the model's size and every claim counted by its real status | `product.json`, `docs/CLAIMS.yaml` |
+| `built` | each stage with its honest mark, the boundary, and what is not built | `manifesto.toml` |
+| `install` | the install, next-step and verification commands | `distribution.json` |
+
+</div>
+
+
+The long-form argument the homepage used to carry section by section is `/method/argument/`,
+moved verbatim, so no sentence of `manifesto.toml` stopped being rendered.
+
+The site is indexed by one declared policy. `[indexing] unlisted` in `site/data/nav.toml` names
+the sections whose detail pages are receipts — the plan's issues and milestones, the registry's
+capabilities and modules, the closed sessions. Those pages stay published and linked; they carry
+a robots `noindex` (`templates/base.html`) and are left out of `sitemap.xml`
+(`templates/sitemap.xml`), while each section's own index page stays indexed.
+
+`scripts/ci/homepage-check` holds all of it, in both directions, under the blocking rule
+`project.homepage-tells-a-declared-story`, and `scripts/site-check` reports its findings, so a
+homepage or a sitemap that drifts from its declaration is refused before the Pages build
+publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
+
+The homepage's weight is declared in the same file, as `[budget]`: the scripts and stylesheets
+it loads from the site and the graph data it carries inline. The composed product graph is
+published at `/graphs/product.json` by `scripts/site-build` and fetched when the drawing first
+comes into view, with the node-by-node list one link away on `/features/`; and no page loads
+the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
+every build, so raising a budget is a reviewed change to `homepage.toml`, never a silent one.
+
+To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
+in `homepage.toml`'s `order`, and give it a link or a derived figure. To unlist a section's
+detail pages: add its name to `[indexing] unlisted`.
 
 ## What is refused
 

@@ -155,6 +155,7 @@ mj_history_render() {
         detail = ""
         if (e == "task.started")             detail = "profile=" field(s, "profile") " scope=" field(s, "scope")
         else if (e == "task.finished")       detail = "outcome=" field(s, "outcome") (index(s, "\"verify\":{") ? " verify_exit=" field(s, "exit") : "")
+        else if (e == "task.refused")        detail = "outcome=" field(s, "outcome") " unmet=" field(s, "unmet")
         else if (e == "task.handed_over")  { d = field(s, "handover_path"); sub(/.*\//, "", d); detail = d " closed=" field(s, "closed") }
         else if (e == "task.checkpoint")   { d = field(s, "checkpoint_path"); sub(/.*\//, "", d); detail = (d == "" ? "(no body)" : d) }
         else if (e == "decision.recorded")   detail = field(s, "decision")

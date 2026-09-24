@@ -1,7 +1,7 @@
 +++
 title = "A task record has no dependencies; sequencing between sessions is not represented"
 description = "**Rejected, and narrowly.** A task is the record of one session's work — what a worker"
-weight = 97
+weight = 98
 [extra]
 claim_id = "task-dependencies"
 status = "rejected"
@@ -19,7 +19,7 @@ overlap report, not an ordering.
 This is not a statement that the repository has no dependency graph. It has two. Issues carry
 `depends_on` and are validated as a DAG with derived execution waves; milestones carry
 `depends_on` above them, and a milestone whose dependencies are not accepted is blocked. Both
-are described in [`PLANNING.md`](../PLANNING.md) and [`ROADMAP.md`](../ROADMAP.md).
+are described in [`PLANNING.md`](@/docs/planning.md) and [`ROADMAP.md`](@/docs/roadmap.md).
 
 The refusal is about the *task* record specifically, which is a different noun from an issue:
 an issue is the contract for a piece of work, a task is one session's attempt at it.

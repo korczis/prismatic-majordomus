@@ -34,7 +34,25 @@ pj_init
 pj_milestone m1 0
 pj_issue I0001 m1
 pj_issue I0002 m1 I0001
-# the issue's scope is `src/I0001`; put something under it that the index holds
+# the issue's scope is `src/I0001`; put something under it that the index holds. The index
+# holds only what a source class maps to a kind, and `init` declares none over code (it does
+# declare the directory contracts, which the cross-surface section below depends on), so this
+# repository declares where its implementation and its cases live — as case 74 does. Without
+# it `--path lib` selects nothing and a change to `lib/thing.sh` leaves the fingerprint alone.
+cat >> .ai/repo/knowledge/sources.yaml <<'SRC'
+
+  - id: library
+    kind: implementation
+    discovery: vcs
+    pathspec: ':(glob)lib/*.sh'
+    required: false
+
+  - id: case
+    kind: test
+    discovery: vcs
+    pathspec: ':(glob)test/cases/*.sh'
+    required: false
+SRC
 mkdir -p src/I0001 lib test/cases
 cat > lib/thing.sh <<'SH'
 #!/usr/bin/env bash
@@ -192,7 +210,12 @@ jq -e --argjson n "$(jq '.selected | length' "$S/tight.json")" '(.selected | len
   || { echo "    a larger budget did not buy more context"; exit 1; }
 
 # --- deduplication: one object reached several ways is one entry, with the fold recorded
-jq -e '[.selected[].uri] | length == ([.selected[].uri] | unique | length)' "$S/a.json" >/dev/null \
+# Both sides are parenthesised because `|` binds looser than `==` in jq. Written as
+# `[…] | length == ([.selected[…]] | …)`, the right-hand side is evaluated with the array of
+# URIs as its input, so it asks that array for `.selected` — indexing an array with a
+# string, which jq refuses whatever the answer contains. The assertion could therefore
+# never pass, and never did.
+jq -e '([.selected[].uri] | length) == ([.selected[].uri] | unique | length)' "$S/a.json" >/dev/null \
   || { echo "    an identifier is in the answer twice"; exit 1; }
 "$RB" devcontext compile --repo "$PWD" --issue I0001 --intent 'the first decision and the context it needs' \
   --budget-tokens 1000000 --format json > "$S/dedup.json"

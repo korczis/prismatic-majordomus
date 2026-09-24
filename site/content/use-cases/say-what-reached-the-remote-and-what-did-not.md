@@ -6,7 +6,7 @@ weight = 21
 id = "say-what-reached-the-remote-and-what-did-not"
 source = ".ai/repo/use-cases/say-what-reached-the-remote-and-what-did-not.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

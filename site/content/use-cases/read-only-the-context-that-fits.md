@@ -6,7 +6,7 @@ weight = 17
 id = "read-only-the-context-that-fits"
 source = ".ai/repo/use-cases/read-only-the-context-that-fits.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 136,
+      "count": 138,
       "dir": "rules",
       "statuses": [
         "active"
@@ -239,7 +239,36 @@
         "knowledge"
       ],
       "source": ".ai/repo/adrs/0010-curated-knowledge-is-one-kind-with-a-class-not-a-second-stor.md",
-      "references": [],
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/knowledge/sources.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "share/kinds.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/64_knowledge_discovery.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/73_knowledge_nodes.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -6350,6 +6379,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.execution-events-are-typed@1",
           "kind": "rule",
           "route": "/rules/project-execution-events-are-typed-1/",
@@ -6360,6 +6396,13 @@
           "label": "project.github-projection-gated@1",
           "kind": "rule",
           "route": "/rules/project-github-projection-gated-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.homepage-tells-a-declared-story@1",
+          "kind": "rule",
+          "route": "/rules/project-homepage-tells-a-declared-story-1/",
           "external": false
         },
         {
@@ -6833,6 +6876,47 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.every-link-and-control-is-tested@1",
+      "identity": "project.every-link-and-control-is-tested@1",
+      "slug": "project-every-link-and-control-is-tested-1",
+      "cockpit": "/cockpit/objects/rule/project-every-link-and-control-is-tested-1",
+      "title": "Every link the site publishes resolves, and every control on it does what a spec says",
+      "status": "active",
+      "tags": [
+        "site",
+        "ui",
+        "links",
+        "accessibility",
+        "testing"
+      ],
+      "source": ".ai/repo/rules/project/every-link-and-control-is-tested.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.no-counts-in-prose@1",
+          "kind": "rule",
+          "route": "/rules/project-no-counts-in-prose-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.every-wait-is-bounded@1",
       "identity": "project.every-wait-is-bounded@1",
       "slug": "project-every-wait-is-bounded-1",
@@ -7160,6 +7244,40 @@
           "label": "project.no-claim-without-test@1",
           "kind": "rule",
           "route": "/rules/project-no-claim-without-test-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.homepage-tells-a-declared-story@1",
+      "identity": "project.homepage-tells-a-declared-story@1",
+      "slug": "project-homepage-tells-a-declared-story-1",
+      "cockpit": "/cockpit/objects/rule/project-homepage-tells-a-declared-story-1",
+      "title": "The homepage tells the story its declaration names, in that order, and the site is indexed by one declared policy",
+      "status": "active",
+      "tags": [
+        "web",
+        "homepage",
+        "navigation",
+        "projections",
+        "documentation"
+      ],
+      "source": ".ai/repo/rules/project/homepage-tells-a-declared-story.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.navigation-is-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-navigation-is-declared-once-1/",
           "external": false
         }
       ],
@@ -7668,7 +7786,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.homepage-tells-a-declared-story@1",
+          "kind": "rule",
+          "route": "/rules/project-homepage-tells-a-declared-story-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7901,6 +8027,13 @@
           "label": "project.a-verdict-states-its-subject@1",
           "kind": "rule",
           "route": "/rules/project-a-verdict-states-its-subject-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
           "external": false
         },
         {
@@ -9068,6 +9201,13 @@
           "label": "project.design-tokens-declared-once@2",
           "kind": "rule",
           "route": "/rules/project-design-tokens-declared-once-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
           "external": false
         }
       ]

@@ -1,7 +1,7 @@
 +++
 title = "Every blocking rule names what proves it, and every path it names is in the tree"
 description = "A rule of this repository declares a class. blocking means a gate refuses work that"
-weight = 169
+weight = 172
 [extra]
 claim_id = "rule-proof-is-named-and-resolves"
 status = "guaranteed"
@@ -61,7 +61,7 @@ ceiling.
 
 Nor does it run anything. A named case that has never been executed still satisfies this
 claim; whether a run happened, passed, and is younger than what it is about is a different
-question, answered by the proof graph and by [`EVIDENCE.md`](../EVIDENCE.md).
+question, answered by the proof graph and by [`EVIDENCE.md`](@/docs/evidence.md).
 
 ## Why it exists
 

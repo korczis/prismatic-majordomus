@@ -1,7 +1,7 @@
 +++
 title = "The briefing an episode opened with is compared against git before it is believed"
 description = "The briefing an episode opened with is compared against git before it is believed"
-weight = 125
+weight = 127
 [extra]
 kind = "rule"
 slug = "project-the-briefing-is-checked-against-git-1"

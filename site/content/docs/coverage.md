@@ -1,7 +1,7 @@
 +++
 title = "Coverage: one measurement, two questions"
 description = "test coverage of the Rust executable: one measurement (scripts/rust-coverage), the crate floor and the session/continuity domain, and the changed-code differential gate of #214 that refuses new debt while leaving untouched legacy debt alone"
-weight = 51
+weight = 53
 [extra]
 source = "docs/COVERAGE.md"
 +++
@@ -18,14 +18,23 @@ different way somewhere else.
 
 ## The two floors and the differential
 
-**The crate floor** (`scripts/rust-coverage-threshold`, currently 90) is a lower bound on
+**The crate floor** (`scripts/rust-coverage-threshold`) is a lower bound on
 line coverage of the whole executable, test code out of the denominator. It is a ratchet
 against the crate rotting, not a promise of completeness.
 
-**The session/continuity domain** (`scripts/session-coverage-threshold`, 100, over the
-files in `scripts/session-coverage-domain`) holds one subsystem to full line, function and
-region coverage. A crate-wide floor says nothing about whether the subsystem a
+**The session/continuity domain** (`scripts/session-coverage-threshold`, over the files in
+`scripts/session-coverage-domain`) holds one subsystem to its own floor, on lines, functions
+and regions alike. A crate-wide floor says nothing about whether the subsystem a
 repository's continuity depends on is tested at all; this is where that is held.
+
+**Both floors are ratchets.** Each is the coverage its subject actually measured when it was
+set, and may rise and never fall; raise the file and its bound together when coverage
+improves. A fixed floor above what any run has met gates nothing — it only teaches people to
+expect the job to be red — so neither floor is one. The crate floor's bound is held by rule:
+`project.rust-command-tested-in-file` refuses a floor under the `FLOOR_BOUND` its gate,
+`scripts/ci/rust-command-check`, declares, and `test/cases/77_rust_evidence.sh` reads that
+same bound. The domain floor's bound is held by `test/cases/77_rust_evidence.sh` itself. New
+uncovered code is refused regardless of either aggregate, by the differential gate below.
 
 **The differential gate** (`scripts/ci/coverage-differential`, rule
 `project.new-code-is-covered`) is the changed-code invariant of issue #214. It holds every
@@ -42,13 +51,13 @@ moves. The differential gate draws the line where it can be held without rewriti
 
 <div class="overflow-x-auto" tabindex="0">
 
-| What a change does | What the gate requires of it |
+| What the change does | What the gate requires |
 |---|---|
-| adds a file | every executable line, function and region covered |
+| adds a file | every executable line, function and region in it covered |
 | adds a function | covered |
 | changes an executable line | covered |
 | changes a branch or region | covered |
-| leaves legacy code untouched | nothing — not this gate's business |
+| leaves legacy code untouched | nothing: not this gate's business |
 
 </div>
 

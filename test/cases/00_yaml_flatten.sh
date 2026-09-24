@@ -1,4 +1,5 @@
 # The YAML subset parser: the foundation everything else validates through.
+# claims: policy-parse
 . "$ROOT/test/lib.sh"
 . "$ROOT/lib/common.sh"
 cat > y.yaml <<'Y'
@@ -54,3 +55,11 @@ printf 'version: 1\ncontext:\n  budget: 1\n  extra: 2\n' > k.yaml
 mj_yaml_flatten k.yaml > kf.txt
 out="$(mj_yaml_unknown_keys kf.txt allow.txt)" && exit 1
 [ "$out" = "context.extra" ]
+# the canonical policy is parsed through this subset, and a key its allowlist does not name
+# rejects it by name (claim policy-parse)
+"$MJ" init >/dev/null
+expect_exit 12 "$MJ" doctor
+expect_grep 'OK +policy +\.ai/repo/policy\.yaml — parsed, version 1'
+printf 'nonsense: 1\n' >> .ai/repo/policy.yaml
+expect_exit 12 "$MJ" doctor
+expect_grep 'FAIL policy .*unknown keys: nonsense'

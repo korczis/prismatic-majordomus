@@ -245,6 +245,12 @@ pub struct LayerSummary {
     /// How many files the layer declared that did not become objects.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invalid: Option<usize>,
+    /// Which ones, and what decided it: the index's own error diagnostics, each naming the
+    /// file, the code and the constraint it failed. A count says something is wrong; only
+    /// this says what and where, and a reader that has the count and not the list has to go
+    /// looking through a log for the answer the index already produced.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub refused: Vec<crate::model::Diagnostic>,
     /// Whether the layer read cleanly.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub degraded: Option<bool>,
@@ -259,6 +265,7 @@ impl LayerSummary {
             objects: None,
             capabilities: None,
             invalid: None,
+            refused: Vec::new(),
             degraded: None,
         }
     }
@@ -587,6 +594,33 @@ impl RepositoryEnvironment {
         stable.provenance.clear();
         let text = serde_json::to_string(&stable).unwrap_or_default();
         crate::policy::sha256_hex(&text)
+    }
+
+    /// The digest that decides whether a banner is news: [`Self::digest`] without the
+    /// services.
+    ///
+    /// The entry file watches the server's lease, so a server coming up re-evaluates entry
+    /// twice more — once when it claims the lease, once when it publishes its address — and
+    /// a digest that counted the services made each of those a first look, drawing the whole
+    /// box again at a person who had just seen it. A server arriving or leaving is not a
+    /// different repository; the short form names the Cockpit when it answers.
+    ///
+    /// ```
+    /// use majordomus_cli::environment::RepositoryEnvironment;
+    /// # fn demo(env: &RepositoryEnvironment) {
+    /// // a server arriving or leaving is not a different repository, so clearing the
+    /// // services changes nothing this digest can see
+    /// let mut without = env.clone();
+    /// without.services.clear();
+    /// assert_eq!(env.news_digest(), without.news_digest());
+    /// // and with no services left, the two digests are the same value
+    /// assert_eq!(without.news_digest(), without.digest());
+    /// # }
+    /// ```
+    pub fn news_digest(&self) -> String {
+        let mut stable = self.clone();
+        stable.services.clear();
+        stable.digest()
     }
 
     /// The service with this id.

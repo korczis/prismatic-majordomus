@@ -1,7 +1,7 @@
 +++
 title = "A rule's proof state is derived from the tree and the ledger together, and a mechanism that refuses violations is never reported as a run that passed"
 description = "There are two questions about a rule and they are not the same question."
-weight = 171
+weight = 174
 [extra]
 claim_id = "rule-state-is-derived-from-what-ran"
 status = "guaranteed"
@@ -25,7 +25,7 @@ second not at all.
 ## How it works
 
 `crate::rules` is the one typed reading of the rule corpus, and it joins the declaration to
-the tree and to the ledger of recorded executions that [`EVIDENCE.md`](../EVIDENCE.md)
+the tree and to the ledger of recorded executions that [`EVIDENCE.md`](@/docs/evidence.md)
 describes. It does not re-implement evidence: a rule's test-level proof *is* that
 vocabulary, and a second one would be a second answer to the same question.
 

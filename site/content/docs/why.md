@@ -1,7 +1,7 @@
 +++
 title = "Why"
 description = "the operational failure modes this tool answers, as objects of the layer: the three kinds, the flow from one Markdown file to every projection, what is authored and what is derived, and what enforces each"
-weight = 40
+weight = 42
 [extra]
 source = "docs/WHY.md"
 +++
@@ -13,9 +13,9 @@ response to. Every entry in it is a declarative object of the layer, and every l
 route, filter, count, backlink, API answer, MCP resource and diagnosis is derived from
 those objects. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 18](../.ai/repo/adrs/0018-operational-moments-are-objects-of-the-layer-not-pages-of-th.md);
+[ADR 18](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0018-operational-moments-are-objects-of-the-layer-not-pages-of-th.md);
 the rule is `project.why-catalogue-is-canonical`; the directory's own contract is
-[`.ai/repo/why/README.md`](../.ai/repo/why/README.md).
+[`.ai/repo/why/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/why/README.md).
 
 ## The three kinds
 

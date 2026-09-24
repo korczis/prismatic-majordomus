@@ -1,7 +1,7 @@
 +++
 title = "The assembled context obeys a line budget, and every section it drops is named with its reason"
 description = "context.builder_budget_lines caps what majordomus context prints. When the briefing would exceed it, sections are dropped — but never silently, and never the parts a worker cannot work without."
-weight = 64
+weight = 65
 [extra]
 claim_id = "context-selection-budget"
 status = "guaranteed"
@@ -44,7 +44,7 @@ majordomus context --budget-lines 5 >/dev/null; echo $?   # 10
 
 ## What it does not cover
 
-Lines, not tokens. Majordomus does not measure token spend anywhere and does not estimate it here; a line count is what it can compute deterministically on any machine. See [`ECONOMICS.md`](../ECONOMICS.md) for why no context-saving claim is made.
+Lines, not tokens. Majordomus does not measure token spend anywhere and does not estimate it here; a line count is what it can compute deterministically on any machine. See [`ECONOMICS.md`](@/docs/economics.md) for why no context-saving claim is made.
 
 The budget governs the briefing, not what a worker loads afterwards. A worker is free to read the whole repository; nothing stops it and nothing measures it.
 

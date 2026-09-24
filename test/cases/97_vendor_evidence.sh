@@ -88,7 +88,12 @@ expect_grep 'INFO +doctrine +vendor evidence' "$T/packaged.txt" || {
 
 # The wiring half is not part of the bargain: it reads lib/, which every archive ships, and
 # it still runs and still reports.
-expect_grep 'doctrine +[0-9]+ doctrines' "$T/packaged.txt" || {
+# The line states its denominator since 815116686 ("the rule and doctrine verdicts state their
+# own denominators"): "N of M rule(s) carry a validator". This pattern still expected the
+# old "N doctrines", so the case reported a wiring half that had stopped reporting while the
+# packaged doctor printed exactly that line. The property asserted is unchanged: the wiring
+# half states a count in a packaged distribution.
+expect_grep 'OK +doctrine +[0-9]+ of [0-9]+ rule\(s\) carry a validator' "$T/packaged.txt" || {
   echo "    the wiring half of the check stopped reporting in a packaged distribution"
   exit 1
 }

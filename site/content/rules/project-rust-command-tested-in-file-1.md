@@ -1,7 +1,7 @@
 +++
 title = "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered"
 description = "A command asserts in the file that declares it that it is what it claims, and is composed rather than registered"
-weight = 119
+weight = 121
 [extra]
 kind = "rule"
 slug = "project-rust-command-tested-in-file-1"
@@ -74,19 +74,31 @@ command is reached. Adding a command to an existing module adds no line anywhere
 adding a module adds exactly one, in the composition.
 
 The crate is held to a declared coverage floor, which lives in a file rather than in a
-habit, and the coverage gate reads it. The floor is a number and it is high: this rule reads
-`scripts/rust-coverage-threshold` and refuses a floor below ninety, so that lowering the bar
-is a visible act rather than a quiet edit that leaves every other check still passing.
-Coverage is a floor and not a target: it says which changes may not land, not how much
-testing is enough.
+habit, and the coverage gate reads it. The floor is a number and it is a ratchet: a committed
+lower bound that may rise and never fall. This rule reads `scripts/rust-coverage-threshold`
+and refuses a floor below the bound written once, as `FLOOR_BOUND`, in
+`scripts/ci/rust-command-check`; the bound is the crate coverage measured when it was set,
+and it is raised together with the file whenever coverage improves. Lowering either is a
+visible edit to a blocking gate rather than a quiet change that leaves every other check
+still passing. Coverage is a floor and not a target: it says which changes may not land, not
+how much testing is enough.
+
+The floor was once a fixed ninety, and that failed as a gate. Every recorded coverage job
+measured the crate between 83.10 and 83.34 percent of lines with test code out of the
+denominator, and no run ever met ninety, so the coverage job was red on every push and its
+verdict said nothing about any change. A floor no run meets gates nothing; the measured value,
+held so it cannot fall, refuses every regression. What a ratchet on the aggregate does not do —
+refuse new uncovered code while old debt keeps the number flat — is held by the changed-code
+gate, `project.new-code-is-covered`, which covers every line, function and region a change
+adds or touches whatever the aggregate says.
 
 ## Failure behaviour
 
 `scripts/ci/rust-command-check` reads the composed module list from `compose_modules!`
 itself and reports, per module, a missing file, a module that declares no capability, and
 the absence of any assertion that runs; across the tree, a module declared with `module!`
-that the root composes nowhere; and, once, a coverage floor that is undeclared, unreadable,
-or below ninety. The `rust-command` gate in `.ai/repo/ci/gates.yaml` runs it.
+that the root composes nowhere; and, once, a coverage floor that is undeclared, not one
+integer, or below its ratchet bound `FLOOR_BOUND`. The `rust-command` gate in `.ai/repo/ci/gates.yaml` runs it.
 
 The gate runs `--strict`: every composed module must satisfy the rule, and one that does not
 fails the build. There is no baseline and no exemption list, because there is nothing left to
@@ -115,8 +127,9 @@ repositories that carry no executable, and a doctrine that cannot apply is not a
 with a test, one with only a doc example, one with neither, and one declared but composed by
 nobody, and asserts that the check reports exactly the last two — so that either form of
 assertion is proved to satisfy the rule rather than only claimed to. It also asserts that a
-composed module declaring no command is reported, that a floor lowered below ninety is
-reported, that a module already on the baseline does not fail the gate while one that is not
+composed module declaring no command is reported, that a floor which is not one integer or
+sits one under the bound the check declares is reported and fails the gate while a floor at or
+above the bound is not, that a module already on the baseline does not fail the gate while one that is not
 does, and that a repository with no crate is passed over rather than failed.
 
 `scripts/ci/rust-command-check` on this repository reports the modules still owing an

@@ -18,7 +18,8 @@
 //! own when none answers — with `--fallback`, so a taken port is never a failure, and with
 //! `--idle`, so a server no client owns ends by itself — then waits until it is ready and
 //! prints where it stands. Run twice, it starts nothing the second time; run by three
-//! shells at once, the election lets one of the three servers bind and the others defer.
+//! shells at once, one of the three starts a process and the other two wait for its lease
+//! (`server.spawn` beside the lease records the start until that process has elected).
 //! `stop` signals the server this checkout's lease names, when it answers for this
 //! checkout, and waits for the lease to go. Nothing here kills a server of another checkout,
 //! and nothing kills a server that was not asked for by name.
@@ -66,7 +67,12 @@ pub fn run(args: ServeArgs) -> Result<u8> {
 
 /// Become the server, or say who already is.
 fn serve(args: &ServeArgs, repo: &Repository) -> Result<u8> {
-    let lease = match lease::elect(repo)? {
+    let elected = lease::elect(repo);
+    // Whatever the election decided, the process `ensure` started to hold it has now
+    // decided: the claim it was started under is spent, and the next `ensure` reads the
+    // lease rather than waiting on this process.
+    release_spawn_claim(repo);
+    let lease = match elected? {
         Role::Peer { url } => {
             tracing::info!(
                 url = %url,
@@ -287,6 +293,136 @@ fn server_log(repo: &Repository) -> PathBuf {
     lease::lease_path(repo).with_file_name("server.log")
 }
 
+/// Where `ensure` records the process it started and that has not yet decided whether it
+/// serves: beside the lease, in the local half.
+///
+/// # Why it exists
+///
+/// The election decides who serves, and it decides correctly however many processes stand
+/// for it. What it cannot decide is *when* they stand. Three `ensure` calls that read an
+/// absent lease in the same instant each started a process of their own (measured: three of
+/// three, every round), one of them bound, and each call reported that it had started the
+/// server. The two losers are harmless once they reach the election and defer. Until they
+/// reach it, they are processes that will elect later — and on a loaded machine (the
+/// instrumented coverage run is one) "later" came after `serve stop` had removed the
+/// winner's lease: a loser then found no lease, became the server, and `stop` watched a
+/// lease that would not go away and exited 10. So a stopped checkout did not stay stopped,
+/// by a process nobody had asked for.
+///
+/// The claim makes the start itself single: the call that creates this file is the one that
+/// starts a process, and every other call sees a start in progress and waits for its lease
+/// instead of making another. The started process removes the claim once its election has
+/// decided ([`release_spawn_claim`]); a claim whose process is gone, or that is older than a
+/// process can take to decide, is taken over ([`spawn_claim_standing`]).
+fn spawn_claim_path(repo: &Repository) -> PathBuf {
+    lease::lease_path(repo).with_file_name("server.spawn")
+}
+
+/// The longest a started process can legitimately take between being started and removing
+/// its claim: the election is bounded by [`lease::JOIN_TIMEOUT`], and a lease may be
+/// binding for [`lease::BIND_GRACE`] before anybody may count it as abandoned. A claim older
+/// than both no longer describes a process that is about to decide.
+const SPAWN_CLAIM_BOUND: Duration =
+    Duration::from_secs(lease::JOIN_TIMEOUT.as_secs() + lease::BIND_GRACE.as_secs());
+
+/// What an existing start claim says about the process it names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SpawnClaim {
+    /// A process was started and has not decided yet: wait for the lease it will write.
+    Pending,
+    /// Nothing is going to decide under this claim: take it over.
+    Abandoned,
+}
+
+/// Classify a start claim from what it holds, how old it is and whether the process it
+/// names is alive. Pure, so each branch is a unit test rather than a race.
+///
+/// The claim is written in two steps — created, then filled with the pid once the process
+/// exists — so an empty or unreadable claim is a start in progress while it is young and an
+/// abandoned one once it is old. A named process that is gone has decided nothing and never
+/// will; one that is alive is waited on only while it could still be deciding, because a pid
+/// can be reused by an unrelated process and an age bound is what keeps that from holding
+/// every later start off for good.
+fn spawn_claim_standing(content: &str, age: Duration, alive: impl Fn(u32) -> bool) -> SpawnClaim {
+    if age > SPAWN_CLAIM_BOUND {
+        return SpawnClaim::Abandoned;
+    }
+    match content.trim().parse::<u32>() {
+        Ok(pid) if pid > 0 && alive(pid) => SpawnClaim::Pending,
+        Ok(_) => SpawnClaim::Abandoned,
+        Err(_) if age > lease::BIND_GRACE => SpawnClaim::Abandoned,
+        Err(_) => SpawnClaim::Pending,
+    }
+}
+
+/// Is a process with this pid alive? `kill(pid, 0)` delivers nothing and answers whether
+/// the process exists; a process of another user answers `EPERM`, which is alive too.
+#[cfg(unix)]
+fn process_alive(pid: u32) -> bool {
+    // SAFETY: kill(2) with signal 0 performs the existence and permission checks only.
+    let rc = unsafe { libc::kill(pid as libc::pid_t, 0) };
+    rc == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
+}
+
+#[cfg(not(unix))]
+fn process_alive(_: u32) -> bool {
+    false
+}
+
+/// The outcome of trying to become the one call that starts a server.
+enum SpawnTurn {
+    /// This call holds the claim and must start the process.
+    Mine(fs::File),
+    /// Another call's process is starting; wait for its lease.
+    Pending,
+    /// The claim was taken over or changed under us; ask again on the next round.
+    Retry,
+}
+
+/// Try to become the one call that starts a server for this checkout.
+fn claim_spawn(repo: &Repository) -> Result<SpawnTurn> {
+    let path = spawn_claim_path(repo);
+    if let Some(dir) = path.parent() {
+        fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
+    }
+    match fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&path)
+    {
+        Ok(file) => Ok(SpawnTurn::Mine(file)),
+        Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
+            let content = fs::read_to_string(&path).unwrap_or_default();
+            match spawn_claim_standing(&content, lease::file_age(&path), process_alive) {
+                SpawnClaim::Pending => Ok(SpawnTurn::Pending),
+                SpawnClaim::Abandoned => {
+                    // remove only the claim that was judged: one written since is somebody's
+                    // fresh start, and the next round reads that one
+                    if fs::read_to_string(&path).unwrap_or_default() == content {
+                        match fs::remove_file(&path) {
+                            Ok(()) => {}
+                            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                            Err(e) => return Err(Error::io(&path, e)),
+                        }
+                    }
+                    Ok(SpawnTurn::Retry)
+                }
+            }
+        }
+        Err(e) => Err(Error::io(&path, e)),
+    }
+}
+
+/// Remove the start claim when it names this process: called by a started server once its
+/// election has decided. A claim naming anybody else is theirs, and is left alone.
+fn release_spawn_claim(repo: &Repository) {
+    let path = spawn_claim_path(repo);
+    let mine = std::process::id().to_string();
+    if fs::read_to_string(&path).is_ok_and(|c| c.trim() == mine) {
+        let _ = fs::remove_file(&path);
+    }
+}
+
 /// Where a checkout's runtime stands after a call that tried to make it stand somewhere,
 /// and which arm of the loop the call left by.
 ///
@@ -366,8 +502,25 @@ pub fn converge(repo: &Repository, port: u16, idle: u64, wait: Duration) -> Resu
             ServerStanding::Ready => return Ok(settle(started, false)),
             ServerStanding::Starting => {}
             ServerStanding::Absent | ServerStanding::Stale if !started => {
-                spawn_server(repo, port, idle, &log)?;
-                started = true;
+                match claim_spawn(repo)? {
+                    SpawnTurn::Mine(mut claim) => {
+                        match spawn_server(repo, port, idle, &log) {
+                            Ok(pid) => {
+                                // the pid fills the claim in: from here on another call can
+                                // tell a process that is deciding from one that is gone
+                                claim
+                                    .write_all(pid.to_string().as_bytes())
+                                    .map_err(|e| Error::io(spawn_claim_path(repo), e))?;
+                                started = true;
+                            }
+                            Err(e) => {
+                                let _ = fs::remove_file(spawn_claim_path(repo));
+                                return Err(e);
+                            }
+                        }
+                    }
+                    SpawnTurn::Pending | SpawnTurn::Retry => {}
+                }
             }
             ServerStanding::Absent | ServerStanding::Stale => {}
             ServerStanding::Outdated => {
@@ -509,7 +662,7 @@ fn report(
 /// async-signal-safe calls are allowed and `close(2)` is one while `sysconf(3)` is not
 /// promised to be. `test/cases/190` holds it: an entry made with a descriptor open on a pipe
 /// must leave that pipe closed when it returns.
-fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<()> {
+fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<u32> {
     let exe = std::env::current_exe().map_err(|e| Error::io("the executable", e))?;
     if let Some(dir) = log.parent() {
         fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
@@ -565,7 +718,7 @@ fn spawn_server(repo: &Repository, port: u16, idle: u64, log: &Path) -> Result<(
     }
     let child = cmd.spawn().map_err(|e| Error::io(log, e))?;
     tracing::info!(pid = child.id(), log = %log.display(), "started a server for this checkout");
-    Ok(())
+    Ok(child.id())
 }
 
 /// `serve stop`: end the server this checkout's lease names, when it answers for this
@@ -674,4 +827,60 @@ fn deployment(app: &App, id: &str) -> Result<(String, Listen)> {
         reason: refusal.to_string(),
     })?;
     Ok((object.provenance.path.clone(), parsed.listen))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const YOUNG: Duration = Duration::ZERO;
+
+    #[test]
+    fn a_claim_naming_a_live_process_is_a_start_in_progress() {
+        assert_eq!(
+            spawn_claim_standing("4242", YOUNG, |_| true),
+            SpawnClaim::Pending
+        );
+    }
+
+    #[test]
+    fn a_claim_naming_a_process_that_is_gone_is_taken_over() {
+        assert_eq!(
+            spawn_claim_standing("4242\n", YOUNG, |_| false),
+            SpawnClaim::Abandoned
+        );
+        assert_eq!(
+            spawn_claim_standing("0", YOUNG, |_| true),
+            SpawnClaim::Abandoned,
+            "pid 0 names no process a start could have made"
+        );
+    }
+
+    #[test]
+    fn an_unfilled_claim_waits_only_while_it_is_young() {
+        assert_eq!(
+            spawn_claim_standing("", YOUNG, |_| true),
+            SpawnClaim::Pending
+        );
+        assert_eq!(
+            spawn_claim_standing("", lease::BIND_GRACE + Duration::from_secs(1), |_| true),
+            SpawnClaim::Abandoned
+        );
+    }
+
+    #[test]
+    fn a_live_pid_does_not_hold_a_start_off_past_the_bound() {
+        // a pid reused by an unrelated process must not block every later start for good
+        assert_eq!(
+            spawn_claim_standing("4242", SPAWN_CLAIM_BOUND + Duration::from_secs(1), |_| true),
+            SpawnClaim::Abandoned
+        );
+    }
+
+    #[test]
+    fn this_process_is_alive_and_an_unused_pid_is_not() {
+        assert!(process_alive(std::process::id()));
+        // the highest pid a kernel hands out is far below this on every supported platform
+        assert!(!process_alive(i32::MAX as u32 - 1));
+    }
 }

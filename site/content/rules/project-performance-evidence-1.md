@@ -1,7 +1,7 @@
 +++
 title = "A performance claim carries its measurement"
 description = "A performance claim carries its measurement"
-weight = 107
+weight = 109
 [extra]
 kind = "rule"
 slug = "project-performance-evidence-1"

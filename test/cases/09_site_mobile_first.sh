@@ -30,21 +30,27 @@ for f in $pages; do
   grep -q '<title>Redirect</title>' "$f" && continue
   # 1. viewport meta on every page
   grep -q '<meta name="viewport" content="width=device-width, initial-scale=1' "$f" || { echo "    $rel: no viewport meta"; bad=1; }
-  # 2. every <pre> sits directly inside an overflow-x-auto wrapper, so long lines scroll
-  #    inside the card instead of widening the page
-  #    (compared on the whole file with newlines removed: wrapper and <pre> may sit on different lines)
+  # 2. every <pre> scrolls or wraps on its own, so a long line scrolls inside its card instead
+  #    of widening the page. Counted per <pre>, and one is satisfied by any of:
+  #      - an element whose own class carries overflow-x-auto, with only whitespace before it
+  #      - an enclosing div, article or section whose class carries [&_pre]:overflow-x-auto.
+  #        Tailwind compiles that variant to `.[&_pre]:overflow-x-auto pre{overflow-x:auto}`,
+  #        so each <pre> inside scrolls itself. Typography containers (class="format ...")
+  #        carry it, and so does the block a rendered doc comment sits in, where the <pre> of
+  #        a code fence cannot be given a wrapper of its own
+  #      - whitespace-pre-wrap on the <pre> itself: a <pre> that wraps cannot widen the page,
+  #        and the shared install component uses it so that a command a person has to read is
+  #        never behind a scrollbar
+  #    This used to be decided per page: one "format" container anywhere exempted every <pre>
+  #    on it, including those outside the container, while the same variant on a block without
+  #    the "format" class was not recognised at all.
+  # scripts/lib/pre-coverage.awk is the rule, shared with site-check: "<file> <pre> <covered>"
+  pre_coverage="$(awk -f "$ROOT/scripts/lib/pre-coverage.awk" "$f")"
+  n_pre="$(printf '%s' "$pre_coverage" | cut -f2)"; n_covered="$(printf '%s' "$pre_coverage" | cut -f3)"
+  [ "$n_pre" = "$n_covered" ] || { echo "    $rel: $((n_pre - n_covered)) of $n_pre <pre> block(s) neither scroll nor wrap"; bad=1; }
+  # the checks below compare on the whole file with newlines removed: a wrapper and the element
+  # it wraps may sit on different lines
   flat="$(tr -d '\n' < "$f")"
-  #    Typography containers (class="format ... [&_pre]:overflow-x-auto") scroll their own <pre>; a page
-  #    without such a container must wrap every <pre> in an overflow-x-auto element
-  #    A <pre> that wraps cannot widen the page either: whitespace-pre-wrap is the other way
-  #    of satisfying the same requirement, and the shared install component uses it so that a
-  #    command a person has to read is never behind a scrollbar. Count those as satisfied.
-  n_pre="$(printf '%s' "$flat" | grep -o '<pre' | wc -l | tr -d ' ')"
-  n_wrapped="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<pre' | wc -l | tr -d ' ')"
-  n_wrapping="$(printf '%s' "$flat" | grep -oE '<pre[^>]*whitespace-pre-wrap' | wc -l | tr -d ' ')"
-  n_wrapped=$((n_wrapped + n_wrapping))
-  if printf '%s' "$flat" | grep -q 'class="format [^"]*\[&_pre\]:overflow-x-auto'; then :
-  elif [ "$n_pre" != "$n_wrapped" ]; then echo "    $rel: $((n_pre - n_wrapped)) of $n_pre <pre> block(s) not wrapped in overflow-x-auto"; bad=1; fi
   # 3. every <table> likewise (Typography containers carry [&_table]:overflow-x-auto)
   n_tab="$(printf '%s' "$flat" | grep -o '<table' | wc -l | tr -d ' ')"
   n_tw="$(printf '%s' "$flat" | grep -oE 'overflow-x-auto[^>]*>[[:space:]]*<table' | wc -l | tr -d ' ')"

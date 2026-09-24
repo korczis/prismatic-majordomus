@@ -19,8 +19,10 @@ flowchart LR
   plan --> coverage["coverage"]
   plan --> bench["bench (macOS)"]
   plan --> site["site"]
+  plan --> interactions["interactions"]
+  plan --> ui["ui"]
   plan --> macos["macos"]
-  structure & suite & rust & coverage & bench & site & macos --> ci["ci<br>the verdict; the one<br>required status"]
+  structure & suite & rust & coverage & bench & site & interactions & ui & macos --> ci["ci<br>the verdict; the one<br>required status"]
 ```
 
 and beside it, on the same commit, never after it:
@@ -137,7 +139,7 @@ scripts/ci/core-check                  # doctor, watch, context, continuity, pla
 scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
 scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
-scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
+scripts/rust-check --ci                # every Rust gate but coverage; the benchmark comparison is macOS's
 scripts/rust-check --integration       # the executable built and the registry checks only
 just coverage                          # coverage with test code out of the denominator, against
                                       # scripts/rust-coverage-threshold and, for the session/continuity

@@ -1,7 +1,7 @@
 +++
 title = "Every page of every web surface is audited, and the audit names no page"
 description = "Every page of every web surface is audited, and the audit names no page"
-weight = 129
+weight = 131
 [extra]
 kind = "rule"
 slug = "project-ui-conformance-1"
@@ -37,8 +37,9 @@ layout discontinuity hides.
 **The invariants are executable.** `scripts/ui audit` drives the repository's own server and
 a real browser over that set and checks: no horizontal overflow at any width, one `main` and
 one `h1` per document, no heading level skipped, no duplicate id, every component trigger
-resolving to the target it names and carrying an accessible name, no console error, no
-failed same-origin request, and the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rules of an
+resolving to the target it names and carrying an accessible name, no console error and no exception left uncaught (a browser
+reports that as a page error, not a console message, so both are listened to), no failed
+same-origin request, and the WCAG 2.0 A/AA, 2.1 A/AA and 2.2 AA rules of an
 accessibility engine. The verdict is arithmetic over the findings; nothing decides that a
 finding does not count.
 

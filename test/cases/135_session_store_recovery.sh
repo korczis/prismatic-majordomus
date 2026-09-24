@@ -20,6 +20,15 @@
 #   exactly where it is and counted.
 . "$ROOT/test/lib.sh"
 
+# The stray-file verdicts are the runtime's, not this tool's: `recover orphans` asks
+# `recover.orphans`, a capability of the registry, what every stray file is and lets it sweep
+# the ones nothing is holding (ADR 0040). So the case drives a built executable, and
+# `lib/recover.sh` refuses rather than deciding a second time when there is none — which is
+# what makes the delegation real and not a preference.
+MAJORDOMUS_BIN="$(rust_bin)" || rust_bin_exit $?
+export MAJORDOMUS_BIN
+command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+
 # A bare `[ ... ]` under the runner's `set -e` ends a case having printed nothing anywhere:
 # no message, no line number, a bare FAIL. It happened twice while this case was being
 # written. `must` is the same test with the reason attached, and every assertion below that
@@ -255,10 +264,22 @@ expect_exit 0 "$MJ" recover orphans
 must "a temp younger than the threshold is left alone" [ -f .ai/repo/sessions/.tmp.inflight ]
 must "an empty temp is removed" [ ! -f .ai/repo/sessions/.tmp.empty000 ]
 must "so is one whose episode is already published" [ ! -f .ai/repo/sessions/.tmp.publishd ]
-must "and a leftover staging directory" [ ! -d .mj-stage.leftover ]
+# A directory is the one stray this command reports and never removes: SECURITY.md states
+# "no recursive deletion", so the sweep names it, counts it as skipped, and leaves it for a
+# person. Asserting its survival is what keeps a recursive delete from returning quietly.
+must "a leftover staging directory is left where it is" [ -d .mj-stage.leftover ]
+expect_grep 'orphan +\.mj-stage\.leftover'
+expect_grep 'reported and left in place'
 must "and a rename temp whose target arrived" [ ! -f "$S/checkpoints/keep.md.mj-tmp" ]
 # the unpublished record was published rather than deleted
 must "the rescued temp is gone from the store" [ ! -f .ai/repo/sessions/.tmp.rescue00 ]
+# Named before it is located. `expect_file "$(grep -l …)"` fails as "expected the file ,
+# which the run did not produce" when the grep found nothing — a message that says the
+# assertion failed and not what was lost. The failure this guards against is the temp being
+# *swept* instead of published, which destroys the only copy of an episode, and a reader
+# meeting that at 2am should be told so in the first line.
+must "the rescued episode s-orphan-0001 has a record in the store, rather than having been swept" \
+  [ -n "$(grep -l '^session_id: s-orphan-0001$' .ai/repo/sessions/*.md 2>/dev/null)" ]
 expect_file "$(grep -l '^session_id: s-orphan-0001$' .ai/repo/sessions/*.md)"
 # content this version cannot classify is left exactly where it is, and counted
 must "unclassifiable content is left exactly where it is" [ -f .ai/repo/sessions/.tmp.foreign0 ]
@@ -268,6 +289,37 @@ must "nor anything inside it" [ -f "$S/checkpoints/campaign-scratch/LEDGER.md" ]
 
 expect_exit 0 "$MJ" recover orphans
 expect_grep 'skipped 1 candidate'
+
+# ---------------------------------------------------------------- the command is backed
+# `scripts/development-semantics-check` decides `backing:recover` from the registry: a
+# capability of kind `command` whose **module** is the command's name in
+# share/commands.yaml. Asserting the declaration here, and not only in the gate, is what
+# keeps the two from being separately true — a module renamed to anything but `recover`
+# still generates cleanly, still serves, and still leaves the command unbacked.
+# The executable is called directly, from the case's own repository, so it is given the
+# share it would otherwise look for beside itself and not find; and its failure is named
+# rather than discarded, because under `bash -eu` a silent non-zero ends the case with no
+# word of why (CI printed only "FAIL 135_session_store_recovery").
+MAJORDOMUS_SHARE="$ROOT/share" "$MAJORDOMUS_BIN" capabilities list --format json > "$T/caps.json" 2>"$T/caps.err" \
+  || { rc=$?; printf '    capabilities list exited %s: %s\n' "$rc" "$(grep -v ' INFO ' "$T/caps.err" | tail -2)"; exit 1; }
+must "the registry declares recover.orphans, a command of module recover" \
+  [ "$(jq '[.capabilities[] | select(.id == "recover.orphans" and .kind == "command" and .module == "recover")] | length' "$T/caps.json")" = 1 ]
+
+# And the delegation is real rather than decorative. With no runtime to ask, the command
+# refuses and sweeps nothing: it does not decide what a stray file is a second time. This is
+# the assertion that fails the day somebody restores a shell fallback "in case the executable
+# is missing" — which is exactly the second implementation ADR 0040 exists to prevent, and
+# the one that drifts.
+: > .ai/repo/sessions/.tmp.unbacked
+touch -t 202001010000 .ai/repo/sessions/.tmp.unbacked
+SAVED_BIN="$MAJORDOMUS_BIN"
+export MAJORDOMUS_BIN="$T/no-such-executable"
+expect_exit 10 "$MJ" recover orphans
+expect_grep 'nothing here decides it a second time'
+must "an unbacked run sweeps nothing" [ -f .ai/repo/sessions/.tmp.unbacked ]
+export MAJORDOMUS_BIN="$SAVED_BIN"
+expect_exit 0 "$MJ" recover orphans
+must "and the backed run that follows does sweep it" [ ! -f .ai/repo/sessions/.tmp.unbacked ]
 
 # ---------------------------------------------------------------- status is read-only
 before="$(find .ai -type f | wc -l | tr -d ' ')"

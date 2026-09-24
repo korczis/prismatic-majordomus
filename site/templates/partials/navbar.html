@@ -13,7 +13,23 @@
     <a href="{{ get_url(path="/", trailing_slash=true) }}" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true">{{ load_data(path="static/images/logo-mark.svg", format="plain") | safe }}</span>
       <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">{{ project.short_name }}</span>
-      <span class="hidden rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading sm:inline">v{{ project.version }}</span>
+      {# Shown at every width. Which version a reader is looking at is the one fact that
+         decides whether anything else on the page is true of the tool they have, and a
+         phone is where most people meet this page first.
+
+         It names the RELEASE, not the tree. The two differ by design: the release policy is
+         surface-measured, so a run of work that moves no public surface owes no bump and the
+         tree sits ahead of the newest release — 0.6.1 against 0.6.0 on 2026-09-15. This badge
+         stands beside the install command, so a reader takes it as "what I am about to get",
+         and `project.version` would have named something they cannot obtain. The tree's own
+         version is not hidden: /build.json carries it for anyone auditing the build.
+
+         No fallback to project.version when there is no release. A repository with nothing
+         released shows no badge, because the alternative is to state a version that does not
+         exist, which is the defect this replaces. #}
+      {% if project.release %}
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v{{ project.release }}</span>
+      {% endif %}
     </a>
     <div class="flex items-center gap-2 md:order-2">
       {% include "partials/theme-toggle.html" %}

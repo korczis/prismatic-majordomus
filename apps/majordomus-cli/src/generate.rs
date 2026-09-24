@@ -118,7 +118,7 @@ pub enum Target {
     /// `docs/generated/graph.json`: the composed graph as data, and
     /// `docs/generated/graph.schema.json`: its schema, generated from the types.
     Graph,
-    /// Every projection of the design system (see [`crate::design::render`]): the
+    /// Every projection of the design system (see `design::render`): the
     /// stylesheets both Tailwind builds import, the tokens and the declaration compiled
     /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
     /// surface serves, the site's dataset, and `docs/generated/design.{json,yaml,md}`.
@@ -1292,7 +1292,27 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// Refuses rather than writes when the rendered document carries anything from
 /// `FORBIDDEN`: this file is published to a website, and a leak that is generated is a
 /// leak that regenerates.
+///
+/// Refuses, for the same reason, while the layer names a rule, a decision or a capability
+/// that no object and no declaration answers to. The composed graph drops the edge such a
+/// reference would draw, so the defect is invisible in the artifact: the file looks whole
+/// and is quietly short of one edge. [`crate::graph::unresolved_relations`] is the verdict
+/// that already decides it — this is the consumer its own contract names.
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    let unresolved = crate::graph::unresolved_relations(&ctx.registry, &ctx.index.objects);
+    if !unresolved.is_empty() {
+        return Err(Error::UnresolvedRelation {
+            findings: unresolved
+                .iter()
+                .map(|u| {
+                    format!(
+                        "{}: {} names `{}`, which resolves to nothing; {}",
+                        u.declared_in, u.key, u.reference, u.correction
+                    )
+                })
+                .collect(),
+        });
+    }
     let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
         Error::Http {
             reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),
@@ -1399,6 +1419,7 @@ pub fn benchmark_matrix(ctx: &Context) -> String {
                 Some(CoverageState::Covered) => "covered".into(),
                 Some(CoverageState::Missing) => "**missing**".into(),
                 Some(CoverageState::Waived) => "waived".into(),
+                Some(CoverageState::Inapplicable) => "inapplicable".into(),
                 None => "—".into(),
             }
         };
@@ -1585,6 +1606,7 @@ pub fn benchmark_document(ctx: &Context) -> Value {
                 "covered": t.covered,
                 "missing": t.missing,
                 "waived": t.waived,
+                "inapplicable": t.inapplicable,
             })
         })
         .collect();
@@ -1603,6 +1625,7 @@ pub fn benchmark_document(ctx: &Context) -> Value {
                     Some(CoverageState::Covered) => "covered",
                     Some(CoverageState::Missing) => "missing",
                     Some(CoverageState::Waived) => "waived",
+                    Some(CoverageState::Inapplicable) => "inapplicable",
                     None => "none",
                 }
             };
@@ -2590,6 +2613,9 @@ fn cache_cell(policy: crate::capability::CachePolicy) -> String {
 fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
     match policy {
         crate::capability::BenchmarkPolicy::Required => "required".into(),
+        crate::capability::BenchmarkPolicy::RequiredWhen { precondition } => {
+            format!("required when {}", enum_name(precondition))
+        }
         crate::capability::BenchmarkPolicy::Waived { reason } => {
             format!("waived ({})", enum_name(reason))
         }

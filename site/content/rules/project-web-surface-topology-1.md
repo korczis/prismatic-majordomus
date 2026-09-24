@@ -1,7 +1,7 @@
 +++
 title = "A web surface is discovered from its producer, never registered twice"
 description = "A web surface is discovered from its producer, never registered twice"
-weight = 133
+weight = 135
 [extra]
 kind = "rule"
 slug = "project-web-surface-topology-1"

@@ -81,7 +81,7 @@ impl ChangeKind {
         ("merge", ChangeKind::Merge),
     ];
 
-    /// The type words, in the order [`Self::TABLE`] declares them.
+    /// The type words, in the order `Self::TABLE` declares them.
     ///
     /// ```
     /// use majordomus_cli::release::ChangeKind;

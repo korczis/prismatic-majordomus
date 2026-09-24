@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 57
+weight = 59
 [extra]
 source = "docs/CI.md"
 +++
@@ -27,8 +27,10 @@ flowchart LR
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
   plan --&gt; site["site"]
+  plan --&gt; interactions["interactions"]
+  plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
@@ -147,7 +149,7 @@ scripts/ci/core-check                  # doctor, watch, context, continuity, pla
 scripts/ci/providers-check             # one provider declaration, every projection current, no provider list by hand
 scripts/ci/worktree-check              # one constant, the guard wired, every document naming the same container
 MJ_TEST_JOBS=4 bash test/run.sh        # the behavioural suite, four cases at a time
-scripts/rust-check --ci                # every Rust gate but coverage, plus the benchmark check
+scripts/rust-check --ci                # every Rust gate but coverage; the benchmark comparison is macOS's
 scripts/rust-check --integration       # the executable built and the registry checks only
 just coverage                          # coverage with test code out of the denominator, against
                                       # scripts/rust-coverage-threshold and, for the session/continuity

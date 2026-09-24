@@ -194,7 +194,7 @@ impl Cockpit {
                 } else if let Some(id) = other.strip_prefix("/cockpit/commands/") {
                     pages::command(ctx, &percent_decode(id))
                 } else if let Some(id) = other.strip_prefix("/cockpit/graphs/") {
-                    pages::graph(ctx, &percent_decode(id))
+                    pages::graph(ctx, &percent_decode(id), query)
                 } else if let Some(rest) = other.strip_prefix("/cockpit/objects/") {
                     // one kind per segment, one entity per two. No kind and no entity is
                     // named here: both are read from the index, which is what makes adding

@@ -1,7 +1,7 @@
 +++
 title = "A new enforced rule is a doctrine, not an inline check"
 description = "A new enforced rule is a doctrine, not an inline check"
-weight = 115
+weight = 117
 [extra]
 kind = "rule"
 slug = "project-rule-is-a-doctrine-1"

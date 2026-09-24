@@ -1,7 +1,7 @@
 +++
 title = "A native command line command exists only with its documentation and its executable examples"
 description = "A native command line command exists only with its documentation and its executable examples"
-weight = 94
+weight = 96
 [extra]
 kind = "rule"
 slug = "project-native-cli-documented-1"

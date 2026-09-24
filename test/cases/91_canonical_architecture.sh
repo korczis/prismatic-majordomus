@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: hot-path-no-rebuild
 # The canonical architecture through the built binary, in a repository the shell tool's own
 # `init` wrote: the registry validates with its modules and complete benchmark coverage, the
 # coverage denominator is generated (it equals the executables times their exposures plus the
@@ -50,8 +51,10 @@ expected="$(jq '[.capabilities[] | select(.kind != "resource") | 1 + (if .exposu
 system="$(jq '[.lines[] | select(.module == "system")] | length' "$S/coverage.json")"
 required="$(jq '.tallies.total.required' "$S/coverage.json")"
 [ "$required" = "$((expected + system))" ] || { echo "    coverage denominator $required != executables×exposures $expected + system $system"; exit 1; }
-# complete means every required subject is accounted for: measured, or waived with a reason
-[ "$(jq '.tallies.total.covered + .tallies.total.waived' "$S/coverage.json")" = "$required" ] || { echo "    coverage is not complete: covered plus waived is not the denominator"; cat "$S/coverage.json"; exit 1; }
+# complete means every required subject is accounted for: measured, waived with a reason, or
+# inapplicable because the repository lacks what a declared precondition names
+[ "$(jq '.tallies.total.covered + .tallies.total.waived + (.tallies.total.inapplicable // 0)' "$S/coverage.json")" = "$required" ] || { echo "    coverage is not complete: covered plus waived plus inapplicable is not the denominator"; cat "$S/coverage.json"; exit 1; }
+[ "$(jq '[.lines[] | select(.state == "inapplicable" and ((.reason // "") | length) == 0)] | length' "$S/coverage.json")" = 0 ] || { echo "    an inapplicable line names no precondition"; exit 1; }
 [ "$(jq '.tallies.total.missing' "$S/coverage.json")" = 0 ] || { echo "    a capability is neither measured nor waived"; cat "$S/coverage.json"; exit 1; }
 [ "$(jq '[.lines[] | select(.state == "waived" and ((.reason // "") | length) == 0)] | length' "$S/coverage.json")" = 0 ] || { echo "    a waived line carries no reason"; exit 1; }
 

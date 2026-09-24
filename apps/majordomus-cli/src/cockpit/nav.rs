@@ -1,8 +1,12 @@
 //! Navigation, derived. The sidebar's catalogues are not a list in this file: the
-//! capability modules come from the registry, the object kinds come from the index, and
-//! the graphs come from the derivations. A module added to `compose_modules!`, a kind
+//! capability modules come from the registry, the object kinds come from `repository.info`,
+//! and the graphs come from the derivations. A module added to `compose_modules!`, a kind
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
+//!
+//! The kinds are *asked for* rather than read: ADR 0012 says no page reads the index
+//! directly, because a reader that steps around the executor is outside the cache, the
+//! counters and the validation every other caller passes through.
 //!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
 //! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
@@ -226,17 +230,44 @@ impl Navigation {
     }
 }
 
+/// What the layer holds, as `repository.info` answers it: the object count and the kinds
+/// with theirs.
+///
+/// A capability that cannot answer leaves the navigation without its object counts rather
+/// than without a navigation: the sidebar is how a person reaches the page that would say
+/// what went wrong, so it is the last thing that should fail with the thing it reports on.
+/// The two fields of `repository.info` this file reads; the rest of the report is the
+/// health page's subject, and taking only these keeps the navigation's dependency on the
+/// capability to what it actually shows.
+#[derive(Default, serde::Deserialize)]
+struct Held {
+    objects: usize,
+    kinds: std::collections::BTreeMap<String, usize>,
+}
+
+fn held(ctx: &Context) -> Held {
+    let Ok(value) = ctx.execute("repository.info", serde_json::json!({})) else {
+        return Held::default();
+    };
+    serde_json::from_value::<Held>(value).unwrap_or_default()
+}
+
 /// Build the navigation for a request: the areas, then the catalogues derived from the
 /// registry, the index and the graph derivations. `here` is the request path, so the
 /// current entry can be marked without a page saying which it is.
 pub fn build(ctx: &Context, here: &str) -> Navigation {
     let summary = ctx.registry.summary();
+    // What the layer holds is asked for, not opened. `repository.info` answers how many
+    // objects there are and which kinds they have, and asking it is what keeps the
+    // navigation a projection instead of a second reader of the index (ADR 0012). One
+    // call answers both catalogues below.
+    let held = held(ctx);
     // the counts are facts of this context, decided per area: how many things are behind
     // an entry is not part of what an area is
     let count = |a: Area| -> Option<usize> {
         match a {
             Area::Capabilities => Some(summary.total),
-            Area::Objects => Some(ctx.index.objects.len()),
+            Area::Objects => Some(held.objects),
             Area::Graphs => Some(graph::ids().len()),
             Area::Api => Some(summary.http_routes),
             _ => None,
@@ -281,16 +312,15 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
     // the kinds of the layer: what the repository declares, not what this code knows
     let kinds = Section {
         title: "Object kinds".into(),
-        items: ctx
-            .index
-            .kinds()
-            .into_iter()
+        items: held
+            .kinds
+            .iter()
             .map(|(kind, count)| Item {
                 label: kind.to_string(),
                 href: crate::entity::kind_route(kind),
                 area: Area::Objects,
                 group: None,
-                count: Some(count),
+                count: Some(*count),
                 current: false,
             })
             .collect(),
@@ -472,7 +502,17 @@ mod tests {
             .find(|s| s.title == "Object kinds")
             .expect("a kind section");
         let labels: Vec<&str> = kinds.items.iter().map(|i| i.label.as_str()).collect();
-        let expected: Vec<&str> = ctx.index.kinds().into_keys().collect();
+        // asked for the same way the navigation asks, so that the assertion cannot pass
+        // by reading a source the page is not allowed to read (ADR 0012)
+        let reported = ctx
+            .execute("repository.info", serde_json::json!({}))
+            .expect("repository.info answers");
+        let expected: Vec<&str> = reported["kinds"]
+            .as_object()
+            .expect("kinds")
+            .keys()
+            .map(String::as_str)
+            .collect();
         assert_eq!(labels, expected);
     }
 }

@@ -10,11 +10,11 @@ source = "AGENTS.md"
 
 This file is a bootstrap, not the rulebook. Read `README.md` for what this
 repository is. The provider-neutral AI context and governance layer lives under
-[`.ai/`](.ai/), and everything normative is there.
+[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai), and everything normative is there.
 
 Before substantive planning, implementation, review or repository mutation:
 
-1. read [`.ai/README.md`](.ai/README.md) and follow its discovery protocol,
+1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/README.md) and follow its discovery protocol,
 2. load the effective rules under `.ai/repo/rules/` and resolve their dependencies,
 3. load only the skills, workflows and knowledge the task is about,
 4. never load `.ai/local/` implicitly; it is this checkout's own state and not context.
@@ -62,7 +62,8 @@ one board, reassigned on reconnect and reused by every other board: never correl
 across time by it — the checkout a peer carries is the durable half of its identity. Read
 the board before you open a mandate and before you fan work out: two workers built the same
 subsystem in one afternoon because neither looked first. A scope announced there is a claim,
-not a lock; the task's own scope and `check --overlap` are what refuse a commit.
+not a lock, and `check --overlap` only reports; what refuses a change is the task's own scope,
+at `check`, at `finish` and in the pre-push hook.
 
 Push what you have, early. A branch whose commits reach no remote is invisible to every
 other worker, cannot be integrated by anyone but you, and is one disk away from being lost;

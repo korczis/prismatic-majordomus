@@ -51,7 +51,15 @@ events:
     emitted_by: finish
     requires: [task_id, outcome, contract]
     public: true
-    note: Written when finish accepts. A refusal is not recorded, which is why an accepted task and one refused four times before passing look the same in the ledger. See the finish-refusal-leaves-no-trace row in docs/HARDCODING_LEDGER.yaml.
+    note: Written when finish accepts. Every refusal before it is a task.refused line, so an accepted task and one refused four times before passing no longer look the same in the ledger.
+
+  - id: task.refused
+    title: Finish refused
+    summary: A task claimed an outcome and its finish contract refused it, naming the doctrines that did.
+    emitted_by: finish
+    requires: [task_id, outcome, unmet, refused]
+    public: true
+    note: "Written each time finish refuses: unmet is the number of contract lines that failed, refused lists the doctrines among them, and contract carries every doctrine's verdict as task.finished does. finish --check writes nothing, because a check asks and a finish claims. This is what makes the tool's own benefit countable: a refusal that was later satisfied is a false done that was caught, and until this event existed it left no trace (the finish-refusal-leaves-no-trace row of docs/HARDCODING_LEDGER.yaml)."
 
   - id: decision.recorded
     title: Decision recorded
@@ -191,7 +199,7 @@ events:
   - id: task.gate
     title: A validation gate reported against the task
     summary: One gate of the repository's CI model ran and reported an exit status, over the files whose hash is recorded.
-    emitted_by: evidence
+    emitted_by: gates
     requires: [task, gate, exit, inputs_hash]
     public: true
     note: The gate's inputs are derived from the CI model — the union of the paths of the classes that select it — so a change to any of them makes the run stale rather than merely old. A gate that has never emitted this event is reported as queued and never as passing.

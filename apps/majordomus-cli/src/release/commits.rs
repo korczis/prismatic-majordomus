@@ -1,7 +1,8 @@
 //! Conventional commits, read from git and parsed.
 //!
 //! The parse is deliberately small and total: a subject that does not match the convention
-//! is [`ChangeKind::Other`] rather than an error, because the changelog's job is to say what
+//! is [`ChangeKind::Other`](crate::release::ChangeKind::Other) rather than an error, because
+//! the changelog's job is to say what
 //! happened and a commit nobody spelled conventionally still happened.
 //!
 //! ```text
@@ -174,7 +175,7 @@ pub fn references(text: &str, objects: &[Object]) -> Vec<Reference> {
 
 /// One commit, as a change.
 ///
-/// The grammar is [`crate::commit::Header`]'s, not a second one: the changelog and the
+/// The grammar is `commit::Header`'s, not a second one: the changelog and the
 /// commit validator read the same parse and disagree only about what to *do* with a header
 /// that is not conventional. Here that is not a failure — a commit nobody spelled
 /// conventionally still happened, and a changelog that dropped it would lie about what the

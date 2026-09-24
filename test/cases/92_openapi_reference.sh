@@ -1,5 +1,6 @@
 # majordomus-exclusive: reads the derived API page the site cases generate into this checkout
 # majordomus-covers: none
+# claims: openapi-inferred
 # The OpenAPI document is inferred, not written: the tags are the modules, the examples are
 # the capabilities' benchmark cases, the responses are the statuses the router answers for
 # the capability's kind, the prose is the one text every projection shares, and the site's
@@ -15,10 +16,9 @@
 command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj92.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-# where cargo just put it: CARGO_TARGET_DIR is how worktrees share one build
-# directory, and the composed path then names a file that was never written
-RB="${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
+# the executable MAJORDOMUS_BIN names, or the one rust_bin builds; cargo itself is still
+# required below, for the crate's route replay
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 "$MJ" init >/dev/null
@@ -53,8 +53,17 @@ jq -e '[.paths[] | .get? // empty | .parameters[] | select(has("default") and .d
   || { echo "    a query parameter carries default: null"; exit 1; }
 jq -e '[.paths[] | .get? // empty | select(.["x-majordomus-benchmark"].policy != "waived") | .parameters[] | select(.required == true and (has("examples") | not))] | length == 0' "$DOC" >/dev/null \
   || { echo "    a required query parameter of a measured operation has no example, so no case sets it"; exit 1; }
-jq -e '[.paths[] | .post? // empty | select(.["x-majordomus-benchmark"].policy != "waived") | select((.requestBody.content["application/json"].examples // {} | length) == 0)] | length == 0' "$DOC" >/dev/null \
+# A requirement declared `required_when` has cases only where its precondition holds, so in
+# a repository that does not hold it the operation has no example — and coverage must then
+# name it inapplicable, with the precondition as its reason. Anything else is a gap.
+"$RB" bench coverage --format json 2>/dev/null > "$S/coverage.json"
+jq -e '[.paths[] | .post? // empty | select(.["x-majordomus-benchmark"].policy != "waived") | select((.requestBody.content["application/json"].examples // {} | length) == 0) | select(.["x-majordomus-benchmark"].policy != "required_when")] | length == 0' "$DOC" >/dev/null \
   || { echo "    a measured POST operation has no request body example"; exit 1; }
+# operationId is the canonical capability id, which is also the coverage line's subject
+for op in $(jq -r '.paths[] | .post? // empty | select(.["x-majordomus-benchmark"].policy == "required_when") | select((.requestBody.content["application/json"].examples // {} | length) == 0) | .operationId' "$DOC"); do
+  jq -e --arg c "$op" '[.lines[] | select(.subject == $c and .transport == "http")] | length == 1 and all(.state == "inapplicable" and ((.reason // "") | length) > 0)' "$S/coverage.json" >/dev/null \
+    || { echo "    $op has no request body example and coverage does not name it inapplicable with a reason"; exit 1; }
+done
 jq -e '[.paths[][] | select(.["x-majordomus-benchmark"].policy != "waived") | select((.parameters // []) | length > 0) | select([.parameters[] | has("examples")] | any | not)] | length == 0' "$DOC" >/dev/null \
   || { echo "    a measured operation with parameters shows no example on any of them"; exit 1; }
 # the example of objects.get names an object the repository holds, and the CLI reads it back

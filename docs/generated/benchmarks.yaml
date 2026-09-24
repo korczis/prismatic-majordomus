@@ -1,35 +1,40 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.6.0
+# Generator: majordomus-cli 0.8.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.6.0
+generator: majordomus-cli 0.8.0
 coverage:
   - scope: direct
-    required: 114
-    covered: 109
+    required: 115
+    covered: 110
     missing: 0
     waived: 5
+    inapplicable: 0
   - scope: http
-    required: 113
-    covered: 109
+    required: 114
+    covered: 110
     missing: 0
     waived: 4
+    inapplicable: 0
   - scope: mcp
-    required: 111
-    covered: 107
+    required: 112
+    covered: 108
     missing: 0
     waived: 4
+    inapplicable: 0
   - scope: system
     required: 13
     covered: 13
     missing: 0
     waived: 0
+    inapplicable: 0
   - scope: total
-    required: 351
-    covered: 338
+    required: 354
+    covered: 341
     missing: 0
     waived: 13
+    inapplicable: 0
 capabilities:
   - id: artifacts.list
     module: artifacts
@@ -860,6 +865,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: recover.orphans
+    module: recover
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - check-twelve-hours
+      - check-one-second
   - id: release.analysis
     module: release
     kind: query

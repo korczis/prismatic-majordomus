@@ -1,7 +1,7 @@
 +++
 title = "Extraction Report"
 description = "how the design was derived: root cause, pattern ledger, rejected patterns, risks, plan"
-weight = 32
+weight = 34
 [extra]
 source = "docs/EXTRACTION_REPORT.md"
 +++
@@ -326,7 +326,7 @@ not study two subsystems that turn out to matter for the same problem: a file-ba
 session-note discipline, and a stateless Markdown compiler that produced a browsable
 generated note vault from a repository's own documents.
 
-They were re-examined when [`M003`](../.ai/repo/project/milestones/M003.yaml) was
+They were re-examined when [`M003`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/project/milestones/M003.yaml) was
 planned. The method is unchanged — study, abstract, challenge, synthesise — and so is the
 confidentiality rule: mechanisms and magnitudes are reported, code and vocabulary are not.
 

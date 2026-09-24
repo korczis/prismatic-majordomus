@@ -7,6 +7,8 @@
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
+{#- a capability page lives at the slug the executable reference gives it, never at a route rebuilt from its dotted id (why.list is /registry/capabilities/why-list/) -#}
+{%- set exe = load_data(path="data/generated/executable.json") -%}
 {%- set m = [x for x in catalogue.moments if x.id == page.extra.id][0] -%}
 {%- set base = config.base_url | trim_end(pat="/") -%}
 
@@ -74,8 +76,8 @@
     {%- if m.capabilities | length > 0 %}
     <h3 class="mb-3 mt-6 font-mono text-xs uppercase tracking-wide text-body-subtle">the capabilities of the executable that answer it</h3>
     <ul class="flex flex-wrap gap-2">
-      {%- for id in m.capabilities %}
-      <li><a href="{{ get_url(path='/registry/capabilities/' ~ id ~ '/', trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ id }}</a></li>
+      {%- for id in m.capabilities %}{%- set cap = [x for x in exe.capabilities if x.id == id] %}
+      <li><a href="{{ get_url(path='/registry/capabilities/' ~ cap[0].slug ~ '/', trailing_slash=true) }}" class="inline-block rounded-base border border-default bg-neutral-primary-soft px-3 py-1.5 font-mono text-sm text-heading hover:bg-neutral-secondary-medium hover:text-fg-brand">{{ id }}</a></li>
       {%- endfor %}
     </ul>
     {%- endif %}

@@ -1,7 +1,7 @@
 +++
 title = "One canonical declaration; modules compose capabilities; the root composes modules"
 description = "One canonical declaration; modules compose capabilities; the root composes modules"
-weight = 117
+weight = 119
 [extra]
 kind = "rule"
 slug = "project-rust-canonical-declaration-1"

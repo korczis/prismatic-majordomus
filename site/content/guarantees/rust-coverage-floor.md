@@ -1,7 +1,7 @@
 +++
 title = "Coverage of the Rust crate is measured with test code out of the denominator, on every change that can affect the crate and on every push to master, and the build fails under the floor in scripts/rust-coverage-threshold or under the session/continuity domain's own floor in scripts/session-coverage-threshold"
 description = "The crate's coverage is a number with a committed floor, and a push that drops under the floor does not go green. Two floors, each one integer in a file of its own: scripts/rust-coverage-threshold over the whole executable, and scripts/session-coverage-threshold over the canonical session/continuity domain declared in scripts/session-coverage-domain. Both are read by every place that measures — the coverage job in CI, scripts/rust-check when cargo-llvm-cov is installed, and just coverage — so there is no second copy of either number to drift."
-weight = 121
+weight = 122
 [extra]
 claim_id = "rust-coverage-floor"
 status = "guaranteed"
@@ -23,7 +23,9 @@ The previous gate was `cargo llvm-cov --all-targets --summary-only --fail-under-
 
 The second floor exists because a crate-wide number says nothing about any particular subsystem. The session and continuity domain — the code a repository's memory of its own work depends on — can sit at zero while the crate-wide figure stays green. `scripts/session-coverage-domain` names the files it covers, one per line, and the script refuses a domain that names a file the export does not carry: narrowing the domain to raise the number is an edit a reviewer sees rather than a silent change of subject.
 
-`test/cases/77_rust_evidence.sh` checks that both files hold one integer, that the coverage job runs the script rather than calling `cargo llvm-cov --summary-only` again, that `scripts/rust-check` and `just coverage` do the same, and that every file the domain names exists.
+Both floors are ratchets: each is the coverage its subject measured when it was set, a lower bound that may rise and never fall. The crate floor's bound is `FLOOR_BOUND` in `scripts/ci/rust-command-check`, the gate of the blocking rule `project.rust-command-tested-in-file`, which refuses a floor under it; the domain floor's bound is held in the case below. Neither floor stands above what the crate has measured, because a floor no run meets fails every push alike and says nothing about any change; new uncovered code is refused regardless by the changed-code gate, `project.new-code-is-covered`.
+
+`test/cases/77_rust_evidence.sh` checks that both files hold one integer, that neither is under its bound, that the coverage job runs the script rather than calling `cargo llvm-cov --summary-only` again, that `scripts/rust-check` and `just coverage` do the same, and that every file the domain names exists.
 
 ## How to see it
 

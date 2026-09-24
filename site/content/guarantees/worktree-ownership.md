@@ -1,7 +1,7 @@
 +++
 title = "A task record names the checkout it belongs to, and another checkout is never held to its scope"
 description = "Before the .ai layout, the state directory was tracked by default, so the active task record travelled with the branch. A second worktree checking out that branch read a record it never wrote — and, before this, was held to a scope it never claimed. Its pre-push hook ran finish --check against someone else's task and refused every file outside that task's paths."
-weight = 90
+weight = 91
 [extra]
 claim_id = "worktree-ownership"
 status = "guaranteed"
@@ -44,7 +44,7 @@ majordomus --repo ../second finish --outcome completed; echo $?   # 15, "finish 
 
 One checkout still holds one record. Two people working in the same working directory share it, and the second `start` replaces the first; nothing about the field tells two workers in one checkout apart, because to git they are one.
 
-It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](../CONTINUITY.md).
+It does not attribute commits. A task records the commit it started at, and every file changed since counts as its work regardless of who changed it — see the limitation in [`CONTINUITY.md`](@/docs/continuity.md).
 
 ## Why it exists
 

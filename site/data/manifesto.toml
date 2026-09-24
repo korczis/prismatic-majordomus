@@ -184,10 +184,10 @@ label = "not satisfied"
 [direction]
 kicker = "direction"
 title = "What is shipped, and what this is becoming"
-lead = "The argument above is a doctrine and a design. Parts of it run today; more of it does not. The matrix at the top of this page is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume."
+lead = "The argument above is a doctrine and a design. Parts of it run today; more of it does not. The feature matrix is the shipped half, feature by feature and interface by interface. The unshipped half is named here rather than left for a reader to assume."
 shipped_title = "Shipped: the commands behind Context, Verify and Proof"
 planned_title = "Not built: everything the word intent names"
-planned_lead = "There is no intent object, no intent registry and no intent id. An issue here already records its objective, its desired state, its acceptance criteria and the evidence it requires — what is missing is anything above the issue that those roll up to, and any evaluation of those criteria when work is declared done. Nothing derives a plan from a desired outcome, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the matrix above like everything else, derived from one declaration, and this section will shrink."
+planned_lead = "There is no intent object, no intent registry and no intent id. An issue here already records its objective, its desired state, its acceptance criteria and the evidence it requires — what is missing is anything above the issue that those roll up to, and any evaluation of those criteria when work is declared done. Nothing derives a plan from a desired outcome, runs an opposition pass, or assembles a proof that an intent was satisfied; the traceability that exists runs from commit to issue, not from either to an intent. Every sentence on this page written in the conditional is one of these. The doctrine came first and the surface follows it: when it exists it will appear on the feature matrix like everything else, derived from one declaration, and this section will shrink."
 
 [doctrine]
 kicker = "the doctrine"
@@ -217,3 +217,18 @@ text = "evidence enough to demonstrate the outcome exists"
 title = "Discover once. Reason once. Derive everywhere. Verify against intent."
 lead = "A repository stops being a collection of partially synchronized artifacts and becomes an inspectable model of what we wanted, what we knew, what we decided, what changed, why it changed, what constrains it, whether it works, and how we know."
 closing = "Humans define intent. Majordomus keeps the system honest."
+
+[how]
+kicker = "how it works"
+title = "Declare what must hold. Derive everything that repeats it. Refuse what does not."
+lead = "Nothing here asks a model to behave. The repository states its rules, its lifecycle and what done means as typed files; one executable derives every instruction file, interface and page from them; and the commands that close a task check the result against the contract before anything is recorded."
+steps = [
+  { title = "Declare", evidence = "rules", text = "Policy, rules, profiles, the task lifecycle and the finish contract live under .ai/ as files with schemas. A rule is blocking or advisory, and a blocking rule stops the command instead of advising it." },
+  { title = "Derive", evidence = "interfaces", text = "Every worker's instruction file, the HTTP API, the MCP tools, the command reference and this site are generated from those declarations and checked for drift, so a rule cannot exist for one worker and not another." },
+  { title = "Verify", evidence = "refusals", text = "A task is started with a scope, checked against policy while it runs and finished against a contract. A worker can always say it is done; the repository decides whether that is true, and records nothing while any line fails." },
+]
+
+[proof]
+kicker = "evidence, not testimonials"
+title = "Every figure below is computed from the repository"
+lead = "There are no customer logos here. What there is: claims that each name the test that settles them, sorted by what they actually are, and the size of the model every interface is derived from. Planned and rejected claims are counted in the open."

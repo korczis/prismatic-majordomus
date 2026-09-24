@@ -67,6 +67,11 @@ cp "$SITE/data/build.json" "$SITE/static/build.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
 cp "$SITE/diagrams.js" "$SITE/static/js/diagrams.js"
 cp "$SITE/graph.js" "$SITE/static/js/graph.js"
+# a published copy of the composed product graph, fetched by graph.js where a page links to the
+# list instead of carrying the graph inline (the homepage); byte for byte the committed dataset
+mkdir -p "$SITE/static/graphs"
+cp "$SITE/data/registry/product-graph.json" "$SITE/static/graphs/product.json"
+cp "$SITE/api-anchors.js" "$SITE/static/js/api-anchors.js"
 if [ "$NOCSS" = 0 ]; then
   echo "== css"
   ( cd "$ROOT" && node_modules/.bin/tailwindcss -i "$SITE/tailwind.css" -o "$SITE/static/app.css" --minify )
