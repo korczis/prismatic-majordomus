@@ -725,7 +725,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.7.1",
+  "generated_by": "majordomus-cli 0.9.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -734,7 +734,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.7.1"
+    "version": "0.9.0"
   },
   "infrastructure": [
     {
@@ -9345,6 +9345,7 @@
         "CommitVerdict",
         "CompiledContext",
         "JudgedCommit",
+        "LayerSummary",
         "RepositoryEnvironment",
         "RepositoryReport"
       ],
@@ -15992,6 +15993,15 @@
           "refs": [],
           "required": false,
           "type": "integer | null"
+        },
+        {
+          "description": "Which ones, and what decided it: the index's own error diagnostics, each naming the\nfile, the code and the constraint it failed. A count says something is wrong; only\nthis says what and where, and a reader that has the count and not the list has to go\nlooking through a log for the answer the index already produced.",
+          "name": "refused",
+          "refs": [
+            "Diagnostic"
+          ],
+          "required": false,
+          "type": "array of Diagnostic"
         },
         {
           "description": "Whether the layer read cleanly.",
