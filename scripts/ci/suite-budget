@@ -24,7 +24,14 @@
 # exit 10  over budget — the total, the slowest case, or both
 # exit 12  it could not measure: no report, no model, or a model with no budget. Never a pass,
 #          because "I did not look" and "I looked and it was fine" are different answers.
+#
+# A pipeline here fails when any of its stages fails (the `set -o` below), so none of them
+# ends in an early reader such as `head`: a reader that stops early can kill the writer with
+# SIGPIPE, which would then end the script on the pipe's timing rather than on a
+# measurement. The slowest case is taken by awk in one pass, and the ten slowest are cut by
+# awk after a byte-order sort.
 set -eu
+set -o pipefail
 
 REPORT="suite.tsv"
 MODEL=".ai/repo/ci/suite.yaml"
@@ -39,7 +46,11 @@ done
 [ -f "$MODEL" ] || { echo "suite-budget: $MODEL is missing; the budget is declared there and nowhere else"; exit 12; }
 [ -f "$REPORT" ] || { echo "suite-budget: $REPORT is missing; the suite writes it under MJ_TEST_REPORT, so there is nothing to measure"; exit 12; }
 
-declared() { sed -n "s/^ *$1: *\([0-9][0-9]*\).*/\1/p" "$MODEL" | head -1; }
+declared() {
+  awk -v key="$1" '
+    $0 ~ ("^ *" key ": *[0-9]") { sub("^ *" key ": *", ""); sub("[^0-9].*$", ""); print; exit }
+  ' "$MODEL"
+}
 budget_total="$(declared cases_seconds || true)"
 budget_slowest="$(declared slowest_case_seconds || true)"
 [ -n "$budget_total" ] && [ -n "$budget_slowest" ] || {
@@ -50,7 +61,15 @@ budget_slowest="$(declared slowest_case_seconds || true)"
 # name <tab> result <tab> seconds <tab> phase
 total="$(awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { s += $3 } END { print s + 0 }' "$REPORT")"
 cases="$(awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { n++ } END { print n + 0 }' "$REPORT")"
-slowest_row="$(awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { print $3, $1 }' "$REPORT" | sort -rn | head -1)"
+# the case at the highest cost, a tie going to the name first in byte order — the same case
+# the ten-slowest listing below puts first — in one awk pass, so no early reader
+slowest_row="$(LC_ALL=C awk -F'\t' '
+  NF >= 3 && $3 ~ /^[0-9]+$/ {
+    c = $3 + 0
+    if (!seen || c > max || (c == max && $1 < name)) { max = c; name = $1; seen = 1 }
+  }
+  END { if (seen) print max, name }
+' "$REPORT")"
 slowest="${slowest_row%% *}"
 slowest_name="${slowest_row#* }"
 
@@ -63,7 +82,9 @@ printf 'suite-budget: %s case(s), %s s of case time against a budget of %s s; sl
 if [ "$total" -gt "$budget_total" ]; then
   printf 'FAILED  the suite costs %s s, over the %s s .ai/repo/ci/suite.yaml declares\n' "$total" "$budget_total"
   printf '        the ten slowest cases of this run:\n'
-  awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { print $3, $1 }' "$REPORT" | sort -rn | head -10 | awk '{ printf "          %6s s  %s\n", $1, $2 }'
+  awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { print $3, $1 }' "$REPORT" \
+    | LC_ALL=C sort -k1,1rn -k2,2 \
+    | awk 'NR <= 10 { printf "          %6s s  %s\n", $1, $2 }'
   printf '        make a case cheaper, or raise the budget in .ai/repo/ci/suite.yaml citing the measurement that justifies it\n'
   status=10
 fi
