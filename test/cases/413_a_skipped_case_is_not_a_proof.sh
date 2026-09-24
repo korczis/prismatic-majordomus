@@ -15,9 +15,12 @@
 #   2  a skip is not a failure: the run's exit status is 0, and a run that only skipped is
 #      still a run rather than "no cases found"
 #   3  the parallel phase agrees with the serial one, word for word
-#   4  a SKIP recorded into the ledger keeps its own outcome and does NOT prove the claim
+#   4  the skip status is not the declaration: a case that ends with 4 because a command
+#      failed with 4 (`jq -e` with no result) and never called `skip` is a FAIL and turns
+#      the run red, in both phases
+#   5  a SKIP recorded into the ledger keeps its own outcome and does NOT prove the claim
 #      the case names -- the claim is not `proven`, and the guarantee stays a finding
-#   5  the same TSV with `ok` in that one field does prove it, which is what makes 4 an
+#   6  the same TSV with `ok` in that one field does prove it, which is what makes 5 an
 #      assertion about the word rather than about the fixture
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null 2>&1 || skip "no jq"
@@ -105,6 +108,40 @@ run_harness parallel MJ_TEST_JOBS=2
 expect_grep '^skip 02_declines$'
 expect_grep '^tests: 1 passed, 0 failed, 1 skipped$'
 
+# ---------------------------------------------------------------- 4. a status is not a declaration
+# A case runs under `set -e`, so it ends with the status of whatever command failed, and
+# `jq -e` fails with 4 when it produced no result -- on the empty output of a command that
+# broke, say. That is the skip status. A runner that read the number alone would record the
+# failure as a case that declined and keep the run green, which is the defect this claim
+# closes arriving from the other side: a case that asserted and failed, read as one that
+# never looked. Only `skip` declares a skip.
+cat > "$H/test/cases/04_fails_with_four.sh" <<'SH'
+. "$ROOT/test/lib.sh"
+: > out.json
+jq -e '.schema == 1' out.json >/dev/null
+SH
+# the fixture must really end with the skip status, or this section asserts nothing
+mkdir -p "$W/four"; rc=0
+( cd "$W/four" && env -u MJ_SKIP_MARK ROOT="$H" bash -eu "$H/test/cases/04_fails_with_four.sh" ) \
+  >/dev/null 2>&1 || rc=$?
+[ "$rc" = 4 ] || { echo "    the fixture meant to fail with status 4 exited $rc"; exit 1; }
+for jobs in 1 2; do
+  run_harness "four$jobs" MJ_TEST_JOBS="$jobs"
+  [ "$(rc_of "four$jobs")" != 0 ] \
+    || { echo "    a run whose case failed with status 4 exited 0 (MJ_TEST_JOBS=$jobs)"; exit 1; }
+  word="$(row "four$jobs" 04_fails_with_four)"
+  [ "$word" = "FAIL" ] || {
+    echo "    a case that failed with status 4 is recorded as '$word', not FAIL (MJ_TEST_JOBS=$jobs)"
+    exit 1; }
+  # and the case that did declare it, in the same run, is still a skip
+  word="$(row "four$jobs" 02_declines)"
+  [ "$word" = "SKIP" ] || {
+    echo "    the declared skip beside it is recorded as '$word' (MJ_TEST_JOBS=$jobs)"; exit 1; }
+  expect_grep '^FAIL 04_fails_with_four$'
+  expect_grep '^tests: 1 passed, 1 failed, 1 skipped$'
+done
+rm "$H/test/cases/04_fails_with_four.sh"
+
 # ---------------------------------------------------------------- the fixture repository
 # A repository with a claims matrix of its own, as 124_evidence builds one: the states
 # below are reached by recording runs, and a case that recorded into this checkout would be
@@ -134,7 +171,7 @@ jqe() {          # jqe <name> <filter> <what broke>
   jq -e "$2" "$W/$1.json" >/dev/null 2>&1 || { printf '    %s\n' "$3"; jq -c . "$W/$1.json" | head -c 2000; echo; return 1; }
 }
 
-# ---------------------------------------------------------------- 4. a SKIP proves nothing
+# ---------------------------------------------------------------- 5. a SKIP proves nothing
 # The word the runner now writes, read back by the recorder. It is recorded -- a skip is a
 # fact about the run and hiding it would leave the claim reading `not run`, which says less
 # than the truth -- and it does not support the guarantee.
@@ -151,7 +188,7 @@ jqe skipped_show '[.findings[].claim] == ["alpha-holds"]' \
   "a guarantee whose only run declined is not reported as unsupported"
 expect_exit 10 "$MJB" evidence --repo "$T" show --check
 
-# ---------------------------------------------------------------- 5. the word is the difference
+# ---------------------------------------------------------------- 6. the word is the difference
 # The same fixture, the same commit, the same report -- one field changed. Without this the
 # section above would assert only that the fixture is unprovable.
 printf '01_alpha\tok\t1\tserial\n' > "$W/pass.tsv"

@@ -13,9 +13,17 @@ LAST_OUT=""
 # missing was a runner that could ever write it.
 #
 #   command -v jq >/dev/null 2>&1 || skip "no jq"
+#
+# The status alone is not the declaration. A case runs under `set -e`, so any command that
+# fails with the same status ends the case with it -- `jq -e` exits 4 when it produced no
+# result, which is what it does on the empty output of a command that broke -- and a runner
+# that read 4 as a skip would record that failure as a case that declined. So `skip` also
+# writes the file the runner names in MJ_SKIP_MARK, and the runner reads a skip only when
+# both are there; a 4 nobody declared stays a failure.
 MJ_SKIP_STATUS=4
 skip() {
   printf '    skip: %s\n' "$*"
+  if [ -n "${MJ_SKIP_MARK:-}" ]; then printf '%s\n' "$*" > "$MJ_SKIP_MARK"; fi
   exit "$MJ_SKIP_STATUS"
 }
 expect_exit() {

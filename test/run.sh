@@ -34,7 +34,9 @@ MJ="$ROOT/bin/majordomus"; export MJ ROOT
 pass=0; fail=0; skipped=0; failed_names=""
 # The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
 # Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
-# number whose only job is to be neither 0 nor a failure.
+# number whose only job is to be neither 0 nor a failure. The number is not the declaration
+# on its own: `skip` also writes the file run_case names in MJ_SKIP_MARK, because a case
+# under `set -e` ends with the status of whatever command failed, and `jq -e` fails with 4.
 MJ_SKIP_STATUS=4
 
 # ---------------------------------------------------------------- one case
@@ -62,8 +64,11 @@ case_timeout() {
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired.
 run_case() {
-  local case="$1" T rc=0 limit pid waited grace
+  local case="$1" T rc=0 limit pid waited grace mark declined=0
   T="$(mktemp -d "${TMPDIR:-/tmp}/mj-test.XXXXXX")"
+  # where `skip` says it was called: beside the fixture rather than in it, so a case that
+  # empties its own directory cannot erase the declaration, and unique because $T is
+  mark="$T.skip"
   ( cd "$T" && git init -q . && git config user.email t@example.com && git config user.name t \
     && git commit -q --allow-empty -m init ) || { rm -rf "$T"; return 2; }
   limit="$(case_timeout "$case")"
@@ -76,7 +81,8 @@ run_case() {
   # is too late -- the subshell is already in this shell's group by then, and a killed case
   # leaves its background server holding a port for the next one.
   set -m
-  ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT && T="$T" bash -eu "$case" ) &
+  ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
+    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" ) &
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then
@@ -93,21 +99,23 @@ run_case() {
         kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
         echo "    the case did not finish within ${limit}s and was terminated" >&2
-        rm -rf "$T"
+        rm -rf "$T" "$mark"
         return 3
       fi
       sleep 1; waited=$((waited+1))
     done
     wait "$pid" || rc=$?
   fi
-  rm -rf "$T"
+  [ -f "$mark" ] && declined=1
+  rm -rf "$T" "$mark"
   # Only two statuses mean anything to the caller besides 0: the skip the case declared, and
   # failure. A case's own exit 2 or 3 is a failure of that case and must not be read as this
   # function's "the fixture could not be set up" or "the bound fired", which are the
-  # runner's own words and are returned above.
+  # runner's own words and are returned above. A 4 is a skip only when `skip` wrote the
+  # mark; a 4 without it is a command that failed with that status, and a failure.
   case "$rc" in
     0) return 0 ;;
-    "$MJ_SKIP_STATUS") return 4 ;;
+    "$MJ_SKIP_STATUS") [ "$declined" = 1 ] && return 4; return 1 ;;
     *) return 1 ;;
   esac
 }
