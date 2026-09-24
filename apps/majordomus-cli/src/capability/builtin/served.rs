@@ -327,7 +327,9 @@ pub fn standing(
 ) -> ServedStanding {
     let (all, unreadable) = served::read_all(root);
     let mut names: Vec<&str> = all.iter().map(|o| o.deployment.as_str()).collect();
-    names.sort_unstable();
+    // the canonical order every other collection is shown in; natural_cmp is total, so
+    // equal names are adjacent and dedup still removes every repeat
+    crate::order::canonical_strings(&mut names);
     names.dedup();
     let deployments = names
         .into_iter()
@@ -533,6 +535,23 @@ mod tests {
             ServedVerdict::Served,
             "B contains A"
         );
+    }
+
+    /// The deployments are one collection with one order: the canonical one, which reads
+    /// `mirror-10` after `mirror-2`, where a byte sort puts it first.
+    #[test]
+    fn deployments_are_listed_once_each_in_canonical_order() {
+        let dir = tempfile::tempdir().unwrap();
+        for name in ["pages", "mirror-10", "mirror-2", "mirror-2"] {
+            served::append(dir.path(), &record(name, A, ServedVerdict::Served)).unwrap();
+        }
+        let s = standing(dir.path(), A, None, &Linear);
+        let names: Vec<_> = s
+            .deployments
+            .iter()
+            .map(|d| d.deployment.as_str())
+            .collect();
+        assert_eq!(names, ["mirror-2", "mirror-10", "pages"]);
     }
 
     #[test]
