@@ -484,7 +484,7 @@ pub fn projection_current(root: &Path) -> bool {
 /// use majordomus_cli::release::version::{carrier_shape, Carrier};
 /// let line = "FOO_VERSION=\"1.2.3\"";
 /// let found = Carrier { path: "lib/x.sh".into(), line: 2, shape: carrier_shape(line).unwrap(), text: line.into() };
-/// assert_eq!(found.shape, "a shell assignment to a VERSION name");
+/// assert_eq!(found.shape, "an assignment to a version name");
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Carrier {
@@ -502,7 +502,10 @@ pub struct Carrier {
 ///
 /// Three shapes, each a place a version is *declared* rather than mentioned:
 ///
-/// - a shell assignment to a `…VERSION` name: `MJ_VERSION="0.8.0"`, `export FOO_VERSION=1.2.3`;
+/// - an assignment to a name ending in `version`, in any case and in the languages the
+///   tool's files are written in: shell `MJ_VERSION="0.8.0"` and `export FOO_VERSION=1.2.3`,
+///   TOML `version = "1.2.3"`, JavaScript `const VERSION = '1.2.3'`, Python
+///   `__version__ = "1.2.3"`;
 /// - a `version` member of YAML or JSON at the start of a line: `version: 1.2.3`,
 ///   `"version": "1.2.3"`;
 /// - the product's own answer to `version`: `majordomus 0.8.0`.
@@ -513,31 +516,41 @@ pub struct Carrier {
 /// use majordomus_cli::release::version::carrier_shape;
 /// assert!(carrier_shape("MJ_VERSION=\"0.8.0\"").is_some());
 /// assert!(carrier_shape("  export FOO_VERSION=v1.2.3").is_some());
+/// assert!(carrier_shape("declare -r MJ_VERSION=\"1.2.3\"").is_some());
+/// assert!(carrier_shape("version = \"1.2.3\"").is_some());
+/// assert!(carrier_shape("export const VERSION = '1.2.3';").is_some());
+/// assert!(carrier_shape("let appVersion = `1.2.3`;").is_some());
+/// assert!(carrier_shape("__version__ = \"1.2.3\"").is_some());
 /// assert!(carrier_shape("version: 1.2.3").is_some());
 /// assert!(carrier_shape("  \"version\": \"1.2.3\",").is_some());
 /// assert!(carrier_shape("echo \"majordomus 0.8.0\"").is_some());
-/// // read, not stated: a variable, a schema version, a generator stamp, a sentinel
+/// // read, not stated: a variable, a schema version, a generator stamp, a sentinel, a
+/// // comparison, a property of something else
 /// assert!(carrier_shape("MJ_VERSION=\"${line#version=}\"").is_none());
 /// assert!(carrier_shape("version: 1").is_none());
 /// assert!(carrier_shape("# Generator: majordomus-cli 0.8.0").is_none());
 /// assert!(carrier_shape("MJ_VERSION=\"site\"").is_none());
+/// assert!(carrier_shape("version == \"1.2.3\"").is_none());
+/// assert!(carrier_shape("pkg.version = \"1.2.3\"").is_none());
+/// assert!(carrier_shape("versioned = \"1.2.3\"").is_none());
 /// ```
 pub fn carrier_shape(line: &str) -> Option<&'static str> {
     let t = line.trim_start();
 
-    // a shell assignment to a name ending in VERSION
-    let assignment = ["export ", "readonly ", "local "]
-        .iter()
-        .find_map(|kw| t.strip_prefix(kw))
-        .unwrap_or(t)
-        .trim_start();
-    if let Some((name, value)) = assignment.split_once('=') {
-        let is_version_name = name.ends_with("VERSION")
+    // an assignment to a name ending in `version`, once the words that declare it are set aside
+    if let Some((name, value)) = declared_name(t).split_once('=') {
+        let name = name.trim_end();
+        let is_version_name = !name.is_empty()
             && name
                 .chars()
-                .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_');
-        if is_version_name && leads_with_version(value.trim_start_matches(['"', '\''])) {
-            return Some("a shell assignment to a VERSION name");
+                .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '$')
+            && name
+                .trim_matches('_')
+                .to_ascii_lowercase()
+                .ends_with("version");
+        let value = value.trim_start().trim_start_matches(['"', '\'', '`']);
+        if is_version_name && leads_with_version(value) {
+            return Some("an assignment to a version name");
         }
     }
 
@@ -565,6 +578,32 @@ pub fn carrier_shape(line: &str) -> Option<&'static str> {
         }
     }
     None
+}
+
+/// A line with the words that declare a name set aside — `export`, `readonly`, `local`,
+/// `declare` and `typeset` with their flags, `const`, `let`, `var` — so that what is left
+/// begins with the name being assigned.
+fn declared_name(mut t: &str) -> &str {
+    const DECLARING: &[&str] = &[
+        "export", "readonly", "local", "declare", "typeset", "const", "let", "var",
+    ];
+    const TAKES_FLAGS: &[&str] = &["export", "readonly", "local", "declare", "typeset"];
+    while let Some((word, rest)) = t.split_once(char::is_whitespace) {
+        if !DECLARING.contains(&word) {
+            break;
+        }
+        t = rest.trim_start();
+        if TAKES_FLAGS.contains(&word) {
+            while let Some((flag, rest)) = t.split_once(char::is_whitespace) {
+                if flag.len() > 1 && flag.starts_with('-') && !flag.contains('=') {
+                    t = rest.trim_start();
+                } else {
+                    break;
+                }
+            }
+        }
+    }
+    t
 }
 
 /// Whether `text` begins with a version: three dot-separated numbers, optionally after a
@@ -1095,7 +1134,14 @@ mod tests {
         )
         .unwrap();
         std::fs::write(root.join("scripts/b"), "echo \"majordomus 0.9.0\"\n").unwrap();
+        // the same declaration in the other languages the tool's files are written in
+        std::fs::write(
+            root.join("scripts/c.mjs"),
+            "// 0.9.0\nexport const VERSION = '0.9.0';\n",
+        )
+        .unwrap();
         std::fs::write(root.join("share/c.yaml"), "name: x\nversion: 0.9.0\n").unwrap();
+        std::fs::write(root.join("share/d.toml"), "[tool]\nversion = \"0.9.0\"\n").unwrap();
         std::fs::write(root.join("share/gen.yaml"), "version: 0.9.0\n").unwrap();
         // outside the tool's own files a version is somebody else's business
         std::fs::write(root.join("docs/d.md"), "version: 0.9.0\n").unwrap();
@@ -1114,7 +1160,9 @@ mod tests {
             vec![
                 ("lib/a.sh".to_string(), 2),
                 ("scripts/b".to_string(), 1),
+                ("scripts/c.mjs".to_string(), 2),
                 ("share/c.yaml".to_string(), 2),
+                ("share/d.toml".to_string(), 2),
             ],
             "every hand-written statement once, the projection and the generated file never"
         );

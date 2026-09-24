@@ -92,8 +92,9 @@ all of them.
 
 `release::version::diagnose`, in the release module, is what refuses a second statement. It
 reports `version-stated-by-hand` (an error) for a version-shaped carrier written by hand in
-`bin/`, `lib/`, `scripts/` or `share/` outside a generated artifact — a shell assignment to a
-`…VERSION` name, a `version:` or `"version":` member, or the product's `majordomus X.Y.Z`;
+`bin/`, `lib/`, `scripts/` or `share/` outside a generated artifact — an assignment to a name
+ending in `version` (shell, TOML, JavaScript or Python), a `version:` or `"version":` member,
+or the product's `majordomus X.Y.Z`;
 `projection-stale` (a warning — the refusal is `generate --check`'s) when `share/version.txt`
 is behind the manifest or missing; and `writers-disagree` (an error) when it is ahead of the
 manifest or unrelated to it. `release analyze` carries these on every surface, and

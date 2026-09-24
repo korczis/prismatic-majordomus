@@ -98,8 +98,9 @@ shell. Gates and cases ask them; none parses the manifest itself.
 module, reports:
 
 - `version-stated-by-hand` (error) — a version-shaped carrier written by hand in `bin/`,
-  `lib/`, `scripts/` or `share/` outside a generated artifact: a shell assignment to a
-  `…VERSION` name, a `version:` or `"version":` member, or the product's `majordomus X.Y.Z`;
+  `lib/`, `scripts/` or `share/` outside a generated artifact: an assignment to a name ending
+  in `version` (shell, TOML, JavaScript or Python), a `version:` or `"version":` member, or
+  the product's `majordomus X.Y.Z`;
 - `projection-stale` (warning) — the projection is behind the manifest or missing: the state
   every bump leaves until the derivation runs. A warning, because `generate --check` is what
   refuses it, and a writer that refused its own un-derived state could not correct a bump;
