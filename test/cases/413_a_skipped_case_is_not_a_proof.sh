@@ -11,7 +11,8 @@
 #
 # What it proves, in order:
 #   1  a case that calls `skip` is reported as a skip and written into the report as SKIP,
-#      while a case that passed is still `ok` and a case that failed is still FAIL
+#      while a case that passed is still `ok` and a case that failed is still FAIL; CI's job
+#      summary (scripts/ci/summary) counts that SKIP as skipped, not as failed
 #   2  a skip is not a failure: the run's exit status is 0, and a run that only skipped is
 #      still a run rather than "no cases found"
 #   3  the parallel phase agrees with the serial one, word for word
@@ -79,6 +80,10 @@ expect_no_grep 'the case continued after skip'
 # the assertion this whole case exists for
 [ "$(row serial 02_declines)" = "SKIP" ] \
   || { echo "    a case that declined is recorded as '$(row serial 02_declines)', not SKIP"; exit 1; }
+# and CI's job summary, which reads that report, counts the skip on its own rather than
+# folding every row that is not `ok` into "failed"
+LAST_OUT="$(env -u GITHUB_STEP_SUMMARY "$ROOT/scripts/ci/summary" --job suite --report "$W/serial.tsv")"
+expect_grep '^Suite: 3 cases, 1 failed, 1 skipped, '
 
 # ---------------------------------------------------------------- 2. a skip is not a failure
 # and a skip is not "nothing ran" either: the run selected a case, the case answered, and
