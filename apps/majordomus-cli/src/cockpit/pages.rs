@@ -2550,6 +2550,177 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
         ])
 }
 
+/// Token economics: the verdict the evidence allows, every metric with its measurement
+/// class, the state of each suite's evidence, the pairs (valid or not), the segments and
+/// the records that could not be read — all from `economics.summary`, so the page shows
+/// what the CLI, the API and MCP show. Every token figure is a reduction spelled by
+/// `economics::report::amount`, the same function the report and the CLI use, and every
+/// state is spelled as it serialises.
+pub fn economics(ctx: &Context) -> Page {
+    let s: crate::economics::model::EconomicsSummary = match ask(ctx, "economics.summary", json!({})) {
+        Ok(r) => r,
+        Err(e) => return failed(Area::Economics, "Economics", e),
+    };
+    use crate::economics::model::{EconomicsFreshness, EconomicsMetricStatus, EconomicsPairStatus};
+    use crate::economics::report::{amount, interval_text, words};
+    use crate::economics::stats::percent_text;
+    let status_badge = |st: EconomicsMetricStatus| {
+        let look = match st {
+            EconomicsMetricStatus::Verified => "verified",
+            EconomicsMetricStatus::Preliminary => "partial",
+            EconomicsMetricStatus::Measured => "ok",
+            EconomicsMetricStatus::NotMeasured => "missing",
+        };
+        badge(look, words(&st))
+    };
+    let verdict = el("div")
+        .child(alert(if s.verdict.publishable { "ok" } else { "warn" }, s.verdict.statement.clone()))
+        .when(!s.verdict.unmet.is_empty(), |d| {
+            let mut list = el("ul").class("mj-list");
+            for u in &s.verdict.unmet {
+                list = list.child(el("li").text(u));
+            }
+            d.child(el("p").class("mj-prose").text("The publication rule is not met:")).child(list)
+        });
+    let primary = s.metrics.iter().find(|m| Some(&m.id) == s.primary_metric.as_ref());
+    let context = s.metrics.iter().find(|m| m.id == crate::economics::CONTEXT_REDUCTION);
+    let stat = |m: Option<&crate::economics::model::EconomicsMetric>, label: &str| {
+        let (v, src) = match m {
+            Some(m) => (
+                m.value.map(|v| amount(v, &m.unit)).unwrap_or_else(|| "—".into()),
+                format!("{} · {} from {} · n={}", m.id, m.class.word(), m.inputs.map(|i| i.word()).unwrap_or("-"), m.n),
+            ),
+            None => ("—".into(), "not declared".into()),
+        };
+        statistic(v, label, src)
+    };
+    let headline = el("div")
+        .class("mj-grid")
+        .child(stat(primary, "Total-token reduction with Majordomus (median over valid pairs)"))
+        .child(stat(context, "Context selection by the compiler (not total savings)"));
+    let suites = table(
+        &["Suite", "Kind", "Evidence", "Runs", "Valid pairs", "Control failed", "Treatment failed", "Both failed", "Other", "Detail"],
+        s.suites
+            .iter()
+            .map(|v| {
+                let look = match v.freshness {
+                    EconomicsFreshness::Current => "current",
+                    EconomicsFreshness::Stale => "stale",
+                    EconomicsFreshness::Incompatible => "fail",
+                    EconomicsFreshness::NoEvidence => "missing",
+                };
+                let fresh = badge(look, words(&v.freshness));
+                row(vec![
+                    cell(mono(v.id.clone())),
+                    text_cell(v.kind.clone()),
+                    cell(fresh),
+                    text_cell(v.runs.to_string()),
+                    text_cell(format!("{}/{}", v.pairs.valid, v.pairs.attempted)),
+                    text_cell(v.pairs.control_failed.to_string()),
+                    text_cell(v.pairs.treatment_failed.to_string()),
+                    text_cell(v.pairs.both_failed.to_string()),
+                    text_cell(v.pairs.other.to_string()),
+                    text_cell(v.freshness_detail.clone().unwrap_or_default()),
+                ])
+            })
+            .collect(),
+    );
+    let metrics = table(
+        &["Metric", "Value", "Status", "Class", "n", "Interval", "What it is not"],
+        s.metrics
+            .iter()
+            .map(|m| {
+                let value = m.value.map(|v| amount(v, &m.unit)).unwrap_or_else(|| "—".into());
+                let class = match m.inputs {
+                    Some(i) => format!("{} from {}", m.class.word(), i.word()),
+                    None => m.class.word().to_string(),
+                };
+                row(vec![
+                    cell(link(format!("/api/v1/economics/explain?metric={}", percent_encode(&m.id)), m.id.clone())),
+                    text_cell(value),
+                    cell(status_badge(m.status)),
+                    cell(tag(class)),
+                    text_cell(m.n.to_string()),
+                    text_cell(
+                        m.interval
+                            .as_ref()
+                            .map(|i| interval_text(i, &m.unit))
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(m.not.clone().unwrap_or_default()),
+                ])
+            })
+            .collect(),
+    );
+    let pairs = table(
+        &["Task", "Category", "Rep", "Status", "Control tokens", "Treatment tokens", "Token reduction", "Reasons"],
+        s.pairs
+            .iter()
+            .map(|p| {
+                let look = match p.status {
+                    EconomicsPairStatus::Valid => "valid",
+                    EconomicsPairStatus::Missing => "missing",
+                    _ => "failed",
+                };
+                let status = badge(look, words(&p.status));
+                row(vec![
+                    cell(mono(p.task.clone())),
+                    text_cell(p.category.clone()),
+                    text_cell(p.repetition.to_string()),
+                    cell(status),
+                    text_cell(p.control_usage.as_ref().map(|u| u.total.to_string()).unwrap_or_else(|| "—".into())),
+                    text_cell(p.treatment_usage.as_ref().map(|u| u.total.to_string()).unwrap_or_else(|| "—".into())),
+                    text_cell(p.token_reduction.map(percent_text).unwrap_or_else(|| "—".into())),
+                    text_cell(p.reasons.join("; ")),
+                ])
+            })
+            .collect(),
+    );
+    let segments = table(
+        &["Dimension", "Segment", "Valid pairs", "Median reduction", "Min", "Max"],
+        s.segments
+            .iter()
+            .filter_map(|g| {
+                let d = g.token_reduction.as_ref()?;
+                Some(row(vec![
+                    text_cell(g.dimension.clone()),
+                    text_cell(g.value.clone()),
+                    text_cell(g.n.to_string()),
+                    text_cell(percent_text(d.median)),
+                    text_cell(percent_text(d.min)),
+                    text_cell(percent_text(d.max)),
+                ]))
+            })
+            .collect(),
+    );
+    let mut unread = el("ul").class("mj-list");
+    for d in &s.diagnostics {
+        unread = unread.child(el("li").text(d));
+    }
+    let mut hypotheses = el("ul").class("mj-list");
+    for h in &s.hypotheses {
+        hypotheses = hypotheses.child(el("li").text(format!("{} ({}): {}", h.id, h.status, h.statement)));
+    }
+    Page::new(
+        Area::Economics,
+        "Economics",
+        el("div")
+            .class("mj-grid")
+            .child(card("Verdict", verdict))
+            .when(!s.diagnostics.is_empty(), |g| {
+                g.child(card("Records that could not be read", unread))
+            })
+            .child(card("Headline", headline))
+            .child(card("Evidence", suites))
+            .child(card(format!("Metrics ({})", s.metrics.len()), metrics))
+            .child(card("Segments", segments))
+            .child(card(format!("Pairs ({})", s.pairs.len()), pairs))
+            .child(card("Hypotheses — stated before the evidence, not results", hypotheses)),
+    )
+    .subtitle("What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests. Observed, counted, derived, estimated and counterfactual numbers are labelled as such. Every token figure is a reduction, 1 - treatment / control: a negative reduction means Majordomus used more tokens.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Economics", None)])
+}
+
 /// The model catalogue and its routing: the vendors and models `share/models.yaml`
 /// declares, with each vendor's credential *presence* (never a value), rendered from
 /// the same `models.list` every other surface reads. No model name lives in this page.

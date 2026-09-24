@@ -194,6 +194,15 @@ gates:
     runs: scripts/ci/claim-proof-check --strict
     summary: every claim marked guaranteed names a runnable test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and with the debt at zero any exception fails
 
+  # A number about tokens, context or cost reaches a reader only from recorded evidence: prose
+  # that types one is refused, and a claim bound to an economics metric cannot be guaranteed
+  # while the metric's evidence does not stand (ADR 0082).
+  - id: economics-claims
+    job: structure
+    always: true
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
+    summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
+
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary

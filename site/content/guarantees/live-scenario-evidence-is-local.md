@@ -1,7 +1,7 @@
 +++
 title = "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered; an undischarged obligation is reported unmet, never failed"
 description = "A live scenario's result describes one tree, on one machine, at one minute. CI cannot"
-weight = 142
+weight = 145
 [extra]
 claim_id = "live-scenario-evidence-is-local"
 status = "guaranteed"

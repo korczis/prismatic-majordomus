@@ -71,6 +71,12 @@ modules:
     stability: behaviorally_verified
     source: builtin
     capabilities: 5
+  - id: economics
+    title: Token economics
+    description: "What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows."
+    stability: behaviorally_verified
+    source: builtin
+    capabilities: 4
   - id: environment
     title: Repository environment
     description: "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
@@ -9014,6 +9020,1899 @@ capabilities:
       cancellable: false
       concurrency: unrestricted
     source_path: apps/majordomus-cli/src/capability/builtin/distribution.rs
+  - id: economics.check
+    module: economics
+    kind: query
+    title: Refuse unsupported economics claims
+    description: "Scan the repository's hand-written prose and claim sentences for a quantity (a percentage, 'N times fewer') stated next to the economics vocabulary, and check every claim the methodology binds to a metric: a bound claim may be guaranteed only while its metric's evidence meets the binding and is current. `ok: false` names every finding."
+    input:
+      name: EconomicsCheckInput
+      schema:
+        type: object
+        additionalProperties: false
+        description: "The input of `economics.check`: nothing to narrow; the check is over the repository."
+        title: EconomicsCheckInput
+    output:
+      name: EconomicsCheckReport
+      schema:
+        type: object
+        properties:
+          ok:
+            type: boolean
+            description: No finding.
+          scanned:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Files scanned.
+          claims_checked:
+            type: integer
+            format: uint
+            minimum: 0
+            description: Bound claims checked.
+          findings:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsFinding"
+            description: Every finding.
+        required:
+          - ok
+          - scanned
+          - claims_checked
+          - findings
+        description: "The answer of `economics.check`."
+        title: EconomicsCheckReport
+        "$defs":
+          EconomicsFinding:
+            type: object
+            properties:
+              kind:
+                type: string
+                description: "`unsupported_quantity` or `claim_unsupported`."
+              path:
+                type: string
+                description: Repository-relative path.
+              line:
+                type:
+                  - integer
+                  - "null"
+                format: uint
+                minimum: 0
+                description: "1-based line, when the finding is about a line."
+              detail:
+                type: string
+                description: "What was found, and what to do about it."
+            required:
+              - kind
+              - path
+              - detail
+            description: One thing the check refuses.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::economics
+    exposure:
+      mcp:
+        tool: majordomus_economics_check
+      http:
+        method: GET
+        path: /api/v1/economics/check
+      cli:
+        path:
+          - economics
+          - check
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - economics
+      - claims
+      - gate
+    benchmark:
+      policy: required
+    cache:
+      policy: disabled
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/economics.rs
+  - id: economics.explain
+    module: economics
+    kind: query
+    title: Explain one economics metric
+    description: "One metric and everything it rests on: its formula, its measurement class and what that class means, the pairs and runs behind it (including the invalid ones), excluded runs, the suites and revisions, and the commands that reproduce it."
+    input:
+      name: EconomicsExplainInput
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          metric:
+            type: string
+            description: "The metric's id, as `economics.summary` lists it."
+        required:
+          - metric
+        description: "The input of `economics.explain`."
+        title: EconomicsExplainInput
+    output:
+      name: EconomicsExplanation
+      schema:
+        type: object
+        properties:
+          metric:
+            "$ref": "#/$defs/EconomicsMetric"
+            description: The metric.
+          class_meaning:
+            type: string
+            description: "What its class means, in the methodology's words."
+          methodology:
+            type: integer
+            format: uint32
+            minimum: 0
+            description: The methodology version.
+          suites:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsSuiteView"
+            description: The suites it draws on.
+          pairs:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsPair"
+            description: "The pairs it rests on, valid or not, when it rests on pairs."
+          excluded:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsExclusion"
+            description: Runs excluded under the outlier rule.
+          variants:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsVariant"
+            description: The arms compared.
+          reproduce:
+            type: array
+            items:
+              type: string
+            description: How to reproduce it.
+        required:
+          - metric
+          - class_meaning
+          - methodology
+          - suites
+          - pairs
+          - excluded
+          - variants
+          - reproduce
+        description: "The answer of `economics.explain`: one metric, and everything it rests on."
+        title: EconomicsExplanation
+        "$defs":
+          EconomicsMetric:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The metric's id."
+              title:
+                type: string
+                description: A name.
+              class:
+                "$ref": "#/$defs/EconomicsClass"
+                description: The measurement class.
+              inputs:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsClass"
+                  - type: "null"
+                description: "For a derived metric, the class of what it was derived from: a reduction derived from\nobserved usage is not the same evidence as one derived from counted bytes."
+              unit:
+                type: string
+                description: "`ratio`, `tokens`, `calls`."
+              formula:
+                type: string
+                description: "The formula, in words."
+              not:
+                type:
+                  - string
+                  - "null"
+                description: "What the metric is not, where it is easily mistaken for something else."
+              value:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The headline value; absent when nothing was measured.
+              status:
+                "$ref": "#/$defs/EconomicsMetricStatus"
+                description: Where it stands.
+              n:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many values it rests on.
+              distribution:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsDistribution"
+                  - type: "null"
+                description: Their distribution.
+              interval:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsInterval"
+                  - type: "null"
+                description: "The interval, when enough values exist."
+              suite:
+                type: string
+                description: The suite.
+              evidence:
+                type: array
+                items:
+                  type: string
+                description: "The runs, pairs or seeds it rests on."
+                default: []
+              warnings:
+                type: array
+                items:
+                  type: string
+                description: What a reader must know before using it.
+                default: []
+            required:
+              - id
+              - title
+              - class
+              - unit
+              - formula
+              - status
+              - n
+              - suite
+            description: "One metric: its value, where it comes from, and how much it can bear."
+          EconomicsClass:
+            oneOf:
+              - type: string
+                const: observed
+                description: Returned by the provider or its harness at run time and recorded unmodified.
+              - type: string
+                const: counted
+                description: "Computed deterministically from bytes on disk with a named, pinned tokenizer."
+              - type: string
+                const: derived
+                description: Arithmetic over observed or counted values.
+              - type: string
+                const: estimated
+                description: "A number standing in for one nobody measured. Never compared, never published."
+              - type: string
+                const: counterfactual
+                description: "What a mechanism would have avoided, modelled rather than observed."
+            description: "How a number came to be. The classes are ordered from strongest to weakest, and a value\ncomputed from several inputs is never stronger than the weakest of them."
+          EconomicsMetricStatus:
+            oneOf:
+              - type: string
+                const: verified
+                description: "Measured, and meets the publication rule."
+              - type: string
+                const: preliminary
+                description: "Measured, below the publication rule: a result, not a claim."
+              - type: string
+                const: measured
+                description: Measured deterministically; the publication rule for sampled data does not apply.
+              - type: string
+                const: not_measured
+                description: Nothing recorded to compute it from.
+            description: Where a metric stands.
+          EconomicsDistribution:
+            type: object
+            properties:
+              n:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many values.
+              mean:
+                type: number
+                format: double
+                description: Arithmetic mean.
+              median:
+                type: number
+                format: double
+                description: Median.
+              p25:
+                type: number
+                format: double
+                description: 25th percentile.
+              p75:
+                type: number
+                format: double
+                description: 75th percentile.
+              p95:
+                type: number
+                format: double
+                description: 95th percentile.
+              min:
+                type: number
+                format: double
+                description: Smallest.
+              max:
+                type: number
+                format: double
+                description: Largest.
+              sd:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: Sample standard deviation; absent for one value.
+            required:
+              - n
+              - mean
+              - median
+              - p25
+              - p75
+              - p95
+              - min
+              - max
+            description: The shape of a set of per-pair values.
+          EconomicsInterval:
+            type: object
+            properties:
+              level_bp:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Confidence in basis points.
+              low:
+                type: number
+                format: double
+                description: Lower bound.
+              high:
+                type: number
+                format: double
+                description: Upper bound.
+              method:
+                type: string
+                description: How it was computed.
+              resamples:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Resamples.
+              seed:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Generator seed.
+            required:
+              - level_bp
+              - low
+              - high
+              - method
+              - resamples
+              - seed
+            description: "A bootstrap interval, with everything needed to reproduce it."
+          EconomicsSuiteView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The suite.
+              kind:
+                type: string
+                description: "`live` or `context`."
+              version:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Its version.
+              title:
+                type: string
+                description: A name.
+              model:
+                type:
+                  - string
+                  - "null"
+                description: "The model, for a live suite."
+              freshness:
+                "$ref": "#/$defs/EconomicsFreshness"
+                description: Where its evidence stands.
+              freshness_detail:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when not current."
+              runs:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Runs recorded.
+              pairs:
+                "$ref": "#/$defs/EconomicsPairCounts"
+                description: Pair counts.
+              revisions:
+                type: array
+                items:
+                  type: string
+                description: The revisions the evidence was recorded at.
+                default: []
+              harnesses:
+                type: array
+                items:
+                  type: string
+                description: The harness versions that ran it.
+                default: []
+              models_reported:
+                type: array
+                items:
+                  type: string
+                description: The models the harness reported.
+                default: []
+            required:
+              - id
+              - kind
+              - version
+              - title
+              - freshness
+              - runs
+              - pairs
+            description: A suite and the state of its evidence.
+          EconomicsFreshness:
+            oneOf:
+              - type: string
+                const: current
+                description: "Recorded under this methodology, and nothing it depends on changed since."
+              - type: string
+                const: stale
+                description: "Recorded under this methodology, but a mechanism it measured changed since."
+              - type: string
+                const: incompatible
+                description: "Recorded under another methodology version: not comparable at all."
+              - type: string
+                const: no_evidence
+                description: Nothing recorded.
+            description: How recorded evidence stands against the repository as it is now.
+          EconomicsPairCounts:
+            type: object
+            properties:
+              declared:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs the suite declares.
+              attempted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs with at least one run recorded.
+              valid:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs that count.
+              control_failed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs whose control failed.
+              treatment_failed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs whose treatment failed.
+              both_failed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs where both failed.
+              other:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Pairs not comparable, missing a side, lacking usage, or excluded."
+            required:
+              - declared
+              - attempted
+              - valid
+              - control_failed
+              - treatment_failed
+              - both_failed
+              - other
+            description: "Pair counts of a suite, so that nothing is dropped out of sight."
+          EconomicsPair:
+            type: object
+            properties:
+              suite:
+                type: string
+                description: The suite.
+              task:
+                type: string
+                description: The task.
+              category:
+                type: string
+                description: "The task's category."
+              sessions:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Sessions the task spans.
+              repetition:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The repetition.
+              control:
+                type:
+                  - string
+                  - "null"
+                description: "The control run's id, when recorded."
+              treatment:
+                type:
+                  - string
+                  - "null"
+                description: "The treatment run's id, when recorded."
+              status:
+                "$ref": "#/$defs/EconomicsPairStatus"
+                description: Whether it counts.
+              reasons:
+                type: array
+                items:
+                  type: string
+                description: "Why not, when it does not."
+                default: []
+              control_usage:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsUsage"
+                  - type: "null"
+                description: "The control's totals."
+              treatment_usage:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsUsage"
+                  - type: "null"
+                description: "The treatment's totals."
+              token_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "`1 - treatment / control` on total tokens. Negative: the treatment cost more."
+              cost_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The same on the harness's cost projection."
+              tool_call_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The same on tool calls.
+              continuation_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The same on the tokens of the last session only: what continuing cost."
+              first_request_overhead:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: "First-request input of the treatment minus that of the control: what the treatment\nadds before the model has done anything."
+            required:
+              - suite
+              - task
+              - category
+              - sessions
+              - repetition
+              - status
+            description: "A control run and its treatment run, and what follows from them."
+          EconomicsPairStatus:
+            oneOf:
+              - type: string
+                const: valid
+                description: "Both runs succeeded, are comparable and report usage."
+              - type: string
+                const: control_failed
+                description: The control run failed a success gate.
+              - type: string
+                const: treatment_failed
+                description: The treatment run failed a success gate.
+              - type: string
+                const: both_failed
+                description: Both failed.
+              - type: string
+                const: usage_unavailable
+                description: A run reports no usage to compare.
+              - type: string
+                const: incomparable
+                description: The runs differ in something the methodology requires them to share.
+              - type: string
+                const: missing
+                description: One side was never recorded.
+              - type: string
+                const: excluded
+                description: A run is excluded under the outlier rule.
+            description: Why a pair does or does not count.
+          EconomicsUsage:
+            type: object
+            properties:
+              input_uncached:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input neither read from nor written to the cache.
+              cache_write:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input written to the cache.
+              cache_read:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input read from the cache.
+              output:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Output, reasoning included."
+              reasoning:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Reasoning tokens, when every request reported them."
+              total_input:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: All input.
+              total:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: All input and output.
+              requests:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Provider requests.
+              tool_calls:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tool calls.
+              cost_microusd:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The harness's cost projection, in millionths of a dollar, when every session had one."
+            required:
+              - input_uncached
+              - cache_write
+              - cache_read
+              - output
+              - total_input
+              - total
+              - requests
+              - tool_calls
+            description: "A run's totals, derived from its raw usage."
+          EconomicsExclusion:
+            type: object
+            properties:
+              run:
+                type: string
+                description: "The run's id."
+              reason:
+                type: string
+                description: Why.
+            required:
+              - run
+              - reason
+            description: One run excluded under the outlier rule.
+          EconomicsVariant:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "`baseline`, `majordomus`, ..."
+              role:
+                type: string
+                description: "`control` or `treatment`."
+              title:
+                type: string
+                description: A short name.
+              description:
+                type: string
+                description: Exactly what the arm consists of.
+              excludes:
+                type: array
+                items:
+                  type: string
+                description: What the arm deliberately does not include.
+                default: []
+            required:
+              - id
+              - role
+              - title
+              - description
+            description: "One arm of the experiment: what the session runs with, and what it runs without."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::economics
+    exposure:
+      mcp:
+        tool: majordomus_economics_explain
+      http:
+        method: GET
+        path: /api/v1/economics/explain
+      cli:
+        path:
+          - economics
+          - explain
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - economics
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 32
+      ttl_seconds: 5
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/economics.rs
+  - id: economics.runs
+    module: economics
+    kind: query
+    title: Recorded benchmark runs
+    description: "The raw facts every economics metric is computed from: each recorded run with its task, variant, repetition, model, revision, success-gate verdicts and the totals derived from its provider usage, and the path of its record."
+    input:
+      name: EconomicsRunsQuery
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          suite:
+            type:
+              - string
+              - "null"
+            description: Only this suite.
+          task:
+            type:
+              - string
+              - "null"
+            description: Only this task.
+          variant:
+            type:
+              - string
+              - "null"
+            description: Only this variant.
+        description: "The input of `economics.runs`."
+        title: EconomicsRunsQuery
+    output:
+      name: EconomicsRunList
+      schema:
+        type: object
+        properties:
+          count:
+            type: integer
+            format: uint
+            minimum: 0
+            description: How many.
+          runs:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsRunView"
+            description: "The runs, sorted by id."
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: Records that could not be read.
+            default: []
+        required:
+          - count
+          - runs
+        description: "The answer of `economics.runs`: the raw facts every metric is computed from."
+        title: EconomicsRunList
+        "$defs":
+          EconomicsRunView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The run's id."
+              suite:
+                type: string
+                description: The suite.
+              task:
+                type: string
+                description: The task.
+              variant:
+                type: string
+                description: The variant.
+              repetition:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The repetition.
+              model:
+                type: string
+                description: The model requested.
+              revision:
+                type: string
+                description: The revision.
+              completed:
+                type: boolean
+                description: Whether every success gate passed.
+              checks:
+                type: array
+                items:
+                  "$ref": "#/$defs/EconomicsCheck"
+                description: "Each gate's verdict."
+              sessions:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Sessions.
+              usage:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsUsage"
+                  - type: "null"
+                description: "Totals, when the provider reported usage."
+              path:
+                type: string
+                description: Where the raw record is.
+            required:
+              - id
+              - suite
+              - task
+              - variant
+              - repetition
+              - model
+              - revision
+              - completed
+              - checks
+              - sessions
+              - path
+            description: "One run in brief, with its derived totals."
+          EconomicsCheck:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The gate's id."
+              passed:
+                type: boolean
+                description: Whether it passed.
+              detail:
+                type: string
+                description: What was found.
+            required:
+              - id
+              - passed
+              - detail
+            description: "One success gate's verdict on a run."
+          EconomicsUsage:
+            type: object
+            properties:
+              input_uncached:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input neither read from nor written to the cache.
+              cache_write:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input written to the cache.
+              cache_read:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input read from the cache.
+              output:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Output, reasoning included."
+              reasoning:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Reasoning tokens, when every request reported them."
+              total_input:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: All input.
+              total:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: All input and output.
+              requests:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Provider requests.
+              tool_calls:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tool calls.
+              cost_microusd:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The harness's cost projection, in millionths of a dollar, when every session had one."
+            required:
+              - input_uncached
+              - cache_write
+              - cache_read
+              - output
+              - total_input
+              - total
+              - requests
+              - tool_calls
+            description: "A run's totals, derived from its raw usage."
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::economics
+    exposure:
+      mcp:
+        tool: majordomus_economics_runs
+      http:
+        method: GET
+        path: /api/v1/economics/runs
+      cli:
+        path:
+          - economics
+          - runs
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - economics
+      - evidence
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 16
+      ttl_seconds: 5
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/economics.rs
+  - id: economics.summary
+    module: economics
+    kind: query
+    title: Token economics summary
+    description: "Every metric of the economics benchmark with its value, measurement class, sample size, distribution and bootstrap interval; every pair of runs with its status (valid, control failed, treatment failed, incomparable, ...); results by segment; the state of each suite's evidence (current, stale, incompatible); and the one statement the publication rule allows. Context reduction and total-token reduction are separate metrics and are never merged."
+    input:
+      name: EconomicsQuery
+      schema:
+        type: object
+        additionalProperties: false
+        properties:
+          suite:
+            type:
+              - string
+              - "null"
+            description: Only this suite.
+          category:
+            type:
+              - string
+              - "null"
+            description: Only tasks of this category.
+          task:
+            type:
+              - string
+              - "null"
+            description: Only this task.
+          model:
+            type:
+              - string
+              - "null"
+            description: Only runs that asked for this model.
+        description: "The input of `economics.summary`: optional narrowing of the pairs and metrics. The\nverdict is always about all the evidence, whatever is narrowed."
+        title: EconomicsQuery
+    output:
+      name: EconomicsSummary
+      schema:
+        type: object
+        properties:
+          present:
+            type: boolean
+            description: Whether a methodology is declared here at all.
+          methodology:
+            type:
+              - integer
+              - "null"
+            format: uint32
+            minimum: 0
+            description: The methodology version.
+          question:
+            type:
+              - string
+              - "null"
+            description: The question.
+          primary_metric:
+            type:
+              - string
+              - "null"
+            description: "The primary metric's id."
+          verdict:
+            "$ref": "#/$defs/EconomicsVerdict"
+            description: What the total-token evidence allows to be said.
+          metrics:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsMetric"
+            description: Every metric.
+          suites:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsSuiteView"
+            description: Every suite and its evidence.
+          pairs:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsPair"
+            description: "Every pair, valid or not."
+          segments:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsSegment"
+            description: Token reduction by segment.
+          context:
+            anyOf:
+              - "$ref": "#/$defs/EconomicsContextView"
+              - type: "null"
+            description: The context suite in brief.
+          history:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsHistoryPoint"
+            description: The metric over recorded measurements.
+          variants:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsVariant"
+            description: The arms of the experiment.
+          hypotheses:
+            type: array
+            items:
+              "$ref": "#/$defs/EconomicsHypothesis"
+            description: "The hypotheses, as hypotheses."
+          publication:
+            anyOf:
+              - "$ref": "#/$defs/EconomicsPublicationPolicy"
+              - type: "null"
+            description: The publication rule.
+          diagnostics:
+            type: array
+            items:
+              type: string
+            description: Problems reading the declarations or the evidence.
+            default: []
+        required:
+          - present
+          - verdict
+          - metrics
+          - suites
+          - pairs
+          - segments
+          - history
+          - variants
+          - hypotheses
+        description: "The answer of `economics.summary`: every metric, where each comes from, and the one\nstatement the evidence allows."
+        title: EconomicsSummary
+        "$defs":
+          EconomicsVerdict:
+            type: object
+            properties:
+              publishable:
+                type: boolean
+                description: Whether a quantitative total-token claim meets the publication rule.
+              statement:
+                type: string
+                description: "The strongest statement the evidence supports, generated, never typed."
+              unmet:
+                type: array
+                items:
+                  type: string
+                description: Every publication threshold not met.
+                default: []
+            required:
+              - publishable
+              - statement
+            description: "The one sentence the evidence allows, and why it allows no stronger one."
+          EconomicsMetric:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "The metric's id."
+              title:
+                type: string
+                description: A name.
+              class:
+                "$ref": "#/$defs/EconomicsClass"
+                description: The measurement class.
+              inputs:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsClass"
+                  - type: "null"
+                description: "For a derived metric, the class of what it was derived from: a reduction derived from\nobserved usage is not the same evidence as one derived from counted bytes."
+              unit:
+                type: string
+                description: "`ratio`, `tokens`, `calls`."
+              formula:
+                type: string
+                description: "The formula, in words."
+              not:
+                type:
+                  - string
+                  - "null"
+                description: "What the metric is not, where it is easily mistaken for something else."
+              value:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The headline value; absent when nothing was measured.
+              status:
+                "$ref": "#/$defs/EconomicsMetricStatus"
+                description: Where it stands.
+              n:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many values it rests on.
+              distribution:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsDistribution"
+                  - type: "null"
+                description: Their distribution.
+              interval:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsInterval"
+                  - type: "null"
+                description: "The interval, when enough values exist."
+              suite:
+                type: string
+                description: The suite.
+              evidence:
+                type: array
+                items:
+                  type: string
+                description: "The runs, pairs or seeds it rests on."
+                default: []
+              warnings:
+                type: array
+                items:
+                  type: string
+                description: What a reader must know before using it.
+                default: []
+            required:
+              - id
+              - title
+              - class
+              - unit
+              - formula
+              - status
+              - n
+              - suite
+            description: "One metric: its value, where it comes from, and how much it can bear."
+          EconomicsClass:
+            oneOf:
+              - type: string
+                const: observed
+                description: Returned by the provider or its harness at run time and recorded unmodified.
+              - type: string
+                const: counted
+                description: "Computed deterministically from bytes on disk with a named, pinned tokenizer."
+              - type: string
+                const: derived
+                description: Arithmetic over observed or counted values.
+              - type: string
+                const: estimated
+                description: "A number standing in for one nobody measured. Never compared, never published."
+              - type: string
+                const: counterfactual
+                description: "What a mechanism would have avoided, modelled rather than observed."
+            description: "How a number came to be. The classes are ordered from strongest to weakest, and a value\ncomputed from several inputs is never stronger than the weakest of them."
+          EconomicsMetricStatus:
+            oneOf:
+              - type: string
+                const: verified
+                description: "Measured, and meets the publication rule."
+              - type: string
+                const: preliminary
+                description: "Measured, below the publication rule: a result, not a claim."
+              - type: string
+                const: measured
+                description: Measured deterministically; the publication rule for sampled data does not apply.
+              - type: string
+                const: not_measured
+                description: Nothing recorded to compute it from.
+            description: Where a metric stands.
+          EconomicsDistribution:
+            type: object
+            properties:
+              n:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many values.
+              mean:
+                type: number
+                format: double
+                description: Arithmetic mean.
+              median:
+                type: number
+                format: double
+                description: Median.
+              p25:
+                type: number
+                format: double
+                description: 25th percentile.
+              p75:
+                type: number
+                format: double
+                description: 75th percentile.
+              p95:
+                type: number
+                format: double
+                description: 95th percentile.
+              min:
+                type: number
+                format: double
+                description: Smallest.
+              max:
+                type: number
+                format: double
+                description: Largest.
+              sd:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: Sample standard deviation; absent for one value.
+            required:
+              - n
+              - mean
+              - median
+              - p25
+              - p75
+              - p95
+              - min
+              - max
+            description: The shape of a set of per-pair values.
+          EconomicsInterval:
+            type: object
+            properties:
+              level_bp:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Confidence in basis points.
+              low:
+                type: number
+                format: double
+                description: Lower bound.
+              high:
+                type: number
+                format: double
+                description: Upper bound.
+              method:
+                type: string
+                description: How it was computed.
+              resamples:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Resamples.
+              seed:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Generator seed.
+            required:
+              - level_bp
+              - low
+              - high
+              - method
+              - resamples
+              - seed
+            description: "A bootstrap interval, with everything needed to reproduce it."
+          EconomicsSuiteView:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The suite.
+              kind:
+                type: string
+                description: "`live` or `context`."
+              version:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: Its version.
+              title:
+                type: string
+                description: A name.
+              model:
+                type:
+                  - string
+                  - "null"
+                description: "The model, for a live suite."
+              freshness:
+                "$ref": "#/$defs/EconomicsFreshness"
+                description: Where its evidence stands.
+              freshness_detail:
+                type:
+                  - string
+                  - "null"
+                description: "Why, when not current."
+              runs:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Runs recorded.
+              pairs:
+                "$ref": "#/$defs/EconomicsPairCounts"
+                description: Pair counts.
+              revisions:
+                type: array
+                items:
+                  type: string
+                description: The revisions the evidence was recorded at.
+                default: []
+              harnesses:
+                type: array
+                items:
+                  type: string
+                description: The harness versions that ran it.
+                default: []
+              models_reported:
+                type: array
+                items:
+                  type: string
+                description: The models the harness reported.
+                default: []
+            required:
+              - id
+              - kind
+              - version
+              - title
+              - freshness
+              - runs
+              - pairs
+            description: A suite and the state of its evidence.
+          EconomicsFreshness:
+            oneOf:
+              - type: string
+                const: current
+                description: "Recorded under this methodology, and nothing it depends on changed since."
+              - type: string
+                const: stale
+                description: "Recorded under this methodology, but a mechanism it measured changed since."
+              - type: string
+                const: incompatible
+                description: "Recorded under another methodology version: not comparable at all."
+              - type: string
+                const: no_evidence
+                description: Nothing recorded.
+            description: How recorded evidence stands against the repository as it is now.
+          EconomicsPairCounts:
+            type: object
+            properties:
+              declared:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs the suite declares.
+              attempted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs with at least one run recorded.
+              valid:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs that count.
+              control_failed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs whose control failed.
+              treatment_failed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs whose treatment failed.
+              both_failed:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Pairs where both failed.
+              other:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Pairs not comparable, missing a side, lacking usage, or excluded."
+            required:
+              - declared
+              - attempted
+              - valid
+              - control_failed
+              - treatment_failed
+              - both_failed
+              - other
+            description: "Pair counts of a suite, so that nothing is dropped out of sight."
+          EconomicsPair:
+            type: object
+            properties:
+              suite:
+                type: string
+                description: The suite.
+              task:
+                type: string
+                description: The task.
+              category:
+                type: string
+                description: "The task's category."
+              sessions:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Sessions the task spans.
+              repetition:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: The repetition.
+              control:
+                type:
+                  - string
+                  - "null"
+                description: "The control run's id, when recorded."
+              treatment:
+                type:
+                  - string
+                  - "null"
+                description: "The treatment run's id, when recorded."
+              status:
+                "$ref": "#/$defs/EconomicsPairStatus"
+                description: Whether it counts.
+              reasons:
+                type: array
+                items:
+                  type: string
+                description: "Why not, when it does not."
+                default: []
+              control_usage:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsUsage"
+                  - type: "null"
+                description: "The control's totals."
+              treatment_usage:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsUsage"
+                  - type: "null"
+                description: "The treatment's totals."
+              token_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "`1 - treatment / control` on total tokens. Negative: the treatment cost more."
+              cost_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The same on the harness's cost projection."
+              tool_call_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: The same on tool calls.
+              continuation_reduction:
+                type:
+                  - number
+                  - "null"
+                format: double
+                description: "The same on the tokens of the last session only: what continuing cost."
+              first_request_overhead:
+                type:
+                  - integer
+                  - "null"
+                format: int64
+                description: "First-request input of the treatment minus that of the control: what the treatment\nadds before the model has done anything."
+            required:
+              - suite
+              - task
+              - category
+              - sessions
+              - repetition
+              - status
+            description: "A control run and its treatment run, and what follows from them."
+          EconomicsPairStatus:
+            oneOf:
+              - type: string
+                const: valid
+                description: "Both runs succeeded, are comparable and report usage."
+              - type: string
+                const: control_failed
+                description: The control run failed a success gate.
+              - type: string
+                const: treatment_failed
+                description: The treatment run failed a success gate.
+              - type: string
+                const: both_failed
+                description: Both failed.
+              - type: string
+                const: usage_unavailable
+                description: A run reports no usage to compare.
+              - type: string
+                const: incomparable
+                description: The runs differ in something the methodology requires them to share.
+              - type: string
+                const: missing
+                description: One side was never recorded.
+              - type: string
+                const: excluded
+                description: A run is excluded under the outlier rule.
+            description: Why a pair does or does not count.
+          EconomicsUsage:
+            type: object
+            properties:
+              input_uncached:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input neither read from nor written to the cache.
+              cache_write:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input written to the cache.
+              cache_read:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Input read from the cache.
+              output:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Output, reasoning included."
+              reasoning:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "Reasoning tokens, when every request reported them."
+              total_input:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: All input.
+              total:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: All input and output.
+              requests:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Provider requests.
+              tool_calls:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: Tool calls.
+              cost_microusd:
+                type:
+                  - integer
+                  - "null"
+                format: uint64
+                minimum: 0
+                description: "The harness's cost projection, in millionths of a dollar, when every session had one."
+            required:
+              - input_uncached
+              - cache_write
+              - cache_read
+              - output
+              - total_input
+              - total
+              - requests
+              - tool_calls
+            description: "A run's totals, derived from its raw usage."
+          EconomicsSegment:
+            type: object
+            properties:
+              dimension:
+                type: string
+                description: "`category`, `sessions`, `complexity`."
+              value:
+                type: string
+                description: The segment.
+              n:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Valid pairs in it.
+              token_reduction:
+                anyOf:
+                  - "$ref": "#/$defs/EconomicsDistribution"
+                  - type: "null"
+                description: Distribution of per-pair token reduction.
+            required:
+              - dimension
+              - value
+              - n
+            description: "A metric's value within one segment of the pairs."
+          EconomicsContextView:
+            type: object
+            properties:
+              revision:
+                type: string
+                description: The revision measured.
+              measured_at:
+                type: string
+                description: When.
+              tokenizer:
+                "$ref": "#/$defs/EconomicsTokenizer"
+                description: The tokenizer.
+              seeds:
+                type: integer
+                format: uint
+                minimum: 0
+                description: Seeds measured.
+              candidate_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Counted candidate tokens (relevant: selected or cut by the budget), all seeds."
+              considered_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Counted tokens of everything the compiler reached, all seeds."
+              selected_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "Counted selected tokens, all seeds."
+              estimated_selected_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The compiler's own estimate of the selected tokens, all seeds."
+              excluded_tokens:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: uint64
+                  minimum: 0
+                description: "Counted tokens left out, by reason, all seeds."
+              seeds_over_budget_counted:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Seeds whose counted selection exceeds the compiler's budget."
+              budget_tokens:
+                type: integer
+                format: uint64
+                minimum: 0
+                description: "The compiler's budget."
+            required:
+              - revision
+              - measured_at
+              - tokenizer
+              - seeds
+              - candidate_tokens
+              - considered_tokens
+              - selected_tokens
+              - estimated_selected_tokens
+              - excluded_tokens
+              - seeds_over_budget_counted
+              - budget_tokens
+            description: "The context suite's latest measurement, in brief."
+          EconomicsTokenizer:
+            type: object
+            properties:
+              encoding:
+                type: string
+                description: "The encoding: `o200k_base`."
+              implementation:
+                type: string
+                description: The implementation and its pinned version.
+            required:
+              - encoding
+              - implementation
+            description: "The identity of a tokenizer, recorded with every count it produced."
+          EconomicsHistoryPoint:
+            type: object
+            properties:
+              suite:
+                type: string
+                description: The suite.
+              methodology:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "The methodology version, so that incompatible versions are never drawn as one line."
+              revision:
+                type: string
+                description: The revision.
+              at:
+                type: string
+                description: When.
+              metric:
+                type: string
+                description: The metric.
+              value:
+                type: number
+                format: double
+                description: Its value.
+              n:
+                type: integer
+                format: uint
+                minimum: 0
+                description: How many values it rests on.
+            required:
+              - suite
+              - methodology
+              - revision
+              - at
+              - metric
+              - value
+              - n
+            description: "A recorded measurement over time: one entry per recorded context run."
+          EconomicsVariant:
+            type: object
+            properties:
+              id:
+                type: string
+                description: "`baseline`, `majordomus`, ..."
+              role:
+                type: string
+                description: "`control` or `treatment`."
+              title:
+                type: string
+                description: A short name.
+              description:
+                type: string
+                description: Exactly what the arm consists of.
+              excludes:
+                type: array
+                items:
+                  type: string
+                description: What the arm deliberately does not include.
+                default: []
+            required:
+              - id
+              - role
+              - title
+              - description
+            description: "One arm of the experiment: what the session runs with, and what it runs without."
+          EconomicsHypothesis:
+            type: object
+            properties:
+              id:
+                type: string
+                description: A slug.
+              statement:
+                type: string
+                description: What is hypothesised.
+              status:
+                type: string
+                description: "`untested`, `supported`, `refuted` — set by a person reading the evidence."
+            required:
+              - id
+              - statement
+              - status
+            description: A statement the benchmark exists to test. Never a result.
+          EconomicsPublicationPolicy:
+            type: object
+            properties:
+              min_valid_pairs:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Valid matched pairs, at least."
+              min_categories:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Task categories with enough pairs, at least."
+              min_pairs_per_category:
+                type: integer
+                format: uint
+                minimum: 0
+                description: "Pairs a category needs to count towards `min_categories`."
+              min_repetitions:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Repetitions of every task and variant, at least."
+              min_valid_pair_rate_bp:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Valid pairs over attempted pairs, in basis points, at least."
+              max_interval_width_bp:
+                type: integer
+                format: uint32
+                minimum: 0
+                description: "Width of the interval, in basis points of reduction, at most."
+              require_current:
+                type: boolean
+                description: Whether the evidence must be current (its mechanism unchanged since it was recorded).
+            required:
+              - min_valid_pairs
+              - min_categories
+              - min_pairs_per_category
+              - min_repetitions
+              - min_valid_pair_rate_bp
+              - max_interval_width_bp
+              - require_current
+            description: When a quantitative total-token claim may be published. Every threshold must hold.
+    provenance:
+      source: builtin
+      module: majordomus_cli::capability::builtin::economics
+    exposure:
+      mcp:
+        tool: majordomus_economics
+        resource:
+          uri: majordomus://economics
+          name: economics
+      http:
+        method: GET
+        path: /api/v1/economics
+      cli:
+        path:
+          - economics
+          - summary
+    availability: runtime
+    visibility: public
+    stability: behaviorally_verified
+    tags:
+      - economics
+      - evidence
+      - benchmark
+    benchmark:
+      policy: required
+    cache:
+      policy: process
+      max_entries: 8
+      ttl_seconds: 5
+    execution:
+      effect: read
+      cancellable: false
+      concurrency: unrestricted
+    source_path: apps/majordomus-cli/src/capability/builtin/economics.rs
   - id: environment.explain
     module: environment
     kind: query

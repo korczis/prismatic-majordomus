@@ -1,0 +1,351 @@
+# GENERATED FILE — DO NOT EDIT DIRECTLY
+# Source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`
+# Generator: majordomus-cli 0.8.0
+schema: majordomus/economics-summary/v1
+generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`"
+generator: majordomus-cli 0.8.0
+present: true
+methodology: 1
+question: "For the same task, from the same repository state, with the same model, the same tools and the same acceptance tests: how many tokens does a coding session consume with Majordomus installed and without it?"
+primary_metric: effective_token_reduction
+verdict:
+  publishable: false
+  statement: "No verified total-token-savings claim is available: no valid matched pair of live runs is recorded under methodology 1."
+  unmet:
+    - 0 valid pair(s); the rule asks for 30
+    - 0 categor(ies) with at least 5 valid pairs; the rule asks for 4
+    - "0 repetition(s) of csv-credit-notes (baseline) in suite pilot, the least repeated; the rule asks for 3 of every task and variant"
+    - "no interval: too few valid pairs, or too few tasks among them"
+metrics:
+  - id: effective_token_reduction
+    title: Effective total-token reduction
+    class: derived
+    inputs: observed
+    unit: ratio
+    formula: "median over valid pairs of 1 - treatment_total_tokens / control_total_tokens, where total tokens are all input (uncached, cache write, cache read) and all output the provider reported for every session of the run"
+    not: "not context reduction: this is everything the provider reported for the whole task, not what one mechanism selected"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: cost_reduction
+    title: "Cost reduction, as the harness priced it"
+    class: derived
+    inputs: observed
+    unit: ratio
+    formula: "median over valid pairs of 1 - treatment_cost / control_cost, where cost is the harness's own total_cost_usd at run time"
+    not: "not a bill: the harness prices usage from its own table at run time, and historical runs are never re-priced"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: tool_call_reduction
+    title: Tool-call reduction
+    class: derived
+    inputs: observed
+    unit: ratio
+    formula: median over valid pairs of 1 - treatment_tool_calls / control_tool_calls
+    not: not a token metric
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: continuation_reduction
+    title: Continuation-session token reduction
+    class: derived
+    inputs: observed
+    unit: ratio
+    formula: "median over valid multi-session pairs of 1 - the treatment's last-session total tokens / the control's"
+    not: "only the session that continued the work, not the whole task"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: first_request_overhead
+    title: What the treatment adds before the model acts
+    class: derived
+    inputs: observed
+    unit: tokens
+    formula: "median over valid pairs of the treatment's first-request input tokens minus the control's: the instruction files and hook output a session is given before it has done anything"
+    not: "not the whole overhead: what the treatment reads later because its instructions say to is in the total, not here"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: completion_rate.baseline
+    title: "Completion rate, Without Majordomus"
+    class: derived
+    inputs: observed
+    unit: ratio
+    formula: "runs that passed every success gate / runs recorded, over the runs of pairs whose two sides were both recorded, are comparable and are not excluded; a failed run counts, which is the point"
+    not: "not a quality score: a run passes the gates or it does not"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: tokens_per_completed_task.baseline
+    title: "Total tokens per completed task, Without Majordomus"
+    class: observed
+    unit: tokens
+    formula: "median over the runs of valid pairs of the total tokens the provider reported for the run, so that both arms describe the same tasks"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: transcript_resume_avoided.baseline
+    title: "Context not re-sent by starting the next session fresh, Without Majordomus"
+    class: counterfactual
+    inputs: observed
+    unit: tokens
+    formula: "over the runs of valid pairs, the previous session's last-request input minus the next session's first-request input: what resuming the previous transcript would have re-sent at the start, against what a fresh session was given"
+    not: "not a saving of Majordomus: both arms start the next session fresh; this is the modelled cost of resuming a transcript instead"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings:
+      - "counterfactual: modelled from observed values, never a measured saving"
+  - id: completion_rate.majordomus
+    title: "Completion rate, With Majordomus as a user installs it"
+    class: derived
+    inputs: observed
+    unit: ratio
+    formula: "runs that passed every success gate / runs recorded, over the runs of pairs whose two sides were both recorded, are comparable and are not excluded; a failed run counts, which is the point"
+    not: "not a quality score: a run passes the gates or it does not"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: tokens_per_completed_task.majordomus
+    title: "Total tokens per completed task, With Majordomus as a user installs it"
+    class: observed
+    unit: tokens
+    formula: "median over the runs of valid pairs of the total tokens the provider reported for the run, so that both arms describe the same tasks"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings: []
+  - id: transcript_resume_avoided.majordomus
+    title: "Context not re-sent by starting the next session fresh, With Majordomus as a user installs it"
+    class: counterfactual
+    inputs: observed
+    unit: tokens
+    formula: "over the runs of valid pairs, the previous session's last-request input minus the next session's first-request input: what resuming the previous transcript would have re-sent at the start, against what a fresh session was given"
+    not: "not a saving of Majordomus: both arms start the next session fresh; this is the modelled cost of resuming a transcript instead"
+    status: not_measured
+    n: 0
+    suite: pilot
+    evidence: []
+    warnings:
+      - "counterfactual: modelled from observed values, never a measured saving"
+  - id: context_reduction_ratio
+    title: Context reduction by the context compiler
+    class: derived
+    inputs: counted
+    unit: ratio
+    formula: "median over seeds of 1 - selected_tokens / candidate_tokens, where candidates are the distinct files the compiler judged relevant to the work (selected, or left out only for budget) and selected are those it put in the budget, counted with the named tokenizer; files it judged irrelevant are reported, never divided by"
+    not: "not total token savings: it says what the compiler selected from what it found relevant, not what a session consumed, and a session remains free to read anything"
+    status: not_measured
+    n: 0
+    suite: context
+    evidence: []
+    warnings: []
+suites:
+  - id: context
+    kind: context
+    version: 1
+    title: "Context selection, counted"
+    freshness: no_evidence
+    runs: 0
+    pairs:
+      declared: 0
+      attempted: 0
+      valid: 0
+      control_failed: 0
+      treatment_failed: 0
+      both_failed: 0
+      other: 0
+    revisions: []
+    harnesses: []
+    models_reported: []
+  - id: pilot
+    kind: live
+    version: 1
+    title: "Pilot, live Claude Code sessions"
+    model: claude-sonnet-5
+    freshness: no_evidence
+    runs: 0
+    pairs:
+      declared: 14
+      attempted: 0
+      valid: 0
+      control_failed: 0
+      treatment_failed: 0
+      both_failed: 0
+      other: 0
+    revisions: []
+    harnesses: []
+    models_reported: []
+pairs:
+  - suite: pilot
+    task: csv-credit-notes
+    category: regression
+    sessions: 1
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: csv-credit-notes
+    category: regression
+    sessions: 1
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: currency-czk
+    category: small-feature
+    sessions: 1
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: currency-czk
+    category: small-feature
+    sessions: 1
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: invoice-discounts
+    category: cross-module
+    sessions: 1
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: invoice-discounts
+    category: cross-module
+    sessions: 1
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: recurring-invoices
+    category: multi-session
+    sessions: 2
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: recurring-invoices
+    category: multi-session
+    sessions: 2
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: storage-v2
+    category: schema-change
+    sessions: 1
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: storage-v2
+    category: schema-change
+    sessions: 1
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: test-repair
+    category: test-repair
+    sessions: 1
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: test-repair
+    category: test-repair
+    sessions: 1
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: vat-rounding
+    category: bug-fix
+    sessions: 1
+    repetition: 1
+    status: missing
+    reasons:
+      - the control run is not recorded
+  - suite: pilot
+    task: vat-rounding
+    category: bug-fix
+    sessions: 1
+    repetition: 2
+    status: missing
+    reasons:
+      - the control run is not recorded
+segments: []
+history: []
+variants:
+  - id: baseline
+    role: control
+    title: Without Majordomus
+    description: "The fixture repository as a competent team keeps it: a README, a short CLAUDE.md pointing at the conventions, the conventions and decisions in docs/, a green test suite. The session runs Claude Code headless with the same model, the same built-in tools and permissions, no MCP server, no user settings, no skills."
+    excludes:
+      - the .ai layer
+      - generated provider bootstraps
+      - Claude Code hooks
+      - session briefing
+      - handovers
+      - peer board
+      - MCP server
+  - id: majordomus
+    role: treatment
+    title: With Majordomus as a user installs it
+    description: "The same fixture after `majordomus init`, `majordomus update` and `majordomus capture install --provider claude-code`, committed: the .ai layer, the Majordomus bootstrap added to the fixture's own CLAUDE.md as a generated region (the policy's region mode, which is how a repository with instruction files of its own adopts it) and generated AGENTS.md and GEMINI.md, and the SessionStart, UserPromptSubmit, SessionEnd and PreCompact hooks that brief each session and record its boundaries. Everything else is identical to the control."
+    excludes:
+      - the MCP server
+      - git pre-commit and pre-push hooks
+hypotheses:
+  - id: long-running-work
+    statement: "Long-running agent development work consumes 30 to 70 percent fewer tokens with Majordomus, centred near half."
+    status: untested
+  - id: short-tasks
+    statement: "Short isolated tasks gain less and may cost more, because the bootstrap and briefing are paid on every session."
+    status: untested
+  - id: continuity
+    statement: "Work that spans sessions gains the most, because a handover replaces rediscovery."
+    status: untested
+publication:
+  min_valid_pairs: 30
+  min_categories: 4
+  min_pairs_per_category: 5
+  min_repetitions: 3
+  min_valid_pair_rate_bp: 8000
+  max_interval_width_bp: 2000
+  require_current: true
+diagnostics: []

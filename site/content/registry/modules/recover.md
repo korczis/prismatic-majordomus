@@ -1,7 +1,7 @@
 +++
 title = "Recovery of the record stores"
 description = "The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks."
-weight = 28
+weight = 29
 slug = "recover"
 [extra]
 id = "recover"

@@ -141,13 +141,21 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
 | [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
 | [`majordomus rules proves`](#majordomus-rules-proves) | `/docs/cli/rules/proves/` | One test: every rule it proves, and the rules that would be left with none |
+| [`majordomus economics`](#majordomus-economics) | `/docs/cli/economics/` | Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim |
+| [`majordomus economics summary`](#majordomus-economics-summary) | `/docs/cli/economics/summary/` | Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows |
+| [`majordomus economics explain`](#majordomus-economics-explain) | `/docs/cli/economics/explain/` | One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it |
+| [`majordomus economics runs`](#majordomus-economics-runs) | `/docs/cli/economics/runs/` | The recorded runs every metric is computed from |
+| [`majordomus economics check`](#majordomus-economics-check) | `/docs/cli/economics/check/` | Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand |
+| [`majordomus economics measure`](#majordomus-economics-measure) | `/docs/cli/economics/measure/` | Run a deterministic suite (no model is called) and record its measurement |
+| [`majordomus economics run`](#majordomus-economics-run) | `/docs/cli/economics/run/` | Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage |
+| [`majordomus economics references`](#majordomus-economics-references) | `/docs/cli/economics/references/` | Prove every task's hidden tests fail on its starting state and pass on its reference solution. No model is called |
 
 <a id="majordomus"></a>
 ## `majordomus`
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
 
-Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules).
+Subcommands: [`majordomus mcp`](#majordomus-mcp), [`majordomus serve`](#majordomus-serve), [`majordomus capabilities`](#majordomus-capabilities), [`majordomus generate`](#majordomus-generate), [`majordomus bench`](#majordomus-bench), [`majordomus scope`](#majordomus-scope), [`majordomus web`](#majordomus-web), [`majordomus why`](#majordomus-why), [`majordomus devtask`](#majordomus-devtask), [`majordomus distribution`](#majordomus-distribution), [`majordomus env`](#majordomus-env), [`majordomus commands`](#majordomus-commands), [`majordomus completion`](#majordomus-completion), [`majordomus worktree`](#majordomus-worktree), [`majordomus commit`](#majordomus-commit), [`majordomus product`](#majordomus-product), [`majordomus release`](#majordomus-release), [`majordomus quality`](#majordomus-quality), [`majordomus run`](#majordomus-run), [`majordomus executions`](#majordomus-executions), [`majordomus devcontext`](#majordomus-devcontext), [`majordomus mesh`](#majordomus-mesh), [`majordomus models`](#majordomus-models), [`majordomus evidence`](#majordomus-evidence), [`majordomus rules`](#majordomus-rules), [`majordomus economics`](#majordomus-economics).
 
 ```text
 majordomus <COMMAND>
@@ -510,7 +518,7 @@ majordomus generate [OPTIONS] [TARGET]
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
 | `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
-| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `manifest` \| `distribution` \| `web` \| `changelog` \| `deployment` \| `graph` \| `design` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.{json,yaml}`; `docs`: `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`; `benchmarks`: `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage; `registry`: `docs/generated/registry.{json,yaml}`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `manifest`: docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact; `distribution`: The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/; `web`: `docs/generated/web.json`: the resolved web topology the site's route reference renders; `changelog`: `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's release records, its decisions and the repository's commits; `deployment`: deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects; `graph`: docs/generated/graph.json and its schema: the composed graph as data; `design`: The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.* |
+| `<TARGET>` | `all` \| `openapi` \| `docs` \| `benchmarks` \| `registry` \| `allow` \| `providers` \| `site` \| `manifest` \| `distribution` \| `web` \| `changelog` \| `deployment` \| `graph` \| `design` \| `economics` | `all` | What to generate — `all`: Every target; `openapi`: `docs/generated/openapi.{json,yaml}`; `docs`: `docs/generated/capabilities.md`, `docs/generated/modules/<id>.md` and `docs/generated/cli.{md,json,yaml}`; `benchmarks`: `docs/generated/benchmarks.{md,json,yaml}`: every benchmark target and the coverage; `registry`: `docs/generated/registry.{json,yaml}`: the builtin registry as data; `allow`: The shell tool's allow-lists under share/allow, derived from the schemas; `providers`: The provider bootstraps the policy declares (AGENTS.md, CLAUDE.md, ...); `site`: site/data/registry/registry.json, the registry dataset the site renders; `manifest`: docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact; `distribution`: The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/; `web`: `docs/generated/web.json`: the resolved web topology the site's route reference renders; `changelog`: `docs/generated/changelog.{json,yaml,md}`: the changelog composed from the layer's release records, its decisions and the repository's commits; `deployment`: deploy/Dockerfile, .dockerignore and fly.toml, from the deployment objects; `graph`: docs/generated/graph.json and its schema: the composed graph as data; `design`: The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.*; `economics`: docs/generated/economics.{json,yaml,md}: the token-economics evidence and its report, computed from the recorded benchmark runs by the one calculator |
 | `--check` | flag | — | Compare with what is on disk and exit 10 when stale; write nothing |
 | `--out` | `<DIR>` | — | Write under this directory instead of the repository root (docs/generated is appended) |
 
@@ -3923,4 +3931,231 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /proves, /sole_proof_of, /path.
+
+<a id="majordomus-economics"></a>
+## `majordomus economics`
+
+Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
+
+Subcommands: [`majordomus economics summary`](#majordomus-economics-summary), [`majordomus economics explain`](#majordomus-economics-explain), [`majordomus economics runs`](#majordomus-economics-runs), [`majordomus economics check`](#majordomus-economics-check), [`majordomus economics measure`](#majordomus-economics-measure), [`majordomus economics run`](#majordomus-economics-run), [`majordomus economics references`](#majordomus-economics-references).
+
+```text
+majordomus economics <COMMAND>
+```
+
+Arguments: none.
+
+<a id="majordomus-economics-summary"></a>
+## `majordomus economics summary`
+
+Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows
+
+```text
+majordomus economics summary [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--suite` | `<SUITE>` | — | Only this suite |
+| `--category` | `<CATEGORY>` | — | Only tasks of this category |
+| `--task` | `<TASK>` | — | Only this task |
+| `--model` | `<MODEL>` | — | Only runs that asked for this model |
+
+Examples:
+
+- **What the evidence allows to be said about tokens** — Every metric with its measurement class, sample size and interval, the state of each suite's evidence, and the one statement the publication rule allows. In a repository that declares no benchmark methodology — which is where the examples run — the statement is that no verified total-token-savings claim is available, and no number is printed.
+
+  ```console
+  $ majordomus economics summary
+  ```
+
+  Verified: exits 0; prints No verified total-token-savings claim.
+
+- **The same answer as the API and MCP give it** — The typed summary: the verdict, the metrics, the pairs and the segments, exactly as GET /api/v1/economics and the majordomus_economics tool return them.
+
+  ```console
+  $ majordomus economics summary --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /present, /verdict/statement, /metrics.
+
+<a id="majordomus-economics-explain"></a>
+## `majordomus economics explain`
+
+One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it
+
+```text
+majordomus economics explain [OPTIONS] <METRIC>
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `<METRIC>` | `<METRIC>` | required | The metric, e.g. effective_token_reduction |
+
+Examples:
+
+- **Everything one metric rests on** — The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. A metric that does not exist is refused with the list of those that do: exit 12 where no methodology is declared.
+
+  ```console
+  $ majordomus economics explain effective_token_reduction
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-economics-runs"></a>
+## `majordomus economics runs`
+
+The recorded runs every metric is computed from
+
+```text
+majordomus economics runs [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--suite` | `<SUITE>` | — | Only this suite |
+| `--task` | `<TASK>` | — | Only this task |
+| `--variant` | `<VARIANT>` | — | Only this variant |
+
+Examples:
+
+- **The raw facts behind every number** — Every recorded run with its gate verdicts and the totals derived from its provider usage. None where nothing was run.
+
+  ```console
+  $ majordomus economics runs --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /count, /runs.
+
+<a id="majordomus-economics-check"></a>
+## `majordomus economics check`
+
+Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand
+
+```text
+majordomus economics check [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **Refuse a savings claim nothing measured** — Scans the hand-written prose and claim sentences for a quantity next to the economics vocabulary, and checks every claim bound to a metric. Exits 10 naming each finding; exits 0 here, where nothing claims anything.
+
+  ```console
+  $ majordomus economics check
+  ```
+
+  Verified: exits 0; prints economics check:, 0 finding(s).
+
+<a id="majordomus-economics-measure"></a>
+## `majordomus economics measure`
+
+Run a deterministic suite (no model is called) and record its measurement
+
+```text
+majordomus economics measure [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--suite` | `<SUITE>` | `context` | The deterministic suite to measure |
+| `--dry-run` | flag | — | Measure and print, write nothing |
+
+Examples:
+
+- **Count what the context compiler selects** — Runs the deterministic context suite: no model is called; every seed's candidates and selection are counted with a pinned tokenizer. Refused with exit 12 where no methodology is declared.
+
+  ```console
+  $ majordomus economics measure --dry-run
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-economics-run"></a>
+## `majordomus economics run`
+
+Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage
+
+```text
+majordomus economics run [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--suite` | `<SUITE>` | `pilot` | The live suite to run |
+| `--task` | `<TASKS>` | — | Only this task (repeatable) |
+| `--repetition` | `<REPETITIONS>` | — | Only this repetition (repeatable) |
+| `--work-dir` | `<PATH>` | — | Where workspaces and transcripts go; never inside the repository |
+| `--harness` | `<PATH>` | `claude` | The harness executable |
+| `--parallel` | `<PARALLEL>` | `2` | Runs in flight at once |
+| `--session-timeout` | `<SESSION_TIMEOUT>` | `1800` | Per-session wall-clock limit, in seconds |
+| `--force` | flag | — | Record over runs already recorded |
+| `--dry-run` | flag | — | Prepare every workspace and print the harness command; run nothing, spend nothing |
+
+Examples:
+
+- **Prepare a live suite without spending anything** — Builds every control and treatment workspace and prints the harness command each session would run; nothing is sent to a provider. Refused with exit 12 where no methodology is declared.
+
+  ```console
+  $ majordomus economics run --suite pilot --dry-run
+  ```
+
+  Verified: exits 12.
+
+<a id="majordomus-economics-references"></a>
+## `majordomus economics references`
+
+Prove every task's hidden tests fail on its starting state and pass on its reference solution. No model is called
+
+```text
+majordomus economics references [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--work-dir` | `<PATH>` | — | Where the workspaces go |
+
+Examples:
+
+- **Prove every task can be failed and can be passed** — Applies each task's reference solution to its fixture: the hidden tests must fail on the starting state and pass on the reference. Refused with exit 12 where no methodology is declared.
+
+  ```console
+  $ majordomus economics references
+  ```
+
+  Verified: exits 12.
 

@@ -80,6 +80,8 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [The ledger's event vocabulary is closed, on the way in and on the way out](https://majordomus.dev/guarantees/event-vocabulary/) | `docs/SCHEMAS.md` | `lib/common.sh` | `test/cases/33_event_registry.sh` |
 | [A task record names the checkout it belongs to, and another checkout is never held to its scope](https://majordomus.dev/guarantees/worktree-ownership/) | `docs/SCHEMAS.md` | `lib/check.sh` | `test/cases/27_foreign_task.sh` |
 | [A blocking question keeps blocking after the work is handed to a new task](https://majordomus.dev/guarantees/blocker-survives-handover/) | `docs/CONTINUITY.md` | `lib/check.sh` | `test/cases/50_blocker_across_handover.sh` |
+| [What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated](https://majordomus.dev/guarantees/context-selection-counted/) | `docs/ECONOMICS.md` | `apps/majordomus-cli/src/economics/context.rs` | `test/cases/430_economics.sh` |
+| [A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand](https://majordomus.dev/guarantees/economics-claims-gated/) | `docs/ECONOMICS.md` | `apps/majordomus-cli/src/economics/claims.rs` | `test/cases/431_economics_claims_gated.sh` |
 | [Milestones and issues are canonical repository files, and a key nobody reads is an error](https://majordomus.dev/guarantees/project-schema/) | `docs/SCHEMAS.md` | `lib/project.sh` | `test/cases/40_project_model.sh` |
 | [Issue and milestone status is derived from recorded facts and is stored nowhere](https://majordomus.dev/guarantees/project-status-derived/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/41_project_status.sh` |
 | [A cycle, a self-dependency and a dependency on an issue that does not exist are each refused by name](https://majordomus.dev/guarantees/dag-validation/) | `docs/PLANNING.md` | `lib/project.awk` | `test/cases/42_dag_waves.sh` |
@@ -194,6 +196,7 @@ Specified and not implemented. Named so the omission is visible.
 | [A task will know which commits it produced, rather than inferring them from a range](https://majordomus.dev/guarantees/task-commit-attribution/) | `docs/CONTINUITY.md` | — | — |
 | [Opt-in runtime adapters will clamp read size, output size and fan-out from profile-derived limits](https://majordomus.dev/guarantees/runtime-adapters/) | `docs/DESIGN.md` | — | — |
 | [Execution telemetry will be recorded once a provider exposes it honestly](https://majordomus.dev/guarantees/telemetry/) | `docs/DESIGN.md` | — | — |
+| [Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule](https://majordomus.dev/guarantees/token-savings-measured/) | `docs/ECONOMICS.md` | — | — |
 | [Cost per accepted outcome will be reported from measured data only](https://majordomus.dev/guarantees/cost-per-outcome/) | `docs/DESIGN.md` | — | — |
 | [Routing recommendations will be derived from measured cost and outcome data](https://majordomus.dev/guarantees/routing/) | `docs/DESIGN.md` | — | — |
 | [One policy will be shared across repositories and workers](https://majordomus.dev/guarantees/shared-policy/) | `docs/DESIGN.md` | — | — |

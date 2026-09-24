@@ -1,0 +1,14 @@
+schema: economics-task/v1
+id: recurring-invoices
+title: "Recurring invoices, built across two sessions"
+category: multi-session
+complexity: medium
+source: "Work that spans sessions: the second starts from what the first left, with nothing restated."
+fixture: test/fixtures/economics/ledgerlite
+acceptance: test/fixtures/economics/acceptance/recurring-invoices
+reference: test/fixtures/economics/reference/recurring-invoices.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md
+  - prompt: prompt-2.md

@@ -1,0 +1,15 @@
+diff --git a/ledgerlite/report.py b/ledgerlite/report.py
+--- a/ledgerlite/report.py
++++ b/ledgerlite/report.py
+@@ -32,3 +32,11 @@ def monthly_summary(invoices: list[Invoice], currency: str = "EUR") -> list[Mont
+         vat = Money.total((i.vat() for i in group), currency)
+         out.append(MonthTotals(month, len(group), net, vat, net + vat))
+     return out
++
++
++def monthly_totals(invoices: list[Invoice], currency: str = "EUR") -> list[MonthTotals]:
++    """Deprecated: use `monthly_summary`."""
++    import warnings
++
++    warnings.warn("monthly_totals is deprecated; use monthly_summary", DeprecationWarning, stacklevel=2)
++    return monthly_summary(invoices, currency)

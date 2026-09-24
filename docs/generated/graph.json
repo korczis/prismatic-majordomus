@@ -335,6 +335,42 @@
         "status": "query"
       },
       {
+        "id": "capability:economics.check",
+        "kind": "capability",
+        "label": "economics.check",
+        "summary": "Refuse unsupported economics claims",
+        "route": "/cockpit/capabilities/economics.check",
+        "source": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:economics.explain",
+        "kind": "capability",
+        "label": "economics.explain",
+        "summary": "Explain one economics metric",
+        "route": "/cockpit/capabilities/economics.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:economics.runs",
+        "kind": "capability",
+        "label": "economics.runs",
+        "summary": "Recorded benchmark runs",
+        "route": "/cockpit/capabilities/economics.runs",
+        "source": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:economics.summary",
+        "kind": "capability",
+        "label": "economics.summary",
+        "summary": "Token economics summary",
+        "route": "/cockpit/capabilities/economics.summary",
+        "source": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:environment.explain",
         "kind": "capability",
         "label": "environment.explain",
@@ -1636,6 +1672,30 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/economics",
+        "kind": "file",
+        "label": "economics",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/economics",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/economics/claims.rs",
+        "kind": "file",
+        "label": "claims.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/economics/claims.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/economics/context.rs",
+        "kind": "file",
+        "label": "context.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/economics/context.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/evidence/ledger.rs",
         "kind": "file",
         "label": "ledger.rs",
@@ -2601,6 +2661,14 @@
         "label": "why.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/why.html",
+        "external": true
+      },
+      {
+        "id": "file:test/fixtures/economics",
+        "kind": "file",
+        "label": "economics",
+        "summary": "named by the layer; not an object of this index",
+        "source": "test/fixtures/economics",
         "external": true
       },
       {
@@ -4018,6 +4086,30 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0082",
+        "kind": "adr",
+        "label": "adr-0082",
+        "summary": "Token economics are measured from matched runs and published only past a declared rule",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fadr%2Fadr-0082",
+        "source": ".ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-24",
+          "related": [
+            "claim:context-selection-counted",
+            "claim:economics-claims-gated",
+            "claim:token-savings-measured",
+            "test:test/cases/430_economics.sh",
+            "test:test/cases/431_economics_claims_gated.sh"
+          ],
+          "tags": [
+            "economics",
+            "evidence",
+            "claims"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -5122,6 +5214,23 @@
         }
       },
       {
+        "id": "majordomus://claim/context-selection-counted",
+        "kind": "claim",
+        "label": "context-selection-counted",
+        "summary": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Fcontext-selection-counted",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+          "implementation": "apps/majordomus-cli/src/economics/context.rs",
+          "note": "The measurement is of selection, not of savings. `majordomus economics measure` records it; the metric carries its own statement of what it is not.",
+          "responsibility": "projection",
+          "source": "docs/ECONOMICS.md",
+          "test": "test/cases/430_economics.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/continuity-reachable",
         "kind": "claim",
         "label": "continuity-reachable",
@@ -5348,6 +5457,23 @@
           "responsibility": "watch",
           "source": "docs/DESIGN.md",
           "test": "test/cases/07_watch.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/economics-claims-gated",
+        "kind": "claim",
+        "label": "economics-claims-gated",
+        "summary": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Feconomics-claims-gated",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+          "implementation": "apps/majordomus-cli/src/economics/claims.rs",
+          "note": "`majordomus economics check` exits 10 naming every finding; the numbers readers see are generated from recorded runs into docs/generated/economics.* and the site's data.",
+          "responsibility": "doctor",
+          "source": "docs/ECONOMICS.md",
+          "test": "test/cases/431_economics_claims_gated.sh"
         }
       },
       {
@@ -7157,6 +7283,23 @@
         }
       },
       {
+        "id": "majordomus://claim/token-savings-measured",
+        "kind": "claim",
+        "label": "token-savings-measured",
+        "summary": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fclaim%2Ftoken-savings-measured",
+        "source": "docs/CLAIMS.yaml",
+        "status": "planned",
+        "facts": {
+          "claim": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+          "implementation": "-",
+          "note": "The benchmark, its runner and its calculator exist; what is missing is enough evidence. The generated report states what the recorded runs show and why no claim follows yet.",
+          "responsibility": "none",
+          "source": "docs/ECONOMICS.md",
+          "test": "-"
+        }
+      },
+      {
         "id": "majordomus://claim/tool-location-independent",
         "kind": "claim",
         "label": "tool-location-independent",
@@ -8634,6 +8777,31 @@
             "*"
           ],
           "scope": "subtree"
+        }
+      },
+      {
+        "id": "majordomus://context/ai.repo.benchmarks.economics",
+        "kind": "context",
+        "label": "ai.repo.benchmarks.economics",
+        "summary": "Token economics benchmark",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fcontext%2Fai.repo.benchmarks.economics",
+        "source": ".ai/repo/benchmarks/economics/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree",
+          "tracks": [
+            "apps/majordomus-cli/src/economics",
+            "test/fixtures/economics"
+          ]
         }
       },
       {
@@ -10123,6 +10291,14 @@
         "source": "docs/claims/context-selection-budget.md"
       },
       {
+        "id": "majordomus://document/docs/claims/context-selection-counted.md",
+        "kind": "document",
+        "label": "docs/claims/context-selection-counted.md",
+        "summary": "What the context compiler selects is counted, not estimated",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fcontext-selection-counted.md",
+        "source": "docs/claims/context-selection-counted.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/continuity-reachable.md",
         "kind": "document",
         "label": "docs/claims/continuity-reachable.md",
@@ -10233,6 +10409,14 @@
         "summary": "watch reports policy, projection, state, scope, handover, verification, staleness and retention drift",
         "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Fdrift-watch.md",
         "source": "docs/claims/drift-watch.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/economics-claims-gated.md",
+        "kind": "document",
+        "label": "docs/claims/economics-claims-gated.md",
+        "summary": "An unsupported savings claim is refused",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Feconomics-claims-gated.md",
+        "source": "docs/claims/economics-claims-gated.md"
       },
       {
         "id": "majordomus://document/docs/claims/effort-escalation.md",
@@ -11139,6 +11323,14 @@
         "source": "docs/claims/telemetry.md"
       },
       {
+        "id": "majordomus://document/docs/claims/token-savings-measured.md",
+        "kind": "document",
+        "label": "docs/claims/token-savings-measured.md",
+        "summary": "A total-token change is stated only from verified, matched runs",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Fdocument%2Fdocs%2Fclaims%2Ftoken-savings-measured.md",
+        "source": "docs/claims/token-savings-measured.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/tool-location-independent.md",
         "kind": "document",
         "label": "docs/claims/tool-location-independent.md",
@@ -11935,6 +12127,53 @@
             "find-out-what-drifted"
           ],
           "weight": 70
+        }
+      },
+      {
+        "id": "majordomus://feature/economics",
+        "kind": "feature",
+        "label": "economics",
+        "summary": "Token economics, measured from matched runs and never typed",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ffeature%2Feconomics",
+        "source": ".ai/repo/features/economics.md",
+        "status": "stable",
+        "facts": {
+          "adrs": [
+            "adr-0082"
+          ],
+          "areas": [
+            "observability",
+            "cost"
+          ],
+          "claims": [
+            "context-selection-counted",
+            "economics-claims-gated",
+            "token-savings-measured"
+          ],
+          "cockpit": [
+            "economics"
+          ],
+          "docs": [
+            "docs/ECONOMICS.md"
+          ],
+          "featured": false,
+          "modules": [
+            "economics"
+          ],
+          "related": [
+            "models",
+            "evidence"
+          ],
+          "rules": [],
+          "short_title": "Economics",
+          "tags": [
+            "economics",
+            "tokens",
+            "benchmark",
+            "evidence"
+          ],
+          "use_cases": [],
+          "weight": 47
         }
       },
       {
@@ -32913,6 +33152,20 @@
         "source": "test/cases/42_dag_waves.sh"
       },
       {
+        "id": "majordomus://test/test/cases/430_economics.sh",
+        "kind": "test",
+        "label": "test/cases/430_economics.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F430_economics.sh",
+        "source": "test/cases/430_economics.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/431_economics_claims_gated.sh",
+        "kind": "test",
+        "label": "test/cases/431_economics_claims_gated.sh",
+        "route": "/cockpit/object?uri=majordomus%3A%2F%2Ftest%2Ftest%2Fcases%2F431_economics_claims_gated.sh",
+        "source": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/43_plan_command.sh",
         "kind": "test",
         "label": "test/cases/43_plan_command.sh",
@@ -35482,6 +35735,11 @@
         "label": "distribution"
       },
       {
+        "id": "module:economics",
+        "kind": "module",
+        "label": "economics"
+      },
+      {
         "id": "module:environment",
         "kind": "module",
         "label": "environment"
@@ -36177,6 +36435,86 @@
       },
       {
         "source": "capability:distribution.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.check",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.check",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.check",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.check",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.runs",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.runs",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.runs",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.runs",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.summary",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.summary",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.summary",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:economics.summary",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -39256,6 +39594,36 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0082",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0082",
+        "target": "majordomus://claim/context-selection-counted",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0082",
+        "target": "majordomus://claim/economics-claims-gated",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0082",
+        "target": "majordomus://claim/token-savings-measured",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0082",
+        "target": "majordomus://test/test/cases/430_economics.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0082",
+        "target": "majordomus://test/test/cases/431_economics_claims_gated.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -40111,6 +40479,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/context-selection-counted",
+        "target": "file:apps/majordomus-cli/src/economics/context.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/context-selection-counted",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/context-selection-counted",
+        "target": "majordomus://document/docs/ECONOMICS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/context-selection-counted",
+        "target": "majordomus://test/test/cases/430_economics.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/continuity-reachable",
         "target": "kind:claim",
         "kind": "is_a"
@@ -40378,6 +40766,26 @@
       {
         "source": "majordomus://claim/drift-watch",
         "target": "majordomus://test/test/cases/07_watch.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/economics-claims-gated",
+        "target": "file:apps/majordomus-cli/src/economics/claims.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/economics-claims-gated",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/economics-claims-gated",
+        "target": "majordomus://document/docs/ECONOMICS.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/economics-claims-gated",
+        "target": "majordomus://test/test/cases/431_economics_claims_gated.sh",
         "kind": "tested_by"
       },
       {
@@ -42571,6 +42979,16 @@
         "kind": "defined_in"
       },
       {
+        "source": "majordomus://claim/token-savings-measured",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/token-savings-measured",
+        "target": "majordomus://document/docs/ECONOMICS.md",
+        "kind": "defined_in"
+      },
+      {
         "source": "majordomus://claim/tool-location-independent",
         "target": "kind:claim",
         "kind": "is_a"
@@ -43047,6 +43465,21 @@
       },
       {
         "source": "majordomus://context/ai.repo.benchmarks",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://context/ai.repo.benchmarks.economics",
+        "target": "file:apps/majordomus-cli/src/economics",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.benchmarks.economics",
+        "target": "file:test/fixtures/economics",
+        "kind": "tracks"
+      },
+      {
+        "source": "majordomus://context/ai.repo.benchmarks.economics",
         "target": "kind:context",
         "kind": "is_a"
       },
@@ -43951,6 +44384,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/context-selection-counted.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/continuity-reachable.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -44017,6 +44455,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/drift-watch.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/economics-claims-gated.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -44586,6 +45029,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/token-savings-measured.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/tool-location-independent.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -44712,6 +45160,11 @@
       },
       {
         "source": "majordomus://feature/doctrine",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/economics",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -51446,6 +51899,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/430_economics.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/431_economics_claims_gated.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/43_plan_command.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -54681,6 +55144,26 @@
         "kind": "composes"
       },
       {
+        "source": "module:economics",
+        "target": "capability:economics.check",
+        "kind": "composes"
+      },
+      {
+        "source": "module:economics",
+        "target": "capability:economics.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:economics",
+        "target": "capability:economics.runs",
+        "kind": "composes"
+      },
+      {
+        "source": "module:economics",
+        "target": "capability:economics.summary",
+        "kind": "composes"
+      },
+      {
         "source": "module:environment",
         "target": "capability:environment.explain",
         "kind": "composes"
@@ -55097,8 +55580,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1747,
-      "edges": 3890,
+      "nodes": 1767,
+      "edges": 3935,
       "acyclic": true,
       "truncated": false
     }

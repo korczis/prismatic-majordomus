@@ -735,6 +735,33 @@
       "note": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement."
     },
     {
+      "id": "claim:context-selection-counted",
+      "kind": "claim",
+      "label": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+      "status": "guaranteed",
+      "route": "/guarantees/context-selection-counted/",
+      "external": false,
+      "note": "The measurement is of selection, not of savings. `majordomus economics measure` records it; the metric carries its own statement of what it is not."
+    },
+    {
+      "id": "claim:economics-claims-gated",
+      "kind": "claim",
+      "label": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+      "status": "guaranteed",
+      "route": "/guarantees/economics-claims-gated/",
+      "external": false,
+      "note": "`majordomus economics check` exits 10 naming every finding; the numbers readers see are generated from recorded runs into docs/generated/economics.* and the site's data."
+    },
+    {
+      "id": "claim:token-savings-measured",
+      "kind": "claim",
+      "label": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+      "status": "planned",
+      "route": "/guarantees/token-savings-measured/",
+      "external": false,
+      "note": "The benchmark, its runner and its calculator exist; what is missing is enough evidence. The generated report states what the recorded runs show and why no claim follows yet."
+    },
+    {
       "id": "claim:cost-per-outcome",
       "kind": "claim",
       "label": "Cost per accepted outcome will be reported from measured data only",
@@ -1697,6 +1724,20 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/economics/claims.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/economics/claims.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/economics/context.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/economics/context.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/evidence/ledger.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/ledger.rs",
@@ -2383,6 +2424,13 @@
       "external": false
     },
     {
+      "id": "source:docs/ECONOMICS.md",
+      "kind": "source",
+      "label": "docs/ECONOMICS.md",
+      "route": "/docs/economics/",
+      "external": false
+    },
+    {
       "id": "source:docs/EVIDENCE.md",
       "kind": "source",
       "label": "docs/EVIDENCE.md",
@@ -2920,6 +2968,20 @@
       "label": "test/cases/42_dag_waves.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/42_dag_waves.sh"
+    },
+    {
+      "id": "test:test/cases/430_economics.sh",
+      "kind": "test",
+      "label": "test/cases/430_economics.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/430_economics.sh"
+    },
+    {
+      "id": "test:test/cases/431_economics_claims_gated.sh",
+      "kind": "test",
+      "label": "test/cases/431_economics_claims_gated.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/431_economics_claims_gated.sh"
     },
     {
       "id": "test:test/cases/45_github_projection.sh",
@@ -3573,6 +3635,21 @@
     {
       "source": "claim:telemetry",
       "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-selection-counted",
+      "target": "source:docs/ECONOMICS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:economics-claims-gated",
+      "target": "source:docs/ECONOMICS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:token-savings-measured",
+      "target": "source:docs/ECONOMICS.md",
       "kind": "specified_by"
     },
     {
@@ -4436,6 +4513,16 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:context-selection-counted",
+      "target": "impl:apps/majordomus-cli/src/economics/context.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:economics-claims-gated",
+      "target": "impl:apps/majordomus-cli/src/economics/claims.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:project-schema",
       "target": "impl:lib/project.sh",
       "kind": "implemented_by"
@@ -5268,6 +5355,16 @@
     {
       "source": "claim:blocker-survives-handover",
       "target": "test:test/cases/50_blocker_across_handover.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:context-selection-counted",
+      "target": "test:test/cases/430_economics.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:economics-claims-gated",
+      "target": "test:test/cases/431_economics_claims_gated.sh",
       "kind": "proved_by"
     },
     {
