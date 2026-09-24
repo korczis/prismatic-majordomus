@@ -1,0 +1,877 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decisions — Prismatic Majordomus</title>
+<meta name="description" content="Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision&#39;s own file.">
+<link rel="canonical" href="https://majordomus.dev/adrs/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="Decisions — Prismatic Majordomus">
+<meta property="og:description" content="Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision&#39;s own file.">
+<meta property="og:url" content="https://majordomus.dev/adrs/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=658d8eb7f315b4a92fb5">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.9.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.8.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading text-fg-brand">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-fg-brand" aria-current="page">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8"><nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">Decisions</li>
+  </ol>
+</nav>
+<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">Decisions</h1><p class="mt-3 max-w-3xl text-lg text-body">Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision&#39;s own file.</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <div x-data="{ q: '', status: 'all' }">
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="sr-only" for="ent-filter">Filter</label>
+      <input id="ent-filter" type="search" x-model="q" placeholder="Filter by identity, title or tag" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by status">
+        <button type="button" x-on:click="status = 'all'" :aria-pressed="status === 'all' ? 'true' : 'false'" aria-pressed="true" :class="status === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">All</button>
+        <button type="button" x-on:click="status = 'accepted'" :aria-pressed="status === 'accepted' ? 'true' : 'false'" aria-pressed="false" :class="status === 'accepted' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">accepted <span class="text-body-subtle">24</span></button>
+        <button type="button" x-on:click="status = 'proposed'" :aria-pressed="status === 'proposed' ? 'true' : 'false'" aria-pressed="false" :class="status === 'proposed' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">proposed <span class="text-body-subtle">28</span></button>
+      </div>
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every entry below is still listed, in the order the index resolves them.</p>
+
+    <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list" aria-live="polite"><li x-show="(status === 'all' || status === 'accepted') && ('adr-0001 a rust executable with a data-driven, read-only mcp surface over stdio rust mcp architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0001/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0001</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A Rust executable with a data-driven, read-only MCP surface over stdio</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">rust</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mcp</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0002 a canonical capability registry, with mcp, http, openapi, swagger ui, the cli and the reference as projections registry projections architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0002/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0002</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A canonical capability registry, with MCP, HTTP, OpenAPI, Swagger UI, the CLI and the reference as projections</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>2 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">registry</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0003 one shared mcp server per repository, peers, and clients that start it themselves mcp concurrency architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0003/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0003</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">One shared MCP server per repository, peers, and clients that start it themselves</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mcp</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">concurrency</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0004 one canonical declaration, composed modules, derived projections, and performance as evidence registry performance architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0004/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0004</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">One canonical declaration, composed modules, derived projections, and performance as evidence</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>2 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">registry</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">performance</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0005 one projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry projections site architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0005/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0005</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">One projection plan over the canonical inputs, named owners for every truth, and the site as a view of the registry</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">site</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0006 ci planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it ci deployment'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0006/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0006</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">CI planned from one model of what affects what, gates as repository-owned scripts, and the site deployed from the run that verified it</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ci</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">deployment</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0007 skills are data under the layers skills section, and every surface that shows one is a projection skills projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0007/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0007</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Skills are data under the layer&#39;s skills section, and every surface that shows one is a projection</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">skills</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0008 use cases are executable canonical objects of the layer use-cases evidence'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0008/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0008</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Use cases are executable canonical objects of the layer</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">use-cases</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0009 prompt capture happens below the model, or is reported as unavailable capture providers privacy'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0009/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0009</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Prompt capture happens below the model, or is reported as unavailable</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">capture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">providers</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">privacy</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0010 curated knowledge is one kind with a class, not a second store knowledge'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0010/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0010</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Curated knowledge is one kind with a class, not a second store</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>4 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">knowledge</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0011 every directory in the layer carries a contract context governance'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0011/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0011</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Every directory in the layer carries a contract</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>5 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">context</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0012 the cockpit is a sixth projection of the registry, not an application over it architecture capabilities rust interface'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0012/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0012</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The Cockpit is a sixth projection of the registry, not an application over it</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>12 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">capabilities</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">rust</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">interface</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0013 every web surface is discovered from its producer, resolved once, and projected architecture web'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0013/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0013</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Every web surface is discovered from its producer, resolved once, and projected</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>2 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>2 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">web</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0014 a closed session is a shared object of the layer, not a local note architecture records'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0014/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0014</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A closed session is a shared object of the layer, not a local note</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>2 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>2 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">records</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0015 the episode boundary is drawn by the provider, not by the model architecture provider'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0015/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0015</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The episode boundary is drawn by the provider, not by the model</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">provider</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0016 the scenario is a body section, not a header field use-cases schemas context'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0016/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0016</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The scenario is a body section, not a header field</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">use-cases</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">schemas</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">context</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0017 an episode that opens is handed what the last one left architecture continuity provider'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0017/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0017</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">An episode that opens is handed what the last one left</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">continuity</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">provider</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0018 operational moments are objects of the layer, not pages of the site why catalogue projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0018/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0018</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Operational moments are objects of the layer, not pages of the site</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>5 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">why</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">catalogue</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0019 distribution is one model, and every surface that ships the tool is a projection of it distribution release'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0019/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0019</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Distribution is one model, and every surface that ships the tool is a projection of it</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">distribution</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">release</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0020 the capability graph is composed, not centralised, and projected twice architecture capabilities interface web'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0020/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0020</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The capability graph is composed, not centralised, and projected twice</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>8 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">capabilities</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">interface</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">web</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0021 the branch-to-worktree topology is derived from git identity and enforced everywhere git worktree filesystem agents coordination'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0021/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0021</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The branch-to-worktree topology is derived from git identity and enforced everywhere</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>9 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">git</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">worktree</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">filesystem</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">agents</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">coordination</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0022 the ui standard is an audit over a discovered page set, and its failures are fixed at their shared source ui accessibility web projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0022/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0022</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The UI standard is an audit over a discovered page set, and its failures are fixed at their shared source</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>11 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ui</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">accessibility</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">web</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0023 product features are objects of the layer, and the landing page is a projection of them product site projections architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0023/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0023</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Product features are objects of the layer, and the landing page is a projection of them</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>10 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">product</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">site</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0024 an orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts architecture provider worktree'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0024/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0024</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">An orchestrator is a provider only at the bootstrap level, and its worktrees are scratch checkouts</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">provider</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">worktree</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0025 presentation order is one total order owned by the crate, not a decision each surface makes architecture presentation determinism projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0025/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0025</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Presentation order is one total order owned by the crate, not a decision each surface makes</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>6 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">presentation</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">determinism</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0026 a capability modules area is derived from the features that name it, not declared beside it architecture taxonomy projections product'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0026/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0026</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A capability module&#39;s area is derived from the features that name it, not declared beside it</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>7 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">taxonomy</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">product</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0027 a command is declared once and every surface is a projection of the command graph commands projections completion'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0027/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0027</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A command is declared once and every surface is a projection of the command graph</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">commands</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">completion</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0028 the crates public surface is measured by the crate, and absence from the api is a decision rust documentation testing capabilities quality'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0028/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0028</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The crate&#39;s public surface is measured by the crate, and absence from the API is a decision</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>12 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">rust</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">documentation</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">testing</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">capabilities</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">quality</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0029 the changelog is a projection of what the repository already records, and the version has one writer rather than one source release changelog versioning projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0029/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0029</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The changelog is a projection of what the repository already records, and the version has one writer rather than one source</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>9 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">release</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">changelog</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">versioning</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0030 a task owes obligations, and the evidence that discharges them goes stale completion evidence tasks'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0030/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0030</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A task owes obligations, and the evidence that discharges them goes stale</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>2 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">completion</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">tasks</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0031 the design is one declaration and every surface is a projection of it design ui projections derived'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0031/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0031</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The design is one declaration and every surface is a projection of it</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>10 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">design</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ui</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">derived</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0032 an external workspace is not a provider: the term, the dependency posture, and where synced content lives architecture workspace'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0032/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0032</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">An external workspace is not a provider: the term, the dependency posture, and where synced content lives</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">workspace</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0033 an execution is a watched capability call, not a second registry architecture capabilities rust http cockpit agents'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0033/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0033</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">An execution is a watched capability call, not a second registry</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>16 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">capabilities</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">rust</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">http</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">cockpit</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">agents</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0035 a checkouts server is one of the repositorys, and its state is served like every other fact mcp architecture coordination'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0035/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0035</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A checkout&#39;s server is one of the repository&#39;s, and its state is served like every other fact</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mcp</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">coordination</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0036 the design system is a typed declaration in the crate and every first-party surface consumes its projections design ui cockpit site projections derived'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0036/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0036</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The design system is a typed declaration in the crate and every first-party surface consumes its projections</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>13 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">design</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ui</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">cockpit</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">site</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">derived</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0037 a gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives ci'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0037/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0037</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A gate whose runner the repository cannot get on demand is planned on demand, so that the verdict arrives</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>8 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ci</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0038 a scenario declares where it runs, and an obligation is a step architecture agents governance'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0038/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0038</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A scenario declares where it runs, and an obligation is a step</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>10 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">agents</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0039 liveness is four rules, advisory until a scan can decide them agents governance process'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0039/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0039</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Liveness is four rules, advisory until a scan can decide them</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>10 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">agents</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">process</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0040 development semantics are capabilities of one runtime; every surface is a consumer architecture capabilities cockpit runtime governance'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0040/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0040</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Development semantics are capabilities of one runtime; every surface is a consumer</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>4 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">capabilities</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">cockpit</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">runtime</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0041 proof is a recorded execution, and inputs unchanged is not proven evidence claims verification ci'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0041/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0041</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Proof is a recorded execution, and inputs unchanged is not proven</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>19 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">claims</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">verification</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ci</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0043 entering the repository brings its runtime up, through one bootstrap command the entry file calls entry mcp environment doctrine'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0043/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0043</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Entering the repository brings its runtime up, through one bootstrap command the entry file calls</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">entry</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mcp</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">environment</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">doctrine</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'accepted') && ('adr-0044 cooperation is repository-wide because the board is gathered, not because the server is shared mcp architecture coordination worktrees'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0044/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0044</code><span class="mj-badge mj-badge--accepted">accepted</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Cooperation is repository-wide because the board is gathered, not because the server is shared</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>5 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mcp</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">coordination</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">worktrees</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0047 the session domain is typed, its identities are not interchangeable, and closing is exactly once sessions continuity architecture identity rust'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0047/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0047</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The session domain is typed, its identities are not interchangeable, and closing is exactly once</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>7 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">sessions</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">continuity</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">identity</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">rust</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0048 a rule declares how it is enforced, and review is one of the three ways rules governance verification evidence'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0048/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0048</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A rule declares how it is enforced, and review is one of the three ways</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>24 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">rules</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">verification</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0049 the model catalogue is declarative data, and routing is an explainable projection of it models catalogue routing'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0049/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0049</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The model catalogue is declarative data, and routing is an explainable projection of it</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>4 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">models</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">catalogue</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">routing</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0050 mesh peer discovery is provider-based observation with authenticated node identity mesh discovery security'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0050/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0050</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Mesh peer discovery is provider-based observation with authenticated node identity</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>4 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mesh</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">discovery</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">security</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0051 the minimum release version is measured from the public contract, and conventional commits are demoted to evidence release versioning compatibility projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0051/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0051</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The minimum release version is measured from the public contract, and conventional commits are demoted to evidence</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>7 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">release</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">versioning</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">compatibility</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0052 the session lifecycle is the episodes, not the tasks sessions continuity governance architecture'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0052/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0052</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">The session lifecycle is the episode&#39;s, not the task&#39;s</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>12 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>1 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">sessions</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">continuity</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0053 an identity is allocated above the high-water mark, and a collision is refused on the branch coordination governance'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0053/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0053</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">An identity is allocated above the high-water mark, and a collision is refused on the branch</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>5 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">coordination</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0054 a commit message is a judged value, not a convention and not a prompt git commit governance projections'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0054/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0054</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">A commit message is a judged value, not a convention and not a prompt</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>17 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">git</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">commit</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">projections</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0055 disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts operations safety worktrees ci'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0055/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0055</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Disk is the fifth self-accumulating quantity — build output is reclaimed by predicate and a build is bounded before it starts</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>7 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">operations</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">safety</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">worktrees</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ci</span></span>
+        </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0056 every object of the layer has a derived address, both directions of every relation, and a declared place of publication governance routing web'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0056/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0056</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Every object of the layer has a derived address, both directions of every relation, and a declared place of publication</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>0 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">governance</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">routing</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">web</span></span>
+        </a>
+      </li></ul>
+  </div>
+
+  <div class="mt-12 max-w-3xl">
+    <h2 class="text-xl font-semibold tracking-tight text-heading">Where these come from</h2>
+    <p class="mt-3 text-body">52 objects of kind <code class="font-mono text-heading">adr</code>, read from the repository's own layer. Nothing on this page is typed into the site: the source class that discovers the files is declared in the repository's knowledge sources, the executable indexes them, and this page, <code class="font-mono text-heading">majordomus entity show adr/&lt;slug&gt;</code>, the MCP resource <code class="font-mono text-heading">majordomus://adr/&lt;identity&gt;</code> and the Cockpit route <code class="font-mono text-heading">/cockpit/objects/adr/&lt;slug&gt;</code> are all projections of that one index.</p>
+    <p class="mt-3 text-body">The references and backlinks each page shows are edges of one graph. A reference is declared in the front matter of the object that makes it; the backlink is that same edge read from the other end, so nothing declares a relationship twice and nothing can declare half of one.</p>
+  </div>
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.9.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/823ca046838ae735057aa871b82f04eb8871176b" class="font-mono underline">823ca04</a> · inputs <span class="font-mono">3346f28e1e0d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

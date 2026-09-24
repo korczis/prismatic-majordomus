@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>entity.show — Prismatic Majordomus</title>
+<meta name="description" content="One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/entity-show/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="entity.show — Prismatic Majordomus">
+<meta property="og:description" content="One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/entity-show/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=658d8eb7f315b4a92fb5">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.9.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.8.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">entity.show</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">entity.show</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">implemented</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/entity/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module entity</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#objects</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#governance</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_entity</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/entity/#op-entity-show" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/entity</a> <span class="text-xs text-body-subtle">operationId entity.show</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus entity show</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · EntityInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">Which entity: by URI, or by the address it is served at.</p>
+<p>Two spellings of one question, because two kinds of caller ask it: MCP and the API hold
+the <code>majordomus://</code> URI the index is keyed by, and the Cockpit's router has a <code>kind</code> and
+a <code>slug</code> out of a path. Nothing converts one form into the other at the edge — the
+capability resolves either, so neither caller has to know the other's spelling.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::entity::EntityInput;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let by_route: EntityInput =</span></span>
+<span class="giallo-l"><span>    serde_json::from_value(serde_json::json!({ &quot;kind&quot;: &quot;adr&quot;, &quot;slug&quot;: &quot;adr-0056&quot; }))</span></span>
+<span class="giallo-l"><span>        .unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(by_route.kind.as_deref(), Some(&quot;adr&quot;));</span></span>
+<span class="giallo-l"><span>assert_eq!(by_route.slug.as_deref(), Some(&quot;adr-0056&quot;));</span></span>
+<span class="giallo-l"><span>assert_eq!(by_route.uri, None);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// absent is a shape, not an error: which fields are required is the handler&#39;s question</span></span>
+<span class="giallo-l"><span>assert_eq!(EntityInput::default().kind, None);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kind</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The kind, when addressing by route.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">slug</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The last segment of the entity's route, when addressing by route.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">uri</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>. Either this, or <code>kind</code> and <code>slug</code> together.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;Which entity: by URI, or by the address it is served at.\n\nTwo spellings of one question, because two kinds of caller ask it: MCP and the API hold\nthe `majordomus://` URI the index is keyed by, and the Cockpit&#39;s router has a `kind` and\na `slug` out of a path. Nothing converts one form into the other at the edge — the\ncapability resolves either, so neither caller has to know the other&#39;s spelling.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityInput;\n\nlet by_route: EntityInput =\n    serde_json::from_value(serde_json::json!({ \&quot;kind\&quot;: \&quot;adr\&quot;, \&quot;slug\&quot;: \&quot;adr-0056\&quot; }))\n        .unwrap();\nassert_eq!(by_route.kind.as_deref(), Some(\&quot;adr\&quot;));\nassert_eq!(by_route.slug.as_deref(), Some(\&quot;adr-0056\&quot;));\nassert_eq!(by_route.uri, None);\n\n// absent is a shape, not an error: which fields are required is the handler&#39;s question\nassert_eq!(EntityInput::default().kind, None);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;kind&quot;: {
+      &quot;description&quot;: &quot;The kind, when addressing by route.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;slug&quot;: {
+      &quot;description&quot;: &quot;The last segment of the entity&#39;s route, when addressing by route.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;uri&quot;: {
+      &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`. Either this, or `kind` and `slug` together.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    }
+  },
+  &quot;title&quot;: &quot;EntityInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · EntityView</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">One object of the layer as an addressable node: what it is, where it is served, what it
+is joined to, and what can be said about its enforcement.</p>
+<p>The whole answer in one value, because it is one question: every surface that shows an
+entity — the Cockpit page, <code>GET /api/v1/entity</code>, <code>majordomus_entity</code>, <code>majordomus entity show</code> — renders this and composes nothing of its own. A field a reader sees on one
+surface and not another would be a surface holding an opinion, which is what ADR 0004
+forecloses.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::entity::EntityView;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// it round-trips through the wire shape every projection reads it as</span></span>
+<span class="giallo-l"><span>let view: EntityView = serde_json::from_value(serde_json::json!({</span></span>
+<span class="giallo-l"><span>    &quot;uri&quot;: &quot;majordomus://adr/adr-0056&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;id&quot;: &quot;adr.adr-0056&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;kind&quot;: &quot;adr&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;identity&quot;: &quot;adr-0056&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;slug&quot;: &quot;adr-0056&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;route&quot;: &quot;/cockpit/objects/adr/adr-0056&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;kind_route&quot;: &quot;/cockpit/objects/adr&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;title&quot;: &quot;Every object of the layer has a derived address&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;provenance&quot;: { &quot;path&quot;: &quot;x.md&quot;, &quot;directory&quot;: &quot;x&quot;, &quot;source_class&quot;: &quot;adr&quot;, &quot;bytes&quot;: 0 },</span></span>
+<span class="giallo-l"><span>    &quot;metadata&quot;: {},</span></span>
+<span class="giallo-l"><span>    &quot;media_type&quot;: &quot;text/markdown&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;content&quot;: &quot;&quot;,</span></span>
+<span class="giallo-l"><span>    &quot;relations&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;surfaces&quot;: [],</span></span>
+<span class="giallo-l"><span>    &quot;evidence&quot;: { &quot;state&quot;: &quot;unclaimed&quot;, &quot;meaning&quot;: &quot;nothing named&quot; },</span></span>
+<span class="giallo-l"><span>}))</span></span>
+<span class="giallo-l"><span>.unwrap();</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>assert_eq!(view.route, &quot;/cockpit/objects/adr/adr-0056&quot;);</span></span>
+<span class="giallo-l"><span>// the kind&#39;s index is the entity&#39;s route with the last segment removed</span></span>
+<span class="giallo-l"><span>assert!(view.route.starts_with(&amp;view.kind_route));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">content</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The file as read.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">description</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The one-line description, when the kind holds one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">evidence</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">What can be said about its enforcement without running anything.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">id</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The capability id, <code>&lt;kind&gt;.&lt;identity&gt;</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">identity</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The identity within the kind.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kind</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The kind.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">kind_route</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The route of its kind's index.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">media_type</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">IANA media type of <code>content</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">metadata</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">object</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The parsed front matter or YAML, keys in the file's order.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">provenance</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where it came from.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">relations</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The references it declares, and the references that resolve to it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">route</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Its route in the Cockpit.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">slug</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The last segment of its route, derived from the identity.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">surfaces</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every surface that answers for it.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">title</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The title, when the kind's title rule found one.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">uri</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words"><code>majordomus://&lt;kind&gt;/&lt;identity&gt;</code>.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;ClaimedArtifact&quot;: {
+      &quot;description&quot;: &quot;One executable artefact an object names, and whether the tree holds it.\n\n`field` is kept beside the path because the same object can name artefacts under several\nkeys, and a reader fixing a dangling one needs to know which line of the front matter to\nlook at rather than which file is missing.\n\n```\nuse majordomus_cli::capability::builtin::entity::ClaimedArtifact;\n\nlet a = ClaimedArtifact {\n    field: \&quot;x-majordomus.tests\&quot;.into(),\n    path: \&quot;test/cases/277_entities_are_routable.sh\&quot;.into(),\n    present: true,\n};\nlet wire = serde_json::to_value(&amp;a).unwrap();\nassert_eq!(wire[\&quot;field\&quot;], serde_json::json!(\&quot;x-majordomus.tests\&quot;));\nassert_eq!(wire[\&quot;present\&quot;], serde_json::json!(true));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The front matter key it was named under (`x-majordomus.tests`, `test`, ...).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;The repository-relative path as named.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;present&quot;: {
+          &quot;description&quot;: &quot;Whether the tree holds it.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;field&quot;,
+        &quot;path&quot;,
+        &quot;present&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityEdge&quot;: {
+      &quot;description&quot;: &quot;One edge, as an entity page reads it.\n\nEverything a reader needs about the other end is here — what to show, what kind of thing\nit is, and the address to send them to — so the page renders a relation without going\nback to the index for it. `route` is `None` exactly when `external` is true: a `file`, a\n`test` or a `command` is named by the layer and is not an object of it, so there is no\nentity page to link to and the template shows plain text instead of a dead link.\n\n```\nuse majordomus_cli::entity::{Direction, Edge};\nuse majordomus_cli::order::Ordered;\n\nlet edge = Edge {\n    direction: Direction::Incoming,\n    edge: \&quot;depends_on\&quot;.into(),\n    field: \&quot;depends_on\&quot;.into(),\n    uri: Some(\&quot;majordomus://rule/project.x@1\&quot;.into()),\n    kind: \&quot;rule\&quot;.into(),\n    label: \&quot;project.x@1\&quot;.into(),\n    title: Some(\&quot;A rule\&quot;.into()),\n    route: Some(\&quot;/cockpit/objects/rule/project-x-1\&quot;.into()),\n    external: false,\n};\n\n// the relation is the group and the direction ranks inside it; see the `Ordered` impl\nlet key = edge.order_key();\nassert_eq!(key.group, Some(\&quot;depends_on\&quot;));\nassert_eq!(key.rank, Direction::Incoming as i64);\nassert_eq!(key.identity, \&quot;majordomus://rule/project.x@1\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;direction&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RelationDirection&quot;,
+          &quot;description&quot;: &quot;Which way it runs from the entity that was asked for.&quot;
+        },
+        &quot;edge&quot;: {
+          &quot;description&quot;: &quot;The relationship, in the graph&#39;s vocabulary (`depends_on`, `put_in_force`, ...).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;external&quot;: {
+          &quot;description&quot;: &quot;True when the other end is not an object of this index.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;field&quot;: {
+          &quot;description&quot;: &quot;The front matter key the reference was declared under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;kind&quot;: {
+          &quot;description&quot;: &quot;Its kind — of the layer, or the external vocabulary (`file`, `test`, `command`).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;label&quot;: {
+          &quot;description&quot;: &quot;What to show: the identity of an object, or the name of something outside.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;route&quot;: {
+          &quot;description&quot;: &quot;Its entity route, when it has one; absent for something outside the layer.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title, when it is an object that has one.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;uri&quot;: {
+          &quot;description&quot;: &quot;The object at the other end: its URI when the layer holds it.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;direction&quot;,
+        &quot;edge&quot;,
+        &quot;field&quot;,
+        &quot;kind&quot;,
+        &quot;label&quot;,
+        &quot;external&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityEvidence&quot;: {
+      &quot;description&quot;: &quot;What can be said about an object&#39;s enforcement without running anything.\n\n`meaning` travels with `state` so that every surface shows the same sentence about it:\na badge alone invites each renderer to write its own gloss, and the gloss is where a\n\&quot;resolved\&quot; quietly becomes a \&quot;passing\&quot;. A kind that names no artefact is `Unclaimed`\nwith an empty `artifacts`, which is an answer and not an omission.\n\n```\nuse majordomus_cli::capability::builtin::entity::{Evidence, EvidenceState};\n\nlet e = Evidence {\n    state: EvidenceState::Unclaimed,\n    meaning: \&quot;This object names no executable artefact.\&quot;.into(),\n    artifacts: Vec::new(),\n    proof: None,\n};\n\n// the empty collections are omitted from the wire, so absence reads as absence\nlet wire = serde_json::to_value(&amp;e).unwrap();\nassert_eq!(wire[\&quot;state\&quot;], serde_json::json!(\&quot;unclaimed\&quot;));\nassert!(wire.get(\&quot;artifacts\&quot;).is_none());\nassert!(wire.get(\&quot;proof\&quot;).is_none());\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;artifacts&quot;: {
+          &quot;description&quot;: &quot;Every artefact named, with whether the tree holds it.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ClaimedArtifact&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;meaning&quot;: {
+          &quot;description&quot;: &quot;That state in one sentence, for a reader.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;proof&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/EntityProofRef&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;The capability that can say more, when this kind has one.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/EntityEvidenceState&quot;,
+          &quot;description&quot;: &quot;The state, which is never rounded up.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;state&quot;,
+        &quot;meaning&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntityEvidenceState&quot;: {
+      &quot;description&quot;: &quot;What this repository can say about the executable artefacts an object names, and only\nthat. The word is chosen so that no reader can mistake it for a run.\n\nThe three states are ordered by how much they permit a reader to conclude, and the\nstrongest of them still concludes nothing about a run: `Resolved` means the files an\nobject points at exist. `proof` on `Evidence` is where \&quot;did it ever pass\&quot; is asked.\n\n```\nuse majordomus_cli::capability::builtin::entity::EvidenceState;\n\n// the wire spellings, which the Cockpit badge and the site template both read\nfor (state, word) in [\n    (EvidenceState::Unclaimed, \&quot;unclaimed\&quot;),\n    (EvidenceState::Dangling, \&quot;dangling\&quot;),\n    (EvidenceState::Resolved, \&quot;resolved\&quot;),\n] {\n    assert_eq!(serde_json::to_value(state).unwrap(), serde_json::json!(word));\n}\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;unclaimed&quot;,
+          &quot;description&quot;: &quot;The object names no executable artefact. Most kinds name none, and that is not a\ndefect: a prompt is not enforced by anything.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;dangling&quot;,
+          &quot;description&quot;: &quot;It names artefacts and at least one of them is not in the tree. A claim that points\nat nothing is worse than no claim, because it reads as enforcement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;resolved&quot;,
+          &quot;description&quot;: &quot;Every artefact it names is in the tree. This says the claim resolves — never that it\npassed. Whether it ever ran is a different question, and `proof` is where it is\nasked.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;EntityProofRef&quot;: {
+      &quot;description&quot;: &quot;Where a fuller answer about this entity&#39;s enforcement lives.\n\nA pointer, never an answer. This module states what it can see in the tree and then\nnames the capability that can say more, so that an entity page does not grow a second,\nweaker implementation of proof beside the one that already exists.\n\n```\nuse majordomus_cli::capability::builtin::entity::ProofRef;\n\nlet p = ProofRef {\n    capability: \&quot;rule.proves\&quot;.into(),\n    title: \&quot;What proves a rule\&quot;.into(),\n    address: \&quot;majordomus rule proves project.entities-are-routable@1\&quot;.into(),\n};\nassert_eq!(\n    serde_json::to_value(&amp;p).unwrap()[\&quot;capability\&quot;],\n    serde_json::json!(\&quot;rule.proves\&quot;)\n);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;address&quot;: {
+          &quot;description&quot;: &quot;How to ask it here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;capability&quot;: {
+          &quot;description&quot;: &quot;The capability that answers it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;title&quot;: {
+          &quot;description&quot;: &quot;Its title.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;capability&quot;,
+        &quot;title&quot;,
+        &quot;address&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;EntitySurface&quot;: {
+      &quot;description&quot;: &quot;One place this entity can be reached, and how.\n\nA row of the \&quot;where else this is answered\&quot; table on an entity page. `surface` is the\ninterface&#39;s own name, so a reader who works on the command line and a reader who works\nover MCP each find their own line rather than a route they have to translate.\n\n```\nuse majordomus_cli::entity::Surface;\n\nlet s = Surface {\n    surface: \&quot;mcp\&quot;.into(),\n    address: \&quot;majordomus://rule/project.x@1\&quot;.into(),\n    detail: \&quot;the file as read\&quot;.into(),\n};\nassert_eq!(\n    serde_json::to_value(&amp;s).unwrap()[\&quot;surface\&quot;],\n    serde_json::json!(\&quot;mcp\&quot;)\n);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;address&quot;: {
+          &quot;description&quot;: &quot;The address on it: a URI, a route, a command line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;What a reader does with it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;surface&quot;: {
+          &quot;description&quot;: &quot;Which surface: `mcp`, `http`, `cli`, `cockpit`, `site`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;surface&quot;,
+        &quot;address&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ObjectProvenance&quot;: {
+      &quot;description&quot;: &quot;Where an object came from. Every field is computed from the repository, never authored.&quot;,
+      &quot;properties&quot;: {
+        &quot;bytes&quot;: {
+          &quot;description&quot;: &quot;Size of the file in bytes.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;directory&quot;: {
+          &quot;description&quot;: &quot;The directory the path sits in, repository-relative; `.` for the root. This is the\nhierarchy position a client orders by; no merge semantics are implied.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;member&quot;: {
+          &quot;description&quot;: &quot;For an object that is one member of a collection file: the member&#39;s key path in\nthe file (`claims.3`).&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;path&quot;: {
+          &quot;description&quot;: &quot;Repository-relative path, forward slashes, as the version-control index names it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;section&quot;: {
+          &quot;description&quot;: &quot;The manifest section the path falls under (`rules`, `prompts`, ...), when it falls\nunder one; a root `README.md` falls under none.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;source_class&quot;: {
+          &quot;description&quot;: &quot;The `sources.yaml` class that discovered the file (`rule`, `readme`, ...).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;path&quot;,
+        &quot;directory&quot;,
+        &quot;source_class&quot;,
+        &quot;bytes&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RelationDirection&quot;: {
+      &quot;description&quot;: &quot;Which way a relation runs from the entity being read.\n\nThe direction is a property of the *reading*, not of the relation: one edge in\n`graph::RELATIONS` is outgoing on the page of the object that declared it and incoming\non the page of the object it names. Nothing in the layer writes `Incoming` down.\n\n```\nuse majordomus_cli::entity::Direction;\n\n// the wire spelling, which every surface shows and the site template reads\nassert_eq!(\n    serde_json::to_string(&amp;Direction::Outgoing).unwrap(),\n    \&quot;\\\&quot;outgoing\\\&quot;\&quot;\n);\nassert_eq!(\n    serde_json::to_string(&amp;Direction::Incoming).unwrap(),\n    \&quot;\\\&quot;incoming\\\&quot;\&quot;\n);\n// declared before derived, which is the order an entity page renders the two sections\nassert!((Direction::Outgoing as u8) &lt; (Direction::Incoming as u8));\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;outgoing&quot;,
+          &quot;description&quot;: &quot;This entity declared the reference.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;incoming&quot;,
+          &quot;description&quot;: &quot;Another entity named this one. Never declared: derived by reading every other\nobject&#39;s references and keeping the ones that resolve here.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \&quot;uri\&quot;: \&quot;majordomus://adr/adr-0056\&quot;,\n    \&quot;id\&quot;: \&quot;adr.adr-0056\&quot;,\n    \&quot;kind\&quot;: \&quot;adr\&quot;,\n    \&quot;identity\&quot;: \&quot;adr-0056\&quot;,\n    \&quot;slug\&quot;: \&quot;adr-0056\&quot;,\n    \&quot;route\&quot;: \&quot;/cockpit/objects/adr/adr-0056\&quot;,\n    \&quot;kind_route\&quot;: \&quot;/cockpit/objects/adr\&quot;,\n    \&quot;title\&quot;: \&quot;Every object of the layer has a derived address\&quot;,\n    \&quot;provenance\&quot;: { \&quot;path\&quot;: \&quot;x.md\&quot;, \&quot;directory\&quot;: \&quot;x\&quot;, \&quot;source_class\&quot;: \&quot;adr\&quot;, \&quot;bytes\&quot;: 0 },\n    \&quot;metadata\&quot;: {},\n    \&quot;media_type\&quot;: \&quot;text/markdown\&quot;,\n    \&quot;content\&quot;: \&quot;\&quot;,\n    \&quot;relations\&quot;: [],\n    \&quot;surfaces\&quot;: [],\n    \&quot;evidence\&quot;: { \&quot;state\&quot;: \&quot;unclaimed\&quot;, \&quot;meaning\&quot;: \&quot;nothing named\&quot; },\n}))\n.unwrap();\n\nassert_eq!(view.route, \&quot;/cockpit/objects/adr/adr-0056\&quot;);\n// the kind&#39;s index is the entity&#39;s route with the last segment removed\nassert!(view.route.starts_with(&amp;view.kind_route));\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;content&quot;: {
+      &quot;description&quot;: &quot;The file as read.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;description&quot;: {
+      &quot;description&quot;: &quot;The one-line description, when the kind holds one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;evidence&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/EntityEvidence&quot;,
+      &quot;description&quot;: &quot;What can be said about its enforcement without running anything.&quot;
+    },
+    &quot;id&quot;: {
+      &quot;description&quot;: &quot;The capability id, `&lt;kind&gt;.&lt;identity&gt;`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;identity&quot;: {
+      &quot;description&quot;: &quot;The identity within the kind.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;kind&quot;: {
+      &quot;description&quot;: &quot;The kind.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;kind_route&quot;: {
+      &quot;description&quot;: &quot;The route of its kind&#39;s index.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;media_type&quot;: {
+      &quot;description&quot;: &quot;IANA media type of `content`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;metadata&quot;: {
+      &quot;description&quot;: &quot;The parsed front matter or YAML, keys in the file&#39;s order.&quot;
+    },
+    &quot;provenance&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ObjectProvenance&quot;,
+      &quot;description&quot;: &quot;Where it came from.&quot;
+    },
+    &quot;relations&quot;: {
+      &quot;description&quot;: &quot;The references it declares, and the references that resolve to it.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EntityEdge&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;route&quot;: {
+      &quot;description&quot;: &quot;Its route in the Cockpit.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;slug&quot;: {
+      &quot;description&quot;: &quot;The last segment of its route, derived from the identity.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;surfaces&quot;: {
+      &quot;description&quot;: &quot;Every surface that answers for it.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/EntitySurface&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;title&quot;: {
+      &quot;description&quot;: &quot;The title, when the kind&#39;s title rule found one.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;uri&quot;: {
+      &quot;description&quot;: &quot;`majordomus://&lt;kind&gt;/&lt;identity&gt;`.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;uri&quot;,
+    &quot;id&quot;,
+    &quot;kind&quot;,
+    &quot;identity&quot;,
+    &quot;slug&quot;,
+    &quot;route&quot;,
+    &quot;kind_route&quot;,
+    &quot;provenance&quot;,
+    &quot;metadata&quot;,
+    &quot;media_type&quot;,
+    &quot;content&quot;,
+    &quot;relations&quot;,
+    &quot;surfaces&quot;,
+    &quot;evidence&quot;
+  ],
+  &quot;title&quot;: &quot;EntityView&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-entity-show-direct-first-object" class="break-all text-fg-brand hover:underline inline-block py-1">first-object</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-entity-show-mcp-first-object" class="break-all text-fg-brand hover:underline inline-block py-1">first-object</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-entity-show-http-first-object" class="break-all text-fg-brand hover:underline inline-block py-1">first-object</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">entity.show</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/entity.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/entity.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::entity</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">EntityInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">EntityView</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/modules/entity.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/entity.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">32f349bd9bb906134781558eee7d3fe754ae894fd6a3c05340b97e13be406828</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.9.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.9.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/823ca046838ae735057aa871b82f04eb8871176b" class="font-mono underline">823ca04</a> · inputs <span class="font-mono">3346f28e1e0d</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>
