@@ -41,7 +41,7 @@
           <td class="py-2 pr-4 font-mono text-heading">{{ k.kind }}</td>
           <td class="py-2 pr-4 text-right font-mono text-heading">{{ k.count }}</td>
           <td class="py-2 text-body">
-            {%- if k.route %}<a class="font-medium text-fg-brand hover:underline" href="{{ get_url(path=k.route, trailing_slash=true) }}">{{ k.title | default(value=k.route) }}</a>{% if k.projection == "entity" %} <span class="text-xs text-body-subtle">— a page per object</span>{% endif %}
+            {%- if k.route %}<a class="font-medium text-fg-brand hover:underline" href="{{ get_url(path=k.route, trailing_slash=true) }}">{% if k.title %}{{ k.title }}{% else %}{{ k.route }}{% endif %}</a>{% if k.projection == "entity" %} <span class="text-xs text-body-subtle">— a page per object</span>{% endif %}
             {%- else %}<span class="text-xs">{{ k.reason }}</span>{% endif %}
           </td>
         </tr>

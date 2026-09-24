@@ -121,8 +121,8 @@ MJ="$(rust_bin)" || rust_bin_exit $?
 KINDS="$(env -u MAJORDOMUS_SHARE "$MJ" entity kinds --repo "$ROOT" --format json 2>/dev/null || true)"
 [ -n "$KINDS" ] || { note "majordomus entity kinds did not answer"; exit 1; }
 printf '%s' "$KINDS" | jq -r '.kinds[] | "\(.kind) \(.count)"' > "$S/index-counts"
-jq -r '.catalogue[] | select(.count > 0) | "\(.kind) \(.count)"' "$ENT" | sort > "$S/cat-counts"
-sort "$S/index-counts" | grep -v ' 0$' > "$S/idx-sorted" || true
+jq -r '.catalogue[] | select(.count > 0) | "\(.kind) \(.count)"' "$ENT" | LC_ALL=C sort > "$S/cat-counts"
+LC_ALL=C sort "$S/index-counts" | grep -v ' 0$' > "$S/idx-sorted" || true
 cmp -s "$S/idx-sorted" "$S/cat-counts" || {
   note "the catalogue's counts are not the index's:"
   diff "$S/idx-sorted" "$S/cat-counts" | sed 's/^/      /' | head -10; }
