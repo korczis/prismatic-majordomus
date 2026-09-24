@@ -6,7 +6,7 @@ weight = 24
 id = "gate-ci-on-the-tool-itself"
 source = ".ai/repo/use-cases/gate-ci-on-the-tool-itself.md"
 category = "policy"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

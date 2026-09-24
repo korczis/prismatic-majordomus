@@ -6,7 +6,7 @@ weight = 45
 id = "record-a-decision-before-it-is-forgotten"
 source = ".ai/repo/use-cases/record-a-decision-before-it-is-forgotten.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

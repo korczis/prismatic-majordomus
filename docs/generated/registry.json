@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-registry/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.7.0",
+  "generator": "majordomus-cli 0.8.0",
   "modules": [
     {
       "id": "artifacts",
@@ -198,7 +198,7 @@
     {
       "id": "plan",
       "title": "The plan and its derivations",
-      "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
+      "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
       "stability": "behaviorally_verified",
       "source": "builtin",
       "capabilities": 9
@@ -13605,6 +13605,13 @@
                   "minimum": 0,
                   "description": "How many files the layer declared that did not become objects."
                 },
+                "refused": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Diagnostic"
+                  },
+                  "description": "Which ones, and what decided it: the index's own error diagnostics, each naming the\nfile, the code and the constraint it failed. A count says something is wrong; only\nthis says what and where, and a reader that has the count and not the list has to go\nlooking through a log for the answer the index already produced."
+                },
                 "degraded": {
                   "type": [
                     "boolean",
@@ -13657,6 +13664,56 @@
                 "count"
               ],
               "description": "How many valid objects of one kind the layer holds."
+            },
+            "Diagnostic": {
+              "type": "object",
+              "properties": {
+                "severity": {
+                  "$ref": "#/$defs/Severity",
+                  "description": "How bad."
+                },
+                "code": {
+                  "type": "string",
+                  "description": "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
+                },
+                "path": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Repository-relative path of the file concerned, when there is one."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong, for a person; the code is for a program."
+                }
+              },
+              "required": [
+                "severity",
+                "code",
+                "message"
+              ],
+              "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
+            },
+            "Severity": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "info",
+                  "description": "Worth knowing; changes nothing."
+                },
+                {
+                  "type": "string",
+                  "const": "warning",
+                  "description": "Something to look at; the object is still served."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "The file is excluded and the index is degraded."
+                }
+              ],
+              "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
             },
             "WorkflowCatalogue": {
               "type": "object",
@@ -13905,56 +13962,6 @@
                 }
               ],
               "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions."
-            },
-            "Diagnostic": {
-              "type": "object",
-              "properties": {
-                "severity": {
-                  "$ref": "#/$defs/Severity",
-                  "description": "How bad."
-                },
-                "code": {
-                  "type": "string",
-                  "description": "A stable machine-readable code, e.g. `unknown_key`, `duplicate_identity`."
-                },
-                "path": {
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "description": "Repository-relative path of the file concerned, when there is one."
-                },
-                "message": {
-                  "type": "string",
-                  "description": "What is wrong, for a person; the code is for a program."
-                }
-              },
-              "required": [
-                "severity",
-                "code",
-                "message"
-              ],
-              "description": "One finding about the declarative state, named by a stable code, tied to a path where\nthere is one, and carrying the command that reproduces it where there is one."
-            },
-            "Severity": {
-              "oneOf": [
-                {
-                  "type": "string",
-                  "const": "info",
-                  "description": "Worth knowing; changes nothing."
-                },
-                {
-                  "type": "string",
-                  "const": "warning",
-                  "description": "Something to look at; the object is still served."
-                },
-                {
-                  "type": "string",
-                  "const": "error",
-                  "description": "The file is excluded and the index is degraded."
-                }
-              ],
-              "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
             },
             "FieldSource": {
               "type": "object",

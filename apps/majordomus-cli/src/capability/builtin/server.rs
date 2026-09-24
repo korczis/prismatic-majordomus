@@ -465,10 +465,13 @@ pub fn standing_at(
 ) -> (ServerStanding, Option<String>, LeaseFile) {
     let file = lease::lease_file(worktree, local_half);
     let read = LeaseFile::read(&file);
+    // this process's own lease is answered from memory: a probe would be a request to
+    // itself, queued behind the very request asking (lease::is_own)
+    let own = read.document().is_some_and(lease::is_own);
     let (standing, reason) = standing_of(
         &read,
         lease::file_age(&file),
-        |url| lease::probe(url, worktree),
+        |url| own || lease::probe(url, worktree),
         crate::VERSION,
     );
     (standing, reason, read)
@@ -540,6 +543,13 @@ fn server_status(ctx: &Context, input: ServerStatusInput) -> Result<ServerStatus
         let worktree = path.canonicalize().unwrap_or(path);
         let (standing, reason, read) = standing_at(&worktree, &local_half);
         let peers = match standing {
+            // this process's own board is in memory; asking it over the wire would queue
+            // behind this very request (lease::is_own)
+            ServerStanding::Ready | ServerStanding::Outdated
+                if read.document().is_some_and(lease::is_own) =>
+            {
+                Some(ctx.peers.list().iter().filter(|p| p.attached).count())
+            }
             ServerStanding::Ready | ServerStanding::Outdated => read
                 .document()
                 .and_then(|d| d.url.as_deref())

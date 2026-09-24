@@ -1,5 +1,6 @@
 # majordomus-exclusive: reads the derived API page the site cases generate into this checkout
 # majordomus-covers: none
+# claims: openapi-inferred
 # The OpenAPI document is inferred, not written: the tags are the modules, the examples are
 # the capabilities' benchmark cases, the responses are the statuses the router answers for
 # the capability's kind, the prose is the one text every projection shares, and the site's
@@ -15,10 +16,9 @@
 command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj92.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-# where cargo just put it: CARGO_TARGET_DIR is how worktrees share one build
-# directory, and the composed path then names a file that was never written
-RB="${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
+# the executable MAJORDOMUS_BIN names, or the one rust_bin builds; cargo itself is still
+# required below, for the crate's route replay
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 "$MJ" init >/dev/null

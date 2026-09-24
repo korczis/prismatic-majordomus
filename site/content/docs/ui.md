@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 54
+weight = 56
 [extra]
 source = "docs/UI.md"
 +++
@@ -94,8 +94,14 @@ it compiles.
 desktop end; one page per section takes the full sweep across every boundary. On a built
 surface a section is the first path segment, because that is where templates change; on a
 crawled surface it is the *family* — the shape a route shares with its siblings, `?`-keys
-when it has a query and the parent path when it does not. Both are where a renderer changes,
-so the sweep buys structural coverage without anybody naming a page.
+when it has a query and the parent path when it does not. A route can vary in both at once —
+`/cockpit/graphs/composed?nodes=3` is a record in its path and a view in its query — and the
+crawled set is what settles it: a directory the crawl reached under more than one name, below
+the entry, holds records, and its children collapse to `*` like any other. The entry's own
+children are the surface's areas and never collapse, so `/cockpit/objects?page` and
+`/cockpit/capabilities?page` stay two renderers while eight graph pages each paging two
+tables stay one family instead of twenty-four. Both are where a renderer changes, so the
+sweep buys structural coverage without anybody naming a page.
 
 **The sample** is derived as well, and only a crawled surface has one. Every route the
 surface advertises is visited, because each of those is its own page; of every family the

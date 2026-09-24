@@ -1,7 +1,7 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 49
+weight = 51
 [extra]
 source = "docs/MCP.md"
 +++
@@ -352,8 +352,9 @@ given against every other announcement and returns the peers whose claims meet i
 the pairs of paths that meet: two claims meet when they are equal or one is inside the
 other (`apps` contains `apps/majordomus-cli`; `app` does not, because a claim is a path
 and not a prefix of a string). `peers.list` reports the same collisions across the whole
-board, each pair once. It is still not enforcement — the shell tool's `start --scope` and
-`check --overlap` do that, per worktree, and they are what refuses a commit — but a
+board, each pair once. It is still not enforcement, and neither is the shell tool's
+`check --overlap`, which reports other worktrees' task scopes and exits 0. What refuses is the
+task's own scope from `start --scope`, at `check`, at `finish` and in the pre-push hook — but a
 collision is now known at the moment it is created rather than discovered afterwards in
 the history of a branch.
 

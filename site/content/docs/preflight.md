@@ -1,7 +1,7 @@
 +++
 title = "The preflight"
 description = "the preflight: what is proven about a checkout rather than what it is — a verdict per claim (git, episode, briefing, task, handover, policy, rules, ADRs, server and surfaces, peers, test runs, enforcement, projections, generated docs, deployment) with the evidence behind it; the nine verdicts, what entry reads and never reads, the measured cost, and what to run for each verdict"
-weight = 46
+weight = 48
 [extra]
 source = "docs/PREFLIGHT.md"
 +++

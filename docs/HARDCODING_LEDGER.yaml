@@ -93,7 +93,8 @@ findings:
     recommended: EVENT
     target: "a finish.refused event carrying the doctrines that refused"
     priority: 1
-    status: open
+    status: fixed
+    resolved_by: "finish appends task.refused each time it refuses, with the number of unmet contract lines, the doctrines that refused and every doctrine's verdict; finish --check writes nothing. Declared in share/events.yaml (named in the vocabulary's task.<past tense> form beside task.finished rather than as finish.refused), rendered by history, and reconciled by test/cases/06_finish.sh."
     reproduce: "grep -n 'mj_ledger_append' lib/finish.sh"
 
   - id: context-provider-lists

@@ -10,7 +10,7 @@ status: stable
 weight: 20
 featured: false
 areas: [documentation, observability, coordination]
-modules: [repository, objects, web]
+modules: [repository, objects, web, environment, executions, commands]
 rules: [project.web-surface-declared-once, project.web-surface-topology, project.native-cli-documented, project.shared-server-resilience]
 docs: [docs/MCP.md, docs/WEB.md, docs/CAPABILITIES.md]
 adrs: [adr-0001, adr-0003, adr-0013]

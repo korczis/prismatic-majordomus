@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.diagnostics-decide-the-exit@1]
 tags: [process, agents, orchestration]
+
+x-majordomus:
+  reviewed_because: a rule about how a worker reasons is not a scan over a tree, and no program here observes another's render loop; its mechanical half is project.commands-run-non-interactively and project.every-wait-is-bounded
 ---
 
 # Rationale

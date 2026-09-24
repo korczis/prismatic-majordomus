@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: site-deploy-one-path
 # scripts/site-deploy publishes site/public to the gh-pages branch of a remote, and refuses
 # what nobody could audit: a dirty tree, a commit master does not contain, a build that is
 # not HEAD's. The remote here is a local bare repository, so the case needs no network and
