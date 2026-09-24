@@ -702,7 +702,7 @@ fn committable(root: &Path) -> Option<Vec<String>> {
         .filter(|s| !s.is_empty())
         .map(|s| String::from_utf8_lossy(s).into_owned())
         .collect();
-    files.sort();
+    crate::order::canonical_strings(&mut files);
     files.dedup();
     Some(files)
 }
@@ -731,7 +731,7 @@ fn walk(root: &Path) -> Vec<String> {
     for dir in CARRIER_ROOTS {
         visit(&root.join(dir), root, &mut out);
     }
-    out.sort();
+    crate::order::canonical_strings(&mut out);
     out
 }
 

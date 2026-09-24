@@ -134,7 +134,7 @@ while read -r added removed path; do
 done < "$S/numstat"
 # the lock's line is the crate's own entry, never the dependency at the same version
 git diff -U1 -- apps/majordomus-cli/Cargo.lock | grep -A2 '^ name = "majordomus-cli"$' | grep -q '^+version = "4.6.0"$' || {
-  echo "    the lock line written is not the crate's own entry:"; git diff -- apps/majordomus-cli/Cargo.lock; exit 1; }
+  echo "    the lock line written is not the crate's own entry:"; git --no-pager diff -- apps/majordomus-cli/Cargo.lock; exit 1; }
 grep -q '^decoy = { version = "4.5.6" }$' apps/majordomus-cli/Cargo.toml || {
   echo "    a dependency pinned at the old version was rewritten in the manifest"; exit 1; }
 # the projection is stale now, by design: a warning the writer can live with, which the
