@@ -42,6 +42,7 @@ Every path below is the mount its surface declares. Nothing in this table is typ
 |---|---|---|---|
 | `/` | `home` | This process, and everything it serves | route |
 | `/docs/` | `docs` | This repository's documentation | directory |
+| `/rustdoc/` | `rustdoc` | The Rust crate's documentation, as rustdoc renders it | directory |
 | `/swagger` | `swagger` | Swagger UI over the OpenAPI document | route |
 | `/openapi.json` | `openapi` | The OpenAPI document, generated from the registry | route |
 | `/api/v1/` | `api` | The capability routes | route |
@@ -54,6 +55,11 @@ Two names are reserved and may never be repurposed:
   mean two things in four files. It does not any more.
 - **`/swagger` is Swagger UI.** It is a viewer for the API, and a viewer for the API is not
   the documentation.
+
+The crate's rustdoc holds a reservation of the same kind: **`/rustdoc` is the crate's
+rustdoc**, and a copy of the reference published at that path under another id is refused
+as a duplicate canonical route — a `surface.mount-collision` while the rustdoc exists, a
+`surface.reserved-namespace` finding whether or not it does.
 
 The reservations are data — `web::discover::reserved()`, each path the same constant its
 surface is declared with — and everything that cares reads them. `majordomus web validate`
@@ -168,14 +174,40 @@ The generated tree lives under `target/web/`, which is ignored: it is derived st
 same status as every other generated tree here — reproducible, never read as source, and a
 stale artifact is a `majordomus web validate --artifacts` finding rather than a diff.
 
+## How `/rustdoc` is declared and served
+
+The crate's rustdoc is a surface because **the crate exists**, not because `cargo doc` ran.
+`web::discover::rustdoc` declares it whenever `apps/majordomus-cli` holds a `Cargo.toml` and
+a `src/lib.rs` — the same test the quality gates use to decide the crate is there — with
+every value fixed in one place: mount `/rustdoc`, directory `target/web/rustdoc`, index
+`index.html`, producer `scripts/rust-check --doc`, category documentation, and both worlds.
+A running process serves it at a top-level mount of its own; a publication carries it
+beside the site under the same path, nested under the application's root, which is the one
+nesting the validator allows. `/docs/rust` was refused because `/docs` owns its whole
+subtree, and `/api` and `/reference` because both already mean something else.
+
+The producer writes a `surface.json` beside its output, and discovery reads one value from
+it: the revision it was built from. The walk of the generated root skips the directory, as
+it skips `target/web/docs`, so the reference is never discovered twice and never exists only
+in the checkout where somebody ran the producer. Unbuilt, `/rustdoc/` answers `503` naming
+`scripts/rust-check --doc`, and the home page shows it as *not built*.
+
+rustdoc writes a redirect stub for every macro named `macro.<name>!.html`, so `!` is in the
+character set the file server accepts. It spells neither a separator nor `.`/`..`, no
+browser escapes it, and `%` stays refused, so an escaped traversal is still text and never
+a path.
+
 ## Static file serving
 
-`/docs/**` is served by `web::files`. A request path is decomposed into segments and every
-segment checked against a conservative character set before the filesystem is touched; a
-segment that is empty, `.` or `..` refuses the request. The resolved path is canonicalised
-and required to still be inside the canonical root, which closes the door a symlink inside
-the directory would otherwise open. There is no concatenation of untrusted text anywhere in
-that file, and a file whose extension is not one the surface generates is not served.
+`/docs/**`, `/rustdoc/**` and every other generated directory are served by `web::files`. A
+request path is decomposed into segments and every segment checked against a conservative
+character set — the characters the producers write, `!` included for rustdoc's macro stubs —
+before the filesystem is touched; a segment that is empty, `.` or `..` refuses the request.
+The resolved path is canonicalised and required to still be inside the canonical root, which
+closes the door a symlink inside the directory would otherwise open. There is no
+concatenation of untrusted text anywhere in that file, and a file whose extension is not one
+the surface generates is not served. Files are read as bytes, so a font or an image comes
+back as it was written.
 
 A file is read once and answered from memory afterwards, up to a ceiling; documents carry
 `Cache-Control: no-cache`, because the pages are rebuilt from a working tree somebody is
@@ -203,7 +235,10 @@ generation of the repository a long-lived process reads (`crate::live`), never p
 checked by `generate --check`. It exists because the site generator runs without a Rust
 toolchain and reads committed artifacts; the Rust resolution is authoritative and the file
 is never edited by hand. It omits `built_from`, which is a fact of one checkout's artifacts
-and would make every clone report drift.
+and would make every clone report drift; the documentation and the rustdoc are declared by
+discovery rather than by their output, so the file is byte-identical whether or not either
+producer ran, and `the_web_projection_is_the_same_whether_or_not_a_producer_ran` holds it
+so.
 
 ## What is enforced, and where
 
@@ -212,6 +247,9 @@ and would make every clone report drift.
 | Ids unique; one owner per path in each world; no nested mount | `majordomus web validate`, in `scripts/rust-check` |
 | A native surface has a handler | the router refuses to build; `every_native_surface_has_a_handler` |
 | `/docs` is documentation, `/swagger` is Swagger UI | `project.web-surface-declared-once`, `test/cases/89_web_surface.sh` |
+| `/rustdoc` is the crate's rustdoc, declared from the crate; a second claim on it is refused | `web::discover` and `web::validate` tests (`a_second_surface_at_the_rustdoc_mount_is_a_duplicate_canonical_route`) |
+| A rustdoc tree is served whole: macro stubs, styles, scripts, fonts | `web::files` tests, `http::surfaces` tests, `tests/http_serve.rs` over a real socket |
+| `docs/generated/web.json` does not depend on which producers ran | `the_web_projection_is_the_same_whether_or_not_a_producer_ran` |
 | The home page covers every public served surface | `web::home` tests, and case 89 over a real socket |
 | `docs/generated/web.json` current | `majordomus generate --check` |
 | No origin-absolute link forces the two builds apart | `scripts/site-basepath-check` |

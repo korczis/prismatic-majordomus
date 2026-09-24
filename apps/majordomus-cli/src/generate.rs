@@ -1209,8 +1209,20 @@ pub fn providers_markdown(value: &Value) -> String {
 /// is a fact of a checkout, not of the repository. That is what keeps the file stable
 /// enough for `generate --check` to compare.
 pub fn web_topology(ctx: &Context) -> Value {
-    let surfaces: Vec<Value> = ctx
-        .web
+    web_document(&ctx.web)
+}
+
+/// The projection of one resolved topology, apart from the context that resolved it, so
+/// that what the committed file depends on can be measured over a directory rather than
+/// over a whole index.
+///
+/// Two surfaces are built in some checkouts and not in others — the documentation and
+/// the crate's rustdoc — and both are declared by discovery from what says they exist,
+/// with every value decided there. The one value their producers add is the revision they
+/// were built from, and it is dropped here: a fact of one checkout's artifacts, never of
+/// the repository, and the one field that would make this file differ per machine.
+fn web_document(topology: &crate::web::Topology) -> Value {
+    let surfaces: Vec<Value> = topology
         .surfaces
         .iter()
         .map(|s| {
@@ -2626,6 +2638,95 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    /// `docs/generated/web.json` is committed and `generate --check` compares it, so it
+    /// may hold nothing that depends on which producers ran in the checkout that wrote it.
+    /// The documentation and the rustdoc are the surfaces whose producers run in some
+    /// checkouts and not others; each writes a declaration with the revision it was built
+    /// from. The projection must be byte-identical with and without those declarations —
+    /// and with two different revisions, which is two machines generating one commit.
+    #[test]
+    fn the_web_projection_is_the_same_whether_or_not_a_producer_ran() {
+        use crate::web::discover::{self, Runtime};
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let krate = root.join(crate::capability::model::CRATE_DIR);
+        std::fs::create_dir_all(krate.join("src")).unwrap();
+        std::fs::write(krate.join("Cargo.toml"), "").unwrap();
+        std::fs::write(krate.join("src/lib.rs"), "//! x\n").unwrap();
+        std::fs::create_dir_all(root.join("site")).unwrap();
+        std::fs::write(root.join(discover::SITE_CONFIG), "base_url = \"/\"\n").unwrap();
+
+        let projection = || {
+            let topology = discover::discover(root, Runtime::full()).unwrap();
+            serde_json::to_string_pretty(&web_document(&topology)).unwrap()
+        };
+        let produce = |revision: &str| {
+            for (artifact, id, mount) in [
+                (
+                    discover::DOCS_ARTIFACT,
+                    discover::DOCS,
+                    discover::DOCS_MOUNT,
+                ),
+                (
+                    discover::RUSTDOC_ARTIFACT,
+                    discover::RUSTDOC,
+                    discover::RUSTDOC_MOUNT,
+                ),
+            ] {
+                let dir = root.join(artifact);
+                std::fs::create_dir_all(&dir).unwrap();
+                std::fs::write(dir.join("index.html"), "<h1>built</h1>").unwrap();
+                std::fs::write(
+                    dir.join(discover::DECLARATION_FILE),
+                    json!({
+                        "schema": discover::DECLARATION_SCHEMA, "id": id, "mount": mount,
+                        "availability": "both", "built_from": revision,
+                    })
+                    .to_string(),
+                )
+                .unwrap();
+            }
+        };
+
+        let unbuilt = projection();
+        produce("1111111111111111111111111111111111111111");
+        // the resolution does read the declarations: this is not equal because nothing
+        // was looked at
+        let topology = discover::discover(root, Runtime::full()).unwrap();
+        for id in [discover::DOCS, discover::RUSTDOC] {
+            assert_eq!(
+                topology.get(id).and_then(|s| s.built_from.as_deref()),
+                Some("1111111111111111111111111111111111111111"),
+                "{id}"
+            );
+        }
+        let built_here = projection();
+        produce("2222222222222222222222222222222222222222");
+        let built_elsewhere = projection();
+        assert_eq!(
+            unbuilt, built_here,
+            "a producer running changed the projection"
+        );
+        assert_eq!(
+            built_here, built_elsewhere,
+            "a revision reached the projection"
+        );
+        assert!(!built_here.contains("built_from"), "{built_here}");
+        assert!(!built_here.contains("1111111"), "{built_here}");
+
+        // and the document holds both surfaces, so the equality is not two empty documents
+        let doc: Value = serde_json::from_str(&built_here).unwrap();
+        let ids: Vec<&str> = doc["surfaces"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|s| s["id"].as_str())
+            .collect();
+        assert!(ids.contains(&discover::DOCS), "{ids:?}");
+        assert!(ids.contains(&discover::RUSTDOC), "{ids:?}");
+        assert_eq!(doc["reserved"]["rustdoc"], discover::RUSTDOC_MOUNT);
+    }
 
     /// A share directory inside the repository is named relative to it even when the root
     /// is spelled differently from the canonical path the share carries. `Share::open`

@@ -276,16 +276,25 @@ fn resolve(root: &Path, relative: &str, index: Option<&str>) -> Option<Resolved>
 
 /// A request path made safe to join onto a surface's root, or none.
 ///
+/// The character set is what the producers write and nothing wider. `!` is in it because
+/// rustdoc names the redirect stub of every macro `macro.<name>!.html`, and a reference
+/// that 404s on its own macros is a reference with holes: it is a legal path character
+/// that no browser escapes, it cannot spell `.`, `..` or a separator, and it therefore
+/// opens no route out of the directory that the segment checks do not already close.
+/// `%` stays out, so an escaped traversal is refused as text rather than decoded into one.
+///
 /// ```
 /// use majordomus_cli::web::files::safe_relative;
 /// assert_eq!(safe_relative("cli/index.html").as_deref(), Some("cli/index.html"));
 /// assert_eq!(safe_relative("").as_deref(), Some(""));
 /// assert_eq!(safe_relative("cli/").as_deref(), Some("cli/"));
+/// assert_eq!(safe_relative("m/macro.x!.html").as_deref(), Some("m/macro.x!.html"));
 /// assert_eq!(safe_relative("../Cargo.toml"), None);
 /// assert_eq!(safe_relative("a/../../b"), None);
 /// assert_eq!(safe_relative("/etc/passwd"), None);
 /// assert_eq!(safe_relative("a//b"), None);
 /// assert_eq!(safe_relative("a\0b"), None);
+/// assert_eq!(safe_relative("%2e%2e/b"), None);
 /// ```
 pub fn safe_relative(path: &str) -> Option<String> {
     if path.len() > 1024 {
@@ -308,7 +317,7 @@ pub fn safe_relative(path: &str) -> Option<String> {
         }
         if !segment
             .bytes()
-            .all(|b| b.is_ascii_alphanumeric() || b"._-~@+()'".contains(&b))
+            .all(|b| b.is_ascii_alphanumeric() || b"._-~@+()'!".contains(&b))
         {
             return None;
         }
@@ -501,6 +510,140 @@ mod tests {
             "a relative path never starts at the root"
         );
         assert_eq!(safe_relative("a//"), Some("a/".to_string()));
+    }
+
+    /// A rustdoc tree as the producer leaves it, reduced to one file of every kind a
+    /// browser asks for when it opens the reference: the landing page, the crate's page,
+    /// the hashed stylesheet, script and font rustdoc writes under `static.files/`, and the
+    /// redirect stub rustdoc names after a macro with its `!`.
+    fn rustdoc_tree() -> (tempfile::TempDir, Files) {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().join("target/web/rustdoc");
+        std::fs::create_dir_all(dir.join("static.files")).unwrap();
+        std::fs::create_dir_all(dir.join("majordomus_cli")).unwrap();
+        std::fs::write(dir.join("index.html"), "<h1>landing</h1>").unwrap();
+        std::fs::write(dir.join("static.files/a.css"), "body{}").unwrap();
+        std::fs::write(dir.join("static.files/b.js"), "var b;").unwrap();
+        // not UTF-8, as a font is not: the bytes must come back untouched
+        std::fs::write(
+            dir.join("static.files/c.woff2"),
+            [0x77, 0x4f, 0x46, 0x32, 0xff],
+        )
+        .unwrap();
+        std::fs::write(dir.join("majordomus_cli/index.html"), "<h1>crate</h1>").unwrap();
+        std::fs::write(
+            dir.join("majordomus_cli/macro.m!.html"),
+            "<meta http-equiv=\"refresh\" content=\"0;URL=macro.m.html\">",
+        )
+        .unwrap();
+        let mut surface = surface("/rustdoc", "target/web/rustdoc");
+        surface.id = "rustdoc".into();
+        surface.availability = Availability::Both;
+        let files = Files::new(&surface, tmp.path());
+        (tmp, files)
+    }
+
+    #[test]
+    fn a_macros_redirect_stub_is_served_under_the_name_rustdoc_gives_it() {
+        let (_tmp, files) = rustdoc_tree();
+        let stub = files.respond("/rustdoc/majordomus_cli/macro.m!.html");
+        assert_eq!(stub.status, 200, "{}", stub.body);
+        assert_eq!(stub.content_type, "text/html; charset=utf-8");
+        assert!(stub.body.text().contains("URL=macro.m.html"));
+        // a `!` names a file; it does not find one that is not there
+        assert_eq!(
+            files
+                .respond("/rustdoc/majordomus_cli/macro.x!.html")
+                .status,
+            404
+        );
+    }
+
+    #[test]
+    fn every_file_a_rustdoc_tree_needs_is_answered_with_its_type() {
+        let (_tmp, files) = rustdoc_tree();
+        for (path, media) in [
+            ("/rustdoc/", "text/html; charset=utf-8"),
+            ("/rustdoc/index.html", "text/html; charset=utf-8"),
+            ("/rustdoc/majordomus_cli/", "text/html; charset=utf-8"),
+            (
+                "/rustdoc/majordomus_cli/index.html",
+                "text/html; charset=utf-8",
+            ),
+            ("/rustdoc/static.files/a.css", "text/css; charset=utf-8"),
+            (
+                "/rustdoc/static.files/b.js",
+                "text/javascript; charset=utf-8",
+            ),
+            ("/rustdoc/static.files/c.woff2", "font/woff2"),
+        ] {
+            let response = files.respond(path);
+            assert_eq!(response.status, 200, "{path}: {}", response.body);
+            assert_eq!(response.content_type, media, "{path}");
+        }
+        let font = files.respond("/rustdoc/static.files/c.woff2");
+        assert_eq!(font.body.as_bytes(), [0x77, 0x4f, 0x46, 0x32, 0xff]);
+        let bare = files.respond("/rustdoc");
+        assert_eq!(bare.status, 308);
+        assert!(bare
+            .headers
+            .iter()
+            .any(|(k, v)| k == "Location" && v == "/rustdoc/"));
+        // and every extension a rustdoc build carries, whether or not this tree has one:
+        // measured over a real `cargo doc` output (css, html, js, md, png, svg, txt, woff2),
+        // with the favicon and search types a newer rustdoc may add
+        for (name, media) in [
+            ("a.html", "text/html; charset=utf-8"),
+            ("a.css", "text/css; charset=utf-8"),
+            ("a.js", "text/javascript; charset=utf-8"),
+            ("a.woff2", "font/woff2"),
+            ("a.svg", "image/svg+xml"),
+            ("a.png", "image/png"),
+            ("a.ico", "image/x-icon"),
+            ("a.json", "application/json"),
+            ("a.txt", "text/plain; charset=utf-8"),
+            ("a.md", "text/markdown; charset=utf-8"),
+        ] {
+            assert_eq!(media_type(name), Some(media), "{name}");
+        }
+    }
+
+    #[test]
+    fn allowing_a_bang_opens_no_way_out_of_the_surface() {
+        let (tmp, files) = rustdoc_tree();
+        std::fs::write(tmp.path().join("secret.html"), "<b>outside</b>").unwrap();
+        std::fs::write(tmp.path().join("target/web/secret!.html"), "<b>outside</b>").unwrap();
+        for hostile in [
+            "/rustdoc/../secret.html",
+            "/rustdoc/../secret!.html",
+            "/rustdoc/!/../../secret.html",
+            "/rustdoc/majordomus_cli/../../secret!.html",
+            "/rustdoc/%2e%2e/secret.html",
+            "/rustdoc/%2E%2E/secret!.html",
+            "/rustdoc/..%2fsecret.html",
+            "/rustdoc/%21/../../secret.html",
+            "/rustdoc//secret.html",
+            "/rustdoc/./index.html",
+            "/rustdoc/..!/secret.html",
+        ] {
+            let response = files.respond(hostile);
+            assert!(
+                response.status == 400 || response.status == 404,
+                "{hostile} answered {}",
+                response.status
+            );
+            assert!(!response.body.text().contains("outside"), "{hostile}");
+        }
+        // a symbolic link named like a macro stub is still a link out, and still refused
+        #[cfg(unix)]
+        {
+            std::os::unix::fs::symlink(
+                tmp.path().join("secret.html"),
+                tmp.path().join("target/web/rustdoc/macro.leak!.html"),
+            )
+            .unwrap();
+            assert_eq!(files.respond("/rustdoc/macro.leak!.html").status, 404);
+        }
     }
 
     #[test]

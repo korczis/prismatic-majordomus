@@ -1,13 +1,16 @@
 //! Discovery: how the repository's web surfaces are found without anybody listing them.
 //!
-//! Three inference sources, none of them a register a person maintains:
+//! Four inference sources, none of them a register a person maintains:
 //!
 //! 1. the **executable's own routes**, from the constants that already declare them once —
 //!    the capability prefix, the OpenAPI document, the Swagger UI, MCP and the Cockpit;
 //! 2. the **generated web root**, `target/web/<id>/`, where a producer writes its output
 //!    and a `surface.json` beside it declaring the intent no directory walk can infer;
 //! 3. the **site configuration**, which says the Zola application exists and where it is
-//!    built, so the application is discovered rather than assumed.
+//!    built, so the application is discovered rather than assumed;
+//! 4. the **crate**, whose presence says its rustdoc exists as a surface whether or not
+//!    anybody has run `cargo doc` in this checkout, so the crate's reference is discovered
+//!    from the source it documents rather than from the output of one machine.
 //!
 //! Everything a consumer can be surprised by carries its [`Provenance`], so `web explain`
 //! answers "why is this here?" from data rather than from this module's source.
@@ -20,7 +23,7 @@ use serde::{Deserialize, Serialize};
 use super::model::{
     Availability, Category, Feature, Mount, Provenance, Surface, SurfaceKind, Topology, Visibility,
 };
-use crate::capability::model::HttpExposure;
+use crate::capability::model::{HttpExposure, CRATE_DIR};
 use crate::cockpit;
 use crate::error::{Error, Result};
 use crate::http::{mcp, swagger};
@@ -132,6 +135,7 @@ pub struct Declaration {
 pub fn discover(root: &Path, runtime: Runtime) -> Result<Topology> {
     let mut surfaces = native(runtime);
     surfaces.extend(application(root));
+    surfaces.extend(rustdoc(root));
     surfaces.extend(generated(root)?);
     Ok(Topology::new(surfaces))
 }
@@ -276,6 +280,25 @@ pub const DOCS_MOUNT: &str = "/docs";
 /// Where the documentation build for [`DOCS_MOUNT`] is written, repository-relative.
 pub const DOCS_ARTIFACT: &str = "target/web/docs";
 
+/// The identity of the crate's rustdoc, mounted under [`RUSTDOC_MOUNT`]: named after its
+/// producer, as `swagger` is, because "reference" already means three other things here.
+pub const RUSTDOC: &str = "rustdoc";
+
+/// Where the crate's rustdoc is served and published.
+///
+/// A top-level mount of its own, and every nearer name was measured and refused: `/docs`
+/// is the documentation's whole subtree and a surface inside another is a nested-mount
+/// finding, `/api` is the prefix of the capability routes, and `/reference` is overloaded.
+pub const RUSTDOC_MOUNT: &str = "/rustdoc";
+
+/// Where the rustdoc for [`RUSTDOC_MOUNT`] is written, repository-relative: one directory
+/// of the generated root, owned by its producer alone.
+pub const RUSTDOC_ARTIFACT: &str = "target/web/rustdoc";
+
+/// The command that writes [`RUSTDOC_ARTIFACT`]: the same `cargo doc` invocation the gate
+/// proves warning-free, so the published reference is the one that was checked.
+pub const RUSTDOC_PRODUCER: &str = "scripts/rust-check --doc";
+
 /// The site's own configuration, repository-relative: what says this repository has a site
 /// at all.
 pub const SITE_CONFIG: &str = "site/config.toml";
@@ -314,6 +337,8 @@ pub struct Reserved {
 /// assert_eq!(docs.owner, "docs");
 /// let swagger = reserved().into_iter().find(|r| r.role == "swagger").unwrap();
 /// assert_eq!(swagger.path, "/swagger");
+/// let rustdoc = reserved().into_iter().find(|r| r.owner == "rustdoc").unwrap();
+/// assert_eq!(rustdoc.path, "/rustdoc");
 /// ```
 pub fn reserved() -> Vec<Reserved> {
     vec![
@@ -326,6 +351,14 @@ pub fn reserved() -> Vec<Reserved> {
             role: "documentation",
             path: DOCS_MOUNT,
             owner: DOCS,
+        },
+        // the crate's reference is documentation too, and a second surface answering its
+        // mount — a producer that decided the rustdoc should be copied somewhere "useful" —
+        // is the duplicate canonical route this refuses while the owner is gone as well
+        Reserved {
+            role: "rustdoc",
+            path: RUSTDOC_MOUNT,
+            owner: RUSTDOC,
         },
         Reserved {
             role: "swagger",
@@ -421,6 +454,79 @@ pub fn application(root: &Path) -> Vec<Surface> {
     ]
 }
 
+/// The crate's rustdoc, when this repository has the crate.
+///
+/// Declared from the source it documents, exactly as the documentation build is declared
+/// from the site's configuration: the crate existing is what says the reference exists,
+/// and whether `cargo doc` has run in this checkout decides only whether it is *built*.
+/// That is what keeps the topology — and the committed projection of it — the same on
+/// every machine; an unbuilt reference is served as a 503 naming [`RUSTDOC_PRODUCER`], and
+/// `web validate --artifacts` is where its absence becomes a finding.
+///
+/// Both worlds hold it. A running process serves it at a top-level mount of its own, and a
+/// publication carries it beside the site under the same path, nested under the
+/// application's root, which is the one nesting the validator allows. The revision is
+/// read from the declaration the producer writes beside its output; nothing else is,
+/// because every other value is decided here and a second statement of it could only
+/// disagree.
+///
+/// ```
+/// use majordomus_cli::web::discover::{rustdoc, RUSTDOC, RUSTDOC_MOUNT};
+/// let dir = tempfile::tempdir().unwrap();
+/// assert!(rustdoc(dir.path()).is_none(), "a repository without the crate documents nothing");
+/// std::fs::create_dir_all(dir.path().join("apps/majordomus-cli/src")).unwrap();
+/// std::fs::write(dir.path().join("apps/majordomus-cli/Cargo.toml"), "").unwrap();
+/// std::fs::write(dir.path().join("apps/majordomus-cli/src/lib.rs"), "//! x\n").unwrap();
+/// let surface = rustdoc(dir.path()).expect("the crate is documented");
+/// assert_eq!(surface.id, RUSTDOC);
+/// assert_eq!(surface.mount.as_str(), RUSTDOC_MOUNT);
+/// // declared before it is built: the producer has not run in this directory
+/// assert!(surface.built_from.is_none());
+/// assert!(surface.availability.is_served() && surface.availability.is_published());
+/// ```
+pub fn rustdoc(root: &Path) -> Option<Surface> {
+    crate::capability::builtin::quality::crate_dir(root)?;
+    Some(Surface {
+        id: RUSTDOC.into(),
+        title: "The Rust crate's documentation, as rustdoc renders it".into(),
+        category: Category::Documentation,
+        visibility: Visibility::Public,
+        kind: SurfaceKind::StaticDirectory,
+        mount: Mount::parse(RUSTDOC_MOUNT).expect("the rustdoc mount is a mount"),
+        producer: RUSTDOC_PRODUCER.into(),
+        feature: None,
+        artifact: Some(PathBuf::from(RUSTDOC_ARTIFACT)),
+        index: Some("index.html".into()),
+        availability: Availability::Both,
+        built_from: built_from(&root.join(RUSTDOC_ARTIFACT)),
+        provenance: provenance([
+            (
+                "kind",
+                Provenance::Filesystem {
+                    path: CRATE_DIR.into(),
+                },
+            ),
+            ("mount", Provenance::Default),
+            (
+                "artifact",
+                Provenance::Filesystem {
+                    path: RUSTDOC_ARTIFACT.into(),
+                },
+            ),
+        ]),
+    })
+}
+
+/// The generated directories whose surface is declared by discovery rather than by the
+/// walk of the generated root: the documentation build, known from the site's
+/// configuration, and the rustdoc, known from the crate.
+///
+/// Each producer still writes a declaration beside its output, and that declaration
+/// carries the revision and nothing else the walk would add. Read as a surface of its own
+/// it would be the same surface twice — a duplicate id — and it would exist only in a
+/// checkout where the producer happened to run.
+const DECLARED_BY_DISCOVERY: [&str; 2] = [DOCS_ARTIFACT, RUSTDOC_ARTIFACT];
+
 /// The revision a producer recorded beside its output, when it recorded one.
 fn built_from(dir: &Path) -> Option<String> {
     let text = std::fs::read_to_string(dir.join(DECLARATION_FILE)).ok()?;
@@ -451,10 +557,11 @@ pub fn generated(root: &Path) -> Result<Vec<Surface>> {
         if !declaration.is_file() {
             continue;
         }
-        // the documentation build is discovered from the site's configuration, which knows
-        // it should exist even when it has not been built; its declaration carries the
-        // revision and nothing else this walk would add
-        if path.file_name().is_some_and(|n| n == DOCS) {
+        // the documentation build and the rustdoc are discovered from what says they should
+        // exist even when they have not been built; their declarations carry the revision
+        // and nothing else this walk would add
+        let relative = path.file_name().map(|n| Path::new(GENERATED_ROOT).join(n));
+        if relative.is_some_and(|r| DECLARED_BY_DISCOVERY.iter().any(|d| r == Path::new(d))) {
             continue;
         }
         let rel = format!(
@@ -616,5 +723,171 @@ mod tests {
 
     fn generated_surfaces(root: &Path) -> Vec<Surface> {
         generated(root).unwrap()
+    }
+
+    /// A repository whose only relevant facts are that it has the crate and a site.
+    fn with_the_crate_and_a_site() -> tempfile::TempDir {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(tmp.path().join(CRATE_DIR).join("src")).unwrap();
+        std::fs::write(tmp.path().join(CRATE_DIR).join("Cargo.toml"), "").unwrap();
+        std::fs::write(tmp.path().join(CRATE_DIR).join("src/lib.rs"), "//! x\n").unwrap();
+        std::fs::create_dir_all(tmp.path().join("site")).unwrap();
+        std::fs::write(tmp.path().join(SITE_CONFIG), "base_url = \"/\"\n").unwrap();
+        tmp
+    }
+
+    /// What the producer writes beside its output: the whole declaration, as the contract
+    /// in `web-surface/v1` has it, with the revision it was built from.
+    fn declare_rustdoc(root: &Path, revision: &str) {
+        let dir = root.join(RUSTDOC_ARTIFACT);
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join(DECLARATION_FILE),
+            format!(
+                r#"{{"schema":"web-surface/v1","id":"rustdoc","mount":"/rustdoc",
+                    "title":"rustdoc","producer":"scripts/rust-check --doc",
+                    "availability":"both","category":"documentation",
+                    "visibility":"public","built_from":"{revision}"}}"#
+            ),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn the_rustdoc_is_declared_by_the_crate_and_not_by_its_output() {
+        let tmp = tempfile::tempdir().unwrap();
+        assert!(rustdoc(tmp.path()).is_none(), "no crate, no reference");
+        // a manifest alone is not a crate the reference documents: the same test the
+        // quality gates use decides it, so the two can never disagree about the crate
+        std::fs::create_dir_all(tmp.path().join(CRATE_DIR)).unwrap();
+        std::fs::write(tmp.path().join(CRATE_DIR).join("Cargo.toml"), "").unwrap();
+        assert!(rustdoc(tmp.path()).is_none());
+
+        let tmp = with_the_crate_and_a_site();
+        let surface = rustdoc(tmp.path()).expect("the crate is there");
+        assert_eq!(surface.id, RUSTDOC);
+        assert_eq!(surface.kind, SurfaceKind::StaticDirectory);
+        assert_eq!(surface.category, Category::Documentation);
+        assert_eq!(surface.visibility, Visibility::Public);
+        assert_eq!(surface.mount.as_str(), RUSTDOC_MOUNT);
+        assert_eq!(surface.producer, RUSTDOC_PRODUCER);
+        assert_eq!(
+            surface.artifact.as_deref(),
+            Some(Path::new(RUSTDOC_ARTIFACT))
+        );
+        assert_eq!(surface.index.as_deref(), Some("index.html"));
+        assert_eq!(surface.availability, Availability::Both);
+        assert_eq!(surface.built_from, None, "declared, and not built");
+        // every value a reader can be surprised by says where it came from
+        assert_eq!(
+            surface.provenance.get("kind"),
+            Some(&Provenance::Filesystem {
+                path: CRATE_DIR.into()
+            })
+        );
+        assert_eq!(surface.provenance.get("mount"), Some(&Provenance::Default));
+        assert_eq!(
+            surface.provenance.get("artifact"),
+            Some(&Provenance::Filesystem {
+                path: RUSTDOC_ARTIFACT.into()
+            })
+        );
+    }
+
+    #[test]
+    fn the_rustdoc_takes_its_revision_from_the_producer_and_nothing_else() {
+        let tmp = with_the_crate_and_a_site();
+        let unbuilt = rustdoc(tmp.path()).unwrap();
+        declare_rustdoc(tmp.path(), "0123456789abcdef");
+        let built = rustdoc(tmp.path()).unwrap();
+        assert_eq!(built.built_from.as_deref(), Some("0123456789abcdef"));
+        // the revision is the one fact the declaration adds: everything else is the same
+        // surface whether or not the producer ran
+        assert_eq!(
+            Surface {
+                built_from: None,
+                ..built
+            },
+            unbuilt
+        );
+    }
+
+    #[test]
+    fn the_walk_of_the_generated_root_leaves_the_declared_directories_alone() {
+        let tmp = with_the_crate_and_a_site();
+        declare_rustdoc(tmp.path(), "abc");
+        write(
+            &tmp.path().join(GENERATED_ROOT),
+            DOCS,
+            r#"{"schema":"web-surface/v1","id":"docs","mount":"/docs","built_from":"abc"}"#,
+        );
+        assert!(
+            generated_surfaces(tmp.path()).is_empty(),
+            "a declared directory read twice would be the same surface twice"
+        );
+        let topology = discover(tmp.path(), Runtime::full()).unwrap();
+        for id in [RUSTDOC, DOCS] {
+            assert_eq!(
+                topology.surfaces.iter().filter(|s| s.id == id).count(),
+                1,
+                "{id} is discovered exactly once"
+            );
+        }
+        assert_eq!(
+            topology.get(RUSTDOC).and_then(|s| s.built_from.as_deref()),
+            Some("abc")
+        );
+    }
+
+    #[test]
+    fn the_rustdoc_is_valid_in_both_worlds_it_lives_in() {
+        use crate::web::validate::{validate, Artifacts};
+        let tmp = with_the_crate_and_a_site();
+        let topology = discover(tmp.path(), Runtime::full()).unwrap();
+        let findings = validate(&topology, tmp.path(), Artifacts::Ignore);
+        assert!(findings.is_empty(), "{findings:?}");
+
+        // served: a top-level mount of its own, beside the documentation and not inside it
+        let served = topology.served(Runtime::full());
+        assert_eq!(
+            served.owner("/rustdoc/").map(|s| s.id.as_str()),
+            Some(RUSTDOC)
+        );
+        assert_eq!(
+            served
+                .owner("/rustdoc/majordomus_cli/index.html")
+                .map(|s| s.id.as_str()),
+            Some(RUSTDOC)
+        );
+        assert_eq!(served.owner("/docs/").map(|s| s.id.as_str()), Some(DOCS));
+        // published: nested under the application's root, which is the one nesting the
+        // validator allows, because answering what nothing else claims is the root's job
+        let published = topology.published();
+        assert_eq!(
+            published.owner("/rustdoc/").map(|s| s.id.as_str()),
+            Some(RUSTDOC)
+        );
+        assert_eq!(
+            published.owner("/anything").map(|s| s.id.as_str()),
+            Some(APPLICATION)
+        );
+        assert!(validate(&served, tmp.path(), Artifacts::Ignore).is_empty());
+        assert!(validate(&published, tmp.path(), Artifacts::Ignore).is_empty());
+
+        // and before it is built, a validation that requires artifacts names its producer
+        let required = validate(
+            &topology.select(&[RUSTDOC.into()], &[]),
+            tmp.path(),
+            Artifacts::Required,
+        );
+        let absent = required
+            .iter()
+            .find(|f| f.rule == "surface.artifact-absent")
+            .expect("an unbuilt reference is a finding when the artifact is required");
+        assert!(
+            absent.remedy.contains(RUSTDOC_PRODUCER),
+            "{}",
+            absent.remedy
+        );
     }
 }
