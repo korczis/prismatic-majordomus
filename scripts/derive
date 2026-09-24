@@ -58,7 +58,10 @@ step_done() { printf '==> derive: %s: %ss\n' "$STAGE" "$(( $(now) - STAGE_T0 ))"
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
   printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
-  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none.
+  # Not --locked: after `release bump` the manifest is the one authored change, the bump has
+  # kept the lock's own entry in step, and this build is what re-derives anything else cargo
+  # records from it. Stage A then projects share/version.txt and every generator stamp.
   mj_rust_space_check "$ROOT" "the build this derivation needs" || exit 12
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
