@@ -1814,6 +1814,23 @@
       "tool": "majordomus_session_machine"
     },
     {
+      "api_anchor": "/docs/api/shell/#op-shell-check",
+      "claims": [],
+      "cli": "majordomus shell check",
+      "id": "shell.check",
+      "kind": "query",
+      "module": "shell",
+      "module_route": "/registry/modules/shell/",
+      "resource": null,
+      "route": "/registry/capabilities/shell-check/",
+      "slug": "shell-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/shell.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/shell.rs",
+      "tests": [],
+      "title": "Refuse undeclared shell",
+      "tool": "majordomus_shell_check"
+    },
+    {
       "api_anchor": "/docs/api/trace/#op-trace-commit",
       "claims": [],
       "cli": null,
@@ -2401,9 +2418,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 114,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.8.0",
   "modules": [
@@ -3288,6 +3305,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/session_domain.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/session_domain.rs",
       "title": "The session domain"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "shell.check",
+          "route": "/registry/capabilities/shell-check/",
+          "slug": "shell-check"
+        }
+      ],
+      "claims": [],
+      "id": "shell",
+      "route": "/registry/modules/shell/",
+      "slug": "shell",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/shell.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/shell.rs",
+      "title": "Shell automation"
     },
     {
       "capabilities": [

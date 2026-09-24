@@ -159,6 +159,10 @@
       "description": "The typed session domain: the lifecycle state machine an episode moves through, declared once in the executable and projected here rather than redrawn per surface, and the identities this checkout records — the repository, the checkout, the episode and the provider's own session — each with the canonical value and each store's own spelling of it, because the stores spell six things as three words and nothing said so."
     },
     {
+      "name": "shell",
+      "description": "The repository's shell automation measured against the tracked migration inventory: new shell is refused unless an exemption declares why it has to be shell and when it stops being, and an exemption whose file is gone is refused too, so the list only shrinks as units move into typed and scripted capabilities (ADR 0069)."
+    },
+    {
       "name": "trace",
       "description": "Which branches and commits realised an issue, and which issue and milestone a commit served — derived from git and from the canonical project model on every call, stored nowhere. A branch names an issue when one of its path components is an issue id; a commit belongs to the issue whose branches hold it; a commit no such branch holds is reported as unattributed rather than left out, because work with no execution contract is what a traceability report exists to make visible. Pull requests are a GitHub fact and this executable makes no network call: `scripts/traceability` reads them and joins them to this answer over the branch name."
     },
@@ -9958,6 +9962,87 @@
             "name": "session-machine"
           }
         }
+      }
+    },
+    "/api/v1/shell/check": {
+      "get": {
+        "operationId": "shell.check",
+        "summary": "Refuse undeclared shell",
+        "description": "Every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ — by interpreter line or by a .sh name, as git would commit it, links not followed — against .ai/repo/automation/inventory.jsonl: an undeclared unit, a record whose unit is gone, an exemption missing its reason or its removal condition, a disposition outside A-F, a duplicate and a record out of canonical order are each a finding that names the file and the remedy. Reads the tree and git's index only; no build and no network.",
+        "tags": [
+          "shell"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Refuse undeclared shell: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShellReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "shell.check",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::shell"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_shell_check"
+        },
+        "x-majordomus-cli": "shell check"
       }
     },
     "/api/v1/trace": {
@@ -30391,6 +30476,139 @@
           }
         ],
         "description": "How bad a diagnostic is. `Error` excludes the file it concerns from the index and puts\nthe index into the degraded state; `Warning` and `Info` do neither."
+      },
+      "ShellFinding": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The finding's code: `shell.undeclared`, `shell.stale`, `shell.missing_field`,\n`shell.invalid_disposition`, `shell.invalid_unit`, `shell.exemption_not_shell`,\n`shell.duplicate`, `shell.out_of_order` or `shell.malformed`."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file the finding is about: the shell unit, or the inventory itself."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint",
+            "minimum": 0,
+            "description": "The line of the inventory the finding is about, when it is about one."
+          },
+          "message": {
+            "type": "string",
+            "description": "What is wrong, in a sentence."
+          },
+          "remedy": {
+            "type": "string",
+            "description": "What to do about it."
+          }
+        },
+        "required": [
+          "code",
+          "path",
+          "message",
+          "remedy"
+        ],
+        "description": "One thing the check refuses, with what to do about it."
+      },
+      "ShellReport": {
+        "type": "object",
+        "properties": {
+          "measured": {
+            "type": "boolean",
+            "description": "Whether the tree could be measured at all. `false` is not a pass: the reason says\nwhat stopped the measurement, and a caller that gates on this report must refuse."
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the tree could not be measured, when it could not."
+          },
+          "inventory": {
+            "type": "string",
+            "description": "The inventory read, relative to the repository root."
+          },
+          "governed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The directories whose shell units must be declared."
+          },
+          "units": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShellUnit"
+            },
+            "description": "Every shell unit under the governed directories, in canonical order."
+          },
+          "records": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many records the inventory holds, shell or not."
+          },
+          "exemptions": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            },
+            "description": "How many exemptions the inventory declares, by disposition."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShellFinding"
+            },
+            "description": "Every finding, in canonical order. Empty is the passing answer."
+          },
+          "passes": {
+            "type": "boolean",
+            "description": "`true` when the tree was measured and nothing was found."
+          }
+        },
+        "required": [
+          "measured",
+          "inventory",
+          "governed",
+          "units",
+          "records",
+          "exemptions",
+          "findings",
+          "passes"
+        ],
+        "description": "The verdict of one check of the tree."
+      },
+      "ShellUnit": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The path, relative to the repository root."
+          },
+          "dialect": {
+            "type": "string",
+            "description": "The shell the unit is written for: the interpreter its first line names, or\n`sourced` for a `*.sh` file with no interpreter line."
+          },
+          "disposition": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The disposition its inventory record carries, when it has one."
+          }
+        },
+        "required": [
+          "path",
+          "dialect"
+        ],
+        "description": "One shell unit the tree carries."
       },
       "Sighting": {
         "type": "object",

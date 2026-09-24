@@ -42,6 +42,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
 | `server` | Server | behaviorally_verified | 1 | [`modules/server.md`](modules/server.md) |
 | `session_domain` | The session domain | behaviorally_verified | 2 | [`modules/session_domain.md`](modules/session_domain.md) |
+| `shell` | Shell automation | behaviorally_verified | 1 | [`modules/shell.md`](modules/shell.md) |
 | `trace` | Traceability | behaviorally_verified | 3 | [`modules/trace.md`](modules/trace.md) |
 | `web` | Web surfaces | behaviorally_verified | 1 | [`modules/web.md`](modules/web.md) |
 | `why` | Why | behaviorally_verified | 6 | [`modules/why.md`](modules/why.md) |
@@ -150,6 +151,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `server.status` | `server` | query | behaviorally_verified | `majordomus_server` | `majordomus://server` | `GET /api/v1/server` | `majordomus serve status` | — | required |
 | `session_domain.identity` | `session_domain` | query | behaviorally_verified | `majordomus_session_identity` | `majordomus://session/identity` | `GET /api/v1/session/identity` | — | process, 2 entries, 2s | required |
 | `session_domain.machine` | `session_domain` | query | behaviorally_verified | `majordomus_session_machine` | `majordomus://session/machine` | `GET /api/v1/session/machine` | — | process, 1 entries, 600s | required |
+| `shell.check` | `shell` | query | behaviorally_verified | `majordomus_shell_check` | — | `GET /api/v1/shell/check` | `majordomus shell check` | — | required |
 | `trace.commit` | `trace` | query | behaviorally_verified | `majordomus_trace_commit` | — | `GET /api/v1/trace/commit` | — | — | required |
 | `trace.issue` | `trace` | query | behaviorally_verified | `majordomus_trace_issue` | — | `GET /api/v1/trace/issue` | — | — | required |
 | `trace.report` | `trace` | query | behaviorally_verified | `majordomus_traceability` | `majordomus://traceability` | `GET /api/v1/trace` | — | — | required |
