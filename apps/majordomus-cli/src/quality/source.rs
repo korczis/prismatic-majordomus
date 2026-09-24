@@ -92,8 +92,14 @@ pub enum ItemKind {
     Field,
     /// A variant of a public enum.
     Variant,
-    /// An associated type or constant of a trait.
-    Associated,
+    /// An associated type of a trait: `type Output;`.
+    ///
+    /// Kept apart from [`ItemKind::AssociatedConstant`] because rustdoc keeps them apart:
+    /// one is anchored `associatedtype.` on its trait's page and the other
+    /// `associatedconstant.`, so a single kind could not say where either is documented.
+    AssociatedType,
+    /// An associated constant of a trait: `const LIMIT: usize;`, with a default or without.
+    AssociatedConstant,
 }
 
 impl ItemKind {
@@ -119,7 +125,8 @@ impl ItemKind {
             ItemKind::Macro => "macro",
             ItemKind::Field => "field",
             ItemKind::Variant => "variant",
-            ItemKind::Associated => "associated item",
+            ItemKind::AssociatedType => "associated type",
+            ItemKind::AssociatedConstant => "associated constant",
         }
     }
 
@@ -306,6 +313,15 @@ pub struct Item {
     /// receiver already holds. Recorded because an example of one shows nothing that the
     /// signature does not; see [`ItemKind::carries_behaviour`].
     pub trivial_accessor: bool,
+    /// A member of a trait that the trait supplies itself: a method with a default body, a
+    /// constant with a default value. `false` for everything that is not a trait's member.
+    ///
+    /// Recorded because rustdoc anchors the two kinds of trait method differently — a
+    /// required one as `tymethod.` and a provided one as `method.` — and the route of a
+    /// method is therefore a fact about its declaration, not something a reader of the
+    /// inventory could guess.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub provided: bool,
     /// The `#[deprecated]` note, when the item carries one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub deprecated: Option<String>,
@@ -409,10 +425,23 @@ impl Inventory {
     /// assert!(Inventory::of_crate(dir.path()).is_err(), "no crate root, no inventory");
     /// ```
     pub fn of_crate(crate_dir: &Path) -> Result<Self, Error> {
-        let root = crate_dir.join("src/lib.rs");
-        if !root.is_file() {
+        let mut inv = Inventory::of_target(crate_dir, "src/lib.rs", CRATE)?;
+        collect_test_references(crate_dir, &mut inv)?;
+        Ok(inv)
+    }
+
+    /// Walk one target of a crate from its own root file, as the crate named `krate`: what
+    /// [`Inventory::of_crate`] does for the library, offered for a binary target too.
+    ///
+    /// A binary is a crate of its own, with its own root and its own name, and rustdoc
+    /// documents it beside the library; a check of the documentation tree has to know what
+    /// is in it, and reading it by the same walk is what keeps that knowledge from being a
+    /// second parser. The tests and benches are not read: they name the library.
+    pub(crate) fn of_target(crate_dir: &Path, root: &str, krate: &str) -> Result<Self, Error> {
+        let file = crate_dir.join(root);
+        if !file.is_file() {
             return Err(Error::InvalidSource {
-                path: "src/lib.rs".into(),
+                path: root.into(),
                 reason: format!(
                     "not a file under {}; the quality inventory needs the crate directory, the one holding Cargo.toml",
                     crate_dir.display()
@@ -422,11 +451,11 @@ impl Inventory {
         let mut inv = Inventory::default();
         let mut walker = Walker {
             crate_dir: crate_dir.to_path_buf(),
+            krate: krate.to_string(),
             inv: &mut inv,
         };
-        walker.file(&root, CRATE, true)?;
+        walker.file(&file, krate, true)?;
         apply_reexports(&mut inv);
-        collect_test_references(crate_dir, &mut inv)?;
         Ok(inv)
     }
 
@@ -541,6 +570,9 @@ impl Inventory {
 
 struct Walker<'a> {
     crate_dir: PathBuf,
+    /// The crate every path this walk records starts with: the library's [`CRATE`], or a
+    /// binary's own name.
+    krate: String,
     inv: &'a mut Inventory,
 }
 
@@ -574,6 +606,7 @@ impl Walker<'_> {
             examples: examples_of(&doc),
             owner,
             trivial_accessor: false,
+            provided: false,
             deprecated: deprecation(&ast.attrs),
         });
         self.items(&ast.items, mod_path, exported, path, &rel)
@@ -624,6 +657,7 @@ impl Walker<'_> {
                                 examples: examples_of(&doc),
                                 owner: mod_path.to_string(),
                                 trivial_accessor: false,
+                                provided: false,
                                 deprecated: deprecation(&m.attrs),
                             });
                             self.items(inner, &child_path, child_exported, file, rel)?;
@@ -661,6 +695,7 @@ impl Walker<'_> {
                 doc,
                 owner: mod_path.to_string(),
                 trivial_accessor: false,
+                provided: false,
                 deprecated: deprecation(attrs),
             });
         };
@@ -691,6 +726,7 @@ impl Walker<'_> {
                         doc,
                         owner: owner.clone(),
                         trivial_accessor: false,
+                        provided: false,
                         deprecated: deprecation(&f.attrs),
                     });
                 }
@@ -720,6 +756,7 @@ impl Walker<'_> {
                         doc,
                         owner: owner.clone(),
                         trivial_accessor: false,
+                        provided: false,
                         deprecated: deprecation(&v.attrs),
                     });
                 }
@@ -744,24 +781,27 @@ impl Walker<'_> {
                 let owner = format!("{mod_path}::{}", t.ident);
                 let owner_pub = exported && is_pub(&t.vis);
                 for i in &t.items {
-                    let (name, kind, attrs, line) = match i {
+                    let (name, kind, attrs, line, provided) = match i {
                         syn::TraitItem::Fn(f) => (
                             f.sig.ident.to_string(),
                             receiver_kind(&f.sig),
                             &f.attrs,
                             line_of(f.sig.ident.span()),
+                            f.default.is_some(),
                         ),
                         syn::TraitItem::Const(c) => (
                             c.ident.to_string(),
-                            ItemKind::Associated,
+                            ItemKind::AssociatedConstant,
                             &c.attrs,
                             line_of(c.ident.span()),
+                            c.default.is_some(),
                         ),
                         syn::TraitItem::Type(ty) => (
                             ty.ident.to_string(),
-                            ItemKind::Associated,
+                            ItemKind::AssociatedType,
                             &ty.attrs,
                             line_of(ty.ident.span()),
+                            ty.default.is_some(),
                         ),
                         _ => continue,
                     };
@@ -779,6 +819,7 @@ impl Walker<'_> {
                         doc,
                         owner: owner.clone(),
                         trivial_accessor: false,
+                        provided,
                         deprecated: deprecation(attrs),
                     });
                 }
@@ -797,6 +838,7 @@ impl Walker<'_> {
                     doc,
                     owner: mod_path.to_string(),
                     trivial_accessor: false,
+                    provided: false,
                     deprecated: deprecation(&f.attrs),
                 });
             }
@@ -835,7 +877,7 @@ impl Walker<'_> {
                 }
                 let doc = doc_of(&m.attrs);
                 self.inv.items.push(Item {
-                    path: format!("{CRATE}::{id}"),
+                    path: format!("{}::{id}", self.krate),
                     name: id.to_string(),
                     kind: ItemKind::Macro,
                     exported: true,
@@ -844,8 +886,9 @@ impl Walker<'_> {
                     line: line_of(id.span()),
                     examples: examples_of(&doc),
                     doc,
-                    owner: CRATE.to_string(),
+                    owner: self.krate.clone(),
                     trivial_accessor: false,
+                    provided: false,
                     deprecated: deprecation(&m.attrs),
                 });
             }
@@ -876,6 +919,7 @@ impl Walker<'_> {
                         doc,
                         owner: owner.clone(),
                         trivial_accessor: is_trivial_accessor(&f.sig, &f.block),
+                        provided: false,
                         deprecated: deprecation(&f.attrs),
                     });
                 }
@@ -883,15 +927,13 @@ impl Walker<'_> {
             // only a `pub use` in an exported module carries anything out of the crate
             syn::Item::Use(u) if exported && is_pub(&u.vis) => {
                 let mut targets = Vec::new();
-                resolve_use(&u.tree, mod_path, String::new(), &mut targets);
-                for target in targets {
-                    // the name the re-export offers it under: this module, then the
-                    // item's own last segment
-                    if let Some(last) = target.rsplit("::").next() {
-                        self.inv
-                            .reexport_aliases
-                            .insert(format!("{mod_path}::{last}"), target.clone());
-                    }
+                resolve_use(&u.tree, &self.krate, mod_path, String::new(), &mut targets);
+                for (target, offered) in targets {
+                    // the name the re-export offers it under: this module, then the name
+                    // the `use` gives it — its own last segment, or the one `as` chose
+                    self.inv
+                        .reexport_aliases
+                        .insert(format!("{mod_path}::{offered}"), target.clone());
                     self.inv.reexported.insert(target);
                 }
             }
@@ -934,24 +976,32 @@ impl Walker<'_> {
     }
 }
 
-/// Resolve one `use` tree into the crate paths it re-exports.
+/// Resolve one `use` tree into the crate paths it re-exports, each with the name the `use`
+/// offers it under.
 ///
-/// `at` is the module the `use` is written in; `prefix` is what has been resolved so far.
-/// A leading `crate` or `self` anchors at the crate root or at `at`; `super` climbs one;
-/// anything else is taken relative to `at`, which is how `pub use docs::tree;` reads. A
-/// glob contributes the module itself, and [`apply_reexports`] takes everything under it.
-fn resolve_use(tree: &syn::UseTree, at: &str, prefix: String, out: &mut Vec<String>) {
+/// `krate` is the crate the walk is reading; `at` is the module the `use` is written in;
+/// `prefix` is what has been resolved so far. A leading `crate` or `self` anchors at the
+/// crate root or at `at`; `super` climbs one; anything else is taken relative to `at`, which
+/// is how `pub use docs::tree;` reads. A glob contributes the module itself, and
+/// [`apply_reexports`] takes everything under it.
+fn resolve_use(
+    tree: &syn::UseTree,
+    krate: &str,
+    at: &str,
+    prefix: String,
+    out: &mut Vec<(String, String)>,
+) {
     let base = |seg: &str| -> String {
         if !prefix.is_empty() {
             return format!("{prefix}::{seg}");
         }
         match seg {
-            "crate" => CRATE.to_string(),
+            "crate" => krate.to_string(),
             "self" => at.to_string(),
             "super" => at
                 .rsplit_once("::")
                 .map(|(o, _)| o.to_string())
-                .unwrap_or(CRATE.to_string()),
+                .unwrap_or(krate.to_string()),
             other => format!("{at}::{other}"),
         }
     };
@@ -959,20 +1009,25 @@ fn resolve_use(tree: &syn::UseTree, at: &str, prefix: String, out: &mut Vec<Stri
         syn::UseTree::Path(p) => {
             // `base` already handles `crate`, `self` and `super` at the head of a path
             let next = base(&p.ident.to_string());
-            resolve_use(&p.tree, at, next, out);
+            resolve_use(&p.tree, krate, at, next, out);
         }
-        syn::UseTree::Name(n) => out.push(base(&n.ident.to_string())),
-        // `pub use x as y` re-exports the item under a new name; the item itself is what
-        // becomes reachable, and that is what the inventory is about
-        syn::UseTree::Rename(r) => out.push(base(&r.ident.to_string())),
+        syn::UseTree::Name(n) => out.push((base(&n.ident.to_string()), n.ident.to_string())),
+        // `pub use x as y` re-exports the item under a new name: the item itself is what
+        // becomes reachable, and `y` is the name a consumer writes and rustdoc documents it
+        // under — `Matrix as ProjectionMatrix` is `ProjectionMatrix` to everybody outside
+        syn::UseTree::Rename(r) => {
+            out.push((base(&r.ident.to_string()), r.rename.to_string()))
+        }
         syn::UseTree::Glob(_) => {
-            if !prefix.is_empty() {
-                out.push(prefix)
+            if let Some(last) = prefix.rsplit("::").next().map(str::to_string) {
+                if !prefix.is_empty() {
+                    out.push((prefix, last))
+                }
             }
         }
         syn::UseTree::Group(g) => {
             for t in &g.items {
-                resolve_use(t, at, prefix.clone(), out);
+                resolve_use(t, krate, at, prefix.clone(), out);
             }
         }
     }
