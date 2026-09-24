@@ -54,6 +54,12 @@ gates:
     runs: scripts/ci/pipefail-check
     summary: a script that pipes under `set -e` may not report its pipeline's failure as its last command's success; a ratchet over the scripts that still can
 
+  - id: argv-limit-check
+    job: structure
+    always: true
+    runs: scripts/ci/argv-limit-check
+    summary: a whole file's JSON may not travel to jq on the command line — Linux refuses a single argument over 131072 bytes and macOS never will, so the shape is checked rather than the size
+
   - id: liveness-check
     job: structure
     always: true
@@ -185,8 +191,8 @@ gates:
   - id: claim-proof
     job: structure
     always: true
-    runs: scripts/ci/claim-proof-check
-    summary: a claim marked guaranteed names a test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and the set may not grow
+    runs: scripts/ci/claim-proof-check --strict
+    summary: every claim marked guaranteed names a runnable test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and with the debt at zero any exception fails
 
   - id: rust-quality
     job: structure
@@ -231,6 +237,16 @@ gates:
     runs: scripts/cockpit-assets --check
     summary: the committed Cockpit stylesheet matches the source it is compiled from
 
+  # A grep over six files, so it costs nothing and runs in every plan. ADR 0012 decides that
+  # no Cockpit page reads the index directly — a page that does is outside the executor, the
+  # cache, the counters and the validation every other caller passes through — and until
+  # this gate the sentence was documentation only: four reads had grown under it.
+  - id: cockpit-projection
+    job: structure
+    always: true
+    runs: scripts/ci/cockpit-projection-check
+    summary: no Cockpit page reads the index directly; every fact a page shows is what a capability answered through Context::execute (ADR 0012)
+
   # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
   # greps the tree for a design decision made outside share/design/tokens.yaml: a colour
   # literal, a raw palette utility, a bracketed size, a second declaration of a token, a
@@ -264,6 +280,17 @@ gates:
     job: structure
     runs: scripts/ci/mesh-check
     summary: the mesh stays one subsystem — UDP sockets only under src/mesh/, one MeshRegistry constructed only there, and the mesh-declaration kind, its schema and the rule that holds it move together (project.mesh-is-observation-not-authority)
+
+  # ADR 0032 keeps the network half of a workspace adapter out of the crate and asks for a
+  # gate, "or the boundary is a sentence rather than a constraint". It reads the manifest
+  # for the dependency list and the lock for what a feature flag pulled in behind it: the
+  # crate takes jsonschema with default-features = false precisely so that nothing resolves
+  # over the network, and turning those features on would add an HTTP client and a TLS stack
+  # without adding a line to the list. File reads only, so it runs with the structure checks.
+  - id: crate-boundary
+    job: structure
+    runs: scripts/ci/crate-boundary
+    summary: the Rust crate declares only dependencies that were argued for, and links no async runtime, HTTP client, TLS stack or CDP client (ADR 0032)
 
   # The one structural gate that reads the remote. It needs a token (issues:read) and says
   # so rather than passing when it has none: a projection gate that skips quietly is the
@@ -325,8 +352,10 @@ gates:
     runs: scripts/site-build --no-data && scripts/interaction-probe
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
+  # A job of its own for the same reason as interaction-probe: after the site job's build, check and
+  # probe, the audit no longer fit that job's bound and was killed mid-run.
   - id: ui-audit
-    job: site
+    job: ui
     requires: [site-build]
     runs: scripts/ui audit --report
     summary: every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
@@ -447,8 +476,8 @@ classes:
 
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
-    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, version-surface, release-check]
+    paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, crate-boundary, version-surface, release-check]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050, and the architecture document

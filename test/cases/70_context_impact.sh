@@ -7,6 +7,7 @@
 # Every scenario is one change in the working tree against HEAD (the default change set),
 # observed through `context affected`, then undone; the tree is committed clean between
 # scenarios so that one scenario's mutation cannot leak into the next.
+# claims: context-impact
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 "$MJ" update >/dev/null
@@ -100,6 +101,12 @@ expect_grep '(ai\.repo\.areas\b|areas/guide\.md)'
 expect_grep '(ai\.repo\.areas\.beta|areas/beta)'
 expect_grep '(ai\.repo\.areas\.alpha\.deep|areas/gamma/deep)'
 clean "the manifest change"
+
+# --- a policy change names the projections it leaves stale
+printf '\n# a comment is still a change\n' >> .ai/repo/policy.yaml
+expect_exit 0 "$MJ" context affected
+expect_grep '\.ai/repo/policy\.yaml .*a projection rendered from the previous policy is stale-projection'
+clean "the policy change"
 
 # --- a change to a tracked path is a review item, advisory, exit 0
 printf 'thing() { echo changed; }\n' > lib/thing.sh

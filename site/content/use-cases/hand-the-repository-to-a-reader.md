@@ -6,7 +6,7 @@ weight = 28
 id = "hand-the-repository-to-a-reader"
 source = ".ai/repo/use-cases/hand-the-repository-to-a-reader.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

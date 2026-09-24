@@ -7,6 +7,7 @@
 # obligation names and watches the evidence go stale rather than stay true. It also proves
 # the honest cases: a token nobody declared is refused, narrative is refused, and an
 # outcome that is not completed is never refused for owing something.
+# claims: obligation-establishment
 . "$ROOT/test/lib.sh"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj103.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 "$MJ" init >/dev/null; "$MJ" update >/dev/null

@@ -13,7 +13,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 
-import { family } from './ui-routes.mjs';
+import { collections, family, shape } from './ui-routes.mjs';
 
 /** The narrowest viewport every page must remain usable at (WCAG 2.2 reflow, 320 CSS px). */
 export const REFLOW_FLOOR = 320;
@@ -261,16 +261,23 @@ export function planSurfaces(surfaces, cssPath) {
   const pages = [];
   for (const surface of surfaces) {
     if (surface.kind === 'native-route') {
+      // the shapes the crawl itself filed, so the tiering and the sampling agree on where a
+      // renderer changes: a record page that takes view parameters is one family and not
+      // one per record. Without the crawled set there is nothing to derive that from, and
+      // the one-route reading is what is left.
+      const records = surface.derived?.routes
+        ? collections(surface.derived.routes, surface.derived.entry ?? surface.mount)
+        : null;
       for (const route of surface.pages ?? []) {
-        const shape = family(route);
+        const of = records ? shape(route, records) : family(route);
         pages.push({
           route,
           surface: surface.id,
           kind: 'native-route',
-          family: shape,
+          family: of,
           // a family is where a renderer changes, exactly as a directory is on a built
           // surface: one member of each takes the boundary sweep
-          section: `${surface.id}:${shape}`,
+          section: `${surface.id}:${of}`,
           found: 'the surface, crawled from its own anchors',
         });
       }

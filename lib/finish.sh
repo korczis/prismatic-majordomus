@@ -81,6 +81,14 @@ H
   done
   contract="{${contract%,}}"
   if [ "$unmet" -gt 0 ]; then
+    # A refusal is a record. Until it was one, a task refused four times before it passed
+    # left the same ledger as a task that passed first try, so the one claim this command
+    # exists to make falsifiable — "done" — left no trace of every time it was false. The
+    # doctrines that refused are named, because a count nobody can attribute is not evidence.
+    # `finish --check` returned above and writes nothing: a check is a question, not a claim.
+    local d refused_json=""
+    for d in $refused; do refused_json="$refused_json\"$d\","; done
+    mj_ledger_append task.refused "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":$unmet,\"refused\":[${refused_json%,}],\"contract\":$contract"
     if [ "$MJ_JSON" != 1 ]; then
       printf 'finish: refused, %s unmet\n' "$unmet"
       [ -n "$refused" ] && printf 'blocking doctrines:%s\n' "$(printf '%s' "$refused" | tr ' ' '\n' | sed '/^$/d' | sed 's/^/\n- /' | tr -d '\n' | sed 's/^/\n/')"

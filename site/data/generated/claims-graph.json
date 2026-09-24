@@ -377,7 +377,7 @@
     {
       "id": "claim:no-transcripts",
       "kind": "claim",
-      "label": "Handovers carry durable facts, never conversation transcripts",
+      "label": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
       "status": "guaranteed",
       "route": "/guarantees/no-transcripts/",
       "external": false,
@@ -389,6 +389,15 @@
       "label": "finish evaluates the finish contract line by line and refuses when any line is unmet",
       "status": "guaranteed",
       "route": "/guarantees/finish-contract/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:finish-refusal-is-recorded",
+      "kind": "claim",
+      "label": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+      "status": "guaranteed",
+      "route": "/guarantees/finish-refusal-is-recorded/",
       "external": false,
       "note": null
     },
@@ -1140,6 +1149,24 @@
       "note": "usecase impact maps paths through docs/RESPONSIBILITIES.yaml, the dispatch table, the rules' identities and the scenarios' fixtures; usecase scaffold writes drafts from the registry, the command fixture and the claims, and never a guarantee."
     },
     {
+      "id": "claim:live-scenario-is-read-only",
+      "kind": "claim",
+      "label": "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one; every other shape is refused by usecase validate with exit 10",
+      "status": "guaranteed",
+      "route": "/guarantees/live-scenario-is-read-only/",
+      "external": false,
+      "note": "The class is read from share/commands.yaml, the declaration the reference semantics already come from, so safety is a property of the declaration and not of the author's care (ADR 38). An obligation step is refused in a fixture scenario, because a disposable repository owes nothing, and a step that both runs a command and asserts an obligation is refused as neither."
+    },
+    {
+      "id": "claim:live-scenario-evidence-is-local",
+      "kind": "claim",
+      "label": "A live scenario is not selected by a bare usecase run, its evidence is written under the ignored local half, and it never raises a command to covered; an undischarged obligation is reported unmet, never failed",
+      "status": "guaranteed",
+      "route": "/guarantees/live-scenario-evidence-is-local/",
+      "external": false,
+      "note": "A live result describes one tree on one machine at one minute, so it is written to .ai/local/evidence/live/<id>.json rather than beside the committed fixture evidence, and coverage counts it as naming a command and never as covering it. The run separates the two verdicts, because a failing fixture scenario is a defect in the tool and an unmet obligation is work not done (ADR 38)."
+    },
+    {
       "id": "claim:site-deploy-one-path",
       "kind": "claim",
       "label": "The site is deployed by one script, scripts/site-deploy, from a terminal or from the publication workflow; it refuses a dirty tree, a commit master does not contain and a build that is not HEAD's, pushes site/public to gh-pages with the source commit named, and pushes nothing when the output is unchanged",
@@ -1304,7 +1331,7 @@
     {
       "id": "claim:cli-documentation-executable",
       "kind": "claim",
-      "label": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+      "label": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
       "status": "guaranteed",
       "route": "/guarantees/cli-documentation-executable/",
       "external": false,
@@ -1385,7 +1412,7 @@
     {
       "id": "claim:landing-page-is-a-projection",
       "kind": "claim",
-      "label": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
+      "label": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged",
       "status": "guaranteed",
       "route": "/guarantees/landing-page-is-a-projection/",
       "external": false,
@@ -2461,6 +2488,13 @@
       "external": false
     },
     {
+      "id": "source:share/events.yaml",
+      "kind": "source",
+      "label": "share/events.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:share/skeleton/policy.yaml",
       "kind": "source",
       "label": "share/skeleton/policy.yaml",
@@ -2496,18 +2530,32 @@
       "external": false
     },
     {
-      "id": "test:apps/majordomus-cli/src/models/mod.rs",
+      "id": "test:apps/majordomus-cli/tests/bench_units.rs",
       "kind": "test",
-      "label": "apps/majordomus-cli/src/models/mod.rs",
+      "label": "apps/majordomus-cli/tests/bench_units.rs",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/models/mod.rs"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/bench_units.rs"
     },
     {
-      "id": "test:apps/majordomus-cli/tests/cli_docs.rs",
+      "id": "test:apps/majordomus-cli/tests/cli_examples.rs",
       "kind": "test",
-      "label": "apps/majordomus-cli/tests/cli_docs.rs",
+      "label": "apps/majordomus-cli/tests/cli_examples.rs",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_docs.rs"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_examples.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/executor.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/executor.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/executor.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/http_serve.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/http_serve.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/http_serve.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/lease_lost.rs",
@@ -2515,6 +2563,13 @@
       "label": "apps/majordomus-cli/tests/lease_lost.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/lease_lost.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/mcp_shared.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/mcp_shared.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/mcp_shared.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/mesh.rs",
@@ -2536,6 +2591,13 @@
       "label": "apps/majordomus-cli/tests/projections.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/projections.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/registry.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/registry.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/registry.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/why.rs",
@@ -2627,13 +2689,6 @@
       "label": "test/cases/125_rule_proof.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/125_rule_proof.sh"
-    },
-    {
-      "id": "test:test/cases/12_site_build.sh",
-      "kind": "test",
-      "label": "test/cases/12_site_build.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
     },
     {
       "id": "test:test/cases/130_archive.sh",
@@ -2825,6 +2880,27 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh"
     },
     {
+      "id": "test:test/cases/359_live_scenarios.sh",
+      "kind": "test",
+      "label": "test/cases/359_live_scenarios.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/359_live_scenarios.sh"
+    },
+    {
+      "id": "test:test/cases/400_derivation_is_one_graph.sh",
+      "kind": "test",
+      "label": "test/cases/400_derivation_is_one_graph.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/400_derivation_is_one_graph.sh"
+    },
+    {
+      "id": "test:test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+      "kind": "test",
+      "label": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/401_the_rust_artifact_carries_its_provenance.sh"
+    },
+    {
       "id": "test:test/cases/40_project_model.sh",
       "kind": "test",
       "label": "test/cases/40_project_model.sh",
@@ -2865,13 +2941,6 @@
       "label": "test/cases/50_blocker_across_handover.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/50_blocker_across_handover.sh"
-    },
-    {
-      "id": "test:test/cases/51_derived_artifacts_committed.sh",
-      "kind": "test",
-      "label": "test/cases/51_derived_artifacts_committed.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/51_derived_artifacts_committed.sh"
     },
     {
       "id": "test:test/cases/52_generated_artifact_typing.sh",
@@ -3098,13 +3167,6 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_product_features.sh"
     },
     {
-      "id": "test:test/cases/98_why_catalogue.sh",
-      "kind": "test",
-      "label": "test/cases/98_why_catalogue.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/98_why_catalogue.sh"
-    },
-    {
       "id": "test:test/cases/99_adr.sh",
       "kind": "test",
       "label": "test/cases/99_adr.sh",
@@ -3321,6 +3383,11 @@
     {
       "source": "claim:finish-contract",
       "target": "source:docs/CLI.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "source:share/events.yaml",
       "kind": "specified_by"
     },
     {
@@ -3735,6 +3802,16 @@
     },
     {
       "source": "claim:use-case-impact",
+      "target": "source:docs/USE_CASES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:live-scenario-is-read-only",
+      "target": "source:docs/USE_CASES.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:live-scenario-evidence-is-local",
       "target": "source:docs/USE_CASES.md",
       "kind": "specified_by"
     },
@@ -4189,6 +4266,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "impl:lib/finish.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:typed-outcome",
       "target": "impl:lib/finish.sh",
       "kind": "implemented_by"
@@ -4555,6 +4637,16 @@
     },
     {
       "source": "claim:use-case-impact",
+      "target": "impl:lib/usecase.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:live-scenario-is-read-only",
+      "target": "impl:lib/usecase.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:live-scenario-evidence-is-local",
       "target": "impl:lib/usecase.sh",
       "kind": "implemented_by"
     },
@@ -5009,6 +5101,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "test:test/cases/06_finish.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:typed-outcome",
       "target": "test:test/cases/06_finish.sh",
       "kind": "proved_by"
@@ -5230,7 +5327,7 @@
     },
     {
       "source": "claim:capability-registry",
-      "target": "test:test/cases/76_capabilities_projections.sh",
+      "target": "test:apps/majordomus-cli/tests/registry.rs",
       "kind": "proved_by"
     },
     {
@@ -5260,7 +5357,7 @@
     },
     {
       "source": "claim:mcp-lease-resilience",
-      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "target": "test:apps/majordomus-cli/tests/mcp_shared.rs",
       "kind": "proved_by"
     },
     {
@@ -5280,7 +5377,7 @@
     },
     {
       "source": "claim:mcp-uri-resolution",
-      "target": "test:test/cases/72_rust_mcp.sh",
+      "target": "test:apps/majordomus-cli/tests/http_serve.rs",
       "kind": "proved_by"
     },
     {
@@ -5300,12 +5397,12 @@
     },
     {
       "source": "claim:capability-modules",
-      "target": "test:test/cases/91_canonical_architecture.sh",
+      "target": "test:apps/majordomus-cli/tests/registry.rs",
       "kind": "proved_by"
     },
     {
       "source": "claim:benchmark-coverage-derived",
-      "target": "test:test/cases/91_canonical_architecture.sh",
+      "target": "test:apps/majordomus-cli/tests/bench_units.rs",
       "kind": "proved_by"
     },
     {
@@ -5315,7 +5412,7 @@
     },
     {
       "source": "claim:execution-cache-equivalence",
-      "target": "test:test/cases/91_canonical_architecture.sh",
+      "target": "test:apps/majordomus-cli/tests/executor.rs",
       "kind": "proved_by"
     },
     {
@@ -5345,7 +5442,7 @@
     },
     {
       "source": "claim:rust-binary-artifact",
-      "target": "test:test/cases/94_ci_plan.sh",
+      "target": "test:test/cases/401_the_rust_artifact_carries_its_provenance.sh",
       "kind": "proved_by"
     },
     {
@@ -5379,6 +5476,16 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:live-scenario-is-read-only",
+      "target": "test:test/cases/359_live_scenarios.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:live-scenario-evidence-is-local",
+      "target": "test:test/cases/359_live_scenarios.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:site-deploy-one-path",
       "target": "test:test/cases/96_site_deploy.sh",
       "kind": "proved_by"
@@ -5395,7 +5502,7 @@
     },
     {
       "source": "claim:derivation-one-graph",
-      "target": "test:test/cases/51_derived_artifacts_committed.sh",
+      "target": "test:test/cases/400_derivation_is_one_graph.sh",
       "kind": "proved_by"
     },
     {
@@ -5425,7 +5532,7 @@
     },
     {
       "source": "claim:why-catalogue-discovered",
-      "target": "test:test/cases/98_why_catalogue.sh",
+      "target": "test:apps/majordomus-cli/tests/why.rs",
       "kind": "proved_by"
     },
     {
@@ -5470,7 +5577,7 @@
     },
     {
       "source": "claim:cli-documentation-executable",
-      "target": "test:apps/majordomus-cli/tests/cli_docs.rs",
+      "target": "test:apps/majordomus-cli/tests/cli_examples.rs",
       "kind": "proved_by"
     },
     {
@@ -5515,7 +5622,7 @@
     },
     {
       "source": "claim:landing-page-is-a-projection",
-      "target": "test:test/cases/12_site_build.sh",
+      "target": "test:test/cases/400_derivation_is_one_graph.sh",
       "kind": "proved_by"
     },
     {
@@ -5595,7 +5702,7 @@
     },
     {
       "source": "claim:models-no-secret-fields",
-      "target": "test:apps/majordomus-cli/src/models/mod.rs",
+      "target": "test:test/cases/131_models.sh",
       "kind": "proved_by"
     },
     {

@@ -245,6 +245,12 @@ pub struct LayerSummary {
     /// How many files the layer declared that did not become objects.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invalid: Option<usize>,
+    /// Which ones, and what decided it: the index's own error diagnostics, each naming the
+    /// file, the code and the constraint it failed. A count says something is wrong; only
+    /// this says what and where, and a reader that has the count and not the list has to go
+    /// looking through a log for the answer the index already produced.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub refused: Vec<crate::model::Diagnostic>,
     /// Whether the layer read cleanly.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub degraded: Option<bool>,
@@ -259,6 +265,7 @@ impl LayerSummary {
             objects: None,
             capabilities: None,
             invalid: None,
+            refused: Vec::new(),
             degraded: None,
         }
     }
