@@ -179,8 +179,9 @@ plan     the tag, the crate and the shell tool state one version; the model and 
          recorded release hold their invariants; the matrix is emitted
 build    one archive per supported target, on the runner the model names, verified where
          it was built (fail-fast: a release missing a platform is not a release)
-publish  digests, the GitHub release, the record written from what was uploaded, the
-         public metadata regenerated from that record, both committed to the default branch
+publish  digests, the GitHub release, the record written from what was uploaded and staged,
+         every projection derived from it and judged by scripts/derive-check, then both
+         proposed to the default branch as one pull request
 smoke    the published installer, from its published URL, installing the release that was
          just published, on every runner whose target it was built for
 ```
@@ -231,6 +232,7 @@ Stage by stage:
 | `publish`, after the release exists | yes — the release and its assets | yes; the rerun adopts those assets | none |
 | `publish`, after the metadata commit | yes — the record is on the default branch | yes; the commit step finds nothing to add | none |
 | `pages` | yes — the record is committed but not served | `gh workflow run pages.yml --ref master` | none |
+| `smoke`, while the record is a proposal | yes — the release, not its metadata | merge the record pull request the error names, then rerun `smoke` | none |
 | `smoke` | yes — everything is published | fix the cause, then rerun | none; the release stands or is withdrawn below |
 
 </div>
