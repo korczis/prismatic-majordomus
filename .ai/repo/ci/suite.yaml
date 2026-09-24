@@ -26,26 +26,61 @@ version: 1
 # weather between a verdict and a silent cut. 225 restores the same doctrine against the cost
 # actually measured (148.3 x 1.5), and the budgets below are what keep it from being eaten
 # again in silence.
+#
+# Re-measured, ten runs on 2026-09-24 (this pull request's own, master's green run
+# 36033138251 on f7e05f4, and eight other branches'):
+#
+#   101.9  113.4  113.5  131.3  136.5  144.7  145.9  148.6  149.6  156.6
+#
+# 156.6 is this pull request's run 36037232050, which finished inside 225 with a verdict: it
+# was not cut here, it failed on the case bound below. 225 holds 68 minutes over it, and the
+# case budget fires long before the wall gets there.
 bound_minutes: 225
+
+# ---------------------------------------------------------------- the bound of one case
+# The default of `MJ_TEST_CASE_TIMEOUT` in test/run.sh: what a case runs under when its
+# header declares no `majordomus-timeout:` of its own. The same failure one level down. It was
+# 2400, set when the site cases cost about half an hour; on 2026-09-24 the slowest case cost
+# 1657 to 2416 seconds across the ten runs above, and twice — this pull request's run
+# 36037232050 and 35989296689 — 95_executable_reference was killed at 2415-2416 s, the bound
+# plus its grace, with 95_skills finishing at 2399. Whether a case passed came down to
+# seconds of runner weather, and a killed case fails the suite for a cost, not a defect.
+#
+# 3600 restores the ~50% doctrine against the worst measured (2416 x 1.5), and it sits above
+# `slowest_case_seconds` below on purpose: the budget has to be able to refuse a case that
+# grew while the bound still has room, or the budget is a number nothing can reach. One
+# declaration, two readers — test/run.sh and this file must agree, and case 417 refuses it
+# when they do not, or when the budget is not below the bound.
+case_bound_seconds: 3600
 
 # ---------------------------------------------------------------- what a healthy run costs
 # Seconds of case time, summed over every case the runner executed, from MJ_TEST_REPORT.
 # Not wall clock: wall depends on MJ_TEST_JOBS and on the runner's cores, and a budget that
 # moved with either would fail on GitHub's weather rather than on a regression anybody can
-# fix. Case time is the quantity this repository controls.
+# fix. Case time is the quantity this repository controls — though not the only thing that
+# moves it: a slower runner slows every case, and the ten runs below span a factor of 1.5 on
+# one day's code. So the budget sits above the worst run measured, never above a typical one.
 #
 # Measured over two complete runs on 2026-09-20:
 #
 #   run 35483875283   27103 s over 223 cases   slowest 2295 s (95_executable_reference)
 #   run 35484107998   26748 s over 224 cases   slowest 2245 s (95_executable_reference)
 #
-# The budgets sit about a tenth above the worse of the two, so a suite that grows by more
-# than that fails here — loudly, with the case named — while the bound above still holds
-# roughly a third of its margin in reserve. Raising a number here is a decision that cites a
-# measurement, the way the bound above does.
+# and re-measured over ten on 2026-09-24, when the 30000 set from those two was already
+# within 2.2% of the worst — the suite had grown since:
+#
+#   run 36037232050   29337 s over 225 cases   slowest 2416 s (95_executable_reference, killed)
+#   run 35989296689   28056 s over 225 cases   slowest 2415 s (95_executable_reference, killed)
+#   run 36033138251   27477 s over 224 cases   slowest 2354 s (95_executable_reference)
+#   seven more        18951 to 27300 s         slowest 1657 to 2294 s
+#
+# The budgets sit about a tenth above the worst of these, so a suite that grows by more
+# than that fails here — loudly, with the case named — while the bounds above still hold
+# a third of their margin in reserve. Raising a number here is a decision that cites a
+# measurement, the way the bounds above do.
 budget:
   # every case, summed
-  cases_seconds: 30000
+  cases_seconds: 33000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed
   slowest_case_seconds: 2700

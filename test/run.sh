@@ -13,7 +13,7 @@
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
 #   MAJORDOMUS_BIN=<path>               the Rust cases drive this prebuilt executable instead
 #                                       of building the crate (see rust_bin in test/lib.sh)
-#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 2400). A
+#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 3600). A
 #                                       case that needs longer declares it itself with
 #                                       "# majordomus-timeout: <seconds>"; 0 disables the
 #                                       bound for a deliberate, supervised run
@@ -37,9 +37,11 @@ pass=0; fail=0; failed_names=""
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up.
 # The bound one case runs under: its own "# majordomus-timeout:" header when it declares
-# one, else MJ_TEST_CASE_TIMEOUT, else 2400 seconds. The site cases legitimately take about
-# half an hour, so the default is generous; the point of the bound is that a wedged case
-# ends, not that a slow one is rushed.
+# one, else MJ_TEST_CASE_TIMEOUT, else 3600 seconds. The slowest cases legitimately take
+# about forty minutes — 95_executable_reference cost up to 2416 s on CI on 2026-09-24 and was
+# killed at the 2400 this default used to be — so the default is generous; the point of the
+# bound is that a wedged case ends, not that a slow one is rushed. The number is declared in
+# .ai/repo/ci/suite.yaml as case_bound_seconds, and test/cases/417 holds the two together.
 # Only the header block is read -- the leading run of comments, up to the first line of
 # actual script. A case that builds another case in a heredoc has the header's own text in
 # its body, and scanning the whole file made such a case inherit the bound it was writing
@@ -52,7 +54,7 @@ case_timeout() {
                             v = $0; sub(/^# majordomus-timeout: */, "", v); sub(/[^0-9].*$/, "", v)
                             print v; exit } ; next }
                    { exit }' "$1" 2>/dev/null | head -n 1)"
-  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-2400}"; fi
+  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-3600}"; fi
 }
 
 # Runs one case in a fresh repository. The case's output streams through; the status is

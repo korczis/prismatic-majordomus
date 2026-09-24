@@ -19,7 +19,8 @@ MARK="mj123$$"
 NAP=$(( 4000 + ($$ % 900) ))
 
 # ---------------------------------------------------------------- a case that hangs ends
-# The case declares its own bound, so the assertion does not wait on the 2400s default.
+# The case declares its own bound, so the assertion does not wait on the runner's default
+# (test/run.sh; .ai/repo/ci/suite.yaml declares it as case_bound_seconds).
 cat > "$ROOT/test/cases/zz_${MARK}_hang.sh" <<INNER
 # majordomus-timeout: 3
 echo "hanging on purpose"
