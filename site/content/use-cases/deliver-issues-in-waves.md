@@ -6,7 +6,7 @@ weight = 32
 id = "deliver-issues-in-waves"
 source = ".ai/repo/use-cases/deliver-issues-in-waves.md"
 category = "workers"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

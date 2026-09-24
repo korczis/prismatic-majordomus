@@ -1,7 +1,7 @@
 +++
 title = "A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied"
 description = "A plan over the working tree is derived from a tree at a moment. In a repository worked by"
-weight = 187
+weight = 190
 [extra]
 claim_id = "commit-plan-is-refusable"
 status = "guaranteed"

@@ -164,7 +164,8 @@ asking the server dearer than not asking it.
 
 `context`'s peers section and the `.just/serve.just` recipes still read the lease
 themselves; they are the readers ADR 0003's amendment left in shell, and they move to the
-executable's answer with the next slice (`docs/ENTRY_AUDIT.md`, stage 09).
+executable's answer with the next slice (`docs/ENTRY_AUDIT.md`, stage 09). *That slice
+landed the same day; see the amendment below.*
 
 The mandate's worktree scenario is now reachable: two worktrees of one repository report
 the same `git.id`, distinct `checkout_id`s, and each other's servers and peer counts. A peer
@@ -174,3 +175,32 @@ the board journal ADR 0034 brings.
 `tests/server_status.rs` holds the two-worktree case and the stale-lease case;
 `tests/shared_units.rs` and `tests/mcp_shared.rs` hold the election as before, through the
 same typed reading.
+
+### Amendment, 2026-09-18: the two shell readers moved, and a gate holds the count at one
+
+The paragraph above deferred the last two shell readers of the lease to stage 09. They
+moved on the day this record was written, in `534e8fb7bc` — `feat(mcp): the shared
+server's lease has one reader, and a gate that keeps it` — so the deferral was never
+reached, and this record has been describing a tree that no longer exists since.
+
+What that slice did, and what holds it today:
+
+- `lib/context.sh` asks `serve status --repo <root> --format json` and reads the answer's
+  `lease.url`; `.just/serve.just`'s `open` recipe asks the same capability for the address
+  of this checkout's server. Neither opens the file; `scripts/cockpit-probe`, a third
+  reader the paragraph did not name, moved with them.
+- The rule is `project.the-lease-is-read-once`, the gate `scripts/ci/lease-reader-check`,
+  and the debt it ratchets is `.ai/repo/lease-reader-baseline.txt` — empty, so the count
+  is one reader, not one reader plus recorded exceptions.
+- `test/cases/110_lease_reader.sh` drives the gate against fixtures, planting a reader in
+  each language it could be written in and requiring the refusal to name it.
+
+Measured on 2026-09-18 at master `751eb3a581`: the gate reports `0 known reader(s)` besides
+`apps/majordomus-cli/src/lease.rs` and exits 0; planting a `jq` hand-parse in
+`lib/context.sh` makes it exit 10, naming the file, the names it matched and the correction;
+removing the probe restores exit 0. Independently of the gate, the only tracked files that
+name the lease's file name outside the reader, the tests and the documentation are `.envrc`,
+which asks direnv to watch it and never opens it, and the gate itself.
+
+Nothing about the decision changes. This amendment exists so that the record stops
+contradicting the tree it decided.

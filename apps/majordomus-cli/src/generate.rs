@@ -1292,7 +1292,27 @@ pub fn forbidden_in(content: &str) -> Option<(&'static str, &'static str)> {
 /// Refuses rather than writes when the rendered document carries anything from
 /// `FORBIDDEN`: this file is published to a website, and a leak that is generated is a
 /// leak that regenerates.
+///
+/// Refuses, for the same reason, while the layer names a rule, a decision or a capability
+/// that no object and no declaration answers to. The composed graph drops the edge such a
+/// reference would draw, so the defect is invisible in the artifact: the file looks whole
+/// and is quietly short of one edge. [`crate::graph::unresolved_relations`] is the verdict
+/// that already decides it — this is the consumer its own contract names.
 pub fn graph_document(ctx: &Context, version: &str) -> Result<String> {
+    let unresolved = crate::graph::unresolved_relations(&ctx.registry, &ctx.index.objects);
+    if !unresolved.is_empty() {
+        return Err(Error::UnresolvedRelation {
+            findings: unresolved
+                .iter()
+                .map(|u| {
+                    format!(
+                        "{}: {} names `{}`, which resolves to nothing; {}",
+                        u.declared_in, u.key, u.reference, u.correction
+                    )
+                })
+                .collect(),
+        });
+    }
     let graph = crate::graph::derive(crate::graph::COMPOSED, &ctx.registry, &ctx.index).ok_or(
         Error::Http {
             reason: format!("no graph with the id `{}`", crate::graph::COMPOSED),

@@ -34,7 +34,25 @@ pj_init
 pj_milestone m1 0
 pj_issue I0001 m1
 pj_issue I0002 m1 I0001
-# the issue's scope is `src/I0001`; put something under it that the index holds
+# the issue's scope is `src/I0001`; put something under it that the index holds. The index
+# holds only what a source class maps to a kind, and `init` declares none over code (it does
+# declare the directory contracts, which the cross-surface section below depends on), so this
+# repository declares where its implementation and its cases live — as case 74 does. Without
+# it `--path lib` selects nothing and a change to `lib/thing.sh` leaves the fingerprint alone.
+cat >> .ai/repo/knowledge/sources.yaml <<'SRC'
+
+  - id: library
+    kind: implementation
+    discovery: vcs
+    pathspec: ':(glob)lib/*.sh'
+    required: false
+
+  - id: case
+    kind: test
+    discovery: vcs
+    pathspec: ':(glob)test/cases/*.sh'
+    required: false
+SRC
 mkdir -p src/I0001 lib test/cases
 cat > lib/thing.sh <<'SH'
 #!/usr/bin/env bash

@@ -4,6 +4,8 @@
 //! expire, and the key is the canonical id, the normalised input and the registry
 //! fingerprint. Driven by the registry: whatever declares a process cache is tested.
 
+// claims: execution-cache-equivalence
+
 mod common;
 
 use std::sync::Arc;
@@ -179,6 +181,64 @@ fn errors_are_not_cached_and_uncached_capabilities_always_run() {
     // an unknown id is not found, through the executor like anything else
     let err = ctx.execute("nope.none", json!({})).unwrap_err();
     assert!(err.to_string().contains("not found"), "{err}");
+}
+
+/// A command changes state, so a descriptor that asks for a cache on one never reaches the
+/// executor: the registry refuses it by id, and the same descriptor as a query builds.
+#[test]
+fn a_command_that_asks_for_a_cache_is_refused_by_the_registry() {
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::{
+        Availability, BenchmarkPolicy, CanonicalSchema, Capability, CapabilityId,
+        CapabilityRegistry, Executable, ExecutionPolicy, Exposure, ModuleId, Provenance,
+        RegistryError, Stability, Visibility,
+    };
+    let _serial = serial();
+    let cached = |kind: CapabilityKind| {
+        let exposure = Exposure::default();
+        Executable {
+            capability: Capability {
+                availability: Availability::classify(kind, &exposure),
+                visibility: Visibility::classify(&exposure),
+                id: CapabilityId::parse("fixture.write").unwrap(),
+                module: ModuleId::unchecked(""),
+                kind,
+                title: "Fixture".into(),
+                description: "A fixture capability.".into(),
+                input: CanonicalSchema::empty(),
+                output: CanonicalSchema::empty(),
+                provenance: Provenance::Builtin {
+                    module: "fixture".into(),
+                },
+                exposure,
+                stability: Stability::Experimental,
+                tags: vec![],
+                benchmark: BenchmarkPolicy::Required,
+                cache: CachePolicy::Process {
+                    max_entries: 8,
+                    ttl_seconds: None,
+                },
+                execution: ExecutionPolicy::classify(kind),
+            },
+            handler: handler::<Value, Value, _>(|_, v| Ok(v)),
+            cases: |_| vec![],
+        }
+    };
+    let errs = CapabilityRegistry::builder()
+        .with_builtin(vec![cached(CapabilityKind::Command)])
+        .build()
+        .expect_err("a cached command is refused");
+    assert!(
+        matches!(&errs[..], [RegistryError::InvalidCachePolicy { id, provenance, reason }]
+            if id == "fixture.write" && provenance == "builtin fixture"
+                && reason.contains("never cached")),
+        "{errs:?}"
+    );
+    let registry = CapabilityRegistry::builder()
+        .with_builtin(vec![cached(CapabilityKind::Query)])
+        .build()
+        .expect("the same descriptor as a query builds");
+    assert!(registry.get("fixture.write").unwrap().cache.is_enabled());
 }
 
 #[test]

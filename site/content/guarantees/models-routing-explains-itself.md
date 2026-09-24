@@ -1,7 +1,7 @@
 +++
 title = "A routing decision names why the selected model was selected and, for every excluded model, the first check it failed — the same answer for the same question, with no hidden state"
 description = "Ask models.route which model satisfies a need — required capability words, a minimum"
-weight = 182
+weight = 185
 [extra]
 claim_id = "models-routing-explains-itself"
 status = "guaranteed"

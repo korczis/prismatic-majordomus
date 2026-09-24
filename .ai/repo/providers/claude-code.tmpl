@@ -46,7 +46,8 @@ one board, reassigned on reconnect and reused by every other board: never correl
 across time by it — the checkout a peer carries is the durable half of its identity. Read
 the board before you open a mandate and before you fan work out: two workers built the same
 subsystem in one afternoon because neither looked first. A scope announced there is a claim,
-not a lock; the task's own scope and `check --overlap` are what refuse a commit.
+not a lock, and `check --overlap` only reports; what refuses a change is the task's own scope,
+at `check`, at `finish` and in the pre-push hook.
 
 Push what you have, early. A branch whose commits reach no remote is invisible to every
 other worker, cannot be integrated by anyone but you, and is one disk away from being lost;

@@ -194,8 +194,11 @@ for j in plan $(jq -r '.gates[].job' full.json | LC_ALL=C sort -u); do
   printf '%s\n' "$ci_needs" | grep -qx "$j" || { echo "    the ci job does not need job $j; a red $j could not turn the required status red"; exit 1; }
 done
 awk '$0 == "  ci:" {f=1; next} /^  [a-z]+:$/ {f=0} f' "$W" | grep -q '^    if: always()$' || { echo "    the ci job does not always run; a skipped job would leave the required status pending"; exit 1; }
-# a pull request's runs are superseded by the next commit; master's never are
-grep -q "cancel-in-progress: \${{ github.event_name == 'pull_request' }}" "$W" || { echo "    validate.yml does not cancel superseded pull-request runs only"; exit 1; }
+# a started run reaches its verdict: a pull request's runs queue per pull request, and a
+# newer commit never cancels the run in progress (a two-hour suite under frequent pushes
+# never finished); master's runs are each their own group
+grep -q "group: validate-\${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}" "$W" || { echo "    validate.yml does not group runs per pull request"; exit 1; }
+grep -q "^  cancel-in-progress: false$" "$W" || { echo "    validate.yml cancels a run in progress; a superseding push would again leave no verdict"; exit 1; }
 # no bare push trigger: a branch with a pull request is validated once, as that pull request
 awk '/^on:/{f=1} /^permissions:/{f=0} f' "$W" | grep -A1 '^  push:' | grep -q 'branches: \[master\]' || { echo "    validate.yml runs on every push rather than on master and pull requests"; exit 1; }
 

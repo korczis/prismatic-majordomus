@@ -1,7 +1,7 @@
 +++
 title = "CLI specification"
 description = "every command: behaviour, reads, writes, exit-code contract, target output"
-weight = 11
+weight = 13
 [extra]
 source = "docs/CLI.md"
 +++
@@ -1494,6 +1494,19 @@ rather than at each producer. Every tracked pathspec carries the `:(glob)` prefi
 which `*` does not cross a directory separator. That is not tidiness: without it,
 `docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file
 becomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.
+
+One overlap is settled by the file rather than by the classes. A section's `README.md` matches
+both `.ai/**/README.md`, the `context` class, and its section's own pathspec
+(`.ai/repo/features/*.md`, `.ai/repo/rules/**/*.md`, and so on). It declares `kind: context`, so
+it is a `context` node, once: a second class discovering it adds nothing. The index applies the
+same precedence in `apps/majordomus-cli/src/discovery/mod.rs`, and
+`test/cases/330_a_contract_is_the_kind_it_declares.sh` proves it for `knowledge nodes`. Where no
+file declares a kind, two classes over one path remain a refusal (case 73's `twin`).
+
+`init` declares the `context` class first, so a new repository's contracts are objects of its
+index from the start. Without it `context resolve`, which reads the files, and every capability
+that reads the index disagreed about what applies to a path;
+`test/cases/130_context_compiler.sh` fails without the class.
 
 A class marked `required` that discovers nothing is reported as a `WARN`. The cost of a
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable

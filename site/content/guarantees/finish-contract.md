@@ -1,6 +1,6 @@
 +++
 title = "finish evaluates the finish contract line by line and refuses when any line is unmet"
-description = "\"Done\" is a checklist, written in the policy before work starts, evaluated by majordomus finish. For completed the default lines are: touched files within scope; the verification command ran and exited zero; the task record is at or behind HEAD, not diverged; no unresolved open question for this task; a handover or completion note with the required sections exists. Every line is printed as pass or fail. If any fails, nothing is written and the exit code is 10."
+description = "\"Done\" is a checklist, written in the policy before work starts, evaluated by majordomus finish. For completed the default lines are: touched files within scope; the verification command ran and exited zero; the task record is at or behind HEAD, not diverged; no unresolved open question for this task; a handover or completion note with the required sections exists. Every line is printed as pass or fail. If any fails, the task is not accepted, the refusal is recorded as a task.refused event, and the exit code is 10."
 weight = 56
 [extra]
 claim_id = "finish-contract"
@@ -11,7 +11,7 @@ source = "docs/claims/finish-contract.md"
 
 ## What it means
 
-"Done" is a checklist, written in the policy before work starts, evaluated by `majordomus finish`. For `completed` the default lines are: touched files within scope; the verification command ran and exited zero; the task record is at or behind `HEAD`, not diverged; no unresolved open question for this task; a handover or completion note with the required sections exists. Every line is printed as pass or fail. If any fails, nothing is written and the exit code is 10.
+"Done" is a checklist, written in the policy before work starts, evaluated by `majordomus finish`. For `completed` the default lines are: touched files within scope; the verification command ran and exited zero; the task record is at or behind `HEAD`, not diverged; no unresolved open question for this task; a handover or completion note with the required sections exists. Every line is printed as pass or fail. If any fails, the task is not accepted, the refusal is recorded as a `task.refused` event, and the exit code is 10.
 
 ## How it works
 
@@ -31,7 +31,7 @@ majordomus finish --outcome completed --verify-command "make test"
 
 ## What it does not cover
 
-It runs the verification you give it and does not decide which tests matter. It does not review code. A refused finish is recorded nowhere by design in v0.1; recording refusals is under review as a contract change.
+It runs the verification you give it and does not decide which tests matter. It does not review code. Each refusal is recorded as its own claim, `finish-refusal-is-recorded`.
 
 ## Why it exists
 

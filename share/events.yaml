@@ -51,7 +51,15 @@ events:
     emitted_by: finish
     requires: [task_id, outcome, contract]
     public: true
-    note: Written when finish accepts. A refusal is not recorded, which is why an accepted task and one refused four times before passing look the same in the ledger. See the finish-refusal-leaves-no-trace row in docs/HARDCODING_LEDGER.yaml.
+    note: Written when finish accepts. Every refusal before it is a task.refused line, so an accepted task and one refused four times before passing no longer look the same in the ledger.
+
+  - id: task.refused
+    title: Finish refused
+    summary: A task claimed an outcome and its finish contract refused it, naming the doctrines that did.
+    emitted_by: finish
+    requires: [task_id, outcome, unmet, refused]
+    public: true
+    note: "Written each time finish refuses: unmet is the number of contract lines that failed, refused lists the doctrines among them, and contract carries every doctrine's verdict as task.finished does. finish --check writes nothing, because a check asks and a finish claims. This is what makes the tool's own benefit countable: a refusal that was later satisfied is a false done that was caught, and until this event existed it left no trace (the finish-refusal-leaves-no-trace row of docs/HARDCODING_LEDGER.yaml)."
 
   - id: decision.recorded
     title: Decision recorded
