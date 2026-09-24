@@ -92,13 +92,15 @@ pub enum Command {
 
 #[derive(Debug, Args)]
 /// `majordomus shell`. The output shape is global, so it reads the way a person writes it.
+/// # Example
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, ShellCommand};
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ShellArgs};
 /// use clap::Parser;
 /// let cli = Cli::try_parse_from(["majordomus", "shell", "check", "--format", "json"]).unwrap();
 /// let Command::Shell(args) = cli.command else { panic!("not the shell command") };
-/// assert!(matches!(args.command, ShellCommand::Check { canonical: false }));
+/// let args: ShellArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
 /// ```
 pub struct ShellArgs {
     #[command(flatten)]
@@ -115,7 +117,18 @@ pub struct ShellArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus shell`.
+/// The subcommands of `majordomus shell`: `check` measures the repository's shell units
+/// against the automation inventory, and `--canonical` puts the inventory's records back
+/// in canonical order before it measures.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ShellCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "shell", "check", "--canonical"]).unwrap();
+/// let Command::Shell(args) = cli.command else { panic!("not the shell command") };
+/// assert!(matches!(args.command, ShellCommand::Check { canonical: true }));
+/// ```
 pub enum ShellCommand {
     /// Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured
     Check {
@@ -2366,10 +2379,10 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "shell-check-json",
             title: "Every shell unit against the automation inventory",
-            description: "The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy. `passes` is the verdict; a tree that could not be measured says `measured: false`, which is not a pass.",
+            description: "The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy, as `/units`, `/exemptions`, `/findings` and `/passes`. The exit code is the verdict: 0 when every unit is declared and every record names a unit the tree still has, 10 on a finding, and 12 when the tree could not be measured, which is not a pass. Here the repository holds the bash library `lib/a.sh` and no inventory, so the answer is 10 and the finding names the file and the remedy.",
             argv: &["shell", "check", "--format", "json"],
             setup: &[],
-            expect: Expect::Json(&["/measured", "/units", "/exemptions", "/findings", "/passes"]),
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

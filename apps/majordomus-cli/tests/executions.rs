@@ -712,12 +712,32 @@ fn nothing_here_runs_anything_the_registry_does_not_declare() {
         );
         assert!(status == 404 || status == 400, "{status} {text}");
     }
-    // and no route takes a command
+    // and no route takes a command. `shell.check` is the one route whose name says shell,
+    // and it runs nothing: it reads the tree against the automation inventory, so it is a
+    // GET with no parameter and no body. Any other shell-shaped route is refused.
     let (_, doc) = s.get("/openapi.json");
     let paths = doc["paths"].as_object().unwrap();
+    let inventory_check = "/api/v1/shell/check";
+    let ops = paths[inventory_check]
+        .as_object()
+        .expect("shell.check has a route");
+    assert_eq!(
+        ops.keys().collect::<Vec<_>>(),
+        ["get"],
+        "the inventory check is read-only"
+    );
+    assert!(
+        ops["get"].get("requestBody").is_none()
+            && ops["get"]["parameters"]
+                .as_array()
+                .is_none_or(|p| p.is_empty()),
+        "the inventory check takes nothing a command could hide in: {}",
+        ops["get"]
+    );
     assert!(
         !paths
             .keys()
+            .filter(|p| p.as_str() != inventory_check)
             .any(|p| p.contains("shell") || p.contains("exec/")),
         "{:?}",
         paths.keys().collect::<Vec<_>>()
