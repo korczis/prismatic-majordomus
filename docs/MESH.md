@@ -35,11 +35,11 @@ addresses).
 flowchart TD
   decl["mesh declaration<br>.ai/repo/mesh/&lt;id&gt;.yaml<br>(enabled, trust, cooperation)"]
   identity["NodeIdentity<br>Ed25519 key per user and machine<br>node id = digest(key)"]
-  subgraph discovery["discovery (ADR 0050) — candidates, never authority"]
+  subgraph discoveryLayer["discovery (ADR 0050) — candidates, never authority"]
     providers["providers: udp_multicast · udp_broadcast · rendezvous"]
     registry["MeshRegistry<br>one record per node × runtime"]
   end
-  subgraph cooperation["cooperation (ADR 0067)"]
+  subgraph cooperationLayer["cooperation (ADR 0067)"]
     link["link handshake (link.rs)<br>signature · freshness · nonce · protocol ·<br>self · repository · trust"]
     table["peer-link table (cooperation.rs)<br>connecting · connected · degraded ·<br>unreachable · expired"]
     journal["Journal (journal.rs)<br>signed events (stream, seq), Lamport,<br>beats, marks"]
@@ -47,9 +47,9 @@ flowchart TD
   end
   surfaces["mesh capability module<br>CLI · HTTP · OpenAPI · MCP · Cockpit"]
   board["peer board (peers.rs)"]
-  decl --> discovery
-  decl --> cooperation
-  identity --> discovery
+  decl --> discoveryLayer
+  decl --> cooperationLayer
+  identity --> discoveryLayer
   identity --> link
   providers --> registry
   registry -->|"trusted, same repository"| link

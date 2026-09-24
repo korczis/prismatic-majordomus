@@ -21,8 +21,8 @@ JUDGE="$ROOT/scripts/ci/mesh-lab-evidence"
 expect_file "$JUDGE"
 
 # The scenarios the lab actually reaches, read out of the script itself.
-grep -oE '[[:space:]]pass [a-z_]+ "' "$ROOT/test/mesh-lab/run" | awk '{print $2}' | sort -u > "$T/lab-scenarios"
-"$JUDGE" --scenarios | sort -u > "$T/required-scenarios"
+grep -oE '[[:space:]]pass [a-z_]+ "' "$ROOT/test/mesh-lab/run" | awk '{print $2}' | LC_ALL=C sort -u > "$T/lab-scenarios"
+"$JUDGE" --scenarios | LC_ALL=C sort -u > "$T/required-scenarios"
 [ -s "$T/lab-scenarios" ] || { echo "    no scenario names were read out of test/mesh-lab/run"; exit 1; }
 diff -u "$T/required-scenarios" "$T/lab-scenarios" || {
   echo "    scripts/ci/mesh-lab-evidence requires a different set than test/mesh-lab/run runs"
