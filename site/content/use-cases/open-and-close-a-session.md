@@ -6,7 +6,7 @@ weight = 42
 id = "open-and-close-a-session"
 source = ".ai/repo/use-cases/open-and-close-a-session.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

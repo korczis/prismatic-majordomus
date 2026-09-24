@@ -85,14 +85,29 @@ n_why="$(jq '[.moments[] | select(.status == "stable" and .featured)] | length' 
 [ "$n_why" -gt 0 ] || { echo "    the catalogue features no stable moment; the homepage would link none"; exit 1; }
 n_linked="$(grep -oE 'href="[^"]*/why/[a-z-]+/"' "$P/index.html" | LC_ALL=C sort -u | wc -l | tr -d ' ')"
 [ "$n_linked" = "$n_why" ] || { echo "    the homepage links $n_linked why moment(s); $n_why declare themselves featured"; exit 1; }
-# the doctrine section is the dataset's own rule list: every rule it names has its page
+# The rule list is asserted where it lives. It used to be on the homepage, and 75729f35c moved
+# it: the homepage now tells the product's story in a declared order and sends a reader to the
+# section with one link, while /doctrines/ carries the list itself. The assertion stayed on the
+# homepage, so it failed on the first rule it reached (adr-integrity) and read as "one link is
+# missing" when the truth was that the page names no rule at all — a stale expectation dressed
+# as a regression. What the site owes is unchanged and is asserted here: the homepage reaches
+# the section, and every rule the site publishes is linked from it and has a page.
+expect_grep 'href="[^"]*/doctrines/"' "$P/index.html"
+DOCPAGE="$P/doctrines/index.html"
+[ -f "$DOCPAGE" ] || { echo "    the site has no /doctrines/ page to carry the rule list"; exit 1; }
+n_ruled=0
 for r in $(jq -r '.rules[].id' "$ROOT/site/data/registry/product.json"); do
   slug="$(jq -r --arg i "$r" '.doctrines[] | select(.id == $i) | .slug' "$ROOT/site/data/generated/doctrines.json")"
   # a rule the site publishes is linked; one it does not is still named, never a dead link
   [ -n "$slug" ] || continue
-  expect_grep "/doctrines/$slug/" "$P/index.html"
-  [ -f "$P/doctrines/$slug/index.html" ] || { echo "    the homepage names rule $r, which has no page"; exit 1; }
+  n_ruled=$((n_ruled + 1))
+  expect_grep "/doctrines/$slug/" "$DOCPAGE"
+  [ -f "$P/doctrines/$slug/index.html" ] || { echo "    the section names rule $r, which has no page"; exit 1; }
 done
+[ "$n_ruled" -gt 0 ] || { echo "    the product model names no rule with a published doctrine; the list would be empty"; exit 1; }
+n_doc="$(grep -oE 'href="[^"]*/doctrines/[a-z0-9-]+/"' "$DOCPAGE" | LC_ALL=C sort -u | wc -l | tr -d ' ')"
+[ "$n_doc" -ge "$n_ruled" ] \
+  || { echo "    /doctrines/ links $n_doc doctrine(s); the product model names $n_ruled with a page — a section that lists one is not a list"; exit 1; }
 # claim pages carry provenance and a verify command
 expect_grep 'bash test/run.sh 03_update' "$P/guarantees/wiring-reconciliation/index.html"
 expect_grep 'supervises/doctor/' "$P/guarantees/wiring-reconciliation/index.html"

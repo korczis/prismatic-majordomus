@@ -87,9 +87,19 @@ rows="$(awk '
 
 claim_total=0
 debt=""
+# A guaranteed claim's test has to be something a runner can execute: a shell case or one of
+# the crate's integration tests. `models-no-secret-fields` named a source file, so the
+# evidence ledger could only ever call it unrunnable while this gate, reading the id back
+# from that file, reported it clean. Not ratcheted: no guaranteed claim carries that debt.
+unrunnable=""
 while IFS="$(printf '\t')" read -r id st tst; do
   [ "$st" = guaranteed ] || continue
   claim_total=$((claim_total + 1))
+  case "$tst" in
+    test/cases/*.sh|apps/majordomus-cli/tests/*.rs) ;;
+    *) unrunnable="$unrunnable  $id names $tst, which no runner executes (a shell case under test/cases/ or a crate test under apps/majordomus-cli/tests/)
+" ;;
+  esac
   if [ -n "$tst" ] && [ "$tst" != "-" ] && [ -f "$tst" ] && LC_ALL=C grep -qIF "$id" "$tst" 2>/dev/null; then continue; fi
   debt="$debt$id
 "
@@ -121,7 +131,13 @@ if [ "$MODE" = write ]; then
   exit 0
 fi
 
+if [ -n "$unrunnable" ]; then
+  printf '%s' "$unrunnable" >&2
+  echo "claim-proof-check: a guaranteed claim names a test no runner can execute" >&2
+  exit 10
+fi
 printf 'guaranteed claims:   %s of %s name a test that does not name the claim back\n' "$debt_n" "$claim_total"
+printf 'runnable tests:      every guaranteed claim names a shell case or a crate test\n'
 printf 'blocking rules:      not measured here — scripts/ci/rule-proof-check is the one reader of that population\n'
 
 # Zero is a failure unless zero is declared expected. A claims file that exists and carries

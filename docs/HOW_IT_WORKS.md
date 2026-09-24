@@ -32,28 +32,28 @@ differently, filter it, or join it with others. It may not hold a second opinion
 
 ```mermaid
 flowchart TD
-  A["Authored canonical state: rules, ADRs, policy, claims, milestones, issues, capability declarations"]
-  G["Git and the filesystem"]
-  R["Runtime: server leases, MCP sessions, mesh datagrams"]
-  A --> D["Discovery: kinds.yaml + sources.yaml + the capability composition"]
-  G --> D
-  D --> I["Object index: typed objects with canonical identity"]
-  D --> CR["Capability registry: one descriptor per operation"]
-  I --> CR
-  CR --> X["One executor: Context::execute"]
-  R --> O["Observed state: peers, standing, mesh nodes"]
-  X --> V["Derived state: rule proof, claim evidence, plan status, waves, environment"]
-  O --> V
-  V --> P{"Projections"}
-  P --> CLI["Command line: clap tree checked against the registry"]
-  P --> MCP["MCP: tools and resources"]
-  P --> HTTP["HTTP under /api/v1"]
-  HTTP --> OA["OpenAPI 3.1"]
-  OA --> SW["Swagger UI"]
-  P --> CK["Cockpit: server-rendered pages"]
-  P --> GEN["docs/generated and site data"]
-  GEN --> SITE["majordomus.dev"]
-  GEN --> CHK["generate --check, derive-check, projection tests"]
+  d1_A["Authored canonical state: rules, ADRs, policy, claims, milestones, issues, capability declarations"]
+  d1_G["Git and the filesystem"]
+  d1_R["Runtime: server leases, MCP sessions, mesh datagrams"]
+  d1_A --> d1_D["Discovery: kinds.yaml + sources.yaml + the capability composition"]
+  d1_G --> d1_D
+  d1_D --> d1_I["Object index: typed objects with canonical identity"]
+  d1_D --> d1_CR["Capability registry: one descriptor per operation"]
+  d1_I --> d1_CR
+  d1_CR --> d1_X["One executor: Context::execute"]
+  d1_R --> d1_O["Observed state: peers, standing, mesh nodes"]
+  d1_X --> d1_V["Derived state: rule proof, claim evidence, plan status, waves, environment"]
+  d1_O --> d1_V
+  d1_V --> d1_P{"Projections"}
+  d1_P --> d1_CLI["Command line: clap tree checked against the registry"]
+  d1_P --> d1_MCP["MCP: tools and resources"]
+  d1_P --> d1_HTTP["HTTP under /api/v1"]
+  d1_HTTP --> d1_OA["OpenAPI 3.1"]
+  d1_OA --> d1_SW["Swagger UI"]
+  d1_P --> d1_CK["Cockpit: server-rendered pages"]
+  d1_P --> d1_GEN["docs/generated and site data"]
+  d1_GEN --> d1_SITE["majordomus.dev"]
+  d1_GEN --> d1_CHK["generate --check, derive-check, projection tests"]
 ```
 
 Read it from the top. Humans and workers author a small set of canonical files. Discovery finds
@@ -181,12 +181,12 @@ and no separate Swagger definition.
 
 ```mermaid
 flowchart LR
-  T["Rust type with derive JsonSchema"] --> S["CanonicalSchema"]
-  S --> M["MCP inputSchema and outputSchema"]
-  S --> O["OpenAPI components"]
-  S --> F["Cockpit runner form"]
-  S --> J["docs/generated/registry.json"]
-  S --> Q["HTTP query coercion"]
+  d2_T["Rust type with derive JsonSchema"] --> d2_S["CanonicalSchema"]
+  d2_S --> d2_M["MCP inputSchema and outputSchema"]
+  d2_S --> d2_O["OpenAPI components"]
+  d2_S --> d2_F["Cockpit runner form"]
+  d2_S --> d2_J["docs/generated/registry.json"]
+  d2_S --> d2_Q["HTTP query coercion"]
 ```
 
 **Repository documents.** Each kind declared in `share/kinds.yaml` names a schema identity of
@@ -362,16 +362,16 @@ clap tree — so the reference cannot list a command the program does not have.
 
 ```mermaid
 flowchart TD
-  CAP["capability! declaration with CliExposure"] --> CL["closure check: path exists and runs"]
-  CLAP["clap tree in cli.rs"] --> CL
-  CLAP --> LOC["cli::LOCAL reasons for non-capability commands"]
-  LOC --> PAR["quality::parity both directions"]
-  CLAP --> CJ["docs/generated/cli.json"]
-  CJ --> REF["/docs/cli/ reference pages"]
-  CLAP --> CG["command graph"]
-  SC["share/commands.yaml"] --> CG
-  JU["just recipes"] --> CG
-  CG --> COMP["completion"]
+  d3_CAP["capability! declaration with CliExposure"] --> d3_CL["closure check: path exists and runs"]
+  d3_CLAP["clap tree in cli.rs"] --> d3_CL
+  d3_CLAP --> d3_LOC["cli::LOCAL reasons for non-capability commands"]
+  d3_LOC --> d3_PAR["quality::parity both directions"]
+  d3_CLAP --> d3_CJ["docs/generated/cli.json"]
+  d3_CJ --> d3_REF["/docs/cli/ reference pages"]
+  d3_CLAP --> d3_CG["command graph"]
+  d3_SC["share/commands.yaml"] --> d3_CG
+  d3_JU["just recipes"] --> d3_CG
+  d3_CG --> d3_COMP["completion"]
 ```
 
 ### The Cockpit
@@ -447,15 +447,15 @@ A renderer decides only how that looks. The rule proof shows the split:
 
 ```mermaid
 flowchart TD
-  RF["rule files"] --> IDX["object index"]
-  GY[".ai/repo/ci/gates.yaml"] --> ENG["rules engine: apps/majordomus-cli/src/rules"]
-  IDX --> ENG
-  LED[".ai/repo/evidence/ledger.json"] --> ENG
-  ENG --> RD["RuleDetail value"]
-  RD --> T1["text renderer: rules show"]
-  RD --> T2["JSON: rules show --json and GET /api/v1/rules/rule"]
-  RD --> T3["MCP tool majordomus_rule"]
-  RD --> T4["Cockpit runner"]
+  d4_RF["rule files"] --> d4_IDX["object index"]
+  d4_GY[".ai/repo/ci/gates.yaml"] --> d4_ENG["rules engine: apps/majordomus-cli/src/rules"]
+  d4_IDX --> d4_ENG
+  d4_LED[".ai/repo/evidence/ledger.json"] --> d4_ENG
+  d4_ENG --> d4_RD["RuleDetail value"]
+  d4_RD --> d4_T1["text renderer: rules show"]
+  d4_RD --> d4_T2["JSON: rules show --json and GET /api/v1/rules/rule"]
+  d4_RD --> d4_T3["MCP tool majordomus_rule"]
+  d4_RD --> d4_T4["Cockpit runner"]
 ```
 
 No renderer computes whether a rule is proven. The frontend is not an authority over
@@ -595,14 +595,14 @@ A half-declared block is refused by the loader.
 
 ```mermaid
 flowchart TD
-  AU["authored: a .vN.md file"] --> PA["parsed against rule.v1"]
-  PA --> IX["indexed: majordomus://rule/id@version"]
-  IX --> MO["mode derived from x-majordomus"]
-  MO --> GB["gates bound: tests matched to what gates.yaml runs"]
-  GB --> EX["executed: a gate or a command runs"]
-  EX --> RC["recorded: evidence ledger row with commit and digest"]
-  RC --> ST["state derived against the current tree"]
-  ST --> SF["surfaces: rules report, rules show, MCP, Cockpit, site"]
+  d5_AU["authored: a .vN.md file"] --> d5_PA["parsed against rule.v1"]
+  d5_PA --> d5_IX["indexed: majordomus://rule/id@version"]
+  d5_IX --> d5_MO["mode derived from x-majordomus"]
+  d5_MO --> d5_GB["gates bound: tests matched to what gates.yaml runs"]
+  d5_GB --> d5_EX["executed: a gate or a command runs"]
+  d5_EX --> d5_RC["recorded: evidence ledger row with commit and digest"]
+  d5_RC --> d5_ST["state derived against the current tree"]
+  d5_ST --> d5_SF["surfaces: rules report, rules show, MCP, Cockpit, site"]
 ```
 
 ## A rule existing is not a rule being enforced
@@ -654,12 +654,12 @@ Evidence is a recorded execution, not a test path that happens to exist (`docs/E
 
 ```mermaid
 flowchart LR
-  TR["test run"] --> REC["majordomus-cli evidence record"]
-  REC --> LED[".ai/repo/evidence/ledger.json: latest run per test"]
-  LED --> JOIN["join: claim or rule to its tests"]
-  TREE["git: diff from the recorded commit"] --> JOIN
-  JOIN --> STATE["proof state"]
-  STATE --> OUT["evidence report, rules show, Cockpit, site guarantees"]
+  d6_TR["test run"] --> d6_REC["majordomus-cli evidence record"]
+  d6_REC --> d6_LED[".ai/repo/evidence/ledger.json: latest run per test"]
+  d6_LED --> d6_JOIN["join: claim or rule to its tests"]
+  d6_TREE["git: diff from the recorded commit"] --> d6_JOIN
+  d6_JOIN --> d6_STATE["proof state"]
+  d6_STATE --> d6_OUT["evidence report, rules show, Cockpit, site guarantees"]
 ```
 
 The ledger is committed and holds the latest execution per test: runner, outcome, seconds,
@@ -830,13 +830,13 @@ of its transitions. **It has no status field.** Status is derived:
 
 ```mermaid
 flowchart TD
-  I["issues: depends_on, timestamps, evidence_required, evidence covers"] --> S["status per issue"]
-  S --> W["waves: Kahn layering of the dependency DAG"]
-  W --> C["scope_conflict warnings: same wave, shared paths"]
-  M["milestones: required issues, milestone dependencies"] --> MS["milestone status"]
-  S --> MS
-  MS --> N["active milestone and next issue"]
-  N --> P["docs/PLAN_STATUS.md, plan capabilities, Cockpit, site"]
+  d7_I["issues: depends_on, timestamps, evidence_required, evidence covers"] --> d7_S["status per issue"]
+  d7_S --> d7_W["waves: Kahn layering of the dependency DAG"]
+  d7_W --> d7_C["scope_conflict warnings: same wave, shared paths"]
+  d7_M["milestones: required issues, milestone dependencies"] --> d7_MS["milestone status"]
+  d7_S --> d7_MS
+  d7_MS --> d7_N["active milestone and next issue"]
+  d7_N --> d7_P["docs/PLAN_STATUS.md, plan capabilities, Cockpit, site"]
 ```
 
 An issue is done when it is not cancelled, has a completion time, and every evidence token it
@@ -887,13 +887,13 @@ hook. `scripts/collision-check` scans pushed branches for paths a new piece of w
 
 ```mermaid
 flowchart LR
-  A["worker A: task scope, announced claim"] --> B["board in A's server"]
-  C["worker B in another worktree"] --> D["board in B's server"]
-  B --> G["peers.list gathers every checkout's board"]
-  D --> G
-  G --> O["overlap: scopes equal or nested"]
-  O --> V["CLI context, MCP peers, Cockpit"]
-  T["task scope in current.yaml"] --> SC["scope doctrine at check, finish, pre-push"]
+  d8_A["worker A: task scope, announced claim"] --> d8_B["board in A's server"]
+  d8_C["worker B in another worktree"] --> d8_D["board in B's server"]
+  d8_B --> d8_G["peers.list gathers every checkout's board"]
+  d8_D --> d8_G
+  d8_G --> d8_O["overlap: scopes equal or nested"]
+  d8_O --> d8_V["CLI context, MCP peers, Cockpit"]
+  d8_T["task scope in current.yaml"] --> d8_SC["scope doctrine at check, finish, pre-push"]
 ```
 
 ### The mesh: who exists
@@ -942,11 +942,11 @@ proves a port answers and nothing more.
 
 ```mermaid
 flowchart TD
-  M["merge to master"] --> B["scripts/pages build: refuse stale source hash, render without regenerating"]
-  B --> K["scripts/pages check: site-check and the never-published check"]
-  K --> P["scripts/site-deploy pushes site/public to gh-pages"]
-  P --> V["scripts/pages verify --commit SHA: poll majordomus.dev/build.json"]
-  V --> G["pages-live gate: served commit is on master, nothing owed past the window"]
+  d9_M["merge to master"] --> d9_B["scripts/pages build: refuse stale source hash, render without regenerating"]
+  d9_B --> d9_K["scripts/pages check: site-check and the never-published check"]
+  d9_K --> d9_P["scripts/site-deploy pushes site/public to gh-pages"]
+  d9_P --> d9_V["scripts/pages verify --commit SHA: poll majordomus.dev/build.json"]
+  d9_V --> d9_G["pages-live gate: served commit is on master, nothing owed past the window"]
 ```
 
 The publication path (`.github/workflows/pages.yml`, modelled in `.ai/repo/ci/pages.yaml`) does
@@ -1120,15 +1120,15 @@ Each strong statement in this document, with how to check it.
 
 ```mermaid
 flowchart LR
-  W["more workers"] --> D["more descriptions of the repository"]
-  S["more interfaces"] --> D
-  MD["more metadata"] --> D
-  D --> X["more drift, faster"]
-  ONE["one model"] --> P1["command line"]
-  ONE --> P2["MCP"]
-  ONE --> P3["HTTP and OpenAPI"]
-  ONE --> P4["Cockpit"]
-  ONE --> P5["docs and site"]
+  d10_W["more workers"] --> d10_D["more descriptions of the repository"]
+  d10_S["more interfaces"] --> d10_D
+  d10_MD["more metadata"] --> d10_D
+  d10_D --> d10_X["more drift, faster"]
+  d10_ONE["one model"] --> d10_P1["command line"]
+  d10_ONE --> d10_P2["MCP"]
+  d10_ONE --> d10_P3["HTTP and OpenAPI"]
+  d10_ONE --> d10_P4["Cockpit"]
+  d10_ONE --> d10_P5["docs and site"]
 ```
 
 Majordomus is not a collection of commands, dashboards and agent integrations. It is a

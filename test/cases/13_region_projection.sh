@@ -1,5 +1,6 @@
 # majordomus-covers: update
 # majordomus-negative: update doctor watch
+# claims: region-projection
 . "$ROOT/test/lib.sh"
 # A region projection owns only the text between its markers. Everything else in the
 # host document is the repository's, and must survive update, doctor and watch untouched.

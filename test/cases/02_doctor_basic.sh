@@ -1,5 +1,6 @@
 # majordomus-covers: doctor
 # majordomus-negative: doctor
+# claims: profile-validate, reproduce-command, retention-caps
 . "$ROOT/test/lib.sh"
 # not installed
 expect_exit 12 "$MJ" doctor
@@ -46,3 +47,39 @@ expect_grep "policy declares no context.builder_budget_lines"
 expect_no_grep 'integer expected'
 expect_no_grep 'over budget *$'
 reset_policy
+
+# A profile carrying a key the schema does not know is named, key and file; a policy whose
+# default profile has no file fails rather than falling back to another profile.
+printf 'bogus_key: 1\n' >> .ai/repo/profiles/routine.yaml
+expect_exit 10 "$MJ" doctor
+expect_grep 'FAIL profiles +routine — unknown keys: bogus_key'
+reset_policy
+rm .ai/repo/profiles/implementation.yaml
+expect_exit 10 "$MJ" doctor
+expect_grep "FAIL profiles +default — profiles.default='implementation' has no file"
+reset_policy
+
+# Every failing finding carries the command that reproduces it: in JSON no FAIL has an
+# empty reproduce field, and in text every FAIL line ends with one.
+expect_exit 10 "$MJ" --json doctor
+expect_grep '"level":"FAIL"'
+expect_no_grep '"level":"(FAIL|DRIFT)".*"reproduce":""\}'
+expect_exit 10 "$MJ" doctor
+expect_grep '^FAIL '
+expect_no_grep '^(FAIL|DRIFT) .*[^]]$'
+
+# The ledger and the handover store have caps doctor checks: a cap below the count fails,
+# naming the count and the cap.
+sed -i.bak -e 's/retention_max_lines: 5000/retention_max_lines: 0/' \
+  -e 's/retention_max_files: 200/retention_max_files: 0/' .ai/repo/policy.yaml
+rm -f .ai/repo/policy.yaml.bak
+mkdir -p .ai/local/state/handovers
+printf '# Objective\nx\n' > .ai/local/state/handovers/planted.md
+expect_exit 10 "$MJ" doctor
+expect_grep 'FAIL retention +ledger — [1-9][0-9]* lines over cap 0'
+expect_grep 'FAIL retention +handovers — 1 files over cap 0'
+rm -f .ai/local/state/handovers/planted.md
+reset_policy
+expect_exit 10 "$MJ" doctor
+expect_grep 'OK +retention +ledger — [0-9]+ lines, cap 5000'
+expect_grep 'OK +retention +handovers — 0 files, cap 200'

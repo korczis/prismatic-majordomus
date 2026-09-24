@@ -50,8 +50,13 @@ echo "    a README that declares kind: context is a context node, not an instanc
 # This runs before the second claimant is planted, and the order is the point. With a class
 # whose kind is literally `context` in the list, a file stripped of its declaration would
 # still be a context node — correctly, decided by the class — and the mutation would prove
-# nothing. Here the only classes claiming this path are the directory's own, so what the
+# nothing. `init` declares exactly that class (`.ai/**/README.md`), so it is taken out in the
+# same commit: the only classes claiming this path are then the directory's own, so what the
 # node becomes is what the class says, which is what "the declaration decides" has to mean.
+S=".ai/repo/knowledge/sources.yaml"
+pre="$(git rev-parse HEAD)"
+awk '/^  - id: context$/ { skip = 1; next } skip && /^  - id: / { skip = 0 } !skip' "$S" > "$S.tmp" && mv "$S.tmp" "$S"
+grep -q '^    kind: context$' "$S" && { echo "    the fixture still declares a context class; the mutation would prove nothing"; exit 1; }
 sed '/^kind: context$/d' "$C" > "$C.tmp" && mv "$C.tmp" "$C"
 git add -A && git -c user.email=t@t -c user.name=t commit -qm "the contract stops declaring itself" >/dev/null
 gone="$(nodes)"
@@ -63,9 +68,13 @@ echo "    removing the declaration returns the file to its class's kind"
 # only thing that noticed. The commit is allowed to be empty-handed for the same reason a
 # restore is allowed to be a no-op — under `bash -eu` a `git commit` with nothing staged
 # exits 1 and takes the whole case with it, silently, which is how this block failed first.
-git show HEAD~1:"$C" > "$C"
+git show "$pre":"$C" > "$C"
+git show "$pre":"$S" > "$S"
 git add -A && git -c user.email=t@t -c user.name=t commit -qm "the contract declares itself again" >/dev/null 2>&1 || true
 grep -q '^kind: context$' "$C" || { echo "    the fixture could not be restored"; exit 1; }
+# compared with the commit it was taken from rather than grepped for the class, so the case
+# reads the same on a tree whose skeleton declares no context class at all
+git show "$pre":"$S" | cmp -s - "$S" || { echo "    the fixture's source classes could not be restored"; exit 1; }
 
 # --- 3. and it decides it once, however many classes discover the file
 # The rules class already claims `.ai/repo/rules/**/*.md`. Adding a context class over

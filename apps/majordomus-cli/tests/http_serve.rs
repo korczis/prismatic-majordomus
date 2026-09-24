@@ -2,6 +2,8 @@
 //! requests, the OpenAPI document, the Swagger shell, capability operations, errors, and
 //! the same answer from HTTP and MCP for the same capability.
 
+// claims: mcp-uri-resolution
+
 mod common;
 
 use std::collections::BTreeSet;
@@ -285,6 +287,113 @@ fn mcp_and_http_answer_the_same_capability_with_the_same_result() {
         json!({ "id": "objects.search" }),
     );
     assert_eq!(via_http, via_mcp);
+}
+
+/// One MCP session over stdio: every request in order, then end of input. The responses
+/// are returned keyed by their id.
+fn mcp_session(
+    cwd: &std::path::Path,
+    requests: &[Value],
+) -> std::collections::BTreeMap<u64, Value> {
+    let mut child = Command::new(BIN)
+        .args(["mcp", "--standalone"])
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    {
+        let mut stdin = child.stdin.take().unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 0, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "t", "version": "0" } } })).unwrap();
+        for r in requests {
+            writeln!(stdin, "{r}").unwrap();
+        }
+    }
+    let out = child.wait_with_output().unwrap();
+    String::from_utf8(out.stdout)
+        .unwrap()
+        .lines()
+        .map(|l| serde_json::from_str::<Value>(l).expect("a JSON frame"))
+        .map(|v| (v["id"].as_u64().expect("a numbered response"), v))
+        .collect()
+}
+
+/// The claim `mcp-uri-resolution`, over the real executables: for a file of the layer, for
+/// `majordomus://repository` and for a URI nothing projects, the MCP resource read, the
+/// `majordomus_get` tool and `GET /api/v1/object` give the same answer — the same document
+/// from the tool and the route, the same text and media type from the read, and "not found"
+/// from all three for the unknown URI.
+#[test]
+fn a_uri_resolves_alike_through_the_resource_read_the_get_tool_and_the_object_route() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let (_, report) = s.get("/api/v1/repository");
+    let uris = [
+        "majordomus://rule/project.alpha@1",
+        "majordomus://repository",
+        "majordomus://rule/none@1",
+    ];
+    let mut requests = Vec::new();
+    for (i, uri) in uris.iter().enumerate() {
+        let base = 10 * (i as u64 + 1);
+        requests.push(json!({ "jsonrpc": "2.0", "id": base + 1, "method": "resources/read", "params": { "uri": uri } }));
+        requests.push(json!({ "jsonrpc": "2.0", "id": base + 2, "method": "tools/call", "params": { "name": "majordomus_get", "arguments": { "uri": uri } } }));
+    }
+    let frames = mcp_session(&f.root(), &requests);
+
+    for (i, uri) in uris.iter().enumerate() {
+        let base = 10 * (i as u64 + 1);
+        let read = &frames[&(base + 1)];
+        let got = &frames[&(base + 2)]["result"];
+        let (status, routed) = s.get(&format!("/api/v1/object?uri={uri}"));
+        if *uri == "majordomus://rule/none@1" {
+            assert_eq!(
+                (status, routed["error"]["code"].as_str()),
+                (404, Some("not_found")),
+                "the object route: {routed}"
+            );
+            assert_eq!(read["error"]["code"], -32002, "resources/read: {read}");
+            assert_eq!(got["isError"], true, "majordomus_get: {got}");
+            assert!(
+                got["content"][0]["text"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .contains(uri),
+                "majordomus_get names the URI it could not find: {got}"
+            );
+            continue;
+        }
+        assert_eq!(status, 200, "{uri}: {routed}");
+        assert_eq!(got["isError"], false, "{uri}: {got}");
+        assert_eq!(
+            got["structuredContent"], routed,
+            "{uri}: majordomus_get and the object route give different documents"
+        );
+        let contents = &read["result"]["contents"][0];
+        assert_eq!(contents["uri"], *uri);
+        assert_eq!(
+            contents["text"], routed["content"],
+            "{uri}: resources/read returns other text than the object route"
+        );
+        assert_eq!(
+            contents["mimeType"], routed["media_type"],
+            "{uri}: resources/read and the object route disagree on the media type"
+        );
+        if *uri == "majordomus://repository" {
+            assert_eq!(routed["source"], "builtin");
+            assert_eq!(routed["id"], "repository.info");
+            assert_eq!(routed["media_type"], "application/json");
+            assert_eq!(routed["answer"], report, "the answer is repository.info's");
+            let text: Value = serde_json::from_str(contents["text"].as_str().unwrap())
+                .expect("resources/read returns the report as a JSON document");
+            assert_eq!(text, report);
+        } else {
+            assert_eq!(routed["source"], "declarative");
+            assert_eq!(contents["text"], rule("project.alpha", 1, "Alpha"));
+        }
+    }
 }
 
 #[test]

@@ -1,5 +1,5 @@
 +++
-title = "Handovers carry durable facts, never conversation transcripts"
+title = "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected"
 description = "A handover is a short structured record of what is true — objective, current state, next action, optionally decisions, verification, risks — not a dump of what was said. Majordomus never stores, summarises or reads a conversation. One of the ten principles in the vendored rule set says so: handovers transfer state, not transcripts, and every worker reads it through the layer its bootstrap points at."
 weight = 55
 [extra]
