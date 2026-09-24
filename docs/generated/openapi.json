@@ -3,9 +3,9 @@
   "jsonSchemaDialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "info": {
     "title": "Majordomus",
-    "version": "0.7.0",
-    "summary": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.",
-    "description": "The read-only projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, and the capabilities that read them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, read-only.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1, asks for no credentials, and never writes to the repository: whoever can reach the socket can read the layer, and nobody can change it through it. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
+    "version": "0.8.0",
+    "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
+    "description": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document.",
     "license": {
       "name": "MIT",
       "identifier": "MIT"
@@ -124,7 +124,7 @@
     },
     {
       "name": "plan",
-      "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository."
+      "description": "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository."
     },
     {
       "name": "product",
@@ -287,6 +287,7 @@
           "max_entries": 8,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_artifacts",
           "resource": {
@@ -395,6 +396,7 @@
           "policy": "process",
           "max_entries": 16
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_capabilities"
         },
@@ -504,6 +506,7 @@
           "policy": "process",
           "max_entries": 8
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_projections"
         },
@@ -599,6 +602,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_capability"
         },
@@ -694,6 +698,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_changelog",
           "resource": {
@@ -792,6 +797,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_command"
         }
@@ -909,6 +915,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_commands",
           "resource": {
@@ -992,6 +999,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_command_graph"
         }
@@ -1087,6 +1095,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_commit_history"
         },
@@ -1167,6 +1176,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_commit_plan",
           "resource": {
@@ -1251,6 +1261,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_commit_scopes",
           "resource": {
@@ -1368,6 +1379,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_commit_validate"
         },
@@ -1450,6 +1462,7 @@
           "max_entries": 2,
           "ttl_seconds": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_continuity",
           "resource": {
@@ -1548,6 +1561,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_deployment"
         }
@@ -1627,6 +1641,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_deployments",
           "resource": {
@@ -1712,6 +1727,7 @@
           "max_entries": 2,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_deploy_check"
         }
@@ -1791,6 +1807,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_design",
           "resource": {
@@ -1874,6 +1891,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_design_contrast"
         }
@@ -1971,6 +1989,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_design_explain"
         }
@@ -2072,6 +2091,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_design_tokens"
         }
@@ -2260,6 +2280,7 @@
           "policy": "process",
           "max_entries": 16
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_devcontext"
         },
@@ -2451,6 +2472,7 @@
           "policy": "process",
           "max_entries": 8
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_devcontext_explain"
         },
@@ -2531,6 +2553,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_devcontext_policy",
           "resource": {
@@ -2650,6 +2673,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_devtask"
         },
@@ -2745,6 +2769,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_devtask_milestone"
         },
@@ -2877,6 +2902,7 @@
           "max_entries": 8,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_directories",
           "resource": {
@@ -2960,6 +2986,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_distribution"
         },
@@ -3069,6 +3096,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_artifact"
         },
@@ -3149,6 +3177,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_build"
         },
@@ -3229,6 +3258,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_releases"
         },
@@ -3309,6 +3339,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_install_status"
         },
@@ -3405,6 +3436,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_environment",
           "resource": {
@@ -3503,6 +3535,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_environment_explain"
         }
@@ -3622,6 +3655,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_evidence",
           "resource": {
@@ -3721,6 +3755,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_evidence_claim"
         },
@@ -3816,6 +3851,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_evidence_test"
         },
@@ -3938,6 +3974,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_executions",
           "resource": {
@@ -4043,6 +4080,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "process_state",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution_cancel"
         },
@@ -4169,6 +4207,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_demonstrate_execution"
         }
@@ -4281,6 +4320,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution_events"
         },
@@ -4372,6 +4412,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution"
         },
@@ -4452,6 +4493,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution_protocol",
           "resource": {
@@ -4567,6 +4609,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "process_state",
         "x-majordomus-mcp": {
           "tool": "majordomus_execution_start"
         },
@@ -4649,6 +4692,7 @@
           "max_entries": 4,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_gates",
           "resource": {
@@ -4785,6 +4829,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_completion",
           "resource": {
@@ -4905,6 +4950,7 @@
           "policy": "process",
           "max_entries": 16
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_graph"
         }
@@ -4984,6 +5030,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_graphs",
           "resource": {
@@ -5069,6 +5116,7 @@
           "max_entries": 4,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_health",
           "resource": {
@@ -5154,6 +5202,7 @@
           "max_entries": 2,
           "ttl_seconds": 30
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_lifecycle_closed"
         }
@@ -5235,6 +5284,7 @@
           "max_entries": 2,
           "ttl_seconds": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_lifecycle_episodes",
           "resource": {
@@ -5319,6 +5369,7 @@
           "policy": "process",
           "max_entries": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_lifecycle_providers"
         }
@@ -5400,6 +5451,7 @@
           "max_entries": 2,
           "ttl_seconds": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_lifecycle_recovery",
           "resource": {
@@ -5485,6 +5537,7 @@
           "max_entries": 2,
           "ttl_seconds": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_lifecycle_runtime"
         }
@@ -5563,7 +5616,8 @@
         },
         "x-majordomus-cache": {
           "policy": "disabled"
-        }
+        },
+        "x-majordomus-effect": "read"
       }
     },
     "/api/v1/mesh": {
@@ -5640,6 +5694,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_mesh",
           "resource": {
@@ -5723,6 +5778,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_mesh_doctor"
         },
@@ -5803,6 +5859,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_mesh_identity"
         },
@@ -5883,6 +5940,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_mesh_nodes"
         }
@@ -5991,6 +6049,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "process_state",
         "x-majordomus-mcp": {
           "tool": "majordomus_mesh_register"
         }
@@ -6115,6 +6174,7 @@
           "max_entries": 4,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_models",
           "resource": {
@@ -6252,6 +6312,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_models_route"
         },
@@ -6350,6 +6411,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_get"
         }
@@ -6453,6 +6515,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_list"
         }
@@ -6558,6 +6621,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_verify_objects"
         }
@@ -6638,6 +6702,7 @@
           "policy": "process",
           "max_entries": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_obligations",
           "resource": {
@@ -6723,6 +6788,7 @@
           "max_entries": 2,
           "ttl_seconds": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_obligation_closure",
           "resource": {
@@ -6822,6 +6888,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_peers"
         }
@@ -6931,6 +6998,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "process_state",
         "x-majordomus-mcp": {
           "tool": "majordomus_announce"
         }
@@ -7010,6 +7078,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_perf"
         }
@@ -7089,6 +7158,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan",
           "resource": {
@@ -7212,6 +7282,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_issues"
         }
@@ -7306,6 +7377,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_next"
         }
@@ -7403,6 +7475,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_record"
         }
@@ -7482,6 +7555,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_roadmap"
         }
@@ -7576,6 +7650,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_status"
         }
@@ -7684,6 +7759,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "repository_mutation",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_transition"
         }
@@ -7763,6 +7839,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_validate"
         }
@@ -7857,6 +7934,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_plan_waves"
         }
@@ -7952,6 +8030,7 @@
           "policy": "process",
           "max_entries": 64
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_feature"
         },
@@ -8107,6 +8186,7 @@
           "policy": "process",
           "max_entries": 32
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_features",
           "resource": {
@@ -8192,6 +8272,7 @@
           "policy": "process",
           "max_entries": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_product_matrix",
           "resource": {
@@ -8277,6 +8358,7 @@
           "policy": "process",
           "max_entries": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_providers",
           "resource": {
@@ -8362,6 +8444,7 @@
           "policy": "process",
           "max_entries": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_product_validate"
         },
@@ -8493,6 +8576,7 @@
           "max_entries": 8,
           "ttl_seconds": 10
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_quality",
           "resource": {
@@ -8576,7 +8660,8 @@
         },
         "x-majordomus-cache": {
           "policy": "disabled"
-        }
+        },
+        "x-majordomus-effect": "read"
       }
     },
     "/api/v1/recover/orphans": {
@@ -8687,6 +8772,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "repository_mutation",
         "x-majordomus-mcp": {
           "tool": "majordomus_recover_orphans"
         }
@@ -8777,6 +8863,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_release_analysis"
         }
@@ -8856,6 +8943,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_release_version"
         }
@@ -8935,6 +9023,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_repository",
           "resource": {
@@ -9079,6 +9168,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_rules",
           "resource": {
@@ -9178,6 +9268,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_rule_proves"
         },
@@ -9273,6 +9364,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_rule"
         },
@@ -9353,6 +9445,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_scope",
           "resource": {
@@ -9464,6 +9557,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_scope_classify"
         }
@@ -9588,6 +9682,7 @@
           "policy": "process",
           "max_entries": 64
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_search"
         }
@@ -9696,6 +9791,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_served",
           "resource": {
@@ -9799,6 +9895,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_server",
           "resource": {
@@ -9885,6 +9982,7 @@
           "max_entries": 2,
           "ttl_seconds": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_session_identity",
           "resource": {
@@ -9970,6 +10068,7 @@
           "max_entries": 1,
           "ttl_seconds": 600
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_session_machine",
           "resource": {
@@ -10070,6 +10169,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_traceability",
           "resource": {
@@ -10168,6 +10268,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_trace_commit"
         }
@@ -10262,6 +10363,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_trace_issue"
         }
@@ -10343,6 +10445,7 @@
           "max_entries": 2,
           "ttl_seconds": 5
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_web_surfaces",
           "resource": {
@@ -10537,6 +10640,7 @@
           "policy": "process",
           "max_entries": 32
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_why",
           "resource": {
@@ -10622,6 +10726,7 @@
           "policy": "process",
           "max_entries": 4
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_why_areas",
           "resource": {
@@ -10707,6 +10812,7 @@
           "policy": "process",
           "max_entries": 4
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_why_audiences",
           "resource": {
@@ -10808,6 +10914,7 @@
           "policy": "process",
           "max_entries": 32
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_why_diagnose"
         },
@@ -10904,6 +11011,7 @@
           "policy": "process",
           "max_entries": 64
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_why_moment"
         },
@@ -10985,6 +11093,7 @@
           "policy": "process",
           "max_entries": 2
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_why_validate"
         },
@@ -11065,6 +11174,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_worktrees",
           "resource": {
@@ -11164,6 +11274,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_worktree_inspect"
         },
@@ -11244,6 +11355,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_worktree_migration_plan"
         },
@@ -11339,6 +11451,7 @@
         "x-majordomus-cache": {
           "policy": "disabled"
         },
+        "x-majordomus-effect": "read",
         "x-majordomus-mcp": {
           "tool": "majordomus_worktree_status"
         },
@@ -22022,6 +22135,13 @@
             "format": "uint",
             "minimum": 0,
             "description": "How many files the layer declared that did not become objects."
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Diagnostic"
+            },
+            "description": "Which ones, and what decided it: the index's own error diagnostics, each naming the\nfile, the code and the constraint it failed. A count says something is wrong; only\nthis says what and where, and a reader that has the count and not the list has to go\nlooking through a log for the answer the index already produced."
           },
           "degraded": {
             "type": [
@@ -33587,7 +33707,7 @@
     }
   },
   "x-majordomus": {
-    "generator": "majordomus-cli 0.7.0",
+    "generator": "majordomus-cli 0.8.0",
     "infrastructure": [
       {
         "id": "home",
@@ -33657,5 +33777,5 @@
     ]
   },
   "x-majordomus-generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`",
-  "x-majordomus-generator": "majordomus-cli 0.7.0"
+  "x-majordomus-generator": "majordomus-cli 0.8.0"
 }
