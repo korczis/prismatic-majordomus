@@ -127,6 +127,24 @@ before "$checked" "$pushed" "the record branch is pushed before scripts/derive-c
 before "$checked" "$proposed" "the record pull request is opened before scripts/derive-check judged it"
 awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && /continue-on-error/{found=1} END{exit found}' "$WF" \
   || { echo "    a publication step may fail without failing the job; a refused derive-check must stop the proposal"; exit 1; }
+# ...and its verdict is the job's. Running before the push is not judging: `|| true`, a branch
+# that only warns or exits 0, or `&& ...` would report the refusal and propose the tree anyway,
+# which is the pull request born red this order exists to prevent. The runner's shell is
+# `bash -e`, so the bare command fails the step; the other accepted form is a failure branch
+# that ends in a non-zero exit.
+awk -v n="$checked" '
+  NR == n {
+    if ($0 ~ /^[ \t]*scripts\/derive-check[ \t]*$/) {ok = 1; exit}
+    if ($0 !~ /^[ \t]*scripts\/derive-check[ \t]*\|\|[ \t]*\{[ \t]*$/) exit
+    branch = 1; next
+  }
+  branch && /^[ \t]*\}[ \t]*$/ {exit}
+  branch && /^[ \t]*exit[ \t]+0?[ \t]*$/ {ok = 0; exit}
+  branch && /^[ \t]*exit[ \t]+[1-9][0-9]*[ \t]*$/ {ok = 1}
+  END {exit !ok}' "$WF" \
+  || { echo "    a refused scripts/derive-check does not fail the publication job"; exit 1; }
+awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && $0 !~ /^[ \t]*#/ && /set \+e/{found=1} END{exit found}' "$WF" \
+  || { echo "    the publication job turns off bash -e, so a refused scripts/derive-check need not fail it"; exit 1; }
 
 # --- smoke fails, and names the pull request, while the record is only a proposal -------------
 # It used to exit 0 with a notice, and the install step after it then failed with a message
