@@ -1,0 +1,62 @@
+{#- The index of one kind of the layer.
+
+  One template for every kind that publishes entity pages. It names no kind: the section it
+  is rendering says which one, and everything else — the rows, the counts, the status and tag
+  filters — comes from site/data/generated/entities.json, which is a projection of the
+  composed graph the executable writes. A kind added to site/data/publication.toml with
+  `projection = "entity"` gets this page with no edit here. -#}
+{% extends "page.html" %}
+{% block title %}{{ section.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ section.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ section.description }}{% endblock description %}
+{% block ogdescription %}{{ section.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
+{%- set data = load_data(path="data/generated/entities.json") -%}
+{%- set kind = section.extra.kind -%}
+{%- set meta = [k for k in data.kinds if k.kind == kind] | first -%}
+{%- set rows = [e for e in data.entities if e.kind == kind] -%}
+{%- set statuses = meta.statuses -%}
+<div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl text-lg text-body">{{ section.description }}</p></div></div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+
+  <div x-data="{ q: '', status: 'all' }">
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="sr-only" for="ent-filter">Filter</label>
+      <input id="ent-filter" type="search" x-model="q" placeholder="Filter by identity, title or tag" class="w-full max-w-sm rounded-base border border-default bg-neutral-primary-soft px-3 py-2 text-sm text-heading placeholder:text-body-subtle focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">
+      {%- if statuses | length > 1 %}
+      <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by status">
+        <button type="button" x-on:click="status = 'all'" :aria-pressed="status === 'all' ? 'true' : 'false'" aria-pressed="true" :class="status === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">All</button>
+        {%- for s in statuses %}
+        <button type="button" x-on:click="status = '{{ s }}'" :aria-pressed="status === '{{ s }}' ? 'true' : 'false'" aria-pressed="false" :class="status === '{{ s }}' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">{{ s }} <span class="text-body-subtle">{{ [e for e in rows if e.status == s] | length }}</span></button>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+    <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every entry below is still listed, in the order the index resolves them.</p>
+
+    <ul class="mt-6 grid gap-4 md:grid-cols-2" role="list" aria-live="polite">
+      {%- for e in rows -%}
+      <li x-show="(status === 'all' || status === '{{ e.status }}') && ('{{ e.identity }} {{ e.title | lower | replace(from="'", to="") }} {{ e.tags | join(sep=" ") }}'.includes(q.toLowerCase()))">
+        <a href="{{ get_url(path=meta.route ~ e.slug ~ '/', trailing_slash=true) }}" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">{{ e.identity }}</code>{%- if e.status %}{{ <badge status={e.status} /> }}{% endif %}</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">{{ e.title }}</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>{{ e.references | length }} outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>{{ e.referenced_by | length }} incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1">{% for t in e.tags %}<span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ t }}</span>{% endfor %}</span>
+        </a>
+      </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+
+  <div class="mt-12 max-w-3xl">
+    <h2 class="text-xl font-semibold tracking-tight text-heading">Where these come from</h2>
+    <p class="mt-3 text-body">{{ meta.count }} objects of kind <code class="font-mono text-heading">{{ kind }}</code>, read from the repository's own layer. Nothing on this page is typed into the site: the source class that discovers the files is declared in the repository's knowledge sources, the executable indexes them, and this page, <code class="font-mono text-heading">majordomus entity show {{ kind }}/&lt;slug&gt;</code>, the MCP resource <code class="font-mono text-heading">majordomus://{{ kind }}/&lt;identity&gt;</code> and the Cockpit route <code class="font-mono text-heading">/cockpit/objects/{{ kind }}/&lt;slug&gt;</code> are all projections of that one index.</p>
+    <p class="mt-3 text-body">The references and backlinks each page shows are edges of one graph. A reference is declared in the front matter of the object that makes it; the backlink is that same edge read from the other end, so nothing declares a relationship twice and nothing can declare half of one.</p>
+  </div>
+</div>
+{% endblock content %}

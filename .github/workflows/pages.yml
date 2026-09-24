@@ -219,6 +219,18 @@ jobs:
           echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
           echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
 
+      # The documentation that commit publishes, as served. Only once the site serves this
+      # commit, so what it measures is this build and not the wait: /docs/index.json must name
+      # the commit, and the documentation root, every route the catalogue publishes a kind at,
+      # one page per entity kind and the machine-readable documents must answer 200. Unlike the
+      # wait above this is definite — the bytes are ours — so a failure fails the run.
+      - name: The documentation it publishes
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 1
+        env:
+          MJ_PAGES_PROBE_SECONDS: 5
+        run: scripts/pages verify-docs --commit "$GITHUB_SHA"
+
       # The third way a deploy fails, and the only one that used to end in a green tick.
       #
       # The step above waits for the site to serve this commit and is deliberately a report:
