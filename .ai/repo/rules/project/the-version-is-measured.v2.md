@@ -7,7 +7,7 @@ description: What a release's version number says about compatibility is decided
 statement: Measure the compatibility level from the public contract with the one engine every surface renders, and let one writer apply it; a commit label, a changelog heading or an explicit version that understates what the contract did is a claim nobody checked, and neither the writer nor any override may go under the measured minimum.
 status: active
 class: blocking
-depends_on: [project.land-and-publish@1, project.interfaces-are-projections@1, project.release-is-a-projection@1]
+depends_on: [project.land-and-publish@1, project.interfaces-are-projections@1, project.release-is-a-projection@2]
 tags: [release, versioning, contract, evidence]
 
 x-majordomus:
@@ -173,7 +173,7 @@ be unreadable.
 
 `test/cases/112_version_matches_surface.sh` is the behavioural half, in a disposable
 repository with a real history and real published releases: an additive change refused and
-then fixed by the writer, an undershooting override refused with both version sites
+then fixed by the writer, an undershooting override refused with the manifest
 untouched, an overshooting one allowed and reported as an override, an unchanged contract
 owing nothing, a removal named as breaking, an unreadable baseline refused as unreadable
 rather than as an empty diff, a tag nobody recorded reported, and — the assertion that keeps
