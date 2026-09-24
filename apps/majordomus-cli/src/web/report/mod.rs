@@ -123,7 +123,7 @@ impl Origin {
         Origin {
             revision,
             rendered_at: crate::web::report::now(),
-            version: env!("CARGO_PKG_VERSION").into(),
+            version: crate::VERSION.into(),
         }
     }
 }

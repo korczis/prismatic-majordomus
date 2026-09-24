@@ -4,8 +4,9 @@
 //! Three capabilities, all read-only, all answered by [`crate::release`] — the same code the
 //! command line renders, the generated document is written from, and the site page shows.
 //! Neither reads a file somebody maintains: the changelog composes the layer's own release
-//! records, decisions and the repository's commits, and the version report reads the two
-//! places the version is stated and says whether they agree.
+//! records, decisions and the repository's commits, and the version report reads the one
+//! place the version is authored and says whether the projection the shell tool prints is
+//! current.
 //!
 //! Raising the version is not here. It writes tracked files, which makes it a repository
 //! mutation, and the exposure policy keeps repository mutations off every machine surface —
@@ -105,7 +106,7 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "release",
         title: "Release",
-        description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
+        description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become.",
         stability: Stability::Implemented,
         capabilities: [
             capability! {
@@ -134,7 +135,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "release.version",
                 title: "The version, and the one the commits imply",
-                description: "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+                description: "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
                 input: Empty,
                 output: VersionReport,
                 stability: Stability::Implemented,

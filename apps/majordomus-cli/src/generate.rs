@@ -106,7 +106,8 @@ pub enum Target {
     Changelog,
     /// Everything derived from the distribution model (see `crate::distribution`): the
     /// release build matrix, the installer, the installation guide, the site's dataset,
-    /// and the public metadata of every recorded release.
+    /// and the public metadata of every recorded release — and `share/version.txt`, the
+    /// projection of the version the shell tool ships with and reads at start-up.
     Distribution,
     /// `docs/generated/artifacts.{json,yaml,md}`: every artifact of every other target,
     /// with its encoding, schema, source and hash. Always planned over the whole set, so
@@ -767,17 +768,20 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
             out.extend(crate::site::product_artifacts(&app.context)?);
         }
     }
-    if targets.contains(&Target::Distribution) {
-        out.extend(distribution_artifacts(app)?);
-    }
-    // The design is the tool's own and is projected into the tool's own tree — the share
-    // directory, the crate, the site. Where the share is not inside this repository, or the
-    // crate is not here, there is nothing of this repository's to project.
+    // The design and the version are the tool's own and are projected into the tool's own
+    // tree — the share directory, the crate, the site. Where the share is not inside this
+    // repository, or the crate is not here, there is nothing of this repository's to project.
     let crate_is_here = app
         .repository
         .root()
-        .join("apps/majordomus-cli/Cargo.toml")
+        .join(crate::release::version::MANIFEST)
         .is_file();
+    if targets.contains(&Target::Distribution) {
+        out.extend(distribution_artifacts(app)?);
+        if share_is_here && crate_is_here {
+            out.push(version_projection(app.repository.root()));
+        }
+    }
     if share_is_here && crate_is_here && targets.contains(&Target::Design) {
         out.extend(design_artifacts(app)?);
     }
@@ -801,6 +805,38 @@ fn indexed_plan(app: &App, targets: &[Target]) -> Result<Vec<Artifact>> {
         }
     }
     Ok(out)
+}
+
+/// The projection of the version the shell tool reads at start-up, `share/version.txt`.
+///
+/// Its value is the authority read directly — [`crate::release::version::declared`] — and
+/// not this executable's own constant, which the foreign-generation guard of
+/// `majordomus generate` has already proved equal to it wherever the crate's sources are.
+/// Part of the distribution target because it is part of what the distribution ships: every
+/// archive carries `share/` whole, and the release plan's `generate distribution --check`
+/// holds it.
+///
+/// ```
+/// use majordomus_cli::generate::version_projection;
+/// use majordomus_cli::release::version::{parse_projection, MANIFEST, PROJECTION};
+/// let dir = tempfile::tempdir().unwrap();
+/// std::fs::create_dir_all(dir.path().join("apps/majordomus-cli")).unwrap();
+/// std::fs::write(dir.path().join(MANIFEST), "[package]\nversion = \"0.9.0\"\n").unwrap();
+/// let artifact = version_projection(dir.path());
+/// assert_eq!(artifact.path, PROJECTION);
+/// assert!(artifact.content.starts_with("# GENERATED FILE"));
+/// assert_eq!(parse_projection(&artifact.content).as_deref(), Some("0.9.0"));
+/// ```
+pub fn version_projection(root: &Path) -> Artifact {
+    use crate::release::version::{declared, render_projection, MANIFEST, PROJECTION};
+    let version = declared(root).unwrap_or_else(|| crate::VERSION.to_string());
+    Artifact::text(
+        PROJECTION,
+        "version",
+        format!("{MANIFEST} ([package] version), the one place the version is authored"),
+        crate::VERSION,
+        &render_projection(&version),
+    )
 }
 
 /// Every artifact the distribution model produces. The model is read from the tool's own

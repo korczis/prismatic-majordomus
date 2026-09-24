@@ -6,8 +6,9 @@
 //! Every other public fact in this repository has one canonical declaration and a set of
 //! projections derived from it — a command, a capability, a schema, a page. The release did
 //! not. Its version was two hand-written strings that a check compared with each other, and
-//! nothing raised them; its changelog did not exist at all, and what changed in a version
-//! lived only in GitHub's release notes, outside the repository that produced it.
+//! nothing raised them (it is authored once now, below); its changelog did not exist at all,
+//! and what changed in a version lived only in GitHub's release notes, outside the repository
+//! that produced it.
 //!
 //! Both facts were already *in* the tree, unread:
 //!
@@ -24,13 +25,15 @@
 //! release is the unreleased section, and the version it implies is arithmetic over the
 //! commit types rather than a number somebody chose.
 //!
-//! # Why the version stays declared twice
+//! # The version is authored once
 //!
-//! [`version`] does not change that, and should not. `scripts/release-version` states the
-//! reason and it still holds: an installed tree has no `Cargo.toml`, and the crate is
-//! compiled before the shell tool exists, so neither program can read the other's copy at
-//! run time. What was missing was not a single source — it was a single *writer*. `bump`
-//! is that writer, and the existing check remains the proof it worked.
+//! The version is authored in one place, the crate manifest's `[package] version`, and
+//! [`version`] owns every other statement of it: the compiled constant, the lock's record,
+//! and `share/version.txt` — the projection the shell tool reads at start-up, because an
+//! installed tree has no `Cargo.toml`. That projection is a `majordomus generate` artifact
+//! and ships beside the tool, so the reason the version was once written twice by hand no
+//! longer holds (ADR 0085). `release bump` writes the manifest, `scripts/derive` derives the
+//! rest, and [`version::diagnose`] refuses a version anybody writes down by hand.
 
 pub mod changelog;
 pub mod commits;

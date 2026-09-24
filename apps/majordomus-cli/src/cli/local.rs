@@ -468,7 +468,7 @@ pub const LOCAL: &[LocalCommand] = &[
     LocalCommand {
         command: "release bump",
         reason: LocalReason::WritesRepository,
-        note: "raises the version in both places it is written; the one writer, and a deliberate act.",
+        note: "raises the version in the one place it is authored, and the lock's record of it; the one writer, and a deliberate act.",
     },
 ];
 
