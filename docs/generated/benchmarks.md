@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 113 | 108 | 0 | 5 |
-| http | 112 | 108 | 0 | 4 |
-| mcp | 110 | 106 | 0 | 4 |
+| direct | 114 | 109 | 0 | 5 |
+| http | 113 | 109 | 0 | 4 |
+| mcp | 111 | 107 | 0 | 4 |
 | system | 13 | 13 | 0 | 0 |
-| total | 348 | 335 | 0 | 13 |
+| total | 351 | 338 | 0 | 13 |
 
 ## Capabilities
 
@@ -31,6 +31,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `commit.scopes` | commit | query | — | covered | covered | covered | `default` |
 | `commit.validate` | commit | query | — | covered | covered | covered | `conventional`, `not-conventional`, `merge` |
 | `continuity.state` | continuity | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `convergence.report` | convergence | query | — | covered | covered | covered | `default` |
 | `deploy.check` | deploy | query | process, 2 entries, 5s | covered | covered | covered | `default` |
 | `deploy.get` | deploy | query | — | covered | covered | covered | `first-deployment` |
 | `deploy.list` | deploy | query | — | covered | covered | covered | `default` |

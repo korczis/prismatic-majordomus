@@ -34,6 +34,7 @@ pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
 pub(crate) mod completion;
+pub(crate) mod convergence;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
@@ -74,6 +75,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Commands(args) => command_graph::run(args),
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Convergence(args) => convergence::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),
         Command::Release(args) => release::run(args),

@@ -12,6 +12,7 @@
     "op-commit-scopes": "docs/api/commit/",
     "op-commit-validate": "docs/api/commit/",
     "op-continuity-state": "docs/api/continuity/",
+    "op-convergence-report": "docs/api/convergence/",
     "op-deploy-check": "docs/api/deploy/",
     "op-deploy-get": "docs/api/deploy/",
     "op-deploy-list": "docs/api/deploy/",
@@ -223,6 +224,7 @@
     "schema-Continuity": "docs/api/continuity/",
     "schema-ContractView": "docs/api/directories/",
     "schema-ContrastReport": "docs/api/design/",
+    "schema-ConvergenceReport": "docs/api/convergence/",
     "schema-CounterSnapshot": "docs/api/perf/",
     "schema-Counts": "docs/api/why/",
     "schema-CpuKind": "docs/api/deploy/",
@@ -252,6 +254,7 @@
     "schema-DirectoryTallies": "docs/api/directories/",
     "schema-DirtyState": "docs/api/worktree/",
     "schema-Discovery": "docs/api/devcontext/",
+    "schema-Disposition": "docs/api/convergence/",
     "schema-DistributionReport": "docs/api/distribution/",
     "schema-Divergence": "docs/api/shared/",
     "schema-DocRef": "docs/api/product/",
@@ -342,6 +345,8 @@
     "schema-HealthRoutes": "docs/api/deploy/",
     "schema-HealthStatus": "docs/api/health/",
     "schema-HistoryReport": "docs/api/commit/",
+    "schema-Holding": "docs/api/convergence/",
+    "schema-HoldingKind": "docs/api/convergence/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
     "schema-Identity": "docs/api/design/",
@@ -644,6 +649,7 @@
     "tag-commands": "docs/api/commands/",
     "tag-commit": "docs/api/commit/",
     "tag-continuity": "docs/api/continuity/",
+    "tag-convergence": "docs/api/convergence/",
     "tag-deploy": "docs/api/deploy/",
     "tag-design": "docs/api/design/",
     "tag-devcontext": "docs/api/devcontext/",
@@ -679,9 +685,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 112,
-    "schemas": 527,
-    "tags": 37
+    "operations": 113,
+    "schemas": 531,
+    "tags": 38
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -778,6 +784,7 @@
     "commit.scopes": "commit",
     "commit.validate": "commit",
     "continuity.state": "continuity",
+    "convergence.report": "convergence",
     "deploy.check": "deploy",
     "deploy.get": "deploy",
     "deploy.list": "deploy",
@@ -993,6 +1000,7 @@
     "Continuity": "continuity",
     "ContractView": "directories",
     "ContrastReport": "design",
+    "ConvergenceReport": "convergence",
     "CounterSnapshot": "perf",
     "Counts": "why",
     "CpuKind": "deploy",
@@ -1022,6 +1030,7 @@
     "DirectoryTallies": "directories",
     "DirtyState": "worktree",
     "Discovery": "devcontext",
+    "Disposition": "convergence",
     "DistributionReport": "distribution",
     "Divergence": "shared",
     "DocRef": "product",
@@ -1112,6 +1121,8 @@
     "HealthRoutes": "deploy",
     "HealthStatus": "health",
     "HistoryReport": "commit",
+    "Holding": "convergence",
+    "HoldingKind": "convergence",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
     "Identity": "design",
@@ -7484,6 +7495,72 @@
       "variants": []
     },
     {
+      "description": "The repository's convergence: every holding, and the one verdict over them.\n\n```\nuse majordomus_cli::convergence::{ConvergenceReport, SCHEMA};\n\nlet empty = ConvergenceReport {\n    schema: SCHEMA.into(),\n    repository: \"/tmp/r\".into(),\n    trunk: Some(\"master\".into()),\n    holdings: vec![],\n    tallies: Default::default(),\n    at_risk: 0,\n    converged: true,\n};\n// the verdict is the one word a gate reads; the count is what a person reads next to it\nassert!(empty.converged && empty.at_risk == 0);\nassert_eq!(serde_json::to_value(&empty).unwrap()[\"schema\"], \"convergence/v1\");\n```",
+      "home": "convergence",
+      "is_enum": false,
+      "name": "ConvergenceReport",
+      "properties": [
+        {
+          "description": "`SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The primary checkout this was measured from.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The trunk the containment was decided against, when there is one.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Every holding, at-risk ones first, then by kind and identity.",
+          "name": "holdings",
+          "refs": [
+            "Holding"
+          ],
+          "required": true,
+          "type": "array of Holding"
+        },
+        {
+          "description": "How many holdings carry each disposition, by its word.",
+          "name": "tallies",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "The holdings that exist on one disk only.",
+          "name": "at_risk",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Nothing is held where it can be lost.",
+          "name": "converged",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "convergence.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The counters and phase totals of this process at one moment. Every value is a count\nor a duration this process measured; none is written anywhere by hand.",
       "home": "perf",
       "is_enum": false,
@@ -9514,6 +9591,37 @@
       "variants": []
     },
     {
+      "description": "Where the work a holding carries can be reached from.\n\nThe order is the order of safety: everything above `Disposition::LocalOnly` is\nreachable by somebody who is not the worker that made it.\n\n```\nuse majordomus_cli::convergence::Disposition;\n\n// declared in the order of safety, so the derived order says which is worse\nassert!(Disposition::Integrated < Disposition::Published);\nassert!(Disposition::Published < Disposition::LocalOnly);\nassert_eq!(serde_json::to_string(&Disposition::LocalOnly).unwrap(), \"\\\"local_only\\\"\");\n```",
+      "home": "convergence",
+      "is_enum": true,
+      "name": "Disposition",
+      "properties": [],
+      "type": "\"integrated\" | \"published\" | \"local_only\" | \"uncommitted\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Holding"
+      ],
+      "values": [
+        {
+          "description": "The trunk reaches it: it is in the repository's own history.",
+          "value": "integrated"
+        },
+        {
+          "description": "A remote reaches it: another checkout can fetch it, and it survives this disk.",
+          "value": "published"
+        },
+        {
+          "description": "Committed here and nowhere else. One disk away from being lost.",
+          "value": "local_only"
+        },
+        {
+          "description": "Not committed at all: files in a work tree, or a stash entry.",
+          "value": "uncommitted"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The distribution, as a person or a script asks for it.",
       "home": "distribution",
       "is_enum": false,
@@ -10596,6 +10704,7 @@
         "commit.scopes",
         "commit.validate",
         "continuity.state",
+        "convergence.report",
         "deploy.get",
         "deploy.list",
         "deploy.check",
@@ -14684,6 +14793,94 @@
       ],
       "used_by_schemas": [],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "One thing holding work, and what is known about where that work can be reached from.\n\n```\nuse majordomus_cli::convergence::{Disposition, Holding, HoldingKind};\n\nlet branch = Holding {\n    kind: HoldingKind::Branch,\n    identity: \"feature/x\".into(),\n    disposition: Disposition::LocalOnly,\n    evidence: \"abc123 is on no remote-tracking ref of this checkout\".into(),\n    remedy: \"git push -u origin feature/x\".into(),\n    at_risk: true,\n};\n// an at-risk holding always carries the command that would move it out of danger\nassert!(branch.at_risk && !branch.remedy.is_empty());\n// and a reachable one carries none, so the field is left out of the document\nlet safe = Holding { disposition: Disposition::Published, remedy: String::new(), at_risk: false, ..branch };\nassert!(!serde_json::to_string(&safe).unwrap().contains(\"remedy\"));\n```",
+      "home": "convergence",
+      "is_enum": false,
+      "name": "Holding",
+      "properties": [
+        {
+          "description": "What kind of thing holds it.",
+          "name": "kind",
+          "refs": [
+            "HoldingKind"
+          ],
+          "required": true,
+          "type": "HoldingKind"
+        },
+        {
+          "description": "How it is named: a branch name, an absolute worktree path, a stash ref.",
+          "name": "identity",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the work can be reached from.",
+          "name": "disposition",
+          "refs": [
+            "Disposition"
+          ],
+          "required": true,
+          "type": "Disposition"
+        },
+        {
+          "description": "What was actually read — never a restatement of the disposition.",
+          "name": "evidence",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that would move it out of danger. Empty when it is not at risk.",
+          "name": "remedy",
+          "refs": [],
+          "required": false,
+          "type": "string"
+        },
+        {
+          "description": "This holding's work exists on one disk only.",
+          "name": "at_risk",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ConvergenceReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What kind of thing is holding the work.\n\n```\nuse majordomus_cli::convergence::HoldingKind;\n\n// the word a report and a persisted record use; renaming a variant must not rename it\nassert_eq!(HoldingKind::Worktree.as_str(), \"worktree\");\nassert_eq!(serde_json::to_string(&HoldingKind::Stash).unwrap(), \"\\\"stash\\\"\");\n```",
+      "home": "convergence",
+      "is_enum": true,
+      "name": "HoldingKind",
+      "properties": [],
+      "type": "\"worktree\" | \"branch\" | \"stash\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Holding"
+      ],
+      "values": [
+        {
+          "description": "A registered work tree, holding files that are not committed.",
+          "value": "worktree"
+        },
+        {
+          "description": "A local branch, holding commits.",
+          "value": "branch"
+        },
+        {
+          "description": "An entry of `git stash`.",
+          "value": "stash"
+        }
+      ],
       "variants": []
     },
     {
@@ -31342,6 +31539,70 @@
         }
       ],
       "slug": "continuity"
+    },
+    {
+      "description": "Whether every unit of work in this repository is somewhere another worker could find it. A holding is anything that can hold work — a work tree with uncommitted files, a branch with commits, a stash — and each carries a disposition read from git: integrated (the trunk reaches it), published (a remote-tracking ref reaches it), local_only (committed on this disk and nowhere else) or uncommitted. The last two are at risk: they are invisible to every other worker, and a worker that stops is not a rollback. Measured offline, from this checkout alone; whether a pull request exists for a branch is a question for the forge and is not asked here.",
+      "name": "convergence",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "convergence",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/convergence\"",
+          "description": "Every holding of this repository with its disposition, the evidence read for it and the command that would move it out of danger, the tallies per disposition, how many holdings exist on one disk only, and the one verdict over them. Read from git on every call: a commit, a push or an editor's save changes the answer between two calls.",
+          "home": "convergence",
+          "id": "convergence.report",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "convergence",
+            "uri": "majordomus://convergence"
+          },
+          "mcp_tool": "majordomus_convergence",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/convergence",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::convergence",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Is any work held where it can be lost?: the result.",
+              "schema": "ConvergenceReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ConvergenceReport",
+          "stability": "behaviorally_verified",
+          "summary": "Is any work held where it can be lost?"
+        }
+      ],
+      "slug": "convergence"
     },
     {
       "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",

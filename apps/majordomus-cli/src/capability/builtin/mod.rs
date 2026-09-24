@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub(crate) mod convergence;
 pub(crate) mod deploy;
 pub(crate) mod design;
 pub(crate) mod devcontext;
@@ -181,6 +182,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         design,
         devtask,
         worktree,
+        convergence,
         trace,
         product
     ]

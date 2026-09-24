@@ -205,6 +205,23 @@
       "tool": "majordomus_continuity"
     },
     {
+      "api_anchor": "/docs/api/convergence/#op-convergence-report",
+      "claims": [],
+      "cli": "majordomus convergence",
+      "id": "convergence.report",
+      "kind": "query",
+      "module": "convergence",
+      "module_route": "/registry/modules/convergence/",
+      "resource": "majordomus://convergence",
+      "route": "/registry/capabilities/convergence-report/",
+      "slug": "convergence-report",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "tests": [],
+      "title": "Is any work held where it can be lost?",
+      "tool": "majordomus_convergence"
+    },
+    {
       "api_anchor": "/docs/api/deploy/#op-deploy-check",
       "claims": [],
       "cli": null,
@@ -2401,9 +2418,9 @@
     ]
   },
   "counts": {
-    "capabilities": 113,
+    "capabilities": 114,
     "claims": 51,
-    "modules": 37
+    "modules": 38
   },
   "generator": "majordomus-cli 0.8.0",
   "modules": [
@@ -2521,6 +2538,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "convergence.report",
+          "route": "/registry/capabilities/convergence-report/",
+          "slug": "convergence-report"
+        }
+      ],
+      "claims": [],
+      "id": "convergence",
+      "route": "/registry/modules/convergence/",
+      "slug": "convergence",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/convergence.rs",
+      "title": "Convergence"
     },
     {
       "capabilities": [
