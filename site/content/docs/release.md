@@ -352,7 +352,7 @@ same ones in its plan:
 
 | diagnostic | severity | when |
 |---|---|---|
-| `version-stated-by-hand` | error | a shell assignment to a `…VERSION` name, a `version:` or `"version":` member, or `majordomus X.Y.Z`, written by hand in `bin/`, `lib/`, `scripts/` or `share/` outside a generated artifact |
+| `version-stated-by-hand` | error | an assignment to a name ending in `version` (shell, TOML, JavaScript or Python), a `version:` or `"version":` member, or `majordomus X.Y.Z`, written by hand in `bin/`, `lib/`, `scripts/` or `share/` outside a generated artifact |
 | `projection-stale` | warning | `share/version.txt` is behind the manifest or missing — the state every bump leaves until `scripts/derive`, refused by `generate --check` |
 | `writers-disagree` | error | `share/version.txt` is ahead of the manifest or unrelated to it — a version no derivation writes |
 
