@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.9.0
 coverage:
   - scope: direct
-    required: 115
-    covered: 108
+    required: 117
+    covered: 110
     missing: 0
     waived: 7
     inapplicable: 0
   - scope: http
-    required: 114
-    covered: 108
+    required: 116
+    covered: 110
     missing: 0
     waived: 6
     inapplicable: 0
   - scope: mcp
-    required: 112
-    covered: 106
+    required: 114
+    covered: 108
     missing: 0
     waived: 6
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 354
-    covered: 335
+    required: 360
+    covered: 341
     missing: 0
     waived: 19
     inapplicable: 0
@@ -339,6 +339,24 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: entity.kinds
+    module: entity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: entity.show
+    module: entity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-object
   - id: environment.explain
     module: environment
     kind: query

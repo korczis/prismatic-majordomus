@@ -38,6 +38,7 @@ pub(crate) mod delivery;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
+pub(crate) mod entity;
 pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
@@ -87,6 +88,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Evidence(args) => evidence::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Delivery(args) => delivery::run(args),
+        Command::Entity(args) => entity::run(args),
     }
 }
 

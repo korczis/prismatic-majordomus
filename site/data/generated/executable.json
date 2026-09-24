@@ -545,6 +545,40 @@
       "tool": "majordomus_install_status"
     },
     {
+      "api_anchor": "/docs/api/entity/#op-entity-kinds",
+      "claims": [],
+      "cli": "majordomus entity kinds",
+      "id": "entity.kinds",
+      "kind": "query",
+      "module": "entity",
+      "module_route": "/registry/modules/entity/",
+      "resource": null,
+      "route": "/registry/capabilities/entity-kinds/",
+      "slug": "entity-kinds",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/entity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/entity.rs",
+      "tests": [],
+      "title": "Every kind, and whether every object of it is addressable",
+      "tool": "majordomus_kinds"
+    },
+    {
+      "api_anchor": "/docs/api/entity/#op-entity-show",
+      "claims": [],
+      "cli": "majordomus entity show",
+      "id": "entity.show",
+      "kind": "query",
+      "module": "entity",
+      "module_route": "/registry/modules/entity/",
+      "resource": null,
+      "route": "/registry/capabilities/entity-show/",
+      "slug": "entity-show",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/entity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/entity.rs",
+      "tests": [],
+      "title": "Read one entity",
+      "tool": "majordomus_entity"
+    },
+    {
       "api_anchor": "/docs/api/environment/#op-environment-explain",
       "claims": [],
       "cli": null,
@@ -2435,9 +2469,9 @@
     ]
   },
   "counts": {
-    "capabilities": 115,
+    "capabilities": 117,
     "claims": 51,
-    "modules": 38
+    "modules": 39
   },
   "generator": "majordomus-cli 0.9.0",
   "modules": [
@@ -2732,6 +2766,27 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "title": "Distribution"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "entity.kinds",
+          "route": "/registry/capabilities/entity-kinds/",
+          "slug": "entity-kinds"
+        },
+        {
+          "id": "entity.show",
+          "route": "/registry/capabilities/entity-show/",
+          "slug": "entity-show"
+        }
+      ],
+      "claims": [],
+      "id": "entity",
+      "route": "/registry/modules/entity/",
+      "slug": "entity",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/entity.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/entity.rs",
+      "title": "Entities"
     },
     {
       "capabilities": [
