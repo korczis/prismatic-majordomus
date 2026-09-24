@@ -317,3 +317,45 @@ fn a_process_that_serves_nothing_holds_no_lease() {
         )
         .expect_err("a word that is not one of the two is refused");
 }
+
+#[test]
+fn a_server_asked_about_itself_by_every_worker_at_once_still_says_ready() {
+    // Every HTTP worker answering "where does this checkout's server stand" at the same
+    // moment. The server is that checkout's server, so the answer is in its memory; when it
+    // probed its own address instead, the probe queued behind the very requests asking,
+    // each waited out the probe timeout and the server reported itself stale — and a client
+    // electing in that window took the live lease over (case 192, 2026-09-15).
+    let f = Fixture::new();
+    let served = Served::start(&f.root(), &[]);
+    let callers = majordomus_cli::http::server::WORKERS * 3;
+    let answers: Vec<(String, serde_json::Value)> = std::thread::scope(|s| {
+        let handles: Vec<_> = (0..callers)
+            .map(|i| {
+                let served = &served;
+                s.spawn(move || {
+                    let target = if i % 2 == 0 {
+                        "/api/v1/server?checkouts=this"
+                    } else {
+                        "/api/v1/peers"
+                    };
+                    let (status, v) = served.get(target);
+                    assert_eq!(status, 200, "{target}: {v}");
+                    (target.to_string(), v)
+                })
+            })
+            .collect();
+        handles.into_iter().map(|h| h.join().unwrap()).collect()
+    });
+    for (target, v) in answers {
+        let standing = if target.starts_with("/api/v1/server") {
+            v["standing"].clone()
+        } else {
+            v["boards"]
+                .as_array()
+                .and_then(|b| b.iter().find(|b| b["this_checkout"] == true))
+                .map(|b| b["standing"].clone())
+                .unwrap_or_default()
+        };
+        assert_eq!(standing, "ready", "{target} under a full worker pool: {v}");
+    }
+}

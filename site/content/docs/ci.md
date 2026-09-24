@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 57
+weight = 59
 [extra]
 source = "docs/CI.md"
 +++
@@ -27,8 +27,10 @@ flowchart LR
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
   plan --&gt; site["site"]
+  plan --&gt; interactions["interactions"]
+  plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 

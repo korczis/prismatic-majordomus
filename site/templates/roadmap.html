@@ -32,7 +32,9 @@
     {%- endif %}
 
     {%- if m.issues.total > 0 %}
-    <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body-subtle">
+    {#- text-body, not text-body-subtle: an active milestone's card is bg-brand-softer, where the
+        subtle token falls under the contrast threshold the UI audit holds every page to -#}
+    <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-1 font-mono text-xs text-body">
       <div class="flex gap-1"><dt>done</dt><dd class="text-heading">{{ m.issues.by_status.DONE }} of {{ m.issues.required }}</dd></div>
       {%- for k, v in m.issues.by_status %}{% if v > 0 and k != "DONE" %}<div class="flex gap-1"><dt>{{ k | lower }}</dt><dd class="text-heading">{{ v }}</dd></div>{% endif %}{% endfor %}
     </dl>

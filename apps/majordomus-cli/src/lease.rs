@@ -3,7 +3,9 @@
 //! local half owns the server and publishes its URL there; every later process reads the
 //! file, checks that the server answers for this root, and attaches to it. A lease whose
 //! server does not answer is stale, and the next process takes it over; so is a file that
-//! is not a lease document, an empty one, or one whose owner never published a URL. The
+//! is not a lease document, an empty one, or one whose owner never published a URL. A
+//! server that is slow to answer while its process is alive is busy, not stale: the
+//! election waits for it for [`BUSY_GRACE`] before it takes anything over. The
 //! file is the only thing the server writes anywhere, it lives under `.ai/local/` (never
 //! tracked, by the layer's contract), and it is removed when the server stops, or when
 //! the server dies of `SIGTERM`, `SIGINT` or `SIGHUP`.
@@ -40,6 +42,19 @@ pub const BIND_GRACE: Duration = Duration::from_secs(15);
 
 /// How long the probe of a published URL waits.
 pub const PROBE_TIMEOUT: Duration = Duration::from_secs(2);
+
+/// How long a live server that does not answer its probe is waited for before its lease is
+/// taken over.
+///
+/// A probe that times out is not a dead server. On 2026-09-15 ten MCP clients attached at
+/// once to a server a shell entry had started; nine were bridged to it, and the tenth
+/// probed while the server was answering the other nine, heard nothing within
+/// [`PROBE_TIMEOUT`], took the lease over and started a second server for one checkout
+/// (test/cases/192). So a silent probe of a lease whose process is still alive is waited
+/// on, and asked again; only a server that stays silent for this long, or whose process is
+/// gone, loses its lease. The bound keeps the recovery from a hung server, and it sits
+/// well inside [`JOIN_TIMEOUT`] so that the take-over still happens within one election.
+pub const BUSY_GRACE: Duration = Duration::from_secs(10);
 
 /// How long a process keeps trying to acquire or join the lease before it gives up and
 /// says so: the bind grace with a margin for the probes. The caller then serves its
@@ -251,6 +266,30 @@ pub fn held() -> Option<LeaseDocument> {
     published().lock().ok()?.clone()
 }
 
+/// Is `doc` the lease this very process holds, published and not lost?
+///
+/// A server asked where its own checkout stands must answer from memory. Probing the
+/// address its lease names is a request to itself, served by the same small pool of HTTP
+/// workers the question arrived on: with every worker answering such a question at once,
+/// none is left to answer the probes, each waits out [`PROBE_TIMEOUT`], the server calls
+/// itself stale — and a client electing in that window times out on the same queue and
+/// takes a live lease over. Measured on 2026-09-15: ten MCP clients calling
+/// `majordomus_peers` at once, and one of them started a second server of the checkout.
+///
+/// ```
+/// use majordomus_cli::lease::{is_own, LeaseDocument};
+/// let doc: LeaseDocument = serde_json::from_str(
+///     r#"{"schema":"lease/v1","pid":1,"token":"t","url":"http://127.0.0.1:1"}"#,
+/// )
+/// .unwrap();
+/// // a process that holds no lease owns no document
+/// assert!(!is_own(&doc));
+/// ```
+pub fn is_own(doc: &LeaseDocument) -> bool {
+    !was_lost()
+        && held().is_some_and(|h| h.token == doc.token && h.pid == doc.pid && h.url == doc.url)
+}
+
 /// The lease this process holds. Dropping it removes the file (when the file is still
 /// this process's), so a failed start never leaves a stale lease behind.
 #[derive(Debug)]
@@ -330,6 +369,9 @@ pub fn elect(repo: &Repository) -> Result<Role> {
         fs::create_dir_all(dir).map_err(|e| Error::io(dir, e))?;
     }
     let waited_since = Instant::now();
+    // when a live server first failed to answer this election; cleared whenever it answers,
+    // or the file stops naming a busy server
+    let mut busy_since: Option<Instant> = None;
     loop {
         match fs::OpenOptions::new()
             .write(true)
@@ -364,8 +406,25 @@ pub fn elect(repo: &Repository) -> Result<Role> {
             }
             Err(e) if e.kind() == std::io::ErrorKind::AlreadyExists => {
                 let (found, seen) = inspect(&path, &root);
+                if !matches!(found, Found::Busy(_)) {
+                    busy_since = None;
+                }
                 match found {
                     Found::Live(url) => return Ok(Role::Peer { url }),
+                    Found::Busy(url) => {
+                        let since = *busy_since.get_or_insert_with(Instant::now);
+                        if since.elapsed() < BUSY_GRACE {
+                            std::thread::sleep(Duration::from_millis(200));
+                        } else {
+                            tracing::warn!(
+                                lease = %path.display(),
+                                "the server at {url} is alive and has not answered for {} seconds; taking it over",
+                                BUSY_GRACE.as_secs()
+                            );
+                            take_over(&path, &seen)?;
+                            busy_since = None;
+                        }
+                    }
                     Found::Stale(reason) => {
                         tracing::warn!(lease = %path.display(), "{reason}; taking it over");
                         take_over(&path, &seen)?;
@@ -394,6 +453,9 @@ pub fn elect(repo: &Repository) -> Result<Role> {
 enum Found {
     /// A server answers at this URL for this root.
     Live(String),
+    /// The server at this URL did not answer in time, and the process that holds the lease
+    /// is alive: busy rather than gone, and waited on for [`BUSY_GRACE`].
+    Busy(String),
     /// The file is not a usable lease; the reason says why, for the log.
     Stale(String),
     /// A lease without a URL, young enough that its owner may still be binding.
@@ -481,10 +543,13 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
         return (Found::Stale(reason), seen);
     }
     let found = match doc.url.as_deref() {
-        Some(url) if probe(url, root) => Found::Live(url.to_string()),
-        Some(url) => Found::Stale(format!(
-            "stale lease: the server it names at {url} does not answer for this repository"
-        )),
+        Some(url) => match ask(url, root) {
+            Answer::Ours => Found::Live(url.to_string()),
+            Answer::Silent if alive(doc.pid) => Found::Busy(url.to_string()),
+            Answer::Silent | Answer::NotOurs => Found::Stale(format!(
+                "stale lease: the server it names at {url} does not answer for this repository"
+            )),
+        },
         None if age > BIND_GRACE => {
             Found::Stale("abandoned lease: its owner never published a URL".into())
         }
@@ -599,17 +664,63 @@ pub fn was_lost() -> bool {
 /// one here, and refusing it would be the worse failure: a live server taken for dead is
 /// taken over, which is how one checkout comes to have two.
 pub fn probe(url: &str, root: &Path) -> bool {
+    matches!(ask(url, root), Answer::Ours)
+}
+
+/// What a probe of a published URL heard.
+enum Answer {
+    /// A Majordomus server that serves this root and holds its lease.
+    Ours,
+    /// Something answered that is not this checkout's server, or nothing is listening.
+    NotOurs,
+    /// The connection was made and no answer came within [`PROBE_TIMEOUT`]: a server that
+    /// is busy looks exactly like this, and so does a hung one.
+    Silent,
+}
+
+/// Ask a published URL the probe's three questions, telling a server that said no apart
+/// from one that said nothing in time.
+fn ask(url: &str, root: &Path) -> Answer {
     match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
             // without telling every caller where the checkout sits
-            v["name"] == "majordomus"
+            let ours = v["name"] == "majordomus"
                 && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
-                && v[LEASEHOLDER_KEY] != Value::Bool(false)
+                && v[LEASEHOLDER_KEY] != Value::Bool(false);
+            if ours {
+                Answer::Ours
+            } else {
+                Answer::NotOurs
+            }
         }
-        _ => false,
+        Ok(_) => Answer::NotOurs,
+        Err(e)
+            if matches!(
+                e.kind(),
+                std::io::ErrorKind::TimedOut | std::io::ErrorKind::WouldBlock
+            ) =>
+        {
+            Answer::Silent
+        }
+        Err(_) => Answer::NotOurs,
     }
+}
+
+/// Is the process with this id alive on this machine? A lease is a file of this checkout,
+/// so its pid is a pid of this host. `kill(pid, 0)` delivers nothing and asks only whether
+/// the process exists; a process owned by somebody else answers `EPERM`, which is alive.
+fn alive(pid: u32) -> bool {
+    if pid == 0 {
+        return false;
+    }
+    let Ok(pid) = libc::pid_t::try_from(pid) else {
+        return false;
+    };
+    // SAFETY: signal 0 performs the existence and permission check and sends nothing.
+    let rc = unsafe { libc::kill(pid, 0) };
+    rc == 0 || std::io::Error::last_os_error().raw_os_error() == Some(libc::EPERM)
 }
 
 impl Lease {

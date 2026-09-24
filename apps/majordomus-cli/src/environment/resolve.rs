@@ -36,6 +36,10 @@ use super::{
     TierState, ToolchainAvailability, VcsState,
 };
 
+/// How many refused files the `layer_degraded` warning names before it counts the rest. A
+/// warning a terminal truncates says nothing; the whole list is in `layer.refused`.
+const LAYER_REFUSALS_NAMED: usize = 3;
+
 /// What a caller wants resolved, and what it will pay for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct EnvironmentQuery {
@@ -252,13 +256,30 @@ pub fn resolve(inputs: &Inputs<'_>, query: &EnvironmentQuery) -> RepositoryEnvir
         }
     };
     if layer.degraded == Some(true) {
+        // Name them here. The count alone sent a reader to `majordomus capabilities
+        // validate`, which validates capabilities against their interfaces and reports
+        // nothing about a file the index refused — the remedy named an answer it does not
+        // have, so the only place the list existed was a log line.
+        let named: Vec<String> = layer
+            .refused
+            .iter()
+            .take(LAYER_REFUSALS_NAMED)
+            .map(|d| match &d.path {
+                Some(p) => format!("{p} — {}", d.message),
+                None => d.message.clone(),
+            })
+            .collect();
+        let total = layer.invalid.unwrap_or(layer.refused.len());
+        let rest = total.saturating_sub(named.len());
+        let list = match (named.is_empty(), rest) {
+            (true, _) => String::new(),
+            (false, 0) => format!(": {}", named.join("; ")),
+            (false, n) => format!(": {}; and {n} more", named.join("; ")),
+        };
         diagnostics.push(Diagnostic::warning(
             "layer_degraded",
             None,
-            format!(
-                "{} declared file(s) did not become objects; `majordomus capabilities validate` names them",
-                layer.invalid.unwrap_or_default()
-            ),
+            format!("{total} declared file(s) did not become objects{list}"),
         ));
     }
 
@@ -478,6 +499,14 @@ fn repository_identity(repository: &Repository) -> RepositoryIdentity {
 
 /// What the layer holds, from the index and the registry that already hold it.
 fn summarise(index: &Index, registry: &CapabilityRegistry) -> LayerSummary {
+    // The index already decided each of these and said why; carrying the diagnostics rather
+    // than their number is what lets every reader of the snapshot name the file.
+    let refused: Vec<crate::model::Diagnostic> = index
+        .diagnostics
+        .iter()
+        .filter(|d| d.severity == Severity::Error)
+        .cloned()
+        .collect();
     LayerSummary {
         state: TierState::Resolved,
         kinds: index
@@ -490,13 +519,8 @@ fn summarise(index: &Index, registry: &CapabilityRegistry) -> LayerSummary {
             .collect(),
         objects: Some(index.objects.len()),
         capabilities: Some(registry.summary().total),
-        invalid: Some(
-            index
-                .diagnostics
-                .iter()
-                .filter(|d| d.severity == Severity::Error)
-                .count(),
-        ),
+        invalid: Some(refused.len()),
+        refused,
         degraded: Some(index.state == crate::index::State::Degraded),
     }
 }

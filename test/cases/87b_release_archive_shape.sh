@@ -1,3 +1,4 @@
+# claims: release-archive-shape
 # The shape of a release archive, and the guard that refuses a malformed one.
 #
 # This case exists because of release v0.2.0, which was never published. scripts/release-package

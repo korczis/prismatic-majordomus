@@ -6,7 +6,7 @@ weight = 33
 id = "classify-what-belongs-in-the-context"
 source = ".ai/repo/use-cases/classify-what-belongs-in-the-context.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

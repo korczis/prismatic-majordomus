@@ -7,7 +7,13 @@ export default {
   width: 1280,
   claims: (el) => 'data-graph-node' in el.attrs || 'data-graph-filter' in el.attrs || 'data-graph-reset' in el.attrs,
   async exercise({ controls, page, fail }) {
-    const figures = await page.evaluate(() => [...document.querySelectorAll('figure[data-graph]')].map((f, i) => { f.setAttribute('data-mj-figure', String(i)); return i; }));
+    // A figure may sit inside a closed disclosure (the homepage keeps its graph one click away). A reader opens
+    // it before using the drawing, so the spec does too; it used to pass only because the disclosure spec had
+    // opened the outer details on its way to a summary nested inside it, and left it open.
+    const figures = await page.evaluate(() => [...document.querySelectorAll('figure[data-graph]')].map((f, i) => {
+      for (let d = f.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;
+      f.setAttribute('data-mj-figure', String(i)); return i;
+    }));
     for (const f of figures) {
       await page.locator(`[data-mj-figure="${f}"]`).scrollIntoViewIfNeeded();
       try { await page.waitForFunction((i) => !!document.querySelector(`[data-mj-figure="${i}"]`).mjGraph, f, { timeout: 15000 }); }

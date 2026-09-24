@@ -1,7 +1,7 @@
 +++
 title = "A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow"
 description = "The rule project.conventional-commits used to state what a commit must look like and end"
-weight = 185
+weight = 188
 [extra]
 claim_id = "commit-message-is-judged"
 status = "guaranteed"

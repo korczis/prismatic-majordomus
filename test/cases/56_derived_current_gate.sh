@@ -1,5 +1,6 @@
 # majordomus-covers: none
 # majordomus-negative: doctor
+# claims: derived-data-current
 # The gate that refuses a commit whose derived data is behind its canonical inputs, and the
 # doctrine that refuses a repository which unwires the gate.
 #

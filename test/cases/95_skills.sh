@@ -1,5 +1,6 @@
 # majordomus-covers: skills
 # majordomus-negative: skills doctor watch
+# claims: skill-catalogue, skill-check, skill-site-projection
 # Skills are data, not registrations. A skill is one directory under the layer's skills
 # section holding SKILL.md; the source class `skill` in the knowledge sources is the whole
 # registration, shared by the shell tool, the Rust executable and the site generator. This

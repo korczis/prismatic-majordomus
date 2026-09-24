@@ -727,6 +727,7 @@ pub(crate) mod tests_support {
                 objects: Some(902),
                 capabilities: Some(934),
                 invalid: Some(0),
+                refused: Vec::new(),
                 degraded: Some(false),
             },
             workflows: WorkflowCatalogue {

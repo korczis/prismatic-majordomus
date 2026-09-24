@@ -10,6 +10,7 @@
 # projections.rs; the rendered side — every entry a page, no page without an entry — is
 # scripts/site-check, run by test/cases/12_site_build.sh. No cargo needed here: the
 # manifest is data, and this case edits the data.
+# claims: executable-reference-derived
 . "$ROOT/test/lib.sh"
 command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
@@ -25,9 +26,18 @@ for id in $(jq -r '.capabilities[].id' "$REG"); do
   [ -f "$C/capabilities/$slug.md" ] || { echo "    no stub for $id"; exit 1; }
   grep -q "^id = \"$id\"" "$C/capabilities/$slug.md" || { echo "    stub of $id does not carry its id"; exit 1; }
   m="$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module' "$REG")"
-  [ "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module_route' "$G/executable.json")" = "/registry/modules/$m/" ] || { echo "    $id does not link module $m"; exit 1; }
+  # The module's route is slugified the same way the capability's is, and for the same reason:
+  # Zola turns `_` into `-`. Built from the raw name this passed for as long as no module
+  # carried an underscore, and `session_domain` is the first that does — an expectation that
+  # outlived the thing it described, rather than a projection that went wrong.
+  mslug="$(printf '%s' "$m" | tr '_' '-')"
+  [ "$(jq -r --arg id "$id" '.capabilities[] | select(.id==$id) | .module_route' "$G/executable.json")" = "/registry/modules/$mslug/" ] || { echo "    $id does not link module $m"; exit 1; }
 done
-for m in $(jq -r '.modules[] | select(.source=="builtin") | .id' "$REG"); do [ -f "$C/modules/$m.md" ] || { echo "    no stub for module $m"; exit 1; }; done
+for m in $(jq -r '.modules[] | select(.source=="builtin") | .id' "$REG"); do
+  # the same slugification as above: the page a reader reaches is modules/<slug>.md
+  ms="$(printf '%s' "$m" | tr '_' '-')"
+  [ -f "$C/modules/$ms.md" ] || { echo "    no stub for module $m (expected $ms.md)"; exit 1; }
+done
 for pg in _index executable cli mcp benchmarks; do [ -f "$C/$pg.md" ] || { echo "    no $pg page"; exit 1; }; done
 # a claim implemented in a module's file is attached to that module and its capabilities
 [ "$(jq -r '.modules[] | select(.id=="objects") | .claims | length' "$G/executable.json")" -gt 0 ] || { echo "    no claim attached to the objects module (mcp-uri-resolution is implemented there)"; exit 1; }
@@ -39,7 +49,11 @@ jq '.capabilities += [ (.capabilities[] | select(.id=="objects.search")) | .id =
 expect_exit 0 "$T/scripts/generate-site-data"
 [ -f "$C/capabilities/objects-grep.md" ] || { echo "    the added capability got no stub"; exit 1; }
 expect_grep '^description = "ADDED CAPABILITY"' "$C/capabilities/objects-grep.md"
-[ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")" = "/docs/api/#op-objects-grep" ] || { echo "    no API anchor for the added capability"; exit 1; }
+# The reference is one page per module, not one page: an operation lives on its tag's page
+# and every tag is the module of the capabilities under it (scripts/lib/executable-site.jq,
+# beside the anchor it builds). This expected the flat page the reference used to be — the
+# same shape as the module route above, an expectation that outlived what it described.
+[ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")" = "/docs/api/objects/#op-objects-grep" ] || { echo "    no API anchor for the added capability: $(jq -r '.capabilities[] | select(.id=="objects.grep") | .api_anchor' "$G/executable.json")"; exit 1; }
 [ "$(jq -r '.capabilities[] | select(.id=="objects.grep") | .tool' "$G/executable.json")" = "majordomus_grep" ] || { echo "    no tool for the added capability"; exit 1; }
 jq -e '.modules[] | select(.id=="objects") | .capabilities | map(.id) | index("objects.grep")' "$G/executable.json" >/dev/null || { echo "    the module index does not list the added capability"; exit 1; }
 [ "$(jq -r .source_hash "$G/source.json")" != "$(jq -r .source_hash "$T/before/source.json")" ] || { echo "    the input hash did not move with the manifest"; exit 1; }

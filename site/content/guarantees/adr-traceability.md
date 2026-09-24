@@ -1,7 +1,7 @@
 +++
 title = "A decision states what it put in force as typed references, each one validated, and the reverse direction — what a rule, a document, an implementation or a case was decided by — is read from the knowledge graph rather than written down a second time"
 description = "A decision that changed the repository is only useful if a reader can get from it to what"
-weight = 156
+weight = 159
 [extra]
 claim_id = "adr-traceability"
 status = "guaranteed"

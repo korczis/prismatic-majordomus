@@ -247,18 +247,32 @@ async function interactions(context) {
     await page
       .waitForFunction(
         () => {
+          // Not `!first || ...`: an empty list satisfied that immediately, so the wait
+          // returned at once whenever the registry had not arrived, and the assertion
+          // below then read nothing and blamed the ordering. Wait for a result to exist
+          // AND to be the one asked for; an empty list is a timeout, which is the truth.
           const first = document.querySelector('.mj-palette-results li[data-href]');
-          return !first || first.dataset.href.includes('objects.search');
+          return !!first && first.dataset.href.includes('objects.search');
         },
         null,
         { timeout: 5000 },
       )
       .catch(() => {});
-    const first = await page.evaluate(
-      () => document.querySelector('.mj-palette-results li[data-href]')?.dataset.href || '',
-    );
-    if (!first.includes('objects.search')) {
-      fail('palette', `filtering for objects.search put "${first}" first`);
+    // Three outcomes, and they are not one verdict: no result at all, a result that is
+    // the wrong one, and the right one. Reporting the first as `put "" first` described
+    // an ordering that never happened and sent a reader looking for a sort bug.
+    const { count, first } = await page.evaluate(() => {
+      const rows = document.querySelectorAll('.mj-palette-results li[data-href]');
+      return { count: rows.length, first: rows[0]?.dataset.href || '' };
+    });
+    if (count === 0) {
+      fail(
+        'palette',
+        'filtering for objects.search produced no entries at all — the registry did not ' +
+          'arrive or the filter matched nothing; this is not an ordering failure',
+      );
+    } else if (!first.includes('objects.search')) {
+      fail('palette', `filtering for objects.search put "${first}" first of ${count}`);
     } else {
       await page.keyboard.press('Enter');
       await page.waitForURL(/capabilities/, { timeout: 5000 }).catch(() => {});

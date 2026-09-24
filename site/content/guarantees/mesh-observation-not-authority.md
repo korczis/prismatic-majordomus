@@ -1,7 +1,7 @@
 +++
 title = "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown"
 description = "Discovery creates awareness, not authority. Being heard on the network — even with a"
-weight = 180
+weight = 183
 [extra]
 claim_id = "mesh-observation-not-authority"
 status = "guaranteed"
