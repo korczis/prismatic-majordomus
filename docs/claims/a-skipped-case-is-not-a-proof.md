@@ -54,7 +54,10 @@ file exists.
 gains `SKIP` beside `ok`, `FAIL` and `TIMEOUT`. The parallel phase renders its verdicts
 from files its workers wrote, through the same function, so both phases write the same
 word — a runner that told the truth serially and `ok` in parallel would be worse than one
-that never told it, because CI runs the suite in parallel.
+that never told it, because CI runs the suite in parallel. CI's job summary
+(`scripts/ci/summary`) reads the same report and counts a `SKIP` as skipped; it used to
+count every row that was not `ok` as failed, which would have turned the word into the
+opposite lie.
 
 Nothing in the Rust model changed. `Outcome::Skip` was already there, `Outcome::parse`
 already read `skip` and `skipped`, and `Outcome::proves()` was already false for it. What
@@ -76,7 +79,8 @@ majordomus evidence claim a-skipped-case-is-not-a-proof
 
 `test/cases/413_a_skipped_case_is_not_a_proof.sh` drives the real runner over a harness of
 three cases of its own — one that passes, one that declines, one that fails — and asserts
-the three words in both phases. It adds a fourth that fails through `jq -e` with status 4
+the three words in both phases, and that the CI job summary over that report counts one
+failure and one skip. It adds a fourth that fails through `jq -e` with status 4
 and never calls `skip`, first checks that it really ends with 4, and asserts that both
 phases write `FAIL` for it and turn the run red while the declared skip beside it stays
 `SKIP`. It then records `SKIP` for a guaranteed claim in a fixture
