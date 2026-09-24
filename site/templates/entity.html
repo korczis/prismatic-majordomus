@@ -75,3 +75,5 @@
   <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start"><div class="rounded-base border border-default bg-neutral-primary-soft p-5"><h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">the {{ sec.pages | length }} {{ kind }} pages</h2><ol class="space-y-2 text-sm">{% for p in sec.pages %}<li><a href="{{ p.permalink }}" class="block rounded px-2 py-1 {% if p.permalink == page.permalink %}bg-brand-softer font-medium text-fg-brand-strong{% else %}text-body hover:bg-neutral-secondary-medium hover:text-heading{% endif %}"{% if p.permalink == page.permalink %} aria-current="page"{% endif %}><code class="font-mono text-xs">{{ p.extra.identity }}</code><span class="block text-xs {% if p.permalink == page.permalink %}text-fg-brand-strong{% else %}text-body-subtle{% endif %}">{{ p.title }}</span></a></li>{% endfor %}</ol></div></aside>
 </div>
 {% endblock body %}
+{#- a rule or a decision that draws a diagram needs the runtime that renders it, as a document does -#}
+{% block scripts %}{% if 'class="mermaid"' in page.content %}{% include "partials/mermaid.html" %}{% endif %}{% endblock scripts %}

@@ -132,7 +132,7 @@ fi
 git grep -h -I -o -E '(^|[^A-Za-z0-9_$./-])share/schemas/[A-Za-z0-9._/-]+' -- \
     ':!.ai/repo/sessions' ':!.ai/repo/adrs' ':!.ai/repo/project' \
     ':!docs/generated' ':!site/data/generated' ':!site/data/registry' \
-    ':!site/content/plan' ':!site/content/sessions' ':!test' 2>/dev/null \
+    ':!site/content/plan' ':!site/content/sessions' ':!site/content/adrs' ':!test' 2>/dev/null \
   | sed -E 's/^[^s]*//; s/[.,;:)]+$//' | LC_ALL=C sort -u > "$TMP/schemapaths" || true
 : > "$TMP/badschema"
 while IFS= read -r sp; do
@@ -144,7 +144,7 @@ if [ -s "$TMP/badschema" ]; then
   echo "share/schemas/<vendor>/<name>/<name>.v<n>.<ext> — see share/kinds.yaml:" >&2
   while IFS= read -r sp; do
     printf '  %s\n' "$sp" >&2
-    git grep -n -I -F -- "$sp" -- ':!test' | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data)' | sed 's/^/    /' >&2 || true
+    git grep -n -I -F -- "$sp" -- ':!test' | grep -vE '^(\.ai/repo/(sessions|adrs|project)|docs/generated|site/data|site/content/adrs)' | sed 's/^/    /' >&2 || true
   done < "$TMP/badschema"
   rc=1
 fi

@@ -1,0 +1,92 @@
+{#- The documentation hub: the top of /docs/.
+
+  Every number here is read, none is written. The interface counts are the registry's own
+  summary (site/data/registry/registry.json, which the executable generates from the capability
+  declarations); the kinds are the catalogue of site/data/generated/entities.json, which is
+  site/data/publication.toml joined to the index. A kind added to the layer appears here with
+  its count and its route, or with the reason it is not published, because it was added.
+
+  The search reads /docs/index.json, which scripts/site-build writes from the pages the build
+  published (scripts/lib/docs-index.mjs), so a result can only be a page that exists. -#}
+{%- set reg = load_data(path="data/registry/registry.json") -%}
+{%- set s = reg.registry.summary -%}
+{%- set ent = load_data(path="data/generated/entities.json") -%}
+<section aria-labelledby="reference-heading" class="mb-12">
+  <h2 id="reference-heading" class="text-2xl font-semibold tracking-tight text-heading">Reference</h2>
+  <p class="mt-2 max-w-3xl text-sm text-body">Generated from the repository: the interfaces from the capability registry, the objects from the index of the <code class="font-mono text-heading">.ai/</code> layer. Each count below is read from the registry at build time.</p>
+  <ul class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <li><a href="{{ get_url(path="/registry/capabilities/", trailing_slash=true) }}" class="block h-full rounded-base border border-brand-soft bg-brand-softer p-5 hover:bg-neutral-secondary-medium"><span class="font-mono text-2xl font-bold text-fg-brand-strong">{{ s.total }}</span><h3 class="mt-1 text-lg font-semibold text-heading">Capabilities</h3><p class="mt-1 text-sm text-body">Every operation, with its source, tests and the surfaces it reaches.</p></a></li>
+    <li><a href="{{ get_url(path="/docs/cli/", trailing_slash=true) }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium"><span class="font-mono text-2xl font-bold text-heading">{{ s.cli_commands }}</span><h3 class="mt-1 text-lg font-semibold text-heading">Command-line operations</h3><p class="mt-1 text-sm text-body">The command reference, generated from the executable's argument parser.</p></a></li>
+    <li><a href="{{ get_url(path="/docs/api/", trailing_slash=true) }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium"><span class="font-mono text-2xl font-bold text-heading">{{ s.http_routes }}</span><h3 class="mt-1 text-lg font-semibold text-heading">HTTP routes</h3><p class="mt-1 text-sm text-body">The HTTP API reference, one page per tag, rendered from the OpenAPI document.</p></a></li>
+    <li><a href="{{ get_url(path="/registry/mcp/", trailing_slash=true) }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium"><span class="font-mono text-2xl font-bold text-heading">{{ s.mcp_tools }} · {{ s.mcp_resources }}</span><h3 class="mt-1 text-lg font-semibold text-heading">MCP tools · resources</h3><p class="mt-1 text-sm text-body">What an MCP client can call and read.</p></a></li>
+    <li><a href="{{ get_url(path="/registry/modules/", trailing_slash=true) }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium"><span class="font-mono text-2xl font-bold text-heading">{{ s.modules }}</span><h3 class="mt-1 text-lg font-semibold text-heading">Modules</h3><p class="mt-1 text-sm text-body">The capability modules of the executable.</p></a></li>
+    <li><a href="{{ get_url(path="/openapi.json") }}" class="block h-full rounded-base border border-default bg-neutral-primary-soft p-5 hover:bg-neutral-secondary-medium"><span class="font-mono text-2xl font-bold text-heading">JSON</span><h3 class="mt-1 text-lg font-semibold text-heading">Machine-readable</h3><p class="mt-1 text-sm text-body"><code class="font-mono">/openapi.json</code> for the API, and <code class="font-mono">/docs/index.json</code> for every page and kind listed here.</p></a></li>
+  </ul>
+
+  <div class="mt-8" data-docs-search data-index="{{ get_url(path="/docs/index.json") }}">
+    <label for="docs-search-input" class="block text-sm font-medium text-heading">Search the documentation</label>
+    <input id="docs-search-input" type="search" autocomplete="off" placeholder="A rule, a decision, a command, a page…" class="mt-2 block w-full max-w-xl rounded-base border border-default-medium bg-neutral-secondary-medium px-3 py-2.5 text-sm text-heading focus:border-brand focus:ring-brand">
+    <p class="mt-2 text-xs text-body-subtle" data-docs-search-status aria-live="polite">Searches the titles and descriptions of every page this site publishes.</p>
+    <ol class="mt-3 max-w-3xl space-y-2" data-docs-search-results></ol>
+  </div>
+
+  <h3 class="mt-10 text-lg font-semibold tracking-tight text-heading">Every kind of object the layer holds</h3>
+  <p class="mt-1 max-w-3xl text-sm text-body">From <code class="font-mono text-heading">site/data/publication.toml</code>, which declares for every kind where it is published or why it is not, joined to the index.</p>
+  <div class="mt-4 overflow-x-auto" tabindex="0">
+    <table class="w-full min-w-[36rem] text-left text-sm">
+      <thead class="border-b border-default text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="py-2 pr-4">kind</th><th scope="col" class="py-2 pr-4 text-right">objects</th><th scope="col" class="py-2">published</th></tr></thead>
+      <tbody class="divide-y divide-default">
+        {%- for k in ent.catalogue %}
+        <tr>
+          <td class="py-2 pr-4 font-mono text-heading">{{ k.kind }}</td>
+          <td class="py-2 pr-4 text-right font-mono text-heading">{{ k.count }}</td>
+          <td class="py-2 text-body">
+            {%- if k.route %}<a class="font-medium text-fg-brand hover:underline" href="{{ get_url(path=k.route, trailing_slash=true) }}">{{ k.title | default(value=k.route) }}</a>{% if k.projection == "entity" %} <span class="text-xs text-body-subtle">— a page per object</span>{% endif %}
+            {%- else %}<span class="text-xs">{{ k.reason }}</span>{% endif %}
+          </td>
+        </tr>
+        {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<script>
+(() => {
+  const root = document.querySelector('[data-docs-search]');
+  if (!root) return;
+  const input = root.querySelector('input');
+  const status = root.querySelector('[data-docs-search-status]');
+  const list = root.querySelector('[data-docs-search-results]');
+  const base = root.dataset.index.replace(/docs\/index\.json$/, '');
+  let pages = null;
+  const load = () => pages ? Promise.resolve(pages) : fetch(root.dataset.index)
+    .then((r) => r.json()).then((ix) => (pages = ix.pages));
+  const render = (q) => {
+    list.replaceChildren();
+    if (!q) { status.textContent = 'Searches the titles and descriptions of every page this site publishes.'; return; }
+    const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+    const hits = pages.filter((p) => {
+      const text = `${p.title} ${p.description} ${p.kind || ''} ${p.id || ''} ${p.route}`.toLowerCase();
+      return words.every((w) => text.includes(w));
+    });
+    status.textContent = `${hits.length} page(s) match.`;
+    for (const p of hits.slice(0, 50)) {
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = base + p.route.replace(/^\//, '');
+      a.className = 'font-medium text-fg-brand hover:underline';
+      a.textContent = p.title;
+      const meta = document.createElement('span');
+      meta.className = 'ml-2 font-mono text-xs text-body-subtle';
+      meta.textContent = p.kind ? `${p.kind} · ${p.route}` : p.route;
+      const d = document.createElement('p');
+      d.className = 'text-sm text-body';
+      d.textContent = p.description;
+      li.append(a, meta, d);
+      list.append(li);
+    }
+  };
+  input.addEventListener('input', () => load().then(() => render(input.value.trim()))
+    .catch(() => { status.textContent = 'The index could not be loaded.'; }));
+})();
+</script>

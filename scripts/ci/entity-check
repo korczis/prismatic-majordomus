@@ -32,7 +32,7 @@
 #   scripts/ci/entity-check          check
 #
 # Exit 0 when every finding list is empty; 10 with an actionable finding per line otherwise.
-set -eu
+set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"
 

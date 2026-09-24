@@ -57,6 +57,13 @@ happens to agree today. The acceptance test for this rule writes one rule into t
 nothing else, and asserts that it reaches the index, the listing, its own page, the two
 404s and the typed API with no consumer touched.
 
+**The documentation is the same projection.** The hub at the top of `/docs/` and the
+machine-readable `/docs/index.json` count and list nothing of their own. The kinds and their
+counts come from the publication declaration joined to the index, and the interface counts
+come from the registry's summary. The pages come from the build that published them. A
+documentation index kept by hand is the second inventory this rule forbids, and so is a
+count typed into a page.
+
 ### What it does not require
 
 It does not require that every kind be published publicly. A prompt, a scope declaration and

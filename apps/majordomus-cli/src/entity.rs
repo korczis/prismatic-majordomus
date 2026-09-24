@@ -256,7 +256,7 @@ pub fn collisions(objects: &[Object]) -> Vec<Collision> {
 /// Which way a relation runs from the entity being read.
 ///
 /// The direction is a property of the *reading*, not of the relation: one edge in
-/// [`graph::RELATIONS`] is outgoing on the page of the object that declared it and incoming
+/// `graph::RELATIONS` is outgoing on the page of the object that declared it and incoming
 /// on the page of the object it names. Nothing in the layer writes `Incoming` down.
 ///
 /// ```
@@ -370,11 +370,11 @@ impl crate::order::Ordered for Edge {
 /// Every edge of one object: the references it declares, and the references that resolve
 /// to it.
 ///
-/// Both directions come from one table — [`graph::RELATIONS`] — so a relation added there
+/// Both directions come from one table — `graph::RELATIONS` — so a relation added there
 /// appears as a forward edge on one page and as a backlink on the other, with nothing
 /// declared twice and no bidirectional bookkeeping in the layer. A reference that resolves
 /// to nothing is not an edge; it is a finding, and
-/// [`graph::unresolved_relations`](crate::graph::unresolved_relations) is what reports it.
+/// [`graph::unresolved_relations`] is what reports it.
 ///
 /// A rule that depends on another produces one edge on each of the two pages, from the one
 /// `depends_on` the first of them declared:

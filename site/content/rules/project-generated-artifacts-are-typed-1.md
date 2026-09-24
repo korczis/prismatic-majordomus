@@ -30,7 +30,7 @@ The second half of the rule is why the encodings cannot drift. A document is one
 JSON, YAML and — where a reader is the audience — Markdown are renderings of it. Two
 renderers over two values is how a matrix in Markdown comes to disagree with the same
 matrix in JSON, and this repository refuses that shape everywhere else
-([`project.interfaces-are-projections@1`](interfaces-are-projections.v1.md)).
+([`project.interfaces-are-projections@1`](@/rules/project-interfaces-are-projections-1.md)).
 
 ## Required behaviour
 

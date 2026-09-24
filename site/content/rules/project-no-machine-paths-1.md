@@ -37,7 +37,7 @@ fallback writes the generator's own location into a file that is then committed.
 Two things let it survive. The helper existed **twice**, as `generate::relative_to` and as
 `metadata::rel_or_abs`, so fixing one left the other writing the same leak — a repeated
 semantic definition across projections, which this repository already calls a design defect
-([ADR 0004](../../adrs/0004-canonical-architecture-and-performance-truth.md)). And
+([ADR 0004](@/adrs/adr-0004.md)). And
 `derive-check` is structurally blind to this class: it regenerates in the same checkout and
 gets the same answer back, so the tree looks current. The banner disagrees only for the
 next person, in another worktree, where it appears as unexplained drift in a file nobody

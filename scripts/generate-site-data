@@ -70,6 +70,8 @@ docs/CLAIMS.yaml
 docs/RESPONSIBILITIES.yaml
 docs/generated/openapi.json
 docs/generated/registry.json
+docs/generated/graph.json
+site/data/publication.toml
 site/data/registry/why.json
 site/data/registry/why-graph.json
 site/data/registry/product.json
@@ -629,7 +631,9 @@ EOF
 # used to become blob/master/<path>, which 404s for all of the local state and for every
 # directory; scripts/ci/link-check refuses both.
 forge_paths() {
-  jq -Rn --arg files "$(git -C "$ROOT" ls-files)" '
+  # --rawfile, not --arg: the list of tracked files passed 128 KiB, which a single argv entry
+  # may not exceed on Linux; macOS has no such cap, so only the runner saw it
+  jq -Rn --rawfile files "$LINK_TRACKED" '
     ($files | split("\n") | map(select(. != ""))) as $tracked
     | ($tracked | map(split("/") | . as $p | range(1; length) | $p[:.] | join("/")) | unique) as $dirs
     | [inputs | select(. != "") | rtrimstr("/") as $p
@@ -1775,8 +1779,20 @@ jq --slurpfile pub "$STAGE/publication.json" '
               | $k + {count: ($own | length),
                       dir: ($k.route | ltrimstr("/") | rtrimstr("/")),
                       statuses: [ $own[] | .status | select(. != null) ] | unique } ],
+     # every kind the declaration names, with how many objects of it the index holds and
+     # where it is published, or why not: the documentation hub renders this and
+     # /docs/index.json carries it, so neither counts or lists kinds of its own
+     catalogue: ([ $pubs[] as $k
+                  | {kind: $k.kind, projection: $k.projection, route: ($k.route // null),
+                     title: ($k.title // null), reason: ($k.reason // null),
+                     count: ([$g.nodes[] | select(.kind == $k.kind and (.external | not))] | length)} ]
+                | sort_by(.kind)),
      entities: [ $g.nodes[] | select((.external | not) and (.kind | IN($kinds[]))) | entity(.) ]}
 ' "$GRAPH" > "$OUT/entities.json"
+# every entity page is a page a document can link to: a decision naming a sibling decision by
+# its file, or a rule naming the decision it cites, links to that page rather than to the file
+jq -r '(.kinds | map({key: .kind, value: .route}) | from_entries) as $r
+       | .entities[] | select($r[.kind]) | "\(.source)\t\($r[.kind])\(.slug)/"' "$OUT/entities.json" >> "$LINK_DOCS"
 # a section per published kind, and a page per entity of it. The directory is the route, so
 # a kind that changes address changes it here and nowhere else.
 jq -r '.kinds[] | [.kind, .route, .title, .description, (.weight|tostring)] | @tsv' "$OUT/entities.json" \
@@ -1797,8 +1813,19 @@ jq -r '.kinds[] | [.kind, .route, .title, .description, (.weight|tostring)] | @t
         "$(jstr "$etitle")" "$(printf '%s' "$etitle" | jline)" "$i" "$(jstr "$kind")" "$(jstr "$slug")" "$(jstr "$identity")" "$(jstr "$status")" "$(jstr "$source")"
       # the body is the object's own file; the page template renders the title as the one
       # h1, so the file's level-one sections step down one level, and fenced code is left alone
-      mj_record_body "$ROOT/$source" | sed -E "$LINKSED" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
-        | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 } { print }'
+      # outside fenced code, a rustdoc intra-doc link (a code span in square brackets, which is
+      # how a decision names the code it governs) resolves only inside rustdoc, so on the site
+      # it is the code span it wraps; a Markdown link or a reference link keeps its brackets
+      mj_record_body "$ROOT/$source" | project_links "$source" | awk -f "$ROOT/scripts/lib/project-markdown.awk" \
+        | awk '/^```/ { fence = !fence } !fence && /^#+ / { $0 = "#" $0 }
+               !fence { out = ""; rest = $0
+                        while (match(rest, /\[`[^`]+`\]/)) {
+                          after = substr(rest, RSTART + RLENGTH, 1)
+                          span = substr(rest, RSTART, RLENGTH)
+                          if (after != "(" && after != "[") span = substr(span, 2, RLENGTH - 2)
+                          out = out substr(rest, 1, RSTART - 1) span; rest = substr(rest, RSTART + RLENGTH) }
+                        $0 = out rest }
+               { print }'
       printf '{%% endraw %%}\n'; } > "$CONTENT_ROOT/$dir/$slug.md"
   done
 done
