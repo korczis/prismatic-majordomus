@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.7.0 -->
+     Generator: majordomus-cli 0.8.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -3965,11 +3965,11 @@ majordomus shell check [OPTIONS]
 
 Examples:
 
-- **Every shell unit against the automation inventory** — The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy. `passes` is the verdict; a tree that could not be measured says `measured: false`, which is not a pass.
+- **Every shell unit against the automation inventory** — The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy, as `/units`, `/exemptions`, `/findings` and `/passes`. The exit code is the verdict: 0 when every unit is declared and every record names a unit the tree still has, 10 on a finding, and 12 when the tree could not be measured, which is not a pass. Here the repository holds the bash library `lib/a.sh` and no inventory, so the answer is 10 and the finding names the file and the remedy.
 
   ```console
   $ majordomus shell check --format json
   ```
 
-  Verified: exits 0; prints one JSON document carrying /measured, /units, /exemptions, /findings, /passes.
+  Verified: exits 10.
 
