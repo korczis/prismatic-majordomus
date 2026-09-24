@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 138,
+      "count": 139,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 252
+      "count": 253
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 138
+      "count": 139
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 225
+      "count": 226
     },
     {
       "kind": "use-case",
@@ -3338,6 +3338,60 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0066",
+      "identity": "adr-0066",
+      "slug": "adr-0066",
+      "cockpit": "/cockpit/objects/adr/adr-0066",
+      "title": "Entry reports a verdict per claim and the evidence behind it, from one preflight value",
+      "status": "proposed",
+      "tags": [
+        "entry",
+        "environment",
+        "evidence",
+        "verification"
+      ],
+      "source": ".ai/repo/adrs/0066-entry-reports-a-verdict-per-claim-and-the-evidence-behind-it.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "project.entry-converges@2",
+          "kind": "rule",
+          "route": "/rules/project-entry-converges-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.envrc-is-an-adapter@2",
+          "kind": "rule",
+          "route": "/rules/project-envrc-is-an-adapter-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/358_entry_reports_only_evidence.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/preflight.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -7059,7 +7113,71 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0066",
+          "kind": "adr",
+          "route": "/adrs/adr-0066/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.entry-reports-only-evidence@1",
+      "identity": "project.entry-reports-only-evidence@1",
+      "slug": "project-entry-reports-only-evidence-1",
+      "cockpit": "/cockpit/objects/rule/project-entry-reports-only-evidence-1",
+      "title": "Entering the repository reports only what evidence proves",
+      "status": "active",
+      "tags": [
+        "entry",
+        "environment",
+        "evidence",
+        "verification",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/entry-reports-only-evidence.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.entry-converges@2",
+          "kind": "rule",
+          "route": "/rules/project-entry-converges-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.envrc-is-an-adapter@2",
+          "kind": "rule",
+          "route": "/rules/project-envrc-is-an-adapter-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0066",
+          "kind": "adr",
+          "route": "/adrs/adr-0066/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7100,10 +7218,24 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0066",
+          "kind": "adr",
+          "route": "/adrs/adr-0066/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.entry-converges@2",
           "kind": "rule",
           "route": "/rules/project-entry-converges-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
           "external": false
         }
       ]
@@ -7738,6 +7870,13 @@
           "label": "project.entry-converges@2",
           "kind": "rule",
           "route": "/rules/project-entry-converges-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
           "external": false
         },
         {

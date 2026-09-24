@@ -28,6 +28,7 @@ use std::time::Duration;
 
 use crate::app::App;
 use crate::cli::{EnvArgs, EnvCommand, OutputFormat, RepoArgs, DEFAULT_IDLE_SECONDS, DEFAULT_PORT};
+use crate::environment::preflight;
 use crate::environment::render::{banner, BannerMode, Presentation};
 use crate::environment::shell::{export, Dialect};
 use crate::environment::{
@@ -44,6 +45,9 @@ pub fn run(args: EnvArgs) -> Result<u8> {
     match args.command {
         None | Some(EnvCommand::Status) => status(&args.repo, args.format),
         Some(EnvCommand::Explain { field }) => explain(&args.repo, args.format, field.as_deref()),
+        Some(EnvCommand::Preflight { compact, full }) => {
+            preflight_command(&args.repo, args.format, compact, full)
+        }
         Some(EnvCommand::Banner { mode, width }) => {
             banner_command(&args.repo, mode.as_deref(), width)
         }
@@ -543,11 +547,121 @@ fn enter_command(
     let mut out = stdout.lock();
     write!(out, "{script}").map_err(Error::Transport)?;
     if let Some(mode) = mode {
-        draw(&environment, mode, &Presentation::detect());
+        let presentation = Presentation::detect();
+        // Decided before anything is read, the same way the banner decides: silence in a
+        // pipe and under CI must not cost the preflight's readings.
+        if mode != BannerMode::Off && (mode != BannerMode::Auto || presentation.interactive) {
+            let preflight = preflight::derive(&preflight::observe(
+                repository.root(),
+                &environment,
+                policy.as_ref().ok_or_else(unparsed_policy),
+                None,
+                preflight::Probe::entry(),
+            ));
+            draw(
+                &proven_services(&environment, &preflight),
+                mode,
+                &presentation,
+            );
+            eprint!("{}", preflight::compact(&preflight, presentation.unicode));
+        }
     }
     if with_bridge {
         refresh_bridge(repo);
     }
+    Ok(0)
+}
+
+/// Why a preflight could not read the policy, when the caller only kept whether it parsed.
+fn unparsed_policy() -> String {
+    "the policy does not parse; `majordomus doctor` names the key".into()
+}
+
+/// The snapshot as the banner may draw it: a service marked answering only when the
+/// preflight verified the server behind it. A connection accepted by an outdated or
+/// superseded server is not this checkout's service, and the mark a person reads on `cd`
+/// must not say it is. The assignments are exported from the snapshot as resolved, so
+/// `MAJORDOMUS_URL` still names the address a client would reach.
+fn proven_services(
+    environment: &RepositoryEnvironment,
+    preflight: &preflight::Preflight,
+) -> RepositoryEnvironment {
+    let verified = preflight
+        .check("integration.server")
+        .is_some_and(|c| c.verdict == preflight::Verdict::Verified);
+    let mut drawn = environment.clone();
+    if !verified {
+        for s in &mut drawn.services {
+            if s.availability == ServiceAvailability::Available {
+                s.availability = ServiceAvailability::Unknown;
+            }
+        }
+    }
+    drawn
+}
+
+/// `majordomus env preflight`: whether Majordomus is in force here, with the evidence.
+///
+/// Fast by default — the environment resolved without the index, the rule tally from the
+/// cache — because a person asking should get the answer in the time entry takes. `--full`
+/// builds the index, counts the rule proofs against this tree and leaves the tally for the
+/// next entry to read.
+fn preflight_command(
+    repo: &RepoArgs,
+    format: OutputFormat,
+    compact: bool,
+    full: bool,
+) -> Result<u8> {
+    let value = if full {
+        let app = App::load(repo)?;
+        let root = app.repository.root();
+        let ledger = crate::evidence::Ledger::load(root)
+            .unwrap_or_else(|_| crate::evidence::Ledger::empty());
+        let tally = preflight::RulesTally::of(&crate::rules::report(app.index(), &ledger));
+        preflight::store_rules(root, &app.repository.local_path(), &tally);
+        let environment = resolve(
+            &Inputs {
+                repository: &app.repository,
+                share: Some(&app.share),
+                index: Some(app.index()),
+                registry: Some(app.registry()),
+                policy: None,
+            },
+            &EnvironmentQuery::full(),
+        );
+        let policy = LoadedPolicy::load(&app.repository).map_err(|e| e.to_string());
+        preflight::derive(&preflight::observe(
+            root,
+            &environment,
+            policy.as_ref().map_err(Clone::clone),
+            Some(tally),
+            preflight::Probe::asked(),
+        ))
+    } else {
+        let repository = discover(repo)?;
+        let policy = LoadedPolicy::load(&repository).map_err(|e| e.to_string());
+        let (environment, _) = resolve_fast_in(repo, &repository, policy.as_ref().ok());
+        preflight::derive(&preflight::observe(
+            repository.root(),
+            &environment,
+            policy.as_ref().map_err(Clone::clone),
+            None,
+            preflight::Probe::asked(),
+        ))
+    };
+    let unicode = Presentation::detect().unicode;
+    let stdout = std::io::stdout();
+    let mut out = stdout.lock();
+    let text = match format {
+        OutputFormat::Json => {
+            serde_json::to_string_pretty(&value).map_err(|e| Error::Protocol {
+                reason: e.to_string(),
+            })? + "\n"
+        }
+        OutputFormat::Text if compact => preflight::compact(&value, unicode),
+        OutputFormat::Text => preflight::full(&value, unicode),
+    };
+    write!(out, "{text}").map_err(Error::Transport)?;
     Ok(0)
 }
 

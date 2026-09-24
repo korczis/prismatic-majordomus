@@ -300,11 +300,49 @@ pub fn overview(ctx: &Context) -> Page {
             .child(statistics)
             .child(identity)
             .child(health_card)
+            .child(preflight_card(ctx))
             .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
             .child(kinds)
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The preflight card: whether Majordomus is in force here, claim by claim.
+///
+/// It asks `environment.preflight` — the value the command line prints and the entry banner
+/// summarises — and lays out each check with its verdict word as data (`data-check`,
+/// `data-verdict`), so that a test reads the same verdicts from this page that it reads
+/// from the route. A capability that fails is shown as a failure, never as an empty card.
+fn preflight_card(ctx: &Context) -> El {
+    let p: crate::environment::preflight::Preflight =
+        match ask(ctx, "environment.preflight", json!({})) {
+            Ok(p) => p,
+            Err(e) => return card("Preflight", alert("fail", e)),
+        };
+    let items: Vec<El> = p
+        .sections
+        .iter()
+        .flat_map(|s| s.checks.iter().map(move |c| (s, c)))
+        .map(|(s, c)| {
+            el("li")
+                .class("mj-checklist-item")
+                .attr("data-check", c.id.as_str())
+                .attr("data-verdict", c.verdict.as_str())
+                .child(badge(c.verdict.status(), c.verdict.as_str()))
+                .child(
+                    el("span")
+                        .class("mj-checklist-title")
+                        .text(format!("{} · {}", s.title, c.title)),
+                )
+                .child(el("span").class("mj-checklist-detail").text(&c.summary))
+        })
+        .collect();
+    card_with(
+        "Preflight",
+        link("/api/v1/environment/preflight", "Evidence"),
+        el("ul").class("mj-checklist").children(items),
+    )
 }
 
 /// The distribution card: whether the command the README advertises works right now.

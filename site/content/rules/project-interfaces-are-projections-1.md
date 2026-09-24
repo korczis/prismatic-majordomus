@@ -1,7 +1,7 @@
 +++
 title = "External interfaces are projections of one capability definition"
 description = "External interfaces are projections of one capability definition"
-weight = 93
+weight = 94
 [extra]
 kind = "rule"
 slug = "project-interfaces-are-projections-1"

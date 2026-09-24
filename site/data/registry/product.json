@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.9.0"
   },
-  "fingerprint": "7e0728236c51b99878cfc2dca853a586c2cf625705bc622561ad3210e10141d3",
+  "fingerprint": "be39dab999daeaae93700d3049f2e5a3f7e8045c0640e43f8ee65bfccd6ce499",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -780,6 +780,15 @@
               "route": "GET /api/v1/environment/explain"
             },
             {
+              "id": "environment.preflight",
+              "title": "Whether Majordomus is in force here, and what proves it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_preflight",
+              "resource": "majordomus://environment/preflight",
+              "route": "GET /api/v1/environment/preflight"
+            },
+            {
               "id": "environment.status",
               "title": "The repository environment",
               "kind": "query",
@@ -1274,10 +1283,10 @@
         "declare-once"
       ],
       "counts": {
-        "capabilities": 20,
-        "mcp_tools": 20,
-        "mcp_resources": 7,
-        "http_routes": 20,
+        "capabilities": 21,
+        "mcp_tools": 21,
+        "mcp_resources": 8,
+        "http_routes": 21,
         "cli_paths": 7,
         "commands": 0,
         "objects": 0,
@@ -3073,7 +3082,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 52
+          "objects": 53
         },
         {
           "name": "knowledge",
@@ -3081,7 +3090,7 @@
         },
         {
           "name": "document",
-          "objects": 252
+          "objects": 253
         }
       ],
       "rule_refs": [
@@ -3330,11 +3339,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 306,
+        "mcp_resources": 308,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 305,
+        "objects": 307,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3544,7 +3553,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 138
+          "objects": 139
         }
       ],
       "rule_refs": [
@@ -3908,11 +3917,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 140,
+        "mcp_resources": 141,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 138,
+        "objects": 139,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9495,7 +9504,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (52)",
+        "title": "adr (53)",
         "features": [
           "knowledge"
         ]
@@ -9626,7 +9635,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (138)",
+        "title": "rule (139)",
         "features": [
           "doctrine"
         ]
@@ -10450,19 +10459,19 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1488,
-    "builtin": 115,
-    "declarative": 1373,
+    "capabilities": 1493,
+    "builtin": 116,
+    "declarative": 1377,
     "modules": 38,
-    "mcp_tools": 112,
-    "mcp_resources": 1414,
-    "http_routes": 114,
-    "cli_commands": 118,
+    "mcp_tools": 113,
+    "mcp_resources": 1419,
+    "http_routes": 115,
+    "cli_commands": 119,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1373,
+    "objects": 1377,
     "by_kind": {
-      "adr": 52,
+      "adr": 53,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -10471,7 +10480,7 @@
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 252,
+      "document": 253,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -10483,12 +10492,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 5,
-      "rule": 138,
+      "rule": 139,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 225,
+      "test": 226,
       "use-case": 46,
       "workspace": 1
     },

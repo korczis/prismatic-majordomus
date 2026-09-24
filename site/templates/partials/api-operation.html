@@ -16,9 +16,9 @@
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">{{ o.stability }}</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="benchmark policy">benchmark {{ o.benchmark }}{% if o.benchmark_reason %}: {{ o.benchmark_reason }}{% endif %}</span></li>
     <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body" title="cache policy">cache {{ o.cache }}{% if o.cache_detail %} ({{ o.cache_detail }}){% endif %}</span></li>
-    {%- if o.mcp_tool %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP tool {{ o.mcp_tool }}</span></li>{% endif -%}
-    {%- if o.mcp_resource %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">MCP resource {{ o.mcp_resource }}</span></li>{% endif -%}
-    {%- if o.cli %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body">$ {{ o.cli }}</span></li>{% endif -%}
+    {%- if o.mcp_tool %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP tool {{ o.mcp_tool }}</span></li>{% endif -%}
+    {%- if o.mcp_resource %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">MCP resource {{ o.mcp_resource }}</span></li>{% endif -%}
+    {%- if o.cli %}<li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 font-mono text-body break-all">$ {{ o.cli }}</span></li>{% endif -%}
   </ul>
 
   {%- if o.parameters | length > 0 -%}

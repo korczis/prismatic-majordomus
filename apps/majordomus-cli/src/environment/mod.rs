@@ -41,6 +41,7 @@
 //! opens a socket to anything but the loopback address the lease names.
 
 pub mod cache;
+pub mod preflight;
 pub mod probe;
 pub mod render;
 pub mod resolve;

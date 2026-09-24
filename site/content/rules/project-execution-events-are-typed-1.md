@@ -1,7 +1,7 @@
 +++
 title = "A long operation reports typed events, and a transport only renders them"
 description = "A long operation reports typed events, and a transport only renders them"
-weight = 85
+weight = 86
 [extra]
 kind = "rule"
 slug = "project-execution-events-are-typed-1"

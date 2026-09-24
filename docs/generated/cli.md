@@ -68,6 +68,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus env export`](#majordomus-env-export) | `/docs/cli/env/export/` | The variable assignments a shell in this repository benefits from, for `eval`. Assignments only: no command, no side effect |
 | [`majordomus env enter`](#majordomus-env-enter) | `/docs/cli/env/enter/` | Enter the repository: the assignments a shell here benefits from on standard output, the banner on standard error, the workflow bridge refreshed when a declaration behind it moved, and the runtime ensured — the whole of what entering this repository is, as one call, so that no person and no agent has to remember a sequence. Never builds, never reaches a remote network, and never waits for a server it started to answer |
 | [`majordomus env explain`](#majordomus-env-explain) | `/docs/cli/env/explain/` | Where each value came from: the file, command or constant that decided it, the resolver that read it, and how far it can be trusted |
+| [`majordomus env preflight`](#majordomus-env-preflight) | `/docs/cli/env/preflight/` | Whether Majordomus is in force in this checkout, claim by claim, with the evidence behind each verdict: git, the episode and its briefing, the task and handover, the policy, rules and ADRs, the shared server and the surfaces it serves, the peer board, recorded test runs, rule enforcement, provider projections and the deployment. A verdict that asserts something is in force always names its evidence. Resolves fast, from the rule tally a `--full` run cached; the HTTP route `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight` answer the same value |
 | [`majordomus commands`](#majordomus-commands) | `/docs/cli/commands/` | Every command this repository offers, from whichever program offers it: the graph, one command, where each one is projected, and the workflow bridge derived from it |
 | [`majordomus commands list`](#majordomus-commands-list) | `/docs/cli/commands/list/` | Every command, one line each: what it is, what running it changes, and where it is projected |
 | [`majordomus commands show`](#majordomus-commands-show) | `/docs/cli/commands/show/` | One command in full: its arguments, its effect, what it needs, and every surface that carries it |
@@ -1662,7 +1663,7 @@ Examples:
 
 What this checkout is: the project, version control, the toolchains it declares, what the layer holds, the workflows, the provider projections and the local services
 
-Subcommands: [`majordomus env status`](#majordomus-env-status), [`majordomus env banner`](#majordomus-env-banner), [`majordomus env export`](#majordomus-env-export), [`majordomus env enter`](#majordomus-env-enter), [`majordomus env explain`](#majordomus-env-explain).
+Subcommands: [`majordomus env status`](#majordomus-env-status), [`majordomus env banner`](#majordomus-env-banner), [`majordomus env export`](#majordomus-env-export), [`majordomus env enter`](#majordomus-env-enter), [`majordomus env explain`](#majordomus-env-explain), [`majordomus env preflight`](#majordomus-env-preflight).
 
 ```text
 majordomus env [OPTIONS] [COMMAND]
@@ -1833,6 +1834,35 @@ Examples:
   ```
 
   Verified: exits 0; prints project.version, source, resolver.
+
+<a id="majordomus-env-preflight"></a>
+## `majordomus env preflight`
+
+Whether Majordomus is in force in this checkout, claim by claim, with the evidence behind each verdict: git, the episode and its briefing, the task and handover, the policy, rules and ADRs, the shared server and the surfaces it serves, the peer board, recorded test runs, rule enforcement, provider projections and the deployment. A verdict that asserts something is in force always names its evidence. Resolves fast, from the rule tally a `--full` run cached; the HTTP route `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight` answer the same value
+
+```text
+majordomus env preflight [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--compact` | flag | — | The short form entering the repository draws: one line of claims and the most urgent thing to look at |
+| `--full` | flag | — | Build the index and count the rule proofs now, and leave the tally for entry to read |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What is in force here, and what proves it** — One verdict per claim — `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable` — and the evidence it rests on: the file, command or loopback answer that was read. A rule file on disk is not a rule anything enforces, an address that accepts a connection is not a server of this version, and a recorded test run at another commit does not verify this tree, so none of them is reported as one. `attention` lists what needs a look, most urgent first.
+
+  ```console
+  $ majordomus env preflight --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /schema, /sections/0/checks/0/verdict, /attention.
 
 <a id="majordomus-commands"></a>
 ## `majordomus commands`

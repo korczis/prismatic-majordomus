@@ -1,7 +1,7 @@
 +++
 title = "The mesh observes nodes; it authorizes nothing and holds one registry"
 description = "The mesh observes nodes; it authorizes nothing and holds one registry"
-weight = 95
+weight = 96
 [extra]
 kind = "rule"
 slug = "project-mesh-is-observation-not-authority-1"
