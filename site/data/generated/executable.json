@@ -1169,7 +1169,7 @@
           "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
           "route": "/guarantees/mcp-uri-resolution/",
           "status": "guaranteed",
-          "test": "test/cases/72_rust_mcp.sh"
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
         }
       ],
       "cli": null,
@@ -1183,7 +1183,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
       "tests": [
-        "test/cases/72_rust_mcp.sh"
+        "apps/majordomus-cli/tests/http_serve.rs"
       ],
       "title": "Get one object",
       "tool": "majordomus_get"
@@ -1196,7 +1196,7 @@
           "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
           "route": "/guarantees/mcp-uri-resolution/",
           "status": "guaranteed",
-          "test": "test/cases/72_rust_mcp.sh"
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
         }
       ],
       "cli": null,
@@ -1210,7 +1210,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
       "tests": [
-        "test/cases/72_rust_mcp.sh"
+        "apps/majordomus-cli/tests/http_serve.rs"
       ],
       "title": "List objects",
       "tool": "majordomus_list"
@@ -1223,7 +1223,7 @@
           "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
           "route": "/guarantees/mcp-uri-resolution/",
           "status": "guaranteed",
-          "test": "test/cases/72_rust_mcp.sh"
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
         }
       ],
       "cli": null,
@@ -1237,7 +1237,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
       "tests": [
-        "test/cases/72_rust_mcp.sh"
+        "apps/majordomus-cli/tests/http_serve.rs"
       ],
       "title": "Search objects",
       "tool": "majordomus_search"
@@ -1250,7 +1250,7 @@
           "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
           "route": "/guarantees/mcp-uri-resolution/",
           "status": "guaranteed",
-          "test": "test/cases/72_rust_mcp.sh"
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
         }
       ],
       "cli": null,
@@ -1264,7 +1264,7 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/objects.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/objects.rs",
       "tests": [
-        "test/cases/72_rust_mcp.sh"
+        "apps/majordomus-cli/tests/http_serve.rs"
       ],
       "title": "Verify the index against the working tree",
       "tool": "majordomus_verify_objects"
@@ -2083,7 +2083,7 @@
         "implementation": "apps/majordomus-cli/src/bench/coverage.rs",
         "route": "/guarantees/benchmark-coverage-derived/",
         "status": "guaranteed",
-        "test": "test/cases/91_canonical_architecture.sh"
+        "test": "apps/majordomus-cli/tests/bench_units.rs"
       }
     ],
     "cli": [
@@ -2092,7 +2092,7 @@
         "implementation": "apps/majordomus-cli/src/cli.rs",
         "route": "/guarantees/cli-documentation-executable/",
         "status": "guaranteed",
-        "test": "apps/majordomus-cli/tests/cli_docs.rs"
+        "test": "apps/majordomus-cli/tests/cli_examples.rs"
       }
     ],
     "executable": [
@@ -2129,7 +2129,7 @@
         "implementation": "apps/majordomus-cli/src/capability/registry.rs",
         "route": "/guarantees/capability-registry/",
         "status": "guaranteed",
-        "test": "test/cases/76_capabilities_projections.sh"
+        "test": "apps/majordomus-cli/tests/registry.rs"
       },
       {
         "id": "schema-driven-kinds",
@@ -2157,7 +2157,7 @@
         "implementation": "apps/majordomus-cli/src/capability/module.rs",
         "route": "/guarantees/capability-modules/",
         "status": "guaranteed",
-        "test": "test/cases/91_canonical_architecture.sh"
+        "test": "apps/majordomus-cli/tests/registry.rs"
       },
       {
         "id": "hot-path-no-rebuild",
@@ -2171,7 +2171,7 @@
         "implementation": "apps/majordomus-cli/src/capability/executor.rs",
         "route": "/guarantees/execution-cache-equivalence/",
         "status": "guaranteed",
-        "test": "test/cases/91_canonical_architecture.sh"
+        "test": "apps/majordomus-cli/tests/executor.rs"
       },
       {
         "id": "provider-projections-one-renderer",
@@ -2199,7 +2199,7 @@
         "implementation": "apps/majordomus-cli/src/why.rs",
         "route": "/guarantees/why-catalogue-discovered/",
         "status": "guaranteed",
-        "test": "test/cases/98_why_catalogue.sh"
+        "test": "apps/majordomus-cli/tests/why.rs"
       },
       {
         "id": "why-references-resolve",
@@ -2332,7 +2332,7 @@
         "implementation": "apps/majordomus-cli/src/models/mod.rs",
         "route": "/guarantees/models-no-secret-fields/",
         "status": "guaranteed",
-        "test": "apps/majordomus-cli/src/models/mod.rs"
+        "test": "test/cases/131_models.sh"
       },
       {
         "id": "commit-message-is-judged",
@@ -2392,7 +2392,7 @@
         "implementation": "apps/majordomus-cli/src/lease.rs",
         "route": "/guarantees/mcp-lease-resilience/",
         "status": "guaranteed",
-        "test": "test/cases/90_mcp_shared_server.sh"
+        "test": "apps/majordomus-cli/tests/mcp_shared.rs"
       },
       {
         "id": "mcp-lease-lost",
@@ -2422,7 +2422,7 @@
     "claims": 51,
     "modules": 38
   },
-  "generator": "majordomus-cli 0.7.0",
+  "generator": "majordomus-cli 0.8.0",
   "modules": [
     {
       "capabilities": [
@@ -3015,7 +3015,7 @@
           "implementation": "apps/majordomus-cli/src/capability/builtin/objects.rs",
           "route": "/guarantees/mcp-uri-resolution/",
           "status": "guaranteed",
-          "test": "test/cases/72_rust_mcp.sh"
+          "test": "apps/majordomus-cli/tests/http_serve.rs"
         }
       ],
       "id": "objects",

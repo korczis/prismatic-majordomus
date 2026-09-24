@@ -907,7 +907,18 @@ mj_uc_cmd_impact() {
   cmds="${cmds% }"; rules="${rules% }"; ucs="${ucs% }"
   # behavioural cases that declare coverage of an affected command, and the rules' tests
   for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:.*\b$c\b" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
-  for r in $rules; do n="$(mj_doc_index "$r" 2>/dev/null)" && cases="$cases $(mj_doc_list "$n" tests | tr '\n' ' ')"; done
+  # a changed rule's own proof: the cases its x-majordomus block names. Read from the resolved
+  # rule set, which carries every rule, and not from the doctrine table, which carries only the
+  # dispatched ones and was never loaded here — so a changed rule used to name no case at all.
+  if [ -n "$rules" ]; then
+    . "$MJ_LIB_DIR/rules.sh"
+    if mj_rules_load 2>/dev/null; then
+      for r in $rules; do
+        n="$(mj_rule_index "$r" 2>/dev/null)" || continue
+        cases="$cases $(mj_rule_list "$n" tests | grep '^test/cases/' | tr '\n' ' ')"
+      done
+    fi
+  fi
   cases="$(printf '%s\n' $cases | LC_ALL=C sort -u | tr '\n' ' ')"; cases="${cases% }"
   local scen=""; for id in $ucs; do i="$(mj_uc_index "$id")" && mj_uc_has_scenario "$i" && scen="$scen $id"; done; scen="${scen# }"
   if [ "$json" = 1 ]; then

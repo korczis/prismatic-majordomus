@@ -6,7 +6,7 @@ weight = 40
 id = "let-the-provider-draw-the-episode-boundary"
 source = ".ai/repo/use-cases/let-the-provider-draw-the-episode-boundary.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

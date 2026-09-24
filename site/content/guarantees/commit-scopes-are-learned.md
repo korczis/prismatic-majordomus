@@ -1,7 +1,7 @@
 +++
 title = "The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal"
 description = "The usual way to answer *\"what scope does this change belong to?\"* is a table of path"
-weight = 186
+weight = 189
 [extra]
 claim_id = "commit-scopes-are-learned"
 status = "guaranteed"

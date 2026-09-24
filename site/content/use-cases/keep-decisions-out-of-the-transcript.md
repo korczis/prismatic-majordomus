@@ -6,7 +6,7 @@ weight = 38
 id = "keep-decisions-out-of-the-transcript"
 source = ".ai/repo/use-cases/keep-decisions-out-of-the-transcript.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

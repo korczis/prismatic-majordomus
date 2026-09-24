@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: mcp-peers
 # The peer board, across the worktrees a branch is actually worked on in. ADR 0044.
 #
 # Every worker of this repository is bootstrapped with the sentence "one shared server

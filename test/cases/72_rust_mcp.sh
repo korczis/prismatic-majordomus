@@ -1,3 +1,4 @@
+# claims: mcp-data-driven, mcp-degraded-not-silent, mcp-stdio-surface
 # The Rust executable serves the layer the shell tool writes: built from the same tree, it
 # is started inside a repository `init` created, spoken to over its real stdin and stdout
 # with protocol frames, and asked for what the layer declares. Then the layer is extended

@@ -6,7 +6,7 @@ weight = 18
 id = "carry-a-blocker-across-a-handover"
 source = ".ai/repo/use-cases/carry-a-blocker-across-a-handover.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation
