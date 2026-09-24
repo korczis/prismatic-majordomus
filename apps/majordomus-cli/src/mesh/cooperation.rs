@@ -2334,6 +2334,14 @@ impl Cooperation {
         let body =
             serde_json::to_value(&request).map_err(|e| RoundError::Unreachable(e.to_string()))?;
         let message = sign(&self.identity, Domain::SyncRequest, body);
+        // The push is counted as the request leaves, not when its answer returns. The peer
+        // holds these events from the moment it ingests them, before its answer is written,
+        // so a count taken on the answer trails every reading of the peer: in between, the
+        // events are held there and not yet sent here, and the count that lands a moment
+        // later reads as an event that travelled twice. The peer counts what it serves the
+        // same way, as it forms the answer. A round that fails after this has still put its
+        // events on the wire, and a round that sends them again counts them again.
+        self.counters.events_sent.fetch_add(sent, Ordering::Relaxed);
         let started = Instant::now();
         let failed = |why: String| {
             self.counters.syncs_failed.fetch_add(1, Ordering::Relaxed);
@@ -2402,7 +2410,6 @@ impl Cooperation {
             }
         }
         self.counters.syncs_out.fetch_add(1, Ordering::Relaxed);
-        self.counters.events_sent.fetch_add(sent, Ordering::Relaxed);
         Ok(())
     }
 
@@ -3582,7 +3589,12 @@ mod tests {
     struct InProcess {
         runtimes: Mutex<BTreeMap<String, Weak<Cooperation>>>,
         cut: Mutex<Vec<String>>,
+        /// Run after a peer has answered a sync and before the answer reaches the dialer:
+        /// the window a slow machine stretches, held still.
+        answered: Mutex<Option<Answered>>,
     }
+
+    type Answered = Box<dyn Fn() + Send>;
 
     impl LinkTransport for InProcess {
         fn post(&self, endpoint: &str, path: &str, message: &Signed) -> Result<LinkReply, String> {
@@ -3596,11 +3608,17 @@ mod tests {
                 .get(endpoint)
                 .and_then(Weak::upgrade)
                 .ok_or_else(|| format!("{endpoint}: connection refused"))?;
-            Ok(match path {
+            let reply = match path {
                 HELLO_PATH => target.accept_hello(message),
                 SYNC_PATH => target.accept_sync(message),
                 other => return Err(format!("no route {other}")),
-            })
+            };
+            if path == SYNC_PATH {
+                if let Some(answered) = self.answered.lock().unwrap().as_ref() {
+                    answered();
+                }
+            }
+            Ok(reply)
         }
     }
 
@@ -3883,6 +3901,64 @@ mod tests {
         );
         assert_eq!(
             a.status().journal.duplicates + c.status().journal.duplicates,
+            0
+        );
+    }
+
+    #[test]
+    fn a_send_is_counted_before_the_peer_can_be_seen_holding_it() {
+        // The three-runtime integration test reads the counters once every runtime holds
+        // every event, and asserts that quiet rounds add nothing. On a slow runner that
+        // reading fell between a peer ingesting a push and the push's answer reaching the
+        // dialer, which counted the push only then: the send landed after the reading and
+        // passed for an event travelling twice. The transport here stops in that window.
+        let net = Arc::new(InProcess::default());
+        let a = runtime(&net, "a:1", "root", TrustPolicy::Tofu);
+        let b = runtime(&net, "b:1", "root", TrustPolicy::Tofu);
+        let key = a.dial(&["b:1".into()]).unwrap();
+        for (r, name, scope) in [(&a, "sa", "apps"), (&b, "sb", "docs")] {
+            r.claim(
+                &session(name),
+                vec![scope.into()],
+                None,
+                ClaimMode::Exclusive,
+                None,
+            )
+            .unwrap();
+        }
+        let seen: Arc<Mutex<Vec<(usize, u64, u64)>>> = Arc::default();
+        let (dialer, peer, log) = (Arc::downgrade(&a), Arc::downgrade(&b), Arc::clone(&seen));
+        *net.answered.lock().unwrap() = Some(Box::new(move || {
+            let (Some(dialer), Some(peer)) = (dialer.upgrade(), peer.upgrade()) else {
+                return;
+            };
+            let held = peer
+                .journal
+                .events()
+                .iter()
+                .filter(|e| &e.stream == dialer.journal.own_stream())
+                .count();
+            log.lock().unwrap().push((
+                held,
+                dialer.status().counters.events_sent,
+                peer.status().counters.events_served,
+            ));
+        }));
+        a.sync_with(&key).unwrap();
+        a.sync_with(&key).unwrap();
+        assert_eq!(
+            *seen.lock().unwrap(),
+            vec![(2, 2, 2), (2, 2, 2)],
+            "while the answer is on its way the peer holds the dialer's session and claim, \
+             and both sides already count what they sent; the quiet round adds nothing"
+        );
+        assert_eq!(
+            a.status().counters.events_sent,
+            2,
+            "and the answer adds nothing"
+        );
+        assert_eq!(
+            a.status().journal.duplicates + b.status().journal.duplicates,
             0
         );
     }
