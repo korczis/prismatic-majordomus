@@ -48,6 +48,16 @@ t="$(fixture B 'jq -n --arg blob "$(cat "$OUT/big.json")" ".")'
 MJ_ROOT="$t" expect_exit 10 "$GATE"
 expect_grep 'scripts/gen:3'
 
+# 3b. the spelling the check once missed: git's listing of tracked paths as one argument.
+#     generate-site-data's forge_paths did exactly this; the listing was 130298 bytes on
+#     master and 131102 on the branch that crossed the cap, and the site job failed on Linux.
+t="$(fixture B2 'jq -Rn --arg files "$(git -C "$ROOT" ls-files)" "[inputs]"')"
+MJ_ROOT="$t" expect_exit 10 "$GATE"
+expect_grep 'scripts/gen:3'
+# ...and its correction, the listing read from the file it was written to, is accepted
+t="$(fixture B3 'jq -Rn --rawfile files "$LINK_TRACKED" "[inputs]"')"
+MJ_ROOT="$t" expect_exit 0 "$GATE"
+
 # 4. the correction is accepted — this is what the fixed generator does
 t="$(fixture C 'jq -S --slurpfile caps "$OUT/capabilities.json" -f x.jq "$REG" > out.json')"
 MJ_ROOT="$t" expect_exit 0 "$GATE"
@@ -67,6 +77,6 @@ MJ_ROOT="$T/nope" expect_exit 12 "$GATE"
 
 # 8. the gate carries no copy of the call it looks for: a scan that matched its own source
 #    would refuse itself the day somebody quoted an example into it
-grep -qE -- '--arg(json)? [A-Za-z_][A-Za-z0-9_]* "\$\((jq [^)]*-c|cat )' "$GATE" \
+grep -qE -- '--arg(json)? [A-Za-z_][A-Za-z0-9_]* "\$\((jq [^)]*-c|cat |git [^)]*ls-files)' "$GATE" \
   && { echo "    the gate contains the very construct it refuses, so it would flag itself"; exit 1; }
 true

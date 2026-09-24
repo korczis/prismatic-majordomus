@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
 pub(crate) mod devcontext;
@@ -161,6 +162,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         obligations,
         gates,
         deploy,
+        delivery,
         evidence,
         rules,
         executions,

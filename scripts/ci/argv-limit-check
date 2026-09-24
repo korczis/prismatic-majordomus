@@ -12,6 +12,10 @@
 # failed with it — a gate, a CI job and twelve suite cases — and the message named none of
 # the cause.
 #
+# It came back through a spelling this check did not know. `forge_paths` in the same
+# generator handed jq git's listing of tracked paths as one `--arg`: 130298 bytes on master,
+# 131102 once a branch added its files, and every tracked-path lookup failed the same way.
+#
 # **Why the failure is invisible on the machine this code is written on.** macOS applies no
 # per-argument cap; its ARG_MAX is 1048576 and a 131 KB argument fits inside it comfortably.
 # Every local run passed, on every developer machine, while CI failed on Linux. A runtime
@@ -20,10 +24,11 @@
 # on the machine the code is written on, as well as on the one that runs it.
 #
 # What is refused: an `--arg` or `--argjson` whose value is a command substitution that reads
-# a whole collection out of a file — `jq -c` over a path, or `cat`. A collection grows with
-# the repository, so its size is not a property of the call site and no reviewer can bound it
-# by eye. The correction is `--slurpfile`/`--rawfile` from the file, or stdin: every other
-# whole-file payload in these generators already travels that way.
+# a whole collection out of a file — `jq -c` over a path, or `cat` — or out of git's index,
+# `git ... ls-files`. A collection grows with the repository, so its size is not a property of
+# the call site and no reviewer can bound it by eye. The correction is `--slurpfile`/`--rawfile`
+# from the file, or stdin: every other whole-file payload in these generators already travels
+# that way.
 #
 # What is NOT refused, deliberately: a substitution that extracts a scalar (`jq -r '.version'`,
 # a `yv`/`jbool` helper). Those are bounded by what they name, and refusing them would make
@@ -59,9 +64,9 @@ scripts_that_run_jq() {
 findings=0
 while IFS= read -r f; do
   [ -n "$f" ] || continue
-  # A whole collection read out of a file and handed to jq as one argument. Two spellings:
-  # a `jq -c` over a path, and a `cat`. Both yield something whose size the repository's
-  # contents decide, not the call site.
+  # A whole collection read out of a file and handed to jq as one argument. Three spellings:
+  # a `jq -c` over a path, a `cat`, and git's listing of tracked paths. Each yields something
+  # whose size the repository's contents decide, not the call site.
   while IFS= read -r hit; do
     [ -n "$hit" ] || continue
     line="${hit%%:*}"
@@ -72,7 +77,7 @@ while IFS= read -r f; do
     printf '  problem:    a whole collection reaches jq as one argument; Linux refuses a single argument over %s bytes (MAX_ARG_STRLEN), whatever ARG_MAX says\n' "$LIMIT"
     printf '  correction: pass the file instead — --slurpfile NAME FILE (then read $NAME[0]) or --rawfile, or send it on stdin\n'
   done <<EOF
-$(grep -nE -- '--arg(json)? [A-Za-z_][A-Za-z0-9_]* "\$\((jq [^)]*-c|cat )' "$f" 2>/dev/null || true)
+$(grep -nE -- '--arg(json)? [A-Za-z_][A-Za-z0-9_]* "\$\((jq [^)]*-c|cat |git [^)]*ls-files)' "$f" 2>/dev/null || true)
 EOF
 done <<EOF
 $(scripts_that_run_jq)

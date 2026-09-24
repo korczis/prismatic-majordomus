@@ -10,9 +10,11 @@ status: draft
 weight: 200
 featured: false
 areas: [governance]
-modules: [deploy]
+modules: [deploy, delivery]
 kinds: [deployment]
 rules: [majordomus.deployment-contract]
+docs: [docs/DELIVERY.md]
+adrs: [adr-0071]
 tags: [deployment]
 ---
 
@@ -21,6 +23,10 @@ tags: [deployment]
 `deploy.list`, `deploy.get` and `deploy.check` read the deployment objects the index holds
 and decide whether each would work against the capability registry and the workspace it
 sits in.
+
+`delivery.report` and `delivery.feature` decide whether each product feature exists: on
+the trunk, contained in what the public site serves, publicly verified, tested, its evidence
+published and linked — every dimension computed, and unknown never a pass (ADR 0071).
 
 ## What it does not do
 

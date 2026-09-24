@@ -86,6 +86,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
+    Delivery(DeliveryArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
     Entity(EntityArgs),
 }
@@ -631,6 +633,78 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus delivery`: every product feature against the delivery invariant. The output
+/// shape is global, so it reads the way a person writes it — `delivery report --format json`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeliveryArgs, DeliveryCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "delivery", "report", "--check", "--format", "json"])
+///     .unwrap();
+/// let args: DeliveryArgs = match cli.command {
+///     Command::Delivery(args) => args,
+///     other => panic!("expected `delivery`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, DeliveryCommand::Report { check: true }));
+///
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "delivery"]).is_err());
+/// ```
+pub struct DeliveryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `report` or `show`. Required: the group runs nothing of its own.
+    pub command: DeliveryCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus delivery`: the command line of `delivery.report` and
+/// `delivery.feature`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeliveryCommand};
+///
+/// fn parse(args: &[&str]) -> DeliveryCommand {
+///     let cli = Cli::try_parse_from(args.iter().copied()).unwrap();
+///     let Command::Delivery(args) = cli.command else { panic!("delivery") };
+///     args.command
+/// }
+///
+/// assert!(matches!(parse(&["majordomus", "delivery", "report"]), DeliveryCommand::Report { check: false }));
+/// assert!(matches!(
+///     parse(&["majordomus", "delivery", "show", "evidence", "--check"]),
+///     DeliveryCommand::Show { id, check: true } if id == "evidence"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "delivery", "show"]).is_err());
+/// ```
+pub enum DeliveryCommand {
+    /// Every feature against every dimension, with the development stage of what does not exist
+    Report {
+        /// Exit 10 when any feature does not exist
+        #[arg(long)]
+        check: bool,
+    },
+    /// One feature: every dimension with its reason and remediation
+    Show {
+        /// The feature's id, as `product list` gives it
+        id: String,
+        /// Exit 10 when the feature does not exist
+        #[arg(long)]
+        check: bool,
     },
 }
 
@@ -2364,6 +2438,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "proves", "not-a-test"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "delivery report",
+        examples: &[ExampleDoc {
+            id: "delivery-report-json",
+            title: "Does each feature exist, dimension by dimension",
+            description: "The same answer `GET /api/v1/delivery` and the MCP tool `majordomus_delivery` return: every feature ordered by id, each of the six dimensions with its verdict, reason and remediation, the development stage of a feature that does not exist, the paths it is implemented by, and the publication read once for all of them. A repository with no site and no trunk says unknown, and unknown is never a pass, so nothing here exists.",
+            argv: &["delivery", "report", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/features/0/dimensions", "/tallies/exists", "/publication/identity/state"]),
+        }],
+    },
+    CommandExamples {
+        command: "delivery show",
+        examples: &[ExampleDoc {
+            id: "delivery-show",
+            title: "One feature, and what stands between it and existing",
+            description: "Every dimension of one feature with the sentence that decided it and what would change it. `--check` turns the conjunction into the exit code: 10 unless every dimension passes. An id the layer does not declare is not found, never reported as not delivered.",
+            argv: &["delivery", "show", "fixture-feature"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-feature", "on_master", "NOT DELIVERED"]),
         }],
     },
     CommandExamples {

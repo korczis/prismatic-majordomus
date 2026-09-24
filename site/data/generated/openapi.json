@@ -12,6 +12,8 @@
     "op-commit-scopes": "docs/api/commit/",
     "op-commit-validate": "docs/api/commit/",
     "op-continuity-state": "docs/api/continuity/",
+    "op-delivery-feature": "docs/api/delivery/",
+    "op-delivery-report": "docs/api/delivery/",
     "op-deploy-check": "docs/api/deploy/",
     "op-deploy-get": "docs/api/deploy/",
     "op-deploy-list": "docs/api/deploy/",
@@ -232,6 +234,10 @@
     "schema-CriticalBlocker": "docs/api/devtask/",
     "schema-Declaration": "docs/api/repository/",
     "schema-Deduplicated": "docs/api/devcontext/",
+    "schema-DeliveryReport": "docs/api/delivery/",
+    "schema-DeliveryState": "docs/api/delivery/",
+    "schema-DeliveryTallies": "docs/api/delivery/",
+    "schema-DeliveryVerdict": "docs/api/delivery/",
     "schema-DemonstrateReport": "docs/api/executions/",
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
@@ -246,9 +252,12 @@
     "schema-DevTaskExecution": "docs/api/devtask/",
     "schema-DevTaskPosition": "docs/api/devtask/",
     "schema-DevTaskSynchronisation": "docs/api/devtask/",
+    "schema-DevelopmentStage": "docs/api/delivery/",
     "schema-Diagnosis": "docs/api/why/",
     "schema-Diagnostic": "docs/api/shared/",
     "schema-DiagnosticCode": "docs/api/worktree/",
+    "schema-Dimension": "docs/api/delivery/",
+    "schema-DimensionId": "docs/api/delivery/",
     "schema-DirectoryNode": "docs/api/directories/",
     "schema-DirectoryReport": "docs/api/directories/",
     "schema-DirectoryState": "docs/api/directories/",
@@ -317,6 +326,7 @@
     "schema-Fact": "docs/api/graph/",
     "schema-Feature": "docs/api/web/",
     "schema-FeatureCounts": "docs/api/product/",
+    "schema-FeatureDelivery": "docs/api/delivery/",
     "schema-FeatureEvidence": "docs/api/product/",
     "schema-FeatureList": "docs/api/product/",
     "schema-FeatureSummary": "docs/api/product/",
@@ -355,7 +365,9 @@
     "schema-HttpMethod": "docs/api/capabilities/",
     "schema-Identity": "docs/api/design/",
     "schema-IdentityFacet": "docs/api/session-domain/",
+    "schema-IdentityRead": "docs/api/delivery/",
     "schema-IdentityReport": "docs/api/session-domain/",
+    "schema-Implementation": "docs/api/delivery/",
     "schema-ImpliedObligation": "docs/api/gates/",
     "schema-Inference": "docs/api/models/",
     "schema-InspectReport": "docs/api/worktree/",
@@ -485,6 +497,7 @@
     "schema-ProviderStatus": "docs/api/mesh/",
     "schema-PublicApiQuality": "docs/api/quality/",
     "schema-PublicIdentity": "docs/api/mesh/",
+    "schema-Publication": "docs/api/delivery/",
     "schema-QualityAnswer": "docs/api/quality/",
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
@@ -578,6 +591,7 @@
     "schema-Severity": "docs/api/shared/",
     "schema-Sighting": "docs/api/mesh/",
     "schema-Signal": "docs/api/why/",
+    "schema-SiteVerification": "docs/api/delivery/",
     "schema-Source": "docs/api/design/",
     "schema-Spelling": "docs/api/session-domain/",
     "schema-Stability": "docs/api/shared/",
@@ -657,6 +671,7 @@
     "tag-commands": "docs/api/commands/",
     "tag-commit": "docs/api/commit/",
     "tag-continuity": "docs/api/continuity/",
+    "tag-delivery": "docs/api/delivery/",
     "tag-deploy": "docs/api/deploy/",
     "tag-design": "docs/api/design/",
     "tag-devcontext": "docs/api/devcontext/",
@@ -693,9 +708,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 114,
-    "schemas": 538,
-    "tags": 38
+    "operations": 116,
+    "schemas": 550,
+    "tags": 39
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -792,6 +807,8 @@
     "commit.scopes": "commit",
     "commit.validate": "commit",
     "continuity.state": "continuity",
+    "delivery.feature": "delivery",
+    "delivery.report": "delivery",
     "deploy.check": "deploy",
     "deploy.get": "deploy",
     "deploy.list": "deploy",
@@ -1016,6 +1033,10 @@
     "CriticalBlocker": "devtask",
     "Declaration": "repository",
     "Deduplicated": "devcontext",
+    "DeliveryReport": "delivery",
+    "DeliveryState": "delivery",
+    "DeliveryTallies": "delivery",
+    "DeliveryVerdict": "delivery",
     "DemonstrateReport": "executions",
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
@@ -1030,9 +1051,12 @@
     "DevTaskExecution": "devtask",
     "DevTaskPosition": "devtask",
     "DevTaskSynchronisation": "devtask",
+    "DevelopmentStage": "delivery",
     "Diagnosis": "why",
     "Diagnostic": "shared",
     "DiagnosticCode": "worktree",
+    "Dimension": "delivery",
+    "DimensionId": "delivery",
     "DirectoryNode": "directories",
     "DirectoryReport": "directories",
     "DirectoryState": "directories",
@@ -1101,6 +1125,7 @@
     "Fact": "graph",
     "Feature": "web",
     "FeatureCounts": "product",
+    "FeatureDelivery": "delivery",
     "FeatureEvidence": "product",
     "FeatureList": "product",
     "FeatureSummary": "product",
@@ -1139,7 +1164,9 @@
     "HttpMethod": "capabilities",
     "Identity": "design",
     "IdentityFacet": "session-domain",
+    "IdentityRead": "delivery",
     "IdentityReport": "session-domain",
+    "Implementation": "delivery",
     "ImpliedObligation": "gates",
     "Inference": "models",
     "InspectReport": "worktree",
@@ -1269,6 +1296,7 @@
     "ProviderStatus": "mesh",
     "PublicApiQuality": "quality",
     "PublicIdentity": "mesh",
+    "Publication": "delivery",
     "QualityAnswer": "quality",
     "QualityReport": "quality",
     "QualitySeverity": "quality",
@@ -1362,6 +1390,7 @@
     "Severity": "shared",
     "Sighting": "mesh",
     "Signal": "why",
+    "SiteVerification": "delivery",
     "Source": "design",
     "Spelling": "session-domain",
     "Stability": "shared",
@@ -7877,6 +7906,198 @@
       "variants": []
     },
     {
+      "description": "Every feature of the layer against the delivery invariant.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "DeliveryReport",
+      "properties": [
+        {
+          "description": "`majordomus/delivery/v1`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The trunk ref every `on_master` verdict was measured against, when one was found.",
+          "name": "trunk",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What the public site was observed to serve, read once for every feature.",
+          "name": "publication",
+          "refs": [
+            "Publication"
+          ],
+          "required": true,
+          "type": "Publication"
+        },
+        {
+          "description": "The counts.",
+          "name": "tallies",
+          "refs": [
+            "DeliveryTallies"
+          ],
+          "required": true,
+          "type": "DeliveryTallies"
+        },
+        {
+          "description": "Every feature, ordered by id.",
+          "name": "features",
+          "refs": [
+            "FeatureDelivery"
+          ],
+          "required": true,
+          "type": "array of FeatureDelivery"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "delivery.report"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Delivered, or not — and when not, how far development got and which dimensions stand in\nthe way. Two variants of one type rather than a flag beside a stage: a delivered feature\nhas no stage to report, and a stage can never be read as delivery.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "DeliveryState",
+      "properties": [],
+      "type": "one of 2 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureDelivery"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Every dimension passes.",
+          "properties": [
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"delivered\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "At least one dimension does not pass.",
+          "properties": [
+            {
+              "description": "How far development has carried it.",
+              "name": "stage",
+              "refs": [
+                "DevelopmentStage"
+              ],
+              "required": true,
+              "type": "DevelopmentStage"
+            },
+            {
+              "description": "The dimensions that do not pass, in the order of the conjunction.",
+              "name": "blocking",
+              "refs": [
+                "DimensionId"
+              ],
+              "required": true,
+              "type": "array of DimensionId"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"not_delivered\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
+      "description": "How many features pass each measured dimension, and how many exist.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "DeliveryTallies",
+      "properties": [
+        {
+          "description": "Features examined.",
+          "name": "features",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "On the trunk.",
+          "name": "on_master",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Contained in the public identity.",
+          "name": "deployed",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Publicly verified.",
+          "name": "publicly_verified",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "Every dimension passes.",
+          "name": "exists",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeliveryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One dimension's answer. Three values and never two: a question that could not be asked\nis not a question answered yes, and it is not one answered no either.",
+      "home": "delivery",
+      "is_enum": true,
+      "name": "DeliveryVerdict",
+      "properties": [],
+      "type": "\"pass\" | \"fail\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Dimension"
+      ],
+      "values": [
+        {
+          "description": "The dimension holds, and the reason says what was observed.",
+          "value": "pass"
+        },
+        {
+          "description": "The dimension was measured and does not hold.",
+          "value": "fail"
+        },
+        {
+          "description": "The dimension could not be measured. Not a pass.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The answer of `executions.demonstrate`.",
       "home": "executions",
       "is_enum": false,
@@ -9006,6 +9227,45 @@
       "variants": []
     },
     {
+      "description": "How far development has carried a feature that does not exist yet. A ladder: a rung is\nreached only when every rung below it passes, so a feature whose tests are unknown is\n`on_master` even when the site already serves it.",
+      "home": "delivery",
+      "is_enum": true,
+      "name": "DevelopmentStage",
+      "properties": [],
+      "type": "\"unknown\" | \"not_implemented\" | \"implemented_on_branch\" | \"on_master\" | \"tested\" | \"deployed\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeliveryState"
+      ],
+      "values": [
+        {
+          "description": "Git could not say where its implementation is.",
+          "value": "unknown"
+        },
+        {
+          "description": "It names no implementation, or nothing ever committed one.",
+          "value": "not_implemented"
+        },
+        {
+          "description": "Its latest implementation revision is on a branch and not on the trunk.",
+          "value": "implemented_on_branch"
+        },
+        {
+          "description": "Its implementation is on the trunk.",
+          "value": "on_master"
+        },
+        {
+          "description": "On the trunk, with every required test current.",
+          "value": "tested"
+        },
+        {
+          "description": "Tested, and contained in what the public site serves.",
+          "value": "deployed"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "What a reader's selection implies, computed by counting rather than by inference.\n\nThe arithmetic is the whole model and is stated so a reader can check it: a selection\nresolves to a set of moments; an area or an audience scores the number of selected\nmoments that name it; a recommendation scores the number that name it and carries\ntheir ids. There is no weighting and no percentage, because there is no model behind\none.",
       "home": "why",
       "is_enum": false,
@@ -9238,6 +9498,93 @@
         {
           "description": "A move crossed devices and was made by copy, repair and verification.",
           "value": "worktree.cross_device"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "One dimension, decided: the verdict, the sentence that decided it, and what would move it.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "Dimension",
+      "properties": [
+        {
+          "description": "Which dimension.",
+          "name": "dimension",
+          "refs": [
+            "DimensionId"
+          ],
+          "required": true,
+          "type": "DimensionId"
+        },
+        {
+          "description": "Pass, fail or unknown.",
+          "name": "verdict",
+          "refs": [
+            "DeliveryVerdict"
+          ],
+          "required": true,
+          "type": "DeliveryVerdict"
+        },
+        {
+          "description": "What was observed, in one sentence.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What would change the verdict; absent on a pass.",
+          "name": "remediation",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureDelivery"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The six dimensions of the delivery invariant, in the order the conjunction is written.",
+      "home": "delivery",
+      "is_enum": true,
+      "name": "DimensionId",
+      "properties": [],
+      "type": "\"on_master\" | \"deployed\" | \"publicly_verified\" | \"required_tests_current\" | \"test_evidence_published\" | \"ui_linked\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeliveryState",
+        "Dimension"
+      ],
+      "values": [
+        {
+          "description": "The feature's latest implementation revision is reachable from the trunk.",
+          "value": "on_master"
+        },
+        {
+          "description": "The public site's identity commit contains that revision.",
+          "value": "deployed"
+        },
+        {
+          "description": "The publication was verified from outside: the site answers with a clean identity,\na second probe agrees, and GitHub's own build of the published branch succeeded.",
+          "value": "publicly_verified"
+        },
+        {
+          "description": "Every test the feature requires has a current passing execution.",
+          "value": "required_tests_current"
+        },
+        {
+          "description": "The evidence of those executions is published.",
+          "value": "test_evidence_published"
+        },
+        {
+          "description": "The feature is linked from the user interface.",
+          "value": "ui_linked"
         }
       ],
       "variants": []
@@ -11022,6 +11369,8 @@
         "commit.scopes",
         "commit.validate",
         "continuity.state",
+        "delivery.report",
+        "delivery.feature",
         "deploy.get",
         "deploy.list",
         "deploy.check",
@@ -13356,6 +13705,78 @@
       "variants": []
     },
     {
+      "description": "One feature against the invariant.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "FeatureDelivery",
+      "properties": [
+        {
+          "description": "The feature's id.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Its title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The status its file declares. Editorial, and not one of the dimensions.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The conjunction: true only when every dimension passes.",
+          "name": "exists",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Delivered, or the development stage and what blocks it.",
+          "name": "delivery",
+          "refs": [
+            "DeliveryState"
+          ],
+          "required": true,
+          "type": "DeliveryState"
+        },
+        {
+          "description": "Every dimension, in the order of the conjunction.",
+          "name": "dimensions",
+          "refs": [
+            "Dimension"
+          ],
+          "required": true,
+          "type": "array of Dimension"
+        },
+        {
+          "description": "What it is implemented by.",
+          "name": "implementation",
+          "refs": [
+            "Implementation"
+          ],
+          "required": true,
+          "type": "Implementation"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "delivery.feature"
+      ],
+      "used_by_schemas": [
+        "DeliveryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "What is guaranteed about a feature, counted from the claims it names: never a word a\nperson wrote about the feature's maturity.",
       "home": "product",
       "is_enum": false,
@@ -15257,6 +15678,88 @@
       "variants": []
     },
     {
+      "description": "What reading the public identity document gave.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "IdentityRead",
+      "properties": [],
+      "type": "one of 3 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "Publication"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The site answered with an identity naming the commit it was built from.",
+          "properties": [
+            {
+              "description": "The commit, as the site states it.",
+              "name": "commit",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "Whether the tree it was built from was dirty, when the identity says.",
+              "name": "dirty",
+              "refs": [],
+              "required": false,
+              "type": "boolean | null"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"served\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The site was asked and gave no identity: no network, no route, not a document.",
+          "properties": [
+            {
+              "description": "Why, in one clause.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"unreachable\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "There was nothing to ask: no site address or no publication model.",
+          "properties": [
+            {
+              "description": "Why, in one clause.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"unconfigured\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "The identities of this checkout: one facet per subject, with a standing note about what\na reader must not do with them.\n\n```\nuse majordomus_cli::capability::builtin::IdentityReport;\nuse majordomus_cli::session::identities;\n\nlet dir = tempfile::tempdir().unwrap();\nlet report = IdentityReport {\n    checkout: dir.path().display().to_string(),\n    facets: identities(dir.path()),\n    findings: Vec::new(),\n};\nlet subjects: Vec<&str> = report.facets.iter().map(|f| f.subject.as_str()).collect();\nassert_eq!(subjects, [\"repository\", \"checkout\", \"episode\", \"provider_session\"]);\n```",
       "home": "session-domain",
       "is_enum": false,
@@ -15291,6 +15794,42 @@
         "session_domain.identity"
       ],
       "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The paths a feature is implemented by and the revisions that last touched them.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "Implementation",
+      "properties": [
+        {
+          "description": "Repository-relative paths, derived from what the feature names: the source file of\nevery capability module, `lib/<command>.sh` of every shell command the dispatcher\nsources, and the `implementation` of every claim.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The latest commit touching them reachable from `HEAD`.",
+          "name": "head_revision",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The latest commit touching them reachable from the trunk.",
+          "name": "master_revision",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "FeatureDelivery"
+      ],
       "values": [],
       "variants": []
     },
@@ -22091,6 +22630,53 @@
       "variants": []
     },
     {
+      "description": "The publication as observed: where the site is, what it serves, and whether that was\nverified.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "Publication",
+      "properties": [
+        {
+          "description": "The site's address, when one was found.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The identity document's path under it, from the publication model.",
+          "name": "identity_path",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "What reading it gave.",
+          "name": "identity",
+          "refs": [
+            "IdentityRead"
+          ],
+          "required": true,
+          "type": "IdentityRead"
+        },
+        {
+          "description": "Whether the publication was verified.",
+          "name": "verification",
+          "refs": [
+            "SiteVerification"
+          ],
+          "required": true,
+          "type": "SiteVerification"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeliveryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "The answer: the measurement, or the reason there was not one.",
       "home": "quality",
       "is_enum": false,
@@ -27267,6 +27853,81 @@
       "variants": []
     },
     {
+      "description": "Whether the publication was verified from outside.",
+      "home": "delivery",
+      "is_enum": false,
+      "name": "SiteVerification",
+      "properties": [],
+      "type": "one of 3 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "Publication"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "Clean identity, a second probe agrees, GitHub's own build succeeded.",
+          "properties": [
+            {
+              "description": "What was observed.",
+              "name": "detail",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"verified\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Measured, and it does not hold.",
+          "properties": [
+            {
+              "description": "What was observed.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"refused\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Could not be measured.",
+          "properties": [
+            {
+              "description": "Why.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "state",
+              "refs": [],
+              "required": true,
+              "type": "\"unmeasured\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "One stylesheet the pair set was derived from.",
       "home": "design",
       "is_enum": false,
@@ -31937,6 +32598,134 @@
         }
       ],
       "slug": "continuity"
+    },
+    {
+      "description": "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery.",
+      "name": "delivery",
+      "operations": [
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "delivery report",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/delivery\"",
+          "description": "Every product feature of the layer against the delivery invariant, ordered by id: the six dimensions with their verdicts, reasons and remediations; the development stage when it is not delivered; the paths it is implemented by and the revisions that last touched them at HEAD and on the trunk; and the publication — the public site's identity, read once, and whether scripts/pages verified it. Reads git and the network; the site address can be replaced with MAJORDOMUS_DELIVERY_SITE_URL.",
+          "home": "delivery",
+          "id": "delivery.report",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_delivery",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/delivery",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::delivery",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Does each feature exist: the result.",
+              "schema": "DeliveryReport",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DeliveryReport",
+          "stability": "experimental",
+          "summary": "Does each feature exist"
+        },
+        {
+          "benchmark": "waived",
+          "benchmark_reason": "external_dependency",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "delivery show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/delivery/feature?id=benchmarks\"",
+          "description": "One product feature against the delivery invariant: every dimension with its verdict, the sentence that decided it and what would change it, whether it exists, and — when it does not — how far development has carried it and which dimensions block it. An id the layer does not declare is not found rather than answered as not delivered.",
+          "home": "delivery",
+          "id": "delivery.feature",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_delivery_feature",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The feature's id, as `product.features` gives it.",
+              "examples": [
+                {
+                  "case": "first-feature",
+                  "value": "\"benchmarks\""
+                }
+              ],
+              "name": "id",
+              "required": true,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/delivery/feature",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::delivery",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Does this feature exist: the result.",
+              "schema": "FeatureDelivery",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "FeatureDelivery",
+          "stability": "experimental",
+          "summary": "Does this feature exist"
+        }
+      ],
+      "slug": "delivery"
     },
     {
       "description": "The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client.",

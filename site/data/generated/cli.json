@@ -156,6 +156,12 @@
           "route": "/docs/cli/rules/"
         },
         {
+          "about": "Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass",
+          "command": "majordomus delivery",
+          "name": "delivery",
+          "route": "/docs/cli/delivery/"
+        },
+        {
           "about": "Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names",
           "command": "majordomus entity",
           "name": "entity",
@@ -20689,6 +20695,429 @@
       "usage": "majordomus rules proves [OPTIONS] <ID>"
     },
     {
+      "about": "Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every feature against every dimension, with the development stage of what does not exist",
+          "command": "majordomus delivery report",
+          "name": "report",
+          "route": "/docs/cli/delivery/report/"
+        },
+        {
+          "about": "One feature: every dimension with its reason and remediation",
+          "command": "majordomus delivery show",
+          "name": "show",
+          "route": "/docs/cli/delivery/show/"
+        }
+      ],
+      "command": "majordomus delivery",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "delivery",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "delivery"
+      ],
+      "route": "/docs/cli/delivery/",
+      "usage": "majordomus delivery [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every feature against every dimension, with the development stage of what does not exist",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus delivery",
+          "name": "delivery",
+          "route": "/docs/cli/delivery/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Exit 10 when any feature does not exist",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus delivery report",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "delivery",
+            "report",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus delivery report --format json",
+          "description": "The same answer `GET /api/v1/delivery` and the MCP tool `majordomus_delivery` return: every feature ordered by id, each of the six dimensions with its verdict, reason and remediation, the development stage of a feature that does not exist, the paths it is implemented by, and the publication read once for all of them. A repository with no site and no trunk says unknown, and unknown is never a pass, so nothing here exists.",
+          "expectation": "exits 0; prints one JSON document carrying /features/0/dimensions, /tallies/exists, /publication/identity/state",
+          "id": "delivery-report-json",
+          "setup": [],
+          "title": "Does each feature exist, dimension by dimension"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "report",
+      "parent_route": "/docs/cli/delivery/",
+      "path": [
+        "majordomus",
+        "delivery",
+        "report"
+      ],
+      "route": "/docs/cli/delivery/report/",
+      "usage": "majordomus delivery report [OPTIONS]"
+    },
+    {
+      "about": "One feature: every dimension with its reason and remediation",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus delivery",
+          "name": "delivery",
+          "route": "/docs/cli/delivery/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The feature's id, as `product list` gives it",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Exit 10 when the feature does not exist",
+          "long": "check",
+          "name": "check",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "CHECK"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus delivery show",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "delivery",
+            "show",
+            "fixture-feature"
+          ],
+          "command": "majordomus delivery show fixture-feature",
+          "description": "Every dimension of one feature with the sentence that decided it and what would change it. `--check` turns the conjunction into the exit code: 10 unless every dimension passes. An id the layer does not declare is not found, never reported as not delivered.",
+          "expectation": "exits 0; prints fixture-feature, on_master, NOT DELIVERED",
+          "id": "delivery-show",
+          "setup": [],
+          "title": "One feature, and what stands between it and existing"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "show",
+      "parent_route": "/docs/cli/delivery/",
+      "path": [
+        "majordomus",
+        "delivery",
+        "show"
+      ],
+      "route": "/docs/cli/delivery/show/",
+      "usage": "majordomus delivery show [OPTIONS] <ID>"
+    },
+    {
       "about": "Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names",
       "ancestors": [
         {
@@ -21100,10 +21529,10 @@
     }
   ],
   "counts": {
-    "arguments": 922,
-    "commands": 130,
-    "examples": 137,
-    "runnable": 118
+    "arguments": 940,
+    "commands": 133,
+    "examples": 139,
+    "runnable": 120
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.9.0",
