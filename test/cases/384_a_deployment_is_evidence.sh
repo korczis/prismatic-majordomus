@@ -13,6 +13,9 @@
 # and a record of B, read back after C, is stale without anyone re-observing.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
+# The fixture repository carries no share of its own, and CI clears any ambient one, so the
+# kinds and the other shipped declarations come from this checkout's share, as siblings do.
+MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 repo="$PWD/repo"; site="$PWD/site"
 mkdir -p "$repo" "$site"
@@ -43,8 +46,11 @@ trap stop_http EXIT
 
 observe() { # <expected-exit> <verdict> <args...>
   local want="$1" verdict="$2"; shift 2
-  "$RB" served observe --repo "$repo" --url "$HTTP_BASE" --format json "$@" > out.json 2> err.txt
-  local rc=$?
+  # the case runs under `bash -eu`: a non-zero verdict is the answer under test, so its
+  # status is captured rather than allowed to end the case before it is compared
+  local rc=0
+  "$RB" served observe --repo "$repo" --url "$HTTP_BASE" --format json "$@" > out.json 2> err.txt \
+    || rc=$?
   [ "$rc" = "$want" ] || { echo "    served observe $* exited $rc, expected $want"; cat out.json err.txt; exit 1; }
   jq -e --arg v "$verdict" '.observation.verdict == $v' out.json >/dev/null \
     || { echo "    served observe $* judged $(jq -r .observation.verdict out.json), expected $verdict"; cat out.json; exit 1; }
@@ -80,7 +86,8 @@ observe 0 served --commit "$B"
 "$RB" served show --repo "$repo" --commit "$B" --format json > show.json || { echo "    served show failed"; exit 1; }
 jq -e '.deployments | length == 1 and .[0].deployment == "pages" and .[0].now.verdict == "served"' show.json >/dev/null \
   || { echo "    show does not report pages as served against B"; cat show.json; exit 1; }
-"$RB" served show --repo "$repo" --commit "$C" --format json > show.json
+rc=0; "$RB" served show --repo "$repo" --commit "$C" --format json > show.json || rc=$?
+[ "$rc" = 0 ] || { echo "    served show against C exited $rc, expected 0"; cat show.json; exit 1; }
 jq -e '.deployments[0].observation.verdict == "served" and .deployments[0].now.verdict == "stale"' show.json >/dev/null \
   || { echo "    a record of B still reads as served once C is asked about"; cat show.json; exit 1; }
 
