@@ -160,6 +160,14 @@ for (const page of pages) {
 console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, over ${touched} page(s)`);
 '
 fi
+# /docs/index.json: the machine-readable documentation index, read off the pages this build
+# just wrote rather than listed anywhere, so it names exactly the routes a visitor can open.
+# Written after every pass that edits a page, because it records what the pages say.
+if [ -d "$PUBLIC" ]; then
+  echo "== docs index"
+  node "$ROOT/scripts/lib/docs-index.mjs" "$PUBLIC" "$SITE/data/generated/entities.json" \
+    "$SITE/data/registry/registry.json"
+fi
 # the declaration that makes the directory a surface: written by the producer, beside its
 # own output, and read back by discovery. Nothing else in the repository is told it exists.
 if [ "$SERVE" = 1 ]; then
