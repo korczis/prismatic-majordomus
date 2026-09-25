@@ -97,6 +97,7 @@
     "op-rules-proves": "docs/api/rules/",
     "op-rules-report": "docs/api/rules/",
     "op-rules-show": "docs/api/rules/",
+    "op-served-show": "docs/api/served/",
     "op-server-status": "docs/api/server/",
     "op-session_domain-identity": "docs/api/session-domain/",
     "op-session_domain-machine": "docs/api/session-domain/",
@@ -148,6 +149,7 @@
     "schema-Budget": "docs/api/devcontext/",
     "schema-Budgets": "docs/api/deploy/",
     "schema-Build": "docs/api/deploy/",
+    "schema-BuildIdentity": "docs/api/served/",
     "schema-BuildReport": "docs/api/distribution/",
     "schema-CachePolicy": "docs/api/capabilities/",
     "schema-CancelInput": "docs/api/executions/",
@@ -235,6 +237,7 @@
     "schema-DemonstrateReport": "docs/api/executions/",
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
+    "schema-DeploymentStanding": "docs/api/served/",
     "schema-DeploymentStatus": "docs/api/deploy/",
     "schema-DeploymentView": "docs/api/deploy/",
     "schema-DesignReport": "docs/api/design/",
@@ -366,6 +369,7 @@
     "schema-Interface": "docs/api/deploy/",
     "schema-IssueTrace": "docs/api/trace/",
     "schema-JudgedCommit": "docs/api/commit/",
+    "schema-Judgement": "docs/api/served/",
     "schema-KindCount": "docs/api/environment/",
     "schema-KindEntry": "docs/api/entity/",
     "schema-KindList": "docs/api/entity/",
@@ -419,6 +423,7 @@
     "schema-Obligation": "docs/api/obligations/",
     "schema-ObligationClosure": "docs/api/obligations/",
     "schema-ObligationState": "docs/api/obligations/",
+    "schema-Observation": "docs/api/served/",
     "schema-OpenSession": "docs/api/continuity/",
     "schema-OperationParity": "docs/api/quality/",
     "schema-Origin": "docs/api/repository/",
@@ -570,6 +575,8 @@
     "schema-Seed": "docs/api/devcontext/",
     "schema-Selector": "docs/api/devcontext/",
     "schema-SelectorRule": "docs/api/devcontext/",
+    "schema-ServedStanding": "docs/api/served/",
+    "schema-ServedVerdict": "docs/api/served/",
     "schema-ServerStanding": "docs/api/shared/",
     "schema-ServerStatus": "docs/api/server/",
     "schema-ServerView": "docs/api/server/",
@@ -684,6 +691,7 @@
     "tag-release": "docs/api/release/",
     "tag-repository": "docs/api/repository/",
     "tag-rules": "docs/api/rules/",
+    "tag-served": "docs/api/served/",
     "tag-server": "docs/api/server/",
     "tag-session_domain": "docs/api/session-domain/",
     "tag-trace": "docs/api/trace/",
@@ -693,9 +701,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 114,
-    "schemas": 538,
-    "tags": 38
+    "operations": 115,
+    "schemas": 544,
+    "tags": 39
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -877,6 +885,7 @@
     "rules.proves": "rules",
     "rules.report": "rules",
     "rules.show": "rules",
+    "served.show": "served",
     "server.status": "server",
     "session_domain.identity": "session-domain",
     "session_domain.machine": "session-domain",
@@ -932,6 +941,7 @@
     "Budget": "devcontext",
     "Budgets": "deploy",
     "Build": "deploy",
+    "BuildIdentity": "served",
     "BuildReport": "distribution",
     "CachePolicy": "capabilities",
     "CancelInput": "executions",
@@ -1019,6 +1029,7 @@
     "DemonstrateReport": "executions",
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
+    "DeploymentStanding": "served",
     "DeploymentStatus": "deploy",
     "DeploymentView": "deploy",
     "DesignReport": "design",
@@ -1150,6 +1161,7 @@
     "Interface": "deploy",
     "IssueTrace": "trace",
     "JudgedCommit": "commit",
+    "Judgement": "served",
     "KindCount": "environment",
     "KindEntry": "entity",
     "KindList": "entity",
@@ -1203,6 +1215,7 @@
     "Obligation": "obligations",
     "ObligationClosure": "obligations",
     "ObligationState": "obligations",
+    "Observation": "served",
     "OpenSession": "continuity",
     "OperationParity": "quality",
     "Origin": "repository",
@@ -1354,6 +1367,8 @@
     "Seed": "devcontext",
     "Selector": "devcontext",
     "SelectorRule": "devcontext",
+    "ServedStanding": "served",
+    "ServedVerdict": "served",
     "ServerStanding": "shared",
     "ServerStatus": "server",
     "ServerView": "server",
@@ -3298,6 +3313,49 @@
       "used_by": [],
       "used_by_schemas": [
         "DeploymentView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation.\n\n```\nuse majordomus_cli::served::BuildIdentity;\nlet id = BuildIdentity {\n    commit: \"a\".repeat(40),\n    dirty: false,\n    source_version: Some(\"0.7.0\".into()),\n    source_hash: None,\n};\n// what is judged is the commit and whether the tree it was built from was committed\nassert_eq!(id.commit.len(), 40);\nassert!(!id.dirty);\n```",
+      "home": "served",
+      "is_enum": false,
+      "name": "BuildIdentity",
+      "properties": [
+        {
+          "description": "The full commit the served build was made from.",
+          "name": "commit",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Whether the tree it was built from had uncommitted changes. A dirty build names a\ncommit it does not equal, so it proves no commit.",
+          "name": "dirty",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "The version the build states, when it states one.",
+          "name": "source_version",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The fingerprint of the site's canonical inputs, when the build states one.",
+          "name": "source_hash",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Observation"
       ],
       "values": [],
       "variants": []
@@ -7991,6 +8049,46 @@
       "variants": []
     },
     {
+      "description": "One deployment's newest record and what it proves about the commit asked. Both are\ncarried: the recorded judgement is what was seen, `now` is what it still proves.\n\n```\nuse majordomus_cli::capability::builtin::served::DeploymentStanding;\nuse majordomus_cli::served::ServedVerdict;\nlet json = r#\"{\"deployment\":\"pages\",\"observation\":{\"schema\":\"majordomus.served-observation/v1\",\n  \"deployment\":\"pages\",\"url\":\"https://majordomus.dev/build.json\",\n  \"expected\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"verdict\":\"served\",\n  \"reason\":\"the deployment serves aaaaaaaaaaaa\",\"at\":\"1970-01-01T00:00:00Z\"},\n  \"now\":{\"verdict\":\"stale\",\"reason\":\"it does not contain bbbbbbbbbbbb\"}}\"#;\nlet s: DeploymentStanding = serde_json::from_str(json).unwrap();\n// seen as served, and no longer proving the commit asked about\nassert_eq!(s.observation.judgement.verdict, ServedVerdict::Served);\nassert_eq!(s.now.verdict, ServedVerdict::Stale);\n```",
+      "home": "served",
+      "is_enum": false,
+      "name": "DeploymentStanding",
+      "properties": [
+        {
+          "description": "The deployment name.",
+          "name": "deployment",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The newest record of it.",
+          "name": "observation",
+          "refs": [
+            "Observation"
+          ],
+          "required": true,
+          "type": "Observation"
+        },
+        {
+          "description": "That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on.",
+          "name": "now",
+          "refs": [
+            "Judgement"
+          ],
+          "required": true,
+          "type": "Judgement"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ServedStanding"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Where a deployment stands.\n\n`Status` is the right name inside this module; the schema component namespace is flat,\nand `distribution::Status` answers a different question, so each says which it is.",
       "home": "deploy",
       "is_enum": true,
@@ -11106,6 +11204,7 @@
         "repository.scope",
         "repository.scope_classify",
         "objects.search",
+        "served.show",
         "server.status",
         "session_domain.identity",
         "session_domain.machine",
@@ -15781,6 +15880,37 @@
       "variants": []
     },
     {
+      "description": "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n#### use majordomus_cli::served::Ancestry;\n#### struct N; impl Ancestry for N {\n####     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n####     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n#### }\n#### fn fake() -> impl Ancestry { N }\n```",
+      "home": "served",
+      "is_enum": false,
+      "name": "Judgement",
+      "properties": [
+        {
+          "description": "The verdict.",
+          "name": "verdict",
+          "refs": [
+            "ServedVerdict"
+          ],
+          "required": true,
+          "type": "ServedVerdict"
+        },
+        {
+          "description": "Why, in one line a reader can act on.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentStanding"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "How many valid objects of one kind the layer holds.",
       "home": "environment",
       "is_enum": false,
@@ -18883,6 +19013,81 @@
           "value": "undeclared"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```",
+      "home": "served",
+      "is_enum": false,
+      "name": "Observation",
+      "properties": [
+        {
+          "description": "Always `OBSERVATION_SCHEMA`.",
+          "name": "schema",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Which deployment: the name the caller observed it under (`pages`, or a deployment\nobject's id).",
+          "name": "deployment",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The identity URL probed.",
+          "name": "url",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The commit that was expected, full.",
+          "name": "expected",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What was served, when a build identity was received.",
+          "name": "served",
+          "refs": [
+            "BuildIdentity"
+          ],
+          "required": false,
+          "type": "BuildIdentity | null"
+        },
+        {
+          "description": "The verdict.",
+          "name": "verdict",
+          "refs": [
+            "ServedVerdict"
+          ],
+          "required": true,
+          "type": "ServedVerdict"
+        },
+        {
+          "description": "Why, in one line a reader can act on.",
+          "name": "reason",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When, RFC 3339 UTC.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DeploymentStanding"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -26901,6 +27106,91 @@
         "CompilerPolicy"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Every deployment's standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n#### struct A; impl Ancestry for A {\n####     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n####     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &\"a\".repeat(40), None, &A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \"nothing observed yet\");\nassert_eq!(s.unreadable, 0);\n```",
+      "home": "served",
+      "is_enum": false,
+      "name": "ServedStanding",
+      "properties": [
+        {
+          "description": "The full commit every record was re-judged against.",
+          "name": "expected",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The checkout-local file the records were read from.",
+          "name": "observations",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Lines of that file that were not readable observations.",
+          "name": "unreadable",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "One entry per deployment observed, in name order.",
+          "name": "deployments",
+          "refs": [
+            "DeploymentStanding"
+          ],
+          "required": true,
+          "type": "array of DeploymentStanding"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "served.show"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```",
+      "home": "served",
+      "is_enum": true,
+      "name": "ServedVerdict",
+      "properties": [],
+      "type": "\"served\" | \"stale\" | \"unreachable\" | \"malformed\" | \"dirty\" | \"undecided\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "Judgement",
+        "Observation"
+      ],
+      "values": [
+        {
+          "description": "The served build is the expected commit or contains it. The only passing verdict.",
+          "value": "served"
+        },
+        {
+          "description": "The served build does not contain the expected commit: the deployment is behind.",
+          "value": "stale"
+        },
+        {
+          "description": "Nothing was received. The deployment was not measured.",
+          "value": "unreachable"
+        },
+        {
+          "description": "Something was received and it is not a build identity.",
+          "value": "malformed"
+        },
+        {
+          "description": "The served build was made from an uncommitted tree, so it proves no commit.",
+          "value": "dirty"
+        },
+        {
+          "description": "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer.",
+          "value": "undecided"
+        }
+      ],
       "variants": []
     },
     {
@@ -37941,6 +38231,95 @@
         }
       ],
       "slug": "rules"
+    },
+    {
+      "description": "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface.",
+      "name": "served",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "served show",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/served?commit=HEAD&deployment=pages\"",
+          "description": "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing.",
+          "home": "served",
+          "id": "served.show",
+          "kind": "query",
+          "mcp_resource": {
+            "name": "served",
+            "uri": "majordomus://served"
+          },
+          "mcp_tool": "majordomus_served",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The commit each record is re-judged against, any revision git resolves; `HEAD` when\nabsent.",
+              "examples": [
+                {
+                  "case": "pages-against-head",
+                  "value": "\"HEAD\""
+                }
+              ],
+              "name": "commit",
+              "required": false,
+              "type": "string"
+            },
+            {
+              "description": "Only this deployment.",
+              "examples": [
+                {
+                  "case": "pages-against-head",
+                  "value": "\"pages\""
+                }
+              ],
+              "name": "deployment",
+              "required": false,
+              "type": "string"
+            }
+          ],
+          "path": "/api/v1/served",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::served",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "What each deployment was last seen serving: the result.",
+              "schema": "ServedStanding",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "ServedStanding",
+          "stability": "behaviorally_verified",
+          "summary": "What each deployment was last seen serving"
+        }
+      ],
+      "slug": "served"
     },
     {
       "description": "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds.",

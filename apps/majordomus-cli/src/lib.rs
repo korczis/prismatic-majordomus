@@ -61,6 +61,7 @@ pub mod release;
 pub mod repository;
 pub mod rules;
 pub mod scope;
+pub mod served;
 pub mod session;
 pub mod share;
 pub(crate) mod shared;

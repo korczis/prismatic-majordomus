@@ -85,6 +85,8 @@ tags:
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
   - name: rules
     description: "What this repository refuses, and what it can actually show for each refusal. A rule declares a class — blocking, where a gate refuses the work, or advisory, where a reader is expected to have read it — and an enforcement block naming either the validator the dispatcher calls or the behavioural cases that prove it. This module joins that declaration to the tree and to the ledger of recorded runs, and reports, per rule, whether what it names is there, whether a runner owns it, whether it was ever run, whether the run passed, and whether the run is older than what it is about. A blocking rule whose proof is missing, dangling or failing is a finding, because a rule nobody can prove is a rule nobody enforces."
+  - name: served
+    description: "Whether a deployment serves the commit it was meant to: the build identity a site serves, read from outside the way a visitor reads it, judged by commit containment and recorded so that a later reader can re-judge it. Only `served` passes; a site that could not be reached, an identity that could not be read, a build from an uncommitted tree and a served commit this clone does not hold are each an unanswered question, never a yes. Observing reaches the network and is a command of the trusted command line; reading the recorded standing is a read on every surface."
   - name: server
     description: "The shared server of this checkout and of every other checkout of the same git repository: what each lease says, whether the server it names answers, whether what answers is the code on disk at this executable's version, and how many peers each one holds."
   - name: session_domain
@@ -6405,6 +6407,80 @@ paths:
       x-majordomus-effect: read
       x-majordomus-mcp:
         tool: majordomus_search
+  "/api/v1/served":
+    get:
+      operationId: served.show
+      summary: What each deployment was last seen serving
+      description: "The newest recorded observation of each deployment, re-judged against a commit (HEAD unless named). A record keeps proving every commit its served build contains and stops proving the moment the commit asked about is not among them; a record that received nothing proves nothing. Asks no network and writes nothing."
+      tags:
+        - served
+      parameters:
+        - name: commit
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "The commit each record is re-judged against, any revision git resolves; `HEAD` when\nabsent."
+          examples:
+            pages-against-head:
+              value: HEAD
+        - name: deployment
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Only this deployment.
+          examples:
+            pages-against-head:
+              value: pages
+      responses:
+        "200":
+          description: "What each deployment was last seen serving: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ServedStanding"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: served.show
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::served
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_served
+        resource:
+          uri: majordomus://served
+          name: served
+      x-majordomus-cli: served show
   "/api/v1/server":
     get:
       operationId: server.status
@@ -8515,6 +8591,29 @@ components:
         - profile
         - inputs
       description: What is shipped and what it is built from.
+    BuildIdentity:
+      type: object
+      properties:
+        commit:
+          type: string
+          description: The full commit the served build was made from.
+        dirty:
+          type: boolean
+          description: "Whether the tree it was built from had uncommitted changes. A dirty build names a\ncommit it does not equal, so it proves no commit."
+        source_version:
+          type:
+            - string
+            - "null"
+          description: "The version the build states, when it states one."
+        source_hash:
+          type:
+            - string
+            - "null"
+          description: "The fingerprint of the site's canonical inputs, when the build states one."
+      required:
+        - commit
+        - dirty
+      description: "The build identity a deployment serves, as far as this module relies on it. Other\nfields of the served document are ignored rather than refused: the document is written\nby another program, and a field it adds is not a malformation.\n\n```\nuse majordomus_cli::served::BuildIdentity;\nlet id = BuildIdentity {\n    commit: \"a\".repeat(40),\n    dirty: false,\n    source_version: Some(\"0.7.0\".into()),\n    source_hash: None,\n};\n// what is judged is the commit and whether the tree it was built from was committed\nassert_eq!(id.commit.len(), 40);\nassert!(!id.dirty);\n```"
     BuildReport:
       type: object
       properties:
@@ -11041,6 +11140,23 @@ components:
         - count
         - deployments
       description: Every deployment the layer declares.
+    DeploymentStanding:
+      type: object
+      properties:
+        deployment:
+          type: string
+          description: The deployment name.
+        observation:
+          "$ref": "#/components/schemas/Observation"
+          description: The newest record of it.
+        now:
+          "$ref": "#/components/schemas/Judgement"
+          description: "That record re-judged against the commit asked about. This, not the recorded\njudgement, is what a reader acts on."
+      required:
+        - deployment
+        - observation
+        - now
+      description: "One deployment's newest record and what it proves about the commit asked. Both are\ncarried: the recorded judgement is what was seen, `now` is what it still proves.\n\n```\nuse majordomus_cli::capability::builtin::served::DeploymentStanding;\nuse majordomus_cli::served::ServedVerdict;\nlet json = r#\"{\"deployment\":\"pages\",\"observation\":{\"schema\":\"majordomus.served-observation/v1\",\n  \"deployment\":\"pages\",\"url\":\"https://majordomus.dev/build.json\",\n  \"expected\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"verdict\":\"served\",\n  \"reason\":\"the deployment serves aaaaaaaaaaaa\",\"at\":\"1970-01-01T00:00:00Z\"},\n  \"now\":{\"verdict\":\"stale\",\"reason\":\"it does not contain bbbbbbbbbbbb\"}}\"#;\nlet s: DeploymentStanding = serde_json::from_str(json).unwrap();\n// seen as served, and no longer proving the commit asked about\nassert_eq!(s.observation.judgement.verdict, ServedVerdict::Served);\nassert_eq!(s.now.verdict, ServedVerdict::Stale);\n```"
     DeploymentStatus:
       oneOf:
         - type: string
@@ -15246,6 +15362,19 @@ components:
         - passed
         - findings
       description: "One commit of the history, judged.\n```\nuse majordomus_cli::commit::verdict::JudgedCommit;\n// what a history report lists: only the commits that have something to say\nlet row = JudgedCommit {\n    commit: \"a1b2c3d4e\".into(),\n    subject: \"update stuff\".into(),\n    passed: false,\n    exempt: None,\n    findings: Vec::new(),\n};\nassert!(!row.passed);\n```"
+    Judgement:
+      type: object
+      properties:
+        verdict:
+          "$ref": "#/components/schemas/ServedVerdict"
+          description: The verdict.
+        reason:
+          type: string
+          description: "Why, in one line a reader can act on."
+      required:
+        - verdict
+        - reason
+      description: "The judgement of one served identity against one expected commit, with its reason. The\nreason travels with the verdict so that every surface can say *why* without re-deriving\nit.\n\n```\nuse majordomus_cli::served::{judge, Fetched, Judgement, ServedVerdict};\nlet j: Judgement = judge(&Err(Fetched::Unreachable(\"timeout\".into())), &\"a\".repeat(40), &fake());\nassert_eq!(j.verdict, ServedVerdict::Unreachable);\nassert!(j.reason.contains(\"timeout\"));\n# use majordomus_cli::served::Ancestry;\n# struct N; impl Ancestry for N {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) }\n# }\n# fn fake() -> impl Ancestry { N }\n```"
     KindCount:
       type: object
       properties:
@@ -17010,6 +17139,44 @@ components:
           const: undeclared
           description: "The task requires a token the shipped vocabulary does not declare. Nothing can\ndischarge it, because nothing knows what would."
       description: "Where one obligation stands.\n\nThe words are the validator's verdicts, not a severity scale: `stale` is not a worse\n`owed`, it is evidence that was true and no longer describes what it proved.\n\n```\nuse majordomus_cli::capability::builtin::obligations::ObligationState;\n// only one of the four lets a task be called completed\nlet completable = |s: ObligationState| s == ObligationState::Discharged;\nassert!(completable(ObligationState::Discharged));\nassert!(!completable(ObligationState::Stale), \"evidence that no longer describes the tree\");\nassert!(!completable(ObligationState::Owed));\nassert!(!completable(ObligationState::Undeclared));\n```"
+    Observation:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "Always `OBSERVATION_SCHEMA`."
+        deployment:
+          type: string
+          description: "Which deployment: the name the caller observed it under (`pages`, or a deployment\nobject's id)."
+        url:
+          type: string
+          description: The identity URL probed.
+        expected:
+          type: string
+          description: "The commit that was expected, full."
+        served:
+          anyOf:
+            - "$ref": "#/components/schemas/BuildIdentity"
+            - type: "null"
+          description: "What was served, when a build identity was received."
+        verdict:
+          "$ref": "#/components/schemas/ServedVerdict"
+          description: The verdict.
+        reason:
+          type: string
+          description: "Why, in one line a reader can act on."
+        at:
+          type: string
+          description: "When, RFC 3339 UTC."
+      required:
+        - schema
+        - deployment
+        - url
+        - expected
+        - verdict
+        - reason
+        - at
+      description: "One observation of one deployment, as recorded: what was asked, what was served, what\nwas judged and when. Everything needed to judge it again later is in the record, which\nis what lets `Observation::rejudge` answer without probing.\n\n```\nuse majordomus_cli::served::{observe, Fetch, Fetched, GitAncestry, Observation, OBSERVATION_SCHEMA};\nuse std::{path::Path, time::SystemTime};\nstruct None_;\nimpl Fetch for None_ {\n    fn fetch(&self, _: &str) -> Fetched { Fetched::Unreachable(\"no route\".into()) }\n}\nlet git = GitAncestry { root: Path::new(env!(\"CARGO_MANIFEST_DIR\")) };\nlet o: Observation = observe(\"pages\", \"https://s\", \"build.json\", &\"a\".repeat(40), &None_,\n                              &git, SystemTime::UNIX_EPOCH);\nassert_eq!(o.schema, OBSERVATION_SCHEMA);\nassert_eq!(o.url, \"https://s/build.json\");\nassert_eq!(o.at, \"1970-01-01T00:00:00Z\");\n```"
     OpenSession:
       type: object
       properties:
@@ -21373,6 +21540,52 @@ components:
         - selector
         - declared
       description: "One selector, and whether what it produces was declared or inferred.\n\nTwo fields, and the second is the whole reason the projection exists: a caller consuming\na compiled context needs to know which selectors it can trust as repository fact, and\nderiving that from the answer would mean inferring it from confidence values. Published\nhere, it is a rule rather than a pattern a reader noticed.\n\n```\nuse majordomus_cli::devcontext::{policy, Selector, SelectorRule};\nuse majordomus_cli::synthetic::SyntheticRepository;\n\nlet repo = SyntheticRepository::small().unwrap();\nlet ctx = repo.context().unwrap();\nlet rules = policy(&ctx).unwrap();\n\n// every selector is published, and each row agrees with the selector it names\nlet selectors: &[SelectorRule] = &rules.selectors;\nassert_eq!(selectors.len(), Selector::ALL.len());\nfor r in selectors {\n    assert_eq!(r.declared, r.selector.declared());\n}\n\n// and the inferring one is named, so the guessed half of an answer can be found\nlet inferred: Vec<Selector> =\n    selectors.iter().filter(|r| !r.declared).map(|r| r.selector).collect();\nassert_eq!(inferred, [Selector::IntentMatch]);\n```"
+    ServedStanding:
+      type: object
+      properties:
+        expected:
+          type: string
+          description: The full commit every record was re-judged against.
+        observations:
+          type: string
+          description: The checkout-local file the records were read from.
+        unreadable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Lines of that file that were not readable observations.
+        deployments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DeploymentStanding"
+          description: "One entry per deployment observed, in name order."
+      required:
+        - expected
+        - observations
+        - unreadable
+        - deployments
+      description: "Every deployment's standing against one commit: the answer `served.show` gives on the\ncommand line, over HTTP and to an MCP client, from one derivation.\n\n```\nuse majordomus_cli::capability::builtin::served::{standing, ServedStanding};\nuse majordomus_cli::served::{Ancestry, OBSERVATIONS_PATH};\n# struct A; impl Ancestry for A {\n#     fn has(&self, _: &str) -> Option<bool> { Some(true) }\n#     fn contains(&self, _: &str, _: &str) -> Option<bool> { Some(true) } }\nlet dir = tempfile::tempdir().unwrap();\nlet s: ServedStanding = standing(dir.path(), &\"a\".repeat(40), None, &A);\nassert_eq!(s.observations, OBSERVATIONS_PATH);\nassert!(s.deployments.is_empty(), \"nothing observed yet\");\nassert_eq!(s.unreadable, 0);\n```"
+    ServedVerdict:
+      oneOf:
+        - type: string
+          const: served
+          description: The served build is the expected commit or contains it. The only passing verdict.
+        - type: string
+          const: stale
+          description: "The served build does not contain the expected commit: the deployment is behind."
+        - type: string
+          const: unreachable
+          description: Nothing was received. The deployment was not measured.
+        - type: string
+          const: malformed
+          description: Something was received and it is not a build identity.
+        - type: string
+          const: dirty
+          description: "The served build was made from an uncommitted tree, so it proves no commit."
+        - type: string
+          const: undecided
+          description: "The served commit is not in this clone, or git could not be asked; containment is\nundecided. Fetching the remote usually turns this into an answer."
+      description: "What an observation says about the expected commit. Only `ServedVerdict::Served` is a\nproof; the other five are each a different reason the question was not answered yes.\n\n```\nuse majordomus_cli::served::ServedVerdict;\n// a measured no and an unanswered question are never spelled the same\nassert!(ServedVerdict::Served.passes());\nassert_eq!(ServedVerdict::Stale.exit_code(), 10);\nassert_eq!(ServedVerdict::Unreachable.exit_code(), 12);\n```"
     ServerStanding:
       oneOf:
         - type: string

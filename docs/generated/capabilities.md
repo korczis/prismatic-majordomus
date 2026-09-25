@@ -41,6 +41,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `release` | Release | implemented | 3 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
 | `rules` | Rules | behaviorally_verified | 3 | [`modules/rules.md`](modules/rules.md) |
+| `served` | Served deployments | behaviorally_verified | 2 | [`modules/served.md`](modules/served.md) |
 | `server` | Server | behaviorally_verified | 1 | [`modules/server.md`](modules/server.md) |
 | `session_domain` | The session domain | behaviorally_verified | 2 | [`modules/session_domain.md`](modules/session_domain.md) |
 | `trace` | Traceability | behaviorally_verified | 3 | [`modules/trace.md`](modules/trace.md) |
@@ -150,6 +151,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `rules.proves` | `rules` | query | behaviorally_verified | `majordomus_rule_proves` | — | `GET /api/v1/rules/proves` | `majordomus rules proves` | — | required |
 | `rules.report` | `rules` | query | behaviorally_verified | `majordomus_rules` | `majordomus://rules` | `GET /api/v1/rules` | `majordomus rules report` | — | required |
 | `rules.show` | `rules` | query | behaviorally_verified | `majordomus_rule` | — | `GET /api/v1/rules/rule` | `majordomus rules show` | — | required |
+| `served.observe` | `served` | command | behaviorally_verified | — | — | — | `majordomus served observe` | — | waived (external_dependency) |
+| `served.show` | `served` | query | behaviorally_verified | `majordomus_served` | `majordomus://served` | `GET /api/v1/served` | `majordomus served show` | — | required |
 | `server.status` | `server` | query | behaviorally_verified | `majordomus_server` | `majordomus://server` | `GET /api/v1/server` | `majordomus serve status` | — | required |
 | `session_domain.identity` | `session_domain` | query | behaviorally_verified | `majordomus_session_identity` | `majordomus://session/identity` | `GET /api/v1/session/identity` | — | process, 2 entries, 2s | required |
 | `session_domain.machine` | `session_domain` | query | behaviorally_verified | `majordomus_session_machine` | `majordomus://session/machine` | `GET /api/v1/session/machine` | — | process, 1 entries, 600s | required |
