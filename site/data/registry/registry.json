@@ -6,7 +6,7 @@
     "version": "0.9.0"
   },
   "registry": {
-    "fingerprint": "32f349bd9bb906134781558eee7d3fe754ae894fd6a3c05340b97e13be406828",
+    "fingerprint": "026b65ced276867dc7a71074e2385d9dd4df8648314cc7420e0048d53879dbd7",
     "summary": {
       "total": 1488,
       "builtin": 115,
@@ -32823,6 +32823,10 @@
                 "type": "string",
                 "description": "`clean`, `dirty` or `unknown` at the time of derivation."
               },
+              "verdict": {
+                "$ref": "#/$defs/RulesVerdict",
+                "description": "What the whole corpus proves: `proven`, `unproven` or `failing`. Derived over the\nwhole corpus before any filter, like the tallies."
+              },
               "rules": {
                 "type": "array",
                 "items": {
@@ -32852,20 +32856,41 @@
               },
               "satisfied": {
                 "type": "boolean",
-                "description": "Whether there are no findings."
+                "description": "Whether there are no findings — and nothing more. A corpus none of whose blocking\nrules was ever run is `satisfied`; `verdict` is the field that says whether anything\nwas proven."
               }
             },
             "required": [
               "working_tree",
+              "verdict",
               "rules",
               "states",
               "coverage",
               "findings",
               "satisfied"
             ],
-            "description": "The whole rule corpus, verified.\n# Example\n\nThe whole corpus joined to the tree and the ledger. `satisfied` is true when no rule\ndeclares a class its proof does not support.\n\n```\nuse majordomus_cli::rules::RulesReport;\nlet r = RulesReport {\n    head: None,\n    working_tree: \"clean\".into(),\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\n```",
+            "description": "The whole rule corpus, verified.\n# Example\n\nThe whole corpus joined to the tree and the ledger. `verdict` is what the corpus can be\nsaid to prove; `satisfied` is only that there are no findings, and the two differ\nwhenever a blocking rule has never been run.\n\n```\nuse majordomus_cli::rules::{RulesReport, RulesVerdict};\nlet r = RulesReport {\n    head: None,\n    working_tree: \"clean\".into(),\n    verdict: RulesVerdict::Unproven,\n    rules: vec![],\n    states: Default::default(),\n    coverage: Default::default(),\n    findings: vec![],\n    satisfied: true,\n};\nassert!(r.satisfied());\nassert_ne!(r.verdict, RulesVerdict::Proven, \"no findings is not proof\");\n```",
             "title": "RulesReport",
             "$defs": {
+              "RulesVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "proven",
+                    "description": "Every blocking rule carries a passing run that nothing it names has changed since."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unproven",
+                    "description": "No finding, and at least one blocking rule has no current passing run — never run,\ngated, reviewed, stale — or there is no blocking rule at all."
+                  },
+                  {
+                    "type": "string",
+                    "const": "failing",
+                    "description": "At least one rule declares a class its proof does not support."
+                  }
+                ],
+                "description": "What the whole corpus can be said to prove, in one word, before any number is read.\n\n`satisfied` answers a narrower question — are there findings — and a corpus in which no\nblocking rule was ever run has none, because `not run`, `gated` and `reviewed` are weaker\nstates rather than defects (docs/DOCTRINE.md). Read alone, `satisfied: true` over such a\ncorpus says \"every rule is enforced\" about a repository that has shown nothing. The\nverdict is the answer that cannot be read that way: it is `proven` only when every\nblocking rule carries a current passing run.\n# Example\n\n```\nuse majordomus_cli::rules::{RuleState, RulesVerdict};\n// a corpus with a finding is failing, whatever else is true of it\nassert_eq!(RulesVerdict::of([RuleState::Proven], true), RulesVerdict::Failing);\n// one blocking rule never run is enough to leave the corpus unproven\nassert_eq!(\n    RulesVerdict::of([RuleState::Proven, RuleState::NotRun], false),\n    RulesVerdict::Unproven\n);\nassert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);\n```"
+              },
               "RuleProof": {
                 "type": "object",
                 "properties": {
@@ -41544,7 +41569,7 @@
     ]
   },
   "index": {
-    "fingerprint": "81eb3716a7e7529d99e77fc4d9deeb96d995b9055cb23fb62eb20f2e5a506d82",
+    "fingerprint": "c3cec5cd1d82788f30159048236ac4428b0513edc76eeb5bbb87c06408ea86b6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -45527,7 +45552,7 @@
         "title": "Doctrine",
         "path": "docs/DOCTRINE.md",
         "source_class": "document",
-        "bytes": 22152
+        "bytes": 22770
       },
       {
         "uri": "majordomus://document/docs/DOGFOODING.md",
@@ -45590,7 +45615,7 @@
         "title": "Evidence — what ran, against which commit, and whether it still proves anything",
         "path": "docs/EVIDENCE.md",
         "source_class": "document",
-        "bytes": 32184
+        "bytes": 33659
       },
       {
         "uri": "majordomus://document/docs/EXECUTIONS.md",
@@ -47663,7 +47688,7 @@
         "path": ".ai/repo/features/interfaces.md",
         "section": "features",
         "source_class": "feature",
-        "bytes": 2870,
+        "bytes": 3209,
         "tags": [
           "mcp",
           "http",
@@ -54499,7 +54524,7 @@
         "identity": "test/cases/124_evidence.sh",
         "path": "test/cases/124_evidence.sh",
         "source_class": "case",
-        "bytes": 25233
+        "bytes": 28411
       },
       {
         "uri": "majordomus://test/test/cases/125_rule_proof.sh",
@@ -54651,7 +54676,7 @@
         "identity": "test/cases/133_rule_graph.sh",
         "path": "test/cases/133_rule_graph.sh",
         "source_class": "case",
-        "bytes": 16036
+        "bytes": 18666
       },
       {
         "uri": "majordomus://test/test/cases/135_session_store_recovery.sh",
