@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 225
+      "count": 226
     },
     {
       "kind": "use-case",
@@ -2939,9 +2939,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         },
         {
@@ -3338,6 +3338,102 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0085",
+      "identity": "adr-0085",
+      "slug": "adr-0085",
+      "cockpit": "/cockpit/objects/adr/adr-0085",
+      "title": "The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "versioning",
+        "projections",
+        "distribution"
+      ],
+      "source": ".ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/generate.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/release/version.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/release-version",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "bin/majordomus",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.distribution-canonical@1",
+          "kind": "rule",
+          "route": "/rules/project-distribution-canonical-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.generated-artifacts-are-typed@1",
+          "kind": "rule",
+          "route": "/rules/project-generated-artifacts-are-typed-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-version-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/103_release_projection.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/484_the_version_is_authored_once.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -6908,7 +7004,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7428,6 +7532,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.design-tokens-declared-once@2",
           "kind": "rule",
@@ -7443,9 +7554,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         }
       ]
@@ -7805,9 +7916,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         },
         {
@@ -8810,11 +8921,11 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.release-is-a-projection@1",
-      "identity": "project.release-is-a-projection@1",
-      "slug": "project-release-is-a-projection-1",
-      "cockpit": "/cockpit/objects/rule/project-release-is-a-projection-1",
-      "title": "The changelog is composed and the version has one writer",
+      "id": "majordomus://rule/project.release-is-a-projection@2",
+      "identity": "project.release-is-a-projection@2",
+      "slug": "project-release-is-a-projection-2",
+      "cockpit": "/cockpit/objects/rule/project-release-is-a-projection-2",
+      "title": "The changelog is composed, and the version is authored once",
       "status": "active",
       "tags": [
         "release",
@@ -8822,7 +8933,7 @@
         "version",
         "projections"
       ],
-      "source": ".ai/repo/rules/project/release-is-a-projection.v1.md",
+      "source": ".ai/repo/rules/project/release-is-a-projection.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -8845,6 +8956,13 @@
           "label": "adr-0051",
           "kind": "adr",
           "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
           "external": false
         },
         {
@@ -9347,9 +9465,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         }
       ],
@@ -9366,6 +9484,13 @@
           "label": "adr-0051",
           "kind": "adr",
           "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
           "external": false
         }
       ]
