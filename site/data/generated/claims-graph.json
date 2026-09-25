@@ -1428,6 +1428,15 @@
       "note": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence."
     },
     {
+      "id": "claim:evidence-recorded-in-ci",
+      "kind": "claim",
+      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-recorded-in-ci/",
+      "external": false,
+      "note": "The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68."
+    },
+    {
       "id": "claim:rule-proof-is-named-and-resolves",
       "kind": "claim",
       "label": "Every blocking rule names what proves it, and every path it names is in the tree",
@@ -2106,6 +2115,13 @@
       "id": "impl:scripts/ci/english-only-check",
       "kind": "implementation",
       "label": "scripts/ci/english-only-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/ci/evidence-collect",
+      "kind": "implementation",
+      "label": "scripts/ci/evidence-collect",
       "route": null,
       "external": false
     },
@@ -2878,6 +2894,13 @@
       "label": "test/cases/33_event_registry.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh"
+    },
+    {
+      "id": "test:test/cases/357_ci_records_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/357_ci_records_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/357_ci_records_evidence.sh"
     },
     {
       "id": "test:test/cases/359_live_scenarios.sh",
@@ -3961,6 +3984,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:rule-proof-is-named-and-resolves",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
@@ -4796,6 +4824,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "impl:scripts/ci/evidence-collect",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:rule-proof-is-named-and-resolves",
       "target": "impl:scripts/ci/rule-proof-check",
       "kind": "implemented_by"
@@ -5628,6 +5661,11 @@
     {
       "source": "claim:evidence-proof-is-an-execution",
       "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "test:test/cases/357_ci_records_evidence.sh",
       "kind": "proved_by"
     },
     {

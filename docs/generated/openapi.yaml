@@ -12808,6 +12808,11 @@ components:
         command:
           type: string
           description: The exact command that runs this one test again.
+        run:
+          anyOf:
+            - "$ref": "#/components/schemas/EvidenceRun"
+            - type: "null"
+          description: "The continuous-integration run the execution was recorded in, when it was recorded in\none that could name itself. Absent for a local run, and absent from every row recorded\nbefore runs were named, which is why the ledger's version did not change."
       required:
         - test
         - runner
@@ -12820,7 +12825,7 @@ components:
         - at
         - origin
         - command
-      description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n};\nassert!(e.outcome.proves());\n```"
+      description: "One recorded run of one test: the whole of what this repository durably remembers about\nit.\n\nEvery field is provenance. A result with no commit is an anonymous green, which is the\nthing a badge must never be derived from.\n\n```\nuse majordomus_cli::evidence::{digest_of, Execution, Origin, Outcome, Runner, TestId};\n\nlet id = TestId::of(\"apps/majordomus-cli/tests/why.rs\").unwrap();\nlet run = Execution {\n    test: id.as_string(),\n    runner: Runner::Crate,\n    source: id.source(),\n    outcome: Outcome::Pass,\n    seconds: 12,\n    commit: \"0\".repeat(40),\n    working_tree: \"clean\".into(),\n    digest: digest_of(b\"fn main() {}\"),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Ci,\n    command: id.reproduce(),\n    run: None,\n};\n\n// it is a value in a tracked JSON file, so it has to survive the file unchanged\nlet back: Execution = serde_json::from_str(&serde_json::to_string(&run).unwrap()).unwrap();\nassert_eq!(back, run);\nassert_eq!(back.test, \"crate:why\");\nassert_eq!(back.command, \"cargo test --test why\");\n```\n# Example\n\nOne recorded run, with the provenance the runner did not carry: which commit, which\ntree state, the digest of the test's own source, when, and how to run it again.\n\n```\nuse majordomus_cli::evidence::{Execution, Origin, Outcome, Runner};\nlet e = Execution {\n    test: \"suite:07_scope\".into(),\n    runner: Runner::Suite,\n    source: \"test/cases/07_scope.sh\".into(),\n    outcome: Outcome::Pass,\n    seconds: 3,\n    commit: \"a04b65c9\".into(),\n    working_tree: \"clean\".into(),\n    digest: \"sha256:00\".into(),\n    at: \"2026-09-11T00:00:00Z\".into(),\n    origin: Origin::Local,\n    command: \"bash test/run.sh 07_scope\".into(),\n    run: None,\n};\nassert!(e.outcome.proves());\n```"
     EvidenceFinding:
       type: object
       properties:
@@ -12949,6 +12954,37 @@ components:
         - totals
         - findings
       description: "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```"
+    EvidenceRun:
+      type: object
+      properties:
+        provider:
+          type: string
+          description: "The provider that ran it, as the adapter that recorded it names it."
+        id:
+          type: string
+          description: "The provider's identifier of the run."
+        attempt:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "Which attempt of the run, counted from 1."
+        workflow:
+          type: string
+          description: The workflow the run belongs to.
+        job:
+          type: string
+          description: The job within the run that recorded the execution.
+        url:
+          type: string
+          description: "Where a reader finds the run, as the provider addressed it at the time."
+      required:
+        - provider
+        - id
+        - attempt
+        - workflow
+        - job
+        - url
+      description: "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```"
     EvidenceRunner:
       oneOf:
         - type: string
