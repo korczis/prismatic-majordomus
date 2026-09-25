@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.8.0 -->
+     Generator: majordomus-cli 0.9.0 -->
 # Benchmark targets and coverage
 
 Every externally callable operation is a benchmark target, derived from the registry: each executable capability directly and on every transport its exposure declares, with the cases its input type provides, plus the transports' own operations. Nothing below is listed by hand; `majordomus bench coverage` computes the same table live, `majordomus bench` times it, and `capabilities validate` fails when a requirement is missing.
@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 129 | 115 | 0 | 14 |
-| http | 128 | 115 | 0 | 13 |
-| mcp | 124 | 111 | 0 | 13 |
+| direct | 131 | 117 | 0 | 14 |
+| http | 130 | 117 | 0 | 13 |
+| mcp | 126 | 113 | 0 | 13 |
 | system | 13 | 13 | 0 | 0 |
-| total | 394 | 354 | 0 | 40 |
+| total | 400 | 360 | 0 | 40 |
 
 ## Capabilities
 
@@ -49,6 +49,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `distribution.model` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.releases` | distribution | query | — | covered | covered | covered | `default` |
 | `distribution.status` | distribution | query | — | covered | covered | covered | `default` |
+| `entity.kinds` | entity | query | — | covered | covered | covered | `default` |
+| `entity.show` | entity | query | — | covered | covered | covered | `first-object` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
 | `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |

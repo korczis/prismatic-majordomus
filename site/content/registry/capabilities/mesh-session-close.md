@@ -1,7 +1,7 @@
 +++
 title = "mesh.session.close"
 description = "End a session of this runtime; every claim it holds ends with it, on every linked runtime. Writes this runtime's journal only."
-weight = 72
+weight = 74
 slug = "mesh-session-close"
 [extra]
 id = "mesh.session.close"

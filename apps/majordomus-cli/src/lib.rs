@@ -27,6 +27,7 @@ pub mod devtask;
 pub mod diagram;
 pub mod discovery;
 pub(crate) mod distribution;
+pub mod entity;
 pub mod environment;
 pub(crate) mod error;
 pub mod evidence;
