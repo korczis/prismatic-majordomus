@@ -12,6 +12,12 @@
 //! A repository that carries no Rust crate — the layer installs into plenty of them — is
 //! answered with `measured: false` and the reason, never with a clean report over nothing.
 //!
+//! `quality.rustdoc` holds the tree rustdoc renders from the same crate to the same
+//! inventory: every exported item has its page at the route rustdoc gives it, the tree is
+//! HEAD's, and nothing in it is broken or leaks the machine it was built on. Its subject is
+//! the `rustdoc` web surface's artifact as the topology resolves it — never a path a caller
+//! names — and a tree that is not there is the `no_tree` verdict, exit 12, never a pass.
+//!
 //! ```
 //! use majordomus_cli::capability::builtin::quality::module;
 //! let m = module();
@@ -34,13 +40,18 @@ use crate::capability::model::{
     CachePolicy, CliExposure, Exposure, McpExposure, McpResource, Stability,
 };
 use crate::capability::module::ModuleDescriptor;
+use crate::quality::rustdoc::{RustdocFindingKind, RustdocReport, Subject, Tree};
 use crate::quality::{QualityReport, ViolationCode};
+use crate::web::discover::{discover, Runtime, GENERATED_ROOT};
 use crate::{capability, module};
 
 use super::get;
 
 /// The URI under which the report is read as an MCP resource.
 pub const QUALITY_URI: &str = "majordomus://quality";
+
+/// The URI under which the judgement of the rustdoc tree is read as an MCP resource.
+pub const RUSTDOC_URI: &str = "majordomus://quality/rustdoc";
 
 /// Where the crate this executable is built from lives, relative to the repository root.
 /// The one fact the measurement needs that the index does not carry.
@@ -101,6 +112,101 @@ pub struct QualityAnswer {
     /// The findings the ratchet accepts because they stood when the rule landed. A finding
     /// outside this count is what fails the gate.
     pub baselined: usize,
+}
+
+/// The input of `quality.rustdoc`: which findings to answer with.
+///
+/// There is deliberately no field naming the tree. The subject is the `rustdoc` surface's
+/// artifact as the repository's web topology resolves it, so a caller over HTTP or MCP can
+/// ask about the one tree the repository publishes and about no other directory of the
+/// machine; the command line's `--tree` is a local affordance of a person at their own
+/// terminal, and never reaches this input.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+pub(crate) struct RustdocInput {
+    /// Only findings of this kind (`missing-page`, `link`, `stale`). All of them when
+    /// absent. The verdict and the counts are never narrowed: a filter that changed the
+    /// verdict would be a way of passing a tree with a missing page.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<RustdocFindingKind>,
+    /// Answer with the verdict, the counts and the module routes, and leave the findings
+    /// out.
+    #[serde(default)]
+    pub summary_only: bool,
+}
+
+impl BenchmarkCases for RustdocInput {
+    fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
+        // the cost is the crate's parse and one walk of the tree, which every input pays;
+        // the second case exists so that each optional parameter has an example
+        vec![
+            NamedCase::new("default", RustdocInput::default()),
+            NamedCase::new(
+                "missing-pages-summary",
+                RustdocInput {
+                    kind: Some(RustdocFindingKind::MissingPage),
+                    summary_only: true,
+                },
+            ),
+        ]
+    }
+}
+
+/// The tree `quality.rustdoc` judges: the artifact of the `rustdoc` surface, as the web
+/// topology of the repository at `root` resolves it.
+///
+/// A topology that declares no such surface, or one that cannot be read, is a tree that is
+/// not there — with the reason, which names the producer — and never a tree that is
+/// clean.
+pub(crate) fn rustdoc_tree(root: &Path) -> Tree {
+    use crate::quality::rustdoc::{PRODUCER, SURFACE};
+    let shown = format!("{GENERATED_ROOT}/{SURFACE}");
+    let topology = match discover(root, Runtime::full()) {
+        Ok(t) => t,
+        Err(e) => {
+            let reason =
+                format!("the web topology cannot be read, so '{SURFACE}' cannot be found: {e}");
+            return Tree::Absent { shown, reason };
+        }
+    };
+    let Some(surface) = topology.get(SURFACE) else {
+        return Tree::Absent {
+            shown,
+            reason: format!(
+                "the web topology declares no '{SURFACE}' surface: discovery declares it from the crate, which this repository does not have, so {PRODUCER} has nothing to build"
+            ),
+        };
+    };
+    let Some(artifact) = &surface.artifact else {
+        return Tree::Absent {
+            shown,
+            reason: format!("the '{SURFACE}' surface declares no artifact to judge"),
+        };
+    };
+    Tree::At {
+        dir: root.join(artifact),
+        shown: artifact.to_string_lossy().replace('\\', "/"),
+        mount: Some(surface.mount.as_str().to_string()),
+    }
+}
+
+/// Judge a tree of the repository at `root` against its crate: the one call the capability
+/// and the command line's `--tree` share, so the two cannot judge differently.
+pub(crate) fn judge_rustdoc(root: &Path, tree: Tree) -> Result<RustdocReport, crate::Error> {
+    let dir = crate_dir(root);
+    let head = crate::worktree::git::head_of(root).ok().flatten();
+    crate::quality::rustdoc::judge(&Subject {
+        root,
+        crate_dir: dir.as_deref(),
+        tree,
+        head: head.as_deref(),
+    })
+}
+
+fn rustdoc(ctx: &Context, input: RustdocInput) -> Result<RustdocReport, CapabilityError> {
+    let root = Path::new(&ctx.index.repository.root);
+    let report = judge_rustdoc(root, rustdoc_tree(root))
+        .map_err(|e| CapabilityError::Internal(e.to_string()))?;
+    Ok(report.filtered(input.kind, input.summary_only))
 }
 
 /// The crate directory of a repository, when it has one.
@@ -275,6 +381,27 @@ pub fn module() -> ModuleDescriptor {
                 cache: CachePolicy::Process { max_entries: 8, ttl_seconds: Some(10) },
                 handler: report,
             },
+            capability! {
+                id: "quality.rustdoc",
+                title: "Rustdoc tree integrity",
+                description: "The crate's rustdoc tree — the rustdoc surface's artifact, as the web topology resolves it — judged against the crate's own inventory of exported items: every item that owns a page has it at the route rustdoc gives it, no item page is left without an item, the tree declares it was built from HEAD, the library's index is present and names the crate, its assets are present, every relative link resolves, and no file names the machine it was built on or carries a credential. Answers the verdict (clean, findings, or no_tree when there is nothing to judge), the counts it joined, every exported module with its page, and one typed finding per defect with the file and what to do.",
+                input: RustdocInput,
+                output: RustdocReport,
+                stability: Stability::BehaviorallyVerified,
+                exposure: Exposure {
+                    mcp: Some(McpExposure {
+                        tool: Some("majordomus_quality_rustdoc".into()),
+                        resource: Some(McpResource { uri: RUSTDOC_URI.into(), name: "quality-rustdoc".into() }),
+                    }),
+                    http: get("/api/v1/quality/rustdoc"),
+                    cli: Some(CliExposure { path: vec!["quality".into(), "rustdoc".into()] }),
+                },
+                tags: ["quality", "introspection", "rust", "documentation"],
+                // one walk of a tree of thousands of files per call; a Cockpit page that
+                // polls reads the same answer for a few seconds instead of walking again
+                cache: CachePolicy::Process { max_entries: 8, ttl_seconds: Some(10) },
+                handler: rustdoc,
+            },
         ],
     }
 }
@@ -295,7 +422,7 @@ mod tests {
             .iter()
             .map(|e| e.capability.id.as_str())
             .collect();
-        assert_eq!(ids, ["quality.report"]);
+        assert_eq!(ids, ["quality.report", "quality.rustdoc"]);
         let e = &m.capabilities[0].capability.exposure;
         assert_eq!(
             e.mcp.as_ref().and_then(|m| m.tool.as_deref()),
@@ -349,5 +476,69 @@ mod tests {
         assert_eq!(json["measured"], false);
         assert_eq!(json["passes"], true);
         assert!(json.get("report").is_some(), "one shape either way");
+    }
+
+    /// A repository with the crate, so that whichever source declares the `rustdoc`
+    /// surface — the crate itself, or the producer's declaration — declares it here.
+    fn repository_with_the_crate() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        let krate = dir.path().join(CRATE_DIR);
+        std::fs::create_dir_all(krate.join("src")).unwrap();
+        std::fs::write(
+            krate.join("Cargo.toml"),
+            "[package]\nname = \"majordomus-cli\"\n[lib]\nname = \"majordomus_cli\"\n",
+        )
+        .unwrap();
+        std::fs::write(krate.join("src/lib.rs"), "//! Root.\n").unwrap();
+        dir
+    }
+
+    #[test]
+    fn the_rustdoc_tree_is_the_topologys_surface_and_never_a_callers_path() {
+        use crate::quality::rustdoc::{PRODUCER, SURFACE};
+        // no crate, so nothing declares the surface: absent, naming the producer
+        let bare = tempfile::tempdir().unwrap();
+        match rustdoc_tree(bare.path()) {
+            Tree::Absent { shown, reason } => {
+                assert_eq!(shown, format!("{GENERATED_ROOT}/{SURFACE}"));
+                assert!(reason.contains(PRODUCER), "{reason}");
+            }
+            other => panic!("{other:?}"),
+        }
+        // the producer ran: the artifact and the mount are the topology's
+        let repo = repository_with_the_crate();
+        let out = repo.path().join(GENERATED_ROOT).join(SURFACE);
+        std::fs::create_dir_all(&out).unwrap();
+        std::fs::write(
+            out.join("surface.json"),
+            r#"{"schema":"web-surface/v1","id":"rustdoc","mount":"/rustdoc","built_from":"abc"}"#,
+        )
+        .unwrap();
+        match rustdoc_tree(repo.path()) {
+            Tree::At { dir, shown, mount } => {
+                assert_eq!(dir, out);
+                assert_eq!(shown, "target/web/rustdoc");
+                assert_eq!(mount.as_deref(), Some("/rustdoc"));
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+
+    #[test]
+    fn a_repository_without_the_tree_or_the_crate_is_no_tree_and_exits_twelve() {
+        use crate::quality::rustdoc::RustdocVerdict;
+        let bare = tempfile::tempdir().unwrap();
+        let report = judge_rustdoc(bare.path(), rustdoc_tree(bare.path())).unwrap();
+        assert_eq!(report.verdict, RustdocVerdict::NoTree);
+        assert_eq!(report.exit_code(), 12);
+        assert!(report.reason.unwrap().contains("no Rust crate"));
+
+        // the crate, and nothing built: still nothing to judge, and the module routes are
+        // answered because they are the crate's
+        let repo = repository_with_the_crate();
+        let report = judge_rustdoc(repo.path(), rustdoc_tree(repo.path())).unwrap();
+        assert_eq!(report.exit_code(), 12, "{report:?}");
+        assert_eq!(report.krate, "majordomus_cli");
+        assert_eq!(report.modules[0].route, "majordomus_cli/index.html");
     }
 }

@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.8.0 -->
+     Generator: majordomus-cli 0.9.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -113,6 +113,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus release bump`](#majordomus-release-bump) | `/docs/cli/release/bump/` | Raise the version in both places at once, to at least what the public contract requires |
 | [`majordomus quality`](#majordomus-quality) | `/docs/cli/quality/` | What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry |
 | [`majordomus quality report`](#majordomus-quality-report) | `/docs/cli/quality/report/` | Measure the crate and report every finding, with the rule it breaks and what to do about it |
+| [`majordomus quality rustdoc`](#majordomus-quality-rustdoc) | `/docs/cli/quality/rustdoc/` | Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked |
 | [`majordomus run`](#majordomus-run) | `/docs/cli/run/` | Run a capability as an execution and follow it: its steps, its progress and its output as they happen |
 | [`majordomus executions`](#majordomus-executions) | `/docs/cli/executions/` | The executions of the server serving this repository: what has run, what is running, and what each one said |
 | [`majordomus executions list`](#majordomus-executions-list) | `/docs/cli/executions/list/` | Every execution the server remembers, newest first |
@@ -3109,7 +3110,7 @@ Examples:
 
 What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
 
-Subcommands: [`majordomus quality report`](#majordomus-quality-report).
+Subcommands: [`majordomus quality report`](#majordomus-quality-report), [`majordomus quality rustdoc`](#majordomus-quality-rustdoc).
 
 ```text
 majordomus quality <COMMAND>
@@ -3156,6 +3157,44 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /measured, /passes, /report/schema.
+
+<a id="majordomus-quality-rustdoc"></a>
+## `majordomus quality rustdoc`
+
+Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked
+
+```text
+majordomus quality rustdoc [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape — `text`: Lines for a person; `json`: One JSON document, deterministic |
+| `--kind` | `<KIND>` | — | Only findings of this kind, e.g. missing-page, orphan-page, stale, link, machine-path |
+| `--summary` | flag | — | Print the verdict and the counts and leave the findings out |
+| `--tree` | `<DIR>` | — | Judge this directory instead of the rustdoc surface's artifact, e.g. site/public/rustdoc |
+
+Examples:
+
+- **Whether the crate's rustdoc tree is complete, current and sound** — The rustdoc surface's tree judged against the crate's own inventory: every exported item's page at its route, no page without an item, built from HEAD, the index and its assets present, every relative link resolved, nothing naming the machine or shaped like a credential. Exits 0 clean, 10 with findings, and 12 when there is nothing to judge — as here, in a repository that carries no Rust crate, or wherever the producer (scripts/rust-check --doc) has not run. A check that cannot see its subject says so; it never reports clean.
+
+  ```console
+  $ majordomus quality rustdoc
+  ```
+
+  Verified: exits 12.
+
+- **Another copy of the tree, judged the same way** — A directory named on the command line — the tree scripts/site-build composed into the site — judged by the same judgement, as the document every transport answers with: the verdict, the counts, every exported module with its page, and one typed finding per defect. Only a person at their own terminal names a directory; over HTTP and MCP the subject is always the surface's artifact.
+
+  ```console
+  $ majordomus quality rustdoc --tree site/public/rustdoc --format json
+  ```
+
+  Verified: exits 12.
 
 <a id="majordomus-run"></a>
 ## `majordomus run`

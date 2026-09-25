@@ -17,7 +17,7 @@ adrs: [adr-0001, adr-0003, adr-0013]
 claims: [mcp-stdio-surface, mcp-data-driven, mcp-shared-server, mcp-lease-resilience, mcp-peers, mcp-client-autostart, mcp-uri-resolution, openapi-inferred, web-surface-declared-once, web-namespaces-reserved, cli-documentation-executable]
 use_cases: [serve-the-layer-to-ai-clients, see-what-the-repository-holds-without-reading-it, find-an-object-without-reading-everything]
 cockpit: [api]
-web: [api, openapi, swagger, mcp, docs]
+web: [api, openapi, swagger, mcp, docs, rustdoc]
 related: [declare-once, coordination]
 tags: [mcp, http, openapi, cli]
 ---
@@ -25,18 +25,19 @@ tags: [mcp, http, openapi, cli]
 ## What it does
 
 The first `majordomus mcp` in a repository binds one shared server on the loopback
-interface and logs every surface it serves: the home page, this documentation, the Cockpit,
-the Swagger UI, the OpenAPI document, the capability routes and MCP over HTTP. Every later
-client attaches to it instead of starting another, and the server ends when its last client
-leaves. The client configurations at the repository root — one per provider that reads
-one, as `docs/generated/providers.md` lists them — name one launcher, so opening the
-repository in any of them is enough.
+interface and logs every surface it serves: the home page, this documentation, the crate's
+rustdoc, the Cockpit, the Swagger UI, the OpenAPI document, the capability routes and MCP
+over HTTP. Every later client attaches to it instead of starting another, and the server
+ends when its last client leaves. The client configurations at the repository root — one
+per provider that reads one, as `docs/generated/providers.md` lists them — name one
+launcher, so opening the repository in any of them is enough.
 
 What the server answers is the registry: a tool, a resource, a route or a command exists
 because a declaration exists, and the same declaration is what the reference and the
-website render. A surface — the documentation mount, a generated report, the Swagger UI —
-is discovered from the thing that produces it and resolved once into a topology the router,
-the home page, the publication and the validator all read.
+website render. A surface — the documentation mount, the crate's rustdoc, a generated
+report, the Swagger UI — is discovered from the thing that produces it, or from the source
+that says it exists, and resolved once into a topology the router, the home page, the
+publication and the validator all read.
 
 ## What it does not do
 

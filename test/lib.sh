@@ -95,6 +95,26 @@ rust_bin() {
 #   RB="$(rust_bin)" || rust_bin_exit $?
 rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
 
+# The end of a case that cannot measure its subject here, and why.
+#
+# The harness has no skip state: a case that exits 0 is reported `ok`, so a skip is a pass
+# that measured nothing, and the machine that lacks every tool shows the greenest suite
+# (cases 12 and 33 each read as fixed that way while they were red). Two rules follow. Under
+# CI (CI=true, which GitHub Actions sets) the job installs every tool the suite needs, so an
+# absence there is the job's setup failing and the case fails saying so — the path that
+# protects master never reports `ok` for a case that did not run. Anywhere else the case ends
+# with a line that names what was not measured, so a reader who greps a log for `skip:` finds
+# every pass that proved nothing.
+#   command -v zola >/dev/null || skip_case "zola is absent, so the site build was not measured"
+skip_case() {
+  if [ "${CI:-}" = true ]; then
+    printf '    %s; under CI every tool the suite needs is installed, so this is a failure, not a skip\n' "$1"
+    exit 1
+  fi
+  printf '    skip: %s\n' "$1"
+  exit 0
+}
+
 # The whole workflow declaration of this repository, written to a file a case can grep.
 #
 # The root justfile imports one file per bounded context, so a case that reads only the root
@@ -342,3 +362,80 @@ start_http() {
 }
 
 stop_http() { [ -n "${HTTP_PID:-}" ] && kill "$HTTP_PID" 2>/dev/null; HTTP_PID=""; return 0; }
+
+# A crate where the repository's own crate lives, shaped the way the rustdoc producer expects
+# the real one and small enough to document in seconds: the package majordomus-cli, its
+# library majordomus_cli, its executable majordomus, and a COMMIT constant the build is handed
+# the commit through, as the real crate's build.rs is (MAJORDOMUS_BUILD_COMMIT). Written into
+# the current directory beside the producer itself — scripts/rust-check and the file it
+# sources — and the repository's toolchain pin, so the fixture is documented by the rustdoc the
+# published reference is, and handed off by the script that hands that one off rather than by
+# a case's copy of its steps. The caller commits: the producer records HEAD.
+#   rustdoc_fixture_crate            the crate, one module (alpha) and one exported macro,
+#                                    the producer and the pin
+#   rustdoc_fixture_module NAME      `pub mod NAME;` with one documented struct in it
+#   rustdoc_fixture_produce          scripts/rust-check --doc, quietly; says why when it fails
+rustdoc_fixture_crate() {
+  local c=apps/majordomus-cli version
+  # the version the executable was built at: `majordomus generate` refuses to stamp a tree
+  # whose crate declares another one
+  version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/$c/Cargo.toml" | head -n 1)"
+  mkdir -p "$c/src" scripts lib
+  cp "$ROOT/scripts/rust-check" scripts/rust-check
+  cp "$ROOT/lib/rust_bin.sh" lib/rust_bin.sh
+  cp "$ROOT/rust-toolchain.toml" rust-toolchain.toml
+  printf 'target/\n' > .gitignore
+  cat > "$c/Cargo.toml" <<TOML
+[package]
+name = "majordomus-cli"
+version = "$version"
+edition = "2021"
+publish = false
+
+[lib]
+name = "majordomus_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "majordomus"
+path = "src/main.rs"
+TOML
+  cat > "$c/build.rs" <<'RUST'
+//! The commit the build was handed, compiled in, as the real crate's build script does.
+fn main() {
+    println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_COMMIT");
+    let commit = std::env::var("MAJORDOMUS_BUILD_COMMIT").unwrap_or_else(|_| "unknown".into());
+    println!("cargo:rustc-env=MAJORDOMUS_COMMIT={commit}");
+}
+RUST
+  # the macro is there for the redirect stub rustdoc writes for it (macro.nothing!.html)
+  cat > "$c/src/lib.rs" <<'RUST'
+//! The fixture crate.
+#![warn(missing_docs)]
+
+/// The commit this build was handed.
+pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
+
+/// Expands to nothing.
+#[macro_export]
+macro_rules! nothing {
+    () => {};
+}
+
+pub mod alpha;
+RUST
+  printf '//! The executable.\n\nfn main() {}\n' > "$c/src/main.rs"
+  rustdoc_fixture_module alpha
+}
+rustdoc_fixture_module() {
+  local c=apps/majordomus-cli
+  grep -qx "pub mod $1;" "$c/src/lib.rs" || printf 'pub mod %s;\n' "$1" >> "$c/src/lib.rs"
+  printf '//! The module %s.\n\n/// The one thing %s has.\npub struct Thing;\n' "$1" "$1" > "$c/src/$1.rs"
+}
+rustdoc_fixture_produce() {
+  local log; log="$(mktemp "${TMPDIR:-/tmp}/mj-rustdoc-fixture.XXXXXX")"
+  env -u CARGO_TARGET_DIR -u MAJORDOMUS_BUILD_COMMIT scripts/rust-check --doc > "$log" 2>&1 || {
+    printf '    scripts/rust-check --doc failed on the fixture crate:\n' >&2
+    sed 's/^/    | /' "$log" >&2; rm -f "$log"; return 1; }
+  rm -f "$log"
+}

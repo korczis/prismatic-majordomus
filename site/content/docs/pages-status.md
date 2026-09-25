@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 61
+weight = 62
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is `GITHUB_PAGES_PERFORMANCE.md`.
 
-Generated from canonical inputs `7cb11d3b8db4`.
+Generated from canonical inputs `227c573d3285`.
 
 ## Controlled budget
 
@@ -30,12 +30,12 @@ and reported beside these and never budgeted: they belong to GitHub, not to this
 | build | 8 s |
 | check | 60 s |
 | publish | 28 s |
-| controlled | 120 s |
+| controlled | 210 s |
 
 </div>
 
 
-Cold runner, whole controlled path: 225 s. Push to publicly observable, reported and not
+Cold runner, whole controlled path: 465 s. Push to publicly observable, reported and not
 enforced: 60 s.
 
 ## What starts a publication
@@ -49,6 +49,7 @@ held to it.
 - `.ai/repo/evidence/**`
 - `.envrc`
 - `.githooks/**`
+- `.github/actions/rustdoc/**`
 - `.github/workflows/pages.yml`
 - `.nojekyll`
 - `AGENTS.md`
@@ -57,6 +58,10 @@ held to it.
 - `LICENSE`
 - `README.md`
 - `SECURITY.md`
+- `apps/majordomus-cli/Cargo.lock`
+- `apps/majordomus-cli/Cargo.toml`
+- `apps/majordomus-cli/build.rs`
+- `apps/majordomus-cli/src/**`
 - `apps/majordomus-cli/src/capability/builtin/design.rs`
 - `apps/majordomus-cli/src/cockpit/logo-mark.svg`
 - `apps/majordomus-cli/src/design/**`
@@ -73,6 +78,7 @@ held to it.
 - `lib/**`
 - `package-lock.json`
 - `package.json`
+- `rust-toolchain.toml`
 - `scripts/ci/design-check`
 - `scripts/cockpit-assets`
 - `scripts/cockpit-probe`
@@ -90,6 +96,7 @@ held to it.
 - `scripts/lib/ui-routes.mjs`
 - `scripts/pages`
 - `scripts/rules-package`
+- `scripts/rust-check`
 - `scripts/site-basepath-check`
 - `scripts/site-build`
 - `scripts/site-check`

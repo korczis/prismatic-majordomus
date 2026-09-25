@@ -1,7 +1,7 @@
 +++
 title = "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged"
 description = "The website's homepage, its /features/ pages and its capability matrix name no feature, no"
-weight = 170
+weight = 175
 [extra]
 claim_id = "landing-page-is-a-projection"
 status = "guaranteed"

@@ -18,10 +18,23 @@ version: 1
 trigger:
   branch: master
   gate: site-build
-  # paths that no class of the gate model covers but that do change what is published
+  # paths that change what is published and that no class selecting the gate above covers.
+  # The pipeline's own files, and since ADR 0086 the inputs of the crate's rustdoc, which the
+  # site composes at /rustdoc: the crate's sources and manifests, the toolchain that renders
+  # them, its producer and the action that runs it here. They are extras rather than classes
+  # of the site-build gate because the reference is built by its own producer and never by
+  # the site build, so a change to the crate must publish without making every Rust change
+  # plan the site's gates (test/cases/94_ci_plan.sh holds that it does not).
   extra:
+    - .github/actions/rustdoc/**
     - .github/workflows/pages.yml
+    - apps/majordomus-cli/Cargo.lock
+    - apps/majordomus-cli/Cargo.toml
+    - apps/majordomus-cli/build.rs
+    - apps/majordomus-cli/src/**
+    - rust-toolchain.toml
     - scripts/pages
+    - scripts/rust-check
     - scripts/site-deploy
 
 # ---------------------------------------------------------------- how a publication happens
@@ -61,6 +74,19 @@ deploy:
 #   publish           13      20   24   24       28              1.2x
 #   controlled        60      75   84   86      120              1.4x
 #
+# THE rustdoc ROW (ADR 0086), PROVISIONAL UNTIL THE FIRST RUNS OF THE rustdoc JOB MEASURE IT.
+# The reference is produced by a job of its own that the deploy job waits for, so its wall
+# time, checkout to upload, plus the download of its artifact in the deploy job, is a phase of
+# the controlled path; the deploy job writes it as the row `rustdoc`. No runner has run it yet.
+# What has been measured is the step itself, `scripts/rust-check --doc`, on an Apple M5 Pro on
+# 2026-09-24: 12, 6 and 6 s warm (cargo doc 10, 4 and 5 s, the handoff 2, 1 and 1 s; 2991
+# files, 84 MB), and 34 s for a cold `cargo doc` into an empty target directory (519 MB). The
+# warm budget of 90 is that step at about three times the laptop's time on a four-vCPU runner
+# (rustdoc of one crate is mostly one core), plus the setup-rust toolchain and cache restore,
+# the checkout, and the artifact's upload and download, estimated at about 60 s together. Set
+# it from the first twenty runs' timing rows, as the rows above were set, and replace this
+# paragraph with that measurement.
+#
 # WHY THE OLD BUDGET WAS WRONG, RATHER THAN THE PATH HAVING REGRESSED. The numbers above
 # replace the set written when this file was created (b959046cd) and never changed since.
 # Those were derived from .ai/repo/benchmarks/pages/baseline.macos-arm64.json — a local macOS
@@ -86,14 +112,19 @@ budget:
     check: 60
     local-check: 3
     publish: 28
+    # the rustdoc job, checkout to upload, and its artifact's download: provisional, see above
+    rustdoc: 90
     # the sum of the rows above, and the number the SLO verdict is taken against
-    controlled: 120
+    controlled: 210
   # a cold runner pays for the caches it cannot restore; it is still bounded. No cold run
   # appears in the window above, so this keeps the allowance the previous pair expressed —
   # 180 against a warm 75, which is 105 s for an uncached `npm ci` and Zola download — over
-  # the re-derived warm budget: 120 + 105.
+  # the re-derived warm budget, and adds the rustdoc job's own cold cost, as provisional as
+  # its warm row: every dependency's metadata built before the crate is documented, 34 s cold
+  # on the laptop above against 6 warm, so about 100 s more on a runner and 150 with the
+  # toolchain download. 210 + 105 + 150.
   cold:
-    controlled: 225
+    controlled: 465
   # push -> publicly observable. Reported against every deployment, and not enforced: the
   # queue and GitHub's own Pages build are the larger half of it and neither is ours.
   end_to_end: 60

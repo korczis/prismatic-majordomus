@@ -1,11 +1,11 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.8.0
+# Generator: majordomus-cli 0.9.0
 openapi: "3.1.0"
 jsonSchemaDialect: https://spec.openapis.org/oas/3.1/dialect/base
 info:
   title: Majordomus
-  version: "0.8.0"
+  version: "0.9.0"
   summary: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry."
   description: "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.\n\n**One registry, every interface a projection.** Every operation here is a capability of the registry and nothing is declared for HTTP alone. `operationId` is the capability's canonical id; the same capability answers as the MCP tool `x-majordomus-mcp` names and as the command `x-majordomus-cli` names, where its exposure says so, through one executor with one cache. A change to a capability's description or input type reaches this document, the MCP schema, the command line and the generated reference on the next start; nothing is edited by hand.\n\n**Loopback, unauthenticated, and explicit about what writes.** The first `majordomus mcp` in a repository binds this server beside its stdio session and logs the URL; `majordomus serve` binds it alone. It listens on 127.0.0.1 and asks for no credentials: whoever can reach the socket can read the layer and can run every command it exposes. An operation that changes a tracked file declares the effect `repository_mutation` in `x-majordomus-effect`; it is always a `POST` and never a read-only MCP tool, and every other operation reads. `GET /` is the home page and lists every surface; `/swagger` is Swagger UI over this document; `/docs/` is this repository's own documentation; `/mcp` is MCP over HTTP for a second client.\n\n**Binding.** `GET` binds every top-level property of the capability's input as a query parameter, coerced by the schema's type (integers, numbers and booleans are parsed, everything else is text); `POST` binds the input as the JSON body. An unknown parameter is an invalid input, not ignored. Every failure is one JSON body, `{ \"error\": { \"code\", \"message\" } }`: 400 `invalid_input`, 404 `not_found`, 422 `refused` (a command's alone), 500 `internal`; 405 `method_not_allowed` names a path that exists under another method.\n\n**Examples are benchmark cases.** Every example in this document is one of the capability's own benchmark cases, the inputs the benchmarks time and the tests replay against a real socket: an operation without an example is an operation without a case, and the executable does not compile in that state. `x-majordomus-benchmark` and `x-majordomus-cache` carry the policies; `x-majordomus-stability` and `x-majordomus-provenance` say how far a capability is proved and where it was declared.\n\n**Generated, committed, checked.** This document is rendered from the registry at every request and committed as `docs/generated/openapi.json`; `majordomus generate --check` derives it again and refuses a stale copy, and CI runs that check on every push, so the committed document, the served one and the reference on the site are the same document."
   license:
@@ -5566,6 +5566,87 @@ paths:
           uri: majordomus://quality
           name: quality
       x-majordomus-cli: quality report
+  "/api/v1/quality/rustdoc":
+    get:
+      operationId: quality.rustdoc
+      summary: Rustdoc tree integrity
+      description: "The crate's rustdoc tree — the rustdoc surface's artifact, as the web topology resolves it — judged against the crate's own inventory of exported items: every item that owns a page has it at the route rustdoc gives it, no item page is left without an item, the tree declares it was built from HEAD, the library's index is present and names the crate, its assets are present, every relative link resolves, and no file names the machine it was built on or carries a credential. Answers the verdict (clean, findings, or no_tree when there is nothing to judge), the counts it joined, every exported module with its page, and one typed finding per defect with the file and what to do."
+      tags:
+        - quality
+      parameters:
+        - name: kind
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/RustdocFindingKind"
+              - type: "null"
+          description: "Only findings of this kind (`missing-page`, `link`, `stale`). All of them when\nabsent. The verdict and the counts are never narrowed: a filter that changed the\nverdict would be a way of passing a tree with a missing page."
+          examples:
+            missing-pages-summary:
+              value: missing-page
+        - name: summary_only
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: "Answer with the verdict, the counts and the module routes, and leave the findings\nout."
+          examples:
+            default:
+              value: false
+            missing-pages-summary:
+              value: true
+      responses:
+        "200":
+          description: "Rustdoc tree integrity: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/RustdocReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: quality.rustdoc
+      x-majordomus-kind: query
+      x-majordomus-stability: behaviorally_verified
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::quality
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: process
+        max_entries: 8
+        ttl_seconds: 10
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_quality_rustdoc
+        resource:
+          uri: majordomus://quality/rustdoc
+          name: quality-rustdoc
+      x-majordomus-cli: quality rustdoc
   "/api/v1/ready":
     get:
       operationId: health.ready
@@ -12809,7 +12890,7 @@ components:
           description: "This process's own memory changes, and nothing outside it."
         - type: string
           const: repository_mutation
-          description: "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with ADR 0040: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`."
+          description: "The repository changes.\n\nFor most of this executable's life nothing classified to this, because no capability\nof any kind wrote to the repository. That day arrived with [ADR 0040]: development\nsemantics are capabilities of this runtime, and the first of them — `plan.transition`\n— stamps a field into an issue's own tracked record. The variant was put on the model\nin advance so that when one did, it would say so *here*, where a projection already\nreads it and a client already asks before running it, rather than in whichever page\nhappens to render its button.\n\nIt is not classified from the kind, because the kind cannot know it: a command that\nannounces a peer and a command that writes a tracked file are the same kind. A\nhandler that writes the repository says so with\n`ExecutionPolicy::writes_repository`, the way one that stops says so with\n`ExecutionPolicy::stoppable`.\n\n[ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md"
       description: "What running a capability changes outside the caller.\n\nClassified, never declared: it follows from the kind, which is the field a declaration\nalready carries. A projection reads this to decide whether to ask before running\nsomething — the Cockpit's confirmation is derived from it — instead of naming\ncapabilities it must treat carefully, which is a list that goes stale the day after it\nis written."
     ExecutionError:
       type: object
@@ -20705,6 +20786,265 @@ components:
         - index_state
         - note
       description: "The commit this process answers about, against the commit the repository is on.\n\nBoth halves are read here and neither is assumed. `served` is what the index this\nprocess is holding was built from; `repository` is what `git` says now, on this call. A\nserver that follows the repository reports them equal and pays one `git` invocation for\nthe proof; a server that froze its index at start-up reports them different, which is\nthe only way a reader could ever have found that out.\n\n`agree` is the field with the operational meaning, and what it says is *not* \"the\nrepository is fine\" but \"the answers you are reading are about the tree you are looking\nat\". When it is false every other capability this process serves is answering about a\ncommit that is no longer checked out, and nothing else in the API would tell you.\n\n```\nuse majordomus_cli::capability::builtin::lifecycle::RuntimeView;\nuse serde_json::json;\n\nlet view = |served: &str, repo: &str, agree: bool| -> RuntimeView {\n    serde_json::from_value(json!({\n        \"root\": \"example/repo\",\n        \"served_head\": served, \"served_branch\": \"master\", \"served_working_tree\": \"clean\",\n        \"repository_head\": repo, \"repository_branch\": \"master\",\n        \"repository_working_tree\": \"clean\",\n        \"agree\": agree, \"objects\": 1319, \"index_state\": \"ok\",\n        \"note\": \"as measured on this call\",\n    })).unwrap()\n};\n\n// a server following the repository: one `git` invocation buys the proof\nlet current = view(\"a1b2c3d\", \"a1b2c3d\", true);\nassert!(current.agree);\nassert_eq!(current.served_head, current.repository_head);\nassert_eq!(current.index_state, \"ok\");\n\n// and one that froze its index at start-up: every answer it serves is about the old commit\nlet frozen = view(\"a1b2c3d\", \"9f8e7d6\", false);\nassert!(!frozen.agree);\nassert_ne!(frozen.served_head, frozen.repository_head);\n```"
+    RustdocAcceptedLinks:
+      type: object
+      properties:
+        class:
+          "$ref": "#/components/schemas/RustdocLinkClass"
+          description: The class.
+        links:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "References of the class, across every page."
+        pages:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Pages carrying at least one.
+        written:
+          type: array
+          items:
+            type: string
+          description: "Every distinct reference as written, fragment included, in canonical order."
+      required:
+        - class
+        - links
+        - pages
+        - written
+      description: "The unresolved references of one `RustdocLinkClass`: how many, on how many pages, and\nevery distinct one as the pages write it. Every class is listed, with zeros when the\ntree has none, so that \"none\" is an answer and not an omission."
+    RustdocCounts:
+      type: object
+      properties:
+        exported_items:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Items the library exports, of every kind."
+        page_owning_items:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Of every documented target, the items that own a page: modules, types, traits, free\nfunctions, constants, statics, aliases, macros."
+        derived_pages:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Pages those items derive; more than the items when a re-export documents one twice.
+        item_pages:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Item pages found in the tree: every page under a crate directory that is neither a\nredirect stub nor a system file."
+        redirect_stubs:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Pages that only redirect to where an item is documented.
+        system_files:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "rustdoc's own files: static assets, the search index, source pages, implementor\nlists, the settings and help pages, every crate's all-items page and sidebar."
+        html_files:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Every HTML file of the tree, whatever it is."
+        files:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Every file of the tree.
+        relative_links:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Relative links followed, across every page: resolved, broken and accepted alike."
+        accepted_links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RustdocAcceptedLinks"
+          description: "The unresolved references that are rustdoc's own, by class; every class is listed."
+        external_links:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RustdocHostLinks"
+          description: "External links, by host."
+      required:
+        - exported_items
+        - page_owning_items
+        - derived_pages
+        - item_pages
+        - redirect_stubs
+        - system_files
+        - html_files
+        - files
+        - relative_links
+        - accepted_links
+        - external_links
+      description: "What the check counted, so a reader can see what was joined and not only what failed."
+    RustdocFinding:
+      type: object
+      properties:
+        kind:
+          "$ref": "#/components/schemas/RustdocFindingKind"
+          description: What is wrong.
+        file:
+          type: string
+          description: "The file of the tree it is about, tree-relative; empty when it is about the tree as a\nwhole."
+        subject:
+          type: string
+          description: "What exactly: the item path of a missing page, the target of a broken link, the\npattern that matched."
+        message:
+          type: string
+          description: "One sentence, specific to this occurrence."
+        remedy:
+          type: string
+          description: "What to do, from the kind."
+      required:
+        - kind
+        - file
+        - subject
+        - message
+        - remedy
+      description: One finding about the tree.
+    RustdocFindingKind:
+      oneOf:
+        - type: string
+          const: missing-page
+          description: An exported item that owns a page has no page at its derived route.
+        - type: string
+          const: orphan-page
+          description: "An item page no item of the crate derives: a leftover, or a route rule this check\nhas wrong."
+        - type: string
+          const: stale
+          description: "The tree declares it was built from a revision other than the repository's HEAD."
+        - type: string
+          const: undeclared
+          description: The tree carries no declaration of what it is or what it was built from.
+        - type: string
+          const: crate-index
+          description: "The library's index page is absent, or does not say it is the library's."
+        - type: string
+          const: asset
+          description: "A stylesheet, script, font or search file the library's index page needs is absent."
+        - type: string
+          const: link
+          description: A relative link of a page resolves to no file of the tree.
+        - type: string
+          const: machine-path
+          description: A file names a path of the machine it was built on.
+        - type: string
+          const: secret
+          description: A file carries the shape of a credential.
+      description: "What is wrong with the tree, as a stable code."
+    RustdocHostLinks:
+      type: object
+      properties:
+        host:
+          type: string
+          description: "The host: `doc.rust-lang.org`."
+        links:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many links point at it, across every page."
+      required:
+        - host
+        - links
+      description: "How many external links the tree carries to one host. Counted, never fetched: a check\nthat went to the network would be a check whose verdict depended on it."
+    RustdocLinkClass:
+      oneOf:
+        - type: string
+          const: inherited-documentation
+          description: "A relative link inside a docblock that rustdoc copied from another crate: the\ndocumentation of an implementation listed under *Auto Trait Implementations* or\n*Blanket Implementations* of a trait no page of this tree documents (the impl's\nheader links no trait page of the tree). The text is the other crate's, written\nrelative to that crate's own pages — tracing's `dispatcher#setting-the-default-subscriber`\n— so it resolves nowhere under this tree and nothing in this crate can change it.\nThe same link anywhere else, or under an implementation of a trait of this crate,\nis a `link` finding."
+        - type: string
+          const: unwritten-implementors
+          description: "The implementors script a trait's page loads —\n`trait.impl/<crate>/<path>/trait.<Name>.js`, for the trait the page documents — when\nrustdoc wrote none. rustdoc references it from every trait page and writes it only\nwhen it has implementors to list from the documented crates; the page renders its\nown crate's implementors inline and is complete without it. Any other absent script\nis a `link` finding."
+      description: "A kind of unresolved reference that is rustdoc's and not the crate's: decided by where\nit sits on its page, counted, and never a finding."
+    RustdocModuleRoute:
+      type: object
+      properties:
+        path:
+          type: string
+          description: "The module's crate path: `majordomus_cli::quality`."
+        route:
+          type: string
+          description: "Its page, relative to the tree root: `majordomus_cli/quality/index.html`."
+      required:
+        - path
+        - route
+      description: "One exported module and the page rustdoc documents it on: the mapping a consumer that\nlinks into the tree reads, rather than deriving a route of its own."
+    RustdocReport:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`SCHEMA`."
+        tree:
+          type: string
+          description: "The tree judged, repository-relative when it is inside the repository."
+        mount:
+          type:
+            - string
+            - "null"
+          description: "The mount the tree is published at, from the web topology."
+        crate:
+          type: string
+          description: "The library's crate name: the directory of the tree it is documented in. Empty when\nthe repository has no crate."
+        built_from:
+          type:
+            - string
+            - "null"
+          description: The revision the tree declares it was built from.
+        head:
+          type:
+            - string
+            - "null"
+          description: "The repository's HEAD when it was judged."
+        verdict:
+          "$ref": "#/components/schemas/RustdocVerdict"
+          description: The verdict.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why nothing was judged, when nothing was."
+        counts:
+          "$ref": "#/components/schemas/RustdocCounts"
+          description: What was counted.
+        modules:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RustdocModuleRoute"
+          description: "Every exported module of the library with its page, in canonical order: the one\nmodule-to-route mapping every consumer reads. Derived from the crate, so it is\nanswered even when the tree is absent."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/RustdocFinding"
+          description: "Every finding, in canonical order."
+      required:
+        - schema
+        - tree
+        - crate
+        - verdict
+        - counts
+        - modules
+        - findings
+      description: One judgement of one rustdoc tree against the crate it documents.
+    RustdocVerdict:
+      oneOf:
+        - type: string
+          const: clean
+          description: The tree holds every page the crate derives and nothing wrong was found.
+        - type: string
+          const: findings
+          description: At least one finding stands.
+        - type: string
+          const: no_tree
+          description: "Nothing could be judged: the tree, or the crate that documents it, is absent. Never\na pass — the producer has not run, and a check that cannot see its subject says so."
+      description: What the tree was judged to be.
     ScopeConflict:
       type: object
       properties:
@@ -23242,7 +23582,7 @@ components:
         - diagnostics
       description: "One work tree, as the topology sees it."
 x-majordomus:
-  generator: majordomus-cli 0.8.0
+  generator: majordomus-cli 0.9.0
   infrastructure:
     - id: home
       path: /
@@ -23287,4 +23627,4 @@ x-majordomus:
       code: internal
       reason: The capability failed for a reason of its own; the message names it.
 x-majordomus-generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the canonical Majordomus capability registry; regenerate with `majordomus generate`"
-x-majordomus-generator: majordomus-cli 0.8.0
+x-majordomus-generator: majordomus-cli 0.9.0

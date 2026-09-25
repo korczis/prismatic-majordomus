@@ -201,6 +201,18 @@ test('an orphan the sitemap does not name is still audited', () => {
   rmSync(root, { recursive: true, force: true });
 });
 
+test('a surface composed into a build at its mount is not the build\'s page, and only that mount', () => {
+  const { root, write } = fixture();
+  write('index.html', '<h1>home</h1>');
+  write('ref/index.html', '<h1>another producer</h1>');
+  write('ref/api/index.html', '<h1>another producer</h1>');
+  write('reference/index.html', '<h1>a page of the site whose name begins like the mount</h1>');
+  // the mounts come from the topology (mj_web_composed); without them every page is the build's
+  assert.deepEqual(discoverPages(root).map((p) => p.route), ['/', '/ref/', '/ref/api/', '/reference/']);
+  assert.deepEqual(discoverPages(root, ['/ref']).map((p) => p.route), ['/', '/reference/']);
+  rmSync(root, { recursive: true, force: true });
+});
+
 test('breakpoints come from the emitted media queries, in pixels, deduplicated', () => {
   const { root, write } = fixture();
   write('app.css', '@media (min-width:40rem){.a{}}@media (min-width:640px){.b{}}@media (min-width:64rem){.c{}}');

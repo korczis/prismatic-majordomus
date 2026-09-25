@@ -1,6 +1,6 @@
 [package]
 name = "majordomus-cli"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
@@ -53,6 +53,11 @@ ed25519-dalek = { version = "2", default-features = false, features = ["std", "f
 # getrandom: the node's one long-lived signing key and each instance's id need OS entropy
 # once at creation; nothing else in the crate is random.
 getrandom = "0.2"
+# regex: the shapes a published artifact must never carry (src/quality/leak-patterns.tsv)
+# are POSIX extended expressions that scripts/site-check and scripts/ci/no-machine-paths
+# apply with grep; the crate applies the same file rather than a translation of it. Already
+# in the build through jsonschema, with the same features, so it adds no code.
+regex = "1"
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

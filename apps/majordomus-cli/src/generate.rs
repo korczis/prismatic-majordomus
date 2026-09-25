@@ -1202,17 +1202,31 @@ pub fn providers_markdown(value: &Value) -> String {
 ///
 /// It is the same value the `web.surfaces` capability answers and the same one the router
 /// serves from — this file exists because the site generator runs without a Rust toolchain
-/// and reads committed artifacts, not because the topology has a second source.
+/// and reads committed artifacts, not because the topology has a second source — less the
+/// one part of that value which is a fact of a checkout rather than of the repository.
 ///
-/// A surface whose existence depends on a producer having run is in it either way: the
-/// topology says what this repository exposes, and whether a directory is presently on disk
-/// is a fact of a checkout, not of the repository. That is what keeps the file stable
-/// enough for `generate --check` to compare.
+/// A surface that discovery declares from what says it exists is in it whether or not its
+/// producer has run: the documentation, declared from the site's configuration, and the
+/// crate's rustdoc, declared from the crate. Whether its directory is presently on disk is
+/// a fact of a checkout, and so is the revision it was built from, which is dropped. A
+/// surface known *only* from the declaration its producer wrote — a report — exists in the
+/// checkout that ran the producer and in no other, so it is left out: the resolution a
+/// process serves still holds it, and the committed file does not change because somebody
+/// ran the suite. That is what keeps the file stable enough for `generate --check` to
+/// compare, and what lets the site build trust that every published surface named here is
+/// one every machine is expected to build.
 pub fn web_topology(ctx: &Context) -> Value {
-    let surfaces: Vec<Value> = ctx
-        .web
+    web_document(&ctx.web)
+}
+
+/// The projection of one resolved topology, apart from the context that resolved it, so
+/// that what the committed file depends on can be measured over a directory rather than
+/// over a whole index.
+fn web_document(topology: &crate::web::Topology) -> Value {
+    let surfaces: Vec<Value> = topology
         .surfaces
         .iter()
+        .filter(|s| !only_where_its_producer_ran(s))
         .map(|s| {
             let mut v = serde_json::to_value(s).unwrap_or(Value::Null);
             // a built revision is a fact of one checkout's artifacts, never of the
@@ -1236,6 +1250,20 @@ pub fn web_topology(ctx: &Context) -> Value {
             .collect::<serde_json::Map<String, Value>>(),
         "surfaces": surfaces,
     })
+}
+
+/// Whether a surface was found only by walking the generated root: its mount, or any other
+/// value, came from the declaration a producer wrote beside its output.
+///
+/// That provenance is the walk's alone — every surface discovery declares from a source
+/// (the registry, the site's configuration, the crate) says so instead — so it is the
+/// discovered fact of "this exists because a producer ran here", not a list of report ids
+/// kept beside the reports.
+fn only_where_its_producer_ran(surface: &crate::web::Surface) -> bool {
+    surface
+        .provenance
+        .values()
+        .any(|p| matches!(p, crate::web::Provenance::ProducerDeclaration { .. }))
 }
 
 /// The schema of `graph.json`.
@@ -2626,6 +2654,127 @@ fn benchmark_cell(policy: crate::capability::BenchmarkPolicy) -> String {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    /// `docs/generated/web.json` is committed and `generate --check` compares it, so it
+    /// may hold nothing that depends on which producers ran in the checkout that wrote it.
+    /// The documentation and the rustdoc are the surfaces whose producers run in some
+    /// checkouts and not others; each writes a declaration with the revision it was built
+    /// from. The projection must be byte-identical with and without those declarations —
+    /// and with two different revisions, which is two machines generating one commit.
+    #[test]
+    fn the_web_projection_is_the_same_whether_or_not_a_producer_ran() {
+        use crate::web::discover::{self, Runtime};
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let krate = root.join(crate::capability::model::CRATE_DIR);
+        std::fs::create_dir_all(krate.join("src")).unwrap();
+        std::fs::write(krate.join("Cargo.toml"), "").unwrap();
+        std::fs::write(krate.join("src/lib.rs"), "//! x\n").unwrap();
+        std::fs::create_dir_all(root.join("site")).unwrap();
+        std::fs::write(root.join(discover::SITE_CONFIG), "base_url = \"/\"\n").unwrap();
+
+        let projection = || {
+            let topology = discover::discover(root, Runtime::full()).unwrap();
+            serde_json::to_string_pretty(&web_document(&topology)).unwrap()
+        };
+        let produce = |revision: &str| {
+            for (artifact, id, mount) in [
+                (
+                    discover::DOCS_ARTIFACT,
+                    discover::DOCS,
+                    discover::DOCS_MOUNT,
+                ),
+                (
+                    discover::RUSTDOC_ARTIFACT,
+                    discover::RUSTDOC,
+                    discover::RUSTDOC_MOUNT,
+                ),
+            ] {
+                let dir = root.join(artifact);
+                std::fs::create_dir_all(&dir).unwrap();
+                std::fs::write(dir.join("index.html"), "<h1>built</h1>").unwrap();
+                std::fs::write(
+                    dir.join(discover::DECLARATION_FILE),
+                    json!({
+                        "schema": discover::DECLARATION_SCHEMA, "id": id, "mount": mount,
+                        "availability": "both", "built_from": revision,
+                    })
+                    .to_string(),
+                )
+                .unwrap();
+            }
+        };
+
+        let unbuilt = projection();
+        produce("1111111111111111111111111111111111111111");
+        // the resolution does read the declarations: this is not equal because nothing
+        // was looked at
+        let topology = discover::discover(root, Runtime::full()).unwrap();
+        for id in [discover::DOCS, discover::RUSTDOC] {
+            assert_eq!(
+                topology.get(id).and_then(|s| s.built_from.as_deref()),
+                Some("1111111111111111111111111111111111111111"),
+                "{id}"
+            );
+        }
+        let built_here = projection();
+        produce("2222222222222222222222222222222222222222");
+        let built_elsewhere = projection();
+        assert_eq!(
+            unbuilt, built_here,
+            "a producer running changed the projection"
+        );
+        assert_eq!(
+            built_here, built_elsewhere,
+            "a revision reached the projection"
+        );
+        assert!(!built_here.contains("built_from"), "{built_here}");
+        assert!(!built_here.contains("1111111"), "{built_here}");
+
+        // and the document holds both surfaces, so the equality is not two empty documents
+        let doc: Value = serde_json::from_str(&built_here).unwrap();
+        let ids: Vec<&str> = doc["surfaces"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|s| s["id"].as_str())
+            .collect();
+        assert!(ids.contains(&discover::DOCS), "{ids:?}");
+        assert!(ids.contains(&discover::RUSTDOC), "{ids:?}");
+        assert_eq!(doc["reserved"]["rustdoc"], discover::RUSTDOC_MOUNT);
+    }
+
+    /// The other producers that run in some checkouts and not others: the reports. A
+    /// report is a surface only where its producer wrote it — the walk of the generated
+    /// root finds it there and nowhere else — so a report reaching the committed file would
+    /// make `generate --check` fail in exactly the checkout that ran the suite, and would
+    /// hand the site build a published surface whose directory no other machine has. The
+    /// declaration here is written by the reports' own `declare`, not by a fixture of it.
+    #[test]
+    fn a_report_on_disk_does_not_reach_the_web_projection() {
+        use crate::web::discover::{self, Runtime};
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        std::fs::create_dir_all(root.join("site")).unwrap();
+        std::fs::write(root.join(discover::SITE_CONFIG), "base_url = \"/\"\n").unwrap();
+        let projection = || {
+            let topology = discover::discover(root, Runtime::full()).unwrap();
+            serde_json::to_string_pretty(&web_document(&topology)).unwrap()
+        };
+
+        let before = projection();
+        crate::web::report::declare(root, "tests", "The test run", "scripts/test").unwrap();
+        // the resolution holds the report — it is served and composed where it was built
+        let topology = discover::discover(root, Runtime::full()).unwrap();
+        assert!(topology.get("tests").is_some(), "the walk found the report");
+        // and the committed projection does not, because only this checkout has it
+        let after = projection();
+        assert_eq!(
+            before, after,
+            "a report on disk reached the committed projection"
+        );
+        assert!(!after.contains("\"tests\""), "{after}");
+    }
 
     /// A share directory inside the repository is named relative to it even when the root
     /// is spelled differently from the canonical path the share carries. `Share::open`

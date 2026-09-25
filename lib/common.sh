@@ -1351,3 +1351,44 @@ mj_ledger_bad_lines() {
 # trailing newline, leaving an empty pattern that matches everything.
 mj_is_multiline() { case "$1" in *"$(printf 'x\ny')"*) return 0 ;; esac
   [ "$(printf '%s' "$1" | wc -l | tr -d ' ')" != 0 ]; }
+
+# ---------------------------------------------------------------- composed web surfaces
+# mj_web_composed <repository-root> [mounts|rows|trees]
+#
+# The published static surfaces other than the application: what scripts/site-build copies
+# into the site at their mounts (ADR 0086), read from the committed web topology,
+# docs/generated/web.json — every surface of kind static-directory that the published site
+# carries (availability both or published-only) and that is not the app itself. The site's
+# own page contracts judge the site's own pages; a composed surface's pages are judged by
+# that surface's own check (`majordomus quality rustdoc` for the crate's reference). So the
+# build that composes them and every check that must tell the site's pages from theirs ask
+# this one selection, and nothing names a surface or a mount by hand.
+#
+#   mounts   one mount per line, as the topology writes it (no trailing slash)
+#   rows     id, mount, artifact and producer of each, tab-separated
+#   trees    every repository-relative directory that holds a composed surface's pages: its
+#            own artifact, and its mount under the artifact of every other static surface,
+#            which is where site-build composes it — the published build and the served one
+#
+# Empty output is an answer (nothing is composed). A topology that cannot be read is not: it
+# fails with 12 and says so, because a scope that silently came back empty would put every
+# composed page back under the site's contracts, and one that silently came back wrong would
+# exempt pages nobody chose to exempt.
+mj_web_composed() {
+  local mj_wc_web="$1/docs/generated/web.json" mj_wc_mode="${2:-mounts}"
+  case "$mj_wc_mode" in mounts|rows|trees) ;; *) mj_err "mj_web_composed: mounts, rows or trees, not '$mj_wc_mode'"; return 2 ;; esac
+  [ -f "$mj_wc_web" ] || { mj_err "$mj_wc_web is missing; the composed surfaces cannot be told from the site's own pages (regenerate: majordomus generate)"; return 12; }
+  command -v jq >/dev/null 2>&1 || { mj_err "jq is required to read $mj_wc_web"; return 12; }
+  jq -r --arg mode "$mj_wc_mode" '
+    [.surfaces[] | select(.kind == "static-directory"
+                          and (.availability == "both" or .availability == "published-only")
+                          and .id != "app")] as $c
+    | if $mode == "mounts" then $c[].mount
+      elif $mode == "rows" then $c[] | [.id, .mount, (.artifact // ""), (.producer // "")] | @tsv
+      else ($c[] | .artifact // empty),
+           ([$c[].id] as $ids
+            | .surfaces[]
+            | select(.kind == "static-directory" and (.artifact // "") != "" and ((.id | IN($ids[])) | not))
+            | .artifact as $host | $c[] | $host + .mount)
+      end' "$mj_wc_web" || { mj_err "$mj_wc_web does not parse as a web topology"; return 12; }
+}
