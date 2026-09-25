@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.8.0
+# Generator: majordomus-cli 0.9.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.8.0
+generator: majordomus-cli 0.9.0
 coverage:
   - scope: direct
-    required: 113
-    covered: 108
+    required: 115
+    covered: 110
     missing: 0
     waived: 5
     inapplicable: 0
   - scope: http
-    required: 112
-    covered: 108
+    required: 114
+    covered: 110
     missing: 0
     waived: 4
     inapplicable: 0
   - scope: mcp
-    required: 110
-    covered: 106
+    required: 112
+    covered: 108
     missing: 0
     waived: 4
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 348
-    covered: 335
+    required: 354
+    covered: 341
     missing: 0
     waived: 13
     inapplicable: 0
@@ -323,6 +323,24 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: entity.kinds
+    module: entity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: entity.show
+    module: entity
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - first-object
   - id: environment.explain
     module: environment
     kind: query
