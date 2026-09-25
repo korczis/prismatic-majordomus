@@ -17,6 +17,8 @@
 //! parity   the registry against MCP, HTTP, OpenAPI and the command line
 //! report   one measurement: counts and findings, sorted, deterministic
 //! model    the vocabulary: codes, severities, the report's own shape
+//! rustdoc  the tree rustdoc renders from the crate, judged against the same inventory
+//! leaks    the shapes a published artifact must never carry, from the one file naming them
 //! ```
 //!
 //! Discovery happens once and every renderer reads the value: the same relationship the
@@ -58,10 +60,14 @@
 //! assert!(!first.remediation.is_empty());
 //! ```
 
+pub(crate) mod leaks;
 pub(crate) mod model;
 pub mod parity;
 pub mod policy;
 pub mod report;
+// crate-visible only: its report reaches every consumer as the typed output of the
+// capability `quality.rustdoc`, and nothing outside the crate needs its Rust items
+pub(crate) mod rustdoc;
 pub mod source;
 
 pub use model::{

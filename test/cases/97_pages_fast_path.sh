@@ -92,12 +92,41 @@ pages: read" ] || { echo "    pages.yml asks for more than the gh-pages push and
 
 # 5. the heavy gates are not on the publication path, and are still somewhere. Only what the
 #    jobs execute counts: the trigger paths name scripts/site-probe as an input that can change
-#    the site, which is not the same as running it.
+#    the site, which is not the same as running it. What a job executes includes the steps of
+#    every local composite action it uses, and of the ones those use: a gate moved into an
+#    action is still on this path, and a check that read pages.yml alone would pass it.
 awk '/^jobs:/{f=1} f' "$W" | grep -vE '^\s*#' > jobs.yml
-for heavy in 'test/run.sh' 'site-probe' 'rust-check' 'llvm-cov' 'cargo test'; do
-  grep -qF "$heavy" jobs.yml && { echo "    pages.yml runs $heavy on the deployment critical path"; exit 1; }
+seen=" "
+while :; do
+  more=""
+  for a in $(grep -oE 'uses: \./\.github/actions/[A-Za-z0-9_-]+' jobs.yml | sed 's#.*uses: \./##' | LC_ALL=C sort -u); do
+    case "$seen" in *" $a "*) continue ;; esac
+    seen="$seen$a "; more=1
+    [ -f "$ROOT/$a/action.yml" ] || { echo "    pages.yml uses $a, which has no action.yml"; exit 1; }
+    # the steps, not the description: an action may explain what it is not for
+    awk '/^runs:/{f=1} f' "$ROOT/$a/action.yml" | grep -vE '^\s*#' >> jobs.yml
+  done
+  [ -n "$more" ] || break
+done
+# ADR 0086 moved exactly one Rust command onto this path, deliberately and for a reason of the
+# bytes rather than of the repository: the crate's rustdoc is a published surface, so its
+# producer runs here — `scripts/rust-check --doc`, the rust gate's own rustdoc step and its
+# handoff, through .github/actions/rustdoc. That line and no other form of it. Every other
+# mode of rust-check (the default, --ci, --integration), the suites, clippy and coverage stay
+# validate.yml's, and a second flag on the allowed line is not the allowed line.
+grep -F 'rust-check' jobs.yml | grep -vxE '[[:space:]]*run: scripts/rust-check --doc' > rustcheck.txt || true
+[ -s rustcheck.txt ] && { echo "    pages.yml runs rust-check in a form other than exactly 'scripts/rust-check --doc' (ADR 0086):"; cat rustcheck.txt; exit 1; }
+grep -vxE '[[:space:]]*run: scripts/rust-check --doc' jobs.yml > jobs.heavy.yml || true
+for heavy in 'test/run.sh' 'site-probe' 'rust-check' 'llvm-cov' 'cargo test' 'clippy'; do
+  grep -qF "$heavy" jobs.heavy.yml && { echo "    pages.yml runs $heavy on the deployment critical path"; exit 1; }
   grep -qF "$heavy" "$V" || { echo "    $heavy runs in neither workflow; a gate was dropped rather than moved"; exit 1; }
 done
+# and the allowed line is there for a reason the trigger and the check both know: the surface
+# it produces is composed into what this workflow builds, and a public copy of it is verified
+grep -qE '^[[:space:]]*run: scripts/rust-check --doc$' jobs.yml \
+  || { echo "    pages.yml does not produce the rustdoc surface its build composes (ADR 0086)"; exit 1; }
+grep -q 'scripts/pages verify-rustdoc --commit' "$W" \
+  || { echo "    pages.yml publishes the crate's reference and never verifies the public copy"; exit 1; }
 # and what does guard the published bytes is there
 grep -q 'scripts/pages build' "$W" || { echo "    pages.yml does not build the site through scripts/pages"; exit 1; }
 grep -q 'scripts/pages check' "$W" || { echo "    pages.yml does not check the built site"; exit 1; }

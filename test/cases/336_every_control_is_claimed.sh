@@ -7,12 +7,19 @@
 # named; a control two specs claim fails; a spec that claims nothing on the site fails; a disabled element is
 # not a control; a control inside <template> (rendered later by a script) is still counted; an attribute value
 # holding ">" (an Alpine arrow function) does not end the tag early and hide the control; and an Alpine expression
-# that does not compile fails, naming the page and the directive.
+# that does not compile fails, naming the page and the directive. And the controls judged are the site's own: a
+# surface the topology composes into the build at /ref (ADR 0086) carries controls no spec here claims and the
+# clean site still passes; the same page under a mount the topology does not compose is judged and fails; with no
+# topology the check refuses to decide (12) rather than guess which pages are the site's.
 . "$ROOT/test/lib.sh"
 command -v node >/dev/null 2>&1 || { echo "    skip: no node"; exit 0; }
 CHECK="$ROOT/scripts/ci/interaction-check"
 
-F="$PWD/site-fixture"; mkdir -p "$F/site/public/tools" specs
+F="$PWD/site-fixture"; mkdir -p "$F/site/public/tools" "$F/site/public/ref/api" "$F/docs/generated" specs
+COMPOSING='{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"},{"id":"ref","kind":"static-directory","mount":"/ref","artifact":"target/web/ref","availability":"both"}]}'
+printf '%s\n' "$COMPOSING" > "$F/docs/generated/web.json"
+# the composed surface's own page: a control of a kind no spec below claims
+printf '<!doctype html><html><body><button type="button" id="ref-search-toggle">search</button></body></html>\n' > "$F/site/public/ref/api/index.html"
 cat > "$F/site/public/index.html" <<'HTML'
 <!doctype html><html><body>
 <button type="button" id="theme-toggle">theme</button>
@@ -79,6 +86,18 @@ cat > "$F/site/public/tools/index.html" <<'HTML'
 <div x-data="{ q: '' }"><input type="search" x-model="q"><template x-if="q"><button type="button" x-on:click="q = ''">clear</button></template></div>
 </body></html>
 HTML
+
+# ---------------------------------------------------------------- the composed surface is not the site
+# the clean runs above already carried /ref/api/ and its unclaimed button; the exemption is the topology's alone
+printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"}]}' > "$F/docs/generated/web.json"
+run
+[ "$rc" = 10 ] || { echo "    a control under a mount the topology does not compose exited $rc, not 10"; cat out.txt; exit 1; }
+expect_grep 'FAIL control .*/ref/api/: <button type="button"> is claimed by no behaviour spec' out.txt
+rm "$F/docs/generated/web.json"; run
+[ "$rc" = 12 ] || { echo "    no topology exited $rc, not 12"; cat out.txt; exit 1; }
+expect_grep 'web.json is missing' out.txt
+printf '%s\n' "$COMPOSING" > "$F/docs/generated/web.json"; run
+[ "$rc" = 0 ] || { echo "    the composed surface was judged again once the topology was back"; cat out.txt; exit 1; }
 
 # ---------------------------------------------------------------- a malformed spec is refused, not skipped
 printf 'export default { id: "broken" };\n' > specs/broken.mjs; run

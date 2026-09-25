@@ -27,7 +27,7 @@
 //! `plan evidence` stays a command-line operation for now: it appends a block rather than
 //! setting a field, and it is the next transition to converge, not this one.
 //!
-//! [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+//! [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
 
 use std::path::Path;
 
@@ -976,7 +976,7 @@ mod tests {
     /// the plan and one that changes it are different things to depend on, and the next
     /// capability to gain a write should have to say so here.
     ///
-    /// [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+    /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     #[test]
     fn only_the_transition_writes() {
         let m = module();

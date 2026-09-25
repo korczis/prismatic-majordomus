@@ -1,11 +1,11 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `quality` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.8.0 -->
+     Generator: majordomus-cli 0.9.0 -->
 # Module `quality` — Public API quality
 
 What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them.
 
-Stability: behaviorally_verified. Capabilities: 1.
+Stability: behaviorally_verified. Capabilities: 2.
 
 ## `quality.report` — Public API quality report
 
@@ -41,4 +41,31 @@ from a report that had the baseline applied to it would empty the file, acceptin
 nothing and failing on everything the next time it ran. |
 
 Output: `QualityAnswer`.
+
+## `quality.rustdoc` — Rustdoc tree integrity
+
+The crate's rustdoc tree — the rustdoc surface's artifact, as the web topology resolves it — judged against the crate's own inventory of exported items: every item that owns a page has it at the route rustdoc gives it, no item page is left without an item, the tree declares it was built from HEAD, the library's index is present and names the crate, its assets are present, every relative link resolves, and no file names the machine it was built on or carries a credential. Answers the verdict (clean, findings, or no_tree when there is nothing to judge), the counts it joined, every exported module with its page, and one typed finding per defect with the file and what to do.
+
+| | |
+|---|---|
+| kind | query |
+| stability | behaviorally_verified |
+| MCP tool | `majordomus_quality_rustdoc` |
+| MCP resource | `majordomus://quality/rustdoc` |
+| HTTP | `GET /api/v1/quality/rustdoc` |
+| CLI | `majordomus quality rustdoc` |
+| cache | process, 8 entries, 10s |
+| benchmark | required |
+| provenance | builtin majordomus_cli::capability::builtin::quality |
+| tags | quality, introspection, rust, documentation |
+
+| input | type | required | description |
+|---|---|---|---|
+| `kind` | object | no | Only findings of this kind (`missing-page`, `link`, `stale`). All of them when
+absent. The verdict and the counts are never narrowed: a filter that changed the
+verdict would be a way of passing a tree with a missing page. |
+| `summary_only` | boolean | no | Answer with the verdict, the counts and the module routes, and leave the findings
+out. |
+
+Output: `RustdocReport`.
 

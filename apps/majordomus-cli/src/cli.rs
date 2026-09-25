@@ -377,11 +377,12 @@ pub enum ReleaseCommand {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus quality`. One subcommand today; declared as a group so that a second
-/// measurement joins it rather than crowding the root.
+/// `majordomus quality`. Declared as a group so that each measurement of the crate joins it
+/// rather than crowding the root: the public surface's quality, and the tree rustdoc renders
+/// from it.
 pub struct QualityArgs {
     #[command(subcommand)]
-    /// `report`.
+    /// `report` or `rustdoc`.
     pub command: QualityCommand,
 }
 
@@ -390,6 +391,59 @@ pub struct QualityArgs {
 pub enum QualityCommand {
     /// Measure the crate and report every finding, with the rule it breaks and what to do about it
     Report(QualityReportArgs),
+    /// Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked
+    Rustdoc(QualityRustdocArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus quality rustdoc`: the tree rustdoc rendered from the crate, judged against the
+/// crate's own inventory of exported items.
+///
+/// Without `--tree` the subject is the `rustdoc` web surface's artifact as the topology
+/// resolves it, through the capability `quality.rustdoc`, exactly as HTTP and MCP ask. With
+/// it, a person judges another copy of the same tree — the one `scripts/site-build` composed
+/// into the site, say — by the same judgement; a path is an input of this terminal only and
+/// never of the capability.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, QualityCommand, QualityRustdocArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "quality", "rustdoc", "--tree", "site/public/rustdoc", "--kind", "link",
+/// ])
+/// .unwrap();
+/// let args: QualityRustdocArgs = match cli.command {
+///     Command::Quality(q) => match q.command {
+///         QualityCommand::Rustdoc(args) => args,
+///         other => panic!("expected `quality rustdoc`, parsed {other:?}"),
+///     },
+///     other => panic!("expected `quality`, parsed {other:?}"),
+/// };
+/// assert_eq!(args.tree.as_deref(), Some(std::path::Path::new("site/public/rustdoc")));
+/// assert_eq!(args.kind.as_deref(), Some("link"));
+/// assert!(!args.summary);
+/// ```
+pub struct QualityRustdocArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only findings of this kind, e.g. missing-page, orphan-page, stale, link, machine-path
+    #[arg(long)]
+    pub kind: Option<String>,
+
+    /// Print the verdict and the counts and leave the findings out
+    #[arg(long)]
+    pub summary: bool,
+
+    /// Judge this directory instead of the rustdoc surface's artifact, e.g. site/public/rustdoc
+    #[arg(long, value_name = "DIR")]
+    pub tree: Option<std::path::PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -3355,6 +3409,27 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 ],
                 setup: &[],
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "quality rustdoc",
+        examples: &[
+            ExampleDoc {
+                id: "quality-rustdoc",
+                title: "Whether the crate's rustdoc tree is complete, current and sound",
+                description: "The rustdoc surface's tree judged against the crate's own inventory: every exported item's page at its route, no page without an item, built from HEAD, the index and its assets present, every relative link resolved, nothing naming the machine or shaped like a credential. Exits 0 clean, 10 with findings, and 12 when there is nothing to judge — as here, in a repository that carries no Rust crate, or wherever the producer (scripts/rust-check --doc) has not run. A check that cannot see its subject says so; it never reports clean.",
+                argv: &["quality", "rustdoc"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
+            },
+            ExampleDoc {
+                id: "quality-rustdoc-tree-json",
+                title: "Another copy of the tree, judged the same way",
+                description: "A directory named on the command line — the tree scripts/site-build composed into the site — judged by the same judgement, as the document every transport answers with: the verdict, the counts, every exported module with its page, and one typed finding per defect. Only a person at their own terminal names a directory; over HTTP and MCP the subject is always the surface's artifact.",
+                argv: &["quality", "rustdoc", "--tree", "site/public/rustdoc", "--format", "json"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
             },
         ],
     },

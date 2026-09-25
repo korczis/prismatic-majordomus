@@ -9,6 +9,12 @@
 # commit, in parallel, and they gate merging through the `ci` status. Nothing that can make the
 # published bytes wrong was moved off; only what guards the repository rather than the bytes.
 #
+# One Rust step is on it, because it produces published bytes (ADR 0086): the crate's rustdoc,
+# which the site serves at /rustdoc. The `rustdoc` job runs it through .github/actions/rustdoc
+# — the rust gate's own rustdoc invocation and its handoff, nothing else of the crate's gates —
+# and hands the tree to the deploy job as an artifact of this run; scripts/site-build composes
+# it and refuses to build without it, and the deploy proves the public copy is this commit's.
+#
 # The `paths:` below is derived, not written: it is `scripts/pages paths`, which is the union
 # of the gate model's classes that name the site-build gate plus this model's extras.
 # test/cases/97_pages_fast_path.sh fails when the two differ.
@@ -22,6 +28,7 @@ on:
       - .ai/repo/evidence/**
       - .envrc
       - .githooks/**
+      - .github/actions/rustdoc/**
       - .github/workflows/pages.yml
       - .nojekyll
       - AGENTS.md
@@ -30,6 +37,10 @@ on:
       - LICENSE
       - README.md
       - SECURITY.md
+      - apps/majordomus-cli/Cargo.lock
+      - apps/majordomus-cli/Cargo.toml
+      - apps/majordomus-cli/build.rs
+      - apps/majordomus-cli/src/**
       - apps/majordomus-cli/src/capability/builtin/design.rs
       - apps/majordomus-cli/src/cockpit/logo-mark.svg
       - apps/majordomus-cli/src/design/**
@@ -46,6 +57,7 @@ on:
       - lib/**
       - package-lock.json
       - package.json
+      - rust-toolchain.toml
       - scripts/ci/design-check
       - scripts/cockpit-assets
       - scripts/cockpit-probe
@@ -63,6 +75,7 @@ on:
       - scripts/lib/ui-routes.mjs
       - scripts/pages
       - scripts/rules-package
+      - scripts/rust-check
       - scripts/site-basepath-check
       - scripts/site-build
       - scripts/site-check
@@ -119,6 +132,35 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
+  # The crate's Rust API reference, as the published surface `rustdoc` (ADR 0086). A job of its
+  # own so that the deploy job keeps no Rust toolchain; its build cache is setup-rust's, which
+  # Swatinem/rust-cache keys by this job's id, so it restores the small cache of a doc build and
+  # never the multi-gigabyte one of validate.yml's rust job. The tree reaches the deploy job as
+  # an artifact of this same run, which needs no permission beyond the ones below, and lives a
+  # day: it is an input of this run and of nothing after it. Its wall time, checkout to upload,
+  # is a phase of the controlled path (the `rustdoc` row the deploy job writes); the queue in
+  # front of it and between the two jobs is GitHub's and is reported as queue.
+  rustdoc:
+    runs-on: ubuntu-latest
+    # a cold runner documents the crate after building every dependency's metadata; a hang is
+    # still a failure long before GitHub's six hours
+    timeout-minutes: 20
+    outputs:
+      seconds: ${{ steps.done.outputs.seconds }}
+    steps:
+      - id: t
+        run: echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/rustdoc
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rustdoc
+          path: target/web/rustdoc
+          if-no-files-found: error
+          retention-days: 1
+      - id: done
+        run: echo "seconds=$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" >> "$GITHUB_OUTPUT"
+
   # The bound is over two different kinds of second, so it is written twice, and the two
   # numbers are not independent.
   #
@@ -137,12 +179,14 @@ jobs:
   # The three controlled steps below bound 9 minutes between them, against the 96 seconds
   # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. 25 covers those 20 plus the unbounded checkout, setup and
-  # report steps on a cold runner, and leaves the job's bound where it belongs: as the last
-  # resort behind every step's own.
+  # file says never to budget; GitHub's own build is read in 2, and the public reference is
+  # verified in 6 (a 300-second wait inside it). 33 covers those 28 plus the unbounded
+  # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
+  # where it belongs: as the last resort behind every step's own.
   deploy:
+    needs: rustdoc
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 33
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -172,6 +216,23 @@ jobs:
         run: |
           echo "MJ_PAGES_TIMINGS=$PWD/pages-timings.tsv" >> "$GITHUB_ENV"
           printf 'pages\tcheckout-setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
+          echo "MJ_PAGES_T_RUSTDOC=$(date -u +%s)" >> "$GITHUB_ENV"
+
+      # the crate's reference, from the rustdoc job of this run, where scripts/site-build reads
+      # the surface's artifact; the build refuses without it, and the check proves it this
+      # commit's (scripts/site-check 13m)
+      - name: the crate's Rust API reference
+        uses: actions/download-artifact@v4
+        with:
+          name: rustdoc
+          path: target/web/rustdoc
+
+      # the `rustdoc` row: the job that produced the tree, checkout to upload, and the download
+      # of it here — the whole of what the reference adds to the controlled path
+      - name: rustdoc timing
+        env:
+          RUSTDOC_JOB: ${{ needs.rustdoc.outputs.seconds }}
+        run: printf 'pages\trustdoc\t%s\n' "$(( RUSTDOC_JOB + $(date -u +%s) - MJ_PAGES_T_RUSTDOC ))" >> "$MJ_PAGES_TIMINGS"
 
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build
@@ -218,6 +279,21 @@ jobs:
           MJ_PAGES_WAITED=/dev/null scripts/pages verify --commit "$GITHUB_SHA" --timeout 600
           echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
           echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
+
+      # The crate's reference, as the public site serves it: the step above proved the site
+      # serves this commit's /build.json, and this proves the composed surface came with it —
+      # /build.json and /rustdoc/surface.json name this commit, the landing page names it, the
+      # crate's index is rustdoc's, its stylesheets and scripts, a module page and the search
+      # index answer, and the crate's COMMIT constant page, the build's own witness, names this
+      # commit too. Not continue-on-error, unlike the wait above: that one measures GitHub's
+      # latency, and this one runs only once the site is known to serve this commit, so what
+      # it can find is a broken publication — a reference that is missing, stale or half
+      # there — and a broken public reference fails the deployment.
+      - name: rustdoc
+        id: rustdoc
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 6
+        run: scripts/pages verify-rustdoc --commit "$GITHUB_SHA" --timeout 300
 
       # The third way a deploy fails, and the only one that used to end in a green tick.
       #
@@ -313,6 +389,6 @@ jobs:
         if: always()
         run: |
           scripts/pages report --advisory --timings "$MJ_PAGES_TIMINGS" \
-            --queue "$(( ${{ steps.t.outputs.start }} - ${{ steps.t.outputs.created }} ))" \
+            --queue "$(( ${{ steps.t.outputs.start }} - ${{ steps.t.outputs.created }} - ${{ needs.rustdoc.outputs.seconds || 0 }} ))" \
             --pages-build "${{ steps.public.outputs.pages_build || 'not measured' }}" \
             ${{ steps.public.outputs.end_to_end && format('--end-to-end {0}', steps.public.outputs.end_to_end) || '' }}

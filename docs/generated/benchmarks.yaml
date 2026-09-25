@@ -1,25 +1,25 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.8.0
+# Generator: majordomus-cli 0.9.0
 schema: majordomus/benchmark-matrix/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`"
-generator: majordomus-cli 0.8.0
+generator: majordomus-cli 0.9.0
 coverage:
   - scope: direct
-    required: 113
-    covered: 108
+    required: 114
+    covered: 109
     missing: 0
     waived: 5
     inapplicable: 0
   - scope: http
-    required: 112
-    covered: 108
+    required: 113
+    covered: 109
     missing: 0
     waived: 4
     inapplicable: 0
   - scope: mcp
-    required: 110
-    covered: 106
+    required: 111
+    covered: 107
     missing: 0
     waived: 4
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 348
-    covered: 335
+    required: 351
+    covered: 338
     missing: 0
     waived: 13
     inapplicable: 0
@@ -847,6 +847,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: quality.rustdoc
+    module: quality
+    kind: query
+    cache: "process, 8 entries, 10s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - missing-pages-summary
   - id: recover.orphans
     module: recover
     kind: command

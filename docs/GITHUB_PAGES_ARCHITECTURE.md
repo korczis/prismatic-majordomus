@@ -35,7 +35,8 @@ being maintained separately from the repository that backs it.
 | derived content | canonical Markdown with generated front matter; one page per profile, claim, status, responsibility, command, doctrine, use case, application, milestone, issue, case study, skill, module and capability | `site/content/{docs,profiles,guarantees,supervises,commands,doctrines,use-cases,applications,plan,why,registry,skills}/`, `render-test.md`, `architecture.md` | never |
 | derived routes and links for the executable | one route per module and per capability, the executable's pages, the API anchor, the source on GitHub, the claims attached to each surface | `site/data/generated/executable.json` | never |
 | the native command line, as the site renders it | the command tree flattened, each command with its route, usage, arguments, children and executed examples | `site/data/generated/cli.json` (from `docs/generated/cli.json`, via `scripts/lib/cli-site.jq`) | never |
-| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| build provenance | the commit and its cleanliness, the site's input hash, the registry and index fingerprints, and each composed surface with the commit its producer declared | `site/data/build.json`, served as `/build.json` | never — `scripts/site-build`, not committed |
+| the crate's reference | the rustdoc pages of `apps/majordomus-cli`, composed at `/rustdoc` ([`RUSTDOC.md`](RUSTDOC.md)) | `target/web/rustdoc/`, with the `surface.json` that declares what it was built from | never — `scripts/rust-check --doc`, not committed |
 | presentation | Zola templates and Tera 2 components | `site/templates/**` | yes |
 | styling entry | Tailwind v4 + Flowbite v4 directives | `site/tailwind.css` | yes |
 | behaviour | theme toggle, Mermaid init | `site/theme.js`, `site/diagrams.js` | yes |
@@ -88,7 +89,7 @@ flowchart TB
 | A | `majordomus generate` | the Rust declarations, `share/`, the policy and the provider templates | `docs/generated/{openapi,registry,cli}.{json,yaml}`, `docs/generated/{capabilities,cli}.md`, `docs/generated/modules/*.md`, `share/allow/*.txt`, the provider bootstraps | `majordomus generate --check` |
 | B | `scripts/generate-site-data` | every canonical file (`--inputs` lists them) and stage A's `registry.json` and `openapi.json` | `site/data/generated/*.json`, `site/content/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | `scripts/generate-site-data --check` (by input hash) |
 | C | `majordomus generate` | the Rust declarations and the index of the layer, which now holds the documents stage B wrote | `site/data/registry/registry.json`, `docs/generated/benchmarks.{md,json,yaml}`, `docs/generated/artifacts.{json,yaml,md}` | `majordomus generate --check` |
-| build | `scripts/site-build` | stages B and C, the templates, the assets | `site/public/**`, `site/data/build.json`, `site/static/build.json` | `scripts/site-check`, `scripts/site-probe` |
+| build | `scripts/site-build` | stages B and C, the templates, the assets, and the artifact of every published static surface `docs/generated/web.json` names | `site/public/**` (with each such surface composed at its mount), `site/data/build.json`, `site/static/build.json` | `scripts/site-check`, `scripts/site-probe` |
 
 The boundary between the executable and the site is data, in both directions of reading:
 the site generator reads the registry manifest for the ids it turns into routes and never
@@ -137,7 +138,7 @@ projection.
 |---|---|---|---|
 | canonical | authored, the only place a fact lives | the Rust declarations, `share/*.yaml`, `docs/*.md`, `docs/CLAIMS.yaml`, `.ai/repo/**`, templates, `nav.toml`, `marketing.toml` | edited by hand |
 | derived, committed | a projection reviewers see on GitHub and CI compares with its sources | `docs/generated/**`, `share/allow/**`, `AGENTS.md`, `CLAUDE.md`, `site/data/generated/**`, `site/data/registry/**`, `docs/SITE_CLAIMS.md`, `docs/PLAN_STATUS.md` | regenerated with `scripts/derive`, committed with the change that moved it; `scripts/derive-check` refuses drift |
-| derived, build only | rebuilt on every build, never committed | `site/content/{docs,registry,commands,...}/`, `site/static/{app.css,js/,openapi.json,build.json}`, `site/data/build.json`, `site/public/**` | gitignored; `scripts/site-check` proves the build's own guards (`13e`, `13a`) |
+| derived, build only | rebuilt on every build, never committed | `site/content/{docs,registry,commands,...}/`, `site/static/{app.css,js/,openapi.json,build.json}`, `site/data/build.json`, `site/public/**`, `target/web/rustdoc/` | gitignored; `scripts/site-check` proves the build's own guards (`13e`, `13a`) and that every composed surface is this build's (`13m`) |
 | local, ephemeral | this checkout's state | `.ai/local/**`, `apps/majordomus-cli/target/` | never a source of anything the site shows |
 
 ### The generator is an input, and it is not in the table
@@ -341,6 +342,7 @@ and Open Graph metadata. The route classes and their sources:
 | `/registry/mcp/` | the dataset's `mcp` (tools, resources, protocol) | `registry-mcp.html` |
 | `/registry/benchmarks/` | the dataset's `benchmarks` (targets, coverage, policy, baselines) | `registry-benchmarks.html` |
 | `/registry/artifacts/` | `artifacts.json` (the generator's own manifest) | `registry-artifacts.html` |
+| `/rustdoc/`, and every page rustdoc writes beneath it | `target/web/rustdoc/`, written by `scripts/rust-check --doc` and composed by `scripts/site-build` from `docs/generated/web.json` | — (rustdoc's own pages; `index.html` is the producer's landing page) |
 | `/build.json` | `scripts/site-build` | — (served raw) |
 | `/render-test/` | `site/content-src/render-test.md`, `noindex` | `docs-page.html` |
 
@@ -412,11 +414,22 @@ disclosure works without JavaScript.
 
 The site is published by `.github/workflows/pages.yml`, which triggers directly on a push to
 master whose paths can change the site and runs beside `validate.yml` rather than after it.
-Its one job proves the committed `site/data/generated` is current for the tree by comparing
+Its deploy job proves the committed `site/data/generated` is current for the tree by comparing
 the tree's canonical input hash with the one `source.json` carries
 (`scripts/generate-site-data --fingerprint`), renders it (`scripts/pages build`), runs every
 static check over the output (`scripts/pages check`), and pushes `gh-pages`. A tree whose
 committed derived data is stale is refused rather than regenerated.
+
+The crate's rustdoc reference is part of those bytes and is not committed, so a `rustdoc` job
+of its own, which the deploy job needs, produces it from the same commit through the composite
+action `.github/actions/rustdoc` — the one the validation workflow uses too — and hands it over
+as an artifact of the run. The deploy job fetches that tree before it renders,
+`scripts/site-build` composes it at `/rustdoc` from `docs/generated/web.json`, and
+`scripts/site-check` refuses a composed surface that is missing or was built from another
+commit (section 13m). Once the site serves the deployed commit, `scripts/pages verify-rustdoc`
+checks the public reference against it, and that step is a hard one: a deployment whose public
+reference is absent, broken or stale fails the run. [`RUSTDOC.md`](RUSTDOC.md) has the whole
+path and ADR 86 the decision.
 
 Everything that decides whether a change may *merge* — the behavioural suite, the crate's
 gates, coverage, the macOS suite, the benchmark check and the browser probe — runs on the same
@@ -471,7 +484,9 @@ The reader is the `pages-live` gate (`scripts/ci/pages-check`), which runs on ev
 validation and asks four things: the published commit is on master, master has not moved past
 it beyond the deploy window (30 minutes, sized from a 25-minute Actions queue observed on
 2026-09-10), the live site serves what `gh-pages` published, and GitHub's own build of that
-branch did not error. The trigger paths it uses to decide whether a publication is *owed* are
+branch did not error. A section of its own asks a fifth: the reference at `/rustdoc/` is
+whole and was built from the commit the site serves, by the same `scripts/pages verify-rustdoc`
+the deploy runs. The trigger paths it uses to decide whether a publication is *owed* are
 `scripts/pages paths` — the same list that is the workflow's own `paths:` — so a commit that
 cannot change the site does not owe a deploy.
 
@@ -520,9 +535,11 @@ their sources and that none embeds the commit it lands in.
 The commit a page was built from is not a derived file's business: `scripts/site-build`
 writes `site/data/build.json` (for the footer and the architecture page) and
 `site/static/build.json`, served at `/build.json`, with the commit, whether the tree was
-dirty, the site's input hash and the registry and index fingerprints; `scripts/site-check`
-proves the served file names HEAD and the data the site was built from, so a deployment can
-be verified from outside against the commit that was meant to deploy.
+dirty, the site's input hash, the registry and index fingerprints, and under `surfaces` each
+composed surface with the commit its producer declared; `scripts/site-check` proves the served
+file names HEAD and the data the site was built from, and that every composed surface was built
+from that same commit, so a deployment can be verified from outside against the commit that was
+meant to deploy.
 
 ## Local development
 
@@ -533,6 +550,7 @@ just derive                 # every committed derived artifact, in order (script
 just derive-check           # is every committed derived artifact current? writes nothing
 just test                   # the shell suite, the Rust gates, derive-check
 scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
+scripts/rust-check --doc    # the crate's reference, target/web/rustdoc — site-build composes it and refuses without it
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs
 scripts/site-probe          # the browser-measured checks (needs Chrome; --quick for one page per section)

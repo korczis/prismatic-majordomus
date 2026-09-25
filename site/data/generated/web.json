@@ -5,6 +5,7 @@
   "reserved": {
     "home": "/",
     "documentation": "/docs",
+    "rustdoc": "/rustdoc",
     "swagger": "/swagger",
     "openapi": "/openapi.json",
     "capabilities": "/api/v1/",
@@ -125,6 +126,31 @@
       }
     },
     {
+      "id": "rustdoc",
+      "title": "The Rust crate's documentation, as rustdoc renders it",
+      "mount": "/rustdoc",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "static-directory",
+      "producer": "scripts/rust-check --doc",
+      "availability": "both",
+      "artifact": "target/web/rustdoc",
+      "feature": null,
+      "provenance": {
+        "artifact": {
+          "source": "filesystem",
+          "path": "target/web/rustdoc"
+        },
+        "kind": {
+          "source": "filesystem",
+          "path": "apps/majordomus-cli"
+        },
+        "mount": {
+          "source": "default"
+        }
+      }
+    },
+    {
       "id": "swagger",
       "title": "Swagger UI over the OpenAPI document",
       "mount": "/swagger",
@@ -191,9 +217,9 @@
     "protocol"
   ],
   "counts": {
-    "surfaces": 9,
-    "public": 7,
-    "served": 8,
-    "published": 2
+    "surfaces": 10,
+    "public": 8,
+    "served": 9,
+    "published": 3
   }
 }

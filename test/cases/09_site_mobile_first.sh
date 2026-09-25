@@ -20,7 +20,16 @@ else
   echo "    node_modules absent and no stylesheet to reuse; skipping"; exit 0
 fi
 out="$ROOT/site/public"
-pages="$(find "$out" -name '*.html')"
+# The pages linted here are the site's own. scripts/site-build also composes the other
+# published static surfaces into the build at their mounts (ADR 0086) — the crate's rustdoc at
+# /rustdoc — whose markup is another producer's and is judged by that surface's own check
+# (`majordomus quality rustdoc`), as scripts/site-check prunes them from its page contract.
+# Which mounts they are is the committed topology's answer, read through the same helper.
+composed="$(. "$ROOT/lib/common.sh"; mj_web_composed "$ROOT" mounts)" \
+  || { echo "    the topology cannot say which pages are the site's own"; exit 1; }
+prune=()
+for m in $composed; do prune+=(-path "$out$m" -prune -o); done
+pages="$(find "$out" ${prune[@]+"${prune[@]}"} -name '*.html' -print)"
 [ -n "$pages" ]
 bad=0
 for f in $pages; do

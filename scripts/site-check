@@ -24,7 +24,18 @@ LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
-pages="$(find "$PUB" -name '*.html')"
+# The pages this check judges are the site's own. scripts/site-build composes the other
+# published static surfaces into the build at their mounts (ADR 0086), and their pages are
+# another producer's, held to that surface's own check — `majordomus quality rustdoc` for the
+# crate's reference, which also scans it for secrets and machine paths. So every per-page
+# contract below prunes those mounts, read from the topology rather than named here; what is
+# still asked of them is 13m: that each is there, and is this build's.
+COMPOSED_MOUNTS="$(mj_web_composed "$ROOT" mounts)" || exit 12
+PRUNE=()
+for m in $COMPOSED_MOUNTS; do PRUNE+=(-path "$PUB$m" -prune -o); done
+pages="$(find "$PUB" ${PRUNE[@]+"${PRUNE[@]}"} -name '*.html' -print)"
+# every file of the site's own, for the scans that read bytes rather than pages
+site_files() { find "$PUB" ${PRUNE[@]+"${PRUNE[@]}"} -type f -print0; }
 # Every per-page assertion, measured once. The checks below read the rows rather than
 # re-reading the pages: one awk process for the site instead of eighteen per route.
 PAGEROWS="$(mktemp "${TMPDIR:-/tmp}/mj-site-pages.XXXXXX")"; trap 'rm -f "$PAGEROWS" "$PAGEROWS".*' EXIT
@@ -306,9 +317,22 @@ ok mermaid "every page with <pre class=\"mermaid\"> loads the runtime"
 } > "$PAGEROWS.11"
 while IFS= read -r m; do bad mobile "$m"; done < "$PAGEROWS.11"; rm -f "$PAGEROWS.11"
 ok mobile "every <pre> scrolls or wraps, no unprefixed grid-cols-3+, no fixed width over 360px"
-# 12. secrets and private paths in output
-grep -rhoaE '/Users/[a-z]+/|/home/[a-z]+/dev/|\.internal\b|\.corp\b' "$PUB" | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
-grep -rhoaE '(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9_\-]{12,}' "$PUB" | grep -viE 'id-token|GITHUB_TOKEN' | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
+# 12. secrets and private paths in output, over the site's own files (a composed surface's own
+# check scans its tree for both). The shapes are the repository's one definition of what a
+# published file must never carry, apps/majordomus-cli/src/quality/leak-patterns.tsv, which
+# scripts/ci/no-machine-paths and `majordomus quality rustdoc` read as well: here its
+# machine-path and private-host classes, and its credential class with every match dropped
+# that a not-credential expression finds something in. A definition that yields nothing is
+# a refusal, never a pass: a scan with nothing to look for would report the site clean.
+LEAKS="$ROOT/apps/majordomus-cli/src/quality/leak-patterns.tsv"
+leak_patterns() { LC_ALL=C awk -F'\t' -v c="$1" '$1 == c { print $3 }' "$LEAKS" 2>/dev/null | paste -sd'|' -; }
+PRIVATE_RE="$(leak_patterns machine-path)|$(leak_patterns private-host)"
+CREDENTIAL_RE="$(leak_patterns credential)"; NOT_CREDENTIAL_RE="$(leak_patterns not-credential)"
+case "|$PRIVATE_RE|" in *"||"*) PRIVATE_RE="" ;; esac
+[ -n "$PRIVATE_RE" ] && [ -n "$CREDENTIAL_RE" ] && [ -n "$NOT_CREDENTIAL_RE" ] \
+  || { echo "site-check: the leak patterns could not be read from ${LEAKS#"$ROOT"/}" >&2; exit 12; }
+site_files | xargs -0 grep -hoaE "$PRIVATE_RE" 2>/dev/null | head -1 | grep -q . && bad private "local path in output" || ok private "no local paths or internal hosts"
+site_files | xargs -0 grep -hoaE "$CREDENTIAL_RE" 2>/dev/null | grep -vE "$NOT_CREDENTIAL_RE" | head -1 | grep -q . && bad secrets "credential pattern in output" || ok secrets "no credential pattern"
 # 13. docs coverage: every rendered docs page has a source, every docs.json entry is rendered
 for d in $(jq -r '.docs[] | select(.route) | .path' "$SITE/data/generated/docs.json"); do
   r="$(jq -r --arg p "$d" '.docs[] | select(.path==$p) | .route' "$SITE/data/generated/docs.json")"
@@ -516,6 +540,40 @@ for r in $(jq -r '.docs[] | select(.route) | .route' "$SITE/data/generated/docs.
 done
 [ "$(jq -r '.docs[] | select(.path == "CLI.md") | .route' "$SITE/data/generated/docs.json")" = "/docs/cli-specification/" ] \
   || bad docs "docs/CLI.md is the shell tool's specification; /docs/cli/ belongs to the native command line's reference"
+# 13m. every surface composed into the build is there, and is this build's. Its pages are its
+# own check's business (the scope at the top of this file), but whether the publication
+# carries it at all, and whether it was built from the commit the site was, belong to the
+# publication: a reference built from last week's crate beside today's site is a stale
+# deployment that every per-page check would pass. The surface's own surface.json says what
+# it was built from; build.json records the same value for the build and names the commit
+# the build is; the two must agree with each other and with that commit.
+surf_bad=0; surf_n=0
+build_commit="$(jq -r '.commit // empty' "$PUB/build.json" 2>/dev/null || true)"
+COMPOSED_ROWS="$(mj_web_composed "$ROOT" rows)" || exit 12
+while IFS="$MJ_TAB" read -r s_id s_mount _ s_producer; do
+  [ -n "$s_id" ] || continue
+  surf_n=$((surf_n + 1))
+  s_dir="$PUB$s_mount"
+  if [ ! -f "$s_dir/index.html" ]; then
+    bad surfaces "surface $s_id is not in the build: no ${s_dir#"$PUB"}/index.html (run its producer, $s_producer, then scripts/site-build)"; surf_bad=1; continue
+  fi
+  if [ ! -f "$s_dir/surface.json" ]; then
+    bad surfaces "surface $s_id carries no ${s_dir#"$PUB"}/surface.json; nothing says what it was built from"; surf_bad=1; continue
+  fi
+  s_built="$(jq -r '.built_from // empty' "$s_dir/surface.json" 2>/dev/null || true)"
+  s_decl="$(jq -r '"\(.id) \(.mount)"' "$s_dir/surface.json" 2>/dev/null || true)"
+  s_rec="$(jq -r --arg i "$s_id" '[.surfaces[]? | select(.id == $i) | .built_from // "none"] | first // empty' "$PUB/build.json" 2>/dev/null || true)"
+  [ "$s_decl" = "$s_id $s_mount" ] \
+    || { bad surfaces "${s_dir#"$PUB"}/surface.json declares '$s_decl', the topology says '$s_id $s_mount'"; surf_bad=1; }
+  [ -n "$s_built" ] && [ "$s_built" = "$build_commit" ] \
+    || { bad surfaces "surface $s_id was built from ${s_built:-no recorded commit}, this build is ${build_commit:-unknown}"; surf_bad=1; }
+  [ "$s_rec" = "$s_built" ] \
+    || { bad surfaces "/build.json records surface $s_id as built from ${s_rec:-nothing}, its surface.json says ${s_built:-nothing}"; surf_bad=1; }
+done <<EOF
+$COMPOSED_ROWS
+EOF
+if [ "$surf_n" = 0 ]; then ok surfaces "docs/generated/web.json declares no published surface to compose; the site is the whole publication"
+elif [ "$surf_bad" = 0 ]; then ok surfaces "$surf_n composed surface(s) ($(printf '%s' "$COMPOSED_MOUNTS" | tr '\n' ' ')) are in the build, each built from ${build_commit:0:12}, the commit this build is"; fi
 # 13j. the build's provenance is served at /build.json and is this build's: the commit is
 # HEAD, the input hash is the one the data carries, the fingerprints are the dataset's. A page
 # that names another commit than the one deployed is how a stale deploy hides.

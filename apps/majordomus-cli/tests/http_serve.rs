@@ -504,6 +504,112 @@ fn a_surface_answers_its_own_mount_and_nothing_invents_a_route_under_it() {
     );
 }
 
+/// The crate's rustdoc through the whole server: discovered because the crate exists,
+/// answered with what to run while it is not built, and once built served whole — the
+/// landing page, the crate's page, the hashed stylesheet, script and font under
+/// `static.files/`, and the redirect stub rustdoc names after a macro with its `!` —
+/// each with the content type a browser needs to use it.
+#[test]
+fn the_crates_rustdoc_is_served_whole_under_its_own_mount() {
+    let f = Fixture::new();
+    f.write(
+        "apps/majordomus-cli/Cargo.toml",
+        "[package]\nname = \"fixture\"\n",
+    );
+    f.write(
+        "apps/majordomus-cli/src/lib.rs",
+        "//! the fixture's crate\n",
+    );
+
+    {
+        let s = Served::start(&f.root(), &[]);
+        let (status, _, body) = s.request("GET", "/rustdoc/", None);
+        assert_eq!(status, 503, "an unbuilt reference says so: {body}");
+        assert!(body.contains("scripts/rust-check --doc"), "{body}");
+    }
+
+    let tree = [
+        ("index.html", "<!DOCTYPE html><title>landing</title>"),
+        ("static.files/a.css", "body{}"),
+        ("static.files/b.js", "var b;"),
+        ("static.files/c.woff2", "wOF2"),
+        (
+            "majordomus_cli/index.html",
+            "<!DOCTYPE html><title>majordomus_cli - Rust</title>",
+        ),
+        (
+            "majordomus_cli/macro.m!.html",
+            "<meta http-equiv=\"refresh\" content=\"0;URL=macro.m.html\">",
+        ),
+        (
+            "surface.json",
+            r#"{"schema":"web-surface/v1","id":"rustdoc","mount":"/rustdoc","built_from":"abc"}"#,
+        ),
+    ];
+    for (file, body) in tree {
+        f.write(&format!("target/web/rustdoc/{file}"), body);
+    }
+    let s = Served::start(&f.root(), &[]);
+    for (path, media, says) in [
+        ("/rustdoc/", "text/html; charset=utf-8", "landing"),
+        (
+            "/rustdoc/static.files/a.css",
+            "text/css; charset=utf-8",
+            "body{}",
+        ),
+        (
+            "/rustdoc/static.files/b.js",
+            "text/javascript; charset=utf-8",
+            "var b;",
+        ),
+        ("/rustdoc/static.files/c.woff2", "font/woff2", "wOF2"),
+        (
+            "/rustdoc/majordomus_cli/index.html",
+            "text/html; charset=utf-8",
+            "majordomus_cli - Rust",
+        ),
+        (
+            "/rustdoc/majordomus_cli/macro.m!.html",
+            "text/html; charset=utf-8",
+            "URL=macro.m.html",
+        ),
+    ] {
+        let (status, headers, body) = s.request("GET", path, None);
+        assert_eq!(status, 200, "GET {path}: {body}");
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "content-type" && v == media),
+            "GET {path} is not {media}: {headers:?}"
+        );
+        assert!(body.contains(says), "GET {path}: {body}");
+    }
+    // the mount without its slash would resolve every relative link one level too high
+    let (status, headers, _) = s.request("GET", "/rustdoc", None);
+    assert_eq!(status, 308);
+    assert!(
+        headers
+            .iter()
+            .any(|(k, v)| k == "location" && v == "/rustdoc/"),
+        "{headers:?}"
+    );
+    // and allowing `!` let nothing out of the directory
+    f.write("target/web/secret!.html", "<b>outside</b>");
+    for hostile in [
+        "/rustdoc/../secret!.html",
+        "/rustdoc/majordomus_cli/../../secret!.html",
+        "/rustdoc/%2e%2e/secret!.html",
+        "/rustdoc/!/../../secret!.html",
+    ] {
+        let (status, _, body) = s.request("GET", hostile, None);
+        assert!(
+            status == 400 || status == 404,
+            "GET {hostile} answered {status}: {body}"
+        );
+        assert!(!body.contains("outside"), "GET {hostile}: {body}");
+    }
+}
+
 #[test]
 fn head_is_answered_and_a_bad_kind_filter_is_an_invalid_input() {
     let f = Fixture::new();
