@@ -802,6 +802,45 @@ impl ProofState {
     }
 }
 
+/// What a state may still be once the tree the run measured is taken into account.
+///
+/// `proven` is "a passing run recorded against this exact commit with a clean tree"
+/// (ADR 0041), and docs/EVIDENCE.md says why the tree is half of that: "A dirty tree is
+/// recorded as `dirty` for exactly this reason: it is the one case where the commit does
+/// not describe what ran." A run measured against a tree that was not its commit is
+/// therefore capped at `inputs_unchanged`: a pass, joined to a commit, with no claim that
+/// the commit is what it saw. A weaker state is never strengthened here, and `unknown` —
+/// git could not be asked — is treated as not clean, because not knowing is not proof.
+///
+/// ```
+/// use majordomus_cli::evidence::{capped_by_working_tree, ProofState};
+///
+/// // a clean tree changes nothing
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Proven, "clean"),
+///     ProofState::Proven
+/// );
+/// // a dirty one costs the strongest state, and only that one
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Proven, "dirty"),
+///     ProofState::InputsUnchanged
+/// );
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Proven, "unknown"),
+///     ProofState::InputsUnchanged
+/// );
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Stale, "dirty"),
+///     ProofState::Stale
+/// );
+/// ```
+pub fn capped_by_working_tree(state: ProofState, working_tree: &str) -> ProofState {
+    match (state, working_tree) {
+        (ProofState::Proven, t) if t != "clean" => ProofState::InputsUnchanged,
+        (s, _) => s,
+    }
+}
+
 /// One claim, joined to whatever the repository actually recorded about it.
 ///
 /// The claim's own fields are carried verbatim beside the derived ones, so that a reader
@@ -1346,7 +1385,13 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
                             } else if !changed.is_empty() {
                                 (ProofState::Stale, changed)
                             } else if changed_at_all.is_empty() {
-                                (ProofState::Proven, Vec::new())
+                                // The diff says the commit is the tree in front of us; the
+                                // execution's own `working_tree` says whether that commit
+                                // was the tree the run measured. Both, or it is not proven.
+                                (
+                                    capped_by_working_tree(ProofState::Proven, &e.working_tree),
+                                    Vec::new(),
+                                )
                             } else {
                                 (ProofState::InputsUnchanged, Vec::new())
                             }
@@ -1420,12 +1465,26 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
 /// outside, `planned` states that nothing implements it and `rejected` that nothing will;
 /// demanding a current proof of those would be demanding proof of a thing the claim already
 /// says is not there.
+///
+/// Three states pass and three do not, and [`ProofState::Stale`] is the line between them.
+/// A stale run is a pass — [`ProofState::passing`] says so, and the summary keeps it apart
+/// from a failure for good reason — but it is a pass of a subject that has since moved: the
+/// claim's own implementation or its test changed after the run offered as its proof.
+/// Accepting it here made the gate accept, as support for a guarantee, a measurement of
+/// something else. What is left is [`ProofState::InputsUnchanged`], weaker than `proven`
+/// but at least a pass of *this* subject, and that is the floor.
 fn unsupported(status: &str, state: ProofState) -> Option<String> {
     if status != "guaranteed" {
         return None;
     }
     match state {
-        ProofState::Proven | ProofState::InputsUnchanged | ProofState::Stale => None,
+        ProofState::Proven | ProofState::InputsUnchanged => None,
+        ProofState::Stale => Some(
+            "the claim guarantees a behaviour whose only recorded run is older than what it is \
+             about: the implementation or the test changed after that run, so the pass measured \
+             a subject this claim no longer names"
+                .into(),
+        ),
         ProofState::Failing => {
             Some("the claim guarantees a behaviour whose test most recently failed".into())
         }
@@ -1548,14 +1607,73 @@ mod tests {
         assert!(unsupported("guaranteed", ProofState::Failing).is_some());
         assert!(unsupported("guaranteed", ProofState::NoTest).is_some());
         assert!(unsupported("guaranteed", ProofState::Unrunnable).is_some());
-        assert!(unsupported("guaranteed", ProofState::Stale).is_none());
+        assert!(unsupported("guaranteed", ProofState::Stale).is_some());
         assert!(unsupported("guaranteed", ProofState::Proven).is_none());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
         for status in ["advisory", "planned", "rejected"] {
-            for state in [ProofState::NotRun, ProofState::NoTest, ProofState::Failing] {
+            for state in [
+                ProofState::NotRun,
+                ProofState::NoTest,
+                ProofState::Failing,
+                ProofState::Stale,
+            ] {
                 assert!(
                     unsupported(status, state).is_none(),
                     "{status} must not be held to a current proof"
                 );
+            }
+        }
+    }
+
+    /// A stale run is a pass, and it is not support for a guarantee. The pass is real —
+    /// `passing()` keeps saying so, and the summary must keep it apart from a failure — but
+    /// its subject moved after it: a guarantee whose implementation or test changed since
+    /// the only run recorded for it is a guarantee nothing current has measured, and
+    /// reporting that as supported is the gate accepting a measurement of something else.
+    #[test]
+    fn a_guarantee_whose_proof_is_older_than_its_subject_is_not_supported() {
+        let reason = unsupported("guaranteed", ProofState::Stale)
+            .expect("a stale proof was accepted as support for a guarantee");
+        assert!(
+            reason.contains("older than what it is about"),
+            "the reason must say the proof is older than its subject, not merely that it is \
+             stale: {reason}"
+        );
+        // the pass is still a pass, and the two passing-but-weaker states are not the same
+        assert!(ProofState::Stale.passing());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
+    }
+
+    /// `proven` is a passing run recorded against this exact commit *with a clean tree*
+    /// (ADR 0041). The tree the run measured is recorded per execution, so a run made on a
+    /// dirty tree is capped at `inputs_unchanged` however empty the diff since its commit
+    /// is — and no weaker state is moved by the cap in either direction.
+    #[test]
+    fn a_run_recorded_on_a_dirty_tree_is_never_proven() {
+        // positive: a run whose tree was the commit keeps the strongest state
+        assert_eq!(
+            capped_by_working_tree(ProofState::Proven, "clean"),
+            ProofState::Proven
+        );
+        // negative: the commit did not describe what ran, so it is not proof of the commit
+        for tree in ["dirty", "unknown", ""] {
+            assert_eq!(
+                capped_by_working_tree(ProofState::Proven, tree),
+                ProofState::InputsUnchanged,
+                "a run recorded on a {tree} tree read as proven"
+            );
+        }
+        // and nothing else moves: the cap only ever takes the one claim it is about
+        for state in [
+            ProofState::InputsUnchanged,
+            ProofState::Stale,
+            ProofState::Failing,
+            ProofState::NotRun,
+            ProofState::Unrunnable,
+            ProofState::NoTest,
+        ] {
+            for tree in ["clean", "dirty", "unknown"] {
+                assert_eq!(capped_by_working_tree(state, tree), state);
             }
         }
     }

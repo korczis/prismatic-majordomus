@@ -88,6 +88,68 @@ pub fn inspect(root: &Path) -> GitState {
     })
 }
 
+/// `clean`, `dirty` or `unknown` as [`inspect`] decides it, except that a change to one of
+/// the given repository-relative paths does not make the tree dirty.
+///
+/// One caller needs this: recording a run writes the evidence ledger, so the second
+/// recording in a session would be stamped `dirty` by its predecessor's own bookkeeping —
+/// about a tree in which nothing the run measured had changed. "Dirty only because of the
+/// ledger" is not dirty; every other path still is.
+///
+/// ```
+/// use majordomus_cli::git::working_tree_ignoring;
+/// use std::process::Command;
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     Command::new("git").arg("-C").arg(dir.path()).args(args).output().unwrap()
+/// };
+/// git(&["init", "-q"]);
+/// git(&["config", "user.email", "t@example.com"]);
+/// git(&["config", "user.name", "t"]);
+/// std::fs::write(dir.path().join("ledger.json"), "{}").unwrap();
+/// std::fs::write(dir.path().join("a.md"), "a").unwrap();
+/// git(&["add", "-A"]);
+/// git(&["commit", "-qm", "init"]);
+///
+/// std::fs::write(dir.path().join("ledger.json"), "{\"v\":1}").unwrap();
+/// assert_eq!(working_tree_ignoring(dir.path(), &["ledger.json"]), "clean");
+///
+/// // anything else is still dirty
+/// std::fs::write(dir.path().join("a.md"), "b").unwrap();
+/// assert_eq!(working_tree_ignoring(dir.path(), &["ledger.json"]), "dirty");
+/// ```
+pub fn working_tree_ignoring(root: &Path, ignore: &[&str]) -> String {
+    // `--untracked-files=all` because the default collapses an untracked directory to the
+    // directory's own name: a repository that does not yet track its ledger would be
+    // reported dirty for `.ai/`, which is not a path any caller can name.
+    match run(root, &["status", "--porcelain", "--untracked-files=all"]) {
+        Ok(s) => {
+            if s.lines()
+                .filter(|l| !l.trim().is_empty())
+                .any(|l| !ignore.contains(&porcelain_path(l)))
+            {
+                "dirty"
+            } else {
+                "clean"
+            }
+        }
+        Err(_) => "unknown",
+    }
+    .to_string()
+}
+
+/// The repository-relative path of one `git status --porcelain` line: two status columns, a
+/// space, then the path — or `orig -> new` for a rename, of which the new name is the one
+/// the tree carries.
+fn porcelain_path(line: &str) -> &str {
+    let rest = line.get(3..).unwrap_or("").trim();
+    match rest.split_once(" -> ") {
+        Some((_, new)) => new.trim_matches('"'),
+        None => rest.trim_matches('"'),
+    }
+}
+
 /// Every tracked file under `root`, repository-relative, in the byte order the index keeps
 /// them in: one subprocess per build, matched against each class's pathspec in process.
 pub fn ls_files_all(root: &Path) -> Result<Vec<String>> {

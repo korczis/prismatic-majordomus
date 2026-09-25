@@ -89,6 +89,13 @@ fn s<'a>(v: &'a Value, key: &str) -> &'a str {
 }
 
 fn report_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
+    // The verdict comes first, with its sentence: a reader who stops at the first line must
+    // not leave believing that a corpus with no findings is a corpus that was proven.
+    let verdict = s(v, "verdict");
+    let meaning = serde_json::from_value::<crate::rules::RulesVerdict>(v["verdict"].clone())
+        .map(|x| x.meaning())
+        .unwrap_or("the report carries no verdict this executable can read");
+    w(out, format!("verdict      {verdict} — {meaning}"))?;
     w(
         out,
         format!(

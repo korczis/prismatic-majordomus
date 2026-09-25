@@ -303,20 +303,12 @@ impl Server {
         })
     }
 
-    /// The text a client reads after `initialize`: what is served, where the shared
-    /// server is, and who else is attached.
+    /// The text a client reads after `initialize`: what is served, what of it writes, where
+    /// the shared server is, and who else is attached.
     pub fn instructions(&self) -> String {
         let index = self.surface.index();
-        let summary = self.surface.registry().summary();
-        // Which tools write is measured from the declared effects, in registry order: this
-        // sentence used to be the constant "Nothing here writes to the repository" while two
-        // of the tools it introduced did.
         let registry = self.surface.registry();
-        let writers: Vec<&str> = registry
-            .iter()
-            .filter(|c| c.execution.effect == crate::capability::Effect::RepositoryMutation)
-            .filter_map(|c| c.exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()))
-            .collect();
+        let summary = registry.summary();
         let mut text = format!(
             "{} This repository: {} object(s), {} capabilities ({} tools, {} resources), index state {}. Resources are majordomus://<kind>/<identity>; majordomus://repository carries the diagnostics; majordomus_capabilities lists every capability with its projections. {}",
             crate::about::SUMMARY,
@@ -325,7 +317,7 @@ impl Server {
             summary.mcp_tools,
             summary.mcp_resources,
             match index.state { crate::index::State::Ok => "ok", crate::index::State::Degraded => "degraded" },
-            crate::about::writes(&writers)
+            effects_sentence(&registry),
         );
         if let Some(url) = &self.endpoint {
             text.push_str(&format!(
@@ -381,6 +373,34 @@ impl Server {
     }
 }
 
+/// What the `initialize` instructions say about writing, read off the registry instead of
+/// stated by hand.
+///
+/// The sentence used to be the constant "Nothing here writes to the repository." It was true
+/// when it was written and false from [ADR 0040] onwards: `plan.transition` stamps a field
+/// into a tracked issue record and appends a ledger event, and it is exposed as an MCP tool.
+/// An agent that reads its instructions and believes them would then call a writer thinking
+/// it was reading — the one thing the instructions exist to prevent. So the sentence is
+/// derived: every capability whose MCP exposure is a tool and whose effect is
+/// [`Effect::RepositoryMutation`] is named, in the registry's own order, and only a registry
+/// that holds no such tool gets the old sentence back.
+///
+/// The wording itself is [`crate::about::writes`], the one sentence the tool uses about its
+/// own writers; this function only decides which tools it names.
+///
+/// The assertion is `the_instructions_never_claim_read_only_while_a_writer_is_exposed`.
+///
+/// [ADR 0040]: ../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+/// [`Effect::RepositoryMutation`]: crate::capability::model::Effect::RepositoryMutation
+pub(crate) fn effects_sentence(registry: &crate::capability::CapabilityRegistry) -> String {
+    let writers: Vec<&str> = registry
+        .iter()
+        .filter(|c| c.execution.effect == crate::capability::model::Effect::RepositoryMutation)
+        .filter_map(|c| c.exposure.mcp.as_ref()?.tool.as_deref())
+        .collect();
+    crate::about::writes(&writers)
+}
+
 pub(crate) fn resource_json(r: &super::surface::Resource) -> Value {
     let mut v = json!({ "uri": r.uri, "name": r.name, "mimeType": r.media_type, "_meta": { "majordomus": r.meta } });
     if let Some(t) = &r.title {
@@ -404,4 +424,62 @@ pub(crate) fn tool_json(t: &super::surface::Tool) -> Value {
 
 fn error(id: Value, code: i64, message: &str) -> Value {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The `initialize` instructions are the one thing every client reads before it does
+    /// anything, and for most of this server's life they ended with the constant "Nothing
+    /// here writes to the repository." That sentence stopped being true when the first
+    /// mutating capability was exposed as a tool, and nothing said so: a constant cannot go
+    /// stale loudly. So the sentence is derived, and this is the assertion that it stays
+    /// derived — if a tool that writes the repository is exposed and the instructions still
+    /// promise a read-only surface, this fails.
+    #[test]
+    fn the_instructions_never_claim_read_only_while_a_writer_is_exposed() {
+        let registry = crate::capability::CapabilityRegistry::builder()
+            .with_builtin(crate::capability::builtin::all())
+            .build()
+            .unwrap();
+        let writers: Vec<&str> = registry
+            .iter()
+            .filter(|c| c.execution.effect == crate::capability::model::Effect::RepositoryMutation)
+            .filter_map(|c| c.exposure.mcp.as_ref()?.tool.as_deref())
+            .collect();
+        let sentence = effects_sentence(&registry);
+
+        if writers.is_empty() {
+            assert_eq!(sentence, "Nothing here writes to the repository.");
+        } else {
+            assert!(
+                !sentence.contains("Nothing here writes"),
+                "{} mutating tool(s) are exposed ({}) and the instructions still tell every \
+                 client the surface writes nothing: {sentence}",
+                writers.len(),
+                writers.join(", ")
+            );
+            for w in &writers {
+                assert!(
+                    sentence.contains(w),
+                    "the instructions do not name the writing tool {w}: {sentence}"
+                );
+            }
+        }
+    }
+
+    /// The sentence over a registry this repository does not happen to hold, so that the
+    /// assertion above cannot pass merely because the real registry has a writer today: a
+    /// registry with nothing in it writes nothing, and says so.
+    #[test]
+    fn a_registry_with_no_writer_still_says_nothing_writes() {
+        let empty = crate::capability::CapabilityRegistry::builder()
+            .build()
+            .unwrap();
+        assert_eq!(
+            effects_sentence(&empty),
+            "Nothing here writes to the repository."
+        );
+    }
 }

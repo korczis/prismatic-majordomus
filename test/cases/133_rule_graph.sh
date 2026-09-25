@@ -27,6 +27,9 @@
 #   9  the relation walks both ways: a test names the rules it proves, and says which of
 #      them would be left with nothing at all if it were deleted
 #  10  a rule the repository does not declare is a not-found, never an empty answer
+#  11  the corpus verdict says what was proven, not only whether anything is broken: a
+#      finding makes it `failing`; no finding with a blocking rule never run is `unproven`
+#      while `satisfied` stays true; only every blocking rule passing is `proven`
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -266,3 +269,42 @@ jqe proves2 '[.proves[].id] == '"$(jq -c '[.proves[].id]' "$W/proves.json")" \
 # may not give.
 expect_exit 12 "$MJB" rules --repo "$T" show project.no-such-rule
 expect_grep 'is not a rule of this repository'
+
+# ---------------------------------------------------------------- 11. the corpus verdict
+# `satisfied` is "there are no findings", and `not run` is deliberately not a finding. So a
+# corpus none of whose blocking rules was ever run is satisfied — and a reader who took that
+# for "every rule is enforced" was told something nobody measured. The verdict is the answer
+# that cannot be read that way, and the text rendering prints it before any number.
+rr v1 report
+jqe v1 '.findings | length > 0' "the fixture's blocking rules naming nothing are not findings"
+jqe v1 '.verdict == "failing" and .satisfied == false' \
+  "a corpus with findings is not reported as failing"
+"$MJB" rules --repo "$T" report 2>/dev/null > "$W/v1.txt" || true
+head -1 "$W/v1.txt" | grep -q '^verdict  *failing' \
+  || { echo "    the text report does not print the verdict first"; head -3 "$W/v1.txt"; exit 1; }
+
+# A corpus of one blocking rule, whose case has a recorded pass. Every other rule is taken
+# out of the index — the vendored ones included — so that the verdict is about alpha alone.
+grep -rlE '^kind: rule' .ai/repo/rules | grep -v '/alpha\.v1\.md$' | while read -r f; do rm -f "$f"; done
+rr v2 report
+jqe v2 '[.rules[].rule.id] == ["project.alpha"] and .coverage.blocking == 1' \
+  "the fixture did not narrow the corpus to one blocking rule"
+jqe v2 '.rules[0].state == "proven" or .rules[0].state == "inputs_unchanged"' \
+  "the one blocking rule does not carry its recorded pass"
+jqe v2 '.verdict == "proven" and .satisfied == true' \
+  "a corpus whose every blocking rule carries a current pass is not proven"
+
+# One more blocking rule, naming a case that is in the tree and was never run. Nothing is
+# broken — no finding, satisfied — and the corpus is no longer proven.
+printf '# the eta case\n' > test/cases/03_eta.sh
+rule eta blocking 'tests: [test/cases/03_eta.sh]'
+# discovery reads the files git knows, so the new rule and its case are added to the index
+git add -A >/dev/null
+rr v3 report
+jqe v3 '[.rules[] | select(.rule.id == "project.eta") | .state] == ["not_run"]' \
+  "a case nobody ran is not not_run"
+jqe v3 '(.findings | length) == 0 and .satisfied == true' \
+  "a blocking rule never run became a finding, which DOCTRINE.md says it is not"
+jqe v3 '.verdict == "unproven"' \
+  "a blocking rule nobody ran leaves the corpus reading as proven"
+exit 0
