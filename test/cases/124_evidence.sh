@@ -20,7 +20,8 @@
 #      not exist is named as unknown and recorded for nobody
 #   9  the ratchet in scripts/evidence-check: new debt is not a regression, a lost proof is
 #  10  the tree a run measured is half of `proven`: a run recorded while an unrelated file
-#      was pending is never proven, however empty the diff is when the report is taken
+#      was pending is never proven, however empty the diff is when the report is taken —
+#      in the evidence derivation and in the rules derivation, which read the same ledger
 #
 # Why the fixture tracks its ledger, as this repository does: `proven` is not "recorded at
 # HEAD with a clean tree" — that rule is unsatisfiable anywhere the evidence is tracked,
@@ -449,7 +450,47 @@ expect_grep '^\+alpha-holds$' "$BL"
 # taken, so that what decides the state is the recorded tree and not the present one.
 git add -A >/dev/null; git commit -qm settle >/dev/null 2>&1 || true
 printf 'a note no claim names\n' > tree.txt
+# A blocking rule naming the alpha case, so that the rules derivation has a test of its own
+# to judge. The vendored rules name cases this fixture does not carry, and an assertion
+# over "every test a dirty run left proven" holds vacuously over an empty set: without this
+# rule, the rules side could drop the tree cap and nothing below would notice.
+mkdir -p .ai/repo/rules/project
+cat > .ai/repo/rules/project/alpha-tree.v1.md <<'MD'
+---
+id: project.alpha-tree
+version: 1
+kind: rule
+title: Rule alpha-tree
+description: What project.alpha-tree requires, in one sentence.
+statement: The normative sentence project.alpha-tree asks a worker to follow.
+status: active
+class: blocking
+depends_on: []
+tags: [fixture]
+
+x-majordomus:
+  tests: [test/cases/01_alpha.sh]
+---
+
+# Rationale
+
+A fixture.
+
+# Required behaviour
+
+The fixture holds.
+
+# Failure behaviour
+
+The fixture is reported.
+
+# Verification
+
+This case.
+MD
 git add -A >/dev/null && git commit -qm tree-note
+# the one test the rules assertions below are about, as the rules derivation reports it
+ALPHA_TREE='[.rules[] | select(.rule.id == "project.alpha-tree") | .tests[] | select(.path == "test/cases/01_alpha.sh")]'
 [ -z "$(git status --porcelain)" ] \
   || { echo "    the fixture did not start section 10 on a clean tree"; git status --porcelain; exit 1; }
 printf '01_alpha\tok\t2\tserial\n02_beta\tok\t2\tserial\n' > "$W/tree.tsv"
@@ -461,6 +502,13 @@ jqe tree_clean '(.claims[] | select(.id == "alpha-holds") | .execution.working_t
   "a recording whose only pending change is the ledger's own row was stamped dirty"
 jqe tree_clean '(.claims[] | select(.id == "alpha-holds") | .state) == "proven"' \
   "a passing run recorded at this commit on a clean tree is not proven"
+# The rules derivation reads the same ledger. Its clean half is asserted too, or a rules side
+# that never said `proven` at all would pass the dirty half below for the wrong reason.
+"$MJB" rules --repo "$T" --format json report > "$W/rules_clean.json" 2>/dev/null || true
+jqe rules_clean "$ALPHA_TREE | map(.execution.working_tree) == [\"clean\"]" \
+  "the rules derivation does not carry the clean recording of the rule's case"
+jqe rules_clean "$ALPHA_TREE | map(.state) == [\"proven\"]" \
+  "the rules derivation does not call a passing run on a clean tree at this commit proven"
 
 # the dirty half: the same commit, the same empty diff, a run that did not measure it
 printf 'edited before the run\n' > tree.txt
@@ -475,9 +523,15 @@ jqe tree_dirty '(.claims[] | select(.id == "alpha-holds") | .state) == "inputs_u
   "a run recorded on a dirty tree is reported as proven against the commit it sat on"
 # the rules derivation reads the same ledger and must not disagree with it
 "$MJB" rules --repo "$T" --format json report > "$W/tree_rules.json" 2>/dev/null || true
-jq -e '[.rules[].tests[]? | select(.execution.working_tree == "dirty") | select(.state == "proven")] | length == 0' \
-  "$W/tree_rules.json" >/dev/null 2>&1 \
-  || { echo "    the rules derivation calls a run made on a dirty tree proven"; exit 1; }
+jqe tree_rules "$ALPHA_TREE | map(.execution.working_tree) == [\"dirty\"]" \
+  "the rules derivation does not carry the dirty recording of the rule's case"
+jqe tree_rules "$ALPHA_TREE | map(.state) == [\"inputs_unchanged\"]" \
+  "the rules derivation calls a run made on a dirty tree proven against the commit it sat on"
+# and over the whole corpus, with the set it quantifies over shown to be non-empty first
+jqe tree_rules '[.rules[].tests[]? | select(.execution.working_tree == "dirty")] | length > 0' \
+  "no rule's test carries a dirty recording, so the next assertion would hold of nothing"
+jqe tree_rules '[.rules[].tests[]? | select(.execution.working_tree == "dirty") | select(.state == "proven")] | length == 0' \
+  "the rules derivation calls a run made on a dirty tree proven"
 
 # ---------------------------------------------------------------- reading changes nothing
 before="$(git status --porcelain)"
