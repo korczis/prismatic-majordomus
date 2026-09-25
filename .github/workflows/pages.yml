@@ -89,6 +89,10 @@ permissions:
   # and until 2026-09-11 this run could not read it — which is why an errored build was the one
   # failure mode of the three that left a green tick.
   pages: read
+  # The evidence the site publishes beside its claims: `scripts/pages evidence` downloads the
+  # `evidence` artifact validate.yml kept for this commit or its nearest ancestor, and reading
+  # another run's artifact is this permission. Nothing here writes to Actions.
+  actions: read
 
 # The site is a projection of the newest commit, so an older deployment of an older commit is
 # worth nothing the moment a newer push exists. A superseded run is cancelled rather than
@@ -172,6 +176,16 @@ jobs:
         run: |
           echo "MJ_PAGES_TIMINGS=$PWD/pages-timings.tsv" >> "$GITHUB_ENV"
           printf 'pages\tcheckout-setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
+
+      # The CI evidence of this commit or of its nearest ancestor, as site/data/evidence.json: a
+      # deployment input like build.json, never committed. Never a gate: evidence of an ancestor
+      # is published labelled stale, none at all as unavailable. validate.yml's evidence job
+      # dispatches this workflow again once this commit's own evidence exists (ADR 68).
+      - name: evidence
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/pages evidence --commit "$GITHUB_SHA"
 
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build

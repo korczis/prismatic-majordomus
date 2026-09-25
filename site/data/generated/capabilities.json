@@ -2055,6 +2055,19 @@
       "test_case": "124_evidence"
     },
     {
+      "id": "evidence-recorded-in-ci",
+      "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "scripts/ci/evidence-collect",
+      "test": "test/cases/357_ci_records_evidence.sh",
+      "status": "guaranteed",
+      "note": "The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "357_ci_records_evidence"
+    },
+    {
       "id": "rule-proof-is-named-and-resolves",
       "claim": "Every blocking rule names what proves it, and every path it names is in the tree",
       "source": "docs/DOCTRINE.md",
