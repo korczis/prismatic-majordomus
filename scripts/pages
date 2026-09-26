@@ -30,6 +30,10 @@
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
 #                                         10 it serves something else, 12 it never answered
+#   scripts/pages verify-docs --url URL --commit SHA [--quiet]
+#                                         the documentation that commit publishes, as served:
+#                                         /docs/index.json names the commit, and every route it
+#                                         publishes a kind at answers 200. 0 ok, 10 not, 12 no index
 #   scripts/pages verify-rustdoc [--url URL] --commit SHA [--timeout N]
 #                                         poll the public site until the crate's reference it
 #                                         composes at the rustdoc surface's mount is that
@@ -428,6 +432,54 @@ cmd_verify() {
   done
 }
 
+# ---------------------------------------------------------------- the documentation, as served
+# `verify` proves the site serves a commit; this proves that commit's documentation is there.
+# It reads /docs/index.json — which the build writes from the pages it published — and asks the
+# public site for the documentation root, every route the catalogue publishes a kind at, one
+# page of every kind published a page per object, and the machine-readable documents. Nothing
+# here lists a route: a kind added to site/data/publication.toml is probed because it was added.
+# Exit 0 every probe answered 200, 10 the index names another commit or a probe failed,
+# 12 the index could not be read.
+cmd_verify_docs() {
+  local url="" commit="" quiet=0 ix served routes r code bad=0 n=0
+  while [ $# -gt 0 ]; do case "$1" in
+    --url) url="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    --quiet) quiet=1; shift ;;
+    *) echo "pages verify-docs: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
+  [ -n "$commit" ] || commit="$(git -C "$ROOT" rev-parse HEAD)"
+  case "$commit" in *[!0-9a-fA-F]*|"") echo "pages verify-docs: --commit takes a commit sha, not '$commit'" >&2; exit 2 ;; esac
+  [ "${#commit}" -ge 7 ] || { echo "pages verify-docs: --commit $commit is too short to name a commit" >&2; exit 2; }
+  command -v curl >/dev/null || { echo "pages verify-docs: curl is required" >&2; return 12; }
+  url="${url%/}"
+  ix="$(curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "$url/docs/index.json?t=$(now)" 2>/dev/null || true)"
+  printf '%s' "$ix" | jq -e '.schema == 1 and (.pages | length > 0)' >/dev/null 2>&1 || {
+    echo "pages verify-docs: $url/docs/index.json is not a documentation index" >&2; return 12; }
+  served="$(printf '%s' "$ix" | jq -r '.build.commit // empty')"
+  [ -n "$served" ] && [ "${served#"$commit"}" != "$served" ] || {
+    echo "pages verify-docs: $url/docs/index.json was built from ${served:-no commit}, not ${commit:0:12}" >&2; return 10; }
+  routes="$(printf '%s' "$ix" | jq -r '. as $ix
+    | ["/docs/", "/openapi.json", "/build.json"]
+    + [$ix.kinds[] | .route | select(. != null)]
+    + [$ix.kinds[] | select(.projection == "entity") | .kind as $k
+       | first($ix.pages[] | select(.kind == $k)) | .route]
+    | unique[]' 2>/dev/null)"
+  for r in $routes; do
+    n=$((n + 1))
+    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "$url$r" || true)"
+    if [ "$code" = 200 ]; then [ "$quiet" = 1 ] || printf '  200  %s%s\n' "$url" "$r"
+    else printf 'pages verify-docs: %s%s answered %s\n' "$url" "$r" "${code:-nothing}" >&2; bad=$((bad + 1)); fi
+  done
+  # the documentation root is the hub, not an older page at the same address
+  curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" "$url/docs/?t=$(now)" 2>/dev/null | grep -q 'data-docs-search' || {
+    echo "pages verify-docs: $url/docs/ does not carry the documentation hub" >&2; bad=$((bad + 1)); }
+  [ "$bad" = 0 ] || return 10
+  [ "$quiet" = 1 ] || printf 'pages verify-docs: %s serves the documentation of %s: %s route(s), %s page(s) indexed\n' \
+    "$url" "${commit:0:12}" "$n" "$(printf '%s' "$ix" | jq -r '.pages | length')"
+}
+
 # ---------------------------------------------------------------- dispatch
 # ---------------------------------------------------------------- GitHub's own build
 # Publishing is two steps owned by two parties. This repository pushes gh-pages; GitHub's own
@@ -714,6 +766,7 @@ case "${1:-}" in
   report)      shift; cmd_report "$@" ;;
   built)       shift; cmd_built "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
+  verify-docs) shift; cmd_verify_docs "$@" ;;
   verify-rustdoc) shift; cmd_verify_rustdoc "$@" ;;
   # the whole header, up to the line that ends it, rather than a line range that stops
   # short the day a command is added to it

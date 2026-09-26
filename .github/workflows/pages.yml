@@ -179,10 +179,11 @@ jobs:
   # The three controlled steps below bound 9 minutes between them, against the 96 seconds
   # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget; GitHub's own build is read in 2, and the public reference is
-  # verified in 6 (a 300-second wait inside it). 33 covers those 28 plus the unbounded
-  # checkout, setup, download and report steps on a cold runner, and leaves the job's bound
-  # where it belongs: as the last resort behind every step's own.
+  # file says never to budget; GitHub's own build is read in 2, the documentation the commit
+  # publishes is verified in 1, and the public reference in 6 (a 300-second wait inside it).
+  # 33 covers those 29 plus the unbounded checkout, setup, download and report steps on a cold
+  # runner, and leaves the job's bound where it belongs: as the last resort behind every
+  # step's own.
   deploy:
     needs: rustdoc
     runs-on: ubuntu-latest
@@ -280,7 +281,19 @@ jobs:
           echo "pages_build=$(( $(date -u +%s) - t0 ))" >> "$GITHUB_OUTPUT"
           echo "end_to_end=$(( $(date -u +%s) - ${{ steps.t.outputs.created }} ))" >> "$GITHUB_OUTPUT"
 
-      # The crate's reference, as the public site serves it: the step above proved the site
+      # The documentation that commit publishes, as served. Only once the site serves this
+      # commit, so what it measures is this build and not the wait: /docs/index.json must name
+      # the commit, and the documentation root, every route the catalogue publishes a kind at,
+      # one page per entity kind and the machine-readable documents must answer 200. Unlike the
+      # wait above this is definite — the bytes are ours — so a failure fails the run.
+      - name: The documentation it publishes
+        if: steps.public.outcome == 'success'
+        timeout-minutes: 1
+        env:
+          MJ_PAGES_PROBE_SECONDS: 5
+        run: scripts/pages verify-docs --commit "$GITHUB_SHA"
+
+      # The crate's reference, as the public site serves it: the `public` step proved the site
       # serves this commit's /build.json, and this proves the composed surface came with it —
       # /build.json and /rustdoc/surface.json name this commit, the landing page names it, the
       # crate's index is rustdoc's, its stylesheets and scripts, a module page and the search
@@ -297,7 +310,7 @@ jobs:
 
       # The third way a deploy fails, and the only one that used to end in a green tick.
       #
-      # The step above waits for the site to serve this commit and is deliberately a report:
+      # The `public` step waits for the site to serve this commit and is deliberately a report:
       # what it waits on is the Actions queue, GitHub's Pages build and a CDN, none of which
       # this repository controls, and a gate on somebody else's latency is a gate that gets
       # waived. But "slow" and "failed" are not the same fact, and the second one has an API.

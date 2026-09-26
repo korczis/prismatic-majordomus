@@ -7,6 +7,44 @@ Every entry below is derived: a section per release the layer records, its decis
 
 Current version: **0.9.0**
 
+## v0.9.0 — 2026-09-25
+
+### Added
+
+- **docs**: the documentation hub and its index are read off the registry and the build (`c3555511c`)
+- **entity**: every object of the layer is addressable, cross-linked and published (`c0b1e9424`)
+
+### Fixed
+
+- **docs**: the hub names every kind it links, and the release is the minor the surface measured (`f8a5caf56`)
+- **entity**: an edge's order is the collection's own, and the surface is exampled (`0fdca807c`)
+- **site**: an entity's URI may not push a phone page sideways (`cb2a69059`)
+
+### Documentation
+
+- **coverage**: the differential rules are a table, not a hand-drawn block (`d15df020d`)
+- **entity**: the entity capability's surface carries executable examples (`054c312bf`)
+
+### Tests
+
+- **cockpit**: the entity routes join the read-only and rebuild sweeps (`c0b15d496`)
+
+### Housekeeping
+
+- **derive**: the projections follow the v0.8.0 release record (`6932fc67b`)
+- **release**: record v0.8.0 and the metadata it publishes (`49a8f053a`)
+- **derive**: the projections follow the merge with master df244393d (`803dc0e47`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.9.0-aarch64-apple-darwin.tar.gz (`c2f71342018d`)
+- `macos-x86_64` — majordomus-v0.9.0-x86_64-apple-darwin.tar.gz (`8a0e587dcc45`)
+- `linux-x86_64-gnu` — majordomus-v0.9.0-x86_64-unknown-linux-gnu.tar.gz (`15189a2bb8d6`)
+- `linux-x86_64-musl` — majordomus-v0.9.0-x86_64-unknown-linux-musl.tar.gz (`28d1644ba2f9`)
+- `linux-aarch64-gnu` — majordomus-v0.9.0-aarch64-unknown-linux-gnu.tar.gz (`c619f973950a`)
+- `linux-aarch64-musl` — majordomus-v0.9.0-aarch64-unknown-linux-musl.tar.gz (`4cd7a2edac6d`)
+
+
 ## v0.8.0 — 2026-09-20
 
 ### Added

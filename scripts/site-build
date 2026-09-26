@@ -225,6 +225,15 @@ while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
 done <<EOF
 $COMPOSED
 EOF
+# /docs/index.json: the machine-readable documentation index, read off the pages this build
+# just wrote rather than listed anywhere, so it names exactly the routes a visitor can open.
+# Written after every pass that edits a page and after the composition above, which adds
+# pages, because it records what the pages say.
+if [ -d "$PUBLIC" ]; then
+  echo "== docs index"
+  node "$ROOT/scripts/lib/docs-index.mjs" "$PUBLIC" "$SITE/data/generated/entities.json" \
+    "$SITE/data/registry/registry.json"
+fi
 # the declaration that makes the directory a surface: written by the producer, beside its
 # own output, and read back by discovery. Nothing else in the repository is told it exists.
 if [ "$SERVE" = 1 ]; then
