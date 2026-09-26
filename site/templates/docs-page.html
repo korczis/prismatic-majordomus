@@ -11,6 +11,9 @@
   <div class="min-w-0">
     <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a> — the same Markdown GitHub shows.</p>
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
+    {#- a document a generated reference names as its own renders that reference after it -#}
+    {%- set schema_ref = load_data(path="data/generated/schemas.json") -%}
+    {%- if schema_ref.document == page.extra.source %}{% include "partials/schema-files.html" %}{% endif -%}
     {%- set caps = load_data(path="data/generated/capabilities.json") -%}
     {%- set mine = [x for x in caps.claims if x.source == page.extra.source] -%}
     {%- if mine | length > 0 -%}
