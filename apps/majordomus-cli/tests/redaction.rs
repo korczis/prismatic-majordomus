@@ -238,10 +238,7 @@ fn a_private_key_is_refused_whole_though_its_header_alone_is_redacted() {
     // the shape matches the header; the key's body follows it, and nothing matches that
     let dir = tempfile::tempdir().unwrap();
     let body = ["M".repeat(64), "N".repeat(64), "P".repeat(24)].join("\n");
-    let pem = format!(
-        "{}{}\n{body}\n{}{}",
-        "-----BEGIN RSA ", "PRIVATE KEY-----", "-----END RSA ", "PRIVATE KEY-----"
-    );
+    let pem = pem(&body);
     assert_eq!(redact_secrets(&pem).kinds, ["private-key-header"]);
     refused_on(&pem, dir.path(), "private-key-header", &"M".repeat(64));
 }
@@ -258,4 +255,75 @@ fn a_credentials_file_is_refused_whole_though_its_key_id_alone_is_redacted() {
     );
     assert_eq!(redact_secrets(&file).kinds, ["aws-access-key-id"]);
     refused_on(&file, dir.path(), "aws-access-key-id", &secret);
+}
+
+/// A PEM private key, split so that no committed file carries its armour whole.
+fn pem(body: &str) -> String {
+    format!(
+        "{}{}\n{body}\n{}{}",
+        "-----BEGIN RSA ", "PRIVATE KEY-----", "-----END RSA ", "PRIVATE KEY-----"
+    )
+}
+
+#[test]
+fn text_redacted_once_is_refused_as_the_original_would_be() {
+    // the prompt archive stores text redacted once; publishing it must not take the
+    // marker for a credential already dealt with
+    let dir = tempfile::tempdir().unwrap();
+    let body = ["M".repeat(64), "N".repeat(64)].join("\n");
+    let once = redact_secrets(&pem(&body)).text;
+    assert_eq!(redact_secrets(&once).kinds, ["private-key-header"]);
+    refused_on(&once, dir.path(), "private-key-header", &body);
+
+    // the marker alone decides: no footer, no other announcement left in the text
+    let headed = format!("{}{}\n{body}", "-----BEGIN ", "PRIVATE KEY-----");
+    let once = redact_secrets(&headed).text;
+    assert_eq!(once, format!("[redacted:private-key-header]\n{body}"));
+    refused_on(&once, dir.path(), "private-key-header", &body);
+
+    let secret = format!("{}/{}", "k".repeat(20), "K".repeat(19));
+    let file = format!(
+        "aws_access_key_id = {}{}\naws_secret_access_key = {secret}\n",
+        "AKIA",
+        "Q".repeat(16)
+    );
+    let once = redact_secrets(&file).text;
+    refused_on(&once, dir.path(), "aws-access-key-id", &secret);
+    // an id marked once and a secret no rule knows the name of
+    let bare = format!("[redacted:aws-access-key-id] {secret}");
+    refused_on(&bare, dir.path(), "aws-access-key-id", &secret);
+}
+
+#[test]
+fn a_private_key_s_tail_is_refused_though_its_header_was_cut_off() {
+    // a failure's tail keeps the end of what was printed, which is the footer
+    let dir = tempfile::tempdir().unwrap();
+    let body = ["N".repeat(64), "P".repeat(24)].join("\n");
+    let tail = format!("{body}\n{}{}", "-----END RSA ", "PRIVATE KEY-----");
+    assert!(redact_secrets(&tail).kinds.is_empty());
+    refused_on(&tail, dir.path(), "PRIVATE KEY-----", &body);
+
+    let pgp = format!("{body}\n{}{}", "-----END PGP ", "PRIVATE KEY BLOCK-----");
+    refused_on(&pgp, dir.path(), "PRIVATE KEY BLOCK-----", &body);
+
+    // a public key's footer announces nothing secret
+    let public = format!("{body}\n{}{}", "-----END ", "PUBLIC KEY-----");
+    assert_eq!(public_text(&public, dir.path(), None).unwrap().text, public);
+}
+
+#[test]
+fn a_secret_access_key_is_refused_without_the_id_it_pairs_with() {
+    // the tail of an environment dump, or a role's temporary credentials, with no key id
+    let dir = tempfile::tempdir().unwrap();
+    let secret = format!("{}+{}", "s".repeat(20), "S".repeat(19));
+    for text in [
+        format!("AWS_REGION=eu-west-1\nAWS_SECRET_ACCESS_KEY={secret}\n"),
+        format!("{{\"Credentials\": {{\"SecretAccessKey\": \"{secret}\"}}}}"),
+    ] {
+        assert!(redact_secrets(&text).kinds.is_empty(), "{text}");
+        refused_on(&text, dir.path(), "secret-access-key", &secret);
+    }
+    // naming the variable is not assigning it
+    let reason = "skipped: AWS_SECRET_ACCESS_KEY is not set";
+    assert_eq!(public_text(reason, dir.path(), None).unwrap().text, reason);
 }

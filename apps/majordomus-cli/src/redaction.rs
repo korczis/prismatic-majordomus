@@ -19,9 +19,10 @@
 //! Two neighbours are different concerns and stay apart: `execution::redact` removes the
 //! fields a capability's input schema marks sensitive, and `generate::forbidden_in` is the
 //! last word on a published artifact, which [`public_text`] asks after it has done its work.
-//! Before asking, [`public_text`] refuses a text in which a shape fired that announces more
-//! secret than it matches, since redacting the announcement is what would let the rest past
-//! that check.
+//! Before asking, [`public_text`] refuses a text that still carries a secret no shape covers:
+//! one whose announcing shape fired, in this call or in an earlier redaction whose marker
+//! the text carries, and one whose armour or name is left once the shapes have run. Redacting
+//! the announcement is what would let the rest past that check.
 //!
 //! ```
 //! use majordomus_cli::redaction::redact_secrets;
@@ -37,11 +38,13 @@ use std::path::Path;
 
 /// Text after [`redact_secrets`] or [`public_text`], with the shapes that fired in it.
 ///
-/// `kinds` is what `mj_capture_redacted_kinds` reports for the same text: the names, each
-/// once, in the crate's canonical order, which for these lower-case hyphenated names is the
-/// byte order the shell's `LC_ALL=C sort -u` gives. It lists the shapes that replaced
-/// something here, so a marker the input already carried is not counted as a credential
-/// this call found.
+/// `kinds` is what `mj_capture_redacted_kinds` reports for the same text: the names its
+/// `[redacted:<name>]` markers carry, each once, in the crate's canonical order, which for
+/// these lower-case hyphenated names is the byte order the shell's `LC_ALL=C sort -u` gives.
+/// They are read off the text, as the shell reads them, so a marker the input already
+/// carried counts as much as one this call wrote: text redacted once and redacted again
+/// still says what was taken out of it. A marker that names no shape of the table is not a
+/// kind here, since a kind is one of [`shape_names`]; the shell would list that name too.
 ///
 /// ```
 /// use majordomus_cli::redaction::{redact_secrets, Redacted};
@@ -51,12 +54,15 @@ use std::path::Path;
 /// let out: Redacted = redact_secrets(&format!("{pat} then {key} then {pat}"));
 /// assert_eq!(out.kinds, ["anthropic-key", "github-pat"]);
 /// assert!(!out.text.contains("sk-ant-"));
+///
+/// // redacting again finds nothing new, and still names what the text had taken out
+/// assert_eq!(redact_secrets(&out.text).kinds, out.kinds);
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Redacted {
     /// The text with every credential replaced by `[redacted:<name>]`.
     pub text: String,
-    /// The names of the shapes that replaced something, sorted and unique.
+    /// The shapes the text's markers name, sorted and unique.
     pub kinds: Vec<&'static str>,
 }
 
@@ -106,16 +112,37 @@ pub fn shape_names() -> Vec<&'static str> {
 /// ```
 pub fn redact_secrets(text: &str) -> Redacted {
     let mut text = text.to_string();
-    let mut kinds = Vec::new();
     for shape in SHAPES.iter().chain(std::iter::once(&ASSIGNMENT)) {
         if let Some(replaced) = shape.replace_all(&text) {
             text = replaced;
-            kinds.push(shape.name);
         }
     }
+    let kinds = kinds_in(&text);
+    Redacted { text, kinds }
+}
+
+/// How every marker opens; the shape's name and `]` follow.
+const MARKER: &str = "[redacted:";
+
+/// The shapes named by the markers in `text`, each once and in canonical order: what
+/// `mj_capture_redacted_kinds` reads with `grep -oE '\[redacted:[a-z-]+\]'`, for the names of
+/// the table. No marker can hold another's opening, so every opening is a candidate.
+fn kinds_in(text: &str) -> Vec<&'static str> {
+    let names = shape_names();
+    let mut kinds: Vec<&'static str> = text
+        .match_indices(MARKER)
+        .filter_map(|(at, _)| {
+            let rest = &text[at + MARKER.len()..];
+            let len = rest
+                .find(|c: char| !(c.is_ascii_lowercase() || c == '-'))
+                .unwrap_or(rest.len());
+            rest[len..].starts_with(']').then_some(&rest[..len])
+        })
+        .filter_map(|name| names.iter().copied().find(|shape| *shape == name))
+        .collect();
     crate::order::canonical_strings(&mut kinds);
     kinds.dedup();
-    Redacted { text, kinds }
+    kinds
 }
 
 /// The repository root written as `<repo>` and the home directory as `<home>`.
@@ -158,11 +185,16 @@ pub fn normalise_machine_paths(text: &str, root: &Path, home: Option<&Path>) -> 
 /// Text fit to publish: machine paths normalised, then credentials redacted, then checked.
 ///
 /// A redaction covers what its shape matched, and two shapes match less than the secret
-/// they announce. So the text is refused, with the shape's name and never the text, when:
+/// they announce. So the text is refused, with what it carries and never the text, when:
 ///
-/// - a private key's header fired, whose body follows on the lines after it, or an access
-///   key id, whose secret access key no shape matches. Redacting the announcement would
-///   remove the very marker `generate::forbidden_in` refuses on, and publish the rest;
+/// - its markers name a private key's header, whose body follows on the lines after it, or
+///   an access key id, whose secret access key no shape matches. The markers are read off
+///   the text, so a text redacted once already is refused as the original would be.
+///   Redacting the announcement removes the very marker `generate::forbidden_in` refuses
+///   on, and would publish the rest;
+/// - it still holds a private key's armour line, such as the footer a failure's tail keeps
+///   after cutting the header off, or a secret access key assigned a value: a secret whose
+///   announcement no longer is in the text, or never was;
 /// - `generate::forbidden_in`, the check every published artifact already passes, still
 ///   finds a marker: something neither rule can make safe, such as another account's home
 ///   directory or a bearer header too short to be a credential's shape.
@@ -183,16 +215,17 @@ pub fn normalise_machine_paths(text: &str, root: &Path, home: Option<&Path>) -> 
 /// let pem = format!("{}{}\n{}", "-----BEGIN ", "PRIVATE KEY-----", "f".repeat(64));
 /// let refused = public_text(&pem, dir.path(), None).unwrap_err();
 /// assert!(refused.contains("`private-key-header`"));
+///
+/// let tail = format!("{}\n{}{}", "g".repeat(64), "-----END ", "PRIVATE KEY-----");
+/// let refused = public_text(&tail, dir.path(), None).unwrap_err();
+/// assert!(refused.contains("`PRIVATE KEY-----`"));
 /// ```
 pub fn public_text(text: &str, root: &Path, home: Option<&Path>) -> Result<Redacted, String> {
     let redacted = redact_secrets(&normalise_machine_paths(text, root, home));
-    if let Some((kind, what)) = ANNOUNCES_MORE
-        .iter()
-        .find(|(kind, _)| redacted.kinds.contains(kind))
-    {
+    if let Some((marker, what)) = uncovered_secret(&redacted) {
         return Err(format!(
-            "the text carries {what} (`{kind}`), and redacting the part its shape matches \
-             would publish the rest, so it is not published"
+            "the text carries {what} (`{marker}`), which redacting the shapes of the table \
+             does not cover, so it is not published"
         ));
     }
     match crate::generate::forbidden_in(&redacted.text) {
@@ -202,6 +235,23 @@ pub fn public_text(text: &str, root: &Path, home: Option<&Path>) -> Result<Redac
              and its credentials redacted, so it is not published"
         )),
     }
+}
+
+/// The first secret `redacted` still carries that no shape covers, as the name it is
+/// refused under and what it is.
+fn uncovered_secret(redacted: &Redacted) -> Option<(&'static str, &'static str)> {
+    let announced = ANNOUNCES_MORE
+        .iter()
+        .find(|(kind, _)| redacted.kinds.contains(kind));
+    let armour = ARMOUR
+        .iter()
+        .find(|(line, _)| contains_ignoring_case(&redacted.text, line));
+    announced.or(armour).copied().or_else(|| {
+        SECRET_ACCESS_KEY.found_in(&redacted.text).then_some((
+            SECRET_ACCESS_KEY.name,
+            "a secret access key assigned a value, which no shape of the table matches",
+        ))
+    })
 }
 
 /// The shapes whose match announces a secret it does not cover, with what that secret is.
@@ -215,6 +265,44 @@ const ANNOUNCES_MORE: &[(&str, &str)] = &[
         "a private key's header, whose body no shape matches",
     ),
 ];
+
+/// The ends of a private key's armour lines, in any case: every header the shape misses
+/// and every footer, which a tail keeps when it has cut the header off.
+const ARMOUR: &[(&str, &str)] = &[
+    (
+        "PRIVATE KEY-----",
+        "a private key's armour line, whose body no shape matches",
+    ),
+    (
+        "PRIVATE KEY BLOCK-----",
+        "a PGP private key's armour line, whose body no shape matches",
+    ),
+];
+
+/// Does `text` contain `needle`, ASCII letters compared without their case?
+fn contains_ignoring_case(text: &str, needle: &str) -> bool {
+    text.as_bytes()
+        .windows(needle.len())
+        .any(|window| window.eq_ignore_ascii_case(needle.as_bytes()))
+}
+
+/// A secret access key assigned a long opaque value, in the assignment rule's own form:
+/// `aws_secret_access_key = ...`, `AWS_SECRET_ACCESS_KEY=...`, `"SecretAccessKey": "..."`.
+/// It is not a shape of the table and redacts nothing: [`public_text`] refuses a text it is
+/// found in, since the id it pairs with may be on a line the text no longer has. A name with
+/// no value after it, as a skip reason says it, is not a match.
+const SECRET_ACCESS_KEY: Shape = Shape {
+    name: "secret-access-key",
+    kept: &[
+        Atom::Caseless("secret"),
+        run("-_", 0, Some(1)),
+        Atom::Caseless("access"),
+        run("-_", 0, Some(1)),
+        Atom::Caseless("key"),
+        ASSIGNED,
+    ],
+    secret: &[OPAQUE_VALUE],
+};
 
 /// A path as the text it appears in, without a trailing separator; `None` when nothing is
 /// left, so that the filesystem root never replaces every separator in the text.
@@ -408,19 +496,25 @@ const ASSIGNMENT: Shape = Shape {
             ],
             optional: false,
         },
-        Atom::Group {
-            alternatives: &[&[
-                run("\\\"'", 0, Some(1)),
-                run(" ", 0, None),
-                Atom::One(Class(":=")),
-                run(" ", 0, None),
-                run("\\\"'", 0, Some(1)),
-            ]],
-            optional: false,
-        },
+        ASSIGNED,
     ],
-    secret: &[run("A-Za-z0-9._~+/-", 16, None)],
+    secret: &[OPAQUE_VALUE],
 };
+
+/// The assignment rule's separator: a quote, spaces, `:` or `=`, spaces and a quote.
+const ASSIGNED: Atom = Atom::Group {
+    alternatives: &[&[
+        run("\\\"'", 0, Some(1)),
+        run(" ", 0, None),
+        Atom::One(Class(":=")),
+        run(" ", 0, None),
+        run("\\\"'", 0, Some(1)),
+    ]],
+    optional: false,
+};
+
+/// The assignment rule's value: a long opaque run.
+const OPAQUE_VALUE: Atom = run("A-Za-z0-9._~+/-", 16, None);
 
 // ---------------------------------------------------------------- the matcher
 
@@ -490,6 +584,12 @@ impl Shape {
         best
     }
 
+    /// Does the shape match anywhere in `text`?
+    fn found_in(&self, text: &str) -> bool {
+        let bytes = text.as_bytes();
+        (0..bytes.len()).any(|at| self.match_at(bytes, at).is_some_and(|(_, end)| end > at))
+    }
+
     /// `s%<shape>%<kept>[redacted:<name>]%g` over the whole text, or `None` when the shape
     /// matched nothing. Every construct of the table starts with an ASCII byte and matches
     /// only ASCII bytes, so every cut below falls on a character boundary.
@@ -501,7 +601,7 @@ impl Shape {
             match self.match_at(bytes, at) {
                 Some((kept_end, end)) if end > at => {
                     out.push_str(&text[copied..kept_end]);
-                    out.push_str("[redacted:");
+                    out.push_str(MARKER);
                     out.push_str(self.name);
                     out.push(']');
                     copied = end;
@@ -749,6 +849,47 @@ mod tests {
                 names.contains(kind),
                 "{kind} is not a shape, so it never fires"
             );
+        }
+    }
+
+    #[test]
+    fn a_kind_is_read_off_a_whole_marker_that_names_a_shape() {
+        let text = "[redacted:github-pat] [redacted:foo-bar] [redacted:] [redacted:Slack] \
+                    [redacted:[redacted:slack-token]] [redacted:assignment";
+        assert_eq!(kinds_in(text), ["github-pat", "slack-token"]);
+        assert!(kinds_in("nothing was taken out").is_empty());
+    }
+
+    #[test]
+    fn an_armour_line_is_found_in_any_case() {
+        assert!(contains_ignoring_case(
+            "x private key----- y",
+            "PRIVATE KEY-----"
+        ));
+        assert!(!contains_ignoring_case(
+            "PRIVATE KEY----",
+            "PRIVATE KEY-----"
+        ));
+        assert!(!contains_ignoring_case("", "PRIVATE KEY-----"));
+    }
+
+    #[test]
+    fn a_secret_access_key_is_found_only_with_a_long_value_assigned() {
+        let value = "h".repeat(16);
+        for text in [
+            format!("aws_secret_access_key = {value}"),
+            format!("export AWS_SECRET_ACCESS_KEY={value}"),
+            format!("{{\"SecretAccessKey\": \"{value}\"}}"),
+            format!("secret-access-key: '{value}'"),
+        ] {
+            assert!(SECRET_ACCESS_KEY.found_in(&text), "{text}");
+        }
+        for text in [
+            "skipped: AWS_SECRET_ACCESS_KEY is not set".to_string(),
+            format!("aws_secret_access_key = {}", "h".repeat(15)),
+            format!("aws_secret_key = {value}"),
+        ] {
+            assert!(!SECRET_ACCESS_KEY.found_in(&text), "{text}");
         }
     }
 

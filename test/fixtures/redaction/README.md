@@ -13,7 +13,7 @@ call the other.
 | column | meaning |
 |---|---|
 | `name` | the shape the line exercises: a name from `MJ_CAPTURE_SECRETS`, or `assignment` |
-| `prefix` | the start of the sample: a credential's own prefix, or the name and separator of an assignment |
+| `prefix` | the start of the sample: a credential's own prefix, the name and separator of an assignment, or a marker's opening |
 | `body` | the rest of the sample |
 | `expect` | `redacted` or `kept` |
 
@@ -42,6 +42,12 @@ so that nothing here can be mistaken for a real credential even once assembled.
   spaces around either, and a quote on either side.
 - Near-misses that must be kept: a body one character short of its shape, a prefix that is
   almost right, and prose that merely mentions a password.
+- Text that was redacted once already: a line that is a marker, `[redacted:` then the
+  shape's name and `]`. Redacting it again leaves it as it is, and both redactors must still
+  name that shape among the kinds, because the shell reads the kinds off the text. The Rust
+  side decides from those kinds whether a private key's body or a secret access key follows
+  a marker, so a port that counted only what it replaced itself would publish a key that
+  was redacted once before it reached it.
 
 Machine paths for the normalisation tests are not here. They are built at run time from a
 temporary directory, because a committed path naming a home directory is exactly what
