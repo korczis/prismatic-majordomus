@@ -437,6 +437,10 @@ identity and `/cockpit/objects/rule/project-x-1` is where a reader is sent. The 
 derived from the kind and the identity by one function, so it exists for every object and is
 the same on every surface; `majordomus_entity` answers to either spelling, and
 `majordomus_kinds` reports any two identities of one kind that reduce to one address.
+`majordomus_entity` also names the object's public documentation page (`documentation`:
+the projection, `route`, `url`, or the `reason` its kind is not published), read from the
+repository's `site/data/publication.toml` and the site's `base_url` — null when the
+repository declares no publication.
 
 Identity is the kind's identity fields joined with `@` — `majordomus.scope-integrity@1`
 for a rule, `continue` for a prompt, `implementation` for a profile, `M001` for a
@@ -454,7 +458,7 @@ manifest section it falls under, and its size.
 | `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
 | `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
 | `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
-| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, and the state of the executable artefacts it names |
+| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page |
 | `majordomus_kinds` | `entity.kinds` | none | every kind the index holds with the route of its listing, how many objects are addressable, and every route collision there is |
 | `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
 | `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |

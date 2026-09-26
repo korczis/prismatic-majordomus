@@ -633,6 +633,250 @@ pub fn surfaces(registry: &CapabilityRegistry, o: &Object) -> Vec<Surface> {
     out
 }
 
+// ---------------------------------------------------------------- the public page
+
+/// Where a repository declares, for every kind of its index, whether and where its public
+/// site publishes that kind. Repository-relative.
+///
+/// The file is the site's, not this executable's: `scripts/generate-site-data` builds the
+/// entity pages from it and `scripts/ci/entity-check` holds it to the index. [`Publication`]
+/// reads the same file so that the address an entity names for its public page is the
+/// address the site generator wrote the page at — one declaration, two readers, no second
+/// list of kinds or routes.
+pub const PUBLICATION: &str = "site/data/publication.toml";
+
+/// How one kind reaches the public site, as the declaration states it.
+///
+/// ```
+/// use majordomus_cli::entity::Publication;
+///
+/// let p = Publication::parse(
+///     "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
+///     None,
+/// );
+/// let adr = p.kind("adr").unwrap();
+/// assert_eq!(adr.projection, "entity");
+/// assert_eq!(adr.route.as_deref(), Some("/adrs/"));
+/// assert!(p.kind("rule").is_none());
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct PublishedKind {
+    /// The kind, as the index reports it.
+    pub kind: String,
+    /// `entity` (a page per object under `route`), `section` (an editorial section at
+    /// `route` publishes the kind) or `none` (not published, for `reason`).
+    pub projection: String,
+    /// The public index of the kind, for `entity` and `section`.
+    pub route: Option<String>,
+    /// Why the kind is not published, for `none`.
+    pub reason: Option<String>,
+}
+
+/// A repository's publication declaration, with the base URL its site is built for.
+///
+/// Read from [`PUBLICATION`] and the site's `base_url` at request time, never compiled in:
+/// this executable supervises repositories that have no site at all, and for those
+/// [`Publication::read`] answers `None` and every entity's `documentation` is null.
+///
+/// The declaration is the small TOML subset the site generator reads with `awk`: `#`
+/// comment lines, one `[[kinds]]` table per kind, and `key = value` lines whose string
+/// values are double-quoted. Anything else is ignored rather than guessed at, exactly as
+/// the generator ignores it.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct Publication {
+    /// Every declared kind, in the file's order.
+    pub kinds: Vec<PublishedKind>,
+    /// The site's `base_url` without a trailing slash, when the site configuration has one.
+    pub base_url: Option<String>,
+}
+
+/// The public documentation page of one entity, as its kind's publication decision derives
+/// it. Every surface that shows an entity carries this value and renders it; none of them
+/// derives a public address of its own.
+///
+/// ```
+/// use majordomus_cli::entity::Documentation;
+///
+/// let d = Documentation {
+///     projection: "entity".into(),
+///     route: Some("/adrs/adr-0056/".into()),
+///     url: Some("https://majordomus.dev/adrs/adr-0056/".into()),
+///     reason: None,
+///     declared_in: "site/data/publication.toml".into(),
+/// };
+/// let wire = serde_json::to_value(&d).unwrap();
+/// assert_eq!(wire["url"], serde_json::json!("https://majordomus.dev/adrs/adr-0056/"));
+/// // a field that does not apply is absent, not an empty string
+/// assert!(wire.get("reason").is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EntityDocumentation")]
+pub struct Documentation {
+    /// The kind's projection: `entity`, `section` or `none`.
+    pub projection: String,
+    /// The public route of the page, site-relative: the entity's own page for an `entity`
+    /// kind, the kind's section for a `section` kind, absent for `none`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub route: Option<String>,
+    /// The route under the site's `base_url`, when the site configuration names one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    /// Why the kind is not published, for `none`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
+    /// The file the decision is read from.
+    pub declared_in: String,
+}
+
+/// The value of a `key = value` line: a double-quoted string unescaped, anything else as
+/// written up to a trailing comment.
+fn toml_value(raw: &str) -> String {
+    let raw = raw.trim();
+    let Some(body) = raw.strip_prefix('"') else {
+        return raw.split(" #").next().unwrap_or("").trim().to_string();
+    };
+    let mut out = String::with_capacity(body.len());
+    let mut chars = body.chars();
+    while let Some(c) = chars.next() {
+        match c {
+            '"' => break,
+            '\\' => match chars.next() {
+                Some('n') => out.push('\n'),
+                Some('t') => out.push('\t'),
+                Some(other) => out.push(other),
+                None => break,
+            },
+            c => out.push(c),
+        }
+    }
+    out
+}
+
+/// One `key = value` line, or `None` for anything that is not one.
+fn toml_pair(line: &str) -> Option<(&str, String)> {
+    let (key, value) = line.split_once('=')?;
+    let key = key.trim();
+    if key.is_empty()
+        || !key
+            .chars()
+            .all(|c| c.is_ascii_lowercase() || c == '_' || c == '-')
+    {
+        return None;
+    }
+    Some((key, toml_value(value)))
+}
+
+impl Publication {
+    /// Parse a publication declaration and, when there is one, the site configuration its
+    /// `base_url` is read from (a top-level key, before the first table).
+    ///
+    /// ```
+    /// use majordomus_cli::entity::Publication;
+    ///
+    /// let p = Publication::parse(
+    ///     "# comment\n[[kinds]]\nkind = \"prompt\"\nprojection = \"none\"\nreason = \"a \\\"why\\\"\"\n",
+    ///     Some("base_url = \"https://example.invalid/\"\n[markdown]\nbase_url = \"no\"\n"),
+    /// );
+    /// assert_eq!(p.base_url.as_deref(), Some("https://example.invalid"));
+    /// assert_eq!(p.kind("prompt").unwrap().reason.as_deref(), Some("a \"why\""));
+    /// ```
+    pub fn parse(declaration: &str, site_config: Option<&str>) -> Publication {
+        let mut kinds: Vec<PublishedKind> = Vec::new();
+        let mut current: Option<PublishedKind> = None;
+        for line in declaration.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            if line.starts_with('[') {
+                kinds.extend(current.take());
+                if line == "[[kinds]]" {
+                    current = Some(PublishedKind::default());
+                }
+                continue;
+            }
+            let (Some(k), Some((key, value))) = (current.as_mut(), toml_pair(line)) else {
+                continue;
+            };
+            match key {
+                "kind" => k.kind = value,
+                "projection" => k.projection = value,
+                "route" => k.route = Some(value),
+                "reason" => k.reason = Some(value),
+                _ => {}
+            }
+        }
+        kinds.extend(current);
+        let base_url = site_config.and_then(|c| {
+            c.lines()
+                .map(str::trim)
+                .take_while(|l| !l.starts_with('['))
+                .filter_map(toml_pair)
+                .find(|(k, _)| *k == "base_url")
+                .map(|(_, v)| v.trim_end_matches('/').to_string())
+        });
+        Publication { kinds, base_url }
+    }
+
+    /// Read the declaration of the repository at `root`, or `None` when it has none.
+    pub fn read(root: &std::path::Path) -> Option<Publication> {
+        let declaration = std::fs::read_to_string(root.join(PUBLICATION)).ok()?;
+        let config = std::fs::read_to_string(root.join(crate::web::discover::SITE_CONFIG)).ok();
+        Some(Publication::parse(&declaration, config.as_deref()))
+    }
+
+    /// The declaration of one kind, if the file declares it.
+    pub fn kind(&self, kind: &str) -> Option<&PublishedKind> {
+        self.kinds.iter().find(|k| k.kind == kind)
+    }
+
+    /// The public page of the entity `slug` of `kind`: the same function
+    /// `scripts/generate-site-data` writes the site's pages with — `route` + slug + `/` for
+    /// an `entity` kind, the kind's `route` for a `section` kind, nothing for `none`. A kind
+    /// the declaration does not name has no answer, because nothing decided it.
+    ///
+    /// ```
+    /// use majordomus_cli::entity::Publication;
+    ///
+    /// let p = Publication::parse(
+    ///     "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n\
+    ///      [[kinds]]\nkind = \"skill\"\nprojection = \"section\"\nroute = \"/skills/\"\n",
+    ///     Some("base_url = \"https://example.invalid\"\n"),
+    /// );
+    /// let adr = p.documentation("adr", "adr-0056").unwrap();
+    /// assert_eq!(adr.url.as_deref(), Some("https://example.invalid/adrs/adr-0056/"));
+    /// let skill = p.documentation("skill", "commit").unwrap();
+    /// assert_eq!(skill.route.as_deref(), Some("/skills/"));
+    /// assert!(p.documentation("prompt", "x").is_none());
+    /// ```
+    pub fn documentation(&self, kind: &str, slug: &str) -> Option<Documentation> {
+        let k = self.kind(kind)?;
+        let route = match (k.projection.as_str(), &k.route) {
+            ("entity", Some(r)) => Some(format!("{r}{slug}/")),
+            ("section", Some(r)) => Some(r.clone()),
+            _ => None,
+        };
+        let reason = match (&route, &k.reason) {
+            (Some(_), _) => None,
+            (None, Some(r)) => Some(r.clone()),
+            (None, None) => Some(format!(
+                "{PUBLICATION} gives kind '{kind}' the projection '{}' and no route",
+                k.projection
+            )),
+        };
+        Some(Documentation {
+            projection: k.projection.clone(),
+            url: route
+                .as_ref()
+                .zip(self.base_url.as_ref())
+                .map(|(r, b)| format!("{b}{r}")),
+            route,
+            reason,
+            declared_in: PUBLICATION.to_string(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -714,5 +958,109 @@ mod tests {
         assert_eq!(found.len(), 1);
         assert_eq!(found[0].slug, "");
         assert!(found[0].correction.contains("no route"));
+    }
+
+    const DECLARATION: &str = "\
+# where each kind is published
+[[kinds]]
+kind = \"adr\"
+projection = \"entity\"
+route = \"/adrs/\"
+title = \"Decisions\"
+weight = 45
+
+[[kinds]]
+kind = \"skill\"
+projection = \"section\"
+route = \"/skills/\"
+
+[[kinds]]
+kind = \"prompt\"
+projection = \"none\"
+reason = \"A prompt is an input to a provider.\"
+";
+
+    #[test]
+    fn an_entity_kind_publishes_one_page_per_object_under_its_route() {
+        let p = Publication::parse(DECLARATION, Some("base_url = \"https://majordomus.dev\"\n"));
+        let d = p.documentation("adr", "adr-0056").expect("adr is declared");
+        assert_eq!(d.projection, "entity");
+        assert_eq!(d.route.as_deref(), Some("/adrs/adr-0056/"));
+        assert_eq!(
+            d.url.as_deref(),
+            Some("https://majordomus.dev/adrs/adr-0056/")
+        );
+        assert_eq!(d.reason, None);
+        assert_eq!(d.declared_in, PUBLICATION);
+    }
+
+    #[test]
+    fn a_section_kind_is_published_at_its_section_whatever_the_object() {
+        let p = Publication::parse(
+            DECLARATION,
+            Some("base_url = \"https://majordomus.dev/\"\n"),
+        );
+        let d = p
+            .documentation("skill", "commit")
+            .expect("skill is declared");
+        assert_eq!(d.projection, "section");
+        assert_eq!(d.route.as_deref(), Some("/skills/"));
+        assert_eq!(
+            d.url.as_deref(),
+            Some("https://majordomus.dev/skills/"),
+            "a trailing slash on base_url does not double"
+        );
+    }
+
+    #[test]
+    fn a_kind_that_is_not_published_says_why_and_has_no_address() {
+        let p = Publication::parse(DECLARATION, Some("base_url = \"https://majordomus.dev\"\n"));
+        let d = p
+            .documentation("prompt", "continue")
+            .expect("prompt is declared");
+        assert_eq!(d.projection, "none");
+        assert_eq!(d.route, None);
+        assert_eq!(d.url, None);
+        assert_eq!(
+            d.reason.as_deref(),
+            Some("A prompt is an input to a provider.")
+        );
+    }
+
+    #[test]
+    fn an_undeclared_kind_or_a_missing_declaration_has_no_answer() {
+        let p = Publication::parse(DECLARATION, None);
+        assert!(p.documentation("rule", "x").is_none(), "nothing decided it");
+        // no site configuration: the route stands and the URL is not invented
+        let d = p.documentation("adr", "adr-0001").unwrap();
+        assert_eq!(d.route.as_deref(), Some("/adrs/adr-0001/"));
+        assert_eq!(d.url, None);
+
+        let empty = tempfile::tempdir().unwrap();
+        assert!(
+            Publication::read(empty.path()).is_none(),
+            "a repository with no site"
+        );
+    }
+
+    #[test]
+    fn the_declaration_is_read_from_the_repository_with_its_base_url() {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(root.path().join("site/data")).unwrap();
+        std::fs::write(root.path().join(PUBLICATION), DECLARATION).unwrap();
+        std::fs::write(
+            root.path().join(crate::web::discover::SITE_CONFIG),
+            "base_url = \"https://example.invalid\"\ntitle = \"x\"\n\n[markdown]\nbase_url = \"no\"\n",
+        )
+        .unwrap();
+        let p = Publication::read(root.path()).expect("declared");
+        assert_eq!(p.kinds.len(), 3);
+        assert_eq!(p.base_url.as_deref(), Some("https://example.invalid"));
+        assert_eq!(
+            p.documentation("adr", "adr-0002")
+                .and_then(|d| d.url)
+                .as_deref(),
+            Some("https://example.invalid/adrs/adr-0002/")
+        );
     }
 }

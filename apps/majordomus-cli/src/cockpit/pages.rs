@@ -5336,6 +5336,22 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 
     let generated = view.content.contains(generate::HEADER)
         || view.provenance.path.starts_with(generate::OUT_DIR);
+    // the public page is the capability's answer, rendered; this page derives no address
+    let published = match &view.documentation {
+        Some(d) => match (&d.url, &d.route) {
+            (Some(url), _) => el("span").text("Published at ").child(link(url, url)),
+            (None, Some(route)) => el("span").text("Published at ").child(mono(route)),
+            (None, None) => el("span").text(format!(
+                "Not published: {}",
+                d.reason.as_deref().unwrap_or("no reason is declared")
+            )),
+        },
+        None => el("span").text(format!(
+            "Not published: this repository's {} declares no public page for kind {}",
+            crate::entity::PUBLICATION,
+            view.kind
+        )),
+    };
     let identity_card = card(
         "What it is",
         facts(vec![
@@ -5351,6 +5367,7 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
                     badge("declared", "declared")
                 }),
             ),
+            ("Public page", Node::Element(published)),
         ]),
     );
 
