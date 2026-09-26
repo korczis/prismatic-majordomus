@@ -516,8 +516,10 @@ the coverage export through `scripts/rust-coverage --summary-json`.
 **What the producers and the recorder measure.** Each job that ran tests measures its own
 checkout right after its run and hands the measurement over beside its report:
 `suite-tree.json` from the suite job, `crate-tree.json` from the rust job. Each excludes by name
-the outputs its own run names, and nothing else: the suite its report, the rust job its timings
-and its artifact directory. The manifest's `working_tree` is derived from those measurements
+the outputs its own run names, at the paths where that run writes them, and nothing else: the
+suite its report, at the root; the rust job its timings and its artifact directory, which
+`scripts/rust-check` writes in the crate's directory, where it runs. The measurement lists what
+it excluded. The manifest's `working_tree` is derived from those measurements
 alone: clean when every recorded job measured a clean tree, dirty when any measured a dirty one,
 unknown otherwise. It is never read from the recorder's checkout, which is clean by
 construction. The recorded rows still carry the recorder's own stamp, which the manifest keeps
@@ -566,9 +568,9 @@ and reads the manifest only to decide whether the run confirms it: a reason can 
 
 | state | when | what the page says |
 |---|---|---|
-| current | the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout, and nothing was absent, refused or failed | CURRENT, with the commit and the run |
+| current | the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and is carried, and nothing was absent, refused or failed | CURRENT, with the commit and the run |
 | stale | the run is of an ancestor, or it is of the published commit and recorded a failure | STALE, with how many commits and changed files lie between, or with the failures |
-| unknown | the run is of the published commit and cannot confirm the report: a tree not measured or not clean, a report absent or refused | UNKNOWN, with every reason |
+| unknown | the run is of the published commit and cannot confirm the report: a tree not measured or not clean, a report absent or refused, or its own report not derived or not carried | UNKNOWN, with every reason |
 | unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
 
 </div>

@@ -14,10 +14,11 @@ What the site publishes beside the claims is the tracked ledger's verdict at the
 not a verdict CI's own executions decided. Those executions are a run record: they are counted,
 and they decide nothing. The site then says whether CI's run confirms that verdict for the
 commit the site was built from. It is **current** only when the run is of that very commit,
-every job that ran tests measured a clean tree, the report was derived on a clean checkout, and
-nothing was absent, refused or failed. A run of an older commit is **stale**, with the number
-of commits and changed files in between, and so is a run of that commit that recorded failures.
-A run of that commit that cannot confirm the report is **unknown**, with every reason. No
+every job that ran tests measured a clean tree, the report was derived on a clean checkout and
+reached the artifact, and nothing was absent, refused or failed. A run of an older commit is
+**stale**, with the number of commits and changed files in between, and so is a run of that
+commit that recorded failures. A run of that commit that cannot confirm the report is
+**unknown**, with every reason, and a report the collector failed to derive is one of them. No
 evidence at all is **unavailable**, with the reason. Nothing but a confirming run of the very
 commit on the page is shown as current.
 
@@ -26,7 +27,9 @@ commit on the page is shown as current.
 The `evidence` job of `validate.yml` downloads the reports the suite, the crate and the
 coverage jobs left, and the measurements the suite and the rust job took of the trees they ran
 in, into the runner's temporary directory, and gives them to `scripts/ci/evidence-collect`.
-Each measurement excludes by name the outputs its own run names, and nothing else.
+Each measurement excludes by name the outputs its own run names, at the paths where that run
+writes them, and nothing else: the suite's report at the root, and the rust job's timings and
+artifact directory in the crate's directory, where `scripts/rust-check` runs.
 
 The collector derives the report first: it measures its own checkout and runs `majordomus
 evidence show` before anything is recorded, so the report is the tracked ledger's verdict at
@@ -60,10 +63,12 @@ scripts/pages evidence --commit HEAD --out /tmp/evidence.json && jq 'del(.panels
 
 The case records inside a described run and outside one, and gathers runs in a fixture with a
 claims matrix of its own. It shows that a claim only the run proved still reads `not_run` in the
-gathered report, that the tree is the one the producing jobs measured, and that a report
-measured at another commit is refused. It publishes gathered evidence against the published
-commit, confirmed and not, against its parent and against a commit outside its history, and it
-reads the checked-in `validate.yml` for the wiring.
+gathered report, that the tree is the one the producing jobs measured (one runner left
+unmeasured leaves it unknown beside a clean one), and that a report measured at another commit
+is refused. It publishes gathered evidence against the published commit, confirmed and not, a
+report that was not derived or not carried included, against its parent and against a commit
+outside its history. It reads the checked-in `validate.yml` for the wiring, and takes the rust
+job's excluded paths from its `rust-check` step and from where `scripts/rust-check` runs.
 
 ## What it does not cover
 

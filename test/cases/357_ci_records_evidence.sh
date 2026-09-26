@@ -20,21 +20,24 @@
 #         never replaces it
 #      c  the working tree is the one the producing jobs measured where they ran: clean only
 #         when every recorded runner measured a clean tree, dirty when any measured a dirty
-#         one, unknown when one was not measured; the rows' own stamp is kept apart
+#         one, unknown when one was not measured, however clean the others; the rows' own
+#         stamp is kept apart
 #      d  a report whose job measured another commit is refused: it is not recorded, and it is
 #         named as absent and refused; when every report is refused, nothing is gathered
 #      e  the report is the tracked ledger's: derived before the run's rows are recorded, on a
 #         checkout measured first, so a claim only the run proved still reads `not_run` in it
 #   4  nothing to gather is refused, not written as an empty success
 #   5  scripts/pages evidence publishes `current` only when the run is of the published commit,
-#      measured clean trees, derived its report on a clean checkout, and nothing was absent,
-#      refused or failed; `unknown` with its reasons when the run cannot confirm the report,
+#      measured clean trees, derived its report on a clean checkout and carries it, and nothing
+#      was absent, refused or failed; `unknown` with its reasons when the run cannot confirm the
+#      report, a report the collector failed to derive or did not keep included,
 #      `stale` for a failure or an ancestor's run, with its distance; a manifest from outside
 #      the history, or none at all, as unavailable with a reason — never as current
 #   6  validate.yml is wired for all of it: cargo writes no colour codes, the reports and the
 #      gathered directory live outside the checkouts, each producing job measures the tree it
-#      ran in excluding only the outputs its run names, and every reader of the suite's report
-#      reads the file the suite wrote
+#      ran in excluding only the outputs its run names, at the paths where that run writes
+#      them (rust-check writes in the crate's directory), and every reader of the suite's
+#      report reads the file the suite wrote
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -201,6 +204,12 @@ jq -e '.working_tree == "clean" and .producers.suite.working_tree == "clean" and
 gather dirty --suite "$W/suite.tsv" --suite-tree "$W/suite-dirty.json" --crate-output "$W/cargo-test.txt" --crate-tree "$W/crate-clean.json"
 jq -e '.working_tree == "dirty" and .rows_working_tree == "clean" and .report_tree == "clean"' "$W/dirty/manifest.json" >/dev/null \
   || { echo "    a producer's dirty tree was not published as dirty over a clean recorder"; jq -c '{working_tree, rows_working_tree, report_tree}' "$W/dirty/manifest.json"; exit 1; }
+# both runners recorded, the crate measured clean and the suite not measured at all: one clean
+# measurement does not stand in for a missing one, so the tree is unknown, never clean
+gather unmeasured --suite "$W/suite.tsv" --crate-output "$W/cargo-test.txt" --crate-tree "$W/crate-clean.json"
+jq -e '.working_tree == "unknown" and .producers.suite == null and .producers.crate.working_tree == "clean"
+       and .totals.runners.suite == 2 and .totals.runners.crate == 1' "$W/unmeasured/manifest.json" >/dev/null \
+  || { echo "    a recorded runner nobody measured did not leave the tree unknown beside a clean one"; jq -c '{working_tree, producers, totals}' "$W/unmeasured/manifest.json"; exit 1; }
 
 # d: a report whose job measured another commit is not recorded against this one
 tree "$W/suite-foreign.json" "$FIXTURE" clean
@@ -254,13 +263,21 @@ jq -e '.coverage.crate.lines.total > 0' "$W/current.json" >/dev/null \
 # The same commit, with one thing the run cannot confirm: never current, and the reason named.
 n=0
 for spoil in '.working_tree = "dirty"' 'del(.working_tree)' '.report_tree = "dirty"' '.absent = ["crate"]' \
-  '.refused = [{runner: "suite", reason: "x"}]'; do
+  '.refused = [{runner: "suite", reason: "x"}]' '.panels[0].exit = 12'; do
   n=$((n + 1))
   publish "unconfirmed$n" "$HERE" "$CONFIRMED | $spoil"
   jq -e '.available and (.current | not) and .state == "unknown" and (.unconfirmed | length > 0)' "$W/unconfirmed$n.json" >/dev/null \
     || { echo "    a run of the published commit that cannot confirm its report ($spoil) was not published as unknown with a reason"; jq -c 'del(.panels)' "$W/unconfirmed$n.json"; exit 1; }
 done
-[ "$n" = 5 ] || { echo "    the unconfirmed cases did not all run ($n)"; exit 1; }
+[ "$n" = 6 ] || { echo "    the unconfirmed cases did not all run ($n)"; exit 1; }
+# a report that never reached the artifact, or reached it empty, is nothing to confirm
+for how in missing empty; do
+  publish "noreport-$how" "$HERE" "$CONFIRMED"
+  if [ "$how" = missing ]; then rm -f "$W/noreport-$how/report.txt"; else : > "$W/noreport-$how/report.txt"; fi
+  run_quiet "$W/noreport-$how.err" "$ROOT/scripts/pages" evidence --commit "$HERE" --from "$W/noreport-$how" --out "$W/noreport-$how.json" > /dev/null
+  jq -e '.available and (.current | not) and .state == "unknown" and (.unconfirmed | length > 0)' "$W/noreport-$how.json" >/dev/null \
+    || { echo "    a confirmed run whose report is $how was published as $(jq -r .state "$W/noreport-$how.json")"; jq -c 'del(.panels)' "$W/noreport-$how.json"; exit 1; }
+done
 publish failed "$HERE" "$CONFIRMED | .totals.outcomes = {pass: 1, fail: 1}"
 jq -e '.available and (.current | not) and .state == "stale" and (.unconfirmed | length > 0)' "$W/failed.json" >/dev/null \
   || { echo "    a run of the published commit that recorded a failure was not published as stale"; jq -c 'del(.panels)' "$W/failed.json"; exit 1; }
@@ -305,20 +322,42 @@ printf '%s\n' "$check" | grep -qE '^ +CARGO_TERM_COLOR: never$' \
 printf '%s\n' "$check" | grep -qE '^ +MJ_CARGO_TEST_OUTPUT: \$\{\{ runner\.temp \}\}/' \
   || { echo "    the rust-check step writes cargo's output into the checkout it measures"; exit 1; }
 
-# each producing job measures the tree it ran in, excluding exactly the outputs its run names
+# each producing job measures the tree it ran in, excluding exactly the outputs its run names,
+# at the paths where that run writes them, and says so in the measurement it hands over
+excludes() {     # excludes <step text> <path...> — the step's status call excludes exactly these paths
+  local step="$1" p want got; shift
+  printf '%s\n' "$step" | grep -q 'status --porcelain --untracked-files=all' || return 1
+  for p in "$@"; do printf '%s\n' "$step" | grep -qF "':(exclude)$p'" || return 1; done
+  [ "$(printf '%s\n' "$step" | grep -o ':(exclude)' | wc -l | tr -d ' ')" = "$#" ] || return 1
+  want="$(if [ $# -gt 0 ]; then printf '%s\n' "$@" | jq -R . | jq -sc .; else echo '[]'; fi)"
+  got="$(printf '%s\n' "$step" | sed -n 's/.*excluded: \(\[[^]]*\]\).*/\1/p' | head -1)"
+  [ -n "$got" ] && jq -e --argjson w "$want" '. == $w' <<<"$got" >/dev/null
+}
 report="$(printf '%s\n' "$suite_job" | sed -n 's/^ *MJ_TEST_REPORT: *//p' | head -1)"
 [ -n "$report" ] || { echo "    the suite job names no MJ_TEST_REPORT"; exit 1; }
-measure="$(printf '%s\n' "$suite_job" | step_with 'suite-tree\.json')"
-printf '%s\n' "$measure" | grep -q 'status --porcelain --untracked-files=all' \
-  && printf '%s\n' "$measure" | grep -qF "':(exclude)$report'" \
-  && [ "$(printf '%s\n' "$measure" | grep -o ':(exclude)' | wc -l | tr -d ' ')" = 1 ] \
-  || { echo "    the suite job has no step measuring its tree with only its report ($report) excluded"; exit 1; }
-measure="$(printf '%s\n' "$rust_job" | step_with 'crate-tree\.json')"
-printf '%s\n' "$measure" | grep -q 'status --porcelain --untracked-files=all' \
-  && printf '%s\n' "$measure" | grep -qF "':(exclude)timings.tsv'" \
-  && printf '%s\n' "$measure" | grep -qF "':(exclude)dist'" \
-  && [ "$(printf '%s\n' "$measure" | grep -o ':(exclude)' | wc -l | tr -d ' ')" = 2 ] \
-  || { echo "    the rust job has no step measuring its tree with only timings.tsv and dist excluded"; exit 1; }
+excludes "$(printf '%s\n' "$suite_job" | step_with 'suite-tree\.json')" "$report" \
+  || { echo "    the suite job has no step measuring its tree with only its report ($report) excluded, and saying so"; exit 1; }
+# The rust job's outputs are the timings file and the artifact directory its rust-check step
+# names, and a relative name resolves where scripts/rust-check runs: in the crate's directory
+# when it changes into it. Read from the step and from the script, never written down here.
+run_line="$(printf '%s\n' "$check" | sed -n 's/^ *run: *//p' | head -1)"
+timings="$(printf '%s\n' "$run_line" | sed -n 's/.*MJ_CI_TIMINGS=\([^ ]*\).*/\1/p')"
+artifact="$(printf '%s\n' "$run_line" | sed -n 's/.*--artifact \([^ ]*\).*/\1/p')"
+[ -n "$timings" ] && [ -n "$artifact" ] \
+  || { echo "    the rust-check step names no timings file or no artifact directory: $run_line"; exit 1; }
+RC="$ROOT/scripts/rust-check"
+base=""
+if grep -qE '^cd "\$CRATE"$' "$RC"; then
+  crate="$(sed -n 's|^CRATE="\$ROOT/\(.*\)"$|\1|p' "$RC" | head -1)"
+  [ -n "$crate" ] || { echo "    scripts/rust-check changes into a crate directory this case cannot read"; exit 1; }
+  base="$crate/"
+fi
+set --
+for out in "$timings" "$artifact"; do
+  case "$out" in /*|'$'*) ;; *) set -- "$@" "$base$out" ;; esac
+done
+excludes "$(printf '%s\n' "$rust_job" | step_with 'crate-tree\.json')" "$@" \
+  || { echo "    the rust job has no step measuring its tree with only the outputs rust-check writes excluded ($*), and saying so"; exit 1; }
 # ... and before the plan it downloads into the checkout
 at_tree="$(printf '%s\n' "$rust_job" | grep -n 'crate-tree\.json' | head -1 | cut -d: -f1)"
 at_plan="$(printf '%s\n' "$rust_job" | grep -n 'name: ci-plan$' | head -1 | cut -d: -f1)"

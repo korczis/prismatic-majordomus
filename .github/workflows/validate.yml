@@ -296,13 +296,15 @@ jobs:
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
       # The tree the crate ran in, measured here, before the plan below is downloaded into it
       # (ADR 0087 decision 6). The two outputs the step above names, its timings and its
-      # artifact directory, are excluded by name, and nothing else is.
+      # artifact directory, are excluded by name, and nothing else is. scripts/rust-check runs
+      # in the crate's directory, so both relative names land there, and that is where they
+      # are excluded: excluded at the root, they matched nothing and the tree read dirty.
       - name: the tree the crate ran in
         if: always() && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         run: |
-          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)timings.tsv' ':(exclude)dist')"
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)apps/majordomus-cli/timings.tsv' ':(exclude)apps/majordomus-cli/dist')"
           if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
-          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["timings.tsv","dist"]}' > "$RUNNER_TEMP/crate-tree.json"
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["apps/majordomus-cli/timings.tsv","apps/majordomus-cli/dist"]}' > "$RUNNER_TEMP/crate-tree.json"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
