@@ -648,15 +648,16 @@ pub const PUBLICATION: &str = "site/data/publication.toml";
 /// How one kind reaches the public site, as the declaration states it.
 ///
 /// ```
-/// use majordomus_cli::entity::Publication;
+/// use majordomus_cli::entity::{Publication, PublishedKind};
 ///
 /// let p = Publication::parse(
 ///     "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
 ///     None,
 /// );
-/// let adr = p.kind("adr").unwrap();
+/// let adr: &PublishedKind = p.kind("adr").unwrap();
 /// assert_eq!(adr.projection, "entity");
 /// assert_eq!(adr.route.as_deref(), Some("/adrs/"));
+/// assert_eq!(adr.reason, None);
 /// assert!(p.kind("rule").is_none());
 /// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -682,6 +683,19 @@ pub struct PublishedKind {
 /// comment lines, one `[[kinds]]` table per kind, and `key = value` lines whose string
 /// values are double-quoted. Anything else is ignored rather than guessed at, exactly as
 /// the generator ignores it.
+///
+/// ```
+/// use majordomus_cli::entity::Publication;
+///
+/// let p = Publication::parse(
+///     "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
+///     Some("base_url = \"https://example.invalid\"\n"),
+/// );
+/// assert_eq!(p.kinds.len(), 1);
+/// assert_eq!(p.base_url.as_deref(), Some("https://example.invalid"));
+/// // with no site configuration, the routes stand and no URL is invented
+/// assert_eq!(Publication::parse("", None), Publication::default());
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct Publication {
     /// Every declared kind, in the file's order.
@@ -819,6 +833,25 @@ impl Publication {
     }
 
     /// Read the declaration of the repository at `root`, or `None` when it has none.
+    ///
+    /// ```
+    /// use majordomus_cli::entity::{Publication, PUBLICATION};
+    ///
+    /// let root = std::env::temp_dir().join(format!("mj-publication-{}", std::process::id()));
+    /// // a repository with no site declares nothing, and nothing is invented for it
+    /// assert!(Publication::read(&root.join("absent")).is_none());
+    ///
+    /// std::fs::create_dir_all(root.join("site/data")).unwrap();
+    /// std::fs::write(
+    ///     root.join(PUBLICATION),
+    ///     "[[kinds]]\nkind = \"adr\"\nprojection = \"entity\"\nroute = \"/adrs/\"\n",
+    /// )
+    /// .unwrap();
+    /// let p = Publication::read(&root).unwrap();
+    /// assert_eq!(p.kinds.len(), 1);
+    /// assert_eq!(p.base_url, None, "no site/config.toml, so no base URL");
+    /// std::fs::remove_dir_all(&root).unwrap();
+    /// ```
     pub fn read(root: &std::path::Path) -> Option<Publication> {
         let declaration = std::fs::read_to_string(root.join(PUBLICATION)).ok()?;
         let config = std::fs::read_to_string(root.join(crate::web::discover::SITE_CONFIG)).ok();
@@ -826,6 +859,17 @@ impl Publication {
     }
 
     /// The declaration of one kind, if the file declares it.
+    ///
+    /// ```
+    /// use majordomus_cli::entity::Publication;
+    ///
+    /// let p = Publication::parse(
+    ///     "[[kinds]]\nkind = \"prompt\"\nprojection = \"none\"\nreason = \"internal\"\n",
+    ///     None,
+    /// );
+    /// assert_eq!(p.kind("prompt").and_then(|k| k.reason.as_deref()), Some("internal"));
+    /// assert!(p.kind("adr").is_none());
+    /// ```
     pub fn kind(&self, kind: &str) -> Option<&PublishedKind> {
         self.kinds.iter().find(|k| k.kind == kind)
     }
