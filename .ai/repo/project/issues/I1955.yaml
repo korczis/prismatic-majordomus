@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Add evidence publish, which reads the ledger committed at the presented commit, the run records and coverage, applies the monotone rule, and writes an allow-listed publication with its publication state, carrying text only through the one redactor (ADR 0087 decisions 3 and 14)."
 why: "The site needs a typed dataset whose verdicts are the tracked ledger's at the build commit. The interim publication of ADR 0068 computes its state in a shell script."
 current_state: "scripts/pages evidence (PR #577, with I1949) writes site/data/evidence.json from a CI artifact; no typed publication exists."
-desired_state: "majordomus evidence publish --presented <commit> --presented-tree <state> --from <dir> --out <dir> writes an EvidencePublication whose states are current, stale, pending, unknown and dirty as ADR 0087 defines them, whose every field is on the allow-list, and whose every text has passed the redactor."
+desired_state: "majordomus evidence publish --presented <commit> --presented-tree <state> --from <dir> --out <dir> writes an EvidencePublication whose one state (dirty, stale, current, pending or unknown) is the first matching row of ADR 0087 decision 3's publication table, whose every field is on the allow-list, and whose every text has passed the redactor."
 scope:
   - apps/majordomus-cli/src/evidence
   - apps/majordomus-cli/src/capability/builtin/evidence.rs
@@ -29,7 +29,7 @@ depends_on:
 acceptance_criteria:
   - "The publication carries only allow-listed fields, and a field off the list is not published"
   - "Every text it carries has passed the one redactor, and the artifact passes generate::forbidden_in"
-  - "The publication state is current, stale, pending, unknown or dirty exactly as ADR 0087 decision 3 defines them"
+  - "The publication state is the first matching row of ADR 0087 decision 3's publication table (dirty, stale, current, pending, unknown), decided from what the publication observes: a dirty build that a record also contradicts reads dirty and names the record, a run concluded without a record reads unknown, and a record of an ancestor only never reads current"
   - "No verdict in it is stronger than the ledger committed at the presented commit"
 validation:
   - bash test/run.sh 512_evidence_publication_is_a_projection

@@ -8,7 +8,7 @@ parallel_safe: false
 objective: "Wire the trunk's runs to the recording branch of ADR 0080 and every runner to a measured report, so that a merge to master is followed by one recording pull request that changes only the ledger (ADR 0087 decisions 1, 6 and 16)."
 why: "CI runs every test on every merge and keeps none of it in the tracked ledger. Until this lands, the ledger holds only local rows and the site renders mostly not_run."
 current_state: "No workflow records CI's executions into the tracked ledger. The suite runner's report has no reason column and no measurement, and the crate and coverage runners emit no provenance."
-desired_state: "A trunk run, after a merge and on a schedule, records with --origin ci and with the provenance evidence stamp measured, and opens at most one recording pull request whose diff is the ledger, by a token whose events start the required workflow; every runner's report carries its revision and the reason a case did not pass."
+desired_state: "A trunk run, after a merge and on a schedule, records with --origin ci and with the provenance evidence stamp measured, and opens at most one recording pull request whose diff is the ledger, by a token whose events start the required workflow; a trunk commit whose diff from its first parent is only the ledger, as the landing of a recording pull request is, starts no recording; every runner's report carries its revision and the reason a case did not pass."
 scope:
   - .github/workflows/validate.yml
   - scripts/ci/evidence-collect
@@ -37,6 +37,7 @@ depends_on:
 acceptance_criteria:
   - "A trunk run's executions reach the tracked ledger only through a recording pull request whose diff is the ledger alone, and at most one such pull request is open"
   - "The recording pull request starts the required workflow, by the token the owner chose"
+  - "A trunk commit whose diff from its first parent is only .ai/repo/evidence/ledger.json starts no recording, whether a merge or the schedule started its run, so that landing a recording pull request opens no further one (ADR 0087 decision 1); asserted by case 510"
   - "Every runner's report carries the commit and tree its run measured, and a case that did not pass carries its reason"
 validation:
   - bash test/run.sh 510_ci_evidence_reaches_the_ledger_through_a_recording_branch
@@ -45,6 +46,7 @@ validation:
   - bash test/run.sh 94_ci_plan
 evidence_required:
   - recording_branch_wired
+  - recording_stops_at_a_ledger_only_commit
   - runner_reports_measured
 risk: "It also waits on PR #629 (the skip word), PR #587 (new shell refused), PR #566 and PR #355, and on the owner's choice of token (ADR 0087 decision 16). Each recording costs a full suite run."
 created_at: 2026-09-26

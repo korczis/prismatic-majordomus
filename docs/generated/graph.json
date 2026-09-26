@@ -23570,11 +23570,6 @@
         "route": "/cockpit/objects/issue/i1954",
         "source": ".ai/repo/project/issues/I1954.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "A trunk run's executions reach the tracked ledger only through a recording pull request whose diff is the ledger alone, and at most one such pull request is open",
-            "The recording pull request starts the required workflow, by the token the owner chose",
-            "Every runner's report carries the commit and tree its run measured, and a case that did not pass carries its reason"
-          ],
           "created_at": "2026-09-26",
           "current_state": "No workflow records CI's executions into the tracked ledger. The suite runner's report has no reason column and no measurement, and the crate and coverage runners emit no provenance.",
           "depends_on": [
@@ -23582,6 +23577,7 @@
           ],
           "evidence_required": [
             "recording_branch_wired",
+            "recording_stops_at_a_ledger_only_commit",
             "runner_reports_measured"
           ],
           "milestone": "test-evidence",
@@ -23633,12 +23629,6 @@
         "route": "/cockpit/objects/issue/i1955",
         "source": ".ai/repo/project/issues/I1955.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The publication carries only allow-listed fields, and a field off the list is not published",
-            "Every text it carries has passed the one redactor, and the artifact passes generate::forbidden_in",
-            "The publication state is current, stale, pending, unknown or dirty exactly as ADR 0087 decision 3 defines them",
-            "No verdict in it is stronger than the ledger committed at the presented commit"
-          ],
           "created_at": "2026-09-26",
           "current_state": "scripts/pages evidence (PR #577, with I1949) writes site/data/evidence.json from a CI artifact; no typed publication exists.",
           "depends_on": [
