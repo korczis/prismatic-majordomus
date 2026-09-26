@@ -17,9 +17,12 @@
 #   - every shape of the table and the assignment rule is exercised both ways, so a fixture
 #     that lost a shape is refused rather than passed;
 #   - the Rust test reads this very fixture, so the two halves cannot silently diverge onto
-#     different data;
-#   - the check can fail: an empty fixture, and a copy with one expectation flipped, are both
-#     refused. A check nobody has watched fail is a check nobody knows works.
+#     different data: its FIXTURE constant is declared as this path, and it is what the test
+#     reads. A mention of the path elsewhere in the file, such as its doc comment, is not
+#     taken for a read;
+#   - the checks can fail: an empty fixture, a copy with one expectation flipped, and a copy
+#     of the Rust test pointed at another file or reading another path are all refused. A
+#     check nobody has watched fail is a check nobody knows works.
 . "$ROOT/test/lib.sh"
 FIXTURE="$ROOT/test/fixtures/redaction/shapes.tsv"
 RUST_TEST="$ROOT/apps/majordomus-cli/tests/redaction.rs"
@@ -84,8 +87,25 @@ rc=0; check_fixture "$FIXTURE" > "$T/real.out" || rc=$?
   || { echo "    the shell redactor disagrees with the fixture:"; cat "$T/real.out"; exit 1; }
 
 # --- one fixture drives both halves: the Rust test reads this path, not a copy of its own
-grep -qF 'test/fixtures/redaction/shapes.tsv' "$RUST_TEST" \
+# reads_fixture <file>: the file declares its FIXTURE as this fixture's path and reads that
+# constant. The path alone is not enough, since the test's own doc comment names it too.
+reads_fixture() {
+  grep -qxF 'const FIXTURE: &str = "test/fixtures/redaction/shapes.tsv";' "$1" \
+    && grep -qF 'repository().join(FIXTURE)' "$1"
+}
+reads_fixture "$RUST_TEST" \
   || { echo "    tests/redaction.rs does not read test/fixtures/redaction/shapes.tsv"; exit 1; }
+# the check fails on a Rust test whose constant names another file, though the path still
+# appears in its doc comment, and on one that reads another path than the constant
+sed 's|^const FIXTURE: &str = "test/fixtures/redaction/shapes.tsv";|const FIXTURE: \&str = "test/fixtures/redaction/other.tsv";|' \
+  "$RUST_TEST" > "$T/other-fixture.rs"
+expect_grep 'test/fixtures/redaction/shapes.tsv' "$T/other-fixture.rs"
+rc=0; reads_fixture "$T/other-fixture.rs" || rc=$?
+[ "$rc" != 0 ] || { echo "    a Rust test declaring another fixture passed the check"; exit 1; }
+sed 's|repository().join(FIXTURE)|repository().join("other.tsv")|' \
+  "$RUST_TEST" > "$T/other-read.rs"
+rc=0; reads_fixture "$T/other-read.rs" || rc=$?
+[ "$rc" != 0 ] || { echo "    a Rust test reading another path passed the check"; exit 1; }
 
 # --- an empty fixture is refused, not passed for having no line that disagrees
 : > "$T/empty.tsv"

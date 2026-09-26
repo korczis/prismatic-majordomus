@@ -19,6 +19,9 @@
 //! Two neighbours are different concerns and stay apart: `execution::redact` removes the
 //! fields a capability's input schema marks sensitive, and `generate::forbidden_in` is the
 //! last word on a published artifact, which [`public_text`] asks after it has done its work.
+//! Before asking, [`public_text`] refuses a text in which a shape fired that announces more
+//! secret than it matches, since redacting the announcement is what would let the rest past
+//! that check.
 //!
 //! ```
 //! use majordomus_cli::redaction::redact_secrets;
@@ -154,11 +157,15 @@ pub fn normalise_machine_paths(text: &str, root: &Path, home: Option<&Path>) -> 
 
 /// Text fit to publish: machine paths normalised, then credentials redacted, then checked.
 ///
-/// The check is `generate::forbidden_in`, the one every published artifact already passes.
-/// What still trips it after normalising and redacting is something neither rule can make
-/// safe, such as another account's home directory or a bearer header too short to be a
-/// credential's shape, so the text is refused with the marker and what it is, rather than
-/// published with a guess.
+/// A redaction covers what its shape matched, and two shapes match less than the secret
+/// they announce. So the text is refused, with the shape's name and never the text, when:
+///
+/// - a private key's header fired, whose body follows on the lines after it, or an access
+///   key id, whose secret access key no shape matches. Redacting the announcement would
+///   remove the very marker `generate::forbidden_in` refuses on, and publish the rest;
+/// - `generate::forbidden_in`, the check every published artifact already passes, still
+///   finds a marker: something neither rule can make safe, such as another account's home
+///   directory or a bearer header too short to be a credential's shape.
 ///
 /// ```
 /// use majordomus_cli::redaction::public_text;
@@ -172,9 +179,22 @@ pub fn normalise_machine_paths(text: &str, root: &Path, home: Option<&Path>) -> 
 /// let elsewhere = format!("{}{}", "/ho", "me/someone/.cache");
 /// let refused = public_text(&elsewhere, dir.path(), None).unwrap_err();
 /// assert!(refused.contains("an absolute path on the machine"));
+///
+/// let pem = format!("{}{}\n{}", "-----BEGIN ", "PRIVATE KEY-----", "f".repeat(64));
+/// let refused = public_text(&pem, dir.path(), None).unwrap_err();
+/// assert!(refused.contains("`private-key-header`"));
 /// ```
 pub fn public_text(text: &str, root: &Path, home: Option<&Path>) -> Result<Redacted, String> {
     let redacted = redact_secrets(&normalise_machine_paths(text, root, home));
+    if let Some((kind, what)) = ANNOUNCES_MORE
+        .iter()
+        .find(|(kind, _)| redacted.kinds.contains(kind))
+    {
+        return Err(format!(
+            "the text carries {what} (`{kind}`), and redacting the part its shape matches \
+             would publish the rest, so it is not published"
+        ));
+    }
     match crate::generate::forbidden_in(&redacted.text) {
         None => Ok(redacted),
         Some((marker, what)) => Err(format!(
@@ -183,6 +203,18 @@ pub fn public_text(text: &str, root: &Path, home: Option<&Path>) -> Result<Redac
         )),
     }
 }
+
+/// The shapes whose match announces a secret it does not cover, with what that secret is.
+const ANNOUNCES_MORE: &[(&str, &str)] = &[
+    (
+        "aws-access-key-id",
+        "an access key id, whose secret access key no shape matches",
+    ),
+    (
+        "private-key-header",
+        "a private key's header, whose body no shape matches",
+    ),
+];
 
 /// A path as the text it appears in, without a trailing separator; `None` when nothing is
 /// left, so that the filesystem root never replaces every separator in the text.
@@ -707,6 +739,17 @@ mod tests {
             normalise_machine_paths(&text, &link, None),
             "<repo>/a <repo>/b"
         );
+    }
+
+    #[test]
+    fn every_shape_announcing_more_is_a_shape_of_the_table() {
+        let names = shape_names();
+        for (kind, _) in ANNOUNCES_MORE {
+            assert!(
+                names.contains(kind),
+                "{kind} is not a shape, so it never fires"
+            );
+        }
     }
 
     #[test]

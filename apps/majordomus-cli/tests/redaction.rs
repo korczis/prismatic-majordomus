@@ -23,8 +23,9 @@ fn repository() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
 
-/// The fixture both halves read. Case 504 greps this file for the path, so that the shell
-/// and the Rust halves cannot drift onto different data.
+/// The fixture both halves read. Case 504 requires this declaration, spelled exactly, and
+/// the read of it in `samples`, so that the shell and the Rust halves cannot drift onto
+/// different data.
 const FIXTURE: &str = "test/fixtures/redaction/shapes.tsv";
 
 /// One line of the fixture.
@@ -201,4 +202,60 @@ fn public_text_normalises_redacts_and_names_what_it_refuses() {
         !refused.contains(&short),
         "the refusal repeats the text it refused: {refused}"
     );
+}
+
+#[test]
+fn the_kinds_are_listed_in_byte_order_not_in_the_order_the_table_applied_them() {
+    // the table applies github-pat before bearer-token, and openai-key before the
+    // assignment rule; `mj_capture_redacted_kinds` lists them as `LC_ALL=C sort -u` does
+    let pat = format!("{}{}", "github_pat_", "u".repeat(24));
+    let bearer = format!("{}{}", "Bearer ", "t".repeat(24));
+    let out = redact_secrets(&format!("{pat} {bearer}"));
+    assert_eq!(out.text, "[redacted:github-pat] [redacted:bearer-token]");
+    assert_eq!(out.kinds, ["bearer-token", "github-pat"]);
+
+    let key = format!("{}{}", "sk-", "v".repeat(24));
+    let out = redact_secrets(&format!("{key} PASSWORD={}", "w".repeat(16)));
+    assert_eq!(
+        out.text,
+        "[redacted:openai-key] PASSWORD=[redacted:assignment]"
+    );
+    assert_eq!(out.kinds, ["assignment", "openai-key"]);
+}
+
+/// A refusal names the shape it refused on and repeats none of what it kept back.
+fn refused_on(text: &str, root: &Path, kind: &str, withheld: &str) {
+    let refused = public_text(text, root, None).expect_err("the text is refused");
+    assert!(refused.contains(&format!("`{kind}`")), "{refused}");
+    assert!(
+        !refused.contains(withheld),
+        "the refusal repeats what it withheld: {refused}"
+    );
+}
+
+#[test]
+fn a_private_key_is_refused_whole_though_its_header_alone_is_redacted() {
+    // the shape matches the header; the key's body follows it, and nothing matches that
+    let dir = tempfile::tempdir().unwrap();
+    let body = ["M".repeat(64), "N".repeat(64), "P".repeat(24)].join("\n");
+    let pem = format!(
+        "{}{}\n{body}\n{}{}",
+        "-----BEGIN RSA ", "PRIVATE KEY-----", "-----END RSA ", "PRIVATE KEY-----"
+    );
+    assert_eq!(redact_secrets(&pem).kinds, ["private-key-header"]);
+    refused_on(&pem, dir.path(), "private-key-header", &"M".repeat(64));
+}
+
+#[test]
+fn a_credentials_file_is_refused_whole_though_its_key_id_alone_is_redacted() {
+    // the key id is one half of a pair, and no shape matches the secret access key
+    let dir = tempfile::tempdir().unwrap();
+    let secret = format!("{}/{}", "k".repeat(20), "K".repeat(19));
+    let file = format!(
+        "[default]\naws_access_key_id = {}{}\naws_secret_access_key = {secret}\n",
+        "AKIA",
+        "Q".repeat(16)
+    );
+    assert_eq!(redact_secrets(&file).kinds, ["aws-access-key-id"]);
+    refused_on(&file, dir.path(), "aws-access-key-id", &secret);
 }
