@@ -41,6 +41,7 @@ pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
+pub mod economics;
 pub mod entity;
 pub mod environment;
 pub mod evidence;
@@ -175,6 +176,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         directories,
         devcontext,
         artifacts,
+        economics,
         environment,
         quality,
         distribution,

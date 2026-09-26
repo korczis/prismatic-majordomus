@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 176
+      "count": 179
     },
     {
       "kind": "command",
@@ -85,7 +85,7 @@
       "route": "/context/",
       "title": null,
       "reason": null,
-      "count": 29
+      "count": 30
     },
     {
       "kind": "deployment",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 252
+      "count": 255
     },
     {
       "kind": "feature",
@@ -117,7 +117,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 25
+      "count": 26
     },
     {
       "kind": "implementation",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 225
+      "count": 227
     },
     {
       "kind": "use-case",
@@ -3338,6 +3338,59 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0082",
+      "identity": "adr-0082",
+      "slug": "adr-0082",
+      "cockpit": "/cockpit/objects/adr/adr-0082",
+      "title": "Token economics are measured from matched runs and published only past a declared rule",
+      "status": "proposed",
+      "tags": [
+        "economics",
+        "evidence",
+        "claims"
+      ],
+      "source": ".ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "context-selection-counted",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "economics-claims-gated",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "token-savings-measured",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/430_economics.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/431_economics_claims_gated.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {

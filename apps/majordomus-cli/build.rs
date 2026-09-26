@@ -59,4 +59,27 @@ fn main() {
     let generation =
         generation::crate_generation(&crate_dir).unwrap_or_else(|| "unknown".to_string());
     println!("cargo:rustc-env=MAJORDOMUS_GENERATION={generation}");
+    // The version of the tokenizer the economics subsystem counts with, as the lockfile
+    // resolved it: Cargo.toml pins it, and every record names it from here rather than from a
+    // second copy of the number that could disagree with what was compiled in.
+    let tokenizer = std::fs::read_to_string(crate_dir.join("Cargo.lock"))
+        .ok()
+        .and_then(|lock| locked_version(&lock, "tiktoken-rs"))
+        .unwrap_or_else(|| "unknown".to_string());
+    println!("cargo:rustc-env=MAJORDOMUS_TIKTOKEN_VERSION={tokenizer}");
+}
+
+/// The version `Cargo.lock` records for the package `name`: the `version` line that follows
+/// its `name = "..."` line inside one `[[package]]` block.
+fn locked_version(lock: &str, name: &str) -> Option<String> {
+    let wanted = format!("name = \"{name}\"");
+    lock.split("[[package]]")
+        .find(|block| block.lines().any(|l| l.trim() == wanted))?
+        .lines()
+        .find_map(|l| {
+            l.trim()
+                .strip_prefix("version = \"")?
+                .strip_suffix('"')
+                .map(str::to_string)
+        })
 }

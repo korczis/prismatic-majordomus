@@ -86,6 +86,8 @@ pub enum Command {
     Evidence(EvidenceArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
+    Economics(EconomicsArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
     Entity(EntityArgs),
 }
@@ -424,6 +426,369 @@ pub struct QualityReportArgs {
     /// Record today's findings as the accepted baseline, so the debt can shrink and cannot grow
     #[arg(long)]
     pub write_baseline: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics`. A group with no action of its own: a subcommand is required,
+/// and each one is either the command line of an `economics.*` capability or one of the
+/// three producers of evidence that `cli::local` classifies as command-line-only.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsArgs, EconomicsCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "economics", "check"]).unwrap();
+/// let args: EconomicsArgs = match cli.command {
+///     Command::Economics(args) => args,
+///     other => panic!("expected `economics`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.command, EconomicsCommand::Check(_)));
+///
+/// // naming no subcommand is a usage error, never a default that reads or spends
+/// assert!(Cli::try_parse_from(["majordomus", "economics"]).is_err());
+/// ```
+pub struct EconomicsArgs {
+    #[command(subcommand)]
+    /// `summary`, `explain`, `runs`, `check`, `measure`, `run`, `references`.
+    pub command: EconomicsCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus economics`: four readers and three producers of evidence.
+///
+/// `summary`, `explain`, `runs` and `check` are the command line of the `economics.*`
+/// capabilities, which compute every number once for every surface. `measure`, `run` and
+/// `references` are the command line's own: they write records into the repository, spend
+/// provider usage or build workspaces on this machine, which no read-only projection offers.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand};
+///
+/// fn parse(argv: &[&str]) -> EconomicsCommand {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     args.command
+/// }
+///
+/// assert!(matches!(parse(&["majordomus", "economics", "summary"]), EconomicsCommand::Summary(_)));
+/// assert!(matches!(
+///     parse(&["majordomus", "economics", "explain", "effective_token_reduction"]),
+///     EconomicsCommand::Explain(e) if e.metric == "effective_token_reduction"
+/// ));
+/// assert!(matches!(parse(&["majordomus", "economics", "run"]), EconomicsCommand::Run(_)));
+/// assert!(Cli::try_parse_from(["majordomus", "economics", "publish"]).is_err());
+/// ```
+pub enum EconomicsCommand {
+    /// Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows
+    Summary(EconomicsSummaryArgs),
+    /// One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it
+    Explain(EconomicsExplainArgs),
+    /// The recorded runs every metric is computed from
+    Runs(EconomicsRunsArgs),
+    /// Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand
+    Check(EconomicsCheckArgs),
+    /// Run a deterministic suite (no model is called) and record its measurement
+    Measure(EconomicsMeasureArgs),
+    /// Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage
+    Run(EconomicsRunArgs),
+    /// Prove every task's hidden tests fail on its starting state and pass on its reference solution. No model is called
+    References(EconomicsReferencesArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics summary`. Every filter is optional and they combine as a
+/// conjunction. They narrow the pairs and the metrics computed from them; the verdict is
+/// always stated over all the live evidence, so a narrowed view cannot make publishable a
+/// statement the whole evidence does not support.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{
+///     Cli, Command, EconomicsCommand, EconomicsSummaryArgs, OutputFormat,
+/// };
+///
+/// fn summary_of(argv: &[&str]) -> EconomicsSummaryArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Summary(summary) = args.command else { panic!("summary") };
+///     summary
+/// }
+///
+/// let s = summary_of(&[
+///     "majordomus", "economics", "summary", "--suite", "pilot", "--category", "bug-fix",
+///     "--format", "json",
+/// ]);
+/// assert_eq!(s.suite.as_deref(), Some("pilot"));
+/// assert_eq!(s.category.as_deref(), Some("bug-fix"));
+/// assert_eq!(s.format, OutputFormat::Json);
+/// // a filter not named is no filter
+/// assert!(s.task.is_none() && s.model.is_none());
+/// ```
+pub struct EconomicsSummaryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only this suite
+    #[arg(long)]
+    pub suite: Option<String>,
+    /// Only tasks of this category
+    #[arg(long)]
+    pub category: Option<String>,
+    /// Only this task
+    #[arg(long)]
+    pub task: Option<String>,
+    /// Only runs that asked for this model
+    #[arg(long)]
+    pub model: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics explain`. The metric is a required positional identifier, spelled
+/// as the summary lists it; one the methodology does not declare is refused as not found,
+/// with the declared metrics named, rather than answered with an empty explanation.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{
+///     Cli, Command, EconomicsCommand, EconomicsExplainArgs, OutputFormat,
+/// };
+///
+/// fn explain_of(argv: &[&str]) -> EconomicsExplainArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Explain(explain) = args.command else { panic!("explain") };
+///     explain
+/// }
+///
+/// let e = explain_of(&["majordomus", "economics", "explain", "effective_token_reduction"]);
+/// assert_eq!(e.metric, "effective_token_reduction");
+/// assert_eq!(e.format, OutputFormat::Text);
+/// // there is no default metric to explain
+/// assert!(Cli::try_parse_from(["majordomus", "economics", "explain"]).is_err());
+/// ```
+pub struct EconomicsExplainArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// The metric, e.g. effective_token_reduction
+    pub metric: String,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics runs`. The recorded runs themselves, before any pairing or
+/// statistics: the raw facts a disputed metric is checked against. The filters combine as a
+/// conjunction and select whole records; they change no number inside one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsRunsArgs};
+///
+/// fn runs_of(argv: &[&str]) -> EconomicsRunsArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Runs(runs) = args.command else { panic!("runs") };
+///     runs
+/// }
+///
+/// let r = runs_of(&[
+///     "majordomus", "economics", "runs", "--task", "vat-rounding", "--variant", "baseline",
+/// ]);
+/// assert_eq!(r.task.as_deref(), Some("vat-rounding"));
+/// assert_eq!(r.variant.as_deref(), Some("baseline"));
+/// assert!(r.suite.is_none(), "every suite's runs unless one is named");
+/// ```
+pub struct EconomicsRunsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only this suite
+    #[arg(long)]
+    pub suite: Option<String>,
+    /// Only this task
+    #[arg(long)]
+    pub task: Option<String>,
+    /// Only this variant
+    #[arg(long)]
+    pub variant: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics check`. It takes no filter, because a gate that could be narrowed
+/// could be narrowed past the claim it exists to refuse. It exits 10 when it finds a
+/// quantity stated beside the economics vocabulary in hand-written prose, or a bound claim
+/// whose evidence does not stand.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCheckArgs, EconomicsCommand, OutputFormat};
+///
+/// fn check_of(argv: &[&str]) -> EconomicsCheckArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Check(check) = args.command else { panic!("check") };
+///     check
+/// }
+///
+/// assert_eq!(check_of(&["majordomus", "economics", "check"]).format, OutputFormat::Text);
+/// let json = check_of(&["majordomus", "economics", "check", "--format", "json"]);
+/// assert_eq!(json.format, OutputFormat::Json);
+/// // nothing narrows the gate
+/// assert!(Cli::try_parse_from(["majordomus", "economics", "check", "--suite", "x"]).is_err());
+/// ```
+pub struct EconomicsCheckArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics measure`. Runs a deterministic suite, the context compiler over
+/// the suite's seeds with no model called, and writes its record as
+/// `runs/<suite>/<commit>.json` under the benchmark directory, so a second measurement at
+/// the same commit replaces the first. A live suite is refused with the `run` command that
+/// runs it; `--dry-run` measures, prints and writes nothing.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsMeasureArgs};
+///
+/// fn measure_of(argv: &[&str]) -> EconomicsMeasureArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Measure(measure) = args.command else { panic!("measure") };
+///     measure
+/// }
+///
+/// let default = measure_of(&["majordomus", "economics", "measure"]);
+/// assert_eq!(default.suite, "context");
+/// assert!(!default.dry_run, "measuring records unless told otherwise");
+/// assert!(measure_of(&["majordomus", "economics", "measure", "--dry-run"]).dry_run);
+/// ```
+pub struct EconomicsMeasureArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// The deterministic suite to measure
+    #[arg(long, default_value = "context")]
+    pub suite: String,
+    /// Measure and print, write nothing
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics run`. Spends provider usage: each selected task runs as real
+/// harness sessions with and without Majordomus installed, and each run is recorded as raw
+/// usage and gate verdicts. Empty `tasks` and `repetitions` mean every one the suite
+/// declares. `--dry-run` prepares each workspace, prints the harness command and removes the
+/// workspace again without starting a session, so it spends nothing. A run already recorded
+/// is skipped and never written over; `--force` is accepted only to be refused with the
+/// reason, because a recorded run is evidence.
+///
+/// ```
+/// use std::path::Path;
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsRunArgs};
+///
+/// fn run_of(argv: &[&str]) -> EconomicsRunArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Run(run) = args.command else { panic!("run") };
+///     run
+/// }
+///
+/// let run = run_of(&[
+///     "majordomus", "economics", "run", "--task", "a", "--task", "b", "--dry-run",
+/// ]);
+/// // repeated singular flags accumulate into the selection
+/// assert_eq!(run.tasks, ["a", "b"]);
+/// assert!(run.dry_run && !run.force);
+/// // the pilot suite, every repetition, two runs at once, thirty minutes a session
+/// assert_eq!(run.suite, "pilot");
+/// assert!(run.repetitions.is_empty() && run.work_dir.is_none());
+/// assert_eq!((run.parallel, run.session_timeout), (2, 1800));
+/// assert_eq!(run.harness, Path::new("claude"));
+/// ```
+pub struct EconomicsRunArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// The live suite to run
+    #[arg(long, default_value = "pilot")]
+    pub suite: String,
+    /// Only this task (repeatable)
+    #[arg(long = "task")]
+    pub tasks: Vec<String>,
+    /// Only this repetition (repeatable)
+    #[arg(long = "repetition")]
+    pub repetitions: Vec<u32>,
+    /// Where transcripts go; never inside the repository. Workspaces are fresh directories
+    /// of the system temporary directory, removed when their run ends
+    #[arg(long, value_name = "PATH")]
+    pub work_dir: Option<PathBuf>,
+    /// The harness executable
+    #[arg(long, value_name = "PATH", default_value = "claude")]
+    pub harness: PathBuf,
+    /// Runs in flight at once
+    #[arg(long, default_value_t = 2)]
+    pub parallel: usize,
+    /// Per-session wall-clock limit, in seconds
+    #[arg(long, default_value_t = 1800)]
+    pub session_timeout: u64,
+    /// Refused: a recorded run is evidence and is never overwritten; exclude it in the
+    /// methodology with a reason and record another repetition
+    #[arg(long)]
+    pub force: bool,
+    /// Prepare every workspace and print the harness command; run nothing, spend nothing
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics references`. Proves every task can fail: its hidden tests must
+/// fail on the starting fixture and pass once the reference solution is applied, or a
+/// failed run would say nothing about the agent. No model is called; the workspaces are
+/// built on this machine, under the system temporary directory unless `--work-dir` names
+/// another, and a task that breaks the rule makes the command exit 10.
+///
+/// ```
+/// use std::path::Path;
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsReferencesArgs};
+///
+/// fn references_of(argv: &[&str]) -> EconomicsReferencesArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::References(r) = args.command else { panic!("references") };
+///     r
+/// }
+///
+/// assert!(references_of(&["majordomus", "economics", "references"]).work_dir.is_none());
+/// let placed = references_of(&[
+///     "majordomus", "economics", "references", "--work-dir", "scratch/refs",
+/// ]);
+/// assert_eq!(placed.work_dir.as_deref(), Some(Path::new("scratch/refs")));
+/// ```
+pub struct EconomicsReferencesArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// Where the workspaces go
+    #[arg(long, value_name = "PATH")]
+    pub work_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -1549,6 +1914,9 @@ pub enum GenerateTarget {
     /// both Tailwind builds import, the tokens and the declaration compiled into the crate,
     /// every copy of the brand, site/data/registry/design.json and docs/generated/design.*
     Design,
+    /// docs/generated/economics.{json,yaml,md}: the token-economics evidence and its report,
+    /// computed from the recorded benchmark runs by the one calculator
+    Economics,
 }
 
 #[derive(Debug, Args)]
@@ -3448,6 +3816,93 @@ pub const EXAMPLES: &[CommandExamples] = &[
                 expect: Expect::Json(&["/measured", "/passes", "/report/schema"]),
             },
         ],
+    },
+    CommandExamples {
+        command: "economics summary",
+        examples: &[
+            ExampleDoc {
+                id: "economics-summary",
+                title: "What the evidence allows to be said about tokens",
+                description: "Every metric with its measurement class, sample size and interval, the state of each suite's evidence, and the one statement the publication rule allows. In a repository that declares no benchmark methodology — which is where the examples run — the statement is that no verified total-token-savings claim is available, and no number is printed.",
+                argv: &["economics", "summary"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["No verified total-token-savings claim"]),
+            },
+            ExampleDoc {
+                id: "economics-summary-json",
+                title: "The same answer as the API and MCP give it",
+                description: "The typed summary: the verdict, the metrics, the pairs and the segments, exactly as GET /api/v1/economics and the majordomus_economics tool return them.",
+                argv: &["economics", "summary", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/present", "/verdict/statement", "/metrics"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "economics explain",
+        examples: &[ExampleDoc {
+            id: "economics-explain",
+            title: "Everything one metric rests on",
+            description: "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. A metric that does not exist is refused with the list of those that do: exit 12 where no methodology is declared.",
+            argv: &["economics", "explain", "effective_token_reduction"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "economics runs",
+        examples: &[ExampleDoc {
+            id: "economics-runs-json",
+            title: "The raw facts behind every number",
+            description: "Every recorded run with its gate verdicts and the totals derived from its provider usage. None where nothing was run.",
+            argv: &["economics", "runs", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/count", "/runs"]),
+        }],
+    },
+    CommandExamples {
+        command: "economics check",
+        examples: &[ExampleDoc {
+            id: "economics-check",
+            title: "Refuse a savings claim nothing measured",
+            description: "Scans the hand-written prose and claim sentences for a quantity next to the economics vocabulary, and checks every claim bound to a metric. Exits 10 naming each finding; exits 0 here, where nothing claims anything.",
+            argv: &["economics", "check"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["economics check:", "0 finding(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "economics measure",
+        examples: &[ExampleDoc {
+            id: "economics-measure-dry-run",
+            title: "Count what the context compiler selects",
+            description: "Runs the deterministic context suite: no model is called; every seed's candidates and selection are counted with a pinned tokenizer. Refused with exit 12 where no methodology is declared.",
+            argv: &["economics", "measure", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "economics run",
+        examples: &[ExampleDoc {
+            id: "economics-run-dry-run",
+            title: "Prepare a live suite without spending anything",
+            description: "Builds every control and treatment workspace and prints the harness command each session would run; nothing is sent to a provider. Refused with exit 12 where no methodology is declared.",
+            argv: &["economics", "run", "--suite", "pilot", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "economics references",
+        examples: &[ExampleDoc {
+            id: "economics-references",
+            title: "Prove every task can be failed and can be passed",
+            description: "Applies each task's reference solution to its fixture: the hidden tests must fail on the starting state and pass on the reference. Refused with exit 12 where no methodology is declared.",
+            argv: &["economics", "references"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
     },
     CommandExamples {
         command: "devcontext compile",

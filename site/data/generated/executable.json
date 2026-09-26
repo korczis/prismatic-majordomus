@@ -511,6 +511,74 @@
       "tool": "majordomus_install_status"
     },
     {
+      "api_anchor": "/docs/api/economics/#op-economics-check",
+      "claims": [],
+      "cli": "majordomus economics check",
+      "id": "economics.check",
+      "kind": "query",
+      "module": "economics",
+      "module_route": "/registry/modules/economics/",
+      "resource": null,
+      "route": "/registry/capabilities/economics-check/",
+      "slug": "economics-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "tests": [],
+      "title": "Refuse unsupported economics claims",
+      "tool": "majordomus_economics_check"
+    },
+    {
+      "api_anchor": "/docs/api/economics/#op-economics-explain",
+      "claims": [],
+      "cli": "majordomus economics explain",
+      "id": "economics.explain",
+      "kind": "query",
+      "module": "economics",
+      "module_route": "/registry/modules/economics/",
+      "resource": null,
+      "route": "/registry/capabilities/economics-explain/",
+      "slug": "economics-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "tests": [],
+      "title": "Explain one economics metric",
+      "tool": "majordomus_economics_explain"
+    },
+    {
+      "api_anchor": "/docs/api/economics/#op-economics-runs",
+      "claims": [],
+      "cli": "majordomus economics runs",
+      "id": "economics.runs",
+      "kind": "query",
+      "module": "economics",
+      "module_route": "/registry/modules/economics/",
+      "resource": null,
+      "route": "/registry/capabilities/economics-runs/",
+      "slug": "economics-runs",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "tests": [],
+      "title": "Recorded benchmark runs",
+      "tool": "majordomus_economics_runs"
+    },
+    {
+      "api_anchor": "/docs/api/economics/#op-economics-summary",
+      "claims": [],
+      "cli": "majordomus economics summary",
+      "id": "economics.summary",
+      "kind": "query",
+      "module": "economics",
+      "module_route": "/registry/modules/economics/",
+      "resource": "majordomus://economics",
+      "route": "/registry/capabilities/economics-summary/",
+      "slug": "economics-summary",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "tests": [],
+      "title": "Token economics summary",
+      "tool": "majordomus_economics"
+    },
+    {
       "api_anchor": "/docs/api/entity/#op-entity-kinds",
       "claims": [],
       "cli": "majordomus entity kinds",
@@ -2128,6 +2196,20 @@
         "test": "test/cases/84_distribution_model.sh"
       },
       {
+        "id": "context-selection-counted",
+        "implementation": "apps/majordomus-cli/src/economics/context.rs",
+        "route": "/guarantees/context-selection-counted/",
+        "status": "guaranteed",
+        "test": "test/cases/430_economics.sh"
+      },
+      {
+        "id": "economics-claims-gated",
+        "implementation": "apps/majordomus-cli/src/economics/claims.rs",
+        "route": "/guarantees/economics-claims-gated/",
+        "status": "guaranteed",
+        "test": "test/cases/431_economics_claims_gated.sh"
+      },
+      {
         "id": "mcp-data-driven",
         "implementation": "apps/majordomus-cli/src/index.rs",
         "route": "/guarantees/mcp-data-driven/",
@@ -2435,9 +2517,9 @@
     ]
   },
   "counts": {
-    "capabilities": 115,
-    "claims": 51,
-    "modules": 38
+    "capabilities": 119,
+    "claims": 53,
+    "modules": 39
   },
   "generator": "majordomus-cli 0.9.0",
   "modules": [
@@ -2711,6 +2793,37 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/distribution.rs",
       "title": "Distribution"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "economics.check",
+          "route": "/registry/capabilities/economics-check/",
+          "slug": "economics-check"
+        },
+        {
+          "id": "economics.explain",
+          "route": "/registry/capabilities/economics-explain/",
+          "slug": "economics-explain"
+        },
+        {
+          "id": "economics.runs",
+          "route": "/registry/capabilities/economics-runs/",
+          "slug": "economics-runs"
+        },
+        {
+          "id": "economics.summary",
+          "route": "/registry/capabilities/economics-summary/",
+          "slug": "economics-summary"
+        }
+      ],
+      "claims": [],
+      "id": "economics",
+      "route": "/registry/modules/economics/",
+      "slug": "economics",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/economics.rs",
+      "title": "Token economics"
     },
     {
       "capabilities": [

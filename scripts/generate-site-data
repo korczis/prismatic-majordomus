@@ -79,6 +79,7 @@ site/data/registry/product-graph.json
 docs/generated/cli.json
 docs/generated/web.json
 docs/generated/changelog.json
+docs/generated/economics.json
 apps/majordomus-cli/README.md
 site/config.toml
 site/data/nav.toml
@@ -1279,6 +1280,24 @@ jq -e '[.nodes[] | select(.kind=="claim" and .status=="guaranteed") | .id] as $g
   || { echo "generate-site-data: a guaranteed claim lost its test edge in claims-graph.json" >&2; exit 10; }
 
 mj_phase_end "gen:claims-graph.json_evidence_a" "$GEN_T0"
+# ---------------------------------------------------------------- economics.json (token economics, measured)
+GEN_T0="$(mj_phase_begin "gen:economics.json_token_econom")"
+# The economics page renders the summary `majordomus generate economics` wrote from the
+# recorded runs. This copies it and computes nothing: every figure on the page is the one
+# calculator's (apps/majordomus-cli/src/economics), and a repository with no generated summary
+# publishes the statement that no claim is available rather than an empty number.
+if [ -f "$ROOT/docs/generated/economics.json" ]; then
+  jq '{schema: 1, source: "docs/generated/economics.json", generator: "scripts/generate-site-data",
+       summary: (del(.schema, .generated, .generator))}' "$ROOT/docs/generated/economics.json" > "$OUT/economics.json"
+else
+  jq -n '{schema: 1, source: "docs/generated/economics.json", generator: "scripts/generate-site-data",
+          summary: {present: false, verdict: {publishable: false, unmet: [],
+                    statement: "No verified total-token-savings claim is available: no economics summary has been generated."},
+                    metrics: [], suites: [], pairs: [], segments: [], history: [], variants: [], hypotheses: []}}' > "$OUT/economics.json"
+fi
+jq -e '.summary.verdict.statement | length > 0' "$OUT/economics.json" >/dev/null \
+  || { echo "generate-site-data: the economics summary carries no verdict" >&2; exit 10; }
+mj_phase_end "gen:economics.json_token_econom" "$GEN_T0"
 # ---------------------------------------------------------------- docs index (from docs/README.md table)
 GEN_T0="$(mj_phase_begin "gen:docs_index_from_docs_README.")"
 # Only the first table becomes site routes. The "## Reference files" table below it lists

@@ -20,6 +20,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `devtask` | Executable development scopes | behaviorally_verified | 2 | [`modules/devtask.md`](modules/devtask.md) |
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
+| `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
 | `entity` | Entities | implemented | 2 | [`modules/entity.md`](modules/entity.md) |
 | `environment` | Repository environment | behaviorally_verified | 2 | [`modules/environment.md`](modules/environment.md) |
 | `evidence` | Evidence | behaviorally_verified | 4 | [`modules/evidence.md`](modules/evidence.md) |
@@ -82,6 +83,10 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `distribution.model` | `distribution` | query | behaviorally_verified | `majordomus_distribution` | — | `GET /api/v1/distribution` | `majordomus distribution show` | — | required |
 | `distribution.releases` | `distribution` | query | behaviorally_verified | `majordomus_releases` | — | `GET /api/v1/distribution/releases` | `majordomus distribution releases` | — | required |
 | `distribution.status` | `distribution` | query | behaviorally_verified | `majordomus_install_status` | — | `GET /api/v1/distribution/status` | `majordomus distribution status` | — | required |
+| `economics.check` | `economics` | query | behaviorally_verified | `majordomus_economics_check` | — | `GET /api/v1/economics/check` | `majordomus economics check` | — | required |
+| `economics.explain` | `economics` | query | behaviorally_verified | `majordomus_economics_explain` | — | `GET /api/v1/economics/explain` | `majordomus economics explain` | process, 32 entries, 5s | required |
+| `economics.runs` | `economics` | query | behaviorally_verified | `majordomus_economics_runs` | — | `GET /api/v1/economics/runs` | `majordomus economics runs` | process, 16 entries, 5s | required |
+| `economics.summary` | `economics` | query | behaviorally_verified | `majordomus_economics` | `majordomus://economics` | `GET /api/v1/economics` | `majordomus economics summary` | process, 8 entries, 5s | required |
 | `entity.kinds` | `entity` | query | implemented | `majordomus_kinds` | — | `GET /api/v1/entity/kinds` | `majordomus entity kinds` | — | required |
 | `entity.show` | `entity` | query | implemented | `majordomus_entity` | — | `GET /api/v1/entity` | `majordomus entity show` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |
