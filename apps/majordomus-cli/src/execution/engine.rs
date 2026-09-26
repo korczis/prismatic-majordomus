@@ -397,14 +397,15 @@ fn run(store: &Arc<ExecutionStore>, pending: Pending) {
         input,
         ctx,
     } = pending;
-    // it may have been cancelled while it waited
-    if store.get(&id).is_none_or(|e| e.state.is_final()) {
-        return;
-    }
     let Some(cancel) = store.token(&id) else {
         return;
     };
-    store.publish(&id, EventPayload::Started);
+    // it may have been cancelled while it waited, up to this very instant: the start is
+    // refused from a final state under the lock a cancel takes, and a refused start runs
+    // nothing, where a look at the state first would leave that instant open
+    if store.publish(&id, EventPayload::Started).is_none() {
+        return;
+    }
     let progress =
         super::sink::Progress::reporting(Arc::clone(store), id.clone(), Arc::clone(&cancel));
     let ctx = ctx.reporting(progress);

@@ -268,42 +268,47 @@ impl ExecutionStore {
     pub fn publish(&self, id: &ExecutionId, payload: EventPayload) -> Option<u64> {
         let (event, deliveries) = {
             let mut inner = self.lock();
-            let limits = self.limits;
-            let record = inner.records.get_mut(id)?;
-            if let Some(next) = payload.implies_state() {
-                let current = record.snapshot.state;
-                if current == next {
-                    // saying the same thing twice is not a transition and not an error
-                } else if !current.may_move_to(next) {
-                    tracing::debug!(
-                        execution_id = %id,
-                        from = current.as_str(),
-                        to = next.as_str(),
-                        "an execution event was refused: the state machine does not allow the move"
-                    );
-                    return None;
-                }
-            }
-            let sequence = record.snapshot.last_sequence + 1;
-            apply(record, &payload, sequence, limits);
-            let event = Arc::new(ExecutionEvent::new(id.clone(), sequence, payload));
-            record.events.push_back(Arc::clone(&event));
-            while record.events.len() > limits.max_events {
-                record.events.pop_front();
-                record.first_retained += 1;
-                record.snapshot.events_truncated = true;
-            }
-            let deliveries = inner.fan_out(id, &event);
-            (event, deliveries)
+            self.publish_locked(&mut inner, id, payload)?
         };
-        tracing::debug!(
-            execution_id = %event.execution_id,
-            sequence = event.sequence,
-            event = event.type_name(),
-            subscribers = deliveries,
-            "execution event"
-        );
+        traced(&event, deliveries);
         Some(event.sequence)
+    }
+
+    /// [`Self::publish`] under a lock the caller already holds, for a caller whose own
+    /// decision has to be taken in the same instant as the transition it leads to.
+    fn publish_locked(
+        &self,
+        inner: &mut Inner,
+        id: &ExecutionId,
+        payload: EventPayload,
+    ) -> Option<(Arc<ExecutionEvent>, usize)> {
+        let limits = self.limits;
+        let record = inner.records.get_mut(id)?;
+        if let Some(next) = payload.implies_state() {
+            let current = record.snapshot.state;
+            if current == next {
+                // saying the same thing twice is not a transition and not an error
+            } else if !current.may_move_to(next) {
+                tracing::debug!(
+                    execution_id = %id,
+                    from = current.as_str(),
+                    to = next.as_str(),
+                    "an execution event was refused: the state machine does not allow the move"
+                );
+                return None;
+            }
+        }
+        let sequence = record.snapshot.last_sequence + 1;
+        apply(record, &payload, sequence, limits);
+        let event = Arc::new(ExecutionEvent::new(id.clone(), sequence, payload));
+        record.events.push_back(Arc::clone(&event));
+        while record.events.len() > limits.max_events {
+            record.events.pop_front();
+            record.first_retained += 1;
+            record.snapshot.events_truncated = true;
+        }
+        let deliveries = inner.fan_out(id, &event);
+        Some((event, deliveries))
     }
 
     /// The snapshot of one execution.
@@ -389,38 +394,48 @@ impl ExecutionStore {
         self.lock().records.get(id).map(|r| Arc::clone(&r.cancel))
     }
 
-    /// Ask an execution to stop. Sets the token and publishes `execution.cancelling`; the
+    /// Ask an execution to stop. Publishes `execution.cancelling` and sets the token; the
     /// handler decides when it stops, and a handler that never looks at its token will
     /// finish normally, which the final state will say.
+    ///
+    /// Both happen under one hold of the lock. A worker reads the token without the lock,
+    /// but a handler that stops publishes `execution.cancelled`, which needs the lock that
+    /// `cancelling` is recorded under, so a handler that sees the token cannot publish
+    /// until `cancelling` is recorded, whichever of the two is done first inside. Recording
+    /// the state before the token is extra ordering on top of that: on its own it would
+    /// hold even were the token set after the lock is let go. What neither may be is the
+    /// token set in one hold and `cancelling` published in the next: a handler looking in
+    /// between publishes `cancelled` from `running` — a move the state machine refuses —
+    /// and the `cancelling` that follows is the last thing the execution ever says.
     pub fn request_cancel(&self, id: &ExecutionId, by: &str) -> CancelOutcome {
-        let outcome = {
+        let published = {
             let mut inner = self.lock();
             let Some(record) = inner.records.get_mut(id) else {
                 return CancelOutcome::Unknown;
             };
-            if record.snapshot.state.is_final() {
-                return CancelOutcome::AlreadyFinished(record.snapshot.state);
+            let state = record.snapshot.state;
+            if state.is_final() {
+                return CancelOutcome::AlreadyFinished(state);
             }
             if record.cancel_requested {
-                CancelOutcome::AlreadyRequested
-            } else {
-                record.cancel_requested = true;
-                record.cancel.store(true, Ordering::SeqCst);
-                CancelOutcome::Requested
+                return CancelOutcome::AlreadyRequested;
             }
-        };
-        if outcome == CancelOutcome::Requested {
+            record.cancel_requested = true;
+            let token = Arc::clone(&record.cancel);
             // a queued execution has no worker to notice the token, so it is finished here
-            let queued = self
-                .get(id)
-                .is_some_and(|s| s.state == ExecutionState::Queued);
-            if queued {
-                self.publish(id, EventPayload::Cancelled);
+            let payload = if state == ExecutionState::Queued {
+                EventPayload::Cancelled
             } else {
-                self.publish(id, EventPayload::Cancelling { by: by.to_string() });
-            }
+                EventPayload::Cancelling { by: by.to_string() }
+            };
+            let published = self.publish_locked(&mut inner, id, payload);
+            token.store(true, Ordering::SeqCst);
+            published
+        };
+        if let Some((event, deliveries)) = published {
+            traced(&event, deliveries);
         }
-        outcome
+        CancelOutcome::Requested
     }
 
     /// Listen. The receiver is dropped to unsubscribe; the store forgets a subscriber the
@@ -499,6 +514,17 @@ impl Inner {
         }
         delivered
     }
+}
+
+/// Say in this process's log that an event was published, once the lock is let go.
+fn traced(event: &ExecutionEvent, deliveries: usize) {
+    tracing::debug!(
+        execution_id = %event.execution_id,
+        sequence = event.sequence,
+        event = event.type_name(),
+        subscribers = deliveries,
+        "execution event"
+    );
 }
 
 /// Fold one event into a snapshot. The only place a snapshot changes.
@@ -842,6 +868,57 @@ mod tests {
             snapshot.error.map(|e| e.code),
             Some("cancelled".to_string())
         );
+    }
+
+    #[test]
+    fn a_handler_that_stops_the_instant_it_sees_the_token_still_ends_cancelled() {
+        // A worker reads the token without the lock and publishes `cancelled` the moment it
+        // sees it. Were the token visible, with the lock let go, before `cancelling` is
+        // recorded, that `cancelled` would arrive from `running`, which the state machine
+        // refuses, and the `cancelling` that landed after it would be the execution's last
+        // word — the engine's test once waited its whole ten seconds on exactly that. A
+        // worker spinning on the token makes the loaded runner's rare interleaving the
+        // common one.
+        for round in 0..300 {
+            let store = Arc::new(store());
+            let id = start(&store);
+            store.publish(&id, EventPayload::Started);
+            let token = store.token(&id).unwrap();
+            let ready = Arc::new(AtomicBool::new(false));
+            let worker = {
+                let (store, id, ready) = (Arc::clone(&store), id.clone(), Arc::clone(&ready));
+                std::thread::spawn(move || {
+                    ready.store(true, Ordering::SeqCst);
+                    // bounded, so that a cancel that never sets the token fails rather than hangs
+                    let deadline = Instant::now() + std::time::Duration::from_secs(10);
+                    while !token.load(Ordering::SeqCst) {
+                        if Instant::now() >= deadline {
+                            return None;
+                        }
+                        std::hint::spin_loop();
+                    }
+                    store.publish(&id, EventPayload::Cancelled)
+                })
+            };
+            while !ready.load(Ordering::SeqCst) {
+                std::hint::spin_loop();
+            }
+            assert_eq!(store.request_cancel(&id, "test"), CancelOutcome::Requested);
+            let published = worker.join().unwrap();
+            let state = store.get(&id).unwrap().state;
+            assert!(
+                published.is_some() && state == ExecutionState::Cancelled,
+                "round {round}: the handler stopped and the execution says {state:?}"
+            );
+        }
+
+        // the other side of the same lock: once a queued execution is cancelled, a worker
+        // that picked it up in that instant is refused its start, and so runs nothing
+        let store = store();
+        let id = start(&store);
+        assert_eq!(store.request_cancel(&id, "test"), CancelOutcome::Requested);
+        assert_eq!(store.publish(&id, EventPayload::Started), None);
+        assert_eq!(store.get(&id).unwrap().state, ExecutionState::Cancelled);
     }
 
     #[test]
