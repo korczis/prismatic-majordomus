@@ -477,6 +477,17 @@ gates:
     runs: scripts/ci/release-check
     summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
 
+  # A page's link into its own source names the commit the site was built from, not master:
+  # a link to master points at whatever the file says today, and the page beside it says
+  # what the file said when it was rendered. The templates make those links through
+  # site/templates/source-links.html; this is the ratchet over the ones still hard-coded
+  # (test/cases/533_source_links_name_the_built_commit.sh). File reads only.
+  - id: source-pin-check
+    job: structure
+    always: true
+    runs: scripts/ci/source-pin-check
+    summary: no template under site/templates adds a source link that names master instead of the commit the page was built from — a ratchet over the blob/master and tree/master occurrences, per file, against .ai/repo/source-pin-baseline.txt
+
 classes:
   # the pipeline itself: a change here can only be validated by running everything
   - id: ci

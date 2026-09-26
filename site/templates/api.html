@@ -23,7 +23,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ repo }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p>
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ <source_blob path={page.extra.source} /> }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p>
 
     {#- About: the info block, in the words about.rs holds -#}
     <section id="about" class="scroll-mt-24">

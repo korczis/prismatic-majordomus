@@ -6,7 +6,7 @@
 {%- set plan = load_data(path="data/generated/plan.json") -%}
 {%- set ms = [m for m in plan.milestones if m.id == page.extra.plan_id][0] -%}
 {%- set mine = [i for i in plan.issues if i.milestone == ms.id] -%}
-{%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
+{%- set repo = <source_blob path="" /> -%}
 <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3">{{ <plan_status status={ms.status} /> }}<span class="text-sm text-body">{{ ms.counts.by_status.DONE }} of {{ ms.counts.required }} issues done{% if ms.id == plan.active_milestone %} · this is the active milestone{% endif %}</span></p>
 

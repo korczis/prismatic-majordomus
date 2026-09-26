@@ -65,7 +65,7 @@
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Where this comes from</h2>
     <dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[max-content_1fr]">
-      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ e.source }}">{{ e.source }}</a></dd>
+      <dt class="text-body-subtle">canonical file</dt><dd class="min-w-0"><a class="break-all font-mono text-fg-brand hover:underline inline-block py-1" href="{{ <source_blob path={e.source} /> }}">{{ e.source }}</a></dd>
       <dt class="text-body-subtle">identity</dt><dd class="min-w-0 break-all font-mono text-heading">{{ e.identity }}</dd>
       <dt class="text-body-subtle">also served as</dt><dd class="min-w-0 break-all font-mono text-heading">MCP resource <code>{{ e.id }}</code> · <code>majordomus entity show {{ kind }}/{{ e.slug }}</code> · <code>GET /api/v1/entity?uri={{ e.id }}</code></dd>
       <dt class="text-body-subtle">in the Cockpit</dt><dd class="min-w-0 break-all font-mono text-heading">{{ e.cockpit }}</dd>
