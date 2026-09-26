@@ -1513,7 +1513,7 @@ claims:
     note: '`evidence::freshness` is the one truth table every surface reads, and only its proven row may render as verified. `evidence show --presented HEAD` judges the checked-out commit as committed, from the ledger that commit holds, against its tree measured without the working copy of the ledger; `--presented-tree` only weakens that measurement. A run the working ledger holds and the committed one does not is listed in `presented.uncommitted` and read only through the monotone rule, which withholds proven and never decides a verdict.'
 
   - id: evidence-a-skip-is-not-run
-    claim: A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing
+    claim: A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing
     source: docs/EVIDENCE.md
     implementation: apps/majordomus-cli/src/evidence/freshness.rs
     test: test/cases/502_evidence_is_judged_at_the_presented_revision.sh

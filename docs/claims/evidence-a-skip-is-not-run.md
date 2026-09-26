@@ -1,4 +1,4 @@
-# A test that declined to run reads not run with its reason, and a test that errored or timed out reads failing
+# A test that declined to run reads not run with a detail saying it declined, and a test that errored or timed out reads failing
 
 ## What it means
 

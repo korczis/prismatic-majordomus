@@ -184,8 +184,8 @@ uncommitted pass never strengthens one. A working ledger that cannot be read is 
 because a run it may hold cannot be ruled out.
 
 **A skip is not a failure.** A test that declined to run proved nothing and failed nothing:
-it is `not_run`, with the reason in its detail, and a guarantee resting on it is named by a
-finding that says its test declined to run. A test that errored or timed out did not
+it is `not_run`, with a detail saying it declined, and a guarantee resting on it is named by
+a finding that says its test declined to run. A test that errored or timed out did not
 decline: it is `failing`.
 
 **Containment.** A pass recorded on a commit the presented revision does not contain is a

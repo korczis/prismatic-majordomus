@@ -1014,8 +1014,8 @@ mod tests {
         assert_eq!(j, Judgement::of(ProofState::NotRun));
     }
 
-    /// A test that declined to run proved nothing and failed nothing: `not_run`, with the
-    /// reason, however fresh everything else is.
+    /// A test that declined to run proved nothing and failed nothing: `not_run`, with a
+    /// detail saying it declined, however fresh everything else is.
     #[test]
     fn row_04_a_skip_is_not_run() {
         let e = ran("skip", E, "clean");

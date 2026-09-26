@@ -6,15 +6,16 @@
 # ledger, which a case must never do to the checkout it runs in.
 #
 # What it proves, in order:
-#   1  a test that declined to run is `not_run` with its reason, never `failing`, and the
-#      guarantee it proves is named by a finding that says it declined
+#   1  a test that declined to run is `not_run` with a detail saying so, never `failing`,
+#      and the guarantee it proves is named by a finding that says it declined
 #   2  a result word nobody can classify is an error, and an error is `failing`
 #   3  a pass recorded on a commit the checked-out branch does not contain is `stale`, and
 #      the detail names that commit — however empty a diff between the two trees is
 #   4  `--presented HEAD` judges the checked-out commit as committed: from the ledger that
 #      commit holds, against its own tree measured without the ledger's working copy. A
-#      clean failure the checkout holds uncommitted caps it at `stale` and never decides it;
-#      an uncommitted pass never strengthens it; a dirty tree, measured or declared, caps it
+#      clean failure the checkout holds uncommitted caps it at `stale` and never decides it,
+#      unless it was recorded on a commit the presented one does not contain; an
+#      uncommitted pass never strengthens it; a dirty tree, measured or declared, caps it
 #      at `inputs_unchanged`; and a revision other than the checked-out commit, a revision
 #      that names nothing, a tree state with no revision and an unreadable working ledger
 #      are each refused
@@ -172,6 +173,25 @@ jqe w_beta "$BETA | .state == \"proven\"" "the working tree does not read its ow
 ev p_beta show --presented HEAD
 jqe p_beta "$BETA | .state == \"not_run\"" "an uncommitted pass strengthened the presented commit"
 jqe p_beta '.presented.uncommitted == ["suite:02_beta"]' "the uncommitted pass is not listed"
+git checkout -q -- "$LEDGER"
+
+# A clean failure the checkout holds from another history says nothing here: recorded on a
+# side commit that contains the evidence, then carried back to a commit that lacks it.
+git checkout -q -b other
+printf 'another history\n' > other.txt
+git add other.txt >/dev/null && git commit -qm other
+OTHER="$(git rev-parse HEAD)"
+record "01_alpha${TAB}FAIL${TAB}4${TAB}parallel"
+cp "$LEDGER" "$W/other-ledger.json"
+git checkout -q -- "$LEDGER"
+git checkout -q "$TRUNK"
+cp "$W/other-ledger.json" "$LEDGER"
+git merge-base --is-ancestor "$OTHER" HEAD && { echo "    the other commit is an ancestor of $TRUNK"; exit 1; }
+ev p_other show --presented HEAD
+jqe p_other '.presented.uncommitted == ["suite:01_alpha"]' \
+  "the failure from another history is not held as an uncommitted run"
+jqe p_other "$ALPHA | .state == \"proven\"" \
+  "a failure on a commit the presented one does not contain capped it"
 git checkout -q -- "$LEDGER"
 
 # The presented tree is measured, and a caller can only weaken it.

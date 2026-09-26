@@ -2161,6 +2161,65 @@ mod tests {
         assert!(r.findings[0].reason.contains("uncommitted"));
     }
 
+    /// A clean failure the checkout holds, recorded on a commit the presented one does not
+    /// contain, is about another history: it says nothing at the presented commit.
+    #[test]
+    fn a_failure_on_another_history_says_nothing_about_the_commit() {
+        let f = Fixture::new(&["01_alpha"]);
+        let trunk = f.git(&["symbolic-ref", "--short", "HEAD"]);
+        let e = f.git(&["rev-parse", "HEAD"]);
+        f.record("01_alpha", "pass");
+        f.commit_all("the ledger");
+        f.git(&["checkout", "-q", "-b", "side"]);
+        f.write("side.txt", "side");
+        let side = f.commit_all("side");
+        f.record("01_alpha", "fail");
+        let held = std::fs::read_to_string(f.root().join(LEDGER_PATH)).unwrap();
+        f.git(&["checkout", "-q", "--", LEDGER_PATH]);
+        f.git(&["checkout", "-q", &trunk]);
+        f.write(LEDGER_PATH, &held);
+
+        // the record is after the evidence, and only the presented commit's history lacks it
+        let r = f.at_head(&["01_alpha"], None);
+        let claim = &r.claims[0];
+        assert_eq!(claim.execution.as_ref().unwrap().commit, e);
+        assert_eq!(r.presented.uncommitted, ["suite:01_alpha"]);
+        assert_eq!(
+            crate::git::contains(f.root(), &side, &e),
+            crate::git::Containment::Contains
+        );
+        assert_eq!(claim.state, ProofState::Proven, "{claim:?}");
+        assert!(r.findings.is_empty());
+    }
+
+    /// A clean failure the checkout holds, recorded on a commit that does not contain the
+    /// evidence, came before the pass it would contradict: it says nothing about that pass.
+    #[test]
+    fn a_failure_from_before_the_evidence_says_nothing_about_it() {
+        let f = Fixture::new(&["01_alpha"]);
+        let before = f.git(&["rev-parse", "HEAD"]);
+        f.record("01_alpha", "fail");
+        let held = std::fs::read_to_string(f.root().join(LEDGER_PATH)).unwrap();
+        std::fs::remove_file(f.root().join(LEDGER_PATH)).unwrap();
+        f.write("later.txt", "later");
+        let e = f.commit_all("later");
+        f.record("01_alpha", "pass");
+        f.commit_all("the ledger");
+        f.write(LEDGER_PATH, &held);
+
+        // the presented commit contains the record, and the record does not contain E
+        let r = f.at_head(&["01_alpha"], None);
+        let claim = &r.claims[0];
+        assert_eq!(claim.execution.as_ref().unwrap().commit, e);
+        assert_eq!(r.presented.uncommitted, ["suite:01_alpha"]);
+        assert_eq!(
+            crate::git::contains(f.root(), &r.presented.revision, &before),
+            crate::git::Containment::Contains
+        );
+        assert_eq!(claim.state, ProofState::Proven, "{claim:?}");
+        assert!(r.findings.is_empty());
+    }
+
     /// And never the other way: a pass the checkout holds uncommitted, of a test the commit's
     /// ledger has no row for, leaves the commit's verdict `not_run`.
     #[test]
@@ -2198,7 +2257,7 @@ mod tests {
         );
     }
 
-    /// A skip is `not_run` with its reason, and the guarantee's finding says it declined.
+    /// A skip is `not_run`, its detail says it declined, and so does the guarantee's finding.
     #[test]
     fn a_skipped_guarantee_is_not_run_and_the_finding_says_it_declined() {
         let f = Fixture::new(&["01_alpha"]);

@@ -1,5 +1,5 @@
 +++
-title = "A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing"
+title = "A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing"
 description = "A recorded skip is a test that declined to run: it measured nothing, so it proves nothing,"
 weight = 182
 [extra]
