@@ -12,6 +12,7 @@ featured: true
 areas: [observability]
 modules: [health, design]
 rules: [project.interfaces-are-projections]
+claims: [cockpit-is-a-projection-of-the-registry]
 docs: [docs/COCKPIT.md]
 adrs: [adr-0012, adr-0020]
 cockpit: [overview, capabilities, objects, directories, graphs, continuity, worktrees, health, artifacts, design, api]
