@@ -53,6 +53,11 @@ ed25519-dalek = { version = "2", default-features = false, features = ["std", "f
 # getrandom: the node's one long-lived signing key and each instance's id need OS entropy
 # once at creation; nothing else in the crate is random.
 getrandom = "0.2"
+# tiktoken-rs: the economics subsystem counts context in tokens of a named, pinned
+# tokenizer (o200k_base, vocabulary embedded, no network) rather than dividing bytes by
+# four. It is not the tokenizer of every model, and every count it produces says which one
+# it is; provider-reported usage is recorded as the provider reported it and never recounted.
+tiktoken-rs = "=0.12.0"
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

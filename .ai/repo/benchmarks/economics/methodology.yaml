@@ -1,0 +1,83 @@
+# The token-economics methodology. Every number Majordomus publishes about tokens is computed
+# from recorded runs under this file, by one calculator (apps/majordomus-cli/src/economics).
+# Changing what is measured, how a pair is formed, how a result is aggregated, what is
+# excluded or when a claim may be published is a methodology change: bump `version` and say
+# why under `changes`. Evidence recorded under another version is never pooled with this one.
+schema: economics-methodology/v1
+version: 1
+title: Token economics, measured
+question: "For the same task, from the same repository state, with the same model, the same tools and the same acceptance tests: how many tokens does a coding session consume with Majordomus installed and without it?"
+unit: tokens per successfully completed task
+primary_metric: effective_token_reduction
+classes:
+  - id: observed
+    meaning: "Returned by the provider or its harness at run time and recorded unmodified."
+  - id: counted
+    meaning: "Computed deterministically from bytes on disk with a named, pinned tokenizer."
+  - id: derived
+    meaning: "Arithmetic over observed or counted values. It is never stronger than its weakest input."
+  - id: estimated
+    meaning: "A number standing in for one nobody measured. Never compared, never published as a result."
+  - id: counterfactual
+    meaning: "What a mechanism would have avoided, modelled rather than observed. Never presented as a saving."
+variants:
+  - id: baseline
+    role: control
+    title: Without Majordomus
+    description: "The fixture repository as a competent team keeps it: a README, a short CLAUDE.md pointing at the conventions, the conventions and decisions in docs/, a green test suite. The session runs Claude Code headless with the same model, the same built-in tools and permissions, no MCP server, no user settings, no skills."
+    excludes: [the .ai layer, generated provider bootstraps, Claude Code hooks, session briefing, handovers, peer board, MCP server]
+  - id: majordomus
+    role: treatment
+    title: With Majordomus as a user installs it
+    description: "The same fixture after `majordomus init`, `majordomus update` and `majordomus capture install --provider claude-code`, committed: the .ai layer, the Majordomus bootstrap added to the fixture's own CLAUDE.md as a generated region (the policy's region mode, which is how a repository with instruction files of its own adopts it) and generated AGENTS.md and GEMINI.md, and the SessionStart, UserPromptSubmit, SessionEnd and PreCompact hooks that brief each session and record its boundaries. Everything else is identical to the control."
+    excludes: [the MCP server, git pre-commit and pre-push hooks]
+success:
+  - id: visible_tests
+    meaning: "The fixture's own test suite passes, run with the task's verify command after the last session."
+  - id: acceptance_tests
+    meaning: "The task's hidden acceptance tests, copied in only after the last session, pass. The agent never sees them."
+  - id: tests_kept
+    meaning: "No test file the fixture started with was deleted."
+pairing:
+  key: [suite, task, repetition]
+  comparable: [methodology version, requested model, fixture digest, harness version, majordomus revision]
+  valid: "Both runs succeeded and both report provider usage. A pair where either run failed is reported as invalid with the side that failed, never dropped silently and never averaged."
+statistics:
+  per_pair: "reduction = 1 - treatment / control on total tokens; a negative value is Majordomus costing more and is reported as it is."
+  location: median of per-pair reductions
+  interval: bootstrap percentile interval of the median, resampling pairs
+  confidence_bp: 9500
+  resamples: 10000
+  seed: 20260924
+  min_pairs_for_interval: 5
+publication:
+  min_valid_pairs: 30
+  min_categories: 4
+  min_pairs_per_category: 5
+  min_repetitions: 3
+  min_valid_pair_rate_bp: 8000
+  max_interval_width_bp: 2000
+  require_current: true
+outliers:
+  rule: "No run is excluded. A run may be excluded only by naming it here with a reason, and every aggregate is then reported both with and without it."
+  excluded: []
+hypotheses:
+  - id: long-running-work
+    statement: "Long-running agent development work consumes 30 to 70 percent fewer tokens with Majordomus, centred near half."
+    status: untested
+  - id: short-tasks
+    statement: "Short isolated tasks gain less and may cost more, because the bootstrap and briefing are paid on every session."
+    status: untested
+  - id: continuity
+    statement: "Work that spans sessions gains the most, because a handover replaces rediscovery."
+    status: untested
+changes:
+  - version: 1
+    why: "The first methodology."
+claims:
+  - claim: context-selection-counted
+    metric: context_reduction_ratio
+    requires: measured
+  - claim: token-savings-measured
+    metric: effective_token_reduction
+    requires: verified

@@ -123,6 +123,11 @@ pub enum Target {
     /// into the crate, the mark the Cockpit's shell inlines, the copies of the brand every
     /// surface serves, the site's dataset, and `docs/generated/design.{json,yaml,md}`.
     Design,
+    /// `docs/generated/economics.{json,yaml,md}`: the token-economics summary and the
+    /// human-readable benchmark report, computed from the committed run records by
+    /// [`crate::economics::summarize_tracked`] — the numbers the site publishes, never
+    /// typed, and never a record someone ran locally without committing it.
+    Economics,
 }
 
 impl Target {
@@ -143,6 +148,7 @@ impl Target {
         Target::Distribution,
         Target::Graph,
         Target::Deployment,
+        Target::Economics,
         Target::Manifest,
     ];
 
@@ -178,6 +184,7 @@ impl Target {
             Target::Deployment => "deployment",
             Target::Graph => "graph",
             Target::Design => "design",
+            Target::Economics => "economics",
         }
     }
 }
@@ -201,6 +208,9 @@ pub enum ArtifactFormat {
 
 /// The schema of `web.json`.
 pub const WEB_SCHEMA: &str = "majordomus/web-topology/v1";
+
+/// The schema of `economics.json`: the token-economics summary.
+pub const ECONOMICS_SCHEMA: &str = "majordomus/economics-summary/v1";
 
 /// The schema id of `docs/generated/providers.{json,yaml}`: every provider the distribution
 /// ships, as `share/providers.yaml` and the repository's policy describe it.
@@ -628,6 +638,7 @@ pub fn artifacts(
             | Target::Deployment
             | Target::Graph
             | Target::Design
+            | Target::Economics
             | Target::Manifest => {}
         }
     }
@@ -1083,6 +1094,26 @@ pub fn context_artifacts(
             &providers_markdown(&value),
         ));
         out.extend(Document::new("providers", PROVIDERS_SCHEMA, source, value).artifacts(version));
+    }
+    if targets.contains(&Target::Economics) {
+        let source = "the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics";
+        // the tracked records only: two checkouts of one commit must generate the same
+        // bytes, whatever either has recorded locally and not committed
+        let summary = crate::economics::summarize_tracked(
+            std::path::Path::new(&ctx.index.repository.root),
+            &Default::default(),
+        );
+        out.push(Artifact::markdown(
+            format!("{OUT_DIR}/economics.md"),
+            "economics",
+            source,
+            version,
+            &crate::economics::report::markdown(&summary),
+        ));
+        let value = serde_json::to_value(&summary).map_err(|e| Error::Protocol {
+            reason: format!("the economics summary does not serialise: {e}"),
+        })?;
+        out.extend(Document::new("economics", ECONOMICS_SCHEMA, source, value).artifacts(version));
     }
     if targets.contains(&Target::Graph) {
         out.push(Artifact::verbatim(

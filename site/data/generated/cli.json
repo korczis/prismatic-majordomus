@@ -154,6 +154,12 @@
           "command": "majordomus rules",
           "name": "rules",
           "route": "/docs/cli/rules/"
+        },
+        {
+          "about": "Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim",
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
         }
       ],
       "command": "majordomus",
@@ -2014,6 +2020,10 @@
             {
               "help": "The design system's projections, from share/design/tokens.yaml: the stylesheets both Tailwind builds import, the tokens and the declaration compiled into the crate, every copy of the brand, site/data/registry/design.json and docs/generated/design.*",
               "name": "design"
+            },
+            {
+              "help": "docs/generated/economics.{json,yaml,md}: the token-economics evidence and its report, computed from the recorded benchmark runs by the one calculator",
+              "name": "economics"
             }
           ],
           "required": false,
@@ -20681,13 +20691,1191 @@
       ],
       "route": "/docs/cli/rules/proves/",
       "usage": "majordomus rules proves [OPTIONS] <ID>"
+    },
+    {
+      "about": "Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [],
+      "children": [
+        {
+          "about": "Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows",
+          "command": "majordomus economics summary",
+          "name": "summary",
+          "route": "/docs/cli/economics/summary/"
+        },
+        {
+          "about": "One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it",
+          "command": "majordomus economics explain",
+          "name": "explain",
+          "route": "/docs/cli/economics/explain/"
+        },
+        {
+          "about": "The recorded runs every metric is computed from",
+          "command": "majordomus economics runs",
+          "name": "runs",
+          "route": "/docs/cli/economics/runs/"
+        },
+        {
+          "about": "Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand",
+          "command": "majordomus economics check",
+          "name": "check",
+          "route": "/docs/cli/economics/check/"
+        },
+        {
+          "about": "Run a deterministic suite (no model is called) and record its measurement",
+          "command": "majordomus economics measure",
+          "name": "measure",
+          "route": "/docs/cli/economics/measure/"
+        },
+        {
+          "about": "Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage",
+          "command": "majordomus economics run",
+          "name": "run",
+          "route": "/docs/cli/economics/run/"
+        },
+        {
+          "about": "Prove every task's hidden tests fail on its starting state and pass on its reference solution. No model is called",
+          "command": "majordomus economics references",
+          "name": "references",
+          "route": "/docs/cli/economics/references/"
+        }
+      ],
+      "command": "majordomus economics",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "economics",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "economics"
+      ],
+      "route": "/docs/cli/economics/",
+      "usage": "majordomus economics <COMMAND>"
+    },
+    {
+      "about": "Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this suite",
+          "long": "suite",
+          "name": "suite",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SUITE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only tasks of this category",
+          "long": "category",
+          "name": "category",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CATEGORY"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this task",
+          "long": "task",
+          "name": "task",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TASK"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only runs that asked for this model",
+          "long": "model",
+          "name": "model",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MODEL"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics summary",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "summary"
+          ],
+          "command": "majordomus economics summary",
+          "description": "Every metric with its measurement class, sample size and interval, the state of each suite's evidence, and the one statement the publication rule allows. In a repository that declares no benchmark methodology — which is where the examples run — the statement is that no verified total-token-savings claim is available, and no number is printed.",
+          "expectation": "exits 0; prints No verified total-token-savings claim",
+          "id": "economics-summary",
+          "setup": [],
+          "title": "What the evidence allows to be said about tokens"
+        },
+        {
+          "argv": [
+            "economics",
+            "summary",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus economics summary --format json",
+          "description": "The typed summary: the verdict, the metrics, the pairs and the segments, exactly as GET /api/v1/economics and the majordomus_economics tool return them.",
+          "expectation": "exits 0; prints one JSON document carrying /present, /verdict/statement, /metrics",
+          "id": "economics-summary-json",
+          "setup": [],
+          "title": "The same answer as the API and MCP give it"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "summary",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "summary"
+      ],
+      "route": "/docs/cli/economics/summary/",
+      "usage": "majordomus economics summary [OPTIONS]"
+    },
+    {
+      "about": "One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The metric, e.g. effective_token_reduction",
+          "name": "metric",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "METRIC"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "explain",
+            "effective_token_reduction"
+          ],
+          "command": "majordomus economics explain effective_token_reduction",
+          "description": "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. A metric that does not exist is refused with the list of those that do: exit 12 where no methodology is declared.",
+          "expectation": "exits 12",
+          "id": "economics-explain",
+          "setup": [],
+          "title": "Everything one metric rests on"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "explain"
+      ],
+      "route": "/docs/cli/economics/explain/",
+      "usage": "majordomus economics explain [OPTIONS] <METRIC>"
+    },
+    {
+      "about": "The recorded runs every metric is computed from",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this suite",
+          "long": "suite",
+          "name": "suite",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SUITE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this task",
+          "long": "task",
+          "name": "task",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TASK"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this variant",
+          "long": "variant",
+          "name": "variant",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "VARIANT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics runs",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "runs",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus economics runs --format json",
+          "description": "Every recorded run with its gate verdicts and the totals derived from its provider usage. None where nothing was run.",
+          "expectation": "exits 0; prints one JSON document carrying /count, /runs",
+          "id": "economics-runs-json",
+          "setup": [],
+          "title": "The raw facts behind every number"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "runs",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "runs"
+      ],
+      "route": "/docs/cli/economics/runs/",
+      "usage": "majordomus economics runs [OPTIONS]"
+    },
+    {
+      "about": "Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": false,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics check",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "check"
+          ],
+          "command": "majordomus economics check",
+          "description": "Scans the hand-written prose and claim sentences for a quantity next to the economics vocabulary, and checks every claim bound to a metric. Exits 10 naming each finding; exits 0 here, where nothing claims anything.",
+          "expectation": "exits 0; prints economics check:, 0 finding(s)",
+          "id": "economics-check",
+          "setup": [],
+          "title": "Refuse a savings claim nothing measured"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "check",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "check"
+      ],
+      "route": "/docs/cli/economics/check/",
+      "usage": "majordomus economics check [OPTIONS]"
+    },
+    {
+      "about": "Run a deterministic suite (no model is called) and record its measurement",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "context"
+          ],
+          "global": false,
+          "help": "The deterministic suite to measure",
+          "long": "suite",
+          "name": "suite",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SUITE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Measure and print, write nothing",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics measure",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "measure",
+            "--dry-run"
+          ],
+          "command": "majordomus economics measure --dry-run",
+          "description": "Runs the deterministic context suite: no model is called; every seed's candidates and selection are counted with a pinned tokenizer. Refused with exit 12 where no methodology is declared.",
+          "expectation": "exits 12",
+          "id": "economics-measure-dry-run",
+          "setup": [],
+          "title": "Count what the context compiler selects"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "measure",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "measure"
+      ],
+      "route": "/docs/cli/economics/measure/",
+      "usage": "majordomus economics measure [OPTIONS]"
+    },
+    {
+      "about": "Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "pilot"
+          ],
+          "global": false,
+          "help": "The live suite to run",
+          "long": "suite",
+          "name": "suite",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SUITE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this task (repeatable)",
+          "long": "task",
+          "name": "tasks",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TASKS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Only this repetition (repeatable)",
+          "long": "repetition",
+          "name": "repetitions",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REPETITIONS"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Where transcripts go; never inside the repository. Workspaces are fresh directories of the system temporary directory, removed when their run ends",
+          "long": "work-dir",
+          "name": "work_dir",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "claude"
+          ],
+          "global": false,
+          "help": "The harness executable",
+          "long": "harness",
+          "name": "harness",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "2"
+          ],
+          "global": false,
+          "help": "Runs in flight at once",
+          "long": "parallel",
+          "name": "parallel",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PARALLEL"
+        },
+        {
+          "defaults": [
+            "1800"
+          ],
+          "global": false,
+          "help": "Per-session wall-clock limit, in seconds",
+          "long": "session-timeout",
+          "name": "session_timeout",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "SESSION_TIMEOUT"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Refused: a recorded run is evidence and is never overwritten; exclude it in the methodology with a reason and record another repetition",
+          "long": "force",
+          "name": "force",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "FORCE"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Prepare every workspace and print the harness command; run nothing, spend nothing",
+          "long": "dry-run",
+          "name": "dry_run",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "DRY_RUN"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics run",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "run",
+            "--suite",
+            "pilot",
+            "--dry-run"
+          ],
+          "command": "majordomus economics run --suite pilot --dry-run",
+          "description": "Builds every control and treatment workspace and prints the harness command each session would run; nothing is sent to a provider. Refused with exit 12 where no methodology is declared.",
+          "expectation": "exits 12",
+          "id": "economics-run-dry-run",
+          "setup": [],
+          "title": "Prepare a live suite without spending anything"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "run",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "run"
+      ],
+      "route": "/docs/cli/economics/run/",
+      "usage": "majordomus economics run [OPTIONS]"
+    },
+    {
+      "about": "Prove every task's hidden tests fail on its starting state and pass on its reference solution. No model is called",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus economics",
+          "name": "economics",
+          "route": "/docs/cli/economics/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Where the workspaces go",
+          "long": "work-dir",
+          "name": "work_dir",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        }
+      ],
+      "children": [],
+      "command": "majordomus economics references",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "economics",
+            "references"
+          ],
+          "command": "majordomus economics references",
+          "description": "Applies each task's reference solution to its fixture: the hidden tests must fail on the starting state and pass on the reference. Refused with exit 12 where no methodology is declared.",
+          "expectation": "exits 12",
+          "id": "economics-references",
+          "setup": [],
+          "title": "Prove every task can be failed and can be passed"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "references",
+      "parent_route": "/docs/cli/economics/",
+      "path": [
+        "majordomus",
+        "economics",
+        "references"
+      ],
+      "route": "/docs/cli/economics/references/",
+      "usage": "majordomus economics references [OPTIONS]"
     }
   ],
   "counts": {
-    "arguments": 906,
-    "commands": 127,
-    "examples": 134,
-    "runnable": 116
+    "arguments": 958,
+    "commands": 135,
+    "examples": 142,
+    "runnable": 123
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.8.0",

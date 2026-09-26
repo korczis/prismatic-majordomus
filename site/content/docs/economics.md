@@ -8,105 +8,160 @@ source = "docs/ECONOMICS.md"
 
 {% raw %}
 
-Short, because v0.1 measures nothing and says so.
+Majordomus does not state a token-saving percentage it has not measured, and this document
+contains none. The numbers are in [`generated/economics.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/economics.md), written
+by `majordomus generate economics` from recorded runs, and on the site's economics page, which
+renders the same generated data. Typed into prose, a number about tokens, context or cost is
+refused by `majordomus economics check`.
 
-## The claim we refuse to make
+## The question
 
-Majordomus does not reduce token spend by any percentage. No benchmark exists, so no
-number appears anywhere in this repository. Every routing document studied while
-designing this tool carried figures like "35 % better" with no measurement behind
-them, and every one of those figures was later found to be invented.
+For the same task, from the same repository state, with the same model, the same tools and
+the same acceptance tests: how many tokens does a coding session consume with Majordomus
+installed and without it?
 
-## What v0.1 controls without measuring
+The unit is tokens per **successfully completed** task. A run that saves tokens by failing is
+not a saving, so a pair of runs counts only when both passed every success gate.
 
-The policy and profiles fix four things that, in the environments studied, were the
-main sources of waste:
+## What is measured, and how each number is labelled
 
-<div class="overflow-x-auto" tabindex="0">
-
-| Lever | Waste it addresses | How v0.1 handles it |
-|---|---|---|
-| always-loaded budget | every session re-reading a 1,000-line contract | hard line cap, `doctor` fails over it |
-| profile effort | maximum reasoning as the default | effort is a profile field; escalation is a recorded event, not a habit |
-| profile verbosity | narrating every intermediate step | verbosity and presentation are profile fields, separate from effort |
-| scope and finish contract | duplicated and abandoned work | one task per checkout, overlap reported, `finish` refuses unverified completion |
-
-</div>
-
-
-These are declared controls. Their effect is not measured by v0.1.
-
-## Where the cost actually is
-
-Token cost per task is a sum, and most optimisation effort goes to its smallest term:
-
-```
-total tokens per task
-  = context loaded per session
-  + the same context loaded again in the next session
-  + reasoning
-  + output
-  + retries and rework
-  + a second worker doing the same investigation
-```
-
-"Write shorter answers" trims the fourth term. A worker that first read a repository's
-worth of context it did not need has already spent more than every answer it will write.
-Majordomus targets the terms in this order, by expected size: context per session (profile
-toggles, the always-loaded budget), repeated context (durable state and handovers instead
-of transcripts), retries (a finish contract that refuses before a human has to), duplicated
-parallel work (scope claims and overlap reports), reasoning profile discipline, and output
-verbosity last.
-
-No percentage is attached to any of this. None has been measured, so none is claimed; the
-sections above and below say what measuring would take. A team that already runs short
-sessions, selects context deliberately, hands over well and scopes work explicitly will
-save little, and for them the value is standardisation, reproducibility and auditability
-rather than cost.
-
-## What can be measured today, from the ledger alone
-
-Without any provider telemetry, `state/ledger.jsonl` already yields per task:
+Every number the subsystem produces carries one of five classes, and a number computed from
+several inputs is never stronger than the weakest of them:
 
 <div class="overflow-x-auto" tabindex="0">
 
-| metric | from |
+| class | meaning |
 |---|---|
-| sessions per task | `task.started`, `task.handed_over`, `task.finished` sharing a `task_id` |
-| wall-clock time | `started_at` on the record to the `task.finished` timestamp |
-| handover overhead | handover files naming the task |
-| workers involved | distinct `owner` values across a task's records |
-| verification runs | the `verify` object on `task.finished` |
+| observed | returned by the provider or its harness at run time and recorded unmodified |
+| counted | computed deterministically from bytes on disk with a named, pinned tokenizer |
+| derived | arithmetic over observed or counted values |
+| estimated | a number standing in for one nobody measured; never compared, never published |
+| counterfactual | what a mechanism would have avoided, modelled rather than observed; never a saving |
 
 </div>
 
 
-Not yet: refused finishes (a refusal writes nothing, by contract; recording it is a
-contract change under review), and anything counted in tokens.
+Two measurements exist, and they answer different questions:
 
-## What would have to be true to measure
+- **Total-token reduction** (`effective_token_reduction`, derived from observed usage).
+  Matched live runs of a task corpus, control against treatment. This is the only kind of
+  number that could support a claim about what Majordomus saves.
+- **Context selection** (`context_reduction_ratio`, derived from counted tokens). For every
+  issue of this repository's plan, what the context compiler selected out of what it judged
+  relevant. No model is involved. It is *not* total savings, and every surface says so.
 
-The unit that matters is **cost per accepted outcome**, not tokens. To compute it,
-each `task.finished` ledger record would need, from the provider:
+## Control and treatment
 
-- input, output, and cached tokens for the session
-- model and effort actually used
-- elapsed time and tool-call count
+The canonical definitions are in
+[`.ai/repo/benchmarks/economics/methodology.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/benchmarks/economics/methodology.yaml).
 
-and, from the person: whether the outcome was accepted, and whether rework followed.
+- **Control, without Majordomus.** The fixture repository as a competent team keeps it: a
+  README, a short `CLAUDE.md` pointing at the conventions, conventions and decision records in
+  `docs/`, a green test suite. Claude Code runs headless with the model the suite names, its
+  built-in tools and permissions, and no MCP server, user settings or skills.
+- **Treatment, with Majordomus as a user installs it.** The same fixture after
+  `majordomus init`, `majordomus update` (the bootstrap added to the fixture's own `CLAUDE.md`
+  as a generated region) and `majordomus capture install --provider claude-code`, committed.
+  Everything else is identical. The MCP server and the git hooks are deliberately excluded
+  from this first treatment.
 
-The ledger already records the task, profile, outcome, contract result, and
-verification command with its exit code and duration. The provider-side fields are the
-missing half. v0.3 in the roadmap adds them only for providers that expose them
-honestly; any `estimated_` field stays out of enforcement and out of comparisons.
+Both arms are isolated from the operator's own configuration in the same way, so neither
+inherits instructions, connectors or memory the other lacks.
 
-## The comparison this would enable
+## The task corpus
 
-The unit is tokens, cost and time **per accepted outcome**, never per prompt: a debugging
-task run under the right profile may spend more on one prompt and less on the task, because
-it needed two sessions instead of three and no retry. Once measured, the question is not
-"which model uses fewer tokens" but which profile produces the best accepted-outcome rate
-per unit cost for a task class. That
-comparison, across a team's real work, is the durable value. Nothing in v0.1 pretends
-to have it.
+Seven tasks in [`.ai/repo/benchmarks/economics/tasks/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/benchmarks/economics/tasks),
+each standing for a development pattern this repository sees: a defect whose fix is written
+down in a decision record, a small additive feature, a change across four modules and a
+persisted format, a suite broken by a rename where a convention decides the right fix, a
+versioned storage change, a user-reported regression, and a feature built across two
+sessions where the second starts from what the first left.
+
+Each task names its fixture, an optional setup patch, a verify command, **hidden** acceptance
+tests copied in only after the last session, and a reference solution.
+`majordomus economics references` proves, with no model involved, that every hidden test fails
+on the task's starting state and passes on its reference — so a failed run says something
+about the agent, not about the test.
+
+## From runs to a statement
+
+1. `majordomus economics run --suite pilot` runs every task in both arms and records one file
+   per run: the provider's usage per request and per model, as reported (message by message,
+   deduplicated), the harness's own cost projection, tool calls, and the verdict of each
+   success gate. Nothing a session said or read is recorded. A recorded run is evidence and
+   is never written over: a run already recorded is skipped, and `--force` is refused. A run
+   that should not count is excluded in the methodology with a reason, and another
+   repetition is recorded in its place.
+2. The calculator pairs control and treatment runs of the same task and repetition, checks
+   that they are comparable (suite version, the model requested and the models that
+   answered, fixture, harness version, configuration, revision, session count) and valid
+   (both succeeded, both report usage), and names the reason for every pair that is not.
+3. Per valid pair: `reduction = 1 - treatment / control`. Every per-pair and aggregate token
+   figure on every surface is this reduction: positive means Majordomus used fewer tokens,
+   and a negative reduction means Majordomus used more tokens. It is reported as it is, and
+   no surface flips its sign.
+4. Across pairs: the distribution (median, quartiles, 95th percentile, mean, standard
+   deviation) and a percentile bootstrap interval of the median with a recorded seed, and the
+   same by task category, session count and complexity. The repetitions of one task are not
+   independent, so the interval resamples whole tasks rather than single pairs; each
+   interval names the method it was computed with.
+5. The verdict: a quantitative total-token claim is allowed only when every threshold of the
+   methodology's publication rule holds — enough valid pairs, enough task categories with
+   enough pairs each, enough repetitions of every task in each arm, a high enough valid-pair
+   rate, a narrow enough interval, current evidence, and no run from a dirty tree. The rule
+   is evaluated for the primary metric over all the evidence, so only that metric, unfiltered,
+   can be verified. Below that, every surface states that no verified total-token-savings
+   claim is available, beside the preliminary observation labelled as preliminary.
+
+No run is excluded unless the methodology names it with a reason, and the primary metric is
+then shown with and without it (`effective_token_reduction.including_excluded`).
+
+## When evidence goes stale
+
+Every record carries a digest of the files its suite depends on: the methodology, the corpus,
+the fixture, and the parts of Majordomus that shape what a treatment session is given (the
+skeleton `init` writes, the provider templates, the briefing and handover code). When any of
+them changes, the evidence is reported as **stale**, and a claim bound to it loses its
+guarantee until the suite is run again. Evidence recorded under another methodology version is
+**incompatible** and never pooled.
+
+## Reproducing it
+
+```bash
+majordomus economics references         # every task can be failed and passed; no model
+majordomus economics measure            # the context suite; deterministic, no model
+majordomus economics run --suite pilot  # live sessions; needs a Claude Code login, spends usage
+majordomus economics summary            # every figure, recomputed from the recorded runs
+majordomus economics explain effective_token_reduction
+majordomus economics check              # refuse an unsupported claim
+```
+
+The same answers are served at `GET /api/v1/economics`, `/api/v1/economics/explain`,
+`/api/v1/economics/runs` and `/api/v1/economics/check`, by the MCP tools
+`majordomus_economics*`, and on the Cockpit's Economics page. All of them are projections of
+one calculator, `apps/majordomus-cli/src/economics`.
+
+## What this does not measure
+
+- A large repository. The fixture is small by design, so that verifying a run takes seconds;
+  context selection matters most where there is much to select from, and that is not measured.
+- Other harnesses and models than the ones a suite names. Provider counts are never compared
+  across providers.
+- The MCP server, mesh coordination between parallel workers, and the finish contract's effect
+  on rework. Each would be its own treatment.
+- Money. Cost is the harness's own projection at run time, not a bill, and historical runs are
+  never re-priced.
+- A corrected treatment. The treatment is Majordomus as a user who installs only the shell
+  tool gets it, and its generated bootstrap advises commands that installation cannot run
+  (`majordomus worktree`). What a session spends on them is part of what that user gets, and
+  it is measured as such, not corrected for.
+- The corpus as it is now. The context suite counts the corpus at the revision it recorded,
+  not at the current one; a later change to the plan or to the files it selects from moves
+  nothing until the suite is measured again.
+
+## The hypotheses
+
+The benchmark was built to test hypotheses recorded in the methodology before any evidence
+existed. They are hypotheses, and the generated report lists them as such beside whatever the
+evidence shows.
 {% endraw %}

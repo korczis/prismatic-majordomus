@@ -1,0 +1,13 @@
+schema: economics-task/v1
+id: currency-czk
+title: "Add a currency with its own display format"
+category: small-feature
+complexity: small
+source: "A small additive feature confined to one table and its formatting."
+fixture: test/fixtures/economics/ledgerlite
+acceptance: test/fixtures/economics/acceptance/currency-czk
+reference: test/fixtures/economics/reference/currency-czk.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md
