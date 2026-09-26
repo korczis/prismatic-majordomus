@@ -21,6 +21,10 @@ command -v python3 >/dev/null || { echo "    skip: no python3, which the fixture
 
 R="$T/repo"
 fixture_repo "$R" .ai/repo/benchmarks/economics test/fixtures/economics >/dev/null
+# the declarations without the evidence this repository recorded under them: every record
+# below is written by this case, so "no evidence yet" and "a dry run wrote nothing" hold
+# whatever the repository's own runs/ holds
+rm -rf "$R/.ai/repo/benchmarks/economics/runs"
 git -C "$R" init -q .
 git -C "$R" config user.email t@example.com
 git -C "$R" config user.name t
