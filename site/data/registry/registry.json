@@ -3,26 +3,26 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "ec196ea85ab92f5775a1d597590250e6223057af4778358031d4f686470e5515",
+    "fingerprint": "e7a8f8e71f0da051cbfad6ecf7312c41f1e35bf1eea40f570231dcc71432ca19",
     "summary": {
-      "total": 1489,
+      "total": 1490,
       "builtin": 115,
-      "declarative": 1374,
+      "declarative": 1375,
       "by_kind": {
         "command": 7,
         "query": 108,
-        "resource": 1374
+        "resource": 1375
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1382
+        "implemented": 1383
       },
       "mcp_tools": 112,
-      "mcp_resources": 1415,
+      "mcp_resources": 1416,
       "http_routes": 114,
       "cli_commands": 54,
       "modules": 67,
@@ -12679,7 +12679,7 @@
         "module": "entity",
         "kind": "query",
         "title": "Read one entity",
-        "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+        "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page as the repository's site/data/publication.toml derives it (null when the repository declares none).",
         "input": {
           "name": "EntityInput",
           "schema": {
@@ -12791,6 +12791,18 @@
               "evidence": {
                 "$ref": "#/$defs/EntityEvidence",
                 "description": "What can be said about its enforcement without running anything."
+              },
+              "documentation": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/EntityDocumentation"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Its public documentation page, derived from the repository's publication declaration\n(`site/data/publication.toml`) and the site's `base_url` by the same function the site\ngenerator writes the page with. Null when the repository declares no publication or\ndoes not declare this kind; a kind declared as not published carries the reason.",
+                "default": null
               }
             },
             "required": [
@@ -12809,7 +12821,7 @@
               "surfaces",
               "evidence"
             ],
-            "description": "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \"uri\": \"majordomus://adr/adr-0056\",\n    \"id\": \"adr.adr-0056\",\n    \"kind\": \"adr\",\n    \"identity\": \"adr-0056\",\n    \"slug\": \"adr-0056\",\n    \"route\": \"/cockpit/objects/adr/adr-0056\",\n    \"kind_route\": \"/cockpit/objects/adr\",\n    \"title\": \"Every object of the layer has a derived address\",\n    \"provenance\": { \"path\": \"x.md\", \"directory\": \"x\", \"source_class\": \"adr\", \"bytes\": 0 },\n    \"metadata\": {},\n    \"media_type\": \"text/markdown\",\n    \"content\": \"\",\n    \"relations\": [],\n    \"surfaces\": [],\n    \"evidence\": { \"state\": \"unclaimed\", \"meaning\": \"nothing named\" },\n}))\n.unwrap();\n\nassert_eq!(view.route, \"/cockpit/objects/adr/adr-0056\");\n// the kind's index is the entity's route with the last segment removed\nassert!(view.route.starts_with(&view.kind_route));\n```",
+            "description": "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \"uri\": \"majordomus://adr/adr-0056\",\n    \"id\": \"adr.adr-0056\",\n    \"kind\": \"adr\",\n    \"identity\": \"adr-0056\",\n    \"slug\": \"adr-0056\",\n    \"route\": \"/cockpit/objects/adr/adr-0056\",\n    \"kind_route\": \"/cockpit/objects/adr\",\n    \"title\": \"Every object of the layer has a derived address\",\n    \"provenance\": { \"path\": \"x.md\", \"directory\": \"x\", \"source_class\": \"adr\", \"bytes\": 0 },\n    \"metadata\": {},\n    \"media_type\": \"text/markdown\",\n    \"content\": \"\",\n    \"relations\": [],\n    \"surfaces\": [],\n    \"evidence\": { \"state\": \"unclaimed\", \"meaning\": \"nothing named\" },\n    \"documentation\": {\n        \"projection\": \"entity\",\n        \"route\": \"/adrs/adr-0056/\",\n        \"url\": \"https://majordomus.dev/adrs/adr-0056/\",\n        \"declared_in\": \"site/data/publication.toml\",\n    },\n}))\n.unwrap();\n\nassert_eq!(view.route, \"/cockpit/objects/adr/adr-0056\");\n// the Cockpit route is the object's; the public page is the site's, and both are named\nlet public = view.documentation.as_ref().and_then(|d| d.url.as_deref());\nassert_eq!(public, Some(\"https://majordomus.dev/adrs/adr-0056/\"));\n// the kind's index is the entity's route with the last segment removed\nassert!(view.route.starts_with(&view.kind_route));\n```",
             "title": "EntityView",
             "$defs": {
               "ObjectProvenance": {
@@ -13054,6 +13066,45 @@
                   "address"
                 ],
                 "description": "Where a fuller answer about this entity's enforcement lives.\n\nA pointer, never an answer. This module states what it can see in the tree and then\nnames the capability that can say more, so that an entity page does not grow a second,\nweaker implementation of proof beside the one that already exists.\n\n```\nuse majordomus_cli::capability::builtin::entity::ProofRef;\n\nlet p = ProofRef {\n    capability: \"rule.proves\".into(),\n    title: \"What proves a rule\".into(),\n    address: \"majordomus rule proves project.entities-are-routable@1\".into(),\n};\nassert_eq!(\n    serde_json::to_value(&p).unwrap()[\"capability\"],\n    serde_json::json!(\"rule.proves\")\n);\n```"
+              },
+              "EntityDocumentation": {
+                "type": "object",
+                "properties": {
+                  "projection": {
+                    "type": "string",
+                    "description": "The kind's projection: `entity`, `section` or `none`."
+                  },
+                  "route": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The public route of the page, site-relative: the entity's own page for an `entity`\nkind, the kind's section for a `section` kind, absent for `none`."
+                  },
+                  "url": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The route under the site's `base_url`, when the site configuration names one."
+                  },
+                  "reason": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "Why the kind is not published, for `none`."
+                  },
+                  "declared_in": {
+                    "type": "string",
+                    "description": "The file the decision is read from."
+                  }
+                },
+                "required": [
+                  "projection",
+                  "declared_in"
+                ],
+                "description": "The public documentation page of one entity, as its kind's publication decision derives\nit. Every surface that shows an entity carries this value and renders it; none of them\nderives a public address of its own.\n\n```\nuse majordomus_cli::entity::Documentation;\n\nlet d = Documentation {\n    projection: \"entity\".into(),\n    route: Some(\"/adrs/adr-0056/\".into()),\n    url: Some(\"https://majordomus.dev/adrs/adr-0056/\".into()),\n    reason: None,\n    declared_in: \"site/data/publication.toml\".into(),\n};\nlet wire = serde_json::to_value(&d).unwrap();\nassert_eq!(wire[\"url\"], serde_json::json!(\"https://majordomus.dev/adrs/adr-0056/\"));\n// a field that does not apply is absent, not an empty string\nassert!(wire.get(\"reason\").is_none());\n```"
               }
             }
           }
@@ -41464,7 +41515,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 225,
+        "capabilities": 226,
         "capability_ids": []
       },
       {
@@ -41544,7 +41595,7 @@
     ]
   },
   "index": {
-    "fingerprint": "4b332633c6f0e701e300d6832c5a94d5b53dbbfeedb7ceed45136fcbb57548db",
+    "fingerprint": "d756860e4f210a96040baacbc0cff42da8b42d46fbf0b47806c7847d12ddcc01",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -41593,7 +41644,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 225,
+      "test": 226,
       "use-case": 46,
       "workspace": 1
     },
@@ -44835,7 +44886,7 @@
         "description": "The protocol of the layer: what it holds, who owns which half, how it is discovered, and what outranks what.",
         "path": ".ai/README.md",
         "source_class": "context",
-        "bytes": 9515
+        "bytes": 9599
       },
       {
         "uri": "majordomus://context/ai.repo",
@@ -45419,7 +45470,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 38112
+        "bytes": 38655
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -45653,7 +45704,7 @@
         "title": "Installing Majordomus",
         "path": "docs/INSTALL.md",
         "source_class": "document",
-        "bytes": 9728
+        "bytes": 9729
       },
       {
         "uri": "majordomus://document/docs/MCP.md",
@@ -45662,7 +45713,7 @@
         "title": "MCP surface — `majordomus mcp`",
         "path": "docs/MCP.md",
         "source_class": "document",
-        "bytes": 42601
+        "bytes": 42932
       },
       {
         "uri": "majordomus://document/docs/MESH.md",
@@ -47833,7 +47884,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 7451
+        "bytes": 7452
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -55432,6 +55483,14 @@
         "bytes": 8267
       },
       {
+        "uri": "majordomus://test/test/cases/531_an_entity_names_its_public_page.sh",
+        "kind": "test",
+        "identity": "test/cases/531_an_entity_names_its_public_page.sh",
+        "path": "test/cases/531_an_entity_names_its_public_page.sh",
+        "source_class": "case",
+        "bytes": 6713
+      },
+      {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
         "kind": "test",
         "identity": "test/cases/53_status_vocabulary.sh",
@@ -56783,7 +56842,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 225
+      "objects": 226
     },
     {
       "name": "use-case",
@@ -75033,7 +75092,7 @@
               {
                 "id": "entity-show-rule",
                 "title": "One entity at its own address",
-                "description": "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
+                "description": "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, what can be said about the executable artefacts it names, and its public documentation page (`documentation`, null here because this fixture has no site/data/publication.toml). The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
                 "argv": [
                   "entity",
                   "show",
@@ -75387,7 +75446,7 @@
         "name": "majordomus_entity",
         "id": "entity.show",
         "title": "Read one entity",
-        "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+        "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page as the repository's site/data/publication.toml derives it (null when the repository declares none).",
         "kind": "query",
         "read_only": true,
         "input": "EntityInput",

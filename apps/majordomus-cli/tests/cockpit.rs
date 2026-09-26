@@ -199,6 +199,45 @@ fn a_capability_the_repository_adds_reaches_every_cockpit_surface() {
 }
 
 #[test]
+fn an_entity_page_names_its_public_page_from_the_repository_declaration() {
+    // the fixture has no site: the entity says so rather than inventing an address
+    let f = Fixture::new();
+    let route = "/cockpit/objects/rule/project-alpha-1";
+    let uri = "majordomus://rule/project.alpha@1";
+    {
+        let s = Served::start(&f.root(), &[]);
+        let (status, page) = html(&s, route);
+        assert_eq!(status, 200);
+        assert!(page.contains("Not published"), "{page}");
+        let (_, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+        assert!(api["documentation"].is_null(), "{api}");
+    }
+
+    // declare the kind as published one page per object, and the same entity names it
+    f.write(
+        "site/data/publication.toml",
+        "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+    );
+    f.write(
+        "site/config.toml",
+        "base_url = \"https://example.invalid\"\n",
+    );
+    f.commit("publish rules");
+    let s = Served::start(&f.root(), &[]);
+    let public = "https://example.invalid/rules/project-alpha-1/";
+    let (status, page) = html(&s, route);
+    assert_eq!(status, 200);
+    assert!(page.contains("Published at"), "{page}");
+    assert!(
+        page.contains(&format!("href=\"{public}\"")),
+        "the page links the public page: {page}"
+    );
+    let (_, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+    assert_eq!(api["documentation"]["url"], public);
+    assert_eq!(api["documentation"]["route"], "/rules/project-alpha-1/");
+}
+
+#[test]
 fn the_runner_form_is_generated_from_the_input_schema() {
     let f = Fixture::new();
     let s = Served::start(&f.root(), &[]);

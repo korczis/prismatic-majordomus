@@ -265,6 +265,7 @@
     "schema-Edge": "docs/api/graph/",
     "schema-EdgeRule": "docs/api/devcontext/",
     "schema-EffectiveEntry": "docs/api/directories/",
+    "schema-EntityDocumentation": "docs/api/entity/",
     "schema-EntityEdge": "docs/api/entity/",
     "schema-EntityEvidence": "docs/api/entity/",
     "schema-EntityEvidenceState": "docs/api/entity/",
@@ -694,7 +695,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 114,
-    "schemas": 538,
+    "schemas": 539,
     "tags": 38
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -724,7 +725,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.9.0",
+  "generated_by": "majordomus-cli 0.10.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -733,7 +734,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "infrastructure": [
     {
@@ -1049,6 +1050,7 @@
     "Edge": "graph",
     "EdgeRule": "devcontext",
     "EffectiveEntry": "directories",
+    "EntityDocumentation": "entity",
     "EntityEdge": "entity",
     "EntityEvidence": "entity",
     "EntityEvidenceState": "entity",
@@ -10101,6 +10103,56 @@
       "variants": []
     },
     {
+      "description": "The public documentation page of one entity, as its kind's publication decision derives\nit. Every surface that shows an entity carries this value and renders it; none of them\nderives a public address of its own.\n\n```\nuse majordomus_cli::entity::Documentation;\n\nlet d = Documentation {\n    projection: \"entity\".into(),\n    route: Some(\"/adrs/adr-0056/\".into()),\n    url: Some(\"https://majordomus.dev/adrs/adr-0056/\".into()),\n    reason: None,\n    declared_in: \"site/data/publication.toml\".into(),\n};\nlet wire = serde_json::to_value(&d).unwrap();\nassert_eq!(wire[\"url\"], serde_json::json!(\"https://majordomus.dev/adrs/adr-0056/\"));\n// a field that does not apply is absent, not an empty string\nassert!(wire.get(\"reason\").is_none());\n```",
+      "home": "entity",
+      "is_enum": false,
+      "name": "EntityDocumentation",
+      "properties": [
+        {
+          "description": "The kind's projection: `entity`, `section` or `none`.",
+          "name": "projection",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The public route of the page, site-relative: the entity's own page for an `entity`\nkind, the kind's section for a `section` kind, absent for `none`.",
+          "name": "route",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The route under the site's `base_url`, when the site configuration names one.",
+          "name": "url",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Why the kind is not published, for `none`.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The file the decision is read from.",
+          "name": "declared_in",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "EntityView"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One edge, as an entity page reads it.\n\nEverything a reader needs about the other end is here — what to show, what kind of thing\nit is, and the address to send them to — so the page renders a relation without going\nback to the index for it. `route` is `None` exactly when `external` is true: a `file`, a\n`test` or a `command` is named by the layer and is not an object of it, so there is no\nentity page to link to and the template shows plain text instead of a dead link.\n\n```\nuse majordomus_cli::entity::{Direction, Edge};\nuse majordomus_cli::order::Ordered;\n\nlet edge = Edge {\n    direction: Direction::Incoming,\n    edge: \"depends_on\".into(),\n    field: \"depends_on\".into(),\n    uri: Some(\"majordomus://rule/project.x@1\".into()),\n    kind: \"rule\".into(),\n    label: \"project.x@1\".into(),\n    title: Some(\"A rule\".into()),\n    route: Some(\"/cockpit/objects/rule/project-x-1\".into()),\n    external: false,\n};\n\n// the relation is the group and the direction ranks inside it; see the `Ordered` impl\nlet key = edge.order_key();\nassert_eq!(key.group, Some(\"depends_on\"));\nassert_eq!(key.rank, Direction::Incoming as i64);\nassert_eq!(key.identity, \"majordomus://rule/project.x@1\");\n```",
       "home": "entity",
       "is_enum": false,
@@ -10329,7 +10381,7 @@
       "variants": []
     },
     {
-      "description": "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \"uri\": \"majordomus://adr/adr-0056\",\n    \"id\": \"adr.adr-0056\",\n    \"kind\": \"adr\",\n    \"identity\": \"adr-0056\",\n    \"slug\": \"adr-0056\",\n    \"route\": \"/cockpit/objects/adr/adr-0056\",\n    \"kind_route\": \"/cockpit/objects/adr\",\n    \"title\": \"Every object of the layer has a derived address\",\n    \"provenance\": { \"path\": \"x.md\", \"directory\": \"x\", \"source_class\": \"adr\", \"bytes\": 0 },\n    \"metadata\": {},\n    \"media_type\": \"text/markdown\",\n    \"content\": \"\",\n    \"relations\": [],\n    \"surfaces\": [],\n    \"evidence\": { \"state\": \"unclaimed\", \"meaning\": \"nothing named\" },\n}))\n.unwrap();\n\nassert_eq!(view.route, \"/cockpit/objects/adr/adr-0056\");\n// the kind's index is the entity's route with the last segment removed\nassert!(view.route.starts_with(&view.kind_route));\n```",
+      "description": "One object of the layer as an addressable node: what it is, where it is served, what it\nis joined to, and what can be said about its enforcement.\n\nThe whole answer in one value, because it is one question: every surface that shows an\nentity — the Cockpit page, `GET /api/v1/entity`, `majordomus_entity`, `majordomus entity\nshow` — renders this and composes nothing of its own. A field a reader sees on one\nsurface and not another would be a surface holding an opinion, which is what ADR 0004\nforecloses.\n\n```\nuse majordomus_cli::capability::builtin::entity::EntityView;\n\n// it round-trips through the wire shape every projection reads it as\nlet view: EntityView = serde_json::from_value(serde_json::json!({\n    \"uri\": \"majordomus://adr/adr-0056\",\n    \"id\": \"adr.adr-0056\",\n    \"kind\": \"adr\",\n    \"identity\": \"adr-0056\",\n    \"slug\": \"adr-0056\",\n    \"route\": \"/cockpit/objects/adr/adr-0056\",\n    \"kind_route\": \"/cockpit/objects/adr\",\n    \"title\": \"Every object of the layer has a derived address\",\n    \"provenance\": { \"path\": \"x.md\", \"directory\": \"x\", \"source_class\": \"adr\", \"bytes\": 0 },\n    \"metadata\": {},\n    \"media_type\": \"text/markdown\",\n    \"content\": \"\",\n    \"relations\": [],\n    \"surfaces\": [],\n    \"evidence\": { \"state\": \"unclaimed\", \"meaning\": \"nothing named\" },\n    \"documentation\": {\n        \"projection\": \"entity\",\n        \"route\": \"/adrs/adr-0056/\",\n        \"url\": \"https://majordomus.dev/adrs/adr-0056/\",\n        \"declared_in\": \"site/data/publication.toml\",\n    },\n}))\n.unwrap();\n\nassert_eq!(view.route, \"/cockpit/objects/adr/adr-0056\");\n// the Cockpit route is the object's; the public page is the site's, and both are named\nlet public = view.documentation.as_ref().and_then(|d| d.url.as_deref());\nassert_eq!(public, Some(\"https://majordomus.dev/adrs/adr-0056/\"));\n// the kind's index is the entity's route with the last segment removed\nassert!(view.route.starts_with(&view.kind_route));\n```",
       "home": "entity",
       "is_enum": false,
       "name": "EntityView",
@@ -10453,6 +10505,15 @@
           ],
           "required": true,
           "type": "EntityEvidence"
+        },
+        {
+          "description": "Its public documentation page, derived from the repository's publication declaration\n(`site/data/publication.toml`) and the site's `base_url` by the same function the site\ngenerator writes the page with. Null when the repository declares no publication or\ndoes not declare this kind; a kind declared as not published carries the reason.",
+          "name": "documentation",
+          "refs": [
+            "EntityDocumentation"
+          ],
+          "required": false,
+          "type": "EntityDocumentation | null"
         }
       ],
       "type": "object",
@@ -33287,7 +33348,7 @@
           "cache_detail": "",
           "cli": "entity show",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/entity?uri=majordomus%3A%2F%2Fadr%2Fadr-0001\"",
-          "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+          "description": "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page as the repository's site/data/publication.toml derives it (null when the repository declares none).",
           "home": "entity",
           "id": "entity.show",
           "kind": "query",

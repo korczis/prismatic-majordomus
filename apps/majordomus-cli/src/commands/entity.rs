@@ -117,6 +117,8 @@ fn show_text(out: &mut impl Write, v: &Value) -> Result<()> {
         v["provenance"]["path"].as_str().unwrap_or_default()
     )
     .map_err(Error::Transport)?;
+    writeln!(out, "{:<12}{}", "published", published(&v["documentation"]))
+        .map_err(Error::Transport)?;
 
     let empty = Vec::new();
     let relations = v["relations"].as_array().unwrap_or(&empty);
@@ -223,6 +225,22 @@ fn map(e: CapabilityError) -> Error {
     }
 }
 
+/// The public page line of `entity show`: the URL, the route when the site names no base
+/// URL, or why there is none. The capability derived it; this only words it.
+fn published(d: &Value) -> String {
+    let field = |k: &str| d[k].as_str().filter(|s| !s.is_empty());
+    match (field("url"), field("route"), field("reason")) {
+        _ if d.is_null() => {
+            "no public page: this repository declares no publication for the kind".to_string()
+        }
+        (Some(url), _, _) => url.to_string(),
+        (None, Some(route), _) => route.to_string(),
+        (None, None, reason) => {
+            format!("not published: {}", reason.unwrap_or("no reason declared"))
+        }
+    }
+}
+
 fn pretty(v: &Value) -> String {
     serde_json::to_string_pretty(v).unwrap_or_else(|_| v.to_string())
 }
@@ -244,5 +262,24 @@ mod tests {
         // a path with more than one separator is not a route, and is not guessed at
         assert_eq!(input_for("a/b/c"), json!({ "uri": "a/b/c" }));
         assert_eq!(input_for("/x"), json!({ "uri": "/x" }));
+    }
+
+    #[test]
+    fn the_public_page_is_worded_from_the_capability_answer() {
+        assert_eq!(
+            published(
+                &json!({ "projection": "entity", "route": "/adrs/a/", "url": "https://x/adrs/a/" })
+            ),
+            "https://x/adrs/a/"
+        );
+        assert_eq!(
+            published(&json!({ "projection": "section", "route": "/s/" })),
+            "/s/"
+        );
+        assert_eq!(
+            published(&json!({ "projection": "none", "reason": "internal" })),
+            "not published: internal"
+        );
+        assert!(published(&Value::Null).starts_with("no public page"));
     }
 }

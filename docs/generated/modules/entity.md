@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the `entity` module of the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.9.0 -->
+     Generator: majordomus-cli 0.10.0 -->
 # Module `entity` — Entities
 
 Every object of the layer as an addressable, cross-linked node: its route, its outgoing references, the references that resolve to it, the surfaces that answer for it, and what can be said about its enforcement without running anything. Nothing here enumerates kinds, entities or routes — an object of the index has a route because it is an object.
@@ -29,7 +29,7 @@ Output: `KindList`.
 
 ## `entity.show` — Read one entity
 
-One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.
+One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page as the repository's site/data/publication.toml derives it (null when the repository declares none).
 
 | | |
 |---|---|

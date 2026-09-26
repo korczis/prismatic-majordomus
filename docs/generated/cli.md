@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.9.0 -->
+     Generator: majordomus-cli 0.10.0 -->
 # Command line of the Rust executable
 
 Majordomus control plane: a data-driven MCP server over the repository's .ai/ layer
@@ -3993,7 +3993,7 @@ majordomus entity show [OPTIONS] <ADDRESS>
 
 Examples:
 
-- **One entity at its own address** — The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.
+- **One entity at its own address** — The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, what can be said about the executable artefacts it names, and its public documentation page (`documentation`, null here because this fixture has no site/data/publication.toml). The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.
 
   ```console
   $ majordomus entity show rule/project-alpha-1 --format json
