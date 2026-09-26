@@ -1,0 +1,50 @@
+name	prefix	body	expect
+anthropic-key	sk-ant-	aaaaaaaaaaaaaaaa	redacted
+anthropic-key	sk-ant-	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	redacted
+anthropic-key	sk-ant-	aaaaaaaaaaaaaaa	kept
+openai-key	sk-	aaaaaaaaaaaaaaaaaaaa	redacted
+openai-key	sk-proj-	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	redacted
+openai-key	sk-	aaaaaaaaaaaaaaaaaaa	kept
+github-token	ghp_	aaaaaaaaaaaaaaaaaaaa	redacted
+github-token	ghs_	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	redacted
+github-token	ghp_	aaaaaaaaaaaaaaaaaaa	kept
+github-token	ghx_	aaaaaaaaaaaaaaaaaaaa	kept
+github-pat	github_pat_	aaaaaaaaaaaaaaaaaaaa	redacted
+github-pat	github_pat_	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	redacted
+github-pat	github_pat_	aaaaaaaaaaaaaaaaaaa	kept
+aws-access-key-id	AKIA	AAAAAAAAAAAAAAAA	redacted
+aws-access-key-id	AKIA	AAAAAAAAAAAAAAA	kept
+aws-access-key-id	AKIB	AAAAAAAAAAAAAAAA	kept
+google-api-key	AIza	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	redacted
+google-api-key	AIza	aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa	kept
+slack-token	xoxb-	aaaaaaaaaa	redacted
+slack-token	xoxp-	aaaaaaaaaaaaaaaaaaaaaaaa	redacted
+slack-token	xoxb-	aaaaaaaaa	kept
+slack-token	xoxz-	aaaaaaaaaa	kept
+stripe-key	sk_live_	aaaaaaaaaaaaaaaa	redacted
+stripe-key	rk_test_	aaaaaaaaaaaaaaaaaaaaaaaa	redacted
+stripe-key	sk_live_	aaaaaaaaaaaaaaa	kept
+stripe-key	sk_prod_	aaaaaaaaaaaaaaaa	kept
+private-key-header	-----BEGIN 	PRIVATE KEY-----	redacted
+private-key-header	-----BEGIN RSA 	PRIVATE KEY-----	redacted
+private-key-header	-----BEGIN OPENSSH 	PRIVATE KEY-----	redacted
+private-key-header	-----BEGIN RSA 	PRIVATE KEY----	kept
+private-key-header	-----BEGIN 	PUBLIC KEY-----	kept
+bearer-token	Bearer 	aaaaaaaaaaaaaaaaaaaa	redacted
+bearer-token	bearer 	aaaa.aaaa_aaaa~aaaa+aaaa/aaaa=aaaa-aaaa	redacted
+bearer-token	Bearer 	aaaaaaaaaaaaaaaaaaa	kept
+bearer-token	BEARER 	aaaaaaaaaaaaaaaaaaaa	kept
+assignment	API_KEY=	aaaaaaaaaaaaaaaa	redacted
+assignment	api-key: 	aaaaaaaaaaaaaaaaaaaaaaaa	redacted
+assignment	ApiKey = 	aaaaaaaaaaaaaaaa	redacted
+assignment	access_token=	aaaaaaaaaaaaaaaa	redacted
+assignment	Access-Token: "	aaaaaaaaaaaaaaaaaaaa	redacted
+assignment	SECRET_KEY='	aaaaaaaaaaaaaaaa	redacted
+assignment	secretkey:	aaaaaaaaaaaaaaaa	redacted
+assignment	PASSWORD=	aaaaaaaaaaaaaaaa	redacted
+assignment	"password": "	aaaaaaaaaaaaaaaa	redacted
+assignment	pAsSwOrD = 	aaaaaaaaaaaaaaaa	redacted
+assignment	API_KEY=	aaaaaaaaaaaaaaa	kept
+assignment	API_TOKEN=	aaaaaaaaaaaaaaaa	kept
+assignment	the password is 	in the manual	kept
+assignment	reset your password: 	see the manual	kept
