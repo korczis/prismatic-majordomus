@@ -3740,7 +3740,7 @@
       "get": {
         "operationId": "evidence.report",
         "summary": "Every claim against the evidence recorded for it",
-        "description": "The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+        "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
         "tags": [
           "evidence"
         ],
@@ -3783,6 +3783,31 @@
                 "value": true
               }
             }
+          },
+          {
+            "name": "presented",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Judge at this revision, as committed, rather than at the working tree: `HEAD`, or\nany name of the checked-out commit. It must be the checked-out commit; the ledger is\nread as that commit holds it, and a run the working ledger holds that the commit's\ndoes not can only withhold `proven`. Absent: the working tree."
+          },
+          {
+            "name": "presented_tree",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EvidenceTreeState"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "description": "What the caller knows about the presented commit's tree (`clean`, `dirty`,\n`unknown`). It can only weaken the measured state, never assert a clean tree over a\ndirty checkout, and it means nothing without `presented`."
           }
         ],
         "responses": {
@@ -13720,6 +13745,13 @@
             },
             "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
           },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the state is what it is, in one sentence, when the state alone does not say: a\ntest that declined to run, a run on a commit the presented revision does not\ncontain, a tree that was not its commit, a failing run the checkout holds uncommitted."
+          },
           "reproduce": {
             "type": [
               "string",
@@ -18855,6 +18887,13 @@
             },
             "description": "The files this claim names that differ between the recorded commit and the working\ntree. Empty unless the state is `ProofState::Stale`.\n\nAlways emitted, empty included: the schema this capability publishes says the key is\nthere, and a client that has to tell \"no files changed\" from \"the server did not say\"\nis a client reading two different answers as one."
           },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the state is what it is, in one sentence, when the state alone does not say: a\ntest that declined to run, a run on a commit the presented revision does not\ncontain, a tree that was not its commit, a failing run the checkout holds uncommitted."
+          },
           "reproduce": {
             "type": [
               "string",
@@ -18871,7 +18910,7 @@
           "meaning",
           "changed"
         ],
-        "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by `report`; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
+        "description": "One claim, joined to whatever the repository actually recorded about it.\n\nThe claim's own fields are carried verbatim beside the derived ones, so that a reader\nwho disbelieves the state can check the join rather than take it.\n\n```\nuse majordomus_cli::evidence::{ClaimProof, ProofState};\n\nlet proof = ClaimProof {\n    id: \"scope-integrity\".into(),\n    claim: \"a commit outside the task's scope is refused\".into(),\n    status: \"guaranteed\".into(),\n    source: Some(\"docs/SCOPE.md\".into()),\n    implementation: Some(\"apps/majordomus-cli/src/scope.rs\".into()),\n    test_path: Some(\"test/cases/07_scope.sh\".into()),\n    test: Some(\"suite:07_scope\".into()),\n    state: ProofState::NotRun,\n    meaning: ProofState::NotRun.meaning().to_string(),\n    execution: None,\n    changed: vec![],\n    detail: None,\n    reproduce: Some(\"bash test/run.sh 07_scope\".into()),\n};\n\nlet json = serde_json::to_value(&proof).unwrap();\n// `changed` is emitted empty rather than omitted: a client must not have to tell\n// \"no file changed\" from \"the server did not say\"\nassert_eq!(json[\"changed\"], serde_json::json!([]));\n// an execution that does not exist is absent, not a null standing in for one\nassert!(json.get(\"execution\").is_none());\n// and so is a detail the state did not need\nassert!(json.get(\"detail\").is_none());\nassert_eq!(json[\"meaning\"], serde_json::json!(ProofState::NotRun.meaning()));\n```\n# Example\n\nA `ClaimProof` is produced by `report`; its `state` is the whole answer and its\n`meaning` is that answer in a sentence, worded once for every surface.\n\n```\nuse majordomus_cli::evidence::{report, ClaimProof, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r = report(&repo.index().unwrap(), &ledger);\nlet proofs: &[ClaimProof] = &r.claims;\nassert!(proofs.is_empty(), \"a synthetic tree declares no claims\");\n```"
       },
       "EvidenceExecution": {
         "type": "object",
@@ -19063,6 +19102,31 @@
         ],
         "description": "What a run said about one test.\n\n`NotRun` is deliberately absent: it is the absence of an execution, not an outcome one\nhad. Encoding it here would let a recorder write \"this did not run\" and have it counted\namong the things that did.\n\n```\nuse majordomus_cli::evidence::Outcome;\n\nassert!(Outcome::parse(\"ok\").proves());\nassert!(!Outcome::parse(\"timeout\").proves());\n// exactly one of the five is evidence of anything; the other four are reasons there\n// is none, kept apart because \"it declined\" and \"the harness broke\" are different bugs\nassert_eq!(Outcome::parse(\"skipped\"), Outcome::Skip);\nassert_eq!(Outcome::parse(\"nonsense\"), Outcome::Error);\n```\n# Example\n\n```\nuse majordomus_cli::evidence::Outcome;\nassert!(Outcome::parse(\"ok\").proves());\nassert_eq!(Outcome::parse(\"wat\"), Outcome::Error);\n```"
       },
+      "EvidencePresentedRevision": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string",
+            "description": "`working_tree`, or the full id of the commit judged as committed."
+          },
+          "tree": {
+            "$ref": "#/components/schemas/EvidenceTreeState",
+            "description": "Whether that revision's tree was its commit: for the working tree, the checkout's\nstate; for a commit, the checkout measured ignoring the ledger's working copy and\nweakened by anything the caller knew."
+          },
+          "uncommitted": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The tests whose execution in the working copy of the ledger the presented commit's\nledger does not hold, sorted. Read only to withhold `proven`, never to decide a\nverdict; always empty for the working tree, whose ledger is itself the authority."
+          }
+        },
+        "required": [
+          "revision",
+          "tree"
+        ],
+        "description": "What a report was judged at: the revision, its tree, and the runs the checkout holds that\nthe revision's own ledger does not.\n\nA verdict is always a verdict at something. `evidence show` judges the working tree;\n`evidence show --presented HEAD` judges the checked-out commit as committed, from the\nledger committed in it — which is what a site built from that commit shows its readers.\n\n```\nuse majordomus_cli::evidence::{PresentedRevision, TreeState};\n\nlet here = PresentedRevision {\n    revision: \"working_tree\".into(),\n    tree: TreeState::Dirty,\n    uncommitted: vec![],\n};\nlet json = serde_json::to_value(&here).unwrap();\nassert_eq!(json[\"tree\"], \"dirty\");\n// nothing held uncommitted is absent, not an empty list to read past\nassert!(json.get(\"uncommitted\").is_none());\n```"
+      },
       "EvidenceReport": {
         "type": "object",
         "properties": {
@@ -19076,6 +19140,10 @@
           "working_tree": {
             "type": "string",
             "description": "`clean`, `dirty` or `unknown`."
+          },
+          "presented": {
+            "$ref": "#/components/schemas/EvidencePresentedRevision",
+            "description": "What the verdicts are about: the working tree, or the checked-out commit judged as\ncommitted."
           },
           "ledger": {
             "$ref": "#/components/schemas/EvidenceLedgerSummary",
@@ -19111,13 +19179,14 @@
         },
         "required": [
           "working_tree",
+          "presented",
           "ledger",
           "subject",
           "claims",
           "totals",
           "findings"
         ],
-        "description": "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```"
+        "description": "The whole joined picture: every claim of the matrix against every execution recorded.\n\nWhat the capability answers, what the gate judges and what the site renders are this one\nvalue; the totals and the findings are derived from the claims, never counted twice.\n\n```\nuse majordomus_cli::evidence::{\n    EvidenceReport, Finding, Ledger, PresentedRevision, ProofState, Subject, TreeState,\n};\n\nlet mut report = EvidenceReport {\n    head: None,\n    working_tree: \"unknown\".into(),\n    presented: PresentedRevision {\n        revision: \"working_tree\".into(),\n        tree: TreeState::Unknown,\n        uncommitted: vec![],\n    },\n    ledger: Ledger::empty().summary(),\n    subject: Subject { examined: 0, complete: true, excluded: vec![] },\n    claims: vec![],\n    totals: Default::default(),\n    findings: vec![],\n};\nassert!(report.satisfied(), \"nothing claimed, so nothing unsupported\");\n\n// and the same report over a subject it could not wholly read is not a pass\nlet mut partial = report.clone();\npartial.subject.complete = false;\nassert!(!partial.satisfied(), \"an absent answer is not a clean one\");\n\nreport.findings.push(Finding {\n    claim: \"scope-integrity\".into(),\n    status: \"guaranteed\".into(),\n    state: ProofState::Failing,\n    reason: \"the claim guarantees a behaviour whose test most recently failed\".into(),\n    reproduce: None,\n});\n// one unsupported guarantee is enough: the gate is not a proportion\nassert!(!report.satisfied());\n```\n# Example\n\nThe whole matrix joined to the ledger. `satisfied` is true when no claim declares a\nguarantee the recorded evidence does not support.\n\n```\nuse majordomus_cli::evidence::{report, EvidenceReport, Ledger};\nuse majordomus_cli::synthetic::SyntheticRepository;\nlet repo = SyntheticRepository::small().unwrap();\nlet ledger = Ledger::load(repo.root()).unwrap();\nlet r: EvidenceReport = report(&repo.index().unwrap(), &ledger);\nassert!(r.satisfied(), \"no claim, so no unsupported guarantee\");\n```"
       },
       "EvidenceRunner": {
         "oneOf": [
@@ -19161,6 +19230,26 @@
           "excluded"
         ],
         "description": "Whether the report could see its whole subject.\n\nA verdict over a matrix the index silently shrank is the failure this repository met\nfour times in one day: an object is excluded, every projection of the smaller index is a\nfaithful projection, and each check prints a true statement about the half it can see.\nA freshness check answers \"was this generated from this tree\" and cannot answer \"did the\ngenerator see everything in it\", so the answer has to carry its own denominator.\n\n```\nuse majordomus_cli::evidence::Subject;\nlet whole = Subject { examined: 149, complete: true, excluded: vec![] };\nassert!(whole.complete);\n\nlet partial = Subject {\n    examined: 148,\n    complete: false,\n    excluded: vec![\"docs/CLAIMS.yaml: unknown_key\".into()],\n};\nassert!(!partial.complete, \"a shrunken index must not report a clean verdict\");\n```"
+      },
+      "EvidenceTreeState": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "clean",
+            "description": "The tree was the commit: nothing but the evidence ledger differed from it."
+          },
+          {
+            "type": "string",
+            "const": "dirty",
+            "description": "Something other than the evidence ledger differed from the commit."
+          },
+          {
+            "type": "string",
+            "const": "unknown",
+            "description": "Git could not be asked, or the word recorded is none of the three."
+          }
+        ],
+        "description": "Whether a tree was the commit it sits on: the three words the ledger and git already\nuse, typed.\n\n`unknown` is not a softer `clean`. It is what is recorded when git could not be asked,\nand not knowing is not proof, so every rule here treats it as not clean.\n\n```\nuse majordomus_cli::evidence::freshness::TreeState;\n\nassert_eq!(TreeState::parse(\"clean\"), TreeState::Clean);\nassert_eq!(TreeState::parse(\"dirty\"), TreeState::Dirty);\n// a word nobody wrote down is not a clean tree\nassert_eq!(TreeState::parse(\"spotless\"), TreeState::Unknown);\nassert_eq!(TreeState::Dirty.as_str(), \"dirty\");\nassert_eq!(serde_json::to_value(TreeState::Unknown).unwrap(), \"unknown\");\n```"
       },
       "Example": {
         "type": "object",
@@ -30198,7 +30287,7 @@
             "description": "The rule names neither a validator nor a test. Correct for a rule nothing executable\ncan express; a defect for a blocking one."
           }
         ],
-        "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking, and so\nthat a rule's state is the weakest of its parts by `max`.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
+        "description": "What the repository can say about one rule's proof, as a whole.\n\nOrdered strongest to weakest so that a summary sorted by this reads as a ranking. A rule's\nstate is made from its parts' by `crate::evidence::freshness::aggregate`: a failing part\nmakes it failing, and otherwise the weakest part that can carry proof decides.\n# Example\n\n```\nuse majordomus_cli::rules::RuleState;\nassert!(RuleState::Proven < RuleState::Stale);\nassert!(RuleState::Stale.passing());\nassert!(!RuleState::Dangling.passing());\n```"
       },
       "RuleSummary": {
         "type": "object",
@@ -30389,12 +30478,12 @@
           {
             "type": "string",
             "const": "proven",
-            "description": "Every blocking rule carries a passing run that nothing it names has changed since."
+            "description": "Every blocking rule is proven: a passing run recorded on a clean tree, at a commit\nthat nothing but the evidence ledger has changed since."
           },
           {
             "type": "string",
             "const": "unproven",
-            "description": "No finding, and at least one blocking rule has no current passing run — never run,\ngated, reviewed, stale — or there is no blocking rule at all."
+            "description": "No rule is a finding, and at least one blocking rule is not proven — never run,\ngated, reviewed, stale, or passing with only its inputs unchanged — or there is no\nblocking rule at all."
           },
           {
             "type": "string",
@@ -30402,7 +30491,7 @@
             "description": "At least one rule declares a class its proof does not support."
           }
         ],
-        "description": "What the whole corpus can be said to prove, in one word, before any number is read.\n\n`satisfied` answers a narrower question — are there findings — and a corpus in which no\nblocking rule was ever run has none, because `not run`, `gated` and `reviewed` are weaker\nstates rather than defects (docs/DOCTRINE.md). Read alone, `satisfied: true` over such a\ncorpus says \"every rule is enforced\" about a repository that has shown nothing. The\nverdict is the answer that cannot be read that way: it is `proven` only when every\nblocking rule carries a current passing run.\n# Example\n\n```\nuse majordomus_cli::rules::{RuleState, RulesVerdict};\n// a corpus with a finding is failing, whatever else is true of it\nassert_eq!(RulesVerdict::of([RuleState::Proven], true), RulesVerdict::Failing);\n// one blocking rule never run is enough to leave the corpus unproven\nassert_eq!(\n    RulesVerdict::of([RuleState::Proven, RuleState::NotRun], false),\n    RulesVerdict::Unproven\n);\nassert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);\n```"
+        "description": "What the whole corpus can be said to prove, in one word, before any number is read.\n\n`satisfied` answers a narrower question — are there findings — and a corpus in which no\nblocking rule was ever run has none, because `not run`, `gated` and `reviewed` are weaker\nstates rather than defects (docs/DOCTRINE.md). Read alone, `satisfied: true` over such a\ncorpus says \"every rule is enforced\" about a repository that has shown nothing. The\nverdict is the answer that cannot be read that way: it is `proven` only when every\nblocking rule is `proven` — a passing run recorded on a clean tree, at a commit that\nnothing but the evidence ledger has changed since. A rule whose inputs are merely\nunchanged is not that (ADR 0041), and leaves the corpus `unproven`.\n# Example\n\n```\nuse majordomus_cli::rules::{RuleState, RulesVerdict};\n// a corpus with a finding is failing, whatever else is true of it\nassert_eq!(RulesVerdict::of([RuleState::Proven], true), RulesVerdict::Failing);\n// one blocking rule never run is enough to leave the corpus unproven\nassert_eq!(\n    RulesVerdict::of([RuleState::Proven, RuleState::NotRun], false),\n    RulesVerdict::Unproven\n);\nassert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);\n// a pass whose inputs are merely unchanged is not proven\nassert_eq!(\n    RulesVerdict::of([RuleState::Proven, RuleState::InputsUnchanged], false),\n    RulesVerdict::Unproven\n);\n```"
       },
       "RuntimeView": {
         "type": "object",

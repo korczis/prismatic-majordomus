@@ -624,8 +624,9 @@ of these rungs, and each rung is a separate fact:
 
 The Rust rules engine (`apps/majordomus-cli/src/rules/mod.rs`) reduces this to one of ten
 states, strongest first: `proven`, `inputs_unchanged`, `stale`, `gated`, `failing`, `not_run`,
-`reviewed`, `unrunnable`, `dangling`, `unproven`. A rule's state is the weakest state among its
-tests. Only the first three count as passing. A finding is raised for a dangling proof, or for a
+`reviewed`, `unrunnable`, `dangling`, `unproven`. A failing test makes the rule `failing`;
+otherwise a rule's state is the weakest state among the tests that can carry proof. Only the
+first three count as passing. A finding is raised for a dangling proof, or for a
 blocking rule that is unproven, failing or unrunnable; `not_run`, `gated` and `reviewed` are
 deliberately not findings, because they describe the absence of a record rather than a defect.
 
@@ -1108,7 +1109,7 @@ Each strong statement in this document, with how to check it.
 | the command line is a checked second declaration | `apps/majordomus-cli/src/capability/closure.rs`, `apps/majordomus-cli/src/cli/local.rs`, `scripts/ci/projection-check` |
 | a doctrine is a rule with a validator | `lib/doctrine.sh`; `bin/majordomus doctrine list` |
 | enforcement mode is derived, not declared | ADR 0048; `rule.v1.proto` has no mode field |
-| a rule's state is the weakest of its tests | `apps/majordomus-cli/src/rules/mod.rs`; `bin/majordomus-cli rules report` |
+| a failing test makes a rule failing; otherwise its state is the weakest of the tests that can carry proof | `apps/majordomus-cli/src/rules/mod.rs`, `apps/majordomus-cli/src/evidence/freshness.rs`; `bin/majordomus-cli rules report` |
 | issue status is derived with no stored status | an issue YAML has no status key; `lib/project.awk`; `bin/majordomus plan status` |
 | overlap is advisory | `lib/check.sh` returns 0 after `--overlap`; `peers.rs` documents informational overlaps |
 | the mesh is off by default and has no Tailscale provider | `.ai/repo/mesh/majordomus.yaml`; `ls apps/majordomus-cli/src/mesh` |

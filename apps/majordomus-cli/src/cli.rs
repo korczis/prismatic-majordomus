@@ -609,6 +609,23 @@ pub enum EvidenceCommand {
         /// Exit 10 when a claim declares a guarantee the evidence does not support
         #[arg(long)]
         check: bool,
+        /// Judge at the checked-out commit as committed (HEAD, or any name of it), from the ledger that commit holds, instead of at the working tree
+        #[arg(long, value_name = "REV")]
+        presented: Option<String>,
+        /// What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state
+        #[arg(
+            long,
+            value_name = "TREE",
+            value_parser = clap::builder::PossibleValuesParser::new([
+                clap::builder::PossibleValue::new("clean")
+                    .help("Nothing you know of: the measured state stands"),
+                clap::builder::PossibleValue::new("dirty")
+                    .help("The build did not come from the commit as committed; nothing reads as proven"),
+                clap::builder::PossibleValue::new("unknown")
+                    .help("You cannot say whether it did; nothing reads as proven"),
+            ])
+        )]
+        presented_tree: Option<String>,
     },
     /// One claim: its proof state, the execution behind it, and how to reproduce it
     Claim {
@@ -2335,14 +2352,24 @@ pub const EXAMPLES: &[CommandExamples] = &[
     },
     CommandExamples {
         command: "evidence show",
-        examples: &[ExampleDoc {
-            id: "evidence-show-json",
-            title: "The whole join, as one document",
-            description: "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
-            argv: &["evidence", "show", "--format", "json"],
-            setup: &[],
-            expect: Expect::Json(&["/claims", "/totals", "/ledger/path", "/findings"]),
-        }],
+        examples: &[
+            ExampleDoc {
+                id: "evidence-show-json",
+                title: "The whole join, as one document",
+                description: "The same answer `GET /api/v1/evidence` and the MCP tool `majordomus_evidence` return: every claim with its proof state, the sentence that explains how that state was derived, the execution behind it, the files that have changed since, and the command that produces the proof again. The tallies count the whole matrix even when the claims are filtered, so a narrowed answer never misreports how much of it was examined.",
+                argv: &["evidence", "show", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/claims", "/totals", "/ledger/path", "/findings"]),
+            },
+            ExampleDoc {
+                id: "evidence-show-presented",
+                title: "The checked-out commit, judged as committed",
+                description: "What a site built from this commit would show: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
+                argv: &["evidence", "show", "--presented", "HEAD"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["judged at", "as committed"]),
+            },
+        ],
     },
     CommandExamples {
         command: "evidence claim",

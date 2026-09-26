@@ -177,6 +177,43 @@ impl Ledger {
         Ledger::default()
     }
 
+    /// Read a ledger from its text, wherever the text came from: the working copy under a
+    /// repository root, or the file as a commit holds it.
+    ///
+    /// The one reading of the shape, so that a ledger read from a commit and a ledger read
+    /// from the working tree are refused for the same reasons in the same words. A version
+    /// this executable does not know is refused rather than reinterpreted.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_VERSION};
+    ///
+    /// let ledger = Ledger::parse(r#"{"version": 1, "executions": []}"#).unwrap();
+    /// assert_eq!(ledger.version, LEDGER_VERSION);
+    /// assert!(ledger.executions.is_empty());
+    ///
+    /// let refused = Ledger::parse(r#"{"version": 99, "executions": []}"#).unwrap_err();
+    /// assert!(refused.to_string().contains("version 99"), "{refused}");
+    /// assert!(Ledger::parse("not json at all").is_err());
+    /// ```
+    pub fn parse(text: &str) -> Result<Ledger> {
+        let ledger: Ledger = serde_json::from_str(text).map_err(|e| Error::InvalidSurface {
+            surface: "evidence".into(),
+            reason: format!("{LEDGER_PATH} is not a ledger this version can read: {e}"),
+        })?;
+        if ledger.version != LEDGER_VERSION {
+            return Err(Error::InvalidSurface {
+                surface: "evidence".into(),
+                reason: format!(
+                    "{LEDGER_PATH} declares version {} and this executable reads version \
+                     {LEDGER_VERSION}; a ledger read under the wrong shape could report a pass \
+                     that was never recorded",
+                    ledger.version
+                ),
+            });
+        }
+        Ok(ledger)
+    }
+
     /// Read the ledger of a repository. A repository with no ledger has an empty one; that
     /// is not an error, and the summary says which it was.
     ///
@@ -205,22 +242,7 @@ impl Ledger {
             return Ok(Ledger::empty());
         }
         let text = std::fs::read_to_string(&path).map_err(Error::Transport)?;
-        let ledger: Ledger = serde_json::from_str(&text).map_err(|e| Error::InvalidSurface {
-            surface: "evidence".into(),
-            reason: format!("{LEDGER_PATH} is not a ledger this version can read: {e}"),
-        })?;
-        if ledger.version != LEDGER_VERSION {
-            return Err(Error::InvalidSurface {
-                surface: "evidence".into(),
-                reason: format!(
-                    "{LEDGER_PATH} declares version {} and this executable reads version \
-                     {LEDGER_VERSION}; a ledger read under the wrong shape could report a pass \
-                     that was never recorded",
-                    ledger.version
-                ),
-            });
-        }
-        Ok(ledger)
+        Ledger::parse(&text)
     }
 
     /// Whether the file is there at all, as opposed to there and empty.

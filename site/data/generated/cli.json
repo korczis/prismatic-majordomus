@@ -19517,6 +19517,43 @@
         },
         {
           "defaults": [],
+          "global": false,
+          "help": "Judge at the checked-out commit as committed (HEAD, or any name of it), from the ledger that commit holds, instead of at the working tree",
+          "long": "presented",
+          "name": "presented",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REV"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state",
+          "long": "presented-tree",
+          "name": "presented_tree",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Nothing you know of: the measured state stands",
+              "name": "clean"
+            },
+            {
+              "help": "The build did not come from the commit as committed; nothing reads as proven",
+              "name": "dirty"
+            },
+            {
+              "help": "You cannot say whether it did; nothing reads as proven",
+              "name": "unknown"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TREE"
+        },
+        {
+          "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
           "long": "repo",
@@ -19617,6 +19654,20 @@
           "id": "evidence-show-json",
           "setup": [],
           "title": "The whole join, as one document"
+        },
+        {
+          "argv": [
+            "evidence",
+            "show",
+            "--presented",
+            "HEAD"
+          ],
+          "command": "majordomus evidence show --presented HEAD",
+          "description": "What a site built from this commit would show: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
+          "expectation": "exits 0; prints judged at, as committed",
+          "id": "evidence-show-presented",
+          "setup": [],
+          "title": "The checked-out commit, judged as committed"
         }
       ],
       "executable": true,
@@ -21100,9 +21151,9 @@
     }
   ],
   "counts": {
-    "arguments": 922,
+    "arguments": 924,
     "commands": 130,
-    "examples": 137,
+    "examples": 138,
     "runnable": 118
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",

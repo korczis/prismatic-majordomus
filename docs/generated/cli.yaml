@@ -12531,6 +12531,32 @@ cli:
               possible_values: []
               defaults:
                 - "false"
+            - name: presented
+              long: presented
+              positional: false
+              help: "Judge at the checked-out commit as committed (HEAD, or any name of it), from the ledger that commit holds, instead of at the working tree"
+              value_name: REV
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: presented_tree
+              long: presented-tree
+              positional: false
+              help: "What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state"
+              value_name: TREE
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: clean
+                  help: "Nothing you know of: the measured state stands"
+                - name: dirty
+                  help: The build did not come from the commit as committed; nothing reads as proven
+                - name: unknown
+                  help: You cannot say whether it did; nothing reads as proven
+              defaults: []
             - name: repo
               long: repo
               positional: false
@@ -12604,6 +12630,17 @@ cli:
               command: majordomus evidence show --format json
               setup: []
               expectation: "exits 0; prints one JSON document carrying /claims, /totals, /ledger/path, /findings"
+            - id: evidence-show-presented
+              title: "The checked-out commit, judged as committed"
+              description: "What a site built from this commit would show: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused."
+              argv:
+                - evidence
+                - show
+                - "--presented"
+                - HEAD
+              command: majordomus evidence show --presented HEAD
+              setup: []
+              expectation: "exits 0; prints judged at, as committed"
           subcommands: []
         - path:
             - majordomus

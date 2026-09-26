@@ -1654,6 +1654,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/evidence/freshness.rs",
+        "kind": "file",
+        "label": "freshness.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/evidence/ledger.rs",
         "kind": "file",
         "label": "ledger.rs",
@@ -5418,6 +5426,38 @@
         }
       },
       {
+        "id": "majordomus://claim/evidence-a-failure-outranks-an-absence",
+        "kind": "claim",
+        "label": "evidence-a-failure-outranks-an-absence",
+        "summary": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+        "route": "/cockpit/objects/claim/evidence-a-failure-outranks-an-absence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+          "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-a-skip-is-not-run",
+        "kind": "claim",
+        "label": "evidence-a-skip-is-not-run",
+        "summary": "A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing",
+        "route": "/cockpit/objects/claim/evidence-a-skip-is-not-run",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing",
+          "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/evidence-currency-is-not-collapsed",
         "kind": "claim",
         "label": "evidence-currency-is-not-collapsed",
@@ -5448,6 +5488,21 @@
           "responsibility": "plan",
           "source": "docs/PLANNING.md",
           "test": "test/cases/41_project_status.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-judged-at-the-presented-revision",
+        "kind": "claim",
+        "label": "evidence-judged-at-the-presented-revision",
+        "summary": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+        "route": "/cockpit/objects/claim/evidence-judged-at-the-presented-revision",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
         }
       },
       {
@@ -10286,6 +10341,22 @@
         "source": "docs/claims/event-vocabulary.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-failure-outranks-an-absence.md",
+        "summary": "A rule with a failing test reads failing whatever its other tests say",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-failure-outranks-an-absence-md",
+        "source": "docs/claims/evidence-a-failure-outranks-an-absence.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-a-skip-is-not-run.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-skip-is-not-run.md",
+        "summary": "A test that declined to run reads not run with its reason, and a test that errored or timed out reads failing",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-skip-is-not-run-md",
+        "source": "docs/claims/evidence-a-skip-is-not-run.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-currency-is-not-collapsed.md",
         "kind": "document",
         "label": "docs/claims/evidence-currency-is-not-collapsed.md",
@@ -10300,6 +10371,14 @@
         "summary": "An issue cannot be completed while a required piece of evidence is missing",
         "route": "/cockpit/objects/document/docs-claims-evidence-gates-done-md",
         "source": "docs/claims/evidence-gates-done.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-judged-at-the-presented-revision.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-judged-at-the-presented-revision.md",
+        "summary": "A claim reads proven only when its run is contained in the presented revision, nothing but the ledger changed since, and both trees were their commits",
+        "route": "/cockpit/objects/document/docs-claims-evidence-judged-at-the-presented-revision-md",
+        "source": "docs/claims/evidence-judged-at-the-presented-revision.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
@@ -11993,7 +12072,10 @@
             "evidence-currency-is-not-collapsed",
             "evidence-partial-run-preserves-the-rest",
             "evidence-navigates-both-ways",
-            "evidence-unsupported-guarantee-is-reported"
+            "evidence-unsupported-guarantee-is-reported",
+            "evidence-judged-at-the-presented-revision",
+            "evidence-a-skip-is-not-run",
+            "evidence-a-failure-outranks-an-absence"
           ],
           "commands": [
             "evidence"
@@ -33056,6 +33138,13 @@
         "source": "test/cases/500_docs_index.sh"
       },
       {
+        "id": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "test",
+        "label": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "route": "/cockpit/objects/test/test-cases-502-evidence-is-judged-at-the-presented-revision-sh",
+        "source": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "kind": "test",
         "label": "test/cases/50_blocker_across_handover.sh",
@@ -40565,6 +40654,46 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
+        "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
+        "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-skip-is-not-run",
+        "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-skip-is-not-run",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-skip-is-not-run",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-skip-is-not-run",
+        "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-currency-is-not-collapsed",
         "target": "file:apps/majordomus-cli/src/evidence/mod.rs",
         "kind": "implemented_by"
@@ -40602,6 +40731,26 @@
       {
         "source": "majordomus://claim/evidence-gates-done",
         "target": "majordomus://test/test/cases/41_project_status.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-judged-at-the-presented-revision",
+        "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-judged-at-the-presented-revision",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-judged-at-the-presented-revision",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-judged-at-the-presented-revision",
+        "target": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
         "kind": "tested_by"
       },
       {
@@ -44175,12 +44324,27 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-a-skip-is-not-run.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/evidence-currency-is-not-collapsed.md",
         "target": "kind:document",
         "kind": "is_a"
       },
       {
         "source": "majordomus://document/docs/claims/evidence-gates-done.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-judged-at-the-presented-revision.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51655,6 +51819,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -55281,8 +55450,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1755,
-      "edges": 3907,
+      "nodes": 1763,
+      "edges": 3923,
       "acyclic": true,
       "truncated": false
     }

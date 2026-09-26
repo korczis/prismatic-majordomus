@@ -120,39 +120,100 @@ Ranked from strongest to weakest, so a summary that sorts by the state reads as 
 Each state carries its own one-sentence meaning in the model, so every surface says the
 same thing rather than inventing a gloss.
 
-| state | derived when |
+| state | in short |
 |---|---|
-| `proven` | the latest execution passed, and the diff between its commit and the working tree is empty — excluding the ledger's own row |
-| `inputs_unchanged` | the latest execution passed, and **nothing the claim itself names** differs between that commit and the working tree |
-| `stale` | the latest execution passed, but something the claim names has changed since — or git could not answer the comparison at all |
-| `failing` | the latest execution of this claim's test did not pass |
-| `not_run` | the claim names a test a runner owns, and no execution of it has ever been recorded |
+| `proven` | a passing run the presented revision contains, nothing but the ledger changed since, on a clean tree at both ends |
+| `inputs_unchanged` | a passing run, and **nothing the claim itself names** has changed since — or it has not, but one of the two trees was not its commit |
+| `stale` | a passing run that no longer proves the presented revision: something the claim names changed, the revision does not contain it, git could not compare, or a failure the checkout holds withholds it |
+| `failing` | the latest execution of this claim's test failed, timed out or could not be run |
+| `not_run` | the claim names a test a runner owns, and no execution that ran it has been recorded — never run, or it declined to run |
 | `unrunnable` | the claim names a path no runner in this repository drives, so no execution of it can ever be recorded |
 | `no_test` | the claim names no test at all — correct for a `planned` or a `rejected` claim, a defect for any other |
 
-"What the claim itself names" is exactly three paths: its `source`, its `implementation`
-and the test's own source. The comparison is `git diff --name-only <recorded commit> --`,
-which catches a path committed since, staged, or merely edited in the working tree. It is
-run once per distinct commit in the ledger and shared by every claim recorded against it,
-which in practice is one subprocess.
+Every state is decided by one function, `evidence::freshness`, from the recorded run and the
+revision it is judged at, and the first row that matches wins. E is the commit the run was
+recorded on; "the presented revision" is what is judged (below); "the inputs" are what the
+claim names — exactly three paths: its `source`, its `implementation` and the test's own
+source (a rule names its test's source and its own definition). "Changed" is every path
+that differs between E and the presented revision, and changed' is that set without the
+ledger's own row.
 
-When git cannot answer — no work tree, a commit the checkout does not have — the state is
-`stale`, not `inputs_unchanged`. Not knowing is not proof.
+| # | when | state | the report adds |
+|---|---|---|---|
+| 1 | the claim names no test | `no_test` | |
+| 2 | it names a path no runner drives | `unrunnable` | |
+| 3 | nothing is recorded for the test | `not_run` | |
+| 4 | the run was a skip | `not_run` | detail: the test declined to run |
+| 5 | the run failed, timed out or errored | `failing` | detail: which |
+| 6 | a pass, and git could not compare E with the presented revision | `stale` | detail naming E |
+| 7 | a pass on an E the presented revision does not contain | `stale` | detail naming E |
+| 8 | a pass whose test no longer hashes to its recorded digest, and no input changed | `stale` | `changed`: the test |
+| 9 | a pass, and an input changed | `stale` | `changed`: those inputs |
+| 10 | a pass, changed' empty, the run's recorded tree clean, the presented tree clean | **`proven`** | |
+| 11 | as 10, but the run's recorded tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the run measured a tree that was not its commit |
+| 12 | as 10, but the presented tree was `dirty` or `unknown` | `inputs_unchanged` | detail: the presented revision was built from a tree that was not its commit |
+| 13 | a pass, changed' not empty, and none of it an input | `inputs_unchanged` | |
+| 14 | as 13, but the route names no inputs at all | `stale` | detail: a change since the run cannot be ruled out |
 
-A `stale` claim names the paths that changed, so a reader is told which of the three
-invalidated the run rather than being told to go and look.
+Only row 10 is `proven`, and only `proven` may be rendered as verified on any surface. A
+`stale` claim names the paths that changed, or says in its detail why it is stale, so a
+reader is told what invalidated the run rather than being told to go and look. Not knowing
+is not proof: an unanswerable comparison is row 6, never row 13.
+
+**The presented revision.** `evidence show` judges the working tree: HEAD plus every
+tracked, staged and untracked change, compared with `git diff --name-only E --` together
+with the untracked files git would show. `evidence show --presented HEAD` judges the
+checked-out commit as committed. The commit must be the one checked out — the claims, the
+tests' sources and their digests are read from the checkout, so a verdict at any other
+commit would mix two trees — and the ledger is the one committed in it, compared with `git
+diff --name-only E <commit> --`. The presented tree is measured ignoring the ledger's
+working copy, which is not what is judged, and `--presented-tree` can only weaken that
+measurement. It is the reading for a site built from a commit: `build.json.commit` names
+the presented commit, and a build with `build.json.dirty` set passes `--presented-tree
+dirty`, so a site built from a dirty tree never shows a verdict as proven. The report says
+what it was judged at in `presented`.
+
+**The working ledger's uncommitted executions.** Under `--presented`, the executions the
+working copy of the ledger holds that the committed ledger does not are listed in
+`presented.uncommitted`, and read only through the monotone rule: a supplementary record
+may withhold `proven` and never grant it. When one of them failed, timed out or errored,
+on a clean tree, at a commit that contains E and that the presented commit contains, a
+`proven` or `inputs_unchanged` verdict is capped at `stale`, with a detail naming the run.
+The cap is `stale` and not `failing`: such a record never decides a verdict, and an
+uncommitted pass never strengthens one. A working ledger that cannot be read is refused,
+because a run it may hold cannot be ruled out.
+
+**A skip is not a failure.** A test that declined to run proved nothing and failed nothing:
+it is `not_run`, with the reason in its detail, and a guarantee resting on it is named by a
+finding that says its test declined to run. A test that errored or timed out did not
+decline: it is `failing`.
+
+**Containment.** A pass recorded on a commit the presented revision does not contain is a
+fact about another history — a branch that was never merged, a rewritten one — however
+empty a diff between the two trees happens to be. It is `stale`, and its detail names the
+commit. A commit this clone does not have is neither contained nor not: git cannot answer,
+which is row 6.
+
+**Aggregation.** Where several states make one — a rule over the tests it names — a
+failing part makes the whole failing, whatever the other parts say, because the ranking
+puts `failing` above `not_run` and the weakest of a failing test and a skipped one would
+otherwise read `not_run` and hide the failure. Otherwise the whole is the weakest of the
+parts that can carry proof, and a part nothing can ever record counts only when it is all
+there is.
 
 ### `proven` and `inputs_unchanged` are deliberately not the same state
 
 This is the point of the whole subsystem, and it is the thing to preserve in any change to
 it.
 
-**`proven`** means a passing run exists, *nothing has changed since it*, and *the run
-measured the commit it is joined to*: the diff between the execution's own commit and the
-working tree is empty, and the execution's `working_tree` is `clean`. It is proof of the
-tree in front of you — the tree the run measured is the tree you are looking at.
+**`proven`** means a passing run exists, *nothing has changed since it*, *the run
+measured the commit it is joined to*, and *what is presented is that commit's own
+history, as committed*: the presented revision contains the execution's own commit, the
+diff between the two is empty but for the ledger, the execution's `working_tree` is
+`clean`, and so is the presented tree. It is proof of the tree in front of you — the tree
+the run measured is the tree you are looking at.
 
-Both halves are needed, and each fails differently. A run recorded while something else was
+Each condition is needed, and each fails differently. A run recorded while something else was
 pending sat on its commit without measuring it (ADR 0041: "`proven` is a passing run
 recorded against this exact commit with a clean tree"), so it is capped at
 `inputs_unchanged` however empty the diff is when the report is taken — a later `git
