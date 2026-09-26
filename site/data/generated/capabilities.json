@@ -2172,6 +2172,45 @@
       "test_case": "124_evidence"
     },
     {
+      "id": "evidence-judged-at-the-presented-revision",
+      "claim": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+      "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "status": "guaranteed",
+      "note": "`evidence::freshness` is the one truth table every surface reads, and only its proven row may render as verified. `evidence show --presented HEAD` judges the checked-out commit as committed, from the ledger that commit holds, against its tree measured without the working copy of the ledger; `--presented-tree` only weakens that measurement. A run the working ledger holds and the committed one does not is listed in `presented.uncommitted` and read only through the monotone rule, which withholds proven and never decides a verdict.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "502_evidence_is_judged_at_the_presented_revision"
+    },
+    {
+      "id": "evidence-a-skip-is-not-run",
+      "claim": "A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+      "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "status": "guaranteed",
+      "note": "A recorded skip used to read failing, because every result that was not a pass did. It is the absence of a proof, not counter-evidence: the claim reads not_run with the detail that the test declined to run, and a guarantee resting on it is still a finding, one that says its test declined rather than that it was never recorded.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "502_evidence_is_judged_at_the_presented_revision"
+    },
+    {
+      "id": "evidence-a-failure-outranks-an-absence",
+      "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+      "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "status": "guaranteed",
+      "note": "`freshness::aggregate` is the one aggregation: failing if any part is failing, otherwise the weakest of the parts that can carry proof, otherwise the weakest of all. The declared order ranks failing above not_run, so a plain weakest-of over a failing test and a skipped one read not_run, which is not a finding, and hid the failure.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "502_evidence_is_judged_at_the_presented_revision"
+    },
+    {
       "id": "mesh-off-by-default",
       "claim": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
       "source": "docs/MESH.md",

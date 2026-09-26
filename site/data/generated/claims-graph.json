@@ -1509,6 +1509,33 @@
       "note": "`majordomus evidence show --check` exits 10 on any guaranteed claim the evidence does not support, and `scripts/evidence-check` ratchets that against .ai/repo/evidence-baseline.txt, which records the state per claim rather than a list of names. Two things fail: a guarantee the baseline recorded as supported that no longer is, and a supported guarantee that left the matrix. A claim the baseline never knew, with no recorded run, is new debt — named and counted, never a regression — because a ratchet that fired on growth taxed writing claims down. The gate is advisory while the baseline carries unsupported lines and `--strict` is the end state; only `guaranteed` is judged, because advisory, planned and rejected already say that a current proof is not what they claim."
     },
     {
+      "id": "claim:evidence-judged-at-the-presented-revision",
+      "kind": "claim",
+      "label": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-judged-at-the-presented-revision/",
+      "external": false,
+      "note": "`evidence::freshness` is the one truth table every surface reads, and only its proven row may render as verified. `evidence show --presented HEAD` judges the checked-out commit as committed, from the ledger that commit holds, against its tree measured without the working copy of the ledger; `--presented-tree` only weakens that measurement. A run the working ledger holds and the committed one does not is listed in `presented.uncommitted` and read only through the monotone rule, which withholds proven and never decides a verdict."
+    },
+    {
+      "id": "claim:evidence-a-skip-is-not-run",
+      "kind": "claim",
+      "label": "A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-skip-is-not-run/",
+      "external": false,
+      "note": "A recorded skip used to read failing, because every result that was not a pass did. It is the absence of a proof, not counter-evidence: the claim reads not_run with the detail that the test declined to run, and a guarantee resting on it is still a finding, one that says its test declined rather than that it was never recorded."
+    },
+    {
+      "id": "claim:evidence-a-failure-outranks-an-absence",
+      "kind": "claim",
+      "label": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-failure-outranks-an-absence/",
+      "external": false,
+      "note": "`freshness::aggregate` is the one aggregation: failing if any part is failing, otherwise the weakest of the parts that can carry proof, otherwise the weakest of all. The declared order ranks failing above not_run, so a plain weakest-of over a failing test and a skipped one read not_run, which is not a finding, and hid the failure."
+    },
+    {
       "id": "claim:mesh-off-by-default",
       "kind": "claim",
       "label": "No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error",
@@ -1693,6 +1720,13 @@
       "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/distribution/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/freshness.rs",
       "route": null,
       "external": false
     },
@@ -2936,6 +2970,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/49_roadmap_doctrine.sh"
     },
     {
+      "id": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "test",
+      "label": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+    },
+    {
       "id": "test:test/cases/50_blocker_across_handover.sh",
       "kind": "test",
       "label": "test/cases/50_blocker_across_handover.sh",
@@ -4006,6 +4047,21 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-judged-at-the-presented-revision",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-a-skip-is-not-run",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-a-failure-outranks-an-absence",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mesh-off-by-default",
       "target": "source:docs/MESH.md",
       "kind": "specified_by"
@@ -4841,6 +4897,21 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-judged-at-the-presented-revision",
+      "target": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-a-skip-is-not-run",
+      "target": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-a-failure-outranks-an-absence",
+      "target": "impl:apps/majordomus-cli/src/evidence/freshness.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mesh-off-by-default",
       "target": "impl:apps/majordomus-cli/src/shared.rs",
       "kind": "implemented_by"
@@ -5673,6 +5744,21 @@
     {
       "source": "claim:evidence-unsupported-guarantee-is-reported",
       "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-judged-at-the-presented-revision",
+      "target": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-skip-is-not-run",
+      "target": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-failure-outranks-an-absence",
+      "target": "test:test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
       "kind": "proved_by"
     },
     {

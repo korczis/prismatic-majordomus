@@ -142,9 +142,15 @@ use serde_json::Value;
 
 use crate::index::Index;
 
+pub mod freshness;
 pub mod ledger;
 pub mod record;
 
+pub use freshness::{
+    aggregate, changed_between, compare, freshness, ledger_at, presented_commit, uncommitted,
+    weakened_by, Comparison, Judgement, Presented, Recorded, Supplementary, TreeState,
+    UNCOMMITTED_RUN,
+};
 pub use ledger::{Ledger, LEDGER_PATH};
 pub use record::{parse_crate_binaries, record, RecordOutcome, RecordRequest};
 
@@ -738,6 +744,30 @@ impl ProofState {
         }
     }
 
+    /// The design-token word for this state: its serialised name with `_` written as `-`.
+    ///
+    /// A surface that colours a state asks for its token and nothing else, so the mapping
+    /// from a state to a design token is this one spelling rather than a table in each
+    /// renderer.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ProofState;
+    /// assert_eq!(ProofState::Proven.token(), "proven");
+    /// assert_eq!(ProofState::InputsUnchanged.token(), "inputs-unchanged");
+    /// assert_eq!(ProofState::NoTest.token(), "no-test");
+    /// ```
+    pub fn token(self) -> &'static str {
+        match self {
+            ProofState::Proven => "proven",
+            ProofState::InputsUnchanged => "inputs-unchanged",
+            ProofState::Stale => "stale",
+            ProofState::Failing => "failing",
+            ProofState::NotRun => "not-run",
+            ProofState::Unrunnable => "unrunnable",
+            ProofState::NoTest => "no-test",
+        }
+    }
+
     /// One sentence: what the state means, for the reader who clicked the badge. This is
     /// the derivation, in words, and it lives here so that every surface says the same
     /// thing rather than each inventing its own gloss.
@@ -861,6 +891,7 @@ pub fn capped_by_working_tree(state: ProofState, working_tree: &str) -> ProofSta
 ///     meaning: ProofState::NotRun.meaning().to_string(),
 ///     execution: None,
 ///     changed: vec![],
+///     detail: None,
 ///     reproduce: Some("bash test/run.sh 07_scope".into()),
 /// };
 ///
@@ -870,6 +901,8 @@ pub fn capped_by_working_tree(state: ProofState, working_tree: &str) -> ProofSta
 /// assert_eq!(json["changed"], serde_json::json!([]));
 /// // an execution that does not exist is absent, not a null standing in for one
 /// assert!(json.get("execution").is_none());
+/// // and so is a detail the state did not need
+/// assert!(json.get("detail").is_none());
 /// assert_eq!(json["meaning"], serde_json::json!(ProofState::NotRun.meaning()));
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -921,6 +954,11 @@ pub struct ClaimProof {
     /// there, and a client that has to tell "no files changed" from "the server did not say"
     /// is a client reading two different answers as one.
     pub changed: Vec<String>,
+    /// Why the state is what it is, in one sentence, when the state alone does not say: a
+    /// test that declined to run, a run on a commit the presented revision does not
+    /// contain, a tree that was not its commit, a failing run the checkout holds uncommitted.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
     /// The command that produces the proof again, when a runner owns the test.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub reproduce: Option<String>,
@@ -1063,17 +1101,60 @@ pub struct Subject {
     pub excluded: Vec<String>,
 }
 
+/// What a report was judged at: the revision, its tree, and the runs the checkout holds that
+/// the revision's own ledger does not.
+///
+/// A verdict is always a verdict at something. `evidence show` judges the working tree;
+/// `evidence show --presented HEAD` judges the checked-out commit as committed, from the
+/// ledger committed in it — which is what a site built from that commit shows its readers.
+///
+/// ```
+/// use majordomus_cli::evidence::{PresentedRevision, TreeState};
+///
+/// let here = PresentedRevision {
+///     revision: "working_tree".into(),
+///     tree: TreeState::Dirty,
+///     uncommitted: vec![],
+/// };
+/// let json = serde_json::to_value(&here).unwrap();
+/// assert_eq!(json["tree"], "dirty");
+/// // nothing held uncommitted is absent, not an empty list to read past
+/// assert!(json.get("uncommitted").is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EvidencePresentedRevision")]
+pub struct PresentedRevision {
+    /// `working_tree`, or the full id of the commit judged as committed.
+    pub revision: String,
+    /// Whether that revision's tree was its commit: for the working tree, the checkout's
+    /// state; for a commit, the checkout measured ignoring the ledger's working copy and
+    /// weakened by anything the caller knew.
+    pub tree: TreeState,
+    /// The tests whose execution in the working copy of the ledger the presented commit's
+    /// ledger does not hold, sorted. Read only to withhold `proven`, never to decide a
+    /// verdict; always empty for the working tree, whose ledger is itself the authority.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub uncommitted: Vec<String>,
+}
+
 /// The whole joined picture: every claim of the matrix against every execution recorded.
 ///
 /// What the capability answers, what the gate judges and what the site renders are this one
 /// value; the totals and the findings are derived from the claims, never counted twice.
 ///
 /// ```
-/// use majordomus_cli::evidence::{EvidenceReport, Finding, Ledger, ProofState, Subject};
+/// use majordomus_cli::evidence::{
+///     EvidenceReport, Finding, Ledger, PresentedRevision, ProofState, Subject, TreeState,
+/// };
 ///
 /// let mut report = EvidenceReport {
 ///     head: None,
 ///     working_tree: "unknown".into(),
+///     presented: PresentedRevision {
+///         revision: "working_tree".into(),
+///         tree: TreeState::Unknown,
+///         uncommitted: vec![],
+///     },
 ///     ledger: Ledger::empty().summary(),
 ///     subject: Subject { examined: 0, complete: true, excluded: vec![] },
 ///     claims: vec![],
@@ -1117,6 +1198,9 @@ pub struct EvidenceReport {
     pub head: Option<String>,
     /// `clean`, `dirty` or `unknown`.
     pub working_tree: String,
+    /// What the verdicts are about: the working tree, or the checked-out commit judged as
+    /// committed.
+    pub presented: PresentedRevision,
     /// The ledger this was joined against.
     pub ledger: LedgerSummary,
     /// What the report could reach. Read this before reading the tallies: they are counts
@@ -1138,11 +1222,17 @@ impl EvidenceReport {
     /// answer, and the two must never be spelled the same way.
     ///
     /// ```
-    /// # use majordomus_cli::evidence::{EvidenceReport, LedgerSummary, Subject};
+    /// # use majordomus_cli::evidence::{EvidenceReport, LedgerSummary, PresentedRevision};
+    /// # use majordomus_cli::evidence::{Subject, TreeState};
     /// # use std::collections::BTreeMap;
     /// let mut r = EvidenceReport {
     ///     head: None,
     ///     working_tree: "clean".into(),
+    ///     presented: PresentedRevision {
+    ///         revision: "working_tree".into(),
+    ///         tree: TreeState::Clean,
+    ///         uncommitted: vec![],
+    ///     },
     ///     ledger: LedgerSummary {
     ///         path: ".ai/repo/evidence/ledger.json".into(),
     ///         present: false,
@@ -1319,22 +1409,59 @@ fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
 /// );
 /// ```
 pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
+    report_at(index, ledger, &Presented::WorkingTree, &[])
+}
+
+/// The same join, judged at a named revision: the working tree, or the checked-out commit
+/// as committed.
+///
+/// The caller supplies what is read for that revision, so this stays one derivation for both:
+/// for [`Presented::WorkingTree`], [`Ledger::load`] and no uncommitted executions — the
+/// working ledger is itself the authority there; for a presented commit, [`ledger_at`] that
+/// commit and [`uncommitted`] against it. Each claim's state, changed paths and detail come
+/// from [`freshness()`] alone. For a presented commit, a clean failing run of the same test
+/// that the checkout holds uncommitted, recorded between the evidence and the presented
+/// commit, then caps the verdict at `stale` through [`weakened_by`]; it never decides one.
+///
+/// ```
+/// use majordomus_cli::evidence::{report_at, Ledger, Presented};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ledger = Ledger::load(repo.root()).unwrap();
+/// let r = report_at(&repo.index().unwrap(), &ledger, &Presented::WorkingTree, &[]);
+/// assert_eq!(r.presented.revision, "working_tree");
+/// assert!(r.presented.uncommitted.is_empty(), "the working ledger is the authority here");
+/// ```
+pub fn report_at(
+    index: &Index,
+    ledger: &Ledger,
+    presented: &Presented,
+    uncommitted: &[Execution],
+) -> EvidenceReport {
     let root = PathBuf::from(&index.repository.root);
     let git = crate::git::inspect(&root);
     // Reported so a reader knows what the report was derived against; the proof states
-    // are decided by the diff against each execution's own commit, never by HEAD.
+    // are decided by each execution's own commit against the presented revision.
     let (head, working_tree) = match &git {
         crate::git::GitState::Available(i) => (i.head.clone(), i.working_tree.clone()),
         crate::git::GitState::Unavailable { .. } => (None, "unknown".to_string()),
     };
 
     // one comparison per commit the ledger names, not one per claim
-    let mut diffs: BTreeMap<String, Option<BTreeSet<String>>> = BTreeMap::new();
+    let mut comparisons: BTreeMap<String, Comparison> = BTreeMap::new();
     for e in &ledger.executions {
-        diffs
+        comparisons
             .entry(e.commit.clone())
-            .or_insert_with(|| changed_since(&root, &e.commit));
+            .or_insert_with(|| compare(&root, &e.commit, presented));
     }
+    // and one containment per pair of commits the monotone rule asks about
+    let mut containments: BTreeMap<(String, String), crate::git::Containment> = BTreeMap::new();
+    let mut contains = |descendant: &str, ancestor: &str| {
+        *containments
+            .entry((descendant.to_string(), ancestor.to_string()))
+            .or_insert_with(|| crate::git::contains(&root, descendant, ancestor))
+    };
 
     let mut claims = Vec::new();
     let mut totals: BTreeMap<String, usize> = BTreeMap::new();
@@ -1347,63 +1474,64 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
             .and_then(|t| ledger.latest(&t.as_string()))
             .cloned();
 
-        let (state, changed) = match (&c.test, &test_id, &execution) {
-            (None, _, _) => (ProofState::NoTest, Vec::new()),
-            (Some(_), None, _) => (ProofState::Unrunnable, Vec::new()),
-            (Some(_), Some(_), None) => (ProofState::NotRun, Vec::new()),
-            (Some(_), Some(t), Some(e)) => {
-                if !e.outcome.proves() {
-                    (ProofState::Failing, Vec::new())
-                } else {
-                    // what this claim names, and nothing else: the derivation is explicit
-                    // about its own reach, and a surface can repeat it
-                    let inputs: Vec<String> =
-                        [c.source.clone(), c.implementation.clone(), Some(t.source())]
-                            .into_iter()
-                            .flatten()
-                            .collect();
-                    match diffs.get(&e.commit).and_then(|d| d.as_ref()) {
-                        // git could not compare: not knowing is not proof
-                        None => (ProofState::Stale, Vec::new()),
-                        Some(d) => {
-                            // The ledger is evidence *about* the tree, not part of what the
-                            // tests measure, so its own row does not age the proof it
-                            // records. Without this exclusion `proven` is unreachable by
-                            // construction: recording dirties the tree, and committing the
-                            // record moves HEAD past the commit the record names.
-                            let changed_at_all: Vec<&String> =
-                                d.iter().filter(|p| p.as_str() != LEDGER_PATH).collect();
-                            let changed: Vec<String> =
-                                inputs.iter().filter(|p| d.contains(*p)).cloned().collect();
-                            // A test whose source no longer hashes to what ran did not run
-                            // in the form it is in now, whatever the diff says — an edit
-                            // made and reverted around the run leaves no diff and is still
-                            // not the thing that was measured.
-                            let test_moved = e.digest_matches(&root) == Some(false);
-                            if test_moved && changed.is_empty() {
-                                (ProofState::Stale, vec![t.source()])
-                            } else if !changed.is_empty() {
-                                (ProofState::Stale, changed)
-                            } else if changed_at_all.is_empty() {
-                                // The diff says the commit is the tree in front of us; the
-                                // execution's own `working_tree` says whether that commit
-                                // was the tree the run measured. Both, or it is not proven.
-                                (
-                                    capped_by_working_tree(ProofState::Proven, &e.working_tree),
-                                    Vec::new(),
-                                )
-                            } else {
-                                (ProofState::InputsUnchanged, Vec::new())
-                            }
-                        }
-                    }
+        let recorded = match (&c.test, &test_id, &execution) {
+            (None, _, _) => Recorded::NoTest,
+            (Some(_), None, _) => Recorded::Unrunnable,
+            (Some(_), Some(_), None) => Recorded::NotRun,
+            (Some(_), Some(_), Some(e)) => Recorded::Ran(e),
+        };
+        let test_source = test_id.as_ref().map(TestId::source).unwrap_or_default();
+        // what this claim names, and nothing else: the derivation is explicit about its own
+        // reach, and a surface can repeat it
+        let inputs: Vec<String> = [
+            c.source.clone(),
+            c.implementation.clone(),
+            test_id.as_ref().map(TestId::source),
+        ]
+        .into_iter()
+        .flatten()
+        .collect();
+        // A test whose source no longer hashes to what ran did not run in the form it is in
+        // now, whatever the diff says — an edit made and reverted around the run leaves no
+        // diff and is still not the thing that was measured. A presented commit is HEAD, so
+        // the checkout's sources are the commit's whenever its tree is clean.
+        let test_moved = execution
+            .as_ref()
+            .is_some_and(|e| e.outcome.proves() && e.digest_matches(&root) == Some(false));
+        let mut judgement = freshness(
+            recorded,
+            Some(&inputs),
+            &test_source,
+            test_moved,
+            execution.as_ref().and_then(|e| comparisons.get(&e.commit)),
+            presented.tree(),
+        );
+
+        // The monotone rule, over the one supplementary source a presented commit has: the
+        // run of the same test the checkout holds and the commit's ledger does not.
+        if let (Some(p), Some(e), Some(t)) = (presented.commit(), &execution, &test_id) {
+            let key = t.as_string();
+            if judgement.state < ProofState::Stale {
+                if let Some(u) = uncommitted.iter().find(|u| u.test == key) {
+                    let record = Supplementary {
+                        execution: u,
+                        named: UNCOMMITTED_RUN,
+                        after_evidence: contains(&u.commit, &e.commit),
+                        in_presented: contains(p, &u.commit),
+                    };
+                    judgement = weakened_by(judgement, &[record]);
                 }
             }
-        };
+        }
+        let Judgement {
+            state,
+            changed,
+            detail,
+        } = judgement;
 
         *totals.entry(state.label().to_string()).or_insert(0) += 1;
 
-        if let Some(reason) = unsupported(&c.status, state) {
+        if let Some(reason) = unsupported(&c.status, state, detail.as_deref()) {
             findings.push(Finding {
                 claim: c.id.clone(),
                 status: c.status.clone(),
@@ -1425,6 +1553,7 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
             meaning: state.meaning().to_string(),
             execution,
             changed,
+            detail,
             reproduce: test_id.as_ref().map(TestId::reproduce),
         });
     }
@@ -1447,9 +1576,28 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
         excluded,
     };
 
+    let presented = match presented.commit() {
+        None => PresentedRevision {
+            revision: "working_tree".to_string(),
+            tree: TreeState::parse(&working_tree),
+            uncommitted: Vec::new(),
+        },
+        Some(commit) => PresentedRevision {
+            revision: commit.to_string(),
+            tree: presented.tree(),
+            uncommitted: uncommitted
+                .iter()
+                .map(|e| e.test.clone())
+                .collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect(),
+        },
+    };
+
     EvidenceReport {
         head,
         working_tree,
+        presented,
         ledger: ledger.summary(),
         subject,
         claims,
@@ -1473,32 +1621,46 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
 /// Accepting it here made the gate accept, as support for a guarantee, a measurement of
 /// something else. What is left is [`ProofState::InputsUnchanged`], weaker than `proven`
 /// but at least a pass of *this* subject, and that is the floor.
-fn unsupported(status: &str, state: ProofState) -> Option<String> {
+///
+/// The reason reads the judgement's detail where the state alone would mislead: a test that
+/// declined to run is `not_run` and was not "never recorded", and a pass the presented
+/// revision does not contain is `stale` without anything the claim names having changed.
+fn unsupported(status: &str, state: ProofState, detail: Option<&str>) -> Option<String> {
     if status != "guaranteed" {
         return None;
     }
-    match state {
-        ProofState::Proven | ProofState::InputsUnchanged => None,
-        ProofState::Stale => Some(
+    match (state, detail) {
+        (ProofState::Proven | ProofState::InputsUnchanged, _) => None,
+        (ProofState::Stale, None) => Some(
             "the claim guarantees a behaviour whose only recorded run is older than what it is \
              about: the implementation or the test changed after that run, so the pass measured \
              a subject this claim no longer names"
                 .into(),
         ),
-        ProofState::Failing => {
+        (ProofState::Stale, Some(d)) => Some(format!(
+            "the claim guarantees a behaviour whose recorded pass proves nothing at the presented \
+             revision: {d}"
+        )),
+        (ProofState::Failing, None | Some("failed")) => {
             Some("the claim guarantees a behaviour whose test most recently failed".into())
         }
-        ProofState::NotRun => Some(
+        (ProofState::Failing, Some(d)) => Some(format!(
+            "the claim guarantees a behaviour whose latest run did not pass: {d}"
+        )),
+        (ProofState::NotRun, None) => Some(
             "the claim guarantees a behaviour and names a test, and no run of that test has ever \
              been recorded"
                 .into(),
         ),
-        ProofState::Unrunnable => Some(
+        (ProofState::NotRun, Some(_)) => {
+            Some("the claim guarantees a behaviour whose test declined to run".into())
+        }
+        (ProofState::Unrunnable, _) => Some(
             "the claim guarantees a behaviour and names a path no runner drives, so no execution \
              of it can be recorded"
                 .into(),
         ),
-        ProofState::NoTest => {
+        (ProofState::NoTest, _) => {
             Some("the claim guarantees a behaviour and names no test at all".into())
         }
     }
@@ -1558,6 +1720,11 @@ mod tests {
         let base = EvidenceReport {
             head: None,
             working_tree: "clean".into(),
+            presented: PresentedRevision {
+                revision: "working_tree".into(),
+                tree: TreeState::Clean,
+                uncommitted: vec![],
+            },
             ledger: LedgerSummary {
                 path: LEDGER_PATH.into(),
                 present: false,
@@ -1603,13 +1770,13 @@ mod tests {
     /// say that a current proof is not what they are claiming.
     #[test]
     fn only_a_guarantee_is_held_to_its_evidence() {
-        assert!(unsupported("guaranteed", ProofState::NotRun).is_some());
-        assert!(unsupported("guaranteed", ProofState::Failing).is_some());
-        assert!(unsupported("guaranteed", ProofState::NoTest).is_some());
-        assert!(unsupported("guaranteed", ProofState::Unrunnable).is_some());
-        assert!(unsupported("guaranteed", ProofState::Stale).is_some());
-        assert!(unsupported("guaranteed", ProofState::Proven).is_none());
-        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
+        assert!(unsupported("guaranteed", ProofState::NotRun, None).is_some());
+        assert!(unsupported("guaranteed", ProofState::Failing, None).is_some());
+        assert!(unsupported("guaranteed", ProofState::NoTest, None).is_some());
+        assert!(unsupported("guaranteed", ProofState::Unrunnable, None).is_some());
+        assert!(unsupported("guaranteed", ProofState::Stale, None).is_some());
+        assert!(unsupported("guaranteed", ProofState::Proven, None).is_none());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged, None).is_none());
         for status in ["advisory", "planned", "rejected"] {
             for state in [
                 ProofState::NotRun,
@@ -1618,7 +1785,7 @@ mod tests {
                 ProofState::Stale,
             ] {
                 assert!(
-                    unsupported(status, state).is_none(),
+                    unsupported(status, state, None).is_none(),
                     "{status} must not be held to a current proof"
                 );
             }
@@ -1632,7 +1799,7 @@ mod tests {
     /// reporting that as supported is the gate accepting a measurement of something else.
     #[test]
     fn a_guarantee_whose_proof_is_older_than_its_subject_is_not_supported() {
-        let reason = unsupported("guaranteed", ProofState::Stale)
+        let reason = unsupported("guaranteed", ProofState::Stale, None)
             .expect("a stale proof was accepted as support for a guarantee");
         assert!(
             reason.contains("older than what it is about"),
@@ -1641,7 +1808,7 @@ mod tests {
         );
         // the pass is still a pass, and the two passing-but-weaker states are not the same
         assert!(ProofState::Stale.passing());
-        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged, None).is_none());
     }
 
     /// `proven` is a passing run recorded against this exact commit *with a clean tree*
@@ -1727,5 +1894,319 @@ mod tests {
         assert_eq!(field(&meta, "d"), Some("docs/CLI.md".into()));
         assert_eq!(field(&meta, "e"), Some("docs/X.md".into()));
         assert_eq!(field(&meta, "missing"), None);
+    }
+
+    /// Every state's design token is its serialised name with `_` written as `-`, and a
+    /// token is a word a stylesheet can carry.
+    #[test]
+    fn a_states_token_is_its_serialised_name_with_hyphens() {
+        for s in [
+            ProofState::Proven,
+            ProofState::InputsUnchanged,
+            ProofState::Stale,
+            ProofState::Failing,
+            ProofState::NotRun,
+            ProofState::Unrunnable,
+            ProofState::NoTest,
+        ] {
+            let name = serde_json::to_value(s).unwrap();
+            let name = name.as_str().unwrap().replace('_', "-");
+            assert_eq!(s.token(), name);
+            let t = s.token();
+            assert!(
+                t.starts_with(|c: char| c.is_ascii_lowercase())
+                    && t.chars()
+                        .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-'),
+                "{t} is not a token"
+            );
+        }
+    }
+
+    /// A finding says why in the judgement's words where the state alone would mislead.
+    #[test]
+    fn a_findings_reason_reads_the_judgements_detail() {
+        let declined = unsupported(
+            "guaranteed",
+            ProofState::NotRun,
+            Some("the test declined to run"),
+        )
+        .unwrap();
+        assert_eq!(
+            declined,
+            "the claim guarantees a behaviour whose test declined to run"
+        );
+        let never = unsupported("guaranteed", ProofState::NotRun, None).unwrap();
+        assert!(never.contains("no run of that test has ever been recorded"));
+
+        let failed = unsupported("guaranteed", ProofState::Failing, Some("failed")).unwrap();
+        assert_eq!(
+            failed,
+            "the claim guarantees a behaviour whose test most recently failed"
+        );
+        let timed = unsupported("guaranteed", ProofState::Failing, Some("timed out")).unwrap();
+        assert!(timed.ends_with("did not pass: timed out"), "{timed}");
+
+        let elsewhere = unsupported(
+            "guaranteed",
+            ProofState::Stale,
+            Some("recorded on abc, which the presented revision does not contain"),
+        )
+        .unwrap();
+        assert!(elsewhere.contains("does not contain"), "{elsewhere}");
+        assert!(!elsewhere.contains("changed after that run"), "{elsewhere}");
+        assert!(unsupported("advisory", ProofState::NotRun, Some("declined")).is_none());
+    }
+
+    // ---------------------------------------------------------------- at a presented commit
+
+    /// A repository with one guaranteed claim per case, and the index the report reads.
+    struct Fixture {
+        dir: tempfile::TempDir,
+    }
+
+    impl Fixture {
+        fn new(cases: &[&str]) -> Fixture {
+            let f = Fixture {
+                dir: tempfile::tempdir().unwrap(),
+            };
+            f.git(&["init", "-q"]);
+            f.git(&["config", "user.email", "t@example.com"]);
+            f.git(&["config", "user.name", "t"]);
+            for c in cases {
+                f.write(&format!("test/cases/{c}.sh"), &format!("# {c}\n"));
+            }
+            f.git(&["add", "-A"]);
+            f.git(&["commit", "-q", "-m", "fixture"]);
+            f
+        }
+        fn root(&self) -> &Path {
+            self.dir.path()
+        }
+        fn git(&self, args: &[&str]) -> String {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(self.root())
+                .args(args)
+                .output()
+                .unwrap();
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        }
+        fn write(&self, rel: &str, text: &str) {
+            let p = self.root().join(rel);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        }
+        /// Record one run of a case at HEAD on a clean tree, into the working ledger.
+        fn record(&self, case: &str, outcome: &str) {
+            let head = self.git(&["rev-parse", "HEAD"]);
+            let source = format!("test/cases/{case}.sh");
+            let digest = digest_of(&std::fs::read(self.root().join(&source)).unwrap());
+            let e: Execution = serde_json::from_value(serde_json::json!({
+                "test": format!("suite:{case}"),
+                "runner": "suite",
+                "source": source,
+                "outcome": outcome,
+                "seconds": 1,
+                "commit": head,
+                "working_tree": "clean",
+                "digest": digest,
+                "at": "2026-09-26T00:00:00Z",
+                "origin": "local",
+                "command": format!("bash test/run.sh {case}")
+            }))
+            .unwrap();
+            let mut l = Ledger::load(self.root()).unwrap();
+            l.merge([e]);
+            l.save(self.root()).unwrap();
+        }
+        fn commit_all(&self, message: &str) -> String {
+            self.git(&["add", "-A"]);
+            self.git(&["commit", "-q", "-m", message]);
+            self.git(&["rev-parse", "HEAD"])
+        }
+        fn index(&self, cases: &[&str]) -> Index {
+            use crate::index::{RepositoryInfo, State};
+            use crate::{Object, Provenance};
+            let objects = cases
+                .iter()
+                .enumerate()
+                .map(|(i, c)| Object {
+                    kind: "claim".into(),
+                    identity: format!("{c}-holds"),
+                    uri: format!("majordomus://claim/{c}-holds"),
+                    title: None,
+                    description: None,
+                    metadata: serde_json::json!({
+                        "claim": format!("{c} holds"),
+                        "status": "guaranteed",
+                        "test": format!("test/cases/{c}.sh"),
+                    }),
+                    body: String::new(),
+                    content: String::new(),
+                    media_type: "application/yaml",
+                    provenance: Provenance {
+                        path: "docs/CLAIMS.yaml".into(),
+                        directory: "docs".into(),
+                        source_class: "claim".into(),
+                        section: None,
+                        bytes: 0,
+                        member: Some(format!("claims.{i}")),
+                    },
+                })
+                .collect();
+            Index {
+                repository: RepositoryInfo {
+                    root: self.root().display().to_string(),
+                    layer_schema: "ai-repository/v1".into(),
+                    sections: Default::default(),
+                    git: crate::git::GitState::Unavailable {
+                        reason: "unit".into(),
+                    },
+                    discovery: "filesystem".into(),
+                    source_classes: vec![],
+                    kind_sources: vec![],
+                    scope_origin: crate::scope::Origin::Distribution,
+                    scope_path: String::new(),
+                },
+                objects,
+                diagnostics: vec![],
+                state: State::Ok,
+                fingerprint: String::new(),
+                scoped: Default::default(),
+                distribution: None,
+                providers: Default::default(),
+                share: None,
+            }
+        }
+        /// The report at the checked-out commit, as `evidence show --presented HEAD` reads it.
+        fn at_head(&self, cases: &[&str], given: Option<TreeState>) -> EvidenceReport {
+            let presented = presented_commit(self.root(), "HEAD", given).unwrap();
+            let commit = presented.commit().unwrap().to_string();
+            let ledger = ledger_at(self.root(), &commit).unwrap();
+            let held = uncommitted(self.root(), &ledger).unwrap();
+            report_at(&self.index(cases), &ledger, &presented, &held)
+        }
+        fn here(&self, cases: &[&str]) -> EvidenceReport {
+            report(&self.index(cases), &Ledger::load(self.root()).unwrap())
+        }
+    }
+
+    fn state_of(r: &EvidenceReport, claim: &str) -> ProofState {
+        r.claims.iter().find(|c| c.id == claim).unwrap().state
+    }
+
+    /// Judged at the commit, from the ledger committed in it: a pass recorded on the commit
+    /// before, with only the ledger committed since, is proven there.
+    #[test]
+    fn a_presented_commit_is_judged_by_the_ledger_it_holds() {
+        let f = Fixture::new(&["01_alpha"]);
+        f.record("01_alpha", "pass");
+        let c2 = f.commit_all("the ledger");
+        let r = f.at_head(&["01_alpha"], None);
+        assert_eq!(state_of(&r, "01_alpha-holds"), ProofState::Proven);
+        assert_eq!(r.presented.revision, c2);
+        assert_eq!(r.presented.tree, TreeState::Clean);
+        assert!(r.presented.uncommitted.is_empty());
+        assert!(r.findings.is_empty());
+
+        // the working tree says the same, and says it is the working tree
+        let here = f.here(&["01_alpha"]);
+        assert_eq!(state_of(&here, "01_alpha-holds"), ProofState::Proven);
+        assert_eq!(here.presented.revision, "working_tree");
+
+        // a tree the caller knows was not its commit is not proven
+        let told = f.at_head(&["01_alpha"], Some(TreeState::Dirty));
+        let claim = &told.claims[0];
+        assert_eq!(claim.state, ProofState::InputsUnchanged);
+        assert!(claim
+            .detail
+            .as_deref()
+            .unwrap()
+            .contains("presented revision"));
+    }
+
+    /// The monotone rule's first source: a clean failure the checkout holds uncommitted
+    /// withholds `proven` at the commit, and does not decide the verdict there.
+    #[test]
+    fn a_failure_the_checkout_holds_caps_the_commit_at_stale() {
+        let f = Fixture::new(&["01_alpha"]);
+        f.record("01_alpha", "pass");
+        let c2 = f.commit_all("the ledger");
+        f.record("01_alpha", "fail");
+
+        let here = f.here(&["01_alpha"]);
+        assert_eq!(state_of(&here, "01_alpha-holds"), ProofState::Failing);
+
+        let r = f.at_head(&["01_alpha"], None);
+        let claim = &r.claims[0];
+        assert_eq!(claim.state, ProofState::Stale, "{claim:?}");
+        let detail = claim.detail.as_deref().unwrap();
+        assert!(detail.contains("uncommitted"), "{detail}");
+        assert!(detail.contains(&c2[..12]), "{detail}");
+        assert_eq!(r.presented.uncommitted, ["suite:01_alpha"]);
+        assert_eq!(
+            r.presented.tree,
+            TreeState::Clean,
+            "the ledger is not the tree"
+        );
+        assert_eq!(r.findings.len(), 1);
+        assert!(r.findings[0].reason.contains("uncommitted"));
+    }
+
+    /// And never the other way: a pass the checkout holds uncommitted, of a test the commit's
+    /// ledger has no row for, leaves the commit's verdict `not_run`.
+    #[test]
+    fn an_uncommitted_pass_never_strengthens_the_commit() {
+        let f = Fixture::new(&["01_alpha", "02_beta"]);
+        f.record("01_alpha", "pass");
+        f.commit_all("the ledger");
+        f.record("02_beta", "pass");
+        let cases = ["01_alpha", "02_beta"];
+        assert_eq!(
+            state_of(&f.here(&cases), "02_beta-holds"),
+            ProofState::Proven
+        );
+        let r = f.at_head(&cases, None);
+        assert_eq!(state_of(&r, "02_beta-holds"), ProofState::NotRun);
+        assert_eq!(r.presented.uncommitted, ["suite:02_beta"]);
+    }
+
+    /// A skip is `not_run` with its reason, and the guarantee's finding says it declined.
+    #[test]
+    fn a_skipped_guarantee_is_not_run_and_the_finding_says_it_declined() {
+        let f = Fixture::new(&["01_alpha"]);
+        f.record("01_alpha", "skip");
+        let r = f.here(&["01_alpha"]);
+        let claim = &r.claims[0];
+        assert_eq!(claim.state, ProofState::NotRun);
+        assert!(claim.detail.as_deref().unwrap().contains("declined"));
+        assert_eq!(
+            r.findings[0].reason,
+            "the claim guarantees a behaviour whose test declined to run"
+        );
+    }
+
+    /// A pass recorded on a commit the checked-out branch does not contain is about some
+    /// other history.
+    #[test]
+    fn a_pass_on_a_commit_head_does_not_contain_is_stale() {
+        let f = Fixture::new(&["01_alpha"]);
+        let trunk = f.git(&["symbolic-ref", "--short", "HEAD"]);
+        f.git(&["checkout", "-q", "-b", "side"]);
+        f.write("side.txt", "side");
+        f.commit_all("side");
+        f.record("01_alpha", "pass");
+        let ledger = std::fs::read_to_string(f.root().join(LEDGER_PATH)).unwrap();
+        std::fs::remove_file(f.root().join(LEDGER_PATH)).unwrap();
+        f.git(&["checkout", "-q", &trunk]);
+        f.write(LEDGER_PATH, &ledger);
+        let r = f.here(&["01_alpha"]);
+        let claim = &r.claims[0];
+        assert_eq!(claim.state, ProofState::Stale);
+        assert!(claim
+            .detail
+            .as_deref()
+            .unwrap()
+            .contains("does not contain"));
     }
 }

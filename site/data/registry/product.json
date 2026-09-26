@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.9.0"
   },
-  "fingerprint": "78361233dc5c5bfb445ac4f4d24bcadd0e953a1a5a2abfa3c92bf78575fc9fea",
+  "fingerprint": "4e5a32142ffeefd0316f84688cbe604c4e10870ad2874fee4f4f23a69ee70546",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -294,7 +294,7 @@
         },
         {
           "name": "claim",
-          "objects": 176
+          "objects": 179
         }
       ],
       "rule_refs": [
@@ -558,11 +558,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 237,
+        "mcp_resources": 240,
         "http_routes": 10,
         "cli_paths": 9,
         "commands": 2,
-        "objects": 232,
+        "objects": 235,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3081,7 +3081,7 @@
         },
         {
           "name": "document",
-          "objects": 252
+          "objects": 255
         }
       ],
       "rule_refs": [
@@ -3330,11 +3330,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 306,
+        "mcp_resources": 309,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 305,
+        "objects": 308,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7425,7 +7425,10 @@
         "evidence-currency-is-not-collapsed",
         "evidence-partial-run-preserves-the-rest",
         "evidence-navigates-both-ways",
-        "evidence-unsupported-guarantee-is-reported"
+        "evidence-unsupported-guarantee-is-reported",
+        "evidence-judged-at-the-presented-revision",
+        "evidence-a-skip-is-not-run",
+        "evidence-a-failure-outranks-an-absence"
       ],
       "use_cases": [],
       "cockpit": [],
@@ -7546,6 +7549,21 @@
           "id": "evidence-unsupported-guarantee-is-reported",
           "claim": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
           "status": "guaranteed"
+        },
+        {
+          "id": "evidence-judged-at-the-presented-revision",
+          "claim": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-a-skip-is-not-run",
+          "claim": "A test that declined to run reads not_run with the reason it gave, never proven and never failing, and a test that errored or timed out reads failing",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-a-failure-outranks-an-absence",
+          "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+          "status": "guaranteed"
         }
       ],
       "use_case_refs": [],
@@ -7565,13 +7583,13 @@
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 5,
+        "claims": 8,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 5
+          "guaranteed": 8
         },
         "modules": {
           "behaviorally_verified": 1
@@ -9523,7 +9541,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (176)",
+        "title": "claim (179)",
         "features": [
           "declare-once"
         ]
@@ -10450,28 +10468,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1488,
+    "capabilities": 1495,
     "builtin": 115,
-    "declarative": 1373,
+    "declarative": 1380,
     "modules": 38,
     "mcp_tools": 112,
-    "mcp_resources": 1414,
+    "mcp_resources": 1421,
     "http_routes": 114,
     "cli_commands": 118,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1373,
+    "objects": 1380,
     "by_kind": {
       "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 176,
+      "claim": 179,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 252,
+      "document": 255,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -10488,7 +10506,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 225,
+      "test": 226,
       "use-case": 46,
       "workspace": 1
     },

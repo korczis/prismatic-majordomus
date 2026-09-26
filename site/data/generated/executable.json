@@ -2317,6 +2317,27 @@
         "test": "test/cases/124_evidence.sh"
       },
       {
+        "id": "evidence-judged-at-the-presented-revision",
+        "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "route": "/guarantees/evidence-judged-at-the-presented-revision/",
+        "status": "guaranteed",
+        "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+      },
+      {
+        "id": "evidence-a-skip-is-not-run",
+        "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "route": "/guarantees/evidence-a-skip-is-not-run/",
+        "status": "guaranteed",
+        "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+      },
+      {
+        "id": "evidence-a-failure-outranks-an-absence",
+        "implementation": "apps/majordomus-cli/src/evidence/freshness.rs",
+        "route": "/guarantees/evidence-a-failure-outranks-an-absence/",
+        "status": "guaranteed",
+        "test": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
+      },
+      {
         "id": "mesh-one-registry",
         "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
         "route": "/guarantees/mesh-one-registry/",
@@ -2436,7 +2457,7 @@
   },
   "counts": {
     "capabilities": 115,
-    "claims": 51,
+    "claims": 54,
     "modules": 38
   },
   "generator": "majordomus-cli 0.9.0",

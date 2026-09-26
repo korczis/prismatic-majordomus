@@ -76,7 +76,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::evidence::{
-    self, ClaimProof, EvidenceReport, Execution, Ledger, Origin, ProofState, RecordRequest,
+    self, freshness, ClaimProof, EvidenceReport, Execution, Ledger, Origin, ProofState,
+    RecordRequest, TreeState,
 };
 use crate::{capability, module};
 
@@ -89,23 +90,30 @@ pub const EVIDENCE_URI: &str = "majordomus://evidence";
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-/// Which part of the matrix to answer for.
+/// Which part of the matrix to answer for, and at which revision.
 ///
-/// Every field narrows, and they compose; saying nothing asks for the whole matrix. A key
-/// nothing recognises is refused rather than dropped, because a misspelled filter that read
-/// as "no filter" would answer a question nobody asked and look like a clean one.
+/// Every filter narrows, and they compose; saying nothing asks for the whole matrix at the
+/// working tree. A key nothing recognises is refused rather than dropped, because a
+/// misspelled filter that read as "no filter" would answer a question nobody asked and look
+/// like a clean one.
 ///
 /// ```
 /// use majordomus_cli::capability::builtin::evidence::EvidenceReportInput;
-/// use majordomus_cli::evidence::ProofState;
+/// use majordomus_cli::evidence::{ProofState, TreeState};
 ///
 /// let all: EvidenceReportInput = serde_json::from_str("{}").unwrap();
 /// assert!(all.state.is_none() && all.status.is_none() && !all.findings_only);
+/// assert!(all.presented.is_none(), "the working tree unless a commit is named");
 ///
 /// let narrowed: EvidenceReportInput =
 ///     serde_json::from_str(r#"{"state": "stale", "findings_only": true}"#).unwrap();
 /// assert_eq!(narrowed.state, Some(ProofState::Stale));
 /// assert!(narrowed.findings_only);
+///
+/// let at: EvidenceReportInput =
+///     serde_json::from_str(r#"{"presented": "HEAD", "presented_tree": "dirty"}"#).unwrap();
+/// assert_eq!(at.presented.as_deref(), Some("HEAD"));
+/// assert_eq!(at.presented_tree, Some(TreeState::Dirty));
 ///
 /// assert!(serde_json::from_str::<EvidenceReportInput>(r#"{"states": "stale"}"#).is_err());
 /// ```
@@ -123,9 +131,24 @@ pub struct EvidenceReportInput {
     /// findings. The tallies still count the whole matrix, so a filtered answer never
     /// misreports how much of it was examined.
     pub findings_only: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Judge at this revision, as committed, rather than at the working tree: `HEAD`, or
+    /// any name of the checked-out commit. It must be the checked-out commit; the ledger is
+    /// read as that commit holds it, and a run the working ledger holds that the commit's
+    /// does not can only withhold `proven`. Absent: the working tree.
+    pub presented: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// What the caller knows about the presented commit's tree (`clean`, `dirty`,
+    /// `unknown`). It can only weaken the measured state, never assert a clean tree over a
+    /// dirty checkout, and it means nothing without `presented`.
+    pub presented_tree: Option<TreeState>,
 }
 
 impl BenchmarkCases for EvidenceReportInput {
+    /// The whole matrix and the findings, at the working tree. No case fills `presented`:
+    /// the benchmark repository is not a git repository, so every revision it could name is
+    /// refused, and such a case would time the refusal and be counted as coverage of the
+    /// judgement it never reached.
     fn benchmark_cases(_: &CaseContext<'_>) -> Vec<NamedCase<Self>> {
         vec![
             NamedCase::new("all", EvidenceReportInput::default()),
@@ -438,8 +461,34 @@ fn full_report(ctx: &Context) -> Result<EvidenceReport, CapabilityError> {
     Ok(evidence::report(&ctx.index, &ledger))
 }
 
+/// The joined report at the checked-out commit, as committed: the ledger that commit holds,
+/// and the runs the working ledger holds beside it, which can only withhold `proven`.
+fn report_at_commit(
+    ctx: &Context,
+    rev: &str,
+    given: Option<TreeState>,
+) -> Result<EvidenceReport, CapabilityError> {
+    let root = root_of(ctx);
+    let presented =
+        freshness::presented_commit(&root, rev, given).map_err(CapabilityError::InvalidInput)?;
+    let commit = presented.commit().unwrap_or_default().to_string();
+    let ledger = freshness::ledger_at(&root, &commit).map_err(internal)?;
+    let held = freshness::uncommitted(&root, &ledger).map_err(internal)?;
+    Ok(evidence::report_at(&ctx.index, &ledger, &presented, &held))
+}
+
 fn report(ctx: &Context, input: EvidenceReportInput) -> Result<EvidenceReport, CapabilityError> {
-    let mut r = full_report(ctx)?;
+    let mut r = match (&input.presented, input.presented_tree) {
+        (Some(rev), given) => report_at_commit(ctx, rev, given)?,
+        (None, Some(_)) => {
+            return Err(CapabilityError::InvalidInput(
+                "`presented_tree` weakens the measured tree of a presented commit, and no \
+                 commit was presented: name one with `presented`"
+                    .to_string(),
+            ))
+        }
+        (None, None) => full_report(ctx)?,
+    };
     // the tallies are taken before the filter: a filtered answer says how much of the
     // matrix it looked at, never how much it returned
     if input.findings_only {
@@ -603,7 +652,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "evidence.report",
                 title: "Every claim against the evidence recorded for it",
-                description: "The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
+                description: "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.",
                 input: EvidenceReportInput,
                 output: EvidenceReport,
                 stability: Stability::BehaviorallyVerified,
@@ -791,5 +840,35 @@ mod tests {
             );
             assert_eq!(cli.path.len(), 2, "{}", e.capability.id);
         }
+    }
+
+    /// A tree state means something only about a presented commit, and a revision the
+    /// repository cannot name is refused with its name rather than judged at something else.
+    #[test]
+    fn a_presented_revision_is_checked_before_anything_is_judged() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let ctx = repo.context().unwrap();
+        match ctx.execute(
+            "evidence.report",
+            serde_json::json!({ "presented_tree": "dirty" }),
+        ) {
+            Err(CapabilityError::InvalidInput(m)) => {
+                assert!(m.contains("presented"), "{m}")
+            }
+            other => panic!("a tree state with no commit was accepted: {other:?}"),
+        }
+        // the benchmark repository is not a git repository, so no revision resolves there
+        match ctx.execute(
+            "evidence.report",
+            serde_json::json!({ "presented": "HEAD", "presented_tree": "clean" }),
+        ) {
+            Err(CapabilityError::InvalidInput(m)) => assert!(m.contains("HEAD"), "{m}"),
+            other => panic!("a revision that names nothing was judged: {other:?}"),
+        }
+        // and the working tree is still the default
+        let v = ctx
+            .execute("evidence.report", serde_json::json!({}))
+            .unwrap();
+        assert_eq!(v["presented"]["revision"], "working_tree");
     }
 }

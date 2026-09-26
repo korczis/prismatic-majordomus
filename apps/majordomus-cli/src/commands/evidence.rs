@@ -34,8 +34,17 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             status,
             findings,
             check,
+            presented,
+            presented_tree,
         } => {
-            let mut input = json!({ "findings_only": findings });
+            // a presented commit is judged from the ledger it holds, and the runs the working
+            // ledger holds beside it can only withhold `proven`: the capability reads both,
+            // and an absent revision or tree is the null an optional input reads as absent
+            let mut input = json!({
+                "findings_only": findings,
+                "presented": presented,
+                "presented_tree": presented_tree,
+            });
             if let Some(s) = &state {
                 input["state"] = json!(s);
             }
@@ -136,6 +145,9 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
             v["working_tree"].as_str().unwrap_or("?")
         ),
     )?;
+    for line in judged_at(v) {
+        w(out, line)?;
+    }
     let l = &v["ledger"];
     w(
         out,
@@ -188,37 +200,8 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     }
 
     for c in v["claims"].as_array().into_iter().flatten() {
-        let state = c["state"].as_str().unwrap_or("?");
-        w(
-            out,
-            format!(
-                "{:<18} {:<12} {}",
-                state,
-                c["status"].as_str().unwrap_or("?"),
-                c["id"].as_str().unwrap_or("?")
-            ),
-        )?;
-        if let Some(e) = c["execution"].as_object() {
-            w(
-                out,
-                format!(
-                    "                   {} at {} · {}s · {} · {}",
-                    e["outcome"].as_str().unwrap_or("?"),
-                    short(e["commit"].as_str().unwrap_or("?")),
-                    e["seconds"],
-                    e["origin"].as_str().unwrap_or("?"),
-                    e["at"].as_str().unwrap_or("?")
-                ),
-            )?;
-        }
-        for p in c["changed"].as_array().into_iter().flatten() {
-            w(
-                out,
-                format!(
-                    "                   changed since: {}",
-                    p.as_str().unwrap_or("?")
-                ),
-            )?;
+        for line in claim_lines(c) {
+            w(out, line)?;
         }
     }
 
@@ -405,6 +388,74 @@ fn test_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     Ok(())
 }
 
+/// One claim of `evidence show`, as the lines a person reads: the state, the status and the
+/// id, then the execution behind it, the paths that changed since, and why when the state
+/// alone does not say.
+fn claim_lines(c: &Value) -> Vec<String> {
+    let mut lines = vec![format!(
+        "{:<18} {:<12} {}",
+        c["state"].as_str().unwrap_or("?"),
+        c["status"].as_str().unwrap_or("?"),
+        c["id"].as_str().unwrap_or("?")
+    )];
+    lines.extend(c["execution"].as_object().map(|e| {
+        format!(
+            "                   {} at {} · {}s · {} · {}",
+            e["outcome"].as_str().unwrap_or("?"),
+            short(e["commit"].as_str().unwrap_or("?")),
+            e["seconds"],
+            e["origin"].as_str().unwrap_or("?"),
+            e["at"].as_str().unwrap_or("?")
+        )
+    }));
+    lines.extend(c["changed"].as_array().into_iter().flatten().map(|p| {
+        format!(
+            "                   changed since: {}",
+            p.as_str().unwrap_or("?")
+        )
+    }));
+    lines.extend(
+        c["detail"]
+            .as_str()
+            .map(|d| format!("                   {d}")),
+    );
+    lines
+}
+
+/// The line naming what the verdicts below were judged at, and — for a presented commit whose
+/// checkout holds runs its own ledger does not — the line saying what those runs are for.
+fn judged_at(v: &Value) -> Vec<String> {
+    let p = &v["presented"];
+    let tree = p["tree"].as_str().unwrap_or("unknown");
+    let mut lines = vec![match p["revision"].as_str() {
+        None | Some("working_tree") => format!(
+            "judged at the working tree (HEAD {}, {tree})",
+            twelve(v["head"].as_str().unwrap_or("unknown"))
+        ),
+        Some(commit) => format!("judged at {} as committed ({tree})", twelve(commit)),
+    }];
+    let held: Vec<&str> = p["uncommitted"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect();
+    if !held.is_empty() {
+        lines.push(format!(
+            "             the working ledger holds executions this commit does not ({}), read \
+             only to withhold `proven`",
+            held.join(", ")
+        ));
+    }
+    lines
+}
+
+/// The first twelve characters of a commit: the spelling the judged line and every detail
+/// sentence use, so a reader can match one against the other.
+fn twelve(commit: &str) -> String {
+    commit.chars().take(12).collect()
+}
+
 // ---------------------------------------------------------------- plumbing
 
 /// The first eight characters of a commit, for a line a person reads. Never used as an
@@ -442,5 +493,67 @@ fn map(e: CapabilityError) -> Error {
         other => Error::Protocol {
             reason: other.to_string(),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The first line says what was judged, and a presented commit whose checkout holds runs
+    /// its own ledger does not says what those runs are read for.
+    #[test]
+    fn the_report_says_what_it_was_judged_at() {
+        let here = json!({
+            "head": "abcdef0123456789abcdef0123456789abcdef01",
+            "presented": { "revision": "working_tree", "tree": "dirty" }
+        });
+        assert_eq!(
+            judged_at(&here),
+            ["judged at the working tree (HEAD abcdef012345, dirty)"]
+        );
+
+        let commit = json!({
+            "presented": {
+                "revision": "0123456789abcdef0123456789abcdef01234567",
+                "tree": "clean",
+                "uncommitted": ["suite:01_alpha", "suite:02_beta"]
+            }
+        });
+        let lines = judged_at(&commit);
+        assert_eq!(lines[0], "judged at 0123456789ab as committed (clean)");
+        assert!(
+            lines[1].contains("(suite:01_alpha, suite:02_beta)"),
+            "{}",
+            lines[1]
+        );
+        assert!(
+            lines[1].contains("only to withhold `proven`"),
+            "{}",
+            lines[1]
+        );
+    }
+
+    /// A claim prints its state first, then what it rests on and why.
+    #[test]
+    fn a_claim_prints_its_execution_its_changes_and_its_detail() {
+        let bare = json!({ "state": "not_run", "status": "guaranteed", "id": "a" });
+        assert_eq!(claim_lines(&bare).len(), 1);
+        assert!(claim_lines(&bare)[0].ends_with(" a"));
+
+        let full = json!({
+            "state": "stale", "status": "guaranteed", "id": "b",
+            "execution": {
+                "outcome": "pass", "commit": "0123456789abcdef", "seconds": 3,
+                "origin": "local", "at": "2026-09-26T00:00:00Z"
+            },
+            "changed": ["lib/b.sh"],
+            "detail": "recorded on 0123456789ab, which the presented revision does not contain"
+        });
+        let lines = claim_lines(&full);
+        assert_eq!(lines.len(), 4, "{lines:?}");
+        assert!(lines[1].contains("pass at 01234567"), "{}", lines[1]);
+        assert!(lines[2].ends_with("changed since: lib/b.sh"));
+        assert!(lines[3].ends_with("does not contain"));
     }
 }
