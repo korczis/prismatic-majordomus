@@ -2364,7 +2364,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
             ExampleDoc {
                 id: "evidence-show-presented",
                 title: "The checked-out commit, judged as committed",
-                description: "What a site built from this commit would show: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
+                description: "The reading a site built from this commit needs: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
                 argv: &["evidence", "show", "--presented", "HEAD"],
                 setup: &[],
                 expect: Expect::StdoutContains(&["judged at", "as committed"]),

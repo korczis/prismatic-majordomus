@@ -6,7 +6,7 @@
     "version": "0.9.0"
   },
   "registry": {
-    "fingerprint": "e8840679f3edb9cfc5bfc864943e9eaaeec0ee9c96b873372ab212de0fb4b4bd",
+    "fingerprint": "0bd14b590d8816fb36d4eb3c42431944c4df2fbb62c7422ce8e7f28259233577",
     "summary": {
       "total": 1495,
       "builtin": 115,
@@ -14833,7 +14833,7 @@
                   "revision",
                   "tree"
                 ],
-                "description": "What a report was judged at: the revision, its tree, and the runs the checkout holds that\nthe revision's own ledger does not.\n\nA verdict is always a verdict at something. `evidence show` judges the working tree;\n`evidence show --presented HEAD` judges the checked-out commit as committed, from the\nledger committed in it — which is what a site built from that commit shows its readers.\n\n```\nuse majordomus_cli::evidence::{PresentedRevision, TreeState};\n\nlet here = PresentedRevision {\n    revision: \"working_tree\".into(),\n    tree: TreeState::Dirty,\n    uncommitted: vec![],\n};\nlet json = serde_json::to_value(&here).unwrap();\nassert_eq!(json[\"tree\"], \"dirty\");\n// nothing held uncommitted is absent, not an empty list to read past\nassert!(json.get(\"uncommitted\").is_none());\n```"
+                "description": "What a report was judged at: the revision, its tree, and the runs the checkout holds that\nthe revision's own ledger does not.\n\nA verdict is always a verdict at something. `evidence show` judges the working tree;\n`evidence show --presented HEAD` judges the checked-out commit as committed, from the\nledger committed in it — which is the reading a site built from that commit needs.\n\n```\nuse majordomus_cli::evidence::{PresentedRevision, TreeState};\n\nlet here = PresentedRevision {\n    revision: \"working_tree\".into(),\n    tree: TreeState::Dirty,\n    uncommitted: vec![],\n};\nlet json = serde_json::to_value(&here).unwrap();\nassert_eq!(json[\"tree\"], \"dirty\");\n// nothing held uncommitted is absent, not an empty list to read past\nassert!(json.get(\"uncommitted\").is_none());\n```"
               },
               "EvidenceTreeState": {
                 "oneOf": [
@@ -41678,7 +41678,7 @@
     ]
   },
   "index": {
-    "fingerprint": "2ff9a45b535cf774d4e9ca6d739349e0c3328f67dd3f40d54413d0c8fd673df0",
+    "fingerprint": "d5f120a122945d71742a6e89762f1f403248dd8bb033d7c14ef1c2f8053ec9e6",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -45754,7 +45754,7 @@
         "title": "Evidence — what ran, against which commit, and whether it still proves anything",
         "path": "docs/EVIDENCE.md",
         "source_class": "document",
-        "bytes": 38381
+        "bytes": 38932
       },
       {
         "uri": "majordomus://document/docs/EXECUTIONS.md",
@@ -46510,7 +46510,7 @@
         "title": "A claim reads proven only when its run is contained in the presented revision, nothing but the ledger changed since, and both trees were their commits",
         "path": "docs/claims/evidence-judged-at-the-presented-revision.md",
         "source_class": "claim_page",
-        "bytes": 4694
+        "bytes": 5148
       },
       {
         "uri": "majordomus://document/docs/claims/evidence-navigates-both-ways.md",
@@ -55594,7 +55594,7 @@
         "identity": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
         "path": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
         "source_class": "case",
-        "bytes": 16296
+        "bytes": 18827
       },
       {
         "uri": "majordomus://test/test/cases/50_blocker_across_handover.sh",
@@ -74010,7 +74010,7 @@
               {
                 "id": "evidence-show-presented",
                 "title": "The checked-out commit, judged as committed",
-                "description": "What a site built from this commit would show: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
+                "description": "The reading a site built from this commit needs: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.",
                 "argv": [
                   "evidence",
                   "show",

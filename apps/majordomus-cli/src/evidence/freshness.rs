@@ -168,7 +168,7 @@ impl TreeState {
 ///
 /// Every verdict is a verdict *at* something, and saying which is half of the answer. The
 /// working tree is what a person at a terminal is looking at; the checked-out commit judged
-/// as committed is what a site built from that commit shows its readers.
+/// as committed is the reading a site built from that commit needs.
 ///
 /// ```
 /// use majordomus_cli::evidence::freshness::Presented;
@@ -241,6 +241,14 @@ impl Presented {
 /// what every payload carries.
 fn short12(commit: &str) -> String {
     commit.chars().take(12).collect()
+}
+
+/// Whether git would read `rev` as an option rather than a revision. A ledger row's commit
+/// is data anyone can write, and `--output=<file>` in a revision's place makes `git diff` or
+/// `git show` write that file; no commit begins with a dash, so such a word names none and
+/// never reaches git as a revision.
+fn option_shaped(rev: &str) -> bool {
+    rev.starts_with('-')
 }
 
 /// The full commit a revision names, or `None` when it names none here.
@@ -340,6 +348,11 @@ pub fn presented_commit(
 /// assert!(ledger_at(dir.path(), &"0".repeat(40)).is_err());
 /// ```
 pub fn ledger_at(root: &Path, commit: &str) -> Result<Ledger> {
+    if option_shaped(commit) {
+        return Err(Error::Git {
+            reason: format!("`{commit}` is not a commit: git would read it as an option"),
+        });
+    }
     let spec = format!("{commit}:{LEDGER_PATH}");
     let shown = git::read_only(root)
         .args(["show", &spec])
@@ -408,6 +421,10 @@ pub fn uncommitted(root: &Path, committed: &Ledger) -> Result<Vec<Execution>> {
 /// changes committed since, staged or edited, and untracked files. For a presented commit
 /// it is the committed difference between the two commits, and nothing in the checkout.
 ///
+/// An evidence commit git would read as an option (`--output=<file>`, which makes `git
+/// diff` write that file) is `None` before git is asked: a ledger row is data, and no data
+/// may choose git's options.
+///
 /// ```
 /// use majordomus_cli::evidence::freshness::{changed_between, presented_commit, Presented};
 /// use std::process::Command;
@@ -439,6 +456,9 @@ pub fn changed_between(
     evidence_commit: &str,
     presented: &Presented,
 ) -> Option<BTreeSet<String>> {
+    if option_shaped(evidence_commit) {
+        return None;
+    }
     match presented {
         Presented::WorkingTree => super::changed_since(root, evidence_commit),
         Presented::Commit { commit, .. } => git::read_only(root)
@@ -485,6 +505,10 @@ pub struct Comparison {
 /// containing commit is HEAD (an unborn HEAD contains nothing anyone can name); for a
 /// presented commit it is that commit.
 ///
+/// When git cannot place the evidence commit in the presented revision — either of the two
+/// names no commit here — nothing is diffed and `changed` is `None`: the truth table reads
+/// that as `stale` already, and a word that names no commit never reaches `git diff`.
+///
 /// ```
 /// use majordomus_cli::evidence::freshness::{compare, Presented};
 /// use majordomus_cli::git::Containment;
@@ -509,9 +533,14 @@ pub struct Comparison {
 /// ```
 pub fn compare(root: &Path, evidence_commit: &str, presented: &Presented) -> Comparison {
     let containing = presented.commit().unwrap_or("HEAD");
+    let containment = git::contains(root, containing, evidence_commit);
+    let changed = match containment {
+        Containment::CommitUnknown => None,
+        _ => changed_between(root, evidence_commit, presented),
+    };
     Comparison {
-        containment: git::contains(root, containing, evidence_commit),
-        changed: changed_between(root, evidence_commit, presented),
+        containment,
+        changed,
     }
 }
 
@@ -1449,6 +1478,56 @@ mod tests {
         let gone = compare(r.root(), &"0".repeat(40), &p);
         assert_eq!(gone.containment, Containment::CommitUnknown);
         assert!(gone.changed.is_none());
+    }
+
+    /// A commit git cannot place is not diffed at all, even where a diff would answer: on an
+    /// orphan branch HEAD is unborn, so the working tree contains nothing anyone can name,
+    /// and what `git diff <E>` would say about it is not read.
+    #[test]
+    fn a_commit_git_cannot_place_is_not_diffed() {
+        let r = Repo::new();
+        let e = r.git(&["rev-parse", "HEAD"]);
+        r.git(&["checkout", "-q", "--orphan", "fresh"]);
+        r.write("new.md", "new");
+        assert!(changed_between(r.root(), &e, &Presented::WorkingTree).is_some());
+        let c = compare(r.root(), &e, &Presented::WorkingTree);
+        assert_eq!(c.containment, Containment::CommitUnknown);
+        assert_eq!(c.changed, None, "git could not place {e}");
+    }
+
+    /// A ledger row's commit is data: one that git would read as an option reaches no git
+    /// command, so `--output=<file>` in its place writes nothing, through every function
+    /// that hands a commit to git.
+    #[test]
+    fn a_commit_git_would_read_as_an_option_writes_nothing() {
+        let r = Repo::new();
+        let out = tempfile::tempdir().unwrap();
+        let target = |name: &str| out.path().join(name);
+        let option = |name: &str| format!("--output={}", target(name).display());
+        let head = presented_commit(r.root(), "HEAD", None).unwrap();
+
+        assert_eq!(
+            changed_between(r.root(), &option("here"), &Presented::WorkingTree),
+            None
+        );
+        assert_eq!(changed_between(r.root(), &option("there"), &head), None);
+        for presented in [&Presented::WorkingTree, &head] {
+            let c = compare(r.root(), &option("compared"), presented);
+            assert_eq!(c.containment, Containment::CommitUnknown);
+            assert_eq!(c.changed, None);
+        }
+        // `git show <commit>:<ledger>` would write to that path, were its directory there
+        let shown = target(&format!("shown:{LEDGER_PATH}"));
+        std::fs::create_dir_all(shown.parent().unwrap()).unwrap();
+        let refused = ledger_at(r.root(), &option("shown"))
+            .map(|_| ())
+            .unwrap_err();
+        assert!(!shown.exists(), "git show wrote the ledger");
+        assert!(refused.to_string().contains("option"), "{refused}");
+
+        for name in ["here", "there", "compared"] {
+            assert!(!target(name).exists(), "git wrote {name}");
+        }
     }
 
     // ---------------------------------------------------------------- the monotone rule

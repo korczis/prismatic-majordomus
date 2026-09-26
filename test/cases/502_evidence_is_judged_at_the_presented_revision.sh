@@ -13,8 +13,9 @@
 #      the detail names that commit — however empty a diff between the two trees is
 #   4  `--presented HEAD` judges the checked-out commit as committed: from the ledger that
 #      commit holds, against its own tree measured without the ledger's working copy. A
-#      clean failure the checkout holds uncommitted caps it at `stale` and never decides it,
-#      unless it was recorded on a commit the presented one does not contain; an
+#      clean failure of the same test the checkout holds uncommitted caps it at `stale` and
+#      never decides it, unless it was recorded on a commit the presented one does not
+#      contain, and another test's failure says nothing about it; an
 #      uncommitted pass never strengthens it; a dirty tree, measured or declared, caps it
 #      at `inputs_unchanged`; and a revision other than the checked-out commit, a revision
 #      that names nothing, a tree state with no revision and an unreadable working ledger
@@ -22,6 +23,8 @@
 #   5  a ledger row naming a commit no object has is `stale`: git could not compare
 #   6  a failure outranks an absence: a blocking rule whose tests are one failing and one
 #      that declined to run is `failing`, and a finding
+#   7  a ledger row's commit is data: one git would read as an option (`--output=<file>`)
+#      is `stale` like any commit git cannot place, and no read writes that file
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -166,6 +169,19 @@ ev p_restored show --presented HEAD
 jqe p_restored "$ALPHA | .state == \"proven\"" "restoring the ledger did not restore the verdict"
 jqe p_restored '.presented | has("uncommitted") | not' "a restored ledger still reports uncommitted runs"
 
+# The cap is read from the run of the same test and no other: a clean failure of beta the
+# checkout holds, stamped with C2 like alpha's above, says nothing about alpha at C2.
+record "02_beta${TAB}FAIL${TAB}2${TAB}parallel"
+ev w_beta_fail show
+jqe w_beta_fail "$BETA | .state == \"failing\" and .execution.commit == \"$C2\" and .execution.working_tree == \"clean\"" \
+  "beta's failing run was not stamped with the presented commit and a clean tree"
+ev p_beta_fail show --presented HEAD
+jqe p_beta_fail '.presented.uncommitted == ["suite:02_beta"]' \
+  "the report does not list only beta's uncommitted run"
+jqe p_beta_fail "$ALPHA | .state == \"proven\"" \
+  "another test's uncommitted failure capped alpha at the presented commit"
+git checkout -q -- "$LEDGER"
+
 # An uncommitted pass never strengthens: the commit's ledger holds no row for beta.
 record "02_beta${TAB}ok${TAB}1${TAB}parallel"
 ev w_beta show
@@ -301,4 +317,30 @@ jqe all '[.findings[] | select(.rule == "project.fixture-both")] | length == 1' 
 jqe all '[.rules[] | select(.rule.id == "project.fixture-both") | .state] == ["failing"]' \
   "the corpus report disagrees with the single-rule answer"
 jqe all '.verdict == "failing"' "a corpus with a failing blocking rule is not failing"
+
+# ---------------------------------------------------------------- 7. a commit is not an option
+# A ledger row's commit is data anyone can write, and `--output=<file>` in a revision's place
+# makes `git diff` write that file. It names no commit, so it is `stale` like any commit git
+# cannot place, and no read — the working tree's, the rules', the presented commit's — hands
+# it to git.
+WRITTEN="$W/written-by-a-ledger-row"
+OPT="--output=$WRITTEN"
+jq --arg c "$OPT" '.executions |= map(.commit = $c | .outcome = "pass")' "$LEDGER" > "$W/opt-ledger.json"
+cp "$W/opt-ledger.json" "$LEDGER"
+written() { [ ! -e "$WRITTEN" ] || { echo "    $1 wrote the file a ledger row's commit named"; exit 1; }; }
+ev opt show
+written "evidence show"
+jqe opt "$ALPHA | .execution.commit == \"$OPT\" and .state == \"stale\"" \
+  "a commit git would read as an option is not stale"
+jqe opt "$ALPHA | .detail | test(\"git could not compare\")" \
+  "the detail does not say git could not compare the commit"
+rr opt_rules report
+written "rules report"
+jqe opt_rules '[.rules[] | select(.rule.id == "project.fixture-both") | .state] == ["stale"]' \
+  "the rule's passes on a commit that is an option are not stale"
+git add -A >/dev/null && git commit -qm "a ledger whose commits are options"
+ev opt_presented show --presented HEAD
+written "evidence show --presented HEAD"
+jqe opt_presented "$ALPHA | .execution.commit == \"$OPT\" and .state == \"stale\"" \
+  "a committed row whose commit is an option is not stale at the presented commit"
 exit 0

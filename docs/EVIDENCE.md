@@ -168,10 +168,14 @@ tests' sources and their digests are read from the checkout, so a verdict at any
 commit would mix two trees — and the ledger is the one committed in it, compared with `git
 diff --name-only E <commit> --`. The presented tree is measured ignoring the ledger's
 working copy, which is not what is judged, and `--presented-tree` can only weaken that
-measurement. It is the reading for a site built from a commit: `build.json.commit` names
-the presented commit, and a build with `build.json.dirty` set passes `--presented-tree
-dirty`, so a site built from a dirty tree never shows a verdict as proven. The report says
-what it was judged at in `presented`.
+measurement. The report says what it was judged at in `presented`. This is the reading a
+site built from a commit needs, and no surface asks for it yet: the evidence publication
+(issue I1955) and the site build that binds it to `build.json` (issue I1959) are the later
+slices that will pass `build.json.commit` as `--presented` and a build with
+`build.json.dirty` set as `--presented-tree dirty`. The two measurements differ:
+`build.json.dirty` ignores untracked files, and the presented tree counts them. The
+narrower one cannot make a verdict proven, because the presented tree is measured here
+whatever the caller declares, and a declared state can only weaken it.
 
 **The working ledger's uncommitted executions.** Under `--presented`, the executions the
 working copy of the ledger holds that the committed ledger does not are listed in
@@ -192,7 +196,9 @@ decline: it is `failing`.
 fact about another history — a branch that was never merged, a rewritten one — however
 empty a diff between the two trees happens to be. It is `stale`, and its detail names the
 commit. A commit this clone does not have is neither contained nor not: git cannot answer,
-which is row 6.
+which is row 6, and nothing is diffed against it. A ledger row's commit is data, so a word
+git would read as an option (`--output=<file>`) is never handed to git: it names no
+commit, and it is row 6 too.
 
 **Aggregation.** Where several states make one — a rule over the tests it names — a
 failing part makes the whole failing, whatever the other parts say, because the ranking

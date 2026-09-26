@@ -13,7 +13,7 @@ source = "docs/claims/evidence-judged-at-the-presented-revision.md"
 
 Every verdict is a verdict at something. `majordomus evidence show` judges the working
 tree in front of you; `majordomus evidence show --presented HEAD` judges the checked-out
-commit as committed, which is what a site built from that commit shows its readers. In
+commit as committed, which is the reading a site built from that commit needs. In
 either case a claim reads `proven` only when all of these hold: its latest run passed; the
 commit the run was recorded on is one the presented revision contains; nothing but the
 evidence ledger changed between that commit and the presented revision; the run measured a
@@ -51,8 +51,8 @@ verdict.
 ## How to see it
 
 ```bash
-majordomus evidence show --presented HEAD                        # what a build of HEAD shows
-majordomus evidence show --presented HEAD --presented-tree dirty # a build from a dirty tree
+majordomus evidence show --presented HEAD                        # HEAD, as committed
+majordomus evidence show --presented HEAD --presented-tree dirty # declared dirty: only weakens
 majordomus evidence show --presented HEAD --format json | jq .presented
 bash test/run.sh 502_evidence_is_judged_at_the_presented_revision
 ```
@@ -67,6 +67,13 @@ measured and declared, and the refusals.
 It judges only the checked-out commit. A verdict at an arbitrary commit would need that
 commit's claims and test sources, which are read from the checkout; `--presented` refuses
 any other revision rather than mixing two trees.
+
+No surface asks for this reading yet. The site does not pass `--presented` or
+`--presented-tree`: the evidence publication (issue I1955) and the site build that binds it
+to `build.json` (issue I1959) are the later slices that will. The site build measures
+`build.json.dirty` without untracked files, and the presented tree counts them; the
+narrower measurement cannot make a verdict proven, because the presented tree is measured
+here whatever a caller declares.
 
 The working ledger's uncommitted executions are the only supplementary records read here.
 Run records kept elsewhere, such as a CI run's own artifact, are later sources of the same

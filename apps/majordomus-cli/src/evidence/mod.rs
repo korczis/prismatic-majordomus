@@ -1106,7 +1106,7 @@ pub struct Subject {
 ///
 /// A verdict is always a verdict at something. `evidence show` judges the working tree;
 /// `evidence show --presented HEAD` judges the checked-out commit as committed, from the
-/// ledger committed in it — which is what a site built from that commit shows its readers.
+/// ledger committed in it — which is the reading a site built from that commit needs.
 ///
 /// ```
 /// use majordomus_cli::evidence::{PresentedRevision, TreeState};
@@ -2218,6 +2218,28 @@ mod tests {
         );
         assert_eq!(claim.state, ProofState::Proven, "{claim:?}");
         assert!(r.findings.is_empty());
+    }
+
+    /// The monotone rule reads the run of the same test and no other: a clean failure of
+    /// beta the checkout holds uncommitted caps beta at the commit, and says nothing about
+    /// alpha.
+    #[test]
+    fn another_tests_uncommitted_failure_says_nothing_about_this_one() {
+        let f = Fixture::new(&["01_alpha", "02_beta"]);
+        f.record("01_alpha", "pass");
+        f.record("02_beta", "pass");
+        let c2 = f.commit_all("the ledger");
+        f.record("02_beta", "fail");
+        let cases = ["01_alpha", "02_beta"];
+
+        let r = f.at_head(&cases, None);
+        assert_eq!(r.presented.uncommitted, ["suite:02_beta"]);
+        assert_eq!(state_of(&r, "01_alpha-holds"), ProofState::Proven);
+        let beta = r.claims.iter().find(|c| c.id == "02_beta-holds").unwrap();
+        assert_eq!(beta.state, ProofState::Stale, "{beta:?}");
+        assert!(beta.detail.as_deref().unwrap().contains(&c2[..12]));
+        let findings: Vec<&str> = r.findings.iter().map(|f| f.claim.as_str()).collect();
+        assert_eq!(findings, ["02_beta-holds"]);
     }
 
     /// And never the other way: a pass the checkout holds uncommitted, of a test the commit's
