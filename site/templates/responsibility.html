@@ -25,7 +25,7 @@
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">State it owns</h3>
-        <ul class="mt-2 space-y-1 text-sm">{% for f in r.files %}<li>{% if f.forge %}<a href="{{ repo }}/{{ f.forge }}/master/{{ f.path }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ f.path }}</a>{% else %}<code class="break-all font-mono text-body inline-block py-1" title="checkout-local state: created by majordomus init, never published">{{ f.path }}</code>{% endif %}</li>{% endfor %}</ul>
+        <ul class="mt-2 space-y-1 text-sm">{% for f in r.files %}<li>{% if f.forge %}<a href="{% if f.forge == "tree" %}{{ <source_tree path={f.path} /> }}{% else %}{{ <source_blob path={f.path} /> }}{% endif %}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ f.path }}</a>{% else %}<code class="break-all font-mono text-body inline-block py-1" title="checkout-local state: created by majordomus init, never published">{{ f.path }}</code>{% endif %}</li>{% endfor %}</ul>
       </div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">What implements it</h3>

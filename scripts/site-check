@@ -21,6 +21,12 @@ MJ_VERSION="site"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VER
 # without the file existing here
 MJ_ROOT="$ROOT"; export MJ_ROOT; mj_resolve_layout
 LOCAL="$(mj_rel "$MJ_AI_LOCAL_DIR")"
+# The ref the built pages' source links name: the commit site-build recorded, or master when it
+# could name none (no build.json, "unknown", a dirty tree). The same decision as
+# site/templates/source-links.html, read from the same file, so a check of a link is a check
+# of what the build meant to write.
+SRC_REF="$(jq -r 'if (.commit // "unknown") != "unknown" and (.dirty | not) then .commit else "master" end' \
+  "$SITE/data/build.json" 2>/dev/null || echo master)"
 fails=0; ok() { printf 'OK   %-12s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-12s %s\n' "$1" "$2"; fails=$((fails+1)); }
 [ -d "$PUB" ] || { echo "site-check: site/public/ missing; run scripts/site-build" >&2; exit 12; }
 PREFIX="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$SITE/config.toml" | sed -E 's#^[a-z]+://[^/]+##; s#/$##')"
@@ -895,9 +901,9 @@ for slug in $(jq -r '.does[].slug' "$SITE/data/generated/readme.json"); do
     # same rule, and a fresh clone has none of them
     case "$f" in "$LOCAL"/*) ;; *) [ -e "$ROOT/$f" ] || { bad supervises "$slug: names $f, which does not exist"; respbad=1; } ;; esac
     case "$kind" in
-      blob|tree) grep -qF "$kind/master/$f\"" "$page" || { bad supervises "$slug: does not link $f as $kind"; respbad=1; } ;;
+      blob|tree) grep -qF "$kind/$SRC_REF/$f\"" "$page" || { bad supervises "$slug: does not link $f as $kind"; respbad=1; } ;;
       *) grep -qF ">$f<" "$page" || { bad supervises "$slug: does not name $f"; respbad=1; }
-         if grep -qF "/master/$f\"" "$page"; then bad supervises "$slug: links $f, which git does not track"; respbad=1; fi ;;
+         if grep -qF "/$SRC_REF/$f\"" "$page"; then bad supervises "$slug: links $f, which git does not track"; respbad=1; fi ;;
     esac
   done <<EOF
 $(jq -r --arg s "$slug" '.does[] | select(.slug==$s) | ((.files[] | [.path, (.forge // "-")]), [.implementation, "blob"]) | @tsv' "$SITE/data/generated/readme.json")

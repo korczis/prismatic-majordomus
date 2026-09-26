@@ -9,8 +9,9 @@
 #
 # Some links follow master deliberately (the footer's licence and security policy are the
 # ones a reader acts on today), and some templates are converted by the work that owns
-# them, so this is a ratchet rather than a ban: the occurrences of blob/master and
-# tree/master under site/templates are recorded per file in the baseline, and the check
+# them, so this is a ratchet rather than a ban: the occurrences of blob/master/,
+# tree/master/ and `}}/master/` (a forge kind held in a variable) under site/templates are
+# recorded per file in the baseline, and the check
 # fails when a file has more than the baseline allows. A file that has fewer is reported,
 # never failed, so the baseline can be tightened deliberately.
 #
@@ -36,7 +37,8 @@ esac; done
 # measured from the tree: a template added tomorrow is counted the day it lands.
 measured() {
   find "$DIR" -type f | LC_ALL=C sort | while IFS= read -r f; do
-    n="$(grep -oE '(blob|tree)/master' "$f" | wc -l | tr -d ' ' || true)"
+    # `}}/master` too: a forge kind held in a variable ({{ f.forge }}/master/) is the same link
+    n="$(grep -oE '(blob|tree|\}\})/master/' "$f" | wc -l | tr -d ' ' || true)"
     [ "$n" = 0 ] || printf '%s %s\n' "$f" "$n"
   done
 }

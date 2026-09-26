@@ -88,6 +88,11 @@ rc=0; out="$(MJ_ROOT="$R" "$CHECK" 2>&1)" || rc=$?
 [ "$rc" = 10 ] || { echo "    source-pin-check accepted an added blob/master (exit $rc)"; exit 1; }
 printf '%s\n' "$out" | grep -q 'NEW  site/templates/entity.html' \
   || { echo "    source-pin-check did not name the template that grew: $out"; exit 1; }
+# a forge kind held in a variable names master just the same
+cp "$ROOT/site/templates/entity.html" "$R/site/templates/entity.html"
+printf '<a href="{{ repo }}/{{ f.forge }}/master/{{ f.path }}">x</a>\n' >> "$R/site/templates/entity.html"
+rc=0; MJ_ROOT="$R" "$CHECK" >/dev/null 2>&1 || rc=$?
+[ "$rc" = 10 ] || { echo "    source-pin-check accepted {{ f.forge }}/master/ (exit $rc)"; exit 1; }
 # one more in a file the baseline already allows some in is refused too
 cp "$ROOT/site/templates/entity.html" "$R/site/templates/entity.html"
 f="$(awk '!/^#/ && NF == 2 { print $1; exit }' "$BASE")"
