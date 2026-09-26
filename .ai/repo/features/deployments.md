@@ -12,6 +12,7 @@ featured: false
 areas: [governance]
 modules: [deploy]
 kinds: [deployment]
+claims: [deployment-contract-refuses-by-name]
 rules: [majordomus.deployment-contract]
 tags: [deployment]
 ---

@@ -2042,6 +2042,32 @@
       "test_case": "400_derivation_is_one_graph"
     },
     {
+      "id": "cockpit-is-a-projection-of-the-registry",
+      "claim": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+      "source": "docs/COCKPIT.md",
+      "implementation": "apps/majordomus-cli/src/cockpit/mod.rs",
+      "test": "apps/majordomus-cli/tests/cockpit.rs",
+      "status": "guaranteed",
+      "note": "a_capability_the_repository_adds_reaches_every_cockpit_surface adds one rule to a fixture repository, which the registry makes a capability, and asks the Cockpit for it over a real socket in its listing, on its own page, on its object page with the navigation entry for its kind, and in its search; the_runner_form_is_generated_from_the_input_schema in the same file proves the form. Nothing of the Cockpit names that capability.",
+      "responsibility": "none",
+      "source_route": "/docs/cockpit/",
+      "command": null,
+      "test_case": "apps/majordomus-cli/tests/cockpit.rs"
+    },
+    {
+      "id": "deployment-contract-refuses-by-name",
+      "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor naming the object and the reason, with no registration anywhere",
+      "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "implementation": "lib/deployment.sh",
+      "test": "test/cases/84_deployment_contract.sh",
+      "status": "guaranteed",
+      "note": "This is the shell half of the contract, decided without a Rust toolchain present. The semantic half, a health route no capability registers or a package the workspace does not contain, belongs to apps/majordomus-cli/src/deploy/mod.rs and is proven by that module's own tests, not by this case.",
+      "responsibility": "none",
+      "source_route": null,
+      "command": null,
+      "test_case": "84_deployment_contract"
+    },
+    {
       "id": "evidence-proof-is-an-execution",
       "claim": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
       "source": "docs/EVIDENCE.md",

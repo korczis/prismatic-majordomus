@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.9.0"
   },
-  "fingerprint": "661b4badda8deed7e14bd66538a428754658aa76fdc85000f116847d83f9c743",
+  "fingerprint": "7bf9f8ca978c6d328dc67a11d7314c8024209181931b07bbc2538fa7d3d498b7",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -294,7 +294,7 @@
         },
         {
           "name": "claim",
-          "objects": 176
+          "objects": 178
         }
       ],
       "rule_refs": [
@@ -558,11 +558,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 237,
+        "mcp_resources": 239,
         "http_routes": 10,
         "cli_paths": 9,
         "commands": 2,
-        "objects": 232,
+        "objects": 234,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2379,7 +2379,9 @@
         "checkpoint-long-work",
         "open-and-close-a-session",
         "capture-the-prompts-that-started-the-work",
-        "let-the-provider-draw-the-episode-boundary"
+        "let-the-provider-draw-the-episode-boundary",
+        "recover-an-episode-nobody-closed",
+        "resume-from-a-prompt-asset"
       ],
       "cockpit": [
         "continuity"
@@ -2757,6 +2759,16 @@
           "id": "let-the-provider-draw-the-episode-boundary",
           "title": "Have the session opened and closed without anybody remembering to",
           "category": "continuity"
+        },
+        {
+          "id": "recover-an-episode-nobody-closed",
+          "title": "Close an episode whose client never came back",
+          "category": "continuity"
+        },
+        {
+          "id": "resume-from-a-prompt-asset",
+          "title": "Start a session from a rendered framing, not a pasted transcript",
+          "category": "continuity"
         }
       ],
       "cockpit_refs": [
@@ -2909,7 +2921,7 @@
         "docs": 2,
         "adrs": 4,
         "claims": 11,
-        "use_cases": 5,
+        "use_cases": 7,
         "moments": 20
       },
       "evidence": {
@@ -3081,7 +3093,7 @@
         },
         {
           "name": "document",
-          "objects": 252
+          "objects": 254
         }
       ],
       "rule_refs": [
@@ -3330,11 +3342,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 306,
+        "mcp_resources": 308,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 305,
+        "objects": 307,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4083,7 +4095,10 @@
       "use_cases": [
         "accept-or-refuse-finished-work",
         "block-acceptance-on-an-open-question",
-        "carry-a-blocker-across-a-handover"
+        "carry-a-blocker-across-a-handover",
+        "know-whether-this-work-is-finished",
+        "prove-what-a-task-owed-before-calling-it-done",
+        "say-what-reached-the-remote-and-what-did-not"
       ],
       "cockpit": [],
       "web": [],
@@ -4318,6 +4333,21 @@
           "id": "carry-a-blocker-across-a-handover",
           "title": "Hand work over with a question still open, and keep it blocking",
           "category": "continuity"
+        },
+        {
+          "id": "know-whether-this-work-is-finished",
+          "title": "Know whether the work in this checkout is finished",
+          "category": "completion"
+        },
+        {
+          "id": "prove-what-a-task-owed-before-calling-it-done",
+          "title": "Prove what a task owed before calling it done",
+          "category": "completion"
+        },
+        {
+          "id": "say-what-reached-the-remote-and-what-did-not",
+          "title": "Say what reached the remote and what did not",
+          "category": "completion"
         }
       ],
       "cockpit_refs": [],
@@ -4461,7 +4491,7 @@
         "docs": 2,
         "adrs": 0,
         "claims": 9,
-        "use_cases": 3,
+        "use_cases": 6,
         "moments": 20
       },
       "evidence": {
@@ -4933,7 +4963,9 @@
         "adr-0012",
         "adr-0020"
       ],
-      "claims": [],
+      "claims": [
+        "cockpit-is-a-projection-of-the-registry"
+      ],
       "use_cases": [],
       "cockpit": [
         "overview",
@@ -5076,7 +5108,13 @@
           "path": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md"
         }
       ],
-      "claim_refs": [],
+      "claim_refs": [
+        {
+          "id": "cockpit-is-a-projection-of-the-registry",
+          "claim": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+          "status": "guaranteed"
+        }
+      ],
       "use_case_refs": [],
       "cockpit_refs": [
         {
@@ -5226,12 +5264,14 @@
         "enforced_rules": 1,
         "docs": 1,
         "adrs": 2,
-        "claims": 0,
+        "claims": 1,
         "use_cases": 0,
         "moments": 11
       },
       "evidence": {
-        "claims": {},
+        "claims": {
+          "guaranteed": 1
+        },
         "modules": {
           "behaviorally_verified": 2
         }
@@ -5646,7 +5686,8 @@
       "use_cases": [
         "install-the-tool-in-one-command",
         "migrate-from-the-old-layout",
-        "know-which-tool-is-running"
+        "know-which-tool-is-running",
+        "hand-the-repository-to-a-reader"
       ],
       "cockpit": [],
       "web": [],
@@ -5894,6 +5935,11 @@
           "id": "know-which-tool-is-running",
           "title": "Check the version before trusting a diagnosis",
           "category": "adoption"
+        },
+        {
+          "id": "hand-the-repository-to-a-reader",
+          "title": "Hand the repository to someone who cannot clone it",
+          "category": "knowledge"
         }
       ],
       "cockpit_refs": [],
@@ -5926,7 +5972,7 @@
         "docs": 2,
         "adrs": 1,
         "claims": 8,
-        "use_cases": 3,
+        "use_cases": 4,
         "moments": 2
       },
       "evidence": {
@@ -8177,7 +8223,9 @@
       ],
       "docs": [],
       "adrs": [],
-      "claims": [],
+      "claims": [
+        "deployment-contract-refuses-by-name"
+      ],
       "use_cases": [],
       "cockpit": [],
       "web": [],
@@ -8249,7 +8297,13 @@
       ],
       "doc_refs": [],
       "adr_refs": [],
-      "claim_refs": [],
+      "claim_refs": [
+        {
+          "id": "deployment-contract-refuses-by-name",
+          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor naming the object and the reason, with no registration anywhere",
+          "status": "guaranteed"
+        }
+      ],
       "use_case_refs": [],
       "cockpit_refs": [],
       "web_refs": [],
@@ -8267,12 +8321,14 @@
         "enforced_rules": 1,
         "docs": 0,
         "adrs": 0,
-        "claims": 0,
+        "claims": 1,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
-        "claims": {},
+        "claims": {
+          "guaranteed": 1
+        },
         "modules": {
           "behaviorally_verified": 1
         }
@@ -8313,7 +8369,9 @@
         "commit-scopes-are-learned",
         "commit-plan-is-refusable"
       ],
-      "use_cases": [],
+      "use_cases": [
+        "plan-a-commit-and-judge-its-message"
+      ],
       "cockpit": [],
       "web": [],
       "related": [
@@ -8443,7 +8501,13 @@
           "status": "guaranteed"
         }
       ],
-      "use_case_refs": [],
+      "use_case_refs": [
+        {
+          "id": "plan-a-commit-and-judge-its-message",
+          "title": "Divide a working tree into commits, and hold every message to a policy",
+          "category": "policy"
+        }
+      ],
       "cockpit_refs": [],
       "web_refs": [],
       "moments": [
@@ -8498,7 +8562,7 @@
         "docs": 1,
         "adrs": 1,
         "claims": 3,
-        "use_cases": 0,
+        "use_cases": 1,
         "moments": 6
       },
       "evidence": {
@@ -9523,7 +9587,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (176)",
+        "title": "claim (178)",
         "features": [
           "declare-once"
         ]
@@ -10450,28 +10514,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1489,
+    "capabilities": 1494,
     "builtin": 115,
-    "declarative": 1374,
+    "declarative": 1379,
     "modules": 38,
     "mcp_tools": 112,
-    "mcp_resources": 1415,
+    "mcp_resources": 1420,
     "http_routes": 114,
     "cli_commands": 118,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1374,
+    "objects": 1379,
     "by_kind": {
       "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 176,
+      "claim": 178,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 252,
+      "document": 254,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -10488,7 +10552,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 225,
+      "test": 226,
       "use-case": 46,
       "workspace": 1
     },
