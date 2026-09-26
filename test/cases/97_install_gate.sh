@@ -11,7 +11,7 @@
 GATE="$ROOT/scripts/ci/install-check"
 expect_file "$GATE"
 MJB="$(rust_bin)" || rust_bin_exit $?
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "no curl"
 
 # --- it states no address of its own ------------------------------------------------------
 # The projection it reads holds every URL this project publishes at; a literal here would be
@@ -31,7 +31,7 @@ fi
 
 # --- an origin that serves a complete release: the gate is green ---------------------------
 FIX="$T/fixture"; mkdir -p "$FIX/releases"
-start_http "$FIX" || { echo "    skip: no python3 or node to serve a fixture release"; exit 0; }
+start_http "$FIX" || skip "no python3 or node to serve a fixture release"
 trap 'stop_http' EXIT INT TERM HUP
 
 VERSION="$("$ROOT/scripts/release-version")"

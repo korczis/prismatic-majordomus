@@ -6,7 +6,7 @@
 # runner with a private harness of throwaway cases.
 . "$ROOT/test/lib.sh"
 PLAN="$ROOT/scripts/ci-plan"; VERDICT="$ROOT/scripts/ci/verdict"; MODEL="$ROOT/.ai/repo/ci/gates.yaml"
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq absent"
 plan() { printf '%s\n' "$@" | "$PLAN" --files - ; }
 selected() { plan "$@" | jq -r '.selected | join(" ")'; }
 # the same plan, asked for the gates whose runner is not available on demand (the macOS ones):
@@ -206,7 +206,7 @@ printf '# majordomus-exclusive: it must see no other case running\necho exclusiv
 out="$(MJ_TEST_JOBS=3 MJ_TEST_REPORT="$T/report.tsv" bash "$H/test/run.sh" 2>&1)" && { echo "    a failing case did not turn the parallel run red"; exit 1; }
 printf '%s\n' "$out" | grep -q 'this one explains itself' || { printf '%s\n' "$out"; echo "    the failing case's log was not rendered"; exit 1; }
 printf '%s\n' "$out" | grep -q '^FAIL p_fails$' || { echo "    the failing case has no FAIL line"; exit 1; }
-printf '%s\n' "$out" | grep -q '^tests: 6 passed, 1 failed$' || { printf '%s\n' "$out"; echo "    the summary is not deterministic (6 passed, 1 failed)"; exit 1; }
+printf '%s\n' "$out" | grep -q '^tests: 6 passed, 1 failed, 0 skipped$' || { printf '%s\n' "$out"; echo "    the summary is not deterministic (6 passed, 1 failed, 0 skipped)"; exit 1; }
 printf '%s\n' "$out" | grep -q 'exclusive cases, one at a time' || { echo "    the exclusive phase did not run"; exit 1; }
 [ "$(wc -l < "$T/report.tsv" | tr -d ' ')" = 7 ] || { cat "$T/report.tsv"; echo "    the report does not carry every case"; exit 1; }
 grep -q "^x1	ok	[0-9]*	exclusive$" "$T/report.tsv" || { cat "$T/report.tsv"; echo "    the report does not mark the exclusive case"; exit 1; }

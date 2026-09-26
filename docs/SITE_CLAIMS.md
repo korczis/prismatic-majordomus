@@ -171,6 +171,7 @@ Deterministic and blocking. Implemented, and a behavioural test proves it.
 | [A commit message that does not satisfy the repository's declared commit policy is refused at the moment it is written, and the history's existing debt is recorded and may not grow](https://majordomus.dev/guarantees/commit-message-is-judged/) | `docs/COMMIT.md` | `apps/majordomus-cli/src/commit/verdict.rs` | `test/cases/274_commit_policy.sh` |
 | [The scope vocabulary a commit is judged against is learned from this repository's own history rather than kept in a table, so a subsystem committed today is in the vocabulary today and a scope outside it is a warning rather than a refusal](https://majordomus.dev/guarantees/commit-scopes-are-learned/) | `docs/COMMIT.md` | `apps/majordomus-cli/src/commit/scopes.rs` | `test/cases/274_commit_policy.sh` |
 | [A commit plan carries a fingerprint of the repository, the worktree, HEAD and the exact change set it was derived from, so a plan acted on after the tree moved is refused with the reason rather than applied](https://majordomus.dev/guarantees/commit-plan-is-refusable/) | `docs/COMMIT.md` | `apps/majordomus-cli/src/commit/plan.rs` | `test/cases/274_commit_policy.sh` |
+| [A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names](https://majordomus.dev/guarantees/a-skipped-case-is-not-a-proof/) | `docs/EVIDENCE.md` | `test/run.sh` | `test/cases/413_a_skipped_case_is_not_a_proof.sh` |
 
 ## advisory
 

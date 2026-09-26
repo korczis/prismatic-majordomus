@@ -146,7 +146,7 @@ expect_grep '^    scripts/derive$' "$JF"
 expect_grep '^    scripts/derive-check$' "$JF"
 
 # ------------------------------------------------------------------ the homepage is a projection
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed (the homepage half)"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed (the homepage half)"
 RB="$(rust_bin)" || rust_bin_exit $?
 C="$T/copy"; mkdir -p "$C"; C="$(cd "$C" && pwd)"   # site-check names paths from its own `pwd`
 # the tracked files as they are in this working tree, so the scripts under test are this

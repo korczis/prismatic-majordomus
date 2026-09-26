@@ -17,7 +17,7 @@
 
 GATE="$ROOT/scripts/ci/entity-check"
 [ -f "$GATE" ] || { echo "    $GATE is missing"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq absent"
 
 MJ="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_BIN="$MJ"

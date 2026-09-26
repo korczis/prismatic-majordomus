@@ -15,8 +15,8 @@
 # `--port 0` throughout: the default port belongs to whatever already serves this machine.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: curl not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
+command -v curl >/dev/null 2>&1 || skip "curl not installed"
 
 mkdir -p "$T/wt"; W="$(cd "$T/wt" && pwd -P)"; R="$W/repo"
 mkdir -p "$R"

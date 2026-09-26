@@ -3,7 +3,7 @@
 # validation exits inside a `{ ... } | jq . > file` pipeline: the subshell dies but the
 # redirect has already truncated the target.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip "jq absent"
 fixture_repo "$T" AGENTS.md docs
 mkdir -p "$T/site/data" "$T/test"; cp "$ROOT/site/data/marketing.toml" "$ROOT/site/data/nav.toml" "$T/site/data/"; cp -R "$ROOT/site/content-src" "$T/site/"; cp -R "$ROOT/test/cases" "$T/test/"
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture

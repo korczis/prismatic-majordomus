@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 176
+      "count": 177
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 252
+      "count": 253
     },
     {
       "kind": "feature",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 225
+      "count": 226
     },
     {
       "kind": "use-case",
@@ -2455,6 +2455,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0048/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0080",
+          "kind": "adr",
+          "route": "/adrs/adr-0080/",
+          "external": false
         }
       ]
     },
@@ -3338,6 +3345,102 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0080",
+      "identity": "adr-0080",
+      "slug": "adr-0080",
+      "cockpit": "/cockpit/objects/adr/adr-0080",
+      "title": "A CI run reaches the tracked ledger through a recording branch, never through the run that produced it",
+      "status": "proposed",
+      "tags": [
+        "evidence",
+        "claims",
+        "ci",
+        "verification"
+      ],
+      "source": ".ai/repo/adrs/0080-a-recorded-run-reaches-the-tracked-ledger-through-a-recording-branch.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/gates.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/evidence-baseline.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/evidence/ledger.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/evidence/record.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/evidence-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0041",
+          "kind": "adr",
+          "route": "/adrs/adr-0041/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-skipped-case-is-not-a-proof",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-proof-is-an-execution",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EVIDENCE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.never-reported-is-not-green@1",
+          "kind": "rule",
+          "route": "/rules/project-never-reported-is-not-green-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/124_evidence.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -8082,6 +8185,13 @@
           "label": "adr-0041",
           "kind": "adr",
           "route": "/adrs/adr-0041/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0080",
+          "kind": "adr",
+          "route": "/adrs/adr-0080/",
           "external": false
         },
         {

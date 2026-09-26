@@ -20,7 +20,7 @@ RB="$(rust_bin)" || rust_bin_exit $?
 # The executable resolves its distribution from beside itself; run straight out of the build
 # directory it has none, and every command exits 12 before it reads anything.
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
 
 "$MJ" init >/dev/null
 git add -A >/dev/null && git commit -q -m install

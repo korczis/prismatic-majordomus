@@ -3,8 +3,8 @@
 # the constructs that break narrow viewports; it is static, so it catches the causes, not
 # the symptom. Rendered-width checks need a browser and are out of scope for a shell test.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || { echo "    zola absent; skipping"; exit 0; }
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v zola >/dev/null || skip "zola absent"
+command -v jq >/dev/null || skip "jq absent"
 # `--no-css` skips the Node steps, which is what this case wants: it lints markup and never
 # looks at a stylesheet. But the Zola build itself resolves `get_url(path="app.css")` in
 # base.html, and `site/static/app.css` is generated and gitignored — absent in any fresh
@@ -17,7 +17,7 @@ if [ -f "$ROOT/site/static/app.css" ]; then
 elif [ -x "$ROOT/node_modules/.bin/tailwindcss" ]; then
   expect_exit 0 "$ROOT/scripts/site-build"
 else
-  echo "    node_modules absent and no stylesheet to reuse; skipping"; exit 0
+  skip "node_modules absent and no stylesheet to reuse"
 fi
 out="$ROOT/site/public"
 pages="$(find "$out" -name '*.html')"
