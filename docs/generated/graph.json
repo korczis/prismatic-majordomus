@@ -1342,6 +1342,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/evidence/ledger.json",
+        "kind": "file",
+        "label": "ledger.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/evidence/ledger.json",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/knowledge/sources.yaml",
         "kind": "file",
         "label": "sources.yaml",
@@ -4049,6 +4057,36 @@
             "governance",
             "routing",
             "web"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0087",
+        "kind": "adr",
+        "label": "adr-0087",
+        "summary": "Evidence is indexed by subject and judged at the presented revision",
+        "route": "/cockpit/objects/adr/adr-0087",
+        "source": ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-26",
+          "related": [
+            "claim:evidence-proof-is-an-execution",
+            "claim:evidence-currency-is-not-collapsed",
+            "claim:evidence-unsupported-guarantee-is-reported",
+            "file:docs/EVIDENCE.md",
+            "file:.ai/repo/evidence/ledger.json",
+            "file:apps/majordomus-cli/src/evidence/mod.rs",
+            "file:apps/majordomus-cli/src/rules/mod.rs",
+            "test:test/cases/124_evidence.sh",
+            "file:.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+          ],
+          "tags": [
+            "evidence",
+            "claims",
+            "ci",
+            "verification",
+            "site"
           ]
         }
       },
@@ -23049,6 +23087,1139 @@
         }
       },
       {
+        "id": "majordomus://issue/I1945",
+        "kind": "issue",
+        "label": "I1945",
+        "summary": "The test-evidence decision and its plan are recorded",
+        "route": "/cockpit/objects/issue/i1945",
+        "source": ".ai/repo/project/issues/I1945.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "ADR 0087 has status proposed, cites ADR 0068, 0080 and 0071 by number and title only, and passes majordomus adr check",
+            "Its Decision amends ADR 0068 sentence by sentence, quoting each sentence it changes and listing every sentence that stands",
+            "The milestone and every issue pass majordomus plan validate with no failure",
+            "No prose states a number a command can compute; where one matters, the command is named"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "The design exists only under tmp/plans, which is gitignored. No ADR, milestone or issue names the work.",
+          "depends_on": [],
+          "desired_state": "ADR 0087 is proposed on master, the milestone test-evidence exists, and I1945 to I1965 describe the slices with their dependencies, so that `majordomus plan waves` orders them.",
+          "evidence_required": [
+            "adr_proposed",
+            "plan_valid"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Any code, script or case",
+            "docs/CLAIMS.yaml and docs/EVIDENCE.md",
+            "Accepting any ADR, which is the owner's act",
+            "A version bump"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+            ".ai/repo/project/milestones/test-evidence.yaml",
+            ".ai/repo/project/issues",
+            "site/content/adrs/adr-0087.md"
+          ],
+          "slug": "evidence-subject-adr",
+          "started_at": "2026-09-26",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bin/majordomus adr check",
+            "bin/majordomus plan validate",
+            "bash test/run.sh 28_no_hardcoded_values",
+            "bash test/run.sh 104_strict_derivation",
+            "scripts/ci/english-only-check",
+            "scripts/ci/diagram-check",
+            "scripts/derive-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1946",
+        "kind": "issue",
+        "label": "I1946",
+        "summary": "The verdict words are status words of the design system",
+        "route": "/cockpit/objects/issue/i1946",
+        "source": ".ai/repo/project/issues/I1946.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every word of the ProofState schema, with each underscore replaced by a hyphen, is filed exactly once in status.states under its declared role",
+            "A schema word the case's role table does not place fails the case, naming the word",
+            "scripts/cockpit-assets --check exits 0 over the rebuilt stylesheet"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [],
+          "evidence_required": [
+            "verdict_words_filed"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Rust code: ProofState::token() belongs to I1948",
+            "Re-adding stale, pending or unknown, which are already filed",
+            "share/cockpit/src",
+            "docs/CLAIMS.yaml"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "share/cockpit/cockpit.css is compiled and not merge=derived, so a conflict on it is resolved by rebuilding it with scripts/cockpit-assets, never by hand.",
+          "scope": [
+            "share/design",
+            "share/cockpit/cockpit.css",
+            "apps/majordomus-cli/src/web/tokens.css",
+            "apps/majordomus-cli/src/design/tokens.yaml",
+            "test/cases/501_verdict_words_are_status_words.sh"
+          ],
+          "slug": "verdicts-are-status-words",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 501_verdict_words_are_status_words",
+            "scripts/cockpit-assets --check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1947",
+        "kind": "issue",
+        "label": "I1947",
+        "summary": "Every feature reaches a test, and every use case has a feature",
+        "route": "/cockpit/objects/issue/i1947",
+        "source": ".ai/repo/project/issues/I1947.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every use case whose status is active is named by at least one feature, and the case fails naming each one that is not",
+            "The case fails when any list it reads is empty or a command in its pipeline fails",
+            "The cockpit and deployments features carry a claim each, and each claim's test names the claim id",
+            "bin/majordomus-cli product validate and bin/majordomus usecase validate pass"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [],
+          "evidence_required": [
+            "every_use_case_has_a_feature",
+            "every_feature_reaches_a_test"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Editing any use case file",
+            ".ai/repo/features/finish-contract.md.tmp",
+            "docs/CLAIMS.yaml beyond the two rows this slice appends"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".ai/repo/features/finish-contract.md",
+            ".ai/repo/features/commit.md",
+            ".ai/repo/features/install.md",
+            ".ai/repo/features/continuity.md",
+            ".ai/repo/features/cockpit.md",
+            ".ai/repo/features/deployments.md",
+            "apps/majordomus-cli/tests/cockpit.rs",
+            "test/cases/84_deployment_contract.sh",
+            "test/cases/503_every_use_case_has_a_feature.sh",
+            "docs/CLAIMS.yaml",
+            "docs/claims"
+          ],
+          "slug": "every-feature-reaches-a-test",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 503_every_use_case_has_a_feature",
+            "bin/majordomus-cli product validate",
+            "bin/majordomus usecase validate",
+            "scripts/ci/claim-proof-check --strict"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1948",
+        "kind": "issue",
+        "label": "I1948",
+        "summary": "Evidence is judged at the presented revision, by one freshness function",
+        "route": "/cockpit/objects/issue/i1948",
+        "source": ".ai/repo/project/issues/I1948.yaml",
+        "facts": {
+          "created_at": "2026-09-26",
+          "depends_on": [],
+          "evidence_required": [
+            "one_freshness_function",
+            "presented_revision_judged",
+            "failure_precedes_absence"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "apps/majordomus-cli/src/environment: the entry preflight is I1965's",
+            "Changing evidence::changed_since, which PR #578 calls from the preflight",
+            "Adding a field to Execution or RunRef",
+            "A version bump"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "Stacked on PR #597, it lands with #597: merged into it, or retargeted to master after #597 lands. If scripts/ci/version-matches-surface asks for a bump, the slice stops and reports; it never bumps.",
+          "scope": [
+            "apps/majordomus-cli/src/git/mod.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/evidence/freshness.rs",
+            "apps/majordomus-cli/src/evidence/ledger.rs",
+            "apps/majordomus-cli/src/rules/mod.rs",
+            "apps/majordomus-cli/src/rules/tests.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "docs/EVIDENCE.md",
+            "docs/DOCTRINE.md",
+            "docs/HOW_IT_WORKS.md",
+            "docs/CONCEPTS.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md",
+            "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+            "test/cases/133_rule_graph.sh"
+          ],
+          "slug": "evidence-is-judged-at-the-presented-revision",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 502_evidence_is_judged_at_the_presented_revision",
+            "bash test/run.sh 133_rule_graph",
+            "bash test/run.sh 124_evidence",
+            "cargo test --workspace --all-features"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1949",
+        "kind": "issue",
+        "label": "I1949",
+        "summary": "CI evidence is recorded clean, and its report is the tracked ledger's verdict",
+        "route": "/cockpit/objects/issue/i1949",
+        "source": ".ai/repo/project/issues/I1949.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The evidence job derives its report before it records, over the tracked ledger as committed at the run's commit",
+            "Every job that ran tests measures its tree, excluding only its named outputs, and the manifest carries each measurement",
+            "scripts/pages evidence publishes current only under ADR 0087's interim rule, and otherwise stale or unknown naming each reason",
+            "Case 357 asserts both halves, and this slice's own pull-request run shows crate executions and clean measured trees"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [],
+          "evidence_required": [
+            "report_derived_before_recording",
+            "producer_trees_measured"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "The behavioural-tests environment, the summary step and the ci-metrics-suite upload of the suite job",
+            "Moving suite.tsv out of the workspace, where the suite budget of PR #627 reads it",
+            "Any row of docs/CLAIMS.yaml other than the claim and note of evidence-recorded-in-ci",
+            "docs/EVIDENCE.md outside its Recorded in CI section",
+            "The leading comment and the article line of site/templates/evidence.html"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/evidence-collect",
+            "scripts/pages",
+            "site/templates/evidence.html",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims/evidence-recorded-in-ci.md",
+            "test/cases/357_ci_records_evidence.sh"
+          ],
+          "slug": "the-ci-evidence-is-recorded-clean",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 357_ci_records_evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1950",
+        "kind": "issue",
+        "label": "I1950",
+        "summary": "Text a run printed is redacted by one rule set",
+        "route": "/cockpit/objects/issue/i1950",
+        "source": ".ai/repo/project/issues/I1950.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The Rust redactor and the shell table produce the same output on one shared fixture",
+            "The output of public_text passes generate::forbidden_in",
+            "cargo test --test redaction and the redaction doctests pass"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [],
+          "evidence_required": [
+            "one_redactor"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "lib/capture.sh and lib/usecase.sh: switching the shell to call Rust is a later change",
+            "apps/majordomus-cli/src/execution and apps/majordomus-cli/src/evidence",
+            "A new crate dependency",
+            "docs/CLAIMS.yaml: the publication slice claims the behaviour when it publishes text"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/redaction.rs",
+            "apps/majordomus-cli/src/lib.rs",
+            "apps/majordomus-cli/tests/redaction.rs",
+            "test/fixtures/redaction",
+            "test/cases/504_public_text_is_redacted_once.sh"
+          ],
+          "slug": "evidence-output-is-redacted-once",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 504_public_text_is_redacted_once",
+            "cargo test --test redaction"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1951",
+        "kind": "issue",
+        "label": "I1951",
+        "summary": "Evidence runs are typed, and a recording carries what its run measured",
+        "route": "/cockpit/objects/issue/i1951",
+        "source": ".ai/repo/project/issues/I1951.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A report whose measured commit is not HEAD is refused, and one without a measurement is recorded with T unknown",
+            "A crate binary that ran no test or a filtered subset is recorded as a skip, and one with a failed test as a failure, whatever colour codes its output carries",
+            "Each evidence record call writes a run record carrying its commit, its tree, its totals, what was absent and what was dropped",
+            "A clean failing run record caps a proven verdict at stale through the one monotone rule, naming the record",
+            "evidence record with no ledger flag still writes the tracked ledger"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [
+            "I1948",
+            "I1949"
+          ],
+          "evidence_required": [
+            "provenance_measured_by_the_run",
+            "crate_count_rule",
+            "run_records_typed"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A second copy of the monotone rule: run records feed the one I1948 writes",
+            "Wiring the runners in CI, which is I1954's",
+            "A version bump"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "It needs the run reference of PR #577 (with I1949) and the tree state of I1948, and it is the second capability change of the chain, so it starts only after both have landed.",
+          "scope": [
+            "apps/majordomus-cli/src/git/mod.rs",
+            "apps/majordomus-cli/src/evidence/provenance.rs",
+            "apps/majordomus-cli/src/evidence/run.rs",
+            "apps/majordomus-cli/src/evidence/coverage.rs",
+            "apps/majordomus-cli/src/evidence/record.rs",
+            "apps/majordomus-cli/src/evidence/ledger.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/evidence/freshness.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "scripts/ci/evidence-collect",
+            "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+            "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md"
+          ],
+          "slug": "evidence-runs-are-typed",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 505_a_recording_carries_what_its_run_measured",
+            "bash test/run.sh 506_a_crate_binary_that_ran_nothing_is_not_a_pass",
+            "bash test/run.sh 124_evidence",
+            "cargo test --workspace --all-features"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1952",
+        "kind": "issue",
+        "label": "I1952",
+        "summary": "Evidence subjects are derived once, in Rust",
+        "route": "/cockpit/objects/issue/i1952",
+        "source": ".ai/repo/project/issues/I1952.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The index is written only by majordomus generate, to site/data/registry/evidence-subjects.json, and holds no ledger content and no commit",
+            "A subject's verdict is computed over its members' own verdicts, a rule member contributing through RuleState::as_proof()",
+            "A case holds the tests of commands.json equal to the index's command routes",
+            "Subject findings never enter the claim report's findings"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "No subject index exists. scripts/generate-site-data derives the tests of commands.json, lib/commands.sh reads the first header line, and scripts/ci/command-furnished reads any line.",
+          "depends_on": [
+            "I1948",
+            "I1947"
+          ],
+          "evidence_required": [
+            "subjects_derived_once",
+            "parity_with_shell_derivations"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "site/data/generated, which scripts/generate-site-data owns and replaces wholesale",
+            "An authored list of subjects",
+            "A capability: the index is read by I1953",
+            "Making subject findings refuse, which is I1962's"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence/subject.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/rules/mod.rs",
+            "apps/majordomus-cli/src/generate.rs",
+            "apps/majordomus-cli/tests/generated_documents.rs",
+            "share/schemas/generated/site-evidence-subjects.schema.json",
+            "site/data/registry/evidence-subjects.json",
+            "test/cases/507_evidence_subjects_are_derived.sh",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".gitattributes"
+          ],
+          "slug": "evidence-subjects-are-derived",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 507_evidence_subjects_are_derived",
+            "majordomus generate --check",
+            "cargo test --workspace --all-features"
+          ],
+          "why": "Nothing ties a widget to a subject, and the command-to-test join is derived in shell more than once, with different rules for which header line counts."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1953",
+        "kind": "issue",
+        "label": "I1953",
+        "summary": "Evidence answers by subject, on every surface",
+        "route": "/cockpit/objects/issue/i1953",
+        "source": ".ai/repo/project/issues/I1953.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every subject kind of the index answers through evidence subject with the same verdict over the CLI, HTTP and MCP",
+            "An unknown subject is refused with exit 13",
+            "A supplementary record only ever weakens a verdict, and each weakening names its record",
+            "Coverage is shown as current only for its own commit with a clean tree"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "evidence show, evidence claim and evidence proves answer by claim; rules answers by rule; nothing answers for any other subject, and nothing lists run or coverage records.",
+          "depends_on": [
+            "I1952",
+            "I1951"
+          ],
+          "evidence_required": [
+            "answers_by_subject",
+            "supplementary_only_weakens"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "MCP resource templates per subject",
+            "A version bump"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/evidence/supplementary.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/evidence/subject.rs",
+            "test/cases/508_evidence_answers_by_subject.sh",
+            "test/cases/509_supplementary_records_only_weaken.sh",
+            "docs/EVIDENCE.md",
+            "docs/HOW_IT_WORKS.md",
+            "docs/README.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md"
+          ],
+          "slug": "evidence-answers-by-subject",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 508_evidence_answers_by_subject",
+            "bash test/run.sh 509_supplementary_records_only_weaken",
+            "majordomus generate --check"
+          ],
+          "why": "Only claims and rules can be asked about today. A feature, a command, a capability, an MCP tool and a use case have no answer, although each is what a reader of the site or the Cockpit is looking at."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1954",
+        "kind": "issue",
+        "label": "I1954",
+        "summary": "Every runner reaches the ledger, through the recording branch",
+        "route": "/cockpit/objects/issue/i1954",
+        "source": ".ai/repo/project/issues/I1954.yaml",
+        "facts": {
+          "created_at": "2026-09-26",
+          "current_state": "No workflow records CI's executions into the tracked ledger. The suite runner's report has no reason column and no measurement, and the crate and coverage runners emit no provenance.",
+          "depends_on": [
+            "I1951"
+          ],
+          "evidence_required": [
+            "recording_branch_wired",
+            "recording_stops_at_a_ledger_only_commit",
+            "runner_reports_measured"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Committing the ledger from a validating run",
+            "New shell automation (ADR 0069)",
+            "Making the required ci check depend on the evidence job"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "It also waits on PR #629 (the skip word), PR #587 (new shell refused), PR #566 and PR #355, and on the owner's choice of token (ADR 0087 decision 16). Each recording costs a full suite run.",
+          "scope": [
+            ".github/workflows/validate.yml",
+            "scripts/ci/evidence-collect",
+            "scripts/rust-check",
+            "scripts/rust-coverage",
+            "scripts/shell-coverage",
+            "test/run.sh",
+            "test/cases/94_ci_plan.sh",
+            "test/cases/357_ci_records_evidence.sh",
+            "test/cases/510_ci_evidence_reaches_the_ledger_through_a_recording_branch.sh",
+            "test/cases/511_every_runner_report_carries_its_revision_and_reason.sh",
+            ".ai/repo/automation/inventory.jsonl",
+            "docs/EVIDENCE.md",
+            "docs/COVERAGE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md",
+            ".ai/repo/features/ci.md",
+            ".ai/repo/features/coverage.md"
+          ],
+          "slug": "every-runner-reaches-the-ledger",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 510_ci_evidence_reaches_the_ledger_through_a_recording_branch",
+            "bash test/run.sh 511_every_runner_report_carries_its_revision_and_reason",
+            "bash test/run.sh 357_ci_records_evidence",
+            "bash test/run.sh 94_ci_plan"
+          ],
+          "why": "CI runs every test on every merge and keeps none of it in the tracked ledger. Until this lands, the ledger holds only local rows and the site renders mostly not_run."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1955",
+        "kind": "issue",
+        "label": "I1955",
+        "summary": "The evidence publication is an allow-listed projection",
+        "route": "/cockpit/objects/issue/i1955",
+        "source": ".ai/repo/project/issues/I1955.yaml",
+        "facts": {
+          "created_at": "2026-09-26",
+          "current_state": "scripts/pages evidence (PR #577, with I1949) writes site/data/evidence.json from a CI artifact; no typed publication exists.",
+          "depends_on": [
+            "I1953",
+            "I1950"
+          ],
+          "evidence_required": [
+            "publication_allow_listed",
+            "publication_states_defined"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "scripts/pages and the site build, which are I1959's",
+            "A version bump"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/tests/evidence_publication.rs",
+            "test/cases/512_evidence_publication_is_a_projection.sh",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md"
+          ],
+          "slug": "evidence-publication-is-a-projection",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 512_evidence_publication_is_a_projection",
+            "cargo test --test evidence_publication"
+          ],
+          "why": "The site needs a typed dataset whose verdicts are the tracked ledger's at the build commit. The interim publication of ADR 0068 computes its state in a shell script."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1956",
+        "kind": "issue",
+        "label": "I1956",
+        "summary": "The Cockpit shows evidence by subject",
+        "route": "/cockpit/objects/issue/i1956",
+        "source": ".ai/repo/project/issues/I1956.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The Cockpit's Verified by section is the evidence subject answer for the page's subject",
+            "A local run can only weaken what the Cockpit shows, and the Cockpit says which run did"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "The Cockpit has no evidence area, and its pages carry no Verified by section.",
+          "depends_on": [
+            "I1953"
+          ],
+          "evidence_required": [
+            "cockpit_reads_the_subject_answer"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            ".ai/repo/features/cockpit.md, whose claims are I1947's",
+            "A verdict the subject answer does not give"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "It edits Cockpit files that another session's pull request (#638) also edits, so it starts after that one lands.",
+          "scope": [
+            "apps/majordomus-cli/src/cockpit/nav.rs",
+            "apps/majordomus-cli/src/cockpit/mod.rs",
+            "apps/majordomus-cli/src/cockpit/pages.rs",
+            "apps/majordomus-cli/tests/cockpit_evidence.rs",
+            "test/cases/513_cockpit_shows_evidence.sh",
+            "docs/COCKPIT.md",
+            ".ai/repo/features/evidence.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims"
+          ],
+          "slug": "cockpit-shows-evidence",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 513_cockpit_shows_evidence",
+            "cargo test --test cockpit_evidence"
+          ],
+          "why": "The Cockpit renders rule, feature, capability, command, skill and provider pages, and none of them says what verifies the thing it shows."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1957",
+        "kind": "issue",
+        "label": "I1957",
+        "summary": "Every test line is read, and a local run stays local",
+        "route": "/cockpit/objects/issue/i1957",
+        "source": ".ai/repo/project/issues/I1957.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every line a runner prints is either read into a case result or listed as dropped",
+            "A local run is kept only under .ai/local/evidence/runs/, bounded, and never reaches the tracked ledger",
+            "web/report/tests.rs reads the same adapters as the recorder"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "Execution carries no per-case results and no detail; web/report/tests.rs parses runner output on its own; no local run index exists.",
+          "depends_on": [
+            "I1955"
+          ],
+          "evidence_required": [
+            "every_test_line_read",
+            "local_run_stays_local"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A change of the ledger's version",
+            "apps/majordomus-cli/src/evidence/public.rs and subject.rs, beyond a literal the compiler names"
+          ],
+          "parallel_safe": false,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "apps/majordomus-cli/src/evidence/adapters.rs",
+            "apps/majordomus-cli/src/evidence/local_runs.rs",
+            "apps/majordomus-cli/src/evidence/supplementary.rs",
+            "apps/majordomus-cli/src/evidence/record.rs",
+            "apps/majordomus-cli/src/evidence/run.rs",
+            "apps/majordomus-cli/src/evidence/ledger.rs",
+            "apps/majordomus-cli/src/evidence/freshness.rs",
+            "apps/majordomus-cli/src/evidence/mod.rs",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/cli.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/web/report/tests.rs",
+            "apps/majordomus-cli/tests/evidence_local_runs.rs",
+            "test/fixtures/evidence-adapters",
+            "test/cases/514_every_test_line_is_read.sh",
+            "test/cases/515_a_local_run_stays_local.sh",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md"
+          ],
+          "slug": "every-test-line-is-read",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 514_every_test_line_is_read",
+            "bash test/run.sh 515_a_local_run_stays_local"
+          ],
+          "why": "An execution records one outcome per test file, so a failure's reason and a line no claim names are lost, and a local run has nowhere to be kept apart from the tracked ledger."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1958",
+        "kind": "issue",
+        "label": "I1958",
+        "summary": "Evidence has one route per subject, and every panel is joined to its subject",
+        "route": "/cockpit/objects/issue/i1958",
+        "source": ".ai/repo/project/issues/I1958.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every subject of the index has a route, and no route exists for a subject the index does not have",
+            "Every panel carries the subject its route joins to, or an explicit illustration marker, and an unknown subject fails generation with the executable's refusal",
+            "The Recorded by CI section is folded into the runs section"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "/evidence/ is a single page whose CI view is the Recorded by CI section of PR #577; panels carry a route and no subject; the tests of commands.json are derived in shell.",
+          "depends_on": [
+            "I1952",
+            "I1946",
+            "I1955"
+          ],
+          "evidence_required": [
+            "routes_from_the_index",
+            "panels_joined_to_subjects"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Deriving a subject in shell or jq beyond the join",
+            "The badge, which is I1960's"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "It also waits on PR #621 and PR #626, which change the templates it edits.",
+          "scope": [
+            "scripts/generate-site-data",
+            "scripts/lib/panel-subjects.jq",
+            "site/content-src/evidence.md",
+            "site/content-src/evidence",
+            "site/templates/evidence.html",
+            "site/data/nav.toml",
+            "test/cases/516_evidence_routes_render_from_the_subject_index.sh",
+            "test/cases/517_a_panel_subject_is_joined_from_its_route.sh",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".gitattributes"
+          ],
+          "slug": "evidence-has-routes",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 516_evidence_routes_render_from_the_subject_index",
+            "bash test/run.sh 517_a_panel_subject_is_joined_from_its_route"
+          ],
+          "why": "The site only joins to the index. Today no panel names a subject, and /evidence/ is one page."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1959",
+        "kind": "issue",
+        "label": "I1959",
+        "summary": "The evidence publication is typed, bound to its build, and kept on gh-pages",
+        "route": "/cockpit/objects/issue/i1959",
+        "source": ".ai/repo/project/issues/I1959.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The site's evidence dataset is produced only by evidence publish, run in the build's checkout",
+            "site-build refuses a dataset for another commit, and a proven whose evidence commit the build does not contain",
+            "A deployed revision's evidence stays reachable on gh-pages after its CI artifact expires"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "scripts/pages evidence (PR #577 with I1949) computes its own publication state in shell; nothing refuses a dataset for another commit; the evidence exists only as a CI artifact.",
+          "depends_on": [
+            "I1955",
+            "I1954"
+          ],
+          "evidence_required": [
+            "publication_bound_to_its_build",
+            "evidence_outlives_artifacts"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A new shell unit",
+            "A verdict computed in the script"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/pages",
+            "scripts/site-build",
+            "scripts/site-deploy",
+            "scripts/ci/link-check",
+            ".github/workflows/pages.yml",
+            ".github/workflows/validate.yml",
+            ".ai/repo/ci/pages.yaml",
+            ".gitignore",
+            "test/cases/518_evidence_publication_is_bound_to_its_build.sh",
+            "test/cases/519_evidence_survives_artifact_expiry.sh",
+            "test/cases/357_ci_records_evidence.sh",
+            "docs/EVIDENCE.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "docs/GITHUB_PAGES_PERFORMANCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/ci.md"
+          ],
+          "slug": "evidence-publication-is-typed",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 518_evidence_publication_is_bound_to_its_build",
+            "bash test/run.sh 519_evidence_survives_artifact_expiry"
+          ],
+          "why": "ADR 0087 retires the interim Recorded by CI publication once the script calls evidence publish, and CI artifacts expire, so the evidence of a deployed revision has to outlive them."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1960",
+        "kind": "issue",
+        "label": "I1960",
+        "summary": "Every widget names its proof",
+        "route": "/cockpit/objects/issue/i1960",
+        "source": ".ai/repo/project/issues/I1960.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Every widget that states behaviour carries one badge linking to its subject's route, and a subject missing from the dataset renders unknown",
+            "The badge renders verified only for a proven verdict at the published commit",
+            "The badge is a plain link that works without JavaScript and fits a phone-width viewport",
+            "Each badge stays under its byte ceiling in homepage-check",
+            "The delivery report's test dimensions read the subject verdict and the site's publication, and never a CI run's own rows"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "Widgets carry no subject badge; the proof partial of PR #626 is a separate component; the delivery dimensions are pending on PR #600.",
+          "depends_on": [
+            "I1958",
+            "I1959",
+            "I1946"
+          ],
+          "evidence_required": [
+            "every_widget_names_its_subject",
+            "delivery_test_dimensions_computed"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Alpine, details elements or an interaction spec for the badge",
+            "A count or a percentage written into a template",
+            "Custom CSS or an inline style"
+          ],
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "It also waits on PR #593, PR #600, PR #621 and PR #626; the delivery module exists only once PR #600 has landed.",
+          "scope": [
+            "site/templates/partials/evidence-badge.html",
+            "site/templates/partials/terminal-figure.html",
+            "site/templates/partials/terminal.html",
+            "site/templates/partials/cli-examples.html",
+            "site/templates/partials/api-operation.html",
+            "site/templates/partials/proof.html",
+            "site/templates/index.html",
+            "site/templates/feature.html",
+            "site/templates/claim.html",
+            "site/templates/use-case.html",
+            "site/templates/components.html",
+            "site/data/homepage.toml",
+            "scripts/ci/homepage-check",
+            "apps/majordomus-cli/src/delivery/mod.rs",
+            "test/cases/520_every_widget_names_its_proof.sh",
+            "test/cases/333_homepage_narrative.sh",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md"
+          ],
+          "slug": "every-widget-names-its-proof",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 520_every_widget_names_its_proof",
+            "bash test/run.sh 333_homepage_narrative",
+            "scripts/ci/homepage-check"
+          ],
+          "why": "Nothing ties a site widget to a subject: where a page says verified, the word was placed by hand, and the delivery report's test dimensions are pending for want of a verdict to read."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1961",
+        "kind": "issue",
+        "label": "I1961",
+        "summary": "A deploy verifies the evidence routes it publishes",
+        "route": "/cockpit/objects/issue/i1961",
+        "source": ".ai/repo/project/issues/I1961.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The probes are derived from the published subject index, and a route missing from the deploy fails the check naming it",
+            "Published evidence that does not name the deployed commit is refused"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "scripts/ci/pages-check verifies the published site and knows nothing of evidence routes.",
+          "depends_on": [
+            "I1959",
+            "I1958"
+          ],
+          "desired_state": "pages-check reads the published subject index and probes the evidence index, the first subject of each kind, coverage and runs, and refuses published evidence that does not name the deployed commit.",
+          "evidence_required": [
+            "deploy_verifies_evidence_routes"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A hand-declared list of routes to verify"
+          ],
+          "objective": "Make pages-check probe the evidence routes a deploy published, deriving the probes from the published evidence-subjects.json rather than from a hand-written list.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "risk": "It also waits on PR #593.",
+          "scope": [
+            "scripts/ci/pages-check",
+            "scripts/pages",
+            ".github/workflows/pages.yml",
+            "test/cases/521_deploy_verifies_evidence_routes.sh",
+            "docs/CLAIMS.yaml",
+            "docs/claims/deploy-verifies-evidence-routes.md",
+            ".ai/repo/features/ci.md"
+          ],
+          "slug": "deploy-verifies-evidence-routes",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 521_deploy_verifies_evidence_routes"
+          ],
+          "why": "A route the build generated and the deploy lost is a badge that links nowhere. ADR 0087 names the deploy check as one mechanism against a badge verified for a revision it did not test."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1962",
+        "kind": "issue",
+        "label": "I1962",
+        "summary": "The evidence gates read subject findings and widgets",
+        "route": "/cockpit/objects/issue/i1962",
+        "source": ".ai/repo/project/issues/I1962.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "Subject findings refuse, and the baseline is rewritten in the same change, with its reason",
+            "A rendered widget without a subject fails the validator, naming the widget",
+            "A count or a percentage hard-coded into a template fails the validator",
+            "The shell command-coverage readers agree with the subject index"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [
+            "I1960",
+            "I1953",
+            "I1952"
+          ],
+          "evidence_required": [
+            "subject_findings_refuse",
+            "widgets_name_subjects"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "Weakening the baseline's ratchet"
+          ],
+          "parallel_safe": false,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "scripts/evidence-check",
+            ".ai/repo/evidence-baseline.txt",
+            "scripts/rust-coverage",
+            "lib/commands.sh",
+            "scripts/ci/command-furnished",
+            "scripts/ci/surface-coverage",
+            "scripts/lib/evidence-widgets.mjs",
+            "scripts/lib/interactions.mjs",
+            "scripts/site-check",
+            ".ai/repo/automation/inventory.jsonl",
+            ".ai/repo/ci/gates.yaml",
+            ".ai/repo/rules/project/no-stable-feature-without-a-test.v1.md",
+            ".ai/repo/rules/project/a-widget-names-its-evidence-subject.v1.md",
+            ".ai/repo/features/evidence.md",
+            ".ai/repo/features/coverage.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "test/cases/522_evidence_check_reads_widgets.sh",
+            "test/cases/523_evidence_rules_are_gated.sh"
+          ],
+          "slug": "evidence-check-reads-widgets",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 522_evidence_check_reads_widgets",
+            "bash test/run.sh 523_evidence_rules_are_gated",
+            "scripts/evidence-check"
+          ],
+          "why": "Subject findings stay advisory until a gate reads them, and ADR 0087 names this validator as the mechanism against a widget without a subject and a hard-coded count."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1963",
+        "kind": "issue",
+        "label": "I1963",
+        "summary": "Evidence is tested end to end",
+        "route": "/cockpit/objects/issue/i1963",
+        "source": ".ai/repo/project/issues/I1963.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "One subject reads the same verdict on every surface, and each difference names its record",
+            "The badge reaches its evidence by click, by deep link and by keyboard at phone width",
+            "A tampered dataset, ledger row or artifact is refused, never rendered",
+            "Coverage is shown with its commit, and never as current for another commit"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "No case compares the verdict of one subject across the CLI, HTTP, MCP, the Cockpit and the site.",
+          "depends_on": [
+            "I1960",
+            "I1956",
+            "I1959"
+          ],
+          "evidence_required": [
+            "no_surface_greener_than_the_ledger",
+            "badge_works_in_a_browser",
+            "tampering_refused"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A change to code: a defect the cases find is reported to the slice that owns it",
+            "scripts/ui and interaction specs"
+          ],
+          "objective": "Prove across every surface that no surface is greener than the ledger, that the badge works in a browser, that tampered evidence is refused, and that coverage is shown with its commit.",
+          "parallel_safe": true,
+          "priority": "p1",
+          "profile": "implementation",
+          "scope": [
+            "test/cases/524_no_surface_is_greener_than_the_ledger.sh",
+            "test/cases/525_an_evidence_badge_works_in_a_browser.sh",
+            "test/cases/526_tampered_evidence_is_refused.sh",
+            "test/cases/527_coverage_is_shown_with_its_commit.sh",
+            "test/fixtures/evidence-end-to-end",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            ".ai/repo/features/evidence.md"
+          ],
+          "slug": "evidence-is-tested-end-to-end",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 524_no_surface_is_greener_than_the_ledger",
+            "bash test/run.sh 525_an_evidence_badge_works_in_a_browser",
+            "bash test/run.sh 526_tampered_evidence_is_refused",
+            "bash test/run.sh 527_coverage_is_shown_with_its_commit"
+          ],
+          "why": "Each slice proves its own part. Only a case across surfaces can prove that they agree, which is what the anti-goal of a surface greener than the ledger requires."
+        }
+      },
+      {
+        "id": "majordomus://issue/I1964",
+        "kind": "issue",
+        "label": "I1964",
+        "summary": "The evidence reference is documented and held to the tree",
+        "route": "/cockpit/objects/issue/i1964",
+        "source": ".ai/repo/project/issues/I1964.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The reference names what the code declares, and the case fails on a name the tree does not have",
+            "Every row of the matrix names a case",
+            "The pipeline is a mermaid diagram and passes diagram-check"
+          ],
+          "created_at": "2026-09-26",
+          "current_state": "docs/EVIDENCE.md describes the ledger and its states; its sections are edited by I1948 and I1949 while the work runs.",
+          "depends_on": [
+            "I1962",
+            "I1963"
+          ],
+          "evidence_required": [
+            "reference_held_to_the_tree"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A diagram in box art: a relationship is drawn in mermaid",
+            "Accepting ADR 0087, which is the owner's act"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "scope": [
+            "docs/EVIDENCE.md",
+            "docs/COVERAGE.md",
+            "docs/README.md",
+            "docs/CI.md",
+            "docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "test/cases/528_the_evidence_reference_is_held_to_the_tree.sh",
+            ".ai/repo/features/evidence.md",
+            ".ai/repo/features/coverage.md",
+            ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+            ".ai/repo/evidence/README.md",
+            ".ai/repo/doc-command-baseline.txt"
+          ],
+          "slug": "evidence-is-documented",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 528_the_evidence_reference_is_held_to_the_tree",
+            "scripts/ci/diagram-check"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://issue/I1965",
+        "kind": "issue",
+        "label": "I1965",
+        "summary": "The entry preflight reads the one verdict",
+        "route": "/cockpit/objects/issue/i1965",
+        "source": ".ai/repo/project/issues/I1965.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "A run recorded on a commit HEAD does not contain, with an identical tree, is not current",
+            "A corpus whose blocking rule is only inputs_unchanged is not verified",
+            "A skip is counted as not run, never as a failure",
+            "The entry briefing and the Cockpit overview render the verdict evidence show gives"
+          ],
+          "created_at": "2026-09-26",
+          "depends_on": [
+            "I1948"
+          ],
+          "evidence_required": [
+            "preflight_reads_the_one_verdict"
+          ],
+          "milestone": "test-evidence",
+          "non_scope": [
+            "A capability declaration or an output schema change: if one proves necessary, the slice stops and joins the capability chain after I1953",
+            "apps/majordomus-cli/src/evidence and apps/majordomus-cli/src/rules"
+          ],
+          "parallel_safe": true,
+          "priority": "p2",
+          "profile": "implementation",
+          "risk": "It starts only once PR #578 and PR #597, carrying I1948's slice, are both on master. The case name is this slice's to confirm when it is written.",
+          "scope": [
+            "apps/majordomus-cli/src/environment/preflight.rs",
+            "test/cases/529_the_preflight_reads_the_one_verdict.sh"
+          ],
+          "slug": "the-preflight-reads-the-one-verdict",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bash test/run.sh 529_the_preflight_reads_the_one_verdict"
+          ]
+        }
+      },
+      {
         "id": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "label": "start-here",
@@ -23923,6 +25094,85 @@
           "updated_at": "2026-09-04T14:05:00Z",
           "validation": [
             "bash test/run.sh"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://milestone/test-evidence",
+        "kind": "milestone",
+        "label": "test-evidence",
+        "summary": "Every verifiable claim and widget resolves to revision-bound test evidence, on every surface",
+        "route": "/cockpit/objects/milestone/test-evidence",
+        "source": ".ai/repo/project/milestones/test-evidence.yaml",
+        "facts": {
+          "created_at": "2026-09-26",
+          "depends_on": [],
+          "evidence_required": [
+            "one_authority_one_freshness",
+            "subjects_derived_once",
+            "runs_measured_where_they_ran",
+            "no_surface_greener_than_the_ledger",
+            "every_widget_names_its_subject",
+            "publication_bound_to_its_build"
+          ],
+          "non_scope": [
+            "Accepting ADR 0041, 0068, 0080 or 0087; acceptance is the owner's act",
+            "Bumping the version; a pull request that moves the public surface inherits the version already on master by merging it",
+            "Judging a commit other than the checked-out one or the site's build commit",
+            "MCP resource templates per subject; evidence is reached through tool calls",
+            "Making the required `ci` check depend on the evidence job",
+            "New shell automation (ADR 0069)",
+            "A regex crate or any other new dependency for the redactor",
+            "Stamping use-case evidence with a commit in the committed catalogue"
+          ],
+          "order": 105,
+          "priority": "p1",
+          "risks": [
+            "Until the recording branch runs, the tracked ledger holds only local rows and the site renders mostly `not_run`. That is the true state; the badges follow the CI wiring for that reason.",
+            "The decisions this milestone builds on are proposed on open pull requests (#577, #578, #597, #600, #629). A slice stacked on one of them waits for it, and the landing order is the owner's.",
+            "The recording pull request needs a token whose events start the required workflow. Until the owner chooses between dispatching validate.yml and an App token, the CI wiring slice cannot land.",
+            "Every landing makes the open slices' pull requests conflict on derived files; each is refreshed by merging master with the derived merge driver, never by a rebase."
+          ],
+          "scope": [
+            ".ai/repo/adrs",
+            ".ai/repo/project",
+            ".ai/repo/evidence",
+            ".ai/repo/evidence-baseline.txt",
+            ".ai/repo/features/evidence.md",
+            ".ai/repo/ci",
+            "apps/majordomus-cli/src/evidence",
+            "apps/majordomus-cli/src/rules",
+            "apps/majordomus-cli/src/git",
+            "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+            "apps/majordomus-cli/src/commands/evidence.rs",
+            "apps/majordomus-cli/src/cockpit",
+            "apps/majordomus-cli/src/environment/preflight.rs",
+            "apps/majordomus-cli/src/redaction.rs",
+            ".github/workflows",
+            "scripts/ci",
+            "scripts/pages",
+            "scripts/generate-site-data",
+            "scripts/evidence-check",
+            "share/design/tokens.yaml",
+            "site/templates",
+            "site/data/registry/evidence-subjects.json",
+            "docs/EVIDENCE.md",
+            "docs/CLAIMS.yaml",
+            "docs/claims",
+            "test/cases"
+          ],
+          "slug": "test-evidence",
+          "updated_at": "2026-09-26",
+          "validation": [
+            "bin/majordomus adr check",
+            "bin/majordomus plan validate",
+            "bin/majordomus-cli evidence show --check",
+            "scripts/evidence-check",
+            "scripts/ci/claim-proof-check --strict",
+            "bash test/run.sh",
+            "cargo test --workspace --all-features",
+            "majordomus generate --check",
+            "scripts/ci/pages-check"
           ]
         }
       },
@@ -39423,6 +40673,56 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://adr/adr-0087",
+        "target": "file:.ai/repo/evidence/ledger.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "file:apps/majordomus-cli/src/evidence/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "file:apps/majordomus-cli/src/rules/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "majordomus://adr/adr-0041",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "majordomus://claim/evidence-currency-is-not-collapsed",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "majordomus://claim/evidence-proof-is-an-execution",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "majordomus://claim/evidence-unsupported-guarantee-is-reported",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0087",
+        "target": "majordomus://test/test/cases/124_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -48768,6 +50068,366 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1945",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1945",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1946",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1946",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1947",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1947",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1948",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1948",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1949",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1949",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1950",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1950",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1951",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1951",
+        "target": "majordomus://issue/I1948",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1951",
+        "target": "majordomus://issue/I1949",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1951",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1952",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1952",
+        "target": "majordomus://issue/I1947",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1952",
+        "target": "majordomus://issue/I1948",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1952",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1953",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1953",
+        "target": "majordomus://issue/I1951",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1953",
+        "target": "majordomus://issue/I1952",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1953",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1954",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1954",
+        "target": "majordomus://issue/I1951",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1954",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1955",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1955",
+        "target": "majordomus://issue/I1950",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1955",
+        "target": "majordomus://issue/I1953",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1955",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1956",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1956",
+        "target": "majordomus://issue/I1953",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1956",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1957",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1957",
+        "target": "majordomus://issue/I1955",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1957",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1958",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1958",
+        "target": "majordomus://issue/I1946",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1958",
+        "target": "majordomus://issue/I1952",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1958",
+        "target": "majordomus://issue/I1955",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1958",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1959",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1959",
+        "target": "majordomus://issue/I1954",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1959",
+        "target": "majordomus://issue/I1955",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1959",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1960",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1960",
+        "target": "majordomus://issue/I1946",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1960",
+        "target": "majordomus://issue/I1958",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1960",
+        "target": "majordomus://issue/I1959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1960",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1961",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1961",
+        "target": "majordomus://issue/I1958",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1961",
+        "target": "majordomus://issue/I1959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1961",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1962",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1962",
+        "target": "majordomus://issue/I1952",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1962",
+        "target": "majordomus://issue/I1953",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1962",
+        "target": "majordomus://issue/I1960",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1962",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1963",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1963",
+        "target": "majordomus://issue/I1956",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1963",
+        "target": "majordomus://issue/I1959",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1963",
+        "target": "majordomus://issue/I1960",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1963",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1964",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1964",
+        "target": "majordomus://issue/I1962",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1964",
+        "target": "majordomus://issue/I1963",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1964",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
+        "source": "majordomus://issue/I1965",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1965",
+        "target": "majordomus://issue/I1948",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://issue/I1965",
+        "target": "majordomus://milestone/test-evidence",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://knowledge/start-here",
         "target": "kind:knowledge",
         "kind": "is_a"
@@ -48906,6 +50566,11 @@
         "source": "majordomus://milestone/shared-policy",
         "target": "majordomus://milestone/routing-recommendations",
         "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://milestone/test-evidence",
+        "target": "kind:milestone",
+        "kind": "is_a"
       },
       {
         "source": "majordomus://milestone/two-folder-integration",
@@ -55309,8 +56974,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1756,
-      "edges": 3908,
+      "nodes": 1780,
+      "edges": 3991,
       "acyclic": true,
       "truncated": false
     }

@@ -1,0 +1,47 @@
+id: I1959
+milestone: test-evidence
+title: The evidence publication is typed, bound to its build, and kept on gh-pages
+slug: evidence-publication-is-typed
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make scripts/pages call evidence publish in the build's checkout, refuse a dataset that is not bound to the build, and keep each deployed revision's evidence on gh-pages under evidence/<sha>/, retiring the interim publication of PR #577 (ADR 0087 decision 3)."
+why: "ADR 0087 retires the interim Recorded by CI publication once the script calls evidence publish, and CI artifacts expire, so the evidence of a deployed revision has to outlive them."
+current_state: "scripts/pages evidence (PR #577 with I1949) computes its own publication state in shell; nothing refuses a dataset for another commit; the evidence exists only as a CI artifact."
+desired_state: "scripts/pages evidence calls majordomus evidence publish; site-build refuses a dataset whose presented commit is not build.json.commit and any proven whose evidence commit the build does not contain; gh-pages keeps evidence/<sha>/ for every deployed revision; the artifact listing is paginated."
+scope:
+  - scripts/pages
+  - scripts/site-build
+  - scripts/site-deploy
+  - scripts/ci/link-check
+  - .github/workflows/pages.yml
+  - .github/workflows/validate.yml
+  - .ai/repo/ci/pages.yaml
+  - .gitignore
+  - test/cases/518_evidence_publication_is_bound_to_its_build.sh
+  - test/cases/519_evidence_survives_artifact_expiry.sh
+  - test/cases/357_ci_records_evidence.sh
+  - docs/EVIDENCE.md
+  - docs/GITHUB_PAGES_ARCHITECTURE.md
+  - docs/GITHUB_PAGES_PERFORMANCE.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/ci.md
+non_scope:
+  - "A new shell unit"
+  - "A verdict computed in the script"
+depends_on:
+  - I1955
+  - I1954
+acceptance_criteria:
+  - "The site's evidence dataset is produced only by evidence publish, run in the build's checkout"
+  - "site-build refuses a dataset for another commit, and a proven whose evidence commit the build does not contain"
+  - "A deployed revision's evidence stays reachable on gh-pages after its CI artifact expires"
+validation:
+  - bash test/run.sh 518_evidence_publication_is_bound_to_its_build
+  - bash test/run.sh 519_evidence_survives_artifact_expiry
+evidence_required:
+  - publication_bound_to_its_build
+  - evidence_outlives_artifacts
+created_at: 2026-09-26
+updated_at: 2026-09-26

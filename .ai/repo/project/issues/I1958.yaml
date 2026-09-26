@@ -1,0 +1,43 @@
+id: I1958
+milestone: test-evidence
+title: Evidence has one route per subject, and every panel is joined to its subject
+slug: evidence-has-routes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Generate one evidence route per subject from site/data/registry/evidence-subjects.json, as sections of the one evidence template, and join every homepage panel to its subject by its route, failing generation for a subject the index does not have (ADR 0087 decision 9)."
+why: "The site only joins to the index. Today no panel names a subject, and /evidence/ is one page."
+current_state: "/evidence/ is a single page whose CI view is the Recorded by CI section of PR #577; panels carry a route and no subject; the tests of commands.json are derived in shell."
+desired_state: "/evidence/ is a section with a child per subject kind, plus suites, coverage and runs; the Recorded by CI section becomes the runs section; scripts/generate-site-data sets each panel's subject by joining its route to an index key and passes the executable's refusal through; the tests of commands.json are read from the artifact."
+scope:
+  - scripts/generate-site-data
+  - scripts/lib/panel-subjects.jq
+  - site/content-src/evidence.md
+  - site/content-src/evidence
+  - site/templates/evidence.html
+  - site/data/nav.toml
+  - test/cases/516_evidence_routes_render_from_the_subject_index.sh
+  - test/cases/517_a_panel_subject_is_joined_from_its_route.sh
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .gitattributes
+non_scope:
+  - "Deriving a subject in shell or jq beyond the join"
+  - "The badge, which is I1960's"
+depends_on:
+  - I1952
+  - I1946
+  - I1955
+acceptance_criteria:
+  - "Every subject of the index has a route, and no route exists for a subject the index does not have"
+  - "Every panel carries the subject its route joins to, or an explicit illustration marker, and an unknown subject fails generation with the executable's refusal"
+  - "The Recorded by CI section is folded into the runs section"
+validation:
+  - bash test/run.sh 516_evidence_routes_render_from_the_subject_index
+  - bash test/run.sh 517_a_panel_subject_is_joined_from_its_route
+evidence_required:
+  - routes_from_the_index
+  - panels_joined_to_subjects
+risk: "It also waits on PR #621 and PR #626, which change the templates it edits."
+created_at: 2026-09-26
+updated_at: 2026-09-26

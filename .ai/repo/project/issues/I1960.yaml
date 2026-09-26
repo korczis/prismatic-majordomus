@@ -1,0 +1,55 @@
+id: I1960
+milestone: test-evidence
+title: Every widget names its proof
+slug: every-widget-names-its-proof
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Render one evidence badge on every widget that states behaviour, linking to its subject's route with the verdict at the published commit, and compute the delivery report's required_tests_current and test_evidence_published dimensions as ADR 0087 decision 3 says."
+why: "Nothing ties a site widget to a subject: where a page says verified, the word was placed by hand, and the delivery report's test dimensions are pending for want of a verdict to read."
+current_state: "Widgets carry no subject badge; the proof partial of PR #626 is a separate component; the delivery dimensions are pending on PR #600."
+desired_state: "One partial, evidence-badge.html, is a plain link with a glyph, a text and a label, and renders unknown for a subject missing from the dataset, never nothing; every widget header carries it and the proof partial is absorbed into it; homepage-check budgets bytes per badge; required_tests_current passes only on a proven subject verdict at the trunk revision, and test_evidence_published reads the site's publication."
+scope:
+  - site/templates/partials/evidence-badge.html
+  - site/templates/partials/terminal-figure.html
+  - site/templates/partials/terminal.html
+  - site/templates/partials/cli-examples.html
+  - site/templates/partials/api-operation.html
+  - site/templates/partials/proof.html
+  - site/templates/index.html
+  - site/templates/feature.html
+  - site/templates/claim.html
+  - site/templates/use-case.html
+  - site/templates/components.html
+  - site/data/homepage.toml
+  - scripts/ci/homepage-check
+  - apps/majordomus-cli/src/delivery/mod.rs
+  - test/cases/520_every_widget_names_its_proof.sh
+  - test/cases/333_homepage_narrative.sh
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/evidence.md
+non_scope:
+  - "Alpine, details elements or an interaction spec for the badge"
+  - "A count or a percentage written into a template"
+  - "Custom CSS or an inline style"
+depends_on:
+  - I1958
+  - I1959
+  - I1946
+acceptance_criteria:
+  - "Every widget that states behaviour carries one badge linking to its subject's route, and a subject missing from the dataset renders unknown"
+  - "The badge renders verified only for a proven verdict at the published commit"
+  - "The badge is a plain link that works without JavaScript and fits a phone-width viewport"
+  - "Each badge stays under its byte ceiling in homepage-check"
+  - "The delivery report's test dimensions read the subject verdict and the site's publication, and never a CI run's own rows"
+validation:
+  - bash test/run.sh 520_every_widget_names_its_proof
+  - bash test/run.sh 333_homepage_narrative
+  - scripts/ci/homepage-check
+evidence_required:
+  - every_widget_names_its_subject
+  - delivery_test_dimensions_computed
+risk: "It also waits on PR #593, PR #600, PR #621 and PR #626; the delivery module exists only once PR #600 has landed."
+created_at: 2026-09-26
+updated_at: 2026-09-26

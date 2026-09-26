@@ -1,0 +1,43 @@
+id: I1963
+milestone: test-evidence
+title: Evidence is tested end to end
+slug: evidence-is-tested-end-to-end
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Prove across every surface that no surface is greener than the ledger, that the badge works in a browser, that tampered evidence is refused, and that coverage is shown with its commit."
+why: "Each slice proves its own part. Only a case across surfaces can prove that they agree, which is what the anti-goal of a surface greener than the ledger requires."
+current_state: "No case compares the verdict of one subject across the CLI, HTTP, MCP, the Cockpit and the site."
+desired_state: "Cases cover the cross-surface comparison with the monotone rule; the badge in a browser at phone width, by click, deep link and keyboard; the refusal of a tampered dataset, ledger row and artifact; and the coverage view with its commit."
+scope:
+  - test/cases/524_no_surface_is_greener_than_the_ledger.sh
+  - test/cases/525_an_evidence_badge_works_in_a_browser.sh
+  - test/cases/526_tampered_evidence_is_refused.sh
+  - test/cases/527_coverage_is_shown_with_its_commit.sh
+  - test/fixtures/evidence-end-to-end
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/evidence.md
+non_scope:
+  - "A change to code: a defect the cases find is reported to the slice that owns it"
+  - "scripts/ui and interaction specs"
+depends_on:
+  - I1960
+  - I1956
+  - I1959
+acceptance_criteria:
+  - "One subject reads the same verdict on every surface, and each difference names its record"
+  - "The badge reaches its evidence by click, by deep link and by keyboard at phone width"
+  - "A tampered dataset, ledger row or artifact is refused, never rendered"
+  - "Coverage is shown with its commit, and never as current for another commit"
+validation:
+  - bash test/run.sh 524_no_surface_is_greener_than_the_ledger
+  - bash test/run.sh 525_an_evidence_badge_works_in_a_browser
+  - bash test/run.sh 526_tampered_evidence_is_refused
+  - bash test/run.sh 527_coverage_is_shown_with_its_commit
+evidence_required:
+  - no_surface_greener_than_the_ledger
+  - badge_works_in_a_browser
+  - tampering_refused
+created_at: 2026-09-26
+updated_at: 2026-09-26

@@ -1,0 +1,34 @@
+id: I1961
+milestone: test-evidence
+title: A deploy verifies the evidence routes it publishes
+slug: deploy-verifies-evidence-routes
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Make pages-check probe the evidence routes a deploy published, deriving the probes from the published evidence-subjects.json rather than from a hand-written list."
+why: "A route the build generated and the deploy lost is a badge that links nowhere. ADR 0087 names the deploy check as one mechanism against a badge verified for a revision it did not test."
+current_state: "scripts/ci/pages-check verifies the published site and knows nothing of evidence routes."
+desired_state: "pages-check reads the published subject index and probes the evidence index, the first subject of each kind, coverage and runs, and refuses published evidence that does not name the deployed commit."
+scope:
+  - scripts/ci/pages-check
+  - scripts/pages
+  - .github/workflows/pages.yml
+  - test/cases/521_deploy_verifies_evidence_routes.sh
+  - docs/CLAIMS.yaml
+  - docs/claims/deploy-verifies-evidence-routes.md
+  - .ai/repo/features/ci.md
+non_scope:
+  - "A hand-declared list of routes to verify"
+depends_on:
+  - I1959
+  - I1958
+acceptance_criteria:
+  - "The probes are derived from the published subject index, and a route missing from the deploy fails the check naming it"
+  - "Published evidence that does not name the deployed commit is refused"
+validation:
+  - bash test/run.sh 521_deploy_verifies_evidence_routes
+evidence_required:
+  - deploy_verifies_evidence_routes
+risk: "It also waits on PR #593."
+created_at: 2026-09-26
+updated_at: 2026-09-26

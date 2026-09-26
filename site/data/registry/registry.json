@@ -6,23 +6,23 @@
     "version": "0.9.0"
   },
   "registry": {
-    "fingerprint": "5a74dc58f2f29144b87ed7dee959c47fcda7c9b4221a32d26118765948e65d13",
+    "fingerprint": "0956a6325a48ff865ca6d17daa04a0599653156c1a272903ade177b7eb3dc493",
     "summary": {
-      "total": 1489,
+      "total": 1512,
       "builtin": 115,
-      "declarative": 1374,
+      "declarative": 1397,
       "by_kind": {
         "command": 7,
         "query": 108,
-        "resource": 1374
+        "resource": 1397
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1382
+        "implemented": 1405
       },
       "mcp_tools": 112,
-      "mcp_resources": 1415,
+      "mcp_resources": 1438,
       "http_routes": 114,
       "cli_commands": 54,
       "modules": 67,
@@ -40781,7 +40781,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 52,
+        "capabilities": 53,
         "capability_ids": []
       },
       {
@@ -41127,7 +41127,7 @@
         "title": "issue",
         "description": "Declarative objects of kind 'issue' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 216,
+        "capabilities": 237,
         "capability_ids": []
       },
       {
@@ -41183,7 +41183,7 @@
         "title": "milestone",
         "description": "Declarative objects of kind 'milestone' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 19,
+        "capabilities": 20,
         "capability_ids": []
       },
       {
@@ -41544,7 +41544,7 @@
     ]
   },
   "index": {
-    "fingerprint": "16716298331074bc0243c089d8641ad7a8cedcdd360823348cfee593cfdd9d81",
+    "fingerprint": "0b3b21632d96b43e00307bda43da300369fe311b1b8b60ef59acf21045362394",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -41567,7 +41567,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 52,
+      "adr": 53,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -41579,10 +41579,10 @@
       "document": 252,
       "feature": 25,
       "implementation": 49,
-      "issue": 216,
+      "issue": 237,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
@@ -42447,6 +42447,24 @@
           "governance",
           "routing",
           "web"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0087",
+        "kind": "adr",
+        "identity": "adr-0087",
+        "title": "Evidence is indexed by subject and judged at the presented revision",
+        "description": "Evidence is indexed by subject and judged at the presented revision",
+        "path": ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 35346,
+        "tags": [
+          "evidence",
+          "claims",
+          "ci",
+          "verification",
+          "site"
         ]
       },
       {
@@ -45716,7 +45734,7 @@
         "title": "Plan status",
         "path": "docs/PLAN_STATUS.md",
         "source_class": "document",
-        "bytes": 54976
+        "bytes": 65919
       },
       {
         "uri": "majordomus://document/docs/PRODUCT.md",
@@ -50596,6 +50614,237 @@
         "bytes": 3566
       },
       {
+        "uri": "majordomus://issue/I1945",
+        "kind": "issue",
+        "identity": "I1945",
+        "title": "The test-evidence decision and its plan are recorded",
+        "description": "Record the test-evidence design as ADR 0087 with status proposed, create the milestone test-evidence, and give every slice of the design one issue, so that `majordomus plan` tracks the work and each slice is held to one written definition.",
+        "path": ".ai/repo/project/issues/I1945.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2476
+      },
+      {
+        "uri": "majordomus://issue/I1946",
+        "kind": "issue",
+        "identity": "I1946",
+        "title": "The verdict words are status words of the design system",
+        "description": "File the proof-state verdict words as hyphenated status tokens with a declared role, so that every surface renders a verdict through the design system and a verdict added later must get a role before it can render (ADR 0087 decision 13).",
+        "path": ".ai/repo/project/issues/I1946.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2317
+      },
+      {
+        "uri": "majordomus://issue/I1947",
+        "kind": "issue",
+        "identity": "I1947",
+        "title": "Every feature reaches a test, and every use case has a feature",
+        "description": "Give every active use case an owning feature, and give the cockpit and deployments features a claim naming their own tests, so that a homepage panel routed to a use case reaches a feature and every feature reaches a test through the subject index (ADR 0087 decision 9).",
+        "path": ".ai/repo/project/issues/I1947.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2509
+      },
+      {
+        "uri": "majordomus://issue/I1948",
+        "kind": "issue",
+        "identity": "I1948",
+        "title": "Evidence is judged at the presented revision, by one freshness function",
+        "description": "Write the freshness table, the presented revision, containment and aggregation of ADR 0087 once each (decisions 4, 5, 7 and 8), so that evidence show can judge the checked-out commit by the ledger committed in it and every verdict comes from one derivation.",
+        "path": ".ai/repo/project/issues/I1948.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3876
+      },
+      {
+        "uri": "majordomus://issue/I1949",
+        "kind": "issue",
+        "identity": "I1949",
+        "title": "CI evidence is recorded clean, and its report is the tracked ledger's verdict",
+        "description": "Fix PR #577 on its own branch so that the CI evidence job derives its report from the tracked ledger before it records the run's executions, every job that runs tests measures its tree where it ran, and the site publishes current only under ADR 0087's interim rule (decision 1).",
+        "path": ".ai/repo/project/issues/I1949.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3336
+      },
+      {
+        "uri": "majordomus://issue/I1950",
+        "kind": "issue",
+        "identity": "I1950",
+        "title": "Text a run printed is redacted by one rule set",
+        "description": "Port the credential table that lib/capture.sh applies into one Rust redactor, held equal to the shell table by one fixture, so that every text the evidence publication carries passes through one rule set (ADR 0087 decision 14).",
+        "path": ".ai/repo/project/issues/I1950.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2181
+      },
+      {
+        "uri": "majordomus://issue/I1951",
+        "kind": "issue",
+        "identity": "I1951",
+        "title": "Evidence runs are typed, and a recording carries what its run measured",
+        "description": "Add the run record, the measured provenance, the coverage record and the crate count rule of ADR 0087 decisions 2, 6 and 12, and feed run records to the one monotone rule, so that a recording states the commit and tree its run measured and only what ran.",
+        "path": ".ai/repo/project/issues/I1951.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3585
+      },
+      {
+        "uri": "majordomus://issue/I1952",
+        "kind": "issue",
+        "identity": "I1952",
+        "title": "Evidence subjects are derived once, in Rust",
+        "description": "Derive the subject index of ADR 0087 decision 9 from existing declarations, compute a subject's verdict over its members through the one aggregation, and have majordomus generate write it as site/data/registry/evidence-subjects.json.",
+        "path": ".ai/repo/project/issues/I1952.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2652
+      },
+      {
+        "uri": "majordomus://issue/I1953",
+        "kind": "issue",
+        "identity": "I1953",
+        "title": "Evidence answers by subject, on every surface",
+        "description": "Add the evidence.subject, evidence.coverage, evidence.runs and evidence.run capabilities, so that the CLI, HTTP and MCP answer by subject from the one authority and read supplementary records only through the monotone rule (ADR 0087 decision 3).",
+        "path": ".ai/repo/project/issues/I1953.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2423
+      },
+      {
+        "uri": "majordomus://issue/I1954",
+        "kind": "issue",
+        "identity": "I1954",
+        "title": "Every runner reaches the ledger, through the recording branch",
+        "description": "Wire the trunk's runs to the recording branch of ADR 0080 and every runner to a measured report, so that a merge to master is followed by one recording pull request that changes only the ledger (ADR 0087 decisions 1, 6 and 16).",
+        "path": ".ai/repo/project/issues/I1954.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3361
+      },
+      {
+        "uri": "majordomus://issue/I1955",
+        "kind": "issue",
+        "identity": "I1955",
+        "title": "The evidence publication is an allow-listed projection",
+        "description": "Add evidence publish, which reads the ledger committed at the presented commit, the run records and coverage, applies the monotone rule, and writes an allow-listed publication with its publication state, carrying text only through the one redactor (ADR 0087 decisions 3 and 14).",
+        "path": ".ai/repo/project/issues/I1955.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2595
+      },
+      {
+        "uri": "majordomus://issue/I1956",
+        "kind": "issue",
+        "identity": "I1956",
+        "title": "The Cockpit shows evidence by subject",
+        "description": "Show every subject's verdict in the Cockpit, read through the subject index from the tracked ledger at the working tree, with a separate, advisory local-run column that can only weaken it (ADR 0087 decision 3).",
+        "path": ".ai/repo/project/issues/I1956.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1906
+      },
+      {
+        "uri": "majordomus://issue/I1957",
+        "kind": "issue",
+        "identity": "I1957",
+        "title": "Every test line is read, and a local run stays local",
+        "description": "Read each runner's per-test lines into the execution (case results, detail and dropped lines), add evidence record --run suite and the local run index, and move the web report onto the same typed adapters.",
+        "path": ".ai/repo/project/issues/I1957.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2530
+      },
+      {
+        "uri": "majordomus://issue/I1958",
+        "kind": "issue",
+        "identity": "I1958",
+        "title": "Evidence has one route per subject, and every panel is joined to its subject",
+        "description": "Generate one evidence route per subject from site/data/registry/evidence-subjects.json, as sections of the one evidence template, and join every homepage panel to its subject by its route, failing generation for a subject the index does not have (ADR 0087 decision 9).",
+        "path": ".ai/repo/project/issues/I1958.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2347
+      },
+      {
+        "uri": "majordomus://issue/I1959",
+        "kind": "issue",
+        "identity": "I1959",
+        "title": "The evidence publication is typed, bound to its build, and kept on gh-pages",
+        "description": "Make scripts/pages call evidence publish in the build's checkout, refuse a dataset that is not bound to the build, and keep each deployed revision's evidence on gh-pages under evidence/<sha>/, retiring the interim publication of PR #577 (ADR 0087 decision 3).",
+        "path": ".ai/repo/project/issues/I1959.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2420
+      },
+      {
+        "uri": "majordomus://issue/I1960",
+        "kind": "issue",
+        "identity": "I1960",
+        "title": "Every widget names its proof",
+        "description": "Render one evidence badge on every widget that states behaviour, linking to its subject's route with the verdict at the published commit, and compute the delivery report's required_tests_current and test_evidence_published dimensions as ADR 0087 decision 3 says.",
+        "path": ".ai/repo/project/issues/I1960.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 3062
+      },
+      {
+        "uri": "majordomus://issue/I1961",
+        "kind": "issue",
+        "identity": "I1961",
+        "title": "A deploy verifies the evidence routes it publishes",
+        "description": "Make pages-check probe the evidence routes a deploy published, deriving the probes from the published evidence-subjects.json rather than from a hand-written list.",
+        "path": ".ai/repo/project/issues/I1961.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 1631
+      },
+      {
+        "uri": "majordomus://issue/I1962",
+        "kind": "issue",
+        "identity": "I1962",
+        "title": "The evidence gates read subject findings and widgets",
+        "description": "Make subject findings refusing, rewriting the evidence baseline in the same change, and make the evidence validator read every rendered widget, so that a widget without a subject or a count hard-coded into a template fails CI (ADR 0087 decision 10).",
+        "path": ".ai/repo/project/issues/I1962.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2500
+      },
+      {
+        "uri": "majordomus://issue/I1963",
+        "kind": "issue",
+        "identity": "I1963",
+        "title": "Evidence is tested end to end",
+        "description": "Prove across every surface that no surface is greener than the ledger, that the badge works in a browser, that tampered evidence is refused, and that coverage is shown with its commit.",
+        "path": ".ai/repo/project/issues/I1963.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2190
+      },
+      {
+        "uri": "majordomus://issue/I1964",
+        "kind": "issue",
+        "identity": "I1964",
+        "title": "The evidence reference is documented and held to the tree",
+        "description": "Rewrite docs/EVIDENCE.md as the reference of the finished model, with the pipeline drawn in mermaid and a case named on every row of the matrix, and hold it to the tree with a case; cite ADR 0068, 0080 and 0087 structurally once they have landed.",
+        "path": ".ai/repo/project/issues/I1964.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2078
+      },
+      {
+        "uri": "majordomus://issue/I1965",
+        "kind": "issue",
+        "identity": "I1965",
+        "title": "The entry preflight reads the one verdict",
+        "description": "Move the entry preflight's verification.tests check onto the freshness function and its verification.enforcement check onto the rules corpus verdict, ending the one known exception ADR 0087 names in decisions 3 and 4. It depends on PR #578 as well as on I1948, because the preflight exists only on #578.",
+        "path": ".ai/repo/project/issues/I1965.yaml",
+        "section": "project",
+        "source_class": "issue",
+        "bytes": 2534
+      },
+      {
         "uri": "majordomus://knowledge/start-here",
         "kind": "knowledge",
         "identity": "start-here",
@@ -50793,6 +51042,17 @@
         "section": "project",
         "source_class": "milestone",
         "bytes": 1441
+      },
+      {
+        "uri": "majordomus://milestone/test-evidence",
+        "kind": "milestone",
+        "identity": "test-evidence",
+        "title": "Every verifiable claim and widget resolves to revision-bound test evidence, on every surface",
+        "description": "Evidence is indexed by subject and judged at the presented revision, as ADR 0087 records. Every claim, rule, feature, command, capability, MCP tool and use case is a subject of one derived index, and every widget that states behaviour names one. Every surface reads its verdict from the tracked ledger alone, through one freshness function and one aggregation, at the revision it presents: the CLI and HTTP and MCP at the working tree or the checked-out commit, the site at the commit it was built from. A trunk run reaches the ledger through a reviewed recording pull request, and a supplementary record (a run record, coverage, a local row) can only weaken a verdict, naming itself when it does. Verified is rendered only for the one proven row of the freshness table, on every surface.",
+        "path": ".ai/repo/project/milestones/test-evidence.yaml",
+        "section": "project",
+        "source_class": "milestone",
+        "bytes": 9001
       },
       {
         "uri": "majordomus://milestone/two-folder-integration",
@@ -56518,7 +56778,7 @@
       "identity": [
         "id"
       ],
-      "objects": 52
+      "objects": 53
     },
     {
       "name": "application",
@@ -56631,7 +56891,7 @@
       "identity": [
         "id"
       ],
-      "objects": 216
+      "objects": 237
     },
     {
       "name": "knowledge",
@@ -56661,7 +56921,7 @@
       "identity": [
         "id"
       ],
-      "objects": 19
+      "objects": 20
     },
     {
       "name": "moment",

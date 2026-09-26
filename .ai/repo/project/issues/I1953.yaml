@@ -1,0 +1,46 @@
+id: I1953
+milestone: test-evidence
+title: Evidence answers by subject, on every surface
+slug: evidence-answers-by-subject
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add the evidence.subject, evidence.coverage, evidence.runs and evidence.run capabilities, so that the CLI, HTTP and MCP answer by subject from the one authority and read supplementary records only through the monotone rule (ADR 0087 decision 3)."
+why: "Only claims and rules can be asked about today. A feature, a command, a capability, an MCP tool and a use case have no answer, although each is what a reader of the site or the Cockpit is looking at."
+current_state: "evidence show, evidence claim and evidence proves answer by claim; rules answers by rule; nothing answers for any other subject, and nothing lists run or coverage records."
+desired_state: "majordomus evidence subject <key>, evidence coverage, evidence runs and evidence run <id> exist as declared capabilities served over the CLI, HTTP and MCP tool calls; an unknown subject exits 13; supplementary records are listed beside the verdict and applied only through the monotone rule."
+scope:
+  - apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/evidence/supplementary.rs
+  - apps/majordomus-cli/src/evidence/mod.rs
+  - apps/majordomus-cli/src/evidence/subject.rs
+  - test/cases/508_evidence_answers_by_subject.sh
+  - test/cases/509_supplementary_records_only_weaken.sh
+  - docs/EVIDENCE.md
+  - docs/HOW_IT_WORKS.md
+  - docs/README.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/evidence.md
+non_scope:
+  - "MCP resource templates per subject"
+  - "A version bump"
+depends_on:
+  - I1952
+  - I1951
+acceptance_criteria:
+  - "Every subject kind of the index answers through evidence subject with the same verdict over the CLI, HTTP and MCP"
+  - "An unknown subject is refused with exit 13"
+  - "A supplementary record only ever weakens a verdict, and each weakening names its record"
+  - "Coverage is shown as current only for its own commit with a clean tree"
+validation:
+  - bash test/run.sh 508_evidence_answers_by_subject
+  - bash test/run.sh 509_supplementary_records_only_weaken
+  - majordomus generate --check
+evidence_required:
+  - answers_by_subject
+  - supplementary_only_weakens
+created_at: 2026-09-26
+updated_at: 2026-09-26

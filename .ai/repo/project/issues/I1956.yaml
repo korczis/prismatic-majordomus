@@ -1,0 +1,37 @@
+id: I1956
+milestone: test-evidence
+title: The Cockpit shows evidence by subject
+slug: cockpit-shows-evidence
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Show every subject's verdict in the Cockpit, read through the subject index from the tracked ledger at the working tree, with a separate, advisory local-run column that can only weaken it (ADR 0087 decision 3)."
+why: "The Cockpit renders rule, feature, capability, command, skill and provider pages, and none of them says what verifies the thing it shows."
+current_state: "The Cockpit has no evidence area, and its pages carry no Verified by section."
+desired_state: "A Cockpit evidence area, and a Verified by section on rule, feature, capability, command, skill and provider pages, each the answer of evidence subject for the page's subject; beside it, a local-run column that is advisory and applied through the monotone rule."
+scope:
+  - apps/majordomus-cli/src/cockpit/nav.rs
+  - apps/majordomus-cli/src/cockpit/mod.rs
+  - apps/majordomus-cli/src/cockpit/pages.rs
+  - apps/majordomus-cli/tests/cockpit_evidence.rs
+  - test/cases/513_cockpit_shows_evidence.sh
+  - docs/COCKPIT.md
+  - .ai/repo/features/evidence.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+non_scope:
+  - ".ai/repo/features/cockpit.md, whose claims are I1947's"
+  - "A verdict the subject answer does not give"
+depends_on:
+  - I1953
+acceptance_criteria:
+  - "The Cockpit's Verified by section is the evidence subject answer for the page's subject"
+  - "A local run can only weaken what the Cockpit shows, and the Cockpit says which run did"
+validation:
+  - bash test/run.sh 513_cockpit_shows_evidence
+  - cargo test --test cockpit_evidence
+evidence_required:
+  - cockpit_reads_the_subject_answer
+risk: "It edits Cockpit files that another session's pull request (#638) also edits, so it starts after that one lands."
+created_at: 2026-09-26
+updated_at: 2026-09-26

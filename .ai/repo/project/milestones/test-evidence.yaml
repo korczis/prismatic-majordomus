@@ -1,0 +1,79 @@
+id: test-evidence
+title: Every verifiable claim and widget resolves to revision-bound test evidence, on every surface
+slug: test-evidence
+order: 105
+priority: p1
+problem: "Claims bind to tests by path, and only `majordomus evidence show` asks whether a claim is proven, always at the working tree of whoever runs it. The site cannot ask that question about the commit it was built from, and no widget on it names the subject that would prove what it shows: where a page says verified, the word was placed by hand. CI runs the suite and the crate tests on every merge and keeps none of it in the ledger. A test that declined to run reads `failing`, while a case that declines by exiting zero is recorded as a pass. The rules module holds a second copy of the freshness derivation, the entry preflight proposed in PR #578 counts a run as current by a filter of its own with no containment test, and ADR 0068 and ADR 0080 disagree about where CI evidence goes. Each surface that wants to say verified derives it differently or not at all."
+outcome: "Evidence is indexed by subject and judged at the presented revision, as ADR 0087 records. Every claim, rule, feature, command, capability, MCP tool and use case is a subject of one derived index, and every widget that states behaviour names one. Every surface reads its verdict from the tracked ledger alone, through one freshness function and one aggregation, at the revision it presents: the CLI and HTTP and MCP at the working tree or the checked-out commit, the site at the commit it was built from. A trunk run reaches the ledger through a reviewed recording pull request, and a supplementary record (a run record, coverage, a local row) can only weaken a verdict, naming itself when it does. Verified is rendered only for the one proven row of the freshness table, on every surface."
+current_state: "On master at 5a0770c437 the tracked ledger holds local recordings only, and how many claims reach each state is what `majordomus evidence show --format json | jq .totals` prints. There is no subject index; the command-to-test join is derived in shell more than once (`scripts/generate-site-data`, `lib/commands.sh`, `scripts/ci/command-furnished`). `rules/mod.rs` carries its own `changed_since` and its own state mapping beside `evidence/mod.rs`. The decisions this milestone builds on are proposed and unlanded: ADR 0068 on PR #577 (CI evidence as an artifact and a published dataset), ADR 0080 on PR #629 (the recording branch, and the skip word), ADR 0071 on PR #600 (delivery dimensions, with a private containment implementation); PR #597 adds the rules corpus verdict and PR #578 the entry preflight."
+desired_state: "A reader of any page of the site follows a widget's badge to the evidence of its subject and sees the verdict at the commit the page was built from, with the run that produced it and every record that weakened it. `majordomus evidence subject <key>` answers the same question from a terminal, over HTTP and over MCP, and the Cockpit shows the same verdict. A merge to master is followed by a recording pull request that moves claims to `proven`, a skipped test reads `not_run` with its reason, and no surface anywhere reads greener than the ledger for the revision it presents."
+scope:
+  - .ai/repo/adrs
+  - .ai/repo/project
+  - .ai/repo/evidence
+  - .ai/repo/evidence-baseline.txt
+  - .ai/repo/features/evidence.md
+  - .ai/repo/ci
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/rules
+  - apps/majordomus-cli/src/git
+  - apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - apps/majordomus-cli/src/cockpit
+  - apps/majordomus-cli/src/environment/preflight.rs
+  - apps/majordomus-cli/src/redaction.rs
+  - .github/workflows
+  - scripts/ci
+  - scripts/pages
+  - scripts/generate-site-data
+  - scripts/evidence-check
+  - share/design/tokens.yaml
+  - site/templates
+  - site/data/registry/evidence-subjects.json
+  - docs/EVIDENCE.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - test/cases
+non_scope:
+  - Accepting ADR 0041, 0068, 0080 or 0087; acceptance is the owner's act
+  - Bumping the version; a pull request that moves the public surface inherits the version already on master by merging it
+  - Judging a commit other than the checked-out one or the site's build commit
+  - MCP resource templates per subject; evidence is reached through tool calls
+  - Making the required `ci` check depend on the evidence job
+  - New shell automation (ADR 0069)
+  - A regex crate or any other new dependency for the redactor
+  - Stamping use-case evidence with a commit in the committed catalogue
+acceptance_criteria:
+  - "Model: one freshness function, one presented revision, one containment and one aggregation judge every verdict, a skip reads `not_run`, and one derived index names every subject; proven by test/cases/502_evidence_is_judged_at_the_presented_revision.sh, test/cases/507_evidence_subjects_are_derived.sh and test/cases/501_verdict_words_are_status_words.sh"
+  - "Producer: every recorded run carries the commit and tree it measured, a crate binary that ran nothing is a skip, CI's report is the tracked ledger's verdict derived before the run records, and a trunk run reaches the ledger through one recording pull request; proven by test/cases/505_a_recording_carries_what_its_run_measured.sh, test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh, test/cases/357_ci_records_evidence.sh, test/cases/510_ci_evidence_reaches_the_ledger_through_a_recording_branch.sh and test/cases/511_every_runner_report_carries_its_revision_and_reason.sh"
+  - "Surfaces: the CLI, HTTP, MCP, the Cockpit and the entry preflight answer by subject from the one authority, and a supplementary record only weakens; proven by test/cases/508_evidence_answers_by_subject.sh, test/cases/509_supplementary_records_only_weaken.sh, test/cases/513_cockpit_shows_evidence.sh, test/cases/514_every_test_line_is_read.sh, test/cases/515_a_local_run_stays_local.sh and test/cases/529_the_preflight_reads_the_one_verdict.sh"
+  - "Site: every widget names its subject, every subject has an evidence route, the publication is bound to its build and allow-listed, and published text is redacted once; proven by test/cases/504_public_text_is_redacted_once.sh, test/cases/512_evidence_publication_is_a_projection.sh, test/cases/516_evidence_routes_render_from_the_subject_index.sh, test/cases/517_a_panel_subject_is_joined_from_its_route.sh, test/cases/518_evidence_publication_is_bound_to_its_build.sh and test/cases/520_every_widget_names_its_proof.sh"
+  - "Policy: subject findings refuse, the evidence baseline is rewritten in the same change, and the validator reads every widget; proven by test/cases/522_evidence_check_reads_widgets.sh and test/cases/523_evidence_rules_are_gated.sh"
+  - "Tests: no surface is greener than the ledger, the badge works in a browser at phone width, tampered evidence is refused, and coverage is shown with its commit; proven by test/cases/524_no_surface_is_greener_than_the_ledger.sh, test/cases/525_an_evidence_badge_works_in_a_browser.sh, test/cases/526_tampered_evidence_is_refused.sh and test/cases/527_coverage_is_shown_with_its_commit.sh"
+  - "Docs: the evidence reference names what the code declares and is held to the tree; proven by test/cases/528_the_evidence_reference_is_held_to_the_tree.sh"
+  - "Deploy: a deploy verifies the evidence routes it publishes, and the evidence survives artifact expiry on gh-pages; proven by test/cases/521_deploy_verifies_evidence_routes.sh, test/cases/519_evidence_survives_artifact_expiry.sh and the live page https://majordomus.dev/evidence/"
+validation:
+  - bin/majordomus adr check
+  - bin/majordomus plan validate
+  - bin/majordomus-cli evidence show --check
+  - scripts/evidence-check
+  - scripts/ci/claim-proof-check --strict
+  - bash test/run.sh
+  - cargo test --workspace --all-features
+  - majordomus generate --check
+  - scripts/ci/pages-check
+evidence_required:
+  - one_authority_one_freshness
+  - subjects_derived_once
+  - runs_measured_where_they_ran
+  - no_surface_greener_than_the_ledger
+  - every_widget_names_its_subject
+  - publication_bound_to_its_build
+depends_on: []
+risks:
+  - "Until the recording branch runs, the tracked ledger holds only local rows and the site renders mostly `not_run`. That is the true state; the badges follow the CI wiring for that reason."
+  - "The decisions this milestone builds on are proposed on open pull requests (#577, #578, #597, #600, #629). A slice stacked on one of them waits for it, and the landing order is the owner's."
+  - "The recording pull request needs a token whose events start the required workflow. Until the owner chooses between dispatching validate.yml and an App token, the CI wiring slice cannot land."
+  - "Every landing makes the open slices' pull requests conflict on derived files; each is refreshed by merging master with the derived merge driver, never by a rebase."
+created_at: 2026-09-26
+updated_at: 2026-09-26

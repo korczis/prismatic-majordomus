@@ -1,0 +1,40 @@
+id: I1949
+milestone: test-evidence
+title: CI evidence is recorded clean, and its report is the tracked ledger's verdict
+slug: the-ci-evidence-is-recorded-clean
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Fix PR #577 on its own branch so that the CI evidence job derives its report from the tracked ledger before it records the run's executions, every job that runs tests measures its tree where it ran, and the site publishes current only under ADR 0087's interim rule (decision 1)."
+why: "As PR #577 is written, the collector records first and derives the report after, so the transcript the site publishes as current is a verdict over the run's own rows from a checkout nobody measured. ADR 0087 amends ADR 0068 on exactly those sentences."
+current_state: "PR #577 (feature/ci-records-evidence) records the run's executions, then runs evidence show, and publishes the result as current when the manifest's commit is the published commit. The producing jobs write their reports into their workspaces, and nothing measures those trees. This slice's branch is fix/the-ci-evidence-is-recorded-clean, with its pull request into feature/ci-records-evidence."
+desired_state: "The evidence job derives its report over the tracked ledger as committed at the run's commit before it records; the suite and rust jobs measure their trees, excluding only their named outputs, and upload the measurement; scripts/pages evidence publishes current only when the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and nothing was absent, refused or failed, and otherwise stale or unknown, naming each reason."
+scope:
+  - .github/workflows/validate.yml
+  - scripts/ci/evidence-collect
+  - scripts/pages
+  - site/templates/evidence.html
+  - docs/EVIDENCE.md
+  - docs/CLAIMS.yaml
+  - docs/claims/evidence-recorded-in-ci.md
+  - test/cases/357_ci_records_evidence.sh
+non_scope:
+  - "The behavioural-tests environment, the summary step and the ci-metrics-suite upload of the suite job"
+  - "Moving suite.tsv out of the workspace, where the suite budget of PR #627 reads it"
+  - "Any row of docs/CLAIMS.yaml other than the claim and note of evidence-recorded-in-ci"
+  - "docs/EVIDENCE.md outside its Recorded in CI section"
+  - "The leading comment and the article line of site/templates/evidence.html"
+depends_on: []
+acceptance_criteria:
+  - "The evidence job derives its report before it records, over the tracked ledger as committed at the run's commit"
+  - "Every job that ran tests measures its tree, excluding only its named outputs, and the manifest carries each measurement"
+  - "scripts/pages evidence publishes current only under ADR 0087's interim rule, and otherwise stale or unknown naming each reason"
+  - "Case 357 asserts both halves, and this slice's own pull-request run shows crate executions and clean measured trees"
+validation:
+  - bash test/run.sh 357_ci_records_evidence
+evidence_required:
+  - report_derived_before_recording
+  - producer_trees_measured
+risk: "Stacked on PR #577, which conflicts with master and so gets no pull-request run of its own: this slice's acceptance is its own pull-request run. A run of #577 after it merges master is a gate of #577's landing, not of this slice."
+created_at: 2026-09-26
+updated_at: 2026-09-26
