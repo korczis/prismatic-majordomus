@@ -34,9 +34,11 @@ use std::path::Path;
 
 /// Text after [`redact_secrets`] or [`public_text`], with the shapes that fired in it.
 ///
-/// `kinds` is what `mj_capture_redacted_kinds` reports for the same text: the names sorted
-/// in byte order, each once. It lists the shapes that replaced something here, so a marker
-/// the input already carried is not counted as a credential this call found.
+/// `kinds` is what `mj_capture_redacted_kinds` reports for the same text: the names, each
+/// once, in the crate's canonical order, which for these lower-case hyphenated names is the
+/// byte order the shell's `LC_ALL=C sort -u` gives. It lists the shapes that replaced
+/// something here, so a marker the input already carried is not counted as a credential
+/// this call found.
 ///
 /// ```
 /// use majordomus_cli::redaction::{redact_secrets, Redacted};
@@ -108,7 +110,7 @@ pub fn redact_secrets(text: &str) -> Redacted {
             kinds.push(shape.name);
         }
     }
-    kinds.sort_unstable();
+    crate::order::canonical_strings(&mut kinds);
     kinds.dedup();
     Redacted { text, kinds }
 }
@@ -654,12 +656,24 @@ mod tests {
     }
 
     #[test]
-    fn text_around_a_match_survives_in_any_script() {
+    fn multibyte_text_around_a_match_survives() {
         let key = format!("{}{}", "xoxp-", "a".repeat(10));
-        let text = format!("klíč {key} — hotovo");
+        let text = format!("it’s…{key}… — done");
         assert_eq!(
             redact_secrets(&text).text,
-            "klíč [redacted:slack-token] — hotovo"
+            "it’s…[redacted:slack-token]… — done"
+        );
+    }
+
+    #[test]
+    fn the_canonical_order_of_the_names_is_the_shell_s_byte_order() {
+        let mut canonical = shape_names();
+        crate::order::canonical_strings(&mut canonical);
+        let mut bytes = shape_names();
+        bytes.sort_unstable();
+        assert_eq!(
+            canonical, bytes,
+            "kinds would be listed in another order than the shell's"
         );
     }
 
