@@ -584,10 +584,10 @@ mod tests {
     #[test]
     fn a_class_reads_ranges_single_bytes_and_a_trailing_dash() {
         let class = Class("A-Za-z0-9_-");
-        for byte in [b'A', b'Z', b'a', b'z', b'0', b'9', b'_', b'-'] {
+        for byte in *b"AZaz09_-" {
             assert!(class.has(byte), "{}", byte as char);
         }
-        for byte in [b'.', b' ', b'/', b'@', b'\n'] {
+        for byte in *b". /@\n" {
             assert!(!class.has(byte), "{}", byte as char);
         }
         assert!(Class("\\\"'").has(b'\\'));
