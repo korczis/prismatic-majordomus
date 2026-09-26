@@ -3,8 +3,8 @@
 ## What it means
 
 A case in `test/cases/` may be unable to run where it finds itself: no `jq`, no `zola`, no
-`node_modules`, no browser, no built executable. Sixty of them say so. Until this change
-they said it the only way the runner understood — printing a line about skipping and
+`node_modules`, no browser, no built executable. Several dozen of them say so. Until this
+change they said it the only way the runner understood — printing a line about skipping and
 exiting 0 — and exit 0 is the status `test/run.sh` writes `ok` for.
 
 So the report the runner hands `majordomus evidence record` carried the same word for two
@@ -64,6 +64,20 @@ already read `skip` and `skipped`, and `Outcome::proves()` was already false for
 was missing was a runner that could ever write the word: the model had a vocabulary the
 producer could not speak.
 
+The word only helps where a case says it, so the old shape is refused in the suite itself.
+Two cases kept it after the conversion — one untouched by it, one merged from another
+branch afterwards — and each would have gone on writing `ok` for a run that asserted
+nothing, with every other part of this claim green. Case 413 therefore reads every file in
+`test/cases/` and refuses one that says `exit 0` anywhere but its last statement: a case
+leaves with status 0 only by reaching its end. The scan skips comment lines and the body
+of every heredoc, where the stubs and fixtures that exit 0 on purpose live, and reports a
+heredoc it cannot see the end of rather than reading past it in silence. It reads the
+literal status: a bare `exit` is refused nowhere, because the awk programs written inline in
+the cases say `exit` too and a line scan cannot tell the two languages apart. It runs before
+the case's own preconditions, because it needs nothing but awk, and it is proven a guard
+first: both old shapes planted in a directory of its own are refused, and a heredoc stub, a
+here-string, a `sed` expression, a comment and a final `exit 0` are let through.
+
 The counter also feeds the runner's two "nothing ran" refusals. `bash test/run.sh
 09_site_mobile_first` on a machine without `zola` selects a case that exists and declines;
 before, that was `0 passed, 0 failed` and exit 2, "no case matches", which sends a reader
@@ -87,7 +101,9 @@ phases write `FAIL` for it and turn the run red while the declared skip beside i
 repository and asserts the claim is not proven and stays a finding, and records the
 identical report with `ok` in that one field and asserts that it is proven: the difference
 between the two is the word, which is what makes the first an assertion about the word
-rather than about the fixture.
+rather than about the fixture. Before any of that it scans `test/cases/` for a case that
+still leaves with `exit 0` before its end, after showing on planted files that the scan
+refuses both old shapes and lets through what only looks like them.
 
 ## What it does not cover
 
@@ -96,6 +112,13 @@ asserted nothing — because its assertions are inside a branch nothing took, or
 was written that way — still exits 0 and is still recorded as a proof. This closes the
 declared skip, which is the half a machine can see; the other half is review, held by the
 rule `project.no-claim-without-test`.
+
+It does not split a case. Several cases skip one section — the crate's own suites where
+there is no cargo, a round trip where there is no zip — say so, and go on to assert the
+rest; the runner has one word per case, and such a case is `ok` for the sections it ran.
+The scan leaves them alone, because they do not leave early: what they skip is written
+beside the assertions they make, and moving the skipped half into a case of its own is how
+it would get a word of its own.
 
 It does not audit the reasons. A case that declines because `jq` is absent and a case that
 declines because a browser could not start are one word here, and whether a skip should

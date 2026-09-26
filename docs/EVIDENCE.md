@@ -124,7 +124,9 @@ The status is not the declaration on its own: `skip` also writes the file the ru
 in `MJ_SKIP_MARK`, and a case that ends with 4 without it — `jq -e` fails with 4 when it
 produced no result, and a case runs under `set -e` — is a failure, not a skip.
 The claim is `a-skipped-case-is-not-a-proof` and the case is
-`test/cases/413_a_skipped_case_is_not_a_proof.sh`.
+`test/cases/413_a_skipped_case_is_not_a_proof.sh`, which also refuses any case in
+`test/cases/` that still says `exit 0` before its last statement, so the old shape cannot
+come back with a new case.
 
 ## The seven states
 

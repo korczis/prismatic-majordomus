@@ -23,12 +23,98 @@
 #      the case names -- the claim is not `proven`, and the guarantee stays a finding
 #   6  the same TSV with `ok` in that one field does prove it, which is what makes 5 an
 #      assertion about the word rather than about the fixture
+#   7  no case in test/cases/ declines the old way: nothing in a case says `exit 0` before
+#      the case's last statement, outside a heredoc body and a comment. The scan is proven a
+#      guard on planted shapes first -- both old skip shapes refused; a heredoc stub, a
+#      here-string, a sed expression, a comment and a final `exit 0` let through -- and then
+#      reads the suite.
+#      It runs before the preconditions below, because it needs nothing but awk: a guard
+#      that skipped where jq is absent would let the old shape back in exactly there.
 . "$ROOT/test/lib.sh"
+
+W="$(mktemp -d "${TMPDIR:-/tmp}/mj413.XXXXXX")"; trap 'rm -rf "$W"' EXIT
+
+# ---------------------------------------------------------------- 7. the old shape stays out
+# The runner can only write the word a case gives it. A case that prints a line about
+# skipping and exits 0 gives it `ok`, and every section below would still pass while the
+# suite recorded that case's claim as proven -- which is how two cases kept the old shape
+# after the conversion. So a case may leave with status 0 only by reaching its end. The
+# scan reads shell a line at a time, so it skips what is not code: comment lines, and the
+# body of every heredoc, where the stubs and fixtures that do exit 0 on purpose live.
+cat > "$W/early.awk" <<'AWK'
+function flush(  i) {
+  for (i = 1; i <= n; i++) if (at[i] != last) print file ":" at[i] ": " text[i]
+  if (term != "") print file ":" opened ": a heredoc opened with <<" term \
+    " is never closed; nothing after it was read"
+}
+FNR == 1 { if (file != "") flush(); file = FILENAME; n = 0; last = 0; term = "" }
+{
+  if (term != "") { if ($0 ~ ("^[\t]*" term "[ \t]*$")) term = ""; next }
+  code = $0
+  if (code ~ /^[ \t]*#/) next
+  if (code ~ /[^ \t]/) last = FNR
+  if (match(code, /<<-?[ \t]*['"]?[A-Za-z_][A-Za-z0-9_]*/) \
+      && (RSTART == 1 || substr(code, RSTART - 1, 1) != "<")) {
+    term = substr(code, RSTART, RLENGTH); sub(/^<<-?[ \t]*['"]?/, "", term); opened = FNR
+  }
+  if (code ~ /(^|[;&|{( \t])exit[ \t]+0[ \t]*($|[;})])/) { n++; at[n] = FNR; text[n] = $0 }
+}
+END { if (file != "") flush() }
+AWK
+early_exits() { awk -f "$W/early.awk" "$@"; }
+
+# the scan is a guard: each old shape is refused, and what only looks like one is not
+mkdir -p "$W/shapes"
+cat > "$W/shapes/one_line.sh" <<'SH'
+. "$ROOT/test/lib.sh"
+command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+expect_exit 0 true
+SH
+cat > "$W/shapes/two_lines.sh" <<'SH'
+. "$ROOT/test/lib.sh"
+if grep -q '^SKIP' self.txt; then
+  echo "    skip: $(cat self.txt)"
+  exit 0
+fi
+expect_exit 0 true
+SH
+cat > "$W/shapes/clean.sh" <<'SH'
+. "$ROOT/test/lib.sh"
+# a case that cannot run used to say: echo "    skip: ..."; exit 0
+command -v jq >/dev/null 2>&1 || skip "no jq"
+cat > stub <<'STUB'
+#!/bin/sh
+echo "a stub the case plants"; exit 0
+STUB
+grep -q ok <<< "ok"
+sed 's/exit 1/exit 0/' stub > stub2
+expect_exit 0 true
+SH
+# a <<- heredoc, whose terminator may be indented with tabs; the marker is a printf argument
+# so that this line does not open a heredoc of its own when the scan reads this case
+printf 'cat > tabbed <<-%s\n\texit 0\n\t%s\nexit 0\n' EOF EOF >> "$W/shapes/clean.sh"
+for shape in one_line two_lines; do
+  found="$(early_exits "$W/shapes/$shape.sh")"
+  [ -n "$found" ] || {
+    echo "    the scan let the old skip shape in $shape through:"
+    sed 's/^/    | /' "$W/shapes/$shape.sh"; exit 1; }
+done
+found="$(early_exits "$W/shapes/clean.sh")"
+[ -z "$found" ] || {
+  echo "    the scan refuses what only looks like an early exit:"
+  printf '%s\n' "$found" | sed 's/^/    | /'; exit 1; }
+
+# and the suite holds no case that leaves with status 0 before its end
+found="$(early_exits "$ROOT"/test/cases/*.sh)"
+[ -z "$found" ] || {
+  echo "    a case leaves with status 0 before its end, which the runner records as ok;"
+  echo "    a case that cannot run calls skip (test/lib.sh), which exits $MJ_SKIP_STATUS and"
+  echo "    is recorded as SKIP:"
+  printf '%s\n' "$found" | sed "s#^$ROOT/#    | #"; exit 1; }
+
 command -v jq >/dev/null 2>&1 || skip "no jq"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
-
-W="$(mktemp -d "${TMPDIR:-/tmp}/mj413.XXXXXX")"; trap 'rm -rf "$W"' EXIT
 
 # ---------------------------------------------------------------- the harness
 # The runner under test, over three cases of its own, outside this checkout: driving the
