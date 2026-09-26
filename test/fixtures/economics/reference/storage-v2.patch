@@ -1,0 +1,48 @@
+diff --git a/ledgerlite/storage.py b/ledgerlite/storage.py
+--- a/ledgerlite/storage.py
++++ b/ledgerlite/storage.py
+@@ -1,4 +1,4 @@
+-"""Reading and writing invoices as JSON (decision 0003). The current format is version 1."""
++"""Reading and writing invoices as JSON (decision 0003). The current format is version 2."""
+ 
+ from __future__ import annotations
+ 
+@@ -9,7 +9,7 @@ from . import dates
+ from .invoice import Invoice
+ from .money import Money
+ 
+-VERSION = 1
++VERSION = 2
+ 
+ 
+ def _invoice_to_dict(inv: Invoice) -> dict:
+@@ -17,6 +17,7 @@ def _invoice_to_dict(inv: Invoice) -> dict:
+         "number": inv.number,
+         "customer": inv.customer,
+         "country": inv.country,
++        "currency": inv.currency,
+         "issued": dates.render(inv.issued),
+         "lines": [
+             {"description": l.description, "quantity": l.quantity, "unit_price": l.unit_price.minor}
+@@ -26,7 +27,9 @@ def _invoice_to_dict(inv: Invoice) -> dict:
+ 
+ 
+ def _invoice_from_dict(d: dict) -> Invoice:
+-    inv = Invoice(d["number"], d["customer"], d["country"], dates.parse(d["issued"]))
++    inv = Invoice(
++        d["number"], d["customer"], d["country"], dates.parse(d["issued"]), d.get("currency", "EUR")
++    )
+     for l in d["lines"]:
+         inv.add(l["description"], l["quantity"], l["unit_price"])
+     return inv
+@@ -43,8 +46,9 @@ def dumps(invoices: list[Invoice]) -> str:
+ def loads(text: str) -> list[Invoice]:
+     doc = json.loads(text)
+     version = doc.get("version")
+-    if version != VERSION:
++    if version not in (1, VERSION):
+         raise ValueError(f"unsupported storage version: {version!r}")
++    # version 1 carried no currency: every invoice was EUR, which the reader defaults to
+     return [_invoice_from_dict(d) for d in doc["invoices"]]
+ 
+ 

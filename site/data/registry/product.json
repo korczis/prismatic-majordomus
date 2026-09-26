@@ -5,15 +5,15 @@
     "id": "majordomus-cli",
     "version": "0.8.0"
   },
-  "fingerprint": "70acacaafb32e8850c685f18a6f9c9dc87fcdaf8471d6f9a56b033572e13f0a1",
+  "fingerprint": "0ca9f404dcfed74a74c5cc113780f8f33b25a6d033a7548b998a3f76d48b28f9",
   "route": "/features/",
   "counts": {
-    "features": 24,
-    "features_all": 25,
+    "features": 25,
+    "features_all": 26,
     "featured": 13,
     "providers": 6,
-    "modules": 37,
-    "modules_covered": 36,
+    "modules": 38,
+    "modules_covered": 37,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 26,
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 22
+      "features": 23
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 18
+      "features": 19
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 22
+      "features": 23
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 19
+      "features": 20
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 24
+      "features": 25
     }
   ],
   "features": [
@@ -286,7 +286,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 25
+          "objects": 26
         },
         {
           "name": "command",
@@ -294,7 +294,7 @@
         },
         {
           "name": "claim",
-          "objects": 176
+          "objects": 179
         }
       ],
       "rule_refs": [
@@ -558,11 +558,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 237,
+        "mcp_resources": 241,
         "http_routes": 10,
         "cli_paths": 9,
         "commands": 2,
-        "objects": 232,
+        "objects": 236,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -2282,7 +2282,9 @@
       ],
       "web_refs": [],
       "moments": [],
-      "backlinks": [],
+      "backlinks": [
+        "economics"
+      ],
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
@@ -2305,6 +2307,180 @@
         },
         "modules": {
           "experimental": 1
+        }
+      }
+    },
+    {
+      "id": "economics",
+      "title": "Token economics, measured from matched runs and never typed",
+      "short_title": "Economics",
+      "headline": "What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests, with every number labelled by how it was obtained and published only past a declared rule.",
+      "summary": "A task corpus runs in a real harness twice — without Majordomus and with it — and the provider's usage, the gate verdicts and the context compiler's counted selection are recorded as raw facts; one calculator derives pairs, distributions, seeded bootstrap intervals and the one statement the methodology's publication rule allows, projected to the CLI, HTTP, OpenAPI, MCP, the Cockpit, a generated report and the site; economics check refuses any savings number typed by hand.",
+      "status": "stable",
+      "weight": 47,
+      "featured": false,
+      "areas": [
+        "observability",
+        "cost"
+      ],
+      "audiences": [],
+      "modules": [
+        "economics"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/ECONOMICS.md"
+      ],
+      "adrs": [
+        "adr-0082"
+      ],
+      "claims": [
+        "context-selection-counted",
+        "economics-claims-gated",
+        "token-savings-measured"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "economics"
+      ],
+      "web": [],
+      "related": [
+        "models",
+        "evidence"
+      ],
+      "tags": [
+        "economics",
+        "tokens",
+        "benchmark",
+        "evidence"
+      ],
+      "route": "/features/economics/",
+      "source": ".ai/repo/features/economics.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "economics",
+          "title": "Token economics",
+          "description": "What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+          "capabilities": [
+            {
+              "id": "economics.check",
+              "title": "Refuse unsupported economics claims",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_check",
+              "route": "GET /api/v1/economics/check",
+              "cli": "majordomus economics check"
+            },
+            {
+              "id": "economics.explain",
+              "title": "Explain one economics metric",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_explain",
+              "route": "GET /api/v1/economics/explain",
+              "cli": "majordomus economics explain"
+            },
+            {
+              "id": "economics.runs",
+              "title": "Recorded benchmark runs",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_runs",
+              "route": "GET /api/v1/economics/runs",
+              "cli": "majordomus economics runs"
+            },
+            {
+              "id": "economics.summary",
+              "title": "Token economics summary",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics",
+              "resource": "majordomus://economics",
+              "route": "GET /api/v1/economics",
+              "cli": "majordomus economics summary"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/ECONOMICS.md",
+          "title": "Economics"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0082",
+          "title": "Token economics are measured from matched runs and published only past a declared rule",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "context-selection-counted",
+          "claim": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+          "status": "guaranteed"
+        },
+        {
+          "id": "economics-claims-gated",
+          "claim": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+          "status": "guaranteed"
+        },
+        {
+          "id": "token-savings-measured",
+          "claim": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+          "status": "planned"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "economics",
+          "title": "Economics",
+          "route": "/cockpit/economics"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 4,
+        "mcp_tools": 4,
+        "mcp_resources": 1,
+        "http_routes": 4,
+        "cli_paths": 4,
+        "commands": 0,
+        "objects": 0,
+        "rules": 0,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 3,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 2,
+          "planned": 1
+        },
+        "modules": {
+          "behaviorally_verified": 1
         }
       }
     },
@@ -3073,7 +3249,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 51
+          "objects": 52
         },
         {
           "name": "knowledge",
@@ -3081,7 +3257,7 @@
         },
         {
           "name": "document",
-          "objects": 252
+          "objects": 255
         }
       ],
       "rule_refs": [
@@ -3330,11 +3506,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 305,
+        "mcp_resources": 309,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 304,
+        "objects": 308,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -6517,7 +6693,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 29
+          "objects": 30
         },
         {
           "name": "scope",
@@ -6797,11 +6973,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 34,
+        "mcp_resources": 35,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 30,
+        "objects": 31,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -7552,7 +7728,9 @@
       "cockpit_refs": [],
       "web_refs": [],
       "moments": [],
-      "backlinks": [],
+      "backlinks": [
+        "economics"
+      ],
       "counts": {
         "capabilities": 4,
         "mcp_tools": 3,
@@ -8634,6 +8812,26 @@
         ]
       },
       {
+        "id": "economics",
+        "label": "Economics",
+        "route": "/features/economics/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "continuity",
         "label": "Continuity",
         "route": "/features/continuity/",
@@ -9074,6 +9272,13 @@
         ]
       },
       {
+        "id": "economics",
+        "title": "Token economics",
+        "features": [
+          "economics"
+        ]
+      },
+      {
         "id": "environment",
         "title": "Repository environment",
         "features": [
@@ -9490,7 +9695,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (51)",
+        "title": "adr (52)",
         "features": [
           "knowledge"
         ]
@@ -9518,7 +9723,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (176)",
+        "title": "claim (179)",
         "features": [
           "declare-once"
         ]
@@ -9532,7 +9737,7 @@
       },
       {
         "id": "context",
-        "title": "context (29)",
+        "title": "context (30)",
         "features": [
           "context"
         ]
@@ -9551,7 +9756,7 @@
       },
       {
         "id": "feature",
-        "title": "feature (25)",
+        "title": "feature (26)",
         "features": [
           "declare-once"
         ]
@@ -10419,6 +10624,11 @@
       "route": "/cockpit/models"
     },
     {
+      "id": "economics",
+      "title": "Economics",
+      "route": "/cockpit/economics"
+    },
+    {
       "id": "health",
       "title": "Health",
       "route": "/cockpit/health"
@@ -10445,29 +10655,29 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1481,
-    "builtin": 113,
-    "declarative": 1368,
-    "modules": 37,
-    "mcp_tools": 110,
-    "mcp_resources": 1409,
-    "http_routes": 112,
-    "cli_commands": 116,
+    "capabilities": 1496,
+    "builtin": 117,
+    "declarative": 1379,
+    "modules": 38,
+    "mcp_tools": 114,
+    "mcp_resources": 1421,
+    "http_routes": 116,
+    "cli_commands": 123,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1368,
+    "objects": 1379,
     "by_kind": {
-      "adr": 51,
+      "adr": 52,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 176,
+      "claim": 179,
       "command": 31,
-      "context": 29,
+      "context": 30,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 252,
-      "feature": 25,
+      "document": 255,
+      "feature": 26,
       "implementation": 49,
       "issue": 216,
       "knowledge": 1,
@@ -10483,12 +10693,12 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 223,
+      "test": 225,
       "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
-    "features": 24,
+    "features": 25,
     "web_surfaces": 9
   },
   "valid": true

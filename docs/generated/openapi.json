@@ -71,6 +71,10 @@
       "description": "How this project is packaged, published and installed: the platforms a release builds, the artifact names the one naming function derives, the installer's canonical command, the releases that were published, and what this build itself is. Every answer comes from share/distribution.yaml and the release records; no surface here states a fact of its own."
     },
     {
+      "name": "economics",
+      "description": "What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows."
+    },
+    {
       "name": "environment",
       "description": "What this checkout is right now: the project and its version, the repository and its layer, version control, the toolchains it declares, what the layer holds, the workflows a person can run, the provider projections and the local services — one typed snapshot, with a provenance entry for every value in it. The direnv banner, the Cockpit's overview and this route are renderings of the same value."
     },
@@ -3340,6 +3344,455 @@
           "tool": "majordomus_install_status"
         },
         "x-majordomus-cli": "distribution status"
+      }
+    },
+    "/api/v1/economics": {
+      "get": {
+        "operationId": "economics.summary",
+        "summary": "Token economics summary",
+        "description": "Every metric of the economics benchmark with its value, measurement class, sample size, distribution and bootstrap interval; every pair of runs with its status (valid, control failed, treatment failed, incomparable, ...); results by segment; the state of each suite's evidence (current, stale, incompatible); and the one statement the publication rule allows. Context reduction and total-token reduction are separate metrics and are never merged.",
+        "tags": [
+          "economics"
+        ],
+        "parameters": [
+          {
+            "name": "suite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only this suite.",
+            "examples": {
+              "narrowed": {
+                "value": "pilot"
+              }
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only tasks of this category.",
+            "examples": {
+              "narrowed": {
+                "value": "bug-fix"
+              }
+            }
+          },
+          {
+            "name": "task",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only this task.",
+            "examples": {
+              "narrowed": {
+                "value": "vat-rounding"
+              }
+            }
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only runs that asked for this model.",
+            "examples": {
+              "narrowed": {
+                "value": "claude-sonnet-5"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token economics summary: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EconomicsSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "economics.summary",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::economics"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 8,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_economics",
+          "resource": {
+            "uri": "majordomus://economics",
+            "name": "economics"
+          }
+        },
+        "x-majordomus-cli": "economics summary"
+      }
+    },
+    "/api/v1/economics/check": {
+      "get": {
+        "operationId": "economics.check",
+        "summary": "Refuse unsupported economics claims",
+        "description": "Scan the repository's hand-written prose and claim sentences for a quantity (a percentage, 'N times fewer') stated next to the economics vocabulary, and check every claim the methodology binds to a metric: a bound claim may be guaranteed only while its metric's evidence meets the binding and is current. `ok: false` names every finding.",
+        "tags": [
+          "economics"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Refuse unsupported economics claims: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EconomicsCheckReport"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "economics.check",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::economics"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "disabled"
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_economics_check"
+        },
+        "x-majordomus-cli": "economics check"
+      }
+    },
+    "/api/v1/economics/explain": {
+      "get": {
+        "operationId": "economics.explain",
+        "summary": "Explain one economics metric",
+        "description": "One metric and everything it rests on: its formula, its measurement class and what that class means, the pairs and runs behind it (including the invalid ones), excluded runs, the suites and revisions, and the commands that reproduce it.",
+        "tags": [
+          "economics"
+        ],
+        "parameters": [
+          {
+            "name": "metric",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The metric's id, as `economics.summary` lists it.",
+            "examples": {
+              "primary": {
+                "value": "effective_token_reduction"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Explain one economics metric: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EconomicsExplanation"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "economics.explain",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::economics"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 32,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_economics_explain"
+        },
+        "x-majordomus-cli": "economics explain"
+      }
+    },
+    "/api/v1/economics/runs": {
+      "get": {
+        "operationId": "economics.runs",
+        "summary": "Recorded benchmark runs",
+        "description": "The raw facts every economics metric is computed from: each recorded run with its task, variant, repetition, model, revision, success-gate verdicts and the totals derived from its provider usage, and the path of its record.",
+        "tags": [
+          "economics"
+        ],
+        "parameters": [
+          {
+            "name": "suite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only this suite.",
+            "examples": {
+              "narrowed": {
+                "value": "pilot"
+              }
+            }
+          },
+          {
+            "name": "task",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only this task.",
+            "examples": {
+              "narrowed": {
+                "value": "vat-rounding"
+              }
+            }
+          },
+          {
+            "name": "variant",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only this variant.",
+            "examples": {
+              "narrowed": {
+                "value": "baseline"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recorded benchmark runs: the result.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EconomicsRunList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`not_found`: The input names something the repository does not hold.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        },
+        "x-majordomus-id": "economics.runs",
+        "x-majordomus-kind": "query",
+        "x-majordomus-stability": "behaviorally_verified",
+        "x-majordomus-provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::economics"
+        },
+        "x-majordomus-benchmark": {
+          "policy": "required"
+        },
+        "x-majordomus-cache": {
+          "policy": "process",
+          "max_entries": 16,
+          "ttl_seconds": 5
+        },
+        "x-majordomus-effect": "read",
+        "x-majordomus-mcp": {
+          "tool": "majordomus_economics_runs"
+        },
+        "x-majordomus-cli": "economics runs"
       }
     },
     "/api/v1/environment": {
@@ -17675,6 +18128,1442 @@
           "detail"
         ],
         "description": "One file of the layer that is no longer what the index read."
+      },
+      "EconomicsCheck": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The gate's id."
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether it passed."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was found."
+          }
+        },
+        "required": [
+          "id",
+          "passed",
+          "detail"
+        ],
+        "description": "One success gate's verdict on a run.\n\n```\nuse majordomus_cli::economics::model::EconomicsCheck;\nlet c = EconomicsCheck { id: \"tests_kept\".into(), passed: true, detail: \"0 deleted\".into() };\nlet back: EconomicsCheck = serde_json::from_value(serde_json::to_value(&c).unwrap()).unwrap();\nassert_eq!(back, c);\n```"
+      },
+      "EconomicsCheckReport": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "description": "No finding."
+          },
+          "scanned": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Files scanned."
+          },
+          "claims_checked": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Bound claims checked."
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsFinding"
+            },
+            "description": "Every finding."
+          }
+        },
+        "required": [
+          "ok",
+          "scanned",
+          "claims_checked",
+          "findings"
+        ],
+        "description": "The answer of `economics.check`, the same over the CLI, HTTP and MCP: how much was read\nand every refusal. `ok` is true exactly when `findings` is empty. `scanned` counts the\nhand-written files read, `docs/CLAIMS.yaml` included and generated files excluded;\n`claims_checked` counts the methodology's claim bindings, whatever their status.\n\n```\nuse majordomus_cli::economics::claims::{check, EconomicsCheckReport};\nlet dir = tempfile::tempdir().unwrap();\nlet git = std::process::Command::new(\"git\")\n    .env_remove(\"GIT_DIR\").env_remove(\"GIT_WORK_TREE\").env_remove(\"GIT_INDEX_FILE\")\n    .arg(\"-C\").arg(dir.path()).args([\"init\", \"-q\"]).status().unwrap();\nassert!(git.success());\nlet report: EconomicsCheckReport = check(dir.path());\nassert!(report.ok && report.findings.is_empty(), \"an empty repository claims nothing\");\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"claims_checked\"], 0);\nassert_eq!(serde_json::from_value::<EconomicsCheckReport>(json).unwrap(), report);\n```"
+      },
+      "EconomicsClass": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "observed",
+            "description": "Returned by the provider or its harness at run time and recorded unmodified."
+          },
+          {
+            "type": "string",
+            "const": "counted",
+            "description": "Computed deterministically from bytes on disk with a named, pinned tokenizer."
+          },
+          {
+            "type": "string",
+            "const": "derived",
+            "description": "Arithmetic over observed or counted values."
+          },
+          {
+            "type": "string",
+            "const": "estimated",
+            "description": "A number standing in for one nobody measured. Never compared, never published."
+          },
+          {
+            "type": "string",
+            "const": "counterfactual",
+            "description": "What a mechanism would have avoided, modelled rather than observed."
+          }
+        ],
+        "description": "How a number came to be. The classes are ordered from strongest to weakest, and a value\ncomputed from several inputs is never stronger than the weakest of them.\n\n```\nuse majordomus_cli::economics::model::EconomicsClass;\nassert_eq!(serde_json::to_value(EconomicsClass::Counterfactual).unwrap(), \"counterfactual\");\nlet parsed: EconomicsClass = serde_json::from_value(\"observed\".into()).unwrap();\nassert!(parsed < EconomicsClass::Estimated, \"a stronger class sorts first\");\n```"
+      },
+      "EconomicsContextView": {
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "string",
+            "description": "The revision measured."
+          },
+          "measured_at": {
+            "type": "string",
+            "description": "When."
+          },
+          "tokenizer": {
+            "$ref": "#/components/schemas/EconomicsTokenizer",
+            "description": "The tokenizer."
+          },
+          "seeds": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Seeds measured."
+          },
+          "candidate_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Counted candidate tokens (relevant: selected or cut by the budget), all seeds."
+          },
+          "considered_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Counted tokens of everything the compiler reached, all seeds."
+          },
+          "selected_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Counted selected tokens, all seeds."
+          },
+          "estimated_selected_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The compiler's own estimate of the selected tokens, all seeds."
+          },
+          "excluded_tokens": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0
+            },
+            "description": "Counted tokens left out, by reason, all seeds."
+          },
+          "seeds_over_budget_counted": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Seeds whose counted selection exceeds the compiler's budget."
+          },
+          "budget_tokens": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The compiler's budget."
+          }
+        },
+        "required": [
+          "revision",
+          "measured_at",
+          "tokenizer",
+          "seeds",
+          "candidate_tokens",
+          "considered_tokens",
+          "selected_tokens",
+          "estimated_selected_tokens",
+          "excluded_tokens",
+          "seeds_over_budget_counted",
+          "budget_tokens"
+        ],
+        "description": "The context suite's latest measurement, in brief.\n\n```\nuse std::collections::BTreeMap;\nuse majordomus_cli::economics::model::{EconomicsContextView, EconomicsTokenizer};\nlet v = EconomicsContextView {\n    revision: \"8d37d011ef\".into(), measured_at: \"2026-09-24T10:00:00Z\".into(),\n    tokenizer: EconomicsTokenizer {\n        encoding: \"o200k_base\".into(), implementation: \"tiktoken-rs 0.12.0\".into(),\n    },\n    seeds: 2, candidate_tokens: 20_000, considered_tokens: 300_000, selected_tokens: 15_000,\n    estimated_selected_tokens: 16_000,\n    excluded_tokens: BTreeMap::from([(\"budget\".into(), 5_000)]),\n    seeds_over_budget_counted: 0, budget_tokens: 8_000,\n};\nassert_eq!(v.selected_tokens + v.excluded_tokens[\"budget\"], v.candidate_tokens);\nassert_eq!(serde_json::to_value(&v).unwrap()[\"tokenizer\"][\"encoding\"], \"o200k_base\");\n```"
+      },
+      "EconomicsDistribution": {
+        "type": "object",
+        "properties": {
+          "n": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many values."
+          },
+          "mean": {
+            "type": "number",
+            "format": "double",
+            "description": "Arithmetic mean."
+          },
+          "median": {
+            "type": "number",
+            "format": "double",
+            "description": "Median."
+          },
+          "p25": {
+            "type": "number",
+            "format": "double",
+            "description": "25th percentile."
+          },
+          "p75": {
+            "type": "number",
+            "format": "double",
+            "description": "75th percentile."
+          },
+          "p95": {
+            "type": "number",
+            "format": "double",
+            "description": "95th percentile."
+          },
+          "min": {
+            "type": "number",
+            "format": "double",
+            "description": "Smallest."
+          },
+          "max": {
+            "type": "number",
+            "format": "double",
+            "description": "Largest."
+          },
+          "sd": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "Sample standard deviation; absent for one value."
+          }
+        },
+        "required": [
+          "n",
+          "mean",
+          "median",
+          "p25",
+          "p75",
+          "p95",
+          "min",
+          "max"
+        ],
+        "description": "The shape of a set of per-pair values.\n\n```\nuse majordomus_cli::economics::model::EconomicsDistribution;\nlet d: EconomicsDistribution = serde_json::from_value(serde_json::json!({\n    \"n\": 1, \"mean\": 0.4, \"median\": 0.4, \"p25\": 0.4, \"p75\": 0.4, \"p95\": 0.4,\n    \"min\": 0.4, \"max\": 0.4\n}))\n.unwrap();\nassert!(d.sd.is_none(), \"one value has no sample standard deviation\");\nassert!(d.min <= d.p25 && d.p25 <= d.median && d.median <= d.p75 && d.p75 <= d.max);\n```"
+      },
+      "EconomicsExclusion": {
+        "type": "object",
+        "properties": {
+          "run": {
+            "type": "string",
+            "description": "The run's id."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why."
+          }
+        },
+        "required": [
+          "run",
+          "reason"
+        ],
+        "description": "One run excluded under the outlier rule.\n\n```\nuse majordomus_cli::economics::model::{EconomicsExclusion, EconomicsOutlierPolicy};\nlet o: EconomicsOutlierPolicy = serde_json::from_value(serde_json::json!({\n    \"rule\": \"A run is excluded only by naming it here with a reason.\",\n    \"excluded\": [{ \"run\": \"vat-rounding--baseline--r2\", \"reason\": \"provider outage\" }]\n}))\n.unwrap();\nlet first: &EconomicsExclusion = &o.excluded[0];\nassert_eq!(first.run, \"vat-rounding--baseline--r2\");\nlet unexplained = serde_json::json!({ \"run\": \"vat-rounding--baseline--r1\" });\nassert!(serde_json::from_value::<EconomicsExclusion>(unexplained).is_err());\n```"
+      },
+      "EconomicsExplanation": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "$ref": "#/components/schemas/EconomicsMetric",
+            "description": "The metric."
+          },
+          "class_meaning": {
+            "type": "string",
+            "description": "What its class means, in the methodology's words."
+          },
+          "methodology": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The methodology version."
+          },
+          "suites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsSuiteView"
+            },
+            "description": "The suites it draws on."
+          },
+          "pairs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsPair"
+            },
+            "description": "The pairs it rests on, valid or not, when it rests on pairs."
+          },
+          "excluded": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsExclusion"
+            },
+            "description": "Runs excluded under the outlier rule."
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsVariant"
+            },
+            "description": "The arms compared."
+          },
+          "reproduce": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "How to reproduce it."
+          }
+        },
+        "required": [
+          "metric",
+          "class_meaning",
+          "methodology",
+          "suites",
+          "pairs",
+          "excluded",
+          "variants",
+          "reproduce"
+        ],
+        "description": "The answer of `economics.explain`: one metric, and everything it rests on.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};\nlet e: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \"metric\": { \"id\": \"context_reduction_ratio\", \"title\": \"Context reduction\",\n        \"class\": \"derived\", \"inputs\": \"counted\", \"unit\": \"ratio\",\n        \"formula\": \"median over seeds of 1 - selected_tokens / candidate_tokens\",\n        \"status\": \"not_measured\", \"n\": 0, \"suite\": \"context\" },\n    \"class_meaning\": \"Arithmetic over observed or counted values.\", \"methodology\": 1,\n    \"suites\": [], \"pairs\": [], \"excluded\": [], \"variants\": [],\n    \"reproduce\": [\"majordomus economics measure --suite context\"]\n}))\n.unwrap();\nassert_eq!(e.metric.inputs, Some(EconomicsClass::Counted));\nassert!(e.pairs.is_empty(), \"a counted metric rests on seeds, not on pairs\");\n```"
+      },
+      "EconomicsFinding": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`unsupported_quantity`, `claim_unsupported`, `claim_unbound`, `claim_duplicate`,\n`declarations_unreadable`, `claims_unreadable` or `scan_failed`."
+          },
+          "path": {
+            "type": "string",
+            "description": "Repository-relative path."
+          },
+          "line": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint",
+            "minimum": 0,
+            "description": "1-based line, when the finding is about a line."
+          },
+          "detail": {
+            "type": "string",
+            "description": "What was found, and what to do about it."
+          }
+        },
+        "required": [
+          "kind",
+          "path",
+          "detail"
+        ],
+        "description": "One thing the check refuses. `detail` names the remedy, so a finding can be acted on\nwithout reading the methodology. A finding about a claim or a file rather than a line\ncarries no `line`, and its JSON omits the key. The kinds:\n\n- `unsupported_quantity`: a number typed into hand-written prose next to the economics\n  vocabulary.\n- `claim_unsupported`: a claim binding that does not hold — the bound claim is missing\n  from `docs/CLAIMS.yaml`, or it is `guaranteed` while its metric does not stand where\n  the binding says or its evidence is not current.\n- `claim_unbound`: a `guaranteed` claim says tokens, context or cost go down and no\n  binding ties it to a metric.\n- `claim_duplicate`: one claim id appears more than once in `docs/CLAIMS.yaml`.\n- `declarations_unreadable`: the benchmark declarations cannot be read, so no binding\n  can be shown to hold.\n- `claims_unreadable`: `docs/CLAIMS.yaml` exists and cannot be read or parsed.\n- `scan_failed`: the prose could not be listed or a file in it could not be read, so\n  nothing can be said to be clean.\n\n```\nuse majordomus_cli::economics::claims::EconomicsFinding;\nlet finding = EconomicsFinding {\n    kind: \"claim_unsupported\".into(),\n    path: \"docs/CLAIMS.yaml\".into(),\n    line: None,\n    detail: \"set the claim to planned, or record the evidence\".into(),\n};\nlet json = serde_json::to_value(&finding).unwrap();\nassert!(json.get(\"line\").is_none(), \"no line, no key\");\nassert_eq!(serde_json::from_value::<EconomicsFinding>(json).unwrap(), finding);\n```"
+      },
+      "EconomicsFreshness": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "current",
+            "description": "Recorded under this methodology, and nothing it depends on changed since."
+          },
+          {
+            "type": "string",
+            "const": "stale",
+            "description": "Recorded under this methodology, but a mechanism it measured changed since."
+          },
+          {
+            "type": "string",
+            "const": "incompatible",
+            "description": "Recorded under another methodology version: not comparable at all."
+          },
+          {
+            "type": "string",
+            "const": "no_evidence",
+            "description": "Nothing recorded."
+          }
+        ],
+        "description": "How recorded evidence stands against the repository as it is now.\n\n```\nuse majordomus_cli::economics::model::EconomicsFreshness;\nassert_eq!(serde_json::to_value(EconomicsFreshness::NoEvidence).unwrap(), \"no_evidence\");\nlet f: EconomicsFreshness = serde_json::from_value(\"incompatible\".into()).unwrap();\nassert_eq!(f, EconomicsFreshness::Incompatible);\n```"
+      },
+      "EconomicsHistoryPoint": {
+        "type": "object",
+        "properties": {
+          "suite": {
+            "type": "string",
+            "description": "The suite."
+          },
+          "methodology": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The methodology version, so that incompatible versions are never drawn as one line."
+          },
+          "revision": {
+            "type": "string",
+            "description": "The revision."
+          },
+          "at": {
+            "type": "string",
+            "description": "When."
+          },
+          "metric": {
+            "type": "string",
+            "description": "The metric."
+          },
+          "value": {
+            "type": "number",
+            "format": "double",
+            "description": "Its value."
+          },
+          "n": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many values it rests on."
+          }
+        },
+        "required": [
+          "suite",
+          "methodology",
+          "revision",
+          "at",
+          "metric",
+          "value",
+          "n"
+        ],
+        "description": "A recorded measurement over time: one entry per recorded context run.\n\n```\nuse majordomus_cli::economics::model::EconomicsHistoryPoint;\nlet p: EconomicsHistoryPoint = serde_json::from_value(serde_json::json!({\n    \"suite\": \"context\", \"methodology\": 1, \"revision\": \"8d37d011ef\",\n    \"at\": \"2026-09-24T10:00:00Z\", \"metric\": \"context_reduction_ratio\", \"value\": 0.62, \"n\": 40\n}))\n.unwrap();\nassert_eq!((p.methodology, p.n), (1, 40));\nassert_eq!(serde_json::to_value(&p).unwrap()[\"metric\"], \"context_reduction_ratio\");\n```"
+      },
+      "EconomicsHypothesis": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "A slug."
+          },
+          "statement": {
+            "type": "string",
+            "description": "What is hypothesised."
+          },
+          "status": {
+            "type": "string",
+            "description": "`untested`, `supported`, `refuted` — set by a person reading the evidence."
+          }
+        },
+        "required": [
+          "id",
+          "statement",
+          "status"
+        ],
+        "description": "A statement the benchmark exists to test. Never a result.\n\n```\nuse majordomus_cli::economics::model::EconomicsHypothesis;\nlet h: EconomicsHypothesis = serde_json::from_value(serde_json::json!({\n    \"id\": \"continuity\",\n    \"statement\": \"Work that spans sessions gains the most.\",\n    \"status\": \"untested\"\n}))\n.unwrap();\nassert_eq!(h.status, \"untested\");\nassert_eq!(serde_json::to_value(&h).unwrap()[\"id\"], \"continuity\");\n```"
+      },
+      "EconomicsInterval": {
+        "type": "object",
+        "properties": {
+          "level_bp": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Confidence in basis points."
+          },
+          "low": {
+            "type": "number",
+            "format": "double",
+            "description": "Lower bound."
+          },
+          "high": {
+            "type": "number",
+            "format": "double",
+            "description": "Upper bound."
+          },
+          "method": {
+            "type": "string",
+            "description": "How it was computed: a cluster bootstrap over tasks for every metric over pairs or\nruns, whose repetitions of one task are not independent, and an independent\nbootstrap over seeds for the context suite."
+          },
+          "resamples": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Resamples."
+          },
+          "seed": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Generator seed."
+          }
+        },
+        "required": [
+          "level_bp",
+          "low",
+          "high",
+          "method",
+          "resamples",
+          "seed"
+        ],
+        "description": "A bootstrap interval, with everything needed to reproduce it.\n\n```\nuse majordomus_cli::economics::model::EconomicsInterval;\nlet i: EconomicsInterval = serde_json::from_value(serde_json::json!({\n    \"level_bp\": 9500, \"low\": 0.21, \"high\": 0.38,\n    \"method\": \"bootstrap percentile of the median\", \"resamples\": 10000, \"seed\": 20260924\n}))\n.unwrap();\nassert!(i.low <= i.high);\nassert_eq!(serde_json::to_value(&i).unwrap()[\"seed\"], 20260924, \"the seed travels with it\");\n```"
+      },
+      "EconomicsMetric": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The metric's id."
+          },
+          "title": {
+            "type": "string",
+            "description": "A name."
+          },
+          "class": {
+            "$ref": "#/components/schemas/EconomicsClass",
+            "description": "The measurement class."
+          },
+          "inputs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsClass"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a derived metric, the class of what it was derived from: a reduction derived from\nobserved usage is not the same evidence as one derived from counted bytes."
+          },
+          "unit": {
+            "type": "string",
+            "description": "`ratio`, `tokens`, `calls`."
+          },
+          "formula": {
+            "type": "string",
+            "description": "The formula, in words."
+          },
+          "not": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the metric is not, where it is easily mistaken for something else."
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The headline value; absent when nothing was measured."
+          },
+          "status": {
+            "$ref": "#/components/schemas/EconomicsMetricStatus",
+            "description": "Where it stands."
+          },
+          "n": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many values it rests on."
+          },
+          "distribution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsDistribution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Their distribution."
+          },
+          "interval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsInterval"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The interval, when enough values exist."
+          },
+          "suite": {
+            "type": "string",
+            "description": "The suite."
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The runs, pairs or seeds it rests on.",
+            "default": []
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What a reader must know before using it.",
+            "default": []
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "class",
+          "unit",
+          "formula",
+          "status",
+          "n",
+          "suite"
+        ],
+        "description": "One metric: its value, where it comes from, and how much it can bear.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsMetric, EconomicsMetricStatus};\nlet m: EconomicsMetric = serde_json::from_value(serde_json::json!({\n    \"id\": \"effective_token_reduction\", \"title\": \"Effective token reduction\",\n    \"class\": \"derived\", \"inputs\": \"observed\", \"unit\": \"ratio\",\n    \"formula\": \"median of 1 - treatment / control\", \"status\": \"not_measured\", \"n\": 0,\n    \"suite\": \"pilot\"\n}))\n.unwrap();\nassert_eq!(m.inputs, Some(EconomicsClass::Observed));\nassert!(m.value.is_none() && m.status == EconomicsMetricStatus::NotMeasured);\nassert!(serde_json::to_value(&m).unwrap().get(\"value\").is_none(), \"no value, not a zero\");\n```"
+      },
+      "EconomicsMetricStatus": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "verified",
+            "description": "Measured, and meets the publication rule. Only the primary metric over all the\nevidence can be: the rule is evaluated for it and for nothing else, so no secondary\nmetric and no narrowed slice is ever verified."
+          },
+          {
+            "type": "string",
+            "const": "preliminary",
+            "description": "Measured, but no claim may rest on it: below the publication rule, narrowed by a\nquery, or a metric the rule was never evaluated for. A result, not a claim."
+          },
+          {
+            "type": "string",
+            "const": "measured",
+            "description": "Measured deterministically; the publication rule for sampled data does not apply."
+          },
+          {
+            "type": "string",
+            "const": "not_measured",
+            "description": "Nothing recorded to compute it from."
+          }
+        ],
+        "description": "Where a metric stands against the publication rule: whether its value may back a claim,\nis a result too thin to claim anything, or was never measured at all.\n\n```\nuse majordomus_cli::economics::model::EconomicsMetricStatus;\nassert_eq!(serde_json::to_value(EconomicsMetricStatus::NotMeasured).unwrap(), \"not_measured\");\nlet s: EconomicsMetricStatus = serde_json::from_value(\"preliminary\".into()).unwrap();\nassert_ne!(s, EconomicsMetricStatus::Verified, \"a preliminary result is not a claim\");\n```"
+      },
+      "EconomicsPair": {
+        "type": "object",
+        "properties": {
+          "suite": {
+            "type": "string",
+            "description": "The suite."
+          },
+          "task": {
+            "type": "string",
+            "description": "The task."
+          },
+          "category": {
+            "type": "string",
+            "description": "The task's category."
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Sessions the task spans."
+          },
+          "repetition": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The repetition."
+          },
+          "control": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The control run's id, when recorded."
+          },
+          "treatment": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The treatment run's id, when recorded."
+          },
+          "status": {
+            "$ref": "#/components/schemas/EconomicsPairStatus",
+            "description": "Whether it counts."
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Why not, when it does not.",
+            "default": []
+          },
+          "control_usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The control's totals."
+          },
+          "treatment_usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The treatment's totals."
+          },
+          "token_reduction": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "`1 - treatment / control` on total tokens. Negative: the treatment cost more.\nPresent on a valid pair, and on an excluded pair that would otherwise be valid, so\nthat the outlier rule's effect can be shown both ways; only valid pairs enter a\nmetric other than `effective_token_reduction.including_excluded`. The same holds for\nevery reduction and overhead below."
+          },
+          "cost_reduction": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The same on the harness's cost projection."
+          },
+          "tool_call_reduction": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The same on tool calls."
+          },
+          "continuation_reduction": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "format": "double",
+            "description": "The same on the tokens of the last session only: what continuing cost."
+          },
+          "first_request_overhead": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int64",
+            "description": "First-request input of the treatment minus that of the control: what the treatment\nadds before the model has done anything."
+          }
+        },
+        "required": [
+          "suite",
+          "task",
+          "category",
+          "sessions",
+          "repetition",
+          "status"
+        ],
+        "description": "A control run and its treatment run, and what follows from them.\n\n```\nuse majordomus_cli::economics::model::{EconomicsPair, EconomicsPairStatus};\nlet p: EconomicsPair = serde_json::from_value(serde_json::json!({\n    \"suite\": \"pilot\", \"task\": \"vat-rounding\", \"category\": \"bugfix\", \"sessions\": 1,\n    \"repetition\": 2, \"control\": \"vat-rounding--baseline--r2\", \"status\": \"missing\",\n    \"reasons\": [\"no treatment run recorded\"]\n}))\n.unwrap();\nassert_eq!(p.status, EconomicsPairStatus::Missing);\nassert!(p.treatment.is_none() && p.token_reduction.is_none(), \"no side, no reduction\");\n```"
+      },
+      "EconomicsPairCounts": {
+        "type": "object",
+        "properties": {
+          "declared": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs the suite declares."
+          },
+          "attempted": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs with at least one run recorded."
+          },
+          "valid": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs that count."
+          },
+          "control_failed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs whose control failed."
+          },
+          "treatment_failed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs whose treatment failed."
+          },
+          "both_failed": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs where both failed."
+          },
+          "other": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs not comparable, missing a side, lacking usage, or excluded."
+          }
+        },
+        "required": [
+          "declared",
+          "attempted",
+          "valid",
+          "control_failed",
+          "treatment_failed",
+          "both_failed",
+          "other"
+        ],
+        "description": "Pair counts of a suite, so that nothing is dropped out of sight.\n\n```\nuse majordomus_cli::economics::model::EconomicsPairCounts;\nlet c = EconomicsPairCounts {\n    declared: 14, attempted: 12, valid: 9, control_failed: 1,\n    treatment_failed: 1, both_failed: 0, other: 1,\n};\nlet accounted = c.valid + c.control_failed + c.treatment_failed + c.both_failed + c.other;\nassert_eq!(accounted, c.attempted, \"every attempted pair is in exactly one bucket\");\nassert_eq!(EconomicsPairCounts::default().declared, 0);\n```"
+      },
+      "EconomicsPairStatus": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "valid",
+            "description": "Both runs succeeded, are comparable and report usage."
+          },
+          {
+            "type": "string",
+            "const": "control_failed",
+            "description": "The control run failed a success gate."
+          },
+          {
+            "type": "string",
+            "const": "treatment_failed",
+            "description": "The treatment run failed a success gate."
+          },
+          {
+            "type": "string",
+            "const": "both_failed",
+            "description": "Both failed."
+          },
+          {
+            "type": "string",
+            "const": "usage_unavailable",
+            "description": "A run reports no usage to compare."
+          },
+          {
+            "type": "string",
+            "const": "incomparable",
+            "description": "The runs differ in something the methodology requires them to share."
+          },
+          {
+            "type": "string",
+            "const": "missing",
+            "description": "One side was never recorded."
+          },
+          {
+            "type": "string",
+            "const": "excluded",
+            "description": "A run is excluded under the outlier rule."
+          }
+        ],
+        "description": "Why a pair does or does not count.\n\n```\nuse majordomus_cli::economics::model::EconomicsPairStatus;\nassert_eq!(serde_json::to_value(EconomicsPairStatus::ControlFailed).unwrap(), \"control_failed\");\nlet s: EconomicsPairStatus = serde_json::from_value(\"usage_unavailable\".into()).unwrap();\nassert_ne!(s, EconomicsPairStatus::Valid);\n```"
+      },
+      "EconomicsPublicationPolicy": {
+        "type": "object",
+        "properties": {
+          "min_valid_pairs": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Valid matched pairs, at least."
+          },
+          "min_categories": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Task categories with enough pairs, at least."
+          },
+          "min_pairs_per_category": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Pairs a category needs to count towards `min_categories`."
+          },
+          "min_repetitions": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Repetitions of every task and variant, at least."
+          },
+          "min_valid_pair_rate_bp": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Valid pairs over attempted pairs, in basis points, at least."
+          },
+          "max_interval_width_bp": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Width of the interval, in basis points of reduction, at most."
+          },
+          "require_current": {
+            "type": "boolean",
+            "description": "Whether the evidence must be current (its mechanism unchanged since it was recorded)."
+          }
+        },
+        "required": [
+          "min_valid_pairs",
+          "min_categories",
+          "min_pairs_per_category",
+          "min_repetitions",
+          "min_valid_pair_rate_bp",
+          "max_interval_width_bp",
+          "require_current"
+        ],
+        "description": "When a quantitative total-token claim may be published. Every threshold must hold.\n\n```\nuse majordomus_cli::economics::model::EconomicsPublicationPolicy;\nlet rule = serde_json::json!({\n    \"min_valid_pairs\": 30, \"min_categories\": 4, \"min_pairs_per_category\": 5,\n    \"min_repetitions\": 3, \"min_valid_pair_rate_bp\": 8000, \"max_interval_width_bp\": 2000,\n    \"require_current\": true\n});\nlet p: EconomicsPublicationPolicy = serde_json::from_value(rule.clone()).unwrap();\nassert!(p.require_current && p.min_valid_pairs == 30);\nlet mut lax = rule;\nlax.as_object_mut().unwrap().remove(\"require_current\");\nassert!(serde_json::from_value::<EconomicsPublicationPolicy>(lax).is_err(), \"no default\");\n```"
+      },
+      "EconomicsRunList": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "How many."
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsRunView"
+            },
+            "description": "The runs, sorted by id."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Records that could not be read.",
+            "default": []
+          }
+        },
+        "required": [
+          "count",
+          "runs"
+        ],
+        "description": "The answer of `economics.runs`: the raw facts every metric is computed from.\n\n```\nuse majordomus_cli::economics::model::EconomicsRunList;\nlet l: EconomicsRunList =\n    serde_json::from_value(serde_json::json!({ \"count\": 0, \"runs\": [] })).unwrap();\nassert_eq!(l.count, l.runs.len());\nassert!(l.diagnostics.is_empty(), \"no diagnostics listed means none\");\n```"
+      },
+      "EconomicsRunView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The run's id."
+          },
+          "suite": {
+            "type": "string",
+            "description": "The suite."
+          },
+          "task": {
+            "type": "string",
+            "description": "The task."
+          },
+          "variant": {
+            "type": "string",
+            "description": "The variant."
+          },
+          "repetition": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The repetition."
+          },
+          "model": {
+            "type": "string",
+            "description": "The model requested."
+          },
+          "revision": {
+            "type": "string",
+            "description": "The revision."
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Whether every success gate passed."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsCheck"
+            },
+            "description": "Each gate's verdict."
+          },
+          "sessions": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Sessions."
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Totals, when the provider reported usage."
+          },
+          "path": {
+            "type": "string",
+            "description": "Where the raw record is."
+          }
+        },
+        "required": [
+          "id",
+          "suite",
+          "task",
+          "variant",
+          "repetition",
+          "model",
+          "revision",
+          "completed",
+          "checks",
+          "sessions",
+          "path"
+        ],
+        "description": "One run in brief, with its derived totals.\n\n```\nuse majordomus_cli::economics::model::EconomicsRunView;\nlet v: EconomicsRunView = serde_json::from_value(serde_json::json!({\n    \"id\": \"vat-rounding--majordomus--r1\", \"suite\": \"pilot\", \"task\": \"vat-rounding\",\n    \"variant\": \"majordomus\", \"repetition\": 1, \"model\": \"claude-sonnet-5\",\n    \"revision\": \"8d37d011ef\", \"completed\": false, \"checks\": [], \"sessions\": 1,\n    \"path\": \".ai/repo/benchmarks/economics/runs/pilot/vat-rounding--majordomus--r1.json\"\n}))\n.unwrap();\nassert!(v.usage.is_none(), \"a run whose provider reported no usage has no totals\");\nassert!(v.path.ends_with(&format!(\"{}.json\", v.id)));\n```"
+      },
+      "EconomicsSegment": {
+        "type": "object",
+        "properties": {
+          "dimension": {
+            "type": "string",
+            "description": "`category`, `sessions`, `complexity`."
+          },
+          "value": {
+            "type": "string",
+            "description": "The segment."
+          },
+          "n": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Valid pairs in it."
+          },
+          "token_reduction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsDistribution"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Distribution of per-pair token reduction."
+          }
+        },
+        "required": [
+          "dimension",
+          "value",
+          "n"
+        ],
+        "description": "A metric's value within one segment of the pairs.\n\n```\nuse majordomus_cli::economics::model::EconomicsSegment;\nlet s: EconomicsSegment = serde_json::from_value(serde_json::json!({\n    \"dimension\": \"category\", \"value\": \"multi-session\", \"n\": 0\n}))\n.unwrap();\nassert!(s.token_reduction.is_none(), \"a segment with no valid pair has no distribution\");\n```"
+      },
+      "EconomicsSuiteView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The suite."
+          },
+          "kind": {
+            "type": "string",
+            "description": "`live` or `context`."
+          },
+          "version": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0,
+            "description": "Its version."
+          },
+          "title": {
+            "type": "string",
+            "description": "A name."
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The model, for a live suite."
+          },
+          "freshness": {
+            "$ref": "#/components/schemas/EconomicsFreshness",
+            "description": "Where its evidence stands."
+          },
+          "freshness_detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why, when not current."
+          },
+          "runs": {
+            "type": "integer",
+            "format": "uint",
+            "minimum": 0,
+            "description": "Runs recorded."
+          },
+          "pairs": {
+            "$ref": "#/components/schemas/EconomicsPairCounts",
+            "description": "Pair counts."
+          },
+          "revisions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The revisions the evidence was recorded at.",
+            "default": []
+          },
+          "harnesses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The harness versions that ran it.",
+            "default": []
+          },
+          "models_reported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The models the harness reported.",
+            "default": []
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "version",
+          "title",
+          "freshness",
+          "runs",
+          "pairs"
+        ],
+        "description": "A suite and the state of its evidence.\n\n```\nuse majordomus_cli::economics::model::{\n    EconomicsFreshness, EconomicsPairCounts, EconomicsSuiteView,\n};\nlet v = EconomicsSuiteView {\n    id: \"pilot\".into(), kind: \"live\".into(), version: 1, title: \"Pilot\".into(),\n    model: Some(\"claude-sonnet-5\".into()), freshness: EconomicsFreshness::NoEvidence,\n    freshness_detail: Some(\"no run recorded\".into()), runs: 0,\n    pairs: EconomicsPairCounts { declared: 14, ..EconomicsPairCounts::default() },\n    revisions: vec![], harnesses: vec![], models_reported: vec![],\n};\nlet json = serde_json::to_value(&v).unwrap();\nassert_eq!(json[\"freshness\"], \"no_evidence\");\nassert_eq!(json[\"pairs\"][\"declared\"], 14, \"declared pairs show even when none ran\");\n```"
+      },
+      "EconomicsSummary": {
+        "type": "object",
+        "properties": {
+          "present": {
+            "type": "boolean",
+            "description": "Whether a methodology is declared here at all."
+          },
+          "methodology": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint32",
+            "minimum": 0,
+            "description": "The methodology version."
+          },
+          "question": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The question."
+          },
+          "primary_metric": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The primary metric's id."
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/EconomicsVerdict",
+            "description": "What the total-token evidence allows to be said."
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsMetric"
+            },
+            "description": "Every metric."
+          },
+          "suites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsSuiteView"
+            },
+            "description": "Every suite and its evidence."
+          },
+          "pairs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsPair"
+            },
+            "description": "Every pair, valid or not."
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsSegment"
+            },
+            "description": "Token reduction by segment."
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsContextView"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The context suite in brief."
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsHistoryPoint"
+            },
+            "description": "The metric over recorded measurements."
+          },
+          "variants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsVariant"
+            },
+            "description": "The arms of the experiment."
+          },
+          "hypotheses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EconomicsHypothesis"
+            },
+            "description": "The hypotheses, as hypotheses."
+          },
+          "publication": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsPublicationPolicy"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The publication rule."
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Problems reading the declarations or the evidence.",
+            "default": []
+          }
+        },
+        "required": [
+          "present",
+          "verdict",
+          "metrics",
+          "suites",
+          "pairs",
+          "segments",
+          "history",
+          "variants",
+          "hypotheses"
+        ],
+        "description": "The answer of `economics.summary`: every metric, where each comes from, and the one\nstatement the evidence allows.\n\n```\nuse majordomus_cli::economics::model::EconomicsSummary;\nlet s: EconomicsSummary = serde_json::from_value(serde_json::json!({\n    \"present\": false,\n    \"verdict\": { \"publishable\": false, \"statement\": \"No methodology is declared.\" },\n    \"metrics\": [], \"suites\": [], \"pairs\": [], \"segments\": [], \"history\": [],\n    \"variants\": [], \"hypotheses\": []\n}))\n.unwrap();\nassert!(s.methodology.is_none() && s.publication.is_none() && s.diagnostics.is_empty());\nlet json = serde_json::to_value(&s).unwrap();\nassert!(json.get(\"methodology\").is_none(), \"an absent methodology is absent, not null\");\n```"
+      },
+      "EconomicsTokenizer": {
+        "type": "object",
+        "properties": {
+          "encoding": {
+            "type": "string",
+            "description": "The encoding: `o200k_base`."
+          },
+          "implementation": {
+            "type": "string",
+            "description": "The implementation and its pinned version."
+          }
+        },
+        "required": [
+          "encoding",
+          "implementation"
+        ],
+        "description": "The identity of a tokenizer, recorded with every count it produced.\n\n```\nuse majordomus_cli::economics::model::EconomicsTokenizer;\nlet t: EconomicsTokenizer = serde_json::from_value(serde_json::json!({\n    \"encoding\": \"o200k_base\", \"implementation\": \"tiktoken-rs 0.12.0\"\n}))\n.unwrap();\nlet other = EconomicsTokenizer { implementation: \"tiktoken-rs 0.13.0\".into(), ..t.clone() };\nassert_ne!(t, other, \"the same encoding from another implementation is another tokenizer\");\n```"
+      },
+      "EconomicsUsage": {
+        "type": "object",
+        "properties": {
+          "input_uncached": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Input neither read from nor written to the cache."
+          },
+          "cache_write": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Input written to the cache."
+          },
+          "cache_read": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Input read from the cache."
+          },
+          "output": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Output, reasoning included."
+          },
+          "reasoning": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Reasoning tokens, when every request reported them."
+          },
+          "total_input": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "All input."
+          },
+          "total": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "All input and output."
+          },
+          "requests": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Provider requests."
+          },
+          "tool_calls": {
+            "type": "integer",
+            "format": "uint64",
+            "minimum": 0,
+            "description": "Tool calls."
+          },
+          "cost_microusd": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "uint64",
+            "minimum": 0,
+            "description": "The harness's cost projection, in millionths of a dollar, when every session had one."
+          }
+        },
+        "required": [
+          "input_uncached",
+          "cache_write",
+          "cache_read",
+          "output",
+          "total_input",
+          "total",
+          "requests",
+          "tool_calls"
+        ],
+        "description": "A run's totals, derived from its raw usage.\n\n```\nuse majordomus_cli::economics::model::EconomicsUsage;\nlet u = EconomicsUsage {\n    input_uncached: 10, cache_write: 90, cache_read: 900, output: 50,\n    total_input: 1000, total: 1050, requests: 3, ..EconomicsUsage::default()\n};\nassert_eq!(u.total_input, u.input_uncached + u.cache_write + u.cache_read);\nlet json = serde_json::to_value(&u).unwrap();\nassert!(json.get(\"reasoning\").is_none() && json.get(\"cost_microusd\").is_none());\n```"
+      },
+      "EconomicsVariant": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`baseline`, `majordomus`, ..."
+          },
+          "role": {
+            "type": "string",
+            "description": "`control` or `treatment`."
+          },
+          "title": {
+            "type": "string",
+            "description": "A short name."
+          },
+          "description": {
+            "type": "string",
+            "description": "Exactly what the arm consists of."
+          },
+          "excludes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What the arm deliberately does not include.",
+            "default": []
+          }
+        },
+        "required": [
+          "id",
+          "role",
+          "title",
+          "description"
+        ],
+        "description": "One arm of the experiment: what the session runs with, and what it runs without.\n\n```\nuse majordomus_cli::economics::model::EconomicsVariant;\nlet v: EconomicsVariant = serde_json::from_value(serde_json::json!({\n    \"id\": \"baseline\", \"role\": \"control\", \"title\": \"Without Majordomus\",\n    \"description\": \"The fixture repository as a competent team keeps it.\"\n}))\n.unwrap();\nassert_eq!(v.role, \"control\");\nassert!(v.excludes.is_empty(), \"an arm that names no exclusion excludes nothing\");\n```"
+      },
+      "EconomicsVerdict": {
+        "type": "object",
+        "properties": {
+          "publishable": {
+            "type": "boolean",
+            "description": "Whether a quantitative total-token claim meets the publication rule."
+          },
+          "statement": {
+            "type": "string",
+            "description": "The strongest statement the evidence supports, generated, never typed."
+          },
+          "unmet": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every publication threshold not met.",
+            "default": []
+          }
+        },
+        "required": [
+          "publishable",
+          "statement"
+        ],
+        "description": "The one sentence the evidence allows, and why it allows no stronger one.\n\n```\nuse majordomus_cli::economics::model::EconomicsVerdict;\nlet v: EconomicsVerdict = serde_json::from_value(serde_json::json!({\n    \"publishable\": false,\n    \"statement\": \"No quantitative token claim: 9 valid pairs of the 30 the rule requires.\",\n    \"unmet\": [\"min_valid_pairs: 9 < 30\"]\n}))\n.unwrap();\nassert!(!v.publishable);\nassert_eq!(v.unmet.len(), 1, \"every threshold not met is named\");\n```"
       },
       "Edge": {
         "type": "object",

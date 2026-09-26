@@ -1,0 +1,13 @@
+schema: economics-task/v1
+id: csv-credit-notes
+title: "Fix negative amounts in the CSV export"
+category: regression
+complexity: small
+source: "A regression reported by a user, localised by reproducing it."
+fixture: test/fixtures/economics/ledgerlite
+acceptance: test/fixtures/economics/acceptance/csv-credit-notes
+reference: test/fixtures/economics/reference/csv-credit-notes.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md

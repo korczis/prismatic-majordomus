@@ -562,6 +562,31 @@
       ]
     },
     {
+      "id": "ai.repo.benchmarks.economics",
+      "path": ".ai/repo/benchmarks/economics/README.md",
+      "dir": ".ai/repo/benchmarks/economics",
+      "depth": 3,
+      "scope": "subtree",
+      "composition": "extend",
+      "order": 100,
+      "status": "active",
+      "title": "Token economics benchmark",
+      "description": "The methodology, suites and task corpus that measure what a session consumes with Majordomus and without it, and the raw runs recorded under them.",
+      "children_require_contract": false,
+      "providers": [
+        "*"
+      ],
+      "audience": [
+        "human",
+        "agent"
+      ],
+      "supersedes": [],
+      "tracks": [
+        "apps/majordomus-cli/src/economics",
+        "test/fixtures/economics"
+      ]
+    },
+    {
       "id": "ai.repo.benchmarks.pages",
       "path": ".ai/repo/benchmarks/pages/README.md",
       "dir": ".ai/repo/benchmarks/pages",
@@ -870,6 +895,141 @@
       }
     },
     {
+      "dir": ".ai/repo/benchmarks/economics",
+      "document": "ai.repo.benchmarks.economics",
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 3,
+      "name": "economics",
+      "contract": {
+        "index": 24,
+        "id": "ai.repo.benchmarks.economics",
+        "path": ".ai/repo/benchmarks/economics/README.md",
+        "dir": ".ai/repo/benchmarks/economics",
+        "depth": 3,
+        "scope": "subtree",
+        "composition": "extend",
+        "order": 100,
+        "status": "active",
+        "title": "Token economics benchmark",
+        "description": "The methodology, suites and task corpus that measure what a session consumes with Majordomus and without it, and the raw runs recorded under them.",
+        "children_require_contract": false,
+        "providers": [
+          "*"
+        ],
+        "audience": [
+          "human",
+          "agent"
+        ],
+        "supersedes": [],
+        "tracks": [
+          "apps/majordomus-cli/src/economics",
+          "test/fixtures/economics"
+        ],
+        "paths": [],
+        "sha256": "2512dc370f0c0d9668c2f9f88617e55dc228daac547d431dc8046572649dfc48"
+      }
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/runs",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 4,
+      "name": "runs",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/runs/context",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "context",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/suites",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 4,
+      "name": "suites",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 4,
+      "name": "tasks",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/csv-credit-notes",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "csv-credit-notes",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/currency-czk",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "currency-czk",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/invoice-discounts",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "invoice-discounts",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/recurring-invoices",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "recurring-invoices",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/storage-v2",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "storage-v2",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/test-repair",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "test-repair",
+      "contract": null
+    },
+    {
+      "dir": ".ai/repo/benchmarks/economics/tasks/vat-rounding",
+      "document": null,
+      "requires_contract": false,
+      "governed_by": ".ai/repo/benchmarks/economics/README.md",
+      "depth": 5,
+      "name": "vat-rounding",
+      "contract": null
+    },
+    {
       "dir": ".ai/repo/benchmarks/pages",
       "document": "ai.repo.benchmarks.pages",
       "requires_contract": true,
@@ -877,7 +1037,7 @@
       "depth": 3,
       "name": "pages",
       "contract": {
-        "index": 24,
+        "index": 25,
         "id": "ai.repo.benchmarks.pages",
         "path": ".ai/repo/benchmarks/pages/README.md",
         "dir": ".ai/repo/benchmarks/pages",
@@ -912,7 +1072,7 @@
       "depth": 3,
       "name": "rust",
       "contract": {
-        "index": 25,
+        "index": 26,
         "id": "ai.repo.benchmarks.rust",
         "path": ".ai/repo/benchmarks/rust/README.md",
         "dir": ".ai/repo/benchmarks/rust",
@@ -1129,7 +1289,7 @@
       "depth": 3,
       "name": "curated",
       "contract": {
-        "index": 26,
+        "index": 27,
         "id": "ai.repo.knowledge.curated",
         "path": ".ai/repo/knowledge/curated/README.md",
         "dir": ".ai/repo/knowledge/curated",
@@ -1272,7 +1432,7 @@
       "depth": 3,
       "name": "issues",
       "contract": {
-        "index": 27,
+        "index": 28,
         "id": "ai.repo.project.issues",
         "path": ".ai/repo/project/issues/README.md",
         "dir": ".ai/repo/project/issues",
@@ -1307,7 +1467,7 @@
       "depth": 3,
       "name": "milestones",
       "contract": {
-        "index": 28,
+        "index": 29,
         "id": "ai.repo.project.milestones",
         "path": ".ai/repo/project/milestones/README.md",
         "dir": ".ai/repo/project/milestones",
@@ -1485,7 +1645,7 @@
       "depth": 3,
       "name": "project",
       "contract": {
-        "index": 29,
+        "index": 30,
         "id": "ai.repo.rules.project",
         "path": ".ai/repo/rules/project/README.md",
         "dir": ".ai/repo/rules/project",
@@ -1797,8 +1957,8 @@
     }
   ],
   "counts": {
-    "directories": 37,
-    "documented": 29,
-    "exempt": 8
+    "directories": 49,
+    "documented": 30,
+    "exempt": 19
   }
 }

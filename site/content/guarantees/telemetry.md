@@ -29,5 +29,5 @@ Everything about tokens and cost, today. The economics document states what can 
 
 ## Why it exists
 
-The team the tool was distilled from built a competent cost profiler for its product's own model calls while having zero telemetry on its coding workers; its routing documents carried "35 % better" figures with no benchmark behind them. This page is the commitment not to repeat that.
+The team the tool was distilled from built a competent cost profiler for its product's own model calls while having zero telemetry on its coding workers; its routing documents carried percentage-improvement figures with no benchmark behind them. This page is the commitment not to repeat that.
 {% endraw %}

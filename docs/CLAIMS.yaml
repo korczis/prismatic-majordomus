@@ -731,6 +731,33 @@ claims:
     responsibility: none      # planned; no responsibility implements it yet
     note: Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.
 
+  - id: context-selection-counted
+    claim: What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated
+    source: docs/ECONOMICS.md
+    implementation: apps/majordomus-cli/src/economics/context.rs
+    test: test/cases/430_economics.sh
+    status: guaranteed
+    responsibility: projection
+    note: The measurement is of selection, not of savings. `majordomus economics measure` records it; the metric carries its own statement of what it is not.
+
+  - id: economics-claims-gated
+    claim: A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand
+    source: docs/ECONOMICS.md
+    implementation: apps/majordomus-cli/src/economics/claims.rs
+    test: test/cases/431_economics_claims_gated.sh
+    status: guaranteed
+    responsibility: doctor
+    note: "`majordomus economics check` exits 10 naming every finding; the numbers readers see are generated from recorded runs into docs/generated/economics.* and the site's data."
+
+  - id: token-savings-measured
+    claim: Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned until the publication rule is met; economics check refuses guaranteed before then
+    note: The benchmark, its runner and its calculator exist; what is missing is enough evidence. The generated report states what the recorded runs show and why no claim follows yet.
+
   - id: cost-per-outcome
     claim: Cost per accepted outcome will be reported from measured data only
     source: docs/DESIGN.md

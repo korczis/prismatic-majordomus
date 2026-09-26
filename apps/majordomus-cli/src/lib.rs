@@ -27,6 +27,7 @@ pub mod devtask;
 pub mod diagram;
 pub mod discovery;
 pub(crate) mod distribution;
+pub mod economics;
 pub mod environment;
 pub(crate) mod error;
 pub mod evidence;

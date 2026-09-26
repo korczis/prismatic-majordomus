@@ -377,6 +377,15 @@
       "status": "featured"
     },
     {
+      "id": "feature:economics",
+      "kind": "feature",
+      "label": "Economics",
+      "summary": "A task corpus runs in a real harness twice — without Majordomus and with it — and the provider's usage, the gate verdicts and the context compiler's counted selection are recorded as raw facts; one calculator derives pairs, distributions, seeded bootstrap intervals and the one statement the methodology's publication rule allows, projected to the CLI, HTTP, OpenAPI, MCP, the Cockpit, a generated report and the site; economics check refuses any savings number typed by hand.",
+      "route": "/features/economics/",
+      "source": ".ai/repo/features/economics.md",
+      "status": "stable"
+    },
+    {
       "id": "feature:evidence",
       "kind": "feature",
       "label": "Evidence",
@@ -506,7 +515,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "51 object(s) of the layer",
+      "summary": "52 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -534,7 +543,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "176 object(s) of the layer",
+      "summary": "179 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -548,7 +557,7 @@
       "id": "kind:context",
       "kind": "kind",
       "label": "context",
-      "summary": "29 object(s) of the layer",
+      "summary": "30 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -562,14 +571,14 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "252 object(s) of the layer",
+      "summary": "255 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
       "id": "kind:feature",
       "kind": "kind",
       "label": "feature",
-      "summary": "25 object(s) of the layer",
+      "summary": "26 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -765,6 +774,15 @@
       "summary": "Distribution",
       "route": "/registry/modules/distribution/",
       "source": "apps/majordomus-cli/src/capability/builtin/distribution.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:economics",
+      "kind": "module",
+      "label": "economics",
+      "summary": "Token economics",
+      "route": "/registry/modules/economics/",
+      "source": "apps/majordomus-cli/src/capability/builtin/economics.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1585,6 +1603,26 @@
     },
     {
       "source": "feature:doctrine",
+      "target": "surface:docs",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "feature:economics",
+      "target": "feature:evidence",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:economics",
+      "target": "feature:models",
+      "kind": "related_to"
+    },
+    {
+      "source": "feature:economics",
+      "target": "module:economics",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:economics",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2524,6 +2562,26 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:economics",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:economics",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:economics",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:economics",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:environment",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -2970,8 +3028,8 @@
     }
   ],
   "metadata": {
-    "nodes": 120,
-    "edges": 387,
+    "nodes": 122,
+    "edges": 395,
     "acyclic": false,
     "truncated": false
   },

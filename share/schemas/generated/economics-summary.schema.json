@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://majordomus.dev/schemas/generated/economics-summary.schema.json",
+  "title": "Token economics summary",
+  "description": "docs/generated/economics.json: the token-economics evidence of this repository as the one calculator (apps/majordomus-cli/src/economics) computes it from the recorded runs — every metric with its measurement class, sample size, distribution and interval, every pair with its status, and the one statement the methodology's publication rule allows. The same value GET /api/v1/economics and the majordomus_economics MCP tool return. Written by `majordomus generate economics`.",
+  "type": "object",
+  "required": ["schema", "generated", "generator", "present", "verdict", "metrics", "suites", "pairs", "segments", "history", "variants", "hypotheses"],
+  "properties": {
+    "schema": { "const": "majordomus/economics-summary/v1" },
+    "generated": { "type": "string", "pattern": "^GENERATED FILE" },
+    "generator": { "type": "string", "minLength": 1 },
+    "present": { "type": "boolean", "description": "Whether a benchmark methodology is declared." },
+    "methodology": { "type": "integer", "minimum": 1 },
+    "verdict": {
+      "type": "object",
+      "required": ["publishable", "statement"],
+      "properties": {
+        "publishable": { "type": "boolean", "description": "Whether a quantitative total-token claim meets the publication rule." },
+        "statement": { "type": "string", "minLength": 1, "description": "The strongest statement the evidence supports, generated." },
+        "unmet": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "class", "unit", "formula", "status", "n", "suite"],
+        "properties": {
+          "id": { "type": "string" },
+          "class": { "enum": ["observed", "counted", "derived", "estimated", "counterfactual"], "description": "How the number came to be; never stronger than its weakest input." },
+          "inputs": { "enum": ["observed", "counted", "derived", "estimated", "counterfactual"] },
+          "unit": { "type": "string" },
+          "value": { "type": "number", "description": "Absent when nothing was measured. A negative reduction is Majordomus costing more." },
+          "status": { "enum": ["verified", "preliminary", "measured", "not_measured"] },
+          "n": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "suites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "version", "freshness", "runs", "pairs"],
+        "properties": {
+          "freshness": { "enum": ["current", "stale", "incompatible", "no_evidence"] }
+        }
+      }
+    },
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["suite", "task", "category", "repetition", "status"],
+        "properties": {
+          "status": { "enum": ["valid", "control_failed", "treatment_failed", "both_failed", "usage_unavailable", "incomparable", "missing", "excluded"] }
+        }
+      }
+    },
+    "segments": { "type": "array" },
+    "history": { "type": "array" },
+    "variants": { "type": "array" },
+    "hypotheses": { "type": "array" }
+  }
+}

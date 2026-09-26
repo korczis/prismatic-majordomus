@@ -1,7 +1,7 @@
 +++
 title = "No pull request can be merged into the default branch while the verdict status is red, because a branch rule requires it"
 description = "The ci status computed by ci-verdict would be a *required* status check on"
-weight = 132
+weight = 135
 [extra]
 claim_id = "ci-verdict-is-required"
 status = "planned"

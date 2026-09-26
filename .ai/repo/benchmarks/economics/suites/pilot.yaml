@@ -1,0 +1,26 @@
+# The first live suite: every task of the corpus, both variants, twice. Small on purpose;
+# its results are preliminary by the publication rule in ../methodology.yaml.
+schema: economics-suite/v1
+id: pilot
+version: 1
+kind: live
+title: Pilot, live Claude Code sessions
+provider: anthropic
+harness: claude-code
+model: claude-sonnet-5
+repetitions: 2
+control: baseline
+treatment: majordomus
+max_budget_usd_per_session: 5
+tasks: [vat-rounding, currency-czk, invoice-discounts, test-repair, storage-v2, csv-credit-notes, recurring-invoices]
+# Everything the treatment executes or installs: the launcher, every library it may source,
+# and the whole share it installs from. A narrower list would let a change to what the
+# treatment runs leave earlier runs looking current.
+freshness_inputs:
+  - .ai/repo/benchmarks/economics/methodology.yaml
+  - .ai/repo/benchmarks/economics/suites/pilot.yaml
+  - .ai/repo/benchmarks/economics/tasks
+  - test/fixtures/economics
+  - bin/majordomus
+  - lib
+  - share
