@@ -613,7 +613,18 @@ pub enum EvidenceCommand {
         #[arg(long, value_name = "REV")]
         presented: Option<String>,
         /// What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state
-        #[arg(long, value_name = "TREE", value_parser = ["clean", "dirty", "unknown"])]
+        #[arg(
+            long,
+            value_name = "TREE",
+            value_parser = clap::builder::PossibleValuesParser::new([
+                clap::builder::PossibleValue::new("clean")
+                    .help("Nothing you know of: the measured state stands"),
+                clap::builder::PossibleValue::new("dirty")
+                    .help("The build did not come from the commit as committed; nothing reads as proven"),
+                clap::builder::PossibleValue::new("unknown")
+                    .help("You cannot say whether it did; nothing reads as proven"),
+            ])
+        )]
         presented_tree: Option<String>,
     },
     /// One claim: its proof state, the execution behind it, and how to reproduce it
