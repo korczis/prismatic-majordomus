@@ -57,6 +57,7 @@ pub mod product;
 pub mod proto;
 pub mod providers;
 pub mod quality;
+pub mod redaction;
 pub mod release;
 pub mod repository;
 pub mod rules;
