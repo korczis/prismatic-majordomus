@@ -871,4 +871,47 @@ mod tests {
             .unwrap();
         assert_eq!(v["presented"]["revision"], "working_tree");
     }
+
+    /// Each ledger a report reads — the one a presented commit holds, the working copy
+    /// beside it, and the working tree's own — is refused when it cannot be read, rather
+    /// than read as a ledger that recorded nothing.
+    #[test]
+    fn an_unreadable_ledger_is_refused_at_every_revision() {
+        use crate::evidence::LEDGER_PATH;
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+        let ctx = repo.context().unwrap();
+        let at_head = serde_json::json!({ "presented": "HEAD" });
+
+        let v = ctx.execute("evidence.report", at_head.clone()).unwrap();
+        assert_eq!(v["presented"]["revision"], git(&["rev-parse", "HEAD"]));
+        assert_eq!(v["presented"]["tree"], "clean");
+
+        let refused = |input: serde_json::Value| match ctx.execute("evidence.report", input) {
+            Err(CapabilityError::Internal(m)) => m,
+            other => panic!("an unreadable ledger was judged past: {other:?}"),
+        };
+        // the working copy cannot be read: a run it may hold cannot be ruled out
+        std::fs::create_dir_all(repo.root().join(".ai/repo/evidence")).unwrap();
+        std::fs::write(repo.root().join(LEDGER_PATH), "not a ledger").unwrap();
+        assert!(refused(at_head.clone()).contains("cannot be ruled out"));
+        assert!(refused(serde_json::json!({})).contains(LEDGER_PATH));
+        // and the ledger the commit holds cannot be read either
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "an unreadable ledger"]);
+        assert!(refused(at_head).contains(LEDGER_PATH));
+    }
 }

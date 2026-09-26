@@ -245,7 +245,7 @@ fn short12(commit: &str) -> String {
 
 /// The full commit a revision names, or `None` when it names none here.
 fn commit_of(root: &Path, rev: &str) -> Option<String> {
-    let out = git::read_only(root)
+    git::read_only(root)
         .args([
             "rev-parse",
             "--verify",
@@ -253,12 +253,10 @@ fn commit_of(root: &Path, rev: &str) -> Option<String> {
             &format!("{rev}^{{commit}}"),
         ])
         .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    let id = String::from_utf8_lossy(&out.stdout).trim().to_string();
-    (!id.is_empty()).then_some(id)
+        .ok()
+        .filter(|out| out.status.success())
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+        .filter(|id| !id.is_empty())
 }
 
 /// The checked-out commit, presented as committed.
@@ -343,11 +341,12 @@ pub fn presented_commit(
 /// ```
 pub fn ledger_at(root: &Path, commit: &str) -> Result<Ledger> {
     let spec = format!("{commit}:{LEDGER_PATH}");
-    let out = git::read_only(root)
+    let shown = git::read_only(root)
         .args(["show", &spec])
         .output()
-        .map_err(Error::Transport)?;
-    if out.status.success() {
+        .ok()
+        .filter(|out| out.status.success());
+    if let Some(out) = shown {
         return Ledger::parse(&String::from_utf8_lossy(&out.stdout));
     }
     if git::resolves(root, commit) {
@@ -355,7 +354,7 @@ pub fn ledger_at(root: &Path, commit: &str) -> Result<Ledger> {
         return Ok(Ledger::empty());
     }
     Err(Error::Git {
-        reason: format!("`{commit}` names no commit in this repository"),
+        reason: format!("`{commit}` names no commit git can read in this repository"),
     })
 }
 
@@ -442,28 +441,24 @@ pub fn changed_between(
 ) -> Option<BTreeSet<String>> {
     match presented {
         Presented::WorkingTree => super::changed_since(root, evidence_commit),
-        Presented::Commit { commit, .. } => {
-            let out = git::read_only(root)
-                .args([
-                    "diff",
-                    "--name-only",
-                    evidence_commit,
-                    commit.as_str(),
-                    "--",
-                ])
-                .output()
-                .ok()?;
-            if !out.status.success() {
-                return None;
-            }
-            Some(
+        Presented::Commit { commit, .. } => git::read_only(root)
+            .args([
+                "diff",
+                "--name-only",
+                evidence_commit,
+                commit.as_str(),
+                "--",
+            ])
+            .output()
+            .ok()
+            .filter(|out| out.status.success())
+            .map(|out| {
                 String::from_utf8_lossy(&out.stdout)
                     .lines()
                     .map(|l| l.trim().to_string())
                     .filter(|l| !l.is_empty())
-                    .collect(),
-            )
-        }
+                    .collect()
+            }),
     }
 }
 

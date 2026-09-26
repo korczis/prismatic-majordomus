@@ -2025,21 +2025,29 @@ mod tests {
             self.git(&["rev-parse", "HEAD"])
         }
         fn index(&self, cases: &[&str]) -> Index {
+            let claims: Vec<(String, String)> = cases
+                .iter()
+                .map(|c| (format!("{c}-holds"), format!("test/cases/{c}.sh")))
+                .collect();
+            self.index_of(&claims)
+        }
+        /// The index of guaranteed claims, each naming the test path given, verbatim.
+        fn index_of(&self, claims: &[(String, String)]) -> Index {
             use crate::index::{RepositoryInfo, State};
             use crate::{Object, Provenance};
-            let objects = cases
+            let objects = claims
                 .iter()
                 .enumerate()
-                .map(|(i, c)| Object {
+                .map(|(i, (id, test))| Object {
                     kind: "claim".into(),
-                    identity: format!("{c}-holds"),
-                    uri: format!("majordomus://claim/{c}-holds"),
+                    identity: id.clone(),
+                    uri: format!("majordomus://claim/{id}"),
                     title: None,
                     description: None,
                     metadata: serde_json::json!({
-                        "claim": format!("{c} holds"),
+                        "claim": id,
                         "status": "guaranteed",
-                        "test": format!("test/cases/{c}.sh"),
+                        "test": test,
                     }),
                     body: String::new(),
                     content: String::new(),
@@ -2169,6 +2177,25 @@ mod tests {
         let r = f.at_head(&cases, None);
         assert_eq!(state_of(&r, "02_beta-holds"), ProofState::NotRun);
         assert_eq!(r.presented.uncommitted, ["suite:02_beta"]);
+    }
+
+    /// A claim that names no test, and one that names a path no runner drives, are judged
+    /// before anything is compared, and neither is ever proven.
+    #[test]
+    fn a_claim_with_no_test_or_an_unrunnable_one_is_judged_without_a_comparison() {
+        let f = Fixture::new(&[]);
+        let index = f.index_of(&[
+            ("nothing".to_string(), "-".to_string()),
+            ("elsewhere".to_string(), "lib/helper.sh".to_string()),
+        ]);
+        let r = report(&index, &Ledger::load(f.root()).unwrap());
+        assert_eq!(state_of(&r, "nothing"), ProofState::NoTest);
+        assert_eq!(state_of(&r, "elsewhere"), ProofState::Unrunnable);
+        assert_eq!(
+            r.findings.len(),
+            2,
+            "both are guarantees nothing can support"
+        );
     }
 
     /// A skip is `not_run` with its reason, and the guarantee's finding says it declined.

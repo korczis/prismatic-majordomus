@@ -140,14 +140,12 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     w(
         out,
         format!(
-            "head         {} ({})",
+            "head         {} ({})\n{}",
             short(v["head"].as_str().unwrap_or("unknown")),
-            v["working_tree"].as_str().unwrap_or("?")
+            v["working_tree"].as_str().unwrap_or("?"),
+            judged_at(v).join("\n")
         ),
     )?;
-    for line in judged_at(v) {
-        w(out, line)?;
-    }
     let l = &v["ledger"];
     w(
         out,
@@ -200,8 +198,38 @@ fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     }
 
     for c in v["claims"].as_array().into_iter().flatten() {
-        for line in claim_lines(c) {
-            w(out, line)?;
+        let state = c["state"].as_str().unwrap_or("?");
+        w(
+            out,
+            format!(
+                "{:<18} {:<12} {}{}",
+                state,
+                c["status"].as_str().unwrap_or("?"),
+                c["id"].as_str().unwrap_or("?"),
+                detail_line(c)
+            ),
+        )?;
+        if let Some(e) = c["execution"].as_object() {
+            w(
+                out,
+                format!(
+                    "                   {} at {} · {}s · {} · {}",
+                    e["outcome"].as_str().unwrap_or("?"),
+                    short(e["commit"].as_str().unwrap_or("?")),
+                    e["seconds"],
+                    e["origin"].as_str().unwrap_or("?"),
+                    e["at"].as_str().unwrap_or("?")
+                ),
+            )?;
+        }
+        for p in c["changed"].as_array().into_iter().flatten() {
+            w(
+                out,
+                format!(
+                    "                   changed since: {}",
+                    p.as_str().unwrap_or("?")
+                ),
+            )?;
         }
     }
 
@@ -388,38 +416,13 @@ fn test_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     Ok(())
 }
 
-/// One claim of `evidence show`, as the lines a person reads: the state, the status and the
-/// id, then the execution behind it, the paths that changed since, and why when the state
-/// alone does not say.
-fn claim_lines(c: &Value) -> Vec<String> {
-    let mut lines = vec![format!(
-        "{:<18} {:<12} {}",
-        c["state"].as_str().unwrap_or("?"),
-        c["status"].as_str().unwrap_or("?"),
-        c["id"].as_str().unwrap_or("?")
-    )];
-    lines.extend(c["execution"].as_object().map(|e| {
-        format!(
-            "                   {} at {} · {}s · {} · {}",
-            e["outcome"].as_str().unwrap_or("?"),
-            short(e["commit"].as_str().unwrap_or("?")),
-            e["seconds"],
-            e["origin"].as_str().unwrap_or("?"),
-            e["at"].as_str().unwrap_or("?")
-        )
-    }));
-    lines.extend(c["changed"].as_array().into_iter().flatten().map(|p| {
-        format!(
-            "                   changed since: {}",
-            p.as_str().unwrap_or("?")
-        )
-    }));
-    lines.extend(
-        c["detail"]
-            .as_str()
-            .map(|d| format!("                   {d}")),
-    );
-    lines
+/// Why a claim's state is what it is, as the line under the claim that says so: empty when
+/// the state alone says it, and otherwise the detail on a line of its own.
+fn detail_line(c: &Value) -> String {
+    c["detail"]
+        .as_str()
+        .map(|d| format!("\n                   {d}"))
+        .unwrap_or_default()
 }
 
 /// The line naming what the verdicts below were judged at, and — for a presented commit whose
@@ -534,26 +537,12 @@ mod tests {
         );
     }
 
-    /// A claim prints its state first, then what it rests on and why.
+    /// A claim whose state needs a reason prints it on the line under the claim, and one
+    /// whose state says it all prints nothing more.
     #[test]
-    fn a_claim_prints_its_execution_its_changes_and_its_detail() {
-        let bare = json!({ "state": "not_run", "status": "guaranteed", "id": "a" });
-        assert_eq!(claim_lines(&bare).len(), 1);
-        assert!(claim_lines(&bare)[0].ends_with(" a"));
-
-        let full = json!({
-            "state": "stale", "status": "guaranteed", "id": "b",
-            "execution": {
-                "outcome": "pass", "commit": "0123456789abcdef", "seconds": 3,
-                "origin": "local", "at": "2026-09-26T00:00:00Z"
-            },
-            "changed": ["lib/b.sh"],
-            "detail": "recorded on 0123456789ab, which the presented revision does not contain"
-        });
-        let lines = claim_lines(&full);
-        assert_eq!(lines.len(), 4, "{lines:?}");
-        assert!(lines[1].contains("pass at 01234567"), "{}", lines[1]);
-        assert!(lines[2].ends_with("changed since: lib/b.sh"));
-        assert!(lines[3].ends_with("does not contain"));
+    fn a_claim_prints_its_detail_when_it_has_one() {
+        assert_eq!(detail_line(&json!({ "state": "not_run" })), "");
+        let d = detail_line(&json!({ "state": "not_run", "detail": "the test declined to run" }));
+        assert_eq!(d, "\n                   the test declined to run");
     }
 }
