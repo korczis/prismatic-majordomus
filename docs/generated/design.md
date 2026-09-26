@@ -3,7 +3,7 @@
      Generator: majordomus-cli 0.9.0 -->
 # The design system
 
-One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `e6bf12153d9f8ec6562be979f2fda8bc516c7c093fb829891292f2773d7cff1a` (`--mj-design: "e6bf12153d9f"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
+One declaration, `share/design/tokens.yaml`, projected into every surface. Fingerprint `5513f7466963b9e89aa59a88dad266f6c8747bfeb13b7ceae530123ebda6e7f0` (`--mj-design: "5513f7466963"` on every page that carries it). Explain any token with `majordomus_design_explain`, `GET /api/v1/design/explain?token=<name>` or the Cockpit's Design page.
 
 ## Type
 
@@ -55,11 +55,11 @@ Five meanings; every state word any surface renders is filed under one of them a
 
 | status | text (light / dark) | ground | border | words |
 |---|---|---|---|---|
-| `--mj-ok` | `emerald-900` / `emerald-300` | `--mj-ok-bg` | `--mj-ok-line` | `ok` `pass` `passed` `succeeded` `completed` `done` `current` `declared` `covered` `guaranteed` `healthy` `live` `present` `synced` `stable` `read-only` `connected` `accepted` `enforced` `wired` `behaviorally-verified` `valid` `clean` `merged` `documented` |
+| `--mj-ok` | `emerald-900` / `emerald-300` | `--mj-ok-bg` | `--mj-ok-line` | `ok` `pass` `passed` `succeeded` `completed` `done` `current` `declared` `covered` `guaranteed` `healthy` `live` `present` `synced` `stable` `read-only` `connected` `accepted` `enforced` `wired` `behaviorally-verified` `valid` `clean` `merged` `documented` `proven` |
 | `--mj-warn` | `orange-900` / `orange-300` | `--mj-warn-bg` | `--mj-warn-line` | `warn` `warning` `stale` `partial` `advisory` `cancelled` `cancelling` `not-generated` `reconnecting` `verify` `executable` `ahead` `behind` `dirty` `proposed` `deprecated` `degraded` `experimental` `ephemeral` |
-| `--mj-bad` | `rose-900` / `rose-300` | `--mj-bad-bg` | `--mj-bad-line` | `bad` `fail` `failed` `error` `missing` `blocked` `rejected` `blocking` `refused` `disconnected` `offline` `lost` `stderr` `superseded` `unwired` `unsupported` `owed` `foreign` `misplaced` |
-| `--mj-info` | `blue-900` / `blue-400` | `--mj-info-bg` | `--mj-info-line` | `info` `running` `queued` `active` `verified` `generated` `cached` `runtime` `resource` `pending` `loading` `streaming` `implemented` `featured` `exempt` `inherited` `unmerged` `detached` |
-| `--mj-neutral` | `fg` → `oklch(21% 0.034 264.665)` / `fg` → `#fff` | `--mj-neutral-bg` | `--mj-neutral-line` | `neutral` `unknown` `external` `planned` `described` `draft` `ready` `inactive` `stopped` `idle` `query` `command` `builtin` `declarative` `vendored` `high` `medium` `low` `setup` `begin` `work` `inspect` `conclude` |
+| `--mj-bad` | `rose-900` / `rose-300` | `--mj-bad-bg` | `--mj-bad-line` | `bad` `fail` `failed` `error` `missing` `blocked` `rejected` `blocking` `refused` `disconnected` `offline` `lost` `stderr` `superseded` `unwired` `unsupported` `owed` `foreign` `misplaced` `failing` `unrunnable` |
+| `--mj-info` | `blue-900` / `blue-400` | `--mj-info-bg` | `--mj-info-line` | `info` `running` `queued` `active` `verified` `generated` `cached` `runtime` `resource` `pending` `loading` `streaming` `implemented` `featured` `exempt` `inherited` `unmerged` `detached` `inputs-unchanged` |
+| `--mj-neutral` | `fg` → `oklch(21% 0.034 264.665)` / `fg` → `#fff` | `--mj-neutral-bg` | `--mj-neutral-line` | `neutral` `unknown` `external` `planned` `described` `draft` `ready` `inactive` `stopped` `idle` `query` `command` `builtin` `declarative` `vendored` `high` `medium` `low` `setup` `begin` `work` `inspect` `conclude` `not-run` `no-test` |
 
 ## Layout, radius, motion
 
