@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the token-economics methodology and every benchmark run committed under .ai/repo/benchmarks/economics; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.8.0 -->
+     Generator: majordomus-cli 0.9.0 -->
 # Token economics: benchmark report
 
 Generated from recorded evidence by `majordomus generate economics`. Every figure below is computed by one calculator (`apps/majordomus-cli/src/economics`) from the raw runs under `.ai/repo/benchmarks/economics/runs/`; nothing here is typed by hand.

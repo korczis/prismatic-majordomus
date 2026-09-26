@@ -283,10 +283,44 @@ export async function crawl({
 export function sample(derived, n = FAMILY_SAMPLE) {
   if (!derived.document) return [];
   const chosen = new Set([derived.entry, ...derived.navigation]);
-  for (const routes of Object.values(derived.families)) {
-    for (const route of spread(routes, n)) chosen.add(route);
+  for (const members of siblingFamilies(derived.families, n)) {
+    if (members.length === 1) {
+      for (const route of spread(members[0], n)) chosen.add(route);
+      continue;
+    }
+    // a data-driven dimension: one renderer across every sibling, so the budget is spent
+    // once over all of them, one route from each sibling in turn, spread across the siblings
+    const firsts = members.map((routes) => routes[0]);
+    for (const route of spread(firsts, 2 * n)) chosen.add(route);
   }
   return [...chosen].sort();
+}
+
+/**
+ * The families of a crawl, grouped where they are one renderer.
+ *
+ * `/cockpit/objects/adr/*` and `/cockpit/objects/rule/*` are two families by shape and one
+ * renderer in fact: the segment that differs is a value (a kind the index holds), not a
+ * route somebody wrote. That is recognisable without naming any route: siblings that differ
+ * only in their next-to-last segment, and more of them than twice the sample — hand-written
+ * routes under one parent do not come in dozens of the same shape, values do. Such a group
+ * is returned as one entry of its member families; every other family stands alone.
+ */
+export function siblingFamilies(families, n = FAMILY_SAMPLE) {
+  const groups = new Map();
+  for (const [key, routes] of Object.entries(families).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    const parts = key.split('/');
+    const parent = parts.length >= 4 && parts[parts.length - 1] === '*'
+      ? [...parts.slice(0, -2), '*', '*'].join('/') : key;
+    if (!groups.has(parent)) groups.set(parent, []);
+    groups.get(parent).push(routes);
+  }
+  const out = [];
+  for (const members of groups.values()) {
+    if (members.length > 2 * n) out.push(members);
+    else for (const m of members) out.push([m]);
+  }
+  return out;
 }
 
 /**

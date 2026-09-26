@@ -1,6 +1,6 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the canonical Majordomus capability registry; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.8.0 -->
+     Generator: majordomus-cli 0.9.0 -->
 # Capability reference
 
 Every capability this executable ships, as the registry holds it. MCP tools and resources, HTTP routes, the OpenAPI document (`openapi.json` beside this file, and `/openapi.json` when serving), Swagger UI, the command line's `capabilities` commands, the benchmark targets (`benchmarks.md`) and the registry manifest (`registry.json`) are projections of the same entries; nothing below is declared anywhere else.
@@ -21,6 +21,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `directories` | Directory contracts | behaviorally_verified | 1 | [`modules/directories.md`](modules/directories.md) |
 | `distribution` | Distribution | behaviorally_verified | 5 | [`modules/distribution.md`](modules/distribution.md) |
 | `economics` | Token economics | behaviorally_verified | 4 | [`modules/economics.md`](modules/economics.md) |
+| `entity` | Entities | implemented | 2 | [`modules/entity.md`](modules/entity.md) |
 | `environment` | Repository environment | behaviorally_verified | 2 | [`modules/environment.md`](modules/environment.md) |
 | `evidence` | Evidence | behaviorally_verified | 4 | [`modules/evidence.md`](modules/evidence.md) |
 | `executions` | Executions | behaviorally_verified | 7 | [`modules/executions.md`](modules/executions.md) |
@@ -86,6 +87,8 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `economics.explain` | `economics` | query | behaviorally_verified | `majordomus_economics_explain` | — | `GET /api/v1/economics/explain` | `majordomus economics explain` | process, 32 entries, 5s | required |
 | `economics.runs` | `economics` | query | behaviorally_verified | `majordomus_economics_runs` | — | `GET /api/v1/economics/runs` | `majordomus economics runs` | process, 16 entries, 5s | required |
 | `economics.summary` | `economics` | query | behaviorally_verified | `majordomus_economics` | `majordomus://economics` | `GET /api/v1/economics` | `majordomus economics summary` | process, 8 entries, 5s | required |
+| `entity.kinds` | `entity` | query | implemented | `majordomus_kinds` | — | `GET /api/v1/entity/kinds` | `majordomus entity kinds` | — | required |
+| `entity.show` | `entity` | query | implemented | `majordomus_entity` | — | `GET /api/v1/entity` | `majordomus entity show` | — | required |
 | `environment.explain` | `environment` | query | behaviorally_verified | `majordomus_environment_explain` | — | `GET /api/v1/environment/explain` | — | — | required |
 | `environment.status` | `environment` | query | behaviorally_verified | `majordomus_environment` | `majordomus://environment` | `GET /api/v1/environment` | — | — | required |
 | `evidence.claim` | `evidence` | query | behaviorally_verified | `majordomus_evidence_claim` | — | `GET /api/v1/evidence/claim` | `majordomus evidence claim` | — | required |
