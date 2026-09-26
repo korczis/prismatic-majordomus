@@ -1,0 +1,34 @@
+id: I1950
+milestone: test-evidence
+title: Text a run printed is redacted by one rule set
+slug: evidence-output-is-redacted-once
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Port the credential table that lib/capture.sh applies into one Rust redactor, held equal to the shell table by one fixture, so that every text the evidence publication carries passes through one rule set (ADR 0087 decision 14)."
+why: "The publication will carry text a run printed, such as the tail of a failure's log. The repository has a shell credential table, a redactor for schema-marked fields of structured input, and a refusal of machine paths in published artifacts, but no function that turns printed text into public text."
+current_state: "mj_capture_redact in lib/capture.sh applies MJ_CAPTURE_SECRETS and MJ_CAPTURE_SECRET_ASSIGN with sed; execution/redact.rs redacts schema-marked fields; generate::forbidden_in refuses machine paths and credential markers. The crate has no regex dependency."
+desired_state: "apps/majordomus-cli/src/redaction.rs offers redact_secrets, normalise_machine_paths and public_text with hand-written matchers; one fixture holds it equal to the shell table; and its output passes generate::forbidden_in."
+scope:
+  - apps/majordomus-cli/src/redaction.rs
+  - apps/majordomus-cli/src/lib.rs
+  - apps/majordomus-cli/tests/redaction.rs
+  - test/fixtures/redaction
+  - test/cases/504_public_text_is_redacted_once.sh
+non_scope:
+  - "lib/capture.sh and lib/usecase.sh: switching the shell to call Rust is a later change"
+  - "apps/majordomus-cli/src/execution and apps/majordomus-cli/src/evidence"
+  - "A new crate dependency"
+  - "docs/CLAIMS.yaml: the publication slice claims the behaviour when it publishes text"
+depends_on: []
+acceptance_criteria:
+  - "The Rust redactor and the shell table produce the same output on one shared fixture"
+  - "The output of public_text passes generate::forbidden_in"
+  - "cargo test --test redaction and the redaction doctests pass"
+validation:
+  - bash test/run.sh 504_public_text_is_redacted_once
+  - cargo test --test redaction
+evidence_required:
+  - one_redactor
+created_at: 2026-09-26
+updated_at: 2026-09-26

@@ -1,0 +1,35 @@
+id: I1946
+milestone: test-evidence
+title: The verdict words are status words of the design system
+slug: verdicts-are-status-words
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "File the proof-state verdict words as hyphenated status tokens with a declared role, so that every surface renders a verdict through the design system and a verdict added later must get a role before it can render (ADR 0087 decision 13)."
+why: "The verdict words proven, inputs-unchanged, failing, unrunnable, not-run and no-test are not status tokens, so a surface that wants to colour a verdict has to invent a mapping. The token name pattern refuses underscores, so the keys are the wire words with hyphens."
+current_state: "share/design/tokens.yaml files stale, pending and unknown under status.states, and none of the verdict words above. share/cockpit/cockpit.css is compiled from the tokens and carries no selector for them."
+desired_state: "Each verdict word is filed exactly once under its role (proven ok; inputs-unchanged info; failing and unrunnable bad; not-run and no-test neutral), the derived stylesheets carry one selector per word, and a case reads the vocabulary from the executable's own schema rather than from a list."
+scope:
+  - share/design
+  - share/cockpit/cockpit.css
+  - apps/majordomus-cli/src/web/tokens.css
+  - apps/majordomus-cli/src/design/tokens.yaml
+  - test/cases/501_verdict_words_are_status_words.sh
+non_scope:
+  - "Rust code: ProofState::token() belongs to I1948"
+  - "Re-adding stale, pending or unknown, which are already filed"
+  - "share/cockpit/src"
+  - "docs/CLAIMS.yaml"
+depends_on: []
+acceptance_criteria:
+  - "Every word of the ProofState schema, with each underscore replaced by a hyphen, is filed exactly once in status.states under its declared role"
+  - "A schema word the case's role table does not place fails the case, naming the word"
+  - "scripts/cockpit-assets --check exits 0 over the rebuilt stylesheet"
+validation:
+  - bash test/run.sh 501_verdict_words_are_status_words
+  - scripts/cockpit-assets --check
+evidence_required:
+  - verdict_words_filed
+risk: "share/cockpit/cockpit.css is compiled and not merge=derived, so a conflict on it is resolved by rebuilding it with scripts/cockpit-assets, never by hand."
+created_at: 2026-09-26
+updated_at: 2026-09-26

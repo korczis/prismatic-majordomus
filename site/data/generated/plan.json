@@ -7,7 +7,7 @@
   },
   "active_milestone": "M003",
   "next_ready": "I0806",
-  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::ready\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::blocked\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::blocked\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::blocked\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::blocked\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::blocked\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::blocked\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::blocked\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::blocked\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::blocked\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::blocked\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::blocked\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::blocked\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::blocked\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::blocked\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::blocked\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::blocked\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::blocked\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::done\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::ready\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::ready\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::ready\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::ready\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::ready\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::active\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::blocked\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::ready\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1201[\"I1201<br/>An identity provider is a declarative object, and Google and Facebook are two of them\"]:::ready\n    I1202[\"I1202<br/>One typed provider model reads the objects, and no code names a provider\"]:::blocked\n    I1203[\"I1203<br/>One flow serves every provider, and it refuses everything it did not start\"]:::blocked\n    I1204[\"I1204<br/>The session is signed, short, and revocable from the server\"]:::blocked\n    I1205[\"I1205<br/>Identity is resolved once, in the router, and every surface reads it from there\"]:::blocked\n    I1206[\"I1206<br/>What an anonymous reader may do is derived from the effect classification, not from a list\"]:::blocked\n    I1207[\"I1207<br/>No credential reaches any output, and hostile provider metadata renders safely\"]:::blocked\n    I1208[\"I1208<br/>Adding a provider is one file, removing one is one deletion, and both are executed rather than described\"]:::blocked\n    I1301[\"I1301<br/>A workspace is a declared object of the layer; only its content is local\"]:::done\n    I1302[\"I1302<br/>Identity, provenance and support level are typed fields, not prose\"]:::ready\n    I1303[\"I1303<br/>The store is bounded, measured and invisible to every published projection\"]:::blocked\n    I1304[\"I1304<br/>The browser transport is the one this repository already drives\"]:::blocked\n    I1305[\"I1305<br/>An observed contract has a fingerprint, a compatibility state and a fixture\"]:::blocked\n    I1306[\"I1306<br/>A sync resumes, repeats itself without harm, and says how fresh it is\"]:::blocked\n    I1307[\"I1307<br/>The ChatGPT shape is mapped from evidence and never becomes the canonical model\"]:::blocked\n    I1308[\"I1308<br/>The executable's share is one capability, shaped like continuity\"]:::blocked\n    I1309[\"I1309<br/>The boundaries this milestone asserts are gates, not sentences\"]:::blocked\n    I1310[\"I1310<br/>The subsystem is documented where a person looks, and the plan is closed against the repository\"]:::blocked\n    I1401[\"I1401<br/>The identity of a projected record is what the record carries, not what its title says\"]:::done\n    I1402[\"I1402<br/>A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them\"]:::done\n    I1403[\"I1403<br/>Backfill the projection once, deliberately, and record what it created\"]:::ready\n    I1404[\"I1404<br/>The drift check is a gate, so a projection that stops being applied cannot stay silent\"]:::done\n    I1405[\"I1405<br/>A pull request names the issue it realises, and the edge is derived rather than remembered\"]:::done\n    I1406[\"I1406<br/>The plan's derivations are capabilities, so every surface reads the readiness the terminal reads\"]:::done\n    I1407[\"I1407<br/>One issue travels the whole path and back, as an executable case\"]:::done\n    I1408[\"I1408<br/>The documents stop claiming a projection nobody runs\"]:::done\n    I1409[\"I1409<br/>Derived data stops hashing inputs it cannot control\"]:::ready\n    I1501[\"I1501<br/>An execution a person starts is an execution the server can see\"]:::ready\n    I1502[\"I1502<br/>A server serving code that no longer exists stops calling itself ready\"]:::ready\n    I1503[\"I1503<br/>A closed session is not closed a second time under the same identity\"]:::ready\n    I1504[\"I1504<br/>One development transition is a capability, end to end\"]:::ready\n    I1505[\"I1505<br/>A mutating capability leaves a durable event, and the ledger can be read back\"]:::blocked\n    I1506[\"I1506<br/>The lifecycle commands become non-interactive capabilities\"]:::blocked\n    I1507[\"I1507<br/>Issues, milestones, sessions and peers reach the Cockpit as projections\"]:::blocked\n    I1508[\"I1508<br/>The navigation is derived from the dispatcher, not kept beside it\"]:::ready\n    I1509[\"I1509<br/>A detail page that pages nothing has outgrown the reason it pages nothing\"]:::ready\n    I1510[\"I1510<br/>A gap the audit calls planned names a plan object that exists\"]:::ready\n    I1511[\"I1511<br/>The documentation surface answers in a checkout that has not built the site\"]:::ready\n    I1512[\"I1512<br/>Gate state is something the runtime can answer\"]:::ready\n    I1520[\"I1520<br/>A step that runs out of time says so itself\"]:::active\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    I1201 --> I1202\n    I1202 --> I1203\n    I1202 --> I1208\n    I1203 --> I1204\n    I1204 --> I1205\n    I1204 --> I1207\n    I1205 --> I1206\n    I1206 --> I1208\n    I1301 --> I1302\n    I1302 --> I1303\n    I1302 --> I1304\n    I1302 --> I1307\n    I1303 --> I1306\n    I1303 --> I1308\n    I1303 --> I1309\n    I1304 --> I1305\n    I1305 --> I1306\n    I1305 --> I1307\n    I1308 --> I1309\n    I1308 --> I1310\n    I1309 --> I1310\n    I1401 --> I1402\n    I1401 --> I1403\n    I1401 --> I1405\n    I1402 --> I1403\n    I1402 --> I1404\n    I1404 --> I1403\n    I1404 --> I1407\n    I1404 --> I1408\n    I1405 --> I1407\n    I1406 --> I1407\n    I1504 --> I1505\n    I1504 --> I1506\n    I1505 --> I1506\n    I1505 --> I1507\n    I1506 --> I1507\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+  "mermaid": "flowchart LR\n    I0001[\"I0001<br/>Audit what actually plans work in this repository\"]:::done\n    I0002[\"I0002<br/>Define the canonical milestone and issue schema\"]:::done\n    I0003[\"I0003<br/>Implement the model loader and the status derivation engine\"]:::done\n    I0004[\"I0004<br/>Implement DAG validation and execution waves\"]:::done\n    I0005[\"I0005<br/>Implement the plan command surface\"]:::done\n    I0006[\"I0006<br/>Generate the Mermaid DAG from the graph\"]:::done\n    I0007[\"I0007<br/>Enforce the canonical model as doctrine\"]:::done\n    I0008[\"I0008<br/>Project the model to GitHub milestones and issues\"]:::done\n    I0009[\"I0009<br/>Project the model into the website\"]:::done\n    I0010[\"I0010<br/>Behavioural tests for schema, status, graph and command\"]:::done\n    I0011[\"I0011<br/>Cross-surface consistency and mutation tests\"]:::done\n    I0012[\"I0012<br/>Make CI refuse an invalid model or a stale projection\"]:::done\n    I0013[\"I0013<br/>Document the semantics and the dogfooding rule\"]:::done\n    I0014[\"I0014<br/>Make the worker instructions require the model\"]:::done\n    I0015[\"I0015<br/>Open the first real milestone and execute one issue through it\"]:::done\n    I0101[\"I0101<br/>Reproduce the escaped blocker as an executable case\"]:::done\n    I0102[\"I0102<br/>Decide whether a question transfers or the gate widens\"]:::done\n    I0103[\"I0103<br/>Implement the decision and prove it holds\"]:::done\n    I0104[\"I0104<br/>Move the claim from planned to guaranteed\"]:::done\n    I0201[\"I0201<br/>Declare which profile axis may become which runtime limit\"]:::ready\n    I0202[\"I0202<br/>Resolve a task's effective limits and print them as data\"]:::blocked\n    I0203[\"I0203<br/>Make enforcement opt-in, and prove a repository that declines is unaffected\"]:::blocked\n    I0204[\"I0204<br/>Apply one derived limit for real and prove it changes what happens\"]:::blocked\n    I0205[\"I0205<br/>Declare the clamp as a doctrine so the mapping and the adapter cannot drift\"]:::blocked\n    I0206[\"I0206<br/>Publish the runtime-adapters claim with the test that proves it and the limits it does not cover\"]:::blocked\n    I0301[\"I0301<br/>Define the execution record, including what an absence looks like\"]:::blocked\n    I0302[\"I0302<br/>Record telemetry a provider reports, and refuse anything it did not\"]:::blocked\n    I0303[\"I0303<br/>Prove a silent provider produces an explicit absence, never a guess\"]:::blocked\n    I0304[\"I0304<br/>Read the measurements back through the history surface, under a bound\"]:::blocked\n    I0305[\"I0305<br/>Publish the telemetry claim and record what remains unmeasured\"]:::blocked\n    I0401[\"I0401<br/>Define an accepted outcome, and join it to its measurements without storing the join\"]:::blocked\n    I0402[\"I0402<br/>Report cost only where measurement and acceptance both exist\"]:::blocked\n    I0403[\"I0403<br/>Make a thin denominator say so rather than average it away\"]:::blocked\n    I0404[\"I0404<br/>Publish the cost-per-outcome claim with its unit defined beside it\"]:::blocked\n    I0501[\"I0501<br/>Group comparable work from what the records already carry\"]:::blocked\n    I0502[\"I0502<br/>Recommend a profile from measured cost, naming the measurements\"]:::blocked\n    I0503[\"I0503<br/>Return no recommendation where the data is too thin, and say why\"]:::blocked\n    I0504[\"I0504<br/>Prove the recommendation is advisory and publish it as such\"]:::blocked\n    I0601[\"I0601<br/>Let a policy name a shared source it does not copy\"]:::blocked\n    I0602[\"I0602<br/>Make a local override explicit and prove it survives an update of the shared source\"]:::blocked\n    I0603[\"I0603<br/>Report drift from the shared policy in one command\"]:::blocked\n    I0604[\"I0604<br/>Prove the offline guarantee survives sharing\"]:::blocked\n    I0605[\"I0605<br/>Publish the shared-policy claim and what sharing still cannot do\"]:::blocked\n    I0701[\"I0701<br/>Reproduce the misattribution as an executable case\"]:::ready\n    I0702[\"I0702<br/>Decide how a record is attributed, between named alternatives\"]:::blocked\n    I0703[\"I0703<br/>Implement the decision and prove it holds\"]:::blocked\n    I0704[\"I0704<br/>Publish what attribution guarantees, and what it still cannot\"]:::blocked\n    I0801[\"I0801<br/>Narrow the Clean Extraction Boundary and record what was adopted\"]:::done\n    I0802[\"I0802<br/>Specify the session record before writing one\"]:::done\n    I0803[\"I0803<br/>Open a session and report its status\"]:::done\n    I0804[\"I0804<br/>Close a session into an envelope derived from the ledger\"]:::done\n    I0805[\"I0805<br/>Read sessions back with a divergence label\"]:::done\n    I0806[\"I0806<br/>Make the session rules doctrines, with retention and archiving\"]:::ready\n    I0807[\"I0807<br/>Discover knowledge sources from git, not from the filesystem\"]:::done\n    I0808[\"I0808<br/>Extract nodes with identities that survive a rebuild\"]:::done\n    I0809[\"I0809<br/>Record only edges that a file states, each with where it was observed\"]:::done\n    I0810[\"I0810<br/>A content-hash manifest that makes a second sync cheap\"]:::ready\n    I0811[\"I0811<br/>Read-only knowledge lookup with an ordering that can be explained\"]:::blocked\n    I0812[\"I0812<br/>Validate the graph, and let doctor and watch ask the same validator\"]:::blocked\n    I0813[\"I0813<br/>A closed session becomes a node that points at its episode\"]:::blocked\n    I0814[\"I0814<br/>Give the worker a bounded slice of knowledge, not the knowledge base\"]:::blocked\n    I0815[\"I0815<br/>Say what is now true in the claims, the documentation and the worker instructions\"]:::blocked\n    I0816[\"I0816<br/>Prove the loop on a real issue, without a transcript\"]:::blocked\n    I0817[\"I0817<br/>Phase timing and work counters behind MJ_TIMING\"]:::done\n    I0818[\"I0818<br/>The command registry is read in one pass\"]:::done\n    I0819[\"I0819<br/>The project model is loaded with one flatten per file and no per-file lookups\"]:::done\n    I0820[\"I0820<br/>Catalogue, DAG, context and command-surface validators read their inputs once\"]:::ready\n    I0821[\"I0821<br/>Flattened YAML is cached under .ai/local/cache by content hash\"]:::ready\n    I0822[\"I0822<br/>Every canonical file is flattened at most once per command\"]:::blocked\n    I0823[\"I0823<br/>majordomus bench: targets derived from the command registry\"]:::done\n    I0824[\"I0824<br/>Bench persists local runs and keeps a latest projection\"]:::done\n    I0825[\"I0825<br/>An explicit committed baseline\"]:::done\n    I0826[\"I0826<br/>bench --check refuses a regression by policy\"]:::done\n    I0827[\"I0827<br/>The benchmark policy block\"]:::done\n    I0828[\"I0828<br/>doctor under a declared budget, and the hook inherits it\"]:::blocked\n    I0829[\"I0829<br/>Performance doctrine as project rules\"]:::done\n    I0830[\"I0830<br/>docs/PERFORMANCE.md, README, CONTRIBUTING and CLI reference\"]:::done\n    I0831[\"I0831<br/>Performance claims at their proven status\"]:::blocked\n    I0832[\"I0832<br/>generate-site-data instrumented and its hot spots removed\"]:::ready\n    I0833[\"I0833<br/>knowledge nodes and edges read each source once\"]:::done\n    I0834[\"I0834<br/>The test runner reports per-case time and the suite budget\"]:::blocked\n    I0835[\"I0835<br/>CI runs the structural performance checks\"]:::blocked\n    I0836[\"I0836<br/>A synthetic repository generator for scaling cases\"]:::ready\n    I0837[\"I0837<br/>Timing report as JSON\"]:::ready\n    I0838[\"I0838<br/>bench compare and the top regressions report\"]:::ready\n    I0839[\"I0839<br/>watch inherits every doctor fix and its own budget\"]:::blocked\n    I0840[\"I0840<br/>context and its subcommands under a second\"]:::blocked\n    I0841[\"I0841<br/>Cache equivalence proved by property-shaped cases\"]:::blocked\n    I0842[\"I0842<br/>Before and after evidence for every optimisation\"]:::blocked\n    I0843[\"I0843<br/>The performance workflow is discoverable and complete\"]:::blocked\n    I0901[\"I0901<br/>The deployment description is a kind of the layer, not a provider file\"]:::ready\n    I0902[\"I0902<br/>The deployment object becomes typed Rust that refuses nonsense\"]:::blocked\n    I0903[\"I0903<br/>Deployment reads are declared once and projected everywhere\"]:::blocked\n    I0904[\"I0904<br/>The listen address is one fact with two projections\"]:::blocked\n    I0905[\"I0905<br/>Liveness and readiness are registered capabilities, not router hacks\"]:::blocked\n    I0906[\"I0906<br/>Termination is graceful and proved against the real container\"]:::blocked\n    I0907[\"I0907<br/>The running process says what it is, from an allowlist\"]:::blocked\n    I0908[\"I0908<br/>A hosted process has no repository, and says so instead of failing\"]:::blocked\n    I0909[\"I0909<br/>The production image is a generated projection of the build specification\"]:::blocked\n    I0910[\"I0910<br/>The release profile is chosen by measurement, not by folklore\"]:::blocked\n    I0911[\"I0911<br/>A source change does not rebuild the world, and the context stays small\"]:::blocked\n    I0912[\"I0912<br/>The image serves the site the canonical pipeline produced\"]:::blocked\n    I0913[\"I0913<br/>The provider configuration is generated, and the cheap profile is declared\"]:::blocked\n    I0914[\"I0914<br/>One deployment core, one command, and a dry run that mutates nothing\"]:::blocked\n    I0915[\"I0915<br/>Deployment joins the diagnostics that already exist\"]:::blocked\n    I0916[\"I0916<br/>The smoke suite is derived from the route registry, never written twice\"]:::blocked\n    I0917[\"I0917<br/>A bad deployment can be undone deterministically\"]:::blocked\n    I0918[\"I0918<br/>The bootstrap credential is used once and belongs to nothing\"]:::blocked\n    I0919[\"I0919<br/>Nothing secret and nothing local leaves in the image\"]:::blocked\n    I0920[\"I0920<br/>The image's dependencies are known and its advisories are policy\"]:::blocked\n    I0921[\"I0921<br/>Size is measured first and budgeted second\"]:::blocked\n    I0922[\"I0922<br/>The memory hypothesis is tested, not asserted\"]:::blocked\n    I0923[\"I0923<br/>Cold start and endpoint cost are benchmark targets like everything else\"]:::blocked\n    I0924[\"I0924<br/>The decision is recorded where architecture decisions are recorded\"]:::blocked\n    I0925[\"I0925<br/>Every deployment rule is a check that runs\"]:::blocked\n    I0926[\"I0926<br/>The deployment documentation is generated and reachable\"]:::blocked\n    I0927[\"I0927<br/>The cockpit shows the deployment from the same data\"]:::blocked\n    I0928[\"I0928<br/>A pull request cannot merge a deployment that would not work\"]:::blocked\n    I0929[\"I0929<br/>Production deploys from CI with a token scoped to one application\"]:::blocked\n    I0930[\"I0930<br/>The real image runs under the real limits before anything is deployed\"]:::blocked\n    I0931[\"I0931<br/>The application exists, one machine runs it, and the URL answers\"]:::blocked\n    I0932[\"I0932<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1001[\"I1001<br/>One typed graph composes the registries that already own their facts\"]:::done\n    I1002[\"I1002<br/>Relations are typed, inferred from stable identities, and never dangle\"]:::done\n    I1003[\"I1003<br/>Skills, rules, decisions, documents, use cases and benchmarks enter the graph as themselves\"]:::done\n    I1004[\"I1004<br/>Availability and visibility are metadata, not conditions in a template\"]:::done\n    I1005[\"I1005<br/>The graph is a generated artifact with a schema and no unsafe field\"]:::done\n    I1006[\"I1006<br/>The runtime reads the graph through the registry, like every other read\"]:::ready\n    I1007[\"I1007<br/>The site renders the same graph, generated once\"]:::ready\n    I1008[\"I1008<br/>The two projections are proved to be the same model\"]:::blocked\n    I1009[\"I1009<br/>Every menu in this repository comes from one derivation\"]:::ready\n    I1010[\"I1010<br/>The overview is what exists, counted rather than claimed\"]:::ready\n    I1011[\"I1011<br/>The coverage matrix reports evidence, and never a green cell without one\"]:::ready\n    I1012[\"I1012<br/>One detail view, assembled from what a node actually has\"]:::ready\n    I1013[\"I1013<br/>Search over the graph, generated, with nothing to run\"]:::blocked\n    I1014[\"I1014<br/>The relation view reads the graph and holds no data of its own\"]:::blocked\n    I1015[\"I1015<br/>A surface with no server behind it is not offered as if it had one\"]:::active\n    I1016[\"I1016<br/>The Cockpit works on a phone and before JavaScript runs\"]:::blocked\n    I1017[\"I1017<br/>Live state is an overlay that degrades to nothing\"]:::blocked\n    I1018[\"I1018<br/>The surface rules exist as checks, proved by making them fail\"]:::blocked\n    I1019[\"I1019<br/>One skill runs the whole loop, and is itself in the graph\"]:::blocked\n    I1020[\"I1020<br/>The graph's health is answered by the doctor that already answers everything else\"]:::blocked\n    I1021[\"I1021<br/>A browser proves the interface, at the widths people use\"]:::blocked\n    I1022[\"I1022<br/>Drift in any derived surface fails the build\"]:::blocked\n    I1023[\"I1023<br/>Nothing private reaches a published page\"]:::ready\n    I1024[\"I1024<br/>The interface has a weight, and it is measured\"]:::blocked\n    I1025[\"I1025<br/>The federated model and its two projections are an architecture decision\"]:::done\n    I1026[\"I1026<br/>The architecture explains itself, from inside itself\"]:::blocked\n    I1027[\"I1027<br/>A synthetic capability proves the architecture instead of describing it\"]:::blocked\n    I1028[\"I1028<br/>The inventories this replaces are removed, not left running beside it\"]:::blocked\n    I1029[\"I1029<br/>The gate refuses what would silently break the interface\"]:::blocked\n    I1030[\"I1030<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1031[\"I1031<br/>A served surface says which checkout it is serving\"]:::ready\n    I1101[\"I1101<br/>What this tool leaves behind, established by inspection rather than by memory\"]:::ready\n    I1102[\"I1102<br/>The two namespaces are a typed contract, not a habit\"]:::blocked\n    I1103[\"I1103<br/>Whether a file is authored or derived is a field, not a naming convention\"]:::blocked\n    I1104[\"I1104<br/>Both namespaces carry their contracts, all the way down\"]:::blocked\n    I1105[\"I1105<br/>The repository is discovered once, into one model\"]:::blocked\n    I1106[\"I1106<br/>The registries are views of the model, not separate discoveries\"]:::blocked\n    I1107[\"I1107<br/>Discovery is deterministic, cached, and its cost is known\"]:::blocked\n    I1108[\"I1108<br/>The desired integration is a value, and the plan is a diff\"]:::blocked\n    I1109[\"I1109<br/>Everything placed outside the two namespaces is recorded, with what it was\"]:::blocked\n    I1110[\"I1110<br/>The second run changes nothing, and a test says so\"]:::blocked\n    I1111[\"I1111<br/>Uninstall gives back exactly what was taken\"]:::blocked\n    I1112[\"I1112<br/>What touches the root is two small blocks, and they never change again\"]:::blocked\n    I1113[\"I1113<br/>Entering a directory is local, bounded and silent about the network\"]:::blocked\n    I1114[\"I1114<br/>A provider is an adapter over the model, and adding one is an implementation\"]:::blocked\n    I1115[\"I1115<br/>Completion comes from the command model, not from a second list\"]:::blocked\n    I1116[\"I1116<br/>This repository's own footprint moves, through the reconciler\"]:::blocked\n    I1117[\"I1117<br/>The hand-maintained lists are removed, not left running beside the derivation\"]:::blocked\n    I1118[\"I1118<br/>Every invariant of this milestone is a rule with a check that runs\"]:::blocked\n    I1119[\"I1119<br/>The budgets are measured, and a regression fails rather than being noticed\"]:::blocked\n    I1120[\"I1120<br/>A refusal says what to do about it\"]:::blocked\n    I1121[\"I1121<br/>Every surface shows the integration from the one model\"]:::blocked\n    I1122[\"I1122<br/>A foreign repository, adopted, upgraded and given back\"]:::blocked\n    I1123[\"I1123<br/>The milestone is accepted on its evidence\"]:::blocked\n    I1201[\"I1201<br/>An identity provider is a declarative object, and Google and Facebook are two of them\"]:::ready\n    I1202[\"I1202<br/>One typed provider model reads the objects, and no code names a provider\"]:::blocked\n    I1203[\"I1203<br/>One flow serves every provider, and it refuses everything it did not start\"]:::blocked\n    I1204[\"I1204<br/>The session is signed, short, and revocable from the server\"]:::blocked\n    I1205[\"I1205<br/>Identity is resolved once, in the router, and every surface reads it from there\"]:::blocked\n    I1206[\"I1206<br/>What an anonymous reader may do is derived from the effect classification, not from a list\"]:::blocked\n    I1207[\"I1207<br/>No credential reaches any output, and hostile provider metadata renders safely\"]:::blocked\n    I1208[\"I1208<br/>Adding a provider is one file, removing one is one deletion, and both are executed rather than described\"]:::blocked\n    I1301[\"I1301<br/>A workspace is a declared object of the layer; only its content is local\"]:::done\n    I1302[\"I1302<br/>Identity, provenance and support level are typed fields, not prose\"]:::ready\n    I1303[\"I1303<br/>The store is bounded, measured and invisible to every published projection\"]:::blocked\n    I1304[\"I1304<br/>The browser transport is the one this repository already drives\"]:::blocked\n    I1305[\"I1305<br/>An observed contract has a fingerprint, a compatibility state and a fixture\"]:::blocked\n    I1306[\"I1306<br/>A sync resumes, repeats itself without harm, and says how fresh it is\"]:::blocked\n    I1307[\"I1307<br/>The ChatGPT shape is mapped from evidence and never becomes the canonical model\"]:::blocked\n    I1308[\"I1308<br/>The executable's share is one capability, shaped like continuity\"]:::blocked\n    I1309[\"I1309<br/>The boundaries this milestone asserts are gates, not sentences\"]:::blocked\n    I1310[\"I1310<br/>The subsystem is documented where a person looks, and the plan is closed against the repository\"]:::blocked\n    I1401[\"I1401<br/>The identity of a projected record is what the record carries, not what its title says\"]:::done\n    I1402[\"I1402<br/>A finding says which of six states it found, and the state that could hide a person's edit is no longer one of them\"]:::done\n    I1403[\"I1403<br/>Backfill the projection once, deliberately, and record what it created\"]:::ready\n    I1404[\"I1404<br/>The drift check is a gate, so a projection that stops being applied cannot stay silent\"]:::done\n    I1405[\"I1405<br/>A pull request names the issue it realises, and the edge is derived rather than remembered\"]:::done\n    I1406[\"I1406<br/>The plan's derivations are capabilities, so every surface reads the readiness the terminal reads\"]:::done\n    I1407[\"I1407<br/>One issue travels the whole path and back, as an executable case\"]:::done\n    I1408[\"I1408<br/>The documents stop claiming a projection nobody runs\"]:::done\n    I1409[\"I1409<br/>Derived data stops hashing inputs it cannot control\"]:::ready\n    I1501[\"I1501<br/>An execution a person starts is an execution the server can see\"]:::ready\n    I1502[\"I1502<br/>A server serving code that no longer exists stops calling itself ready\"]:::ready\n    I1503[\"I1503<br/>A closed session is not closed a second time under the same identity\"]:::ready\n    I1504[\"I1504<br/>One development transition is a capability, end to end\"]:::ready\n    I1505[\"I1505<br/>A mutating capability leaves a durable event, and the ledger can be read back\"]:::blocked\n    I1506[\"I1506<br/>The lifecycle commands become non-interactive capabilities\"]:::blocked\n    I1507[\"I1507<br/>Issues, milestones, sessions and peers reach the Cockpit as projections\"]:::blocked\n    I1508[\"I1508<br/>The navigation is derived from the dispatcher, not kept beside it\"]:::ready\n    I1509[\"I1509<br/>A detail page that pages nothing has outgrown the reason it pages nothing\"]:::ready\n    I1510[\"I1510<br/>A gap the audit calls planned names a plan object that exists\"]:::ready\n    I1511[\"I1511<br/>The documentation surface answers in a checkout that has not built the site\"]:::ready\n    I1512[\"I1512<br/>Gate state is something the runtime can answer\"]:::ready\n    I1520[\"I1520<br/>A step that runs out of time says so itself\"]:::active\n    I1945[\"I1945<br/>The test-evidence decision and its plan are recorded\"]:::active\n    I1946[\"I1946<br/>The verdict words are status words of the design system\"]:::ready\n    I1947[\"I1947<br/>Every feature reaches a test, and every use case has a feature\"]:::ready\n    I1948[\"I1948<br/>Evidence is judged at the presented revision, by one freshness function\"]:::ready\n    I1949[\"I1949<br/>CI evidence is recorded clean, and its report is the tracked ledger's verdict\"]:::ready\n    I1950[\"I1950<br/>Text a run printed is redacted by one rule set\"]:::ready\n    I1951[\"I1951<br/>Evidence runs are typed, and a recording carries what its run measured\"]:::blocked\n    I1952[\"I1952<br/>Evidence subjects are derived once, in Rust\"]:::blocked\n    I1953[\"I1953<br/>Evidence answers by subject, on every surface\"]:::blocked\n    I1954[\"I1954<br/>Every runner reaches the ledger, through the recording branch\"]:::blocked\n    I1955[\"I1955<br/>The evidence publication is an allow-listed projection\"]:::blocked\n    I1956[\"I1956<br/>The Cockpit shows evidence by subject\"]:::blocked\n    I1957[\"I1957<br/>Every test line is read, and a local run stays local\"]:::blocked\n    I1958[\"I1958<br/>Evidence has one route per subject, and every panel is joined to its subject\"]:::blocked\n    I1959[\"I1959<br/>The evidence publication is typed, bound to its build, and kept on gh-pages\"]:::blocked\n    I1960[\"I1960<br/>Every widget names its proof\"]:::blocked\n    I1961[\"I1961<br/>A deploy verifies the evidence routes it publishes\"]:::blocked\n    I1962[\"I1962<br/>The evidence gates read subject findings and widgets\"]:::blocked\n    I1963[\"I1963<br/>Evidence is tested end to end\"]:::blocked\n    I1964[\"I1964<br/>The evidence reference is documented and held to the tree\"]:::blocked\n    I1965[\"I1965<br/>The entry preflight reads the one verdict\"]:::blocked\n    I0001 --> I0002\n    I0002 --> I0003\n    I0003 --> I0004\n    I0004 --> I0005\n    I0004 --> I0006\n    I0004 --> I0010\n    I0005 --> I0007\n    I0005 --> I0008\n    I0005 --> I0009\n    I0005 --> I0013\n    I0005 --> I0014\n    I0006 --> I0009\n    I0008 --> I0011\n    I0009 --> I0011\n    I0010 --> I0011\n    I0011 --> I0012\n    I0012 --> I0015\n    I0013 --> I0014\n    I0014 --> I0015\n    I0101 --> I0102\n    I0102 --> I0103\n    I0103 --> I0104\n    I0201 --> I0202\n    I0202 --> I0203\n    I0203 --> I0204\n    I0204 --> I0205\n    I0205 --> I0206\n    I0301 --> I0302\n    I0302 --> I0303\n    I0303 --> I0304\n    I0304 --> I0305\n    I0401 --> I0402\n    I0402 --> I0403\n    I0403 --> I0404\n    I0501 --> I0502\n    I0502 --> I0503\n    I0503 --> I0504\n    I0601 --> I0602\n    I0602 --> I0603\n    I0603 --> I0604\n    I0604 --> I0605\n    I0701 --> I0702\n    I0702 --> I0703\n    I0703 --> I0704\n    I0801 --> I0807\n    I0802 --> I0803\n    I0803 --> I0804\n    I0804 --> I0805\n    I0805 --> I0806\n    I0806 --> I0813\n    I0807 --> I0808\n    I0808 --> I0809\n    I0809 --> I0810\n    I0810 --> I0811\n    I0811 --> I0812\n    I0811 --> I0814\n    I0812 --> I0813\n    I0813 --> I0815\n    I0814 --> I0815\n    I0815 --> I0816\n    I0817 --> I0818\n    I0817 --> I0819\n    I0817 --> I0821\n    I0817 --> I0823\n    I0817 --> I0832\n    I0817 --> I0833\n    I0817 --> I0837\n    I0818 --> I0820\n    I0818 --> I0822\n    I0818 --> I0828\n    I0818 --> I0842\n    I0819 --> I0820\n    I0819 --> I0822\n    I0819 --> I0828\n    I0819 --> I0832\n    I0819 --> I0836\n    I0819 --> I0842\n    I0820 --> I0822\n    I0820 --> I0828\n    I0820 --> I0840\n    I0820 --> I0842\n    I0821 --> I0840\n    I0821 --> I0841\n    I0822 --> I0831\n    I0822 --> I0835\n    I0823 --> I0824\n    I0823 --> I0827\n    I0823 --> I0830\n    I0824 --> I0825\n    I0825 --> I0826\n    I0826 --> I0830\n    I0826 --> I0831\n    I0826 --> I0835\n    I0826 --> I0838\n    I0827 --> I0828\n    I0828 --> I0834\n    I0828 --> I0839\n    I0829 --> I0830\n    I0830 --> I0843\n    I0831 --> I0843\n    I0832 --> I0842\n    I0833 --> I0842\n    I0835 --> I0843\n    I0841 --> I0843\n    I0842 --> I0843\n    I0901 --> I0902\n    I0901 --> I0924\n    I0902 --> I0903\n    I0902 --> I0904\n    I0902 --> I0905\n    I0902 --> I0907\n    I0902 --> I0908\n    I0902 --> I0909\n    I0902 --> I0913\n    I0902 --> I0918\n    I0903 --> I0913\n    I0903 --> I0914\n    I0903 --> I0926\n    I0903 --> I0927\n    I0904 --> I0906\n    I0904 --> I0909\n    I0905 --> I0909\n    I0905 --> I0916\n    I0906 --> I0930\n    I0909 --> I0910\n    I0909 --> I0911\n    I0909 --> I0912\n    I0909 --> I0914\n    I0909 --> I0919\n    I0909 --> I0920\n    I0909 --> I0930\n    I0910 --> I0921\n    I0911 --> I0921\n    I0912 --> I0930\n    I0913 --> I0914\n    I0913 --> I0926\n    I0913 --> I0931\n    I0914 --> I0915\n    I0914 --> I0916\n    I0914 --> I0917\n    I0914 --> I0931\n    I0915 --> I0925\n    I0916 --> I0931\n    I0917 --> I0931\n    I0918 --> I0929\n    I0918 --> I0931\n    I0919 --> I0928\n    I0920 --> I0932\n    I0921 --> I0928\n    I0922 --> I0931\n    I0923 --> I0932\n    I0924 --> I0926\n    I0925 --> I0932\n    I0926 --> I0932\n    I0927 --> I0932\n    I0928 --> I0932\n    I0929 --> I0932\n    I0930 --> I0922\n    I0930 --> I0923\n    I0930 --> I0928\n    I0930 --> I0931\n    I0931 --> I0929\n    I0931 --> I0932\n    I1001 --> I1002\n    I1001 --> I1003\n    I1001 --> I1004\n    I1001 --> I1025\n    I1002 --> I1005\n    I1002 --> I1011\n    I1002 --> I1014\n    I1002 --> I1020\n    I1004 --> I1005\n    I1004 --> I1009\n    I1004 --> I1015\n    I1005 --> I1006\n    I1005 --> I1007\n    I1005 --> I1009\n    I1005 --> I1010\n    I1005 --> I1012\n    I1005 --> I1023\n    I1006 --> I1008\n    I1006 --> I1017\n    I1007 --> I1008\n    I1007 --> I1013\n    I1007 --> I1014\n    I1007 --> I1020\n    I1007 --> I1022\n    I1009 --> I1016\n    I1009 --> I1028\n    I1010 --> I1030\n    I1011 --> I1018\n    I1012 --> I1026\n    I1013 --> I1030\n    I1014 --> I1021\n    I1014 --> I1024\n    I1015 --> I1018\n    I1015 --> I1021\n    I1016 --> I1021\n    I1017 --> I1030\n    I1018 --> I1019\n    I1018 --> I1027\n    I1019 --> I1027\n    I1020 --> I1030\n    I1021 --> I1029\n    I1022 --> I1029\n    I1023 --> I1029\n    I1024 --> I1030\n    I1025 --> I1026\n    I1026 --> I1030\n    I1027 --> I1030\n    I1028 --> I1030\n    I1029 --> I1030\n    I1101 --> I1102\n    I1101 --> I1105\n    I1102 --> I1103\n    I1102 --> I1104\n    I1104 --> I1123\n    I1105 --> I1106\n    I1106 --> I1107\n    I1106 --> I1108\n    I1106 --> I1117\n    I1107 --> I1123\n    I1108 --> I1109\n    I1108 --> I1120\n    I1109 --> I1110\n    I1109 --> I1111\n    I1109 --> I1112\n    I1110 --> I1116\n    I1110 --> I1118\n    I1110 --> I1122\n    I1111 --> I1122\n    I1112 --> I1113\n    I1112 --> I1114\n    I1112 --> I1116\n    I1112 --> I1121\n    I1113 --> I1119\n    I1114 --> I1115\n    I1115 --> I1123\n    I1116 --> I1118\n    I1116 --> I1122\n    I1117 --> I1123\n    I1118 --> I1123\n    I1119 --> I1123\n    I1120 --> I1123\n    I1121 --> I1122\n    I1122 --> I1123\n    I1201 --> I1202\n    I1202 --> I1203\n    I1202 --> I1208\n    I1203 --> I1204\n    I1204 --> I1205\n    I1204 --> I1207\n    I1205 --> I1206\n    I1206 --> I1208\n    I1301 --> I1302\n    I1302 --> I1303\n    I1302 --> I1304\n    I1302 --> I1307\n    I1303 --> I1306\n    I1303 --> I1308\n    I1303 --> I1309\n    I1304 --> I1305\n    I1305 --> I1306\n    I1305 --> I1307\n    I1308 --> I1309\n    I1308 --> I1310\n    I1309 --> I1310\n    I1401 --> I1402\n    I1401 --> I1403\n    I1401 --> I1405\n    I1402 --> I1403\n    I1402 --> I1404\n    I1404 --> I1403\n    I1404 --> I1407\n    I1404 --> I1408\n    I1405 --> I1407\n    I1406 --> I1407\n    I1504 --> I1505\n    I1504 --> I1506\n    I1505 --> I1506\n    I1505 --> I1507\n    I1506 --> I1507\n    I1946 --> I1958\n    I1946 --> I1960\n    I1947 --> I1952\n    I1948 --> I1951\n    I1948 --> I1952\n    I1948 --> I1965\n    I1949 --> I1951\n    I1950 --> I1955\n    I1951 --> I1953\n    I1951 --> I1954\n    I1952 --> I1953\n    I1952 --> I1958\n    I1952 --> I1962\n    I1953 --> I1955\n    I1953 --> I1956\n    I1953 --> I1962\n    I1954 --> I1959\n    I1955 --> I1957\n    I1955 --> I1958\n    I1955 --> I1959\n    I1956 --> I1963\n    I1958 --> I1960\n    I1958 --> I1961\n    I1959 --> I1960\n    I1959 --> I1961\n    I1959 --> I1963\n    I1960 --> I1962\n    I1960 --> I1963\n    I1962 --> I1964\n    I1963 --> I1964\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
   "statuses": {
     "issue": [
       "READY",
@@ -1368,6 +1368,128 @@
           "READY": 0,
           "BLOCKED": 5,
           "ACTIVE": 0,
+          "VERIFY": 0,
+          "DONE": 0,
+          "CANCELLED": 0
+        }
+      }
+    },
+    {
+      "id": "test-evidence",
+      "slug": "test-evidence",
+      "status": "ACTIVE",
+      "order": 105,
+      "priority": "p1",
+      "title": "Every verifiable claim and widget resolves to revision-bound test evidence, on every surface",
+      "problem": "Claims bind to tests by path, and only `majordomus evidence show` asks whether a claim is proven, always at the working tree of whoever runs it. The site cannot ask that question about the commit it was built from, and no widget on it names the subject that would prove what it shows: where a page says verified, the word was placed by hand. CI runs the suite and the crate tests on every merge and keeps none of it in the ledger. A test that declined to run reads `failing`, while a case that declines by exiting zero is recorded as a pass. The rules module holds a second copy of the freshness derivation, the entry preflight proposed in PR #578 counts a run as current by a filter of its own with no containment test, and ADR 0068 and ADR 0080 disagree about where CI evidence goes. Each surface that wants to say verified derives it differently or not at all.",
+      "outcome": "Evidence is indexed by subject and judged at the presented revision, as ADR 0087 records. Every claim, rule, feature, command, capability, MCP tool and use case is a subject of one derived index, and every widget that states behaviour names one. Every surface reads its verdict from the tracked ledger alone, through one freshness function and one aggregation, at the revision it presents: the CLI and HTTP and MCP at the working tree or the checked-out commit, the site at the commit it was built from. A trunk run reaches the ledger through a reviewed recording pull request, and a supplementary record (a run record, coverage, a local row) can only weaken a verdict, naming itself when it does. Verified is rendered only for the one proven row of the freshness table, on every surface.",
+      "current_state": "On master at 5a0770c437 the tracked ledger holds local recordings only, and how many claims reach each state is what `majordomus evidence show --format json | jq .totals` prints. There is no subject index; the command-to-test join is derived in shell more than once (`scripts/generate-site-data`, `lib/commands.sh`, `scripts/ci/command-furnished`). `rules/mod.rs` carries its own `changed_since` and its own state mapping beside `evidence/mod.rs`. The decisions this milestone builds on are proposed and unlanded: ADR 0068 on PR #577 (CI evidence as an artifact and a published dataset), ADR 0080 on PR #629 (the recording branch, and the skip word), ADR 0071 on PR #600 (delivery dimensions, with a private containment implementation); PR #597 adds the rules corpus verdict and PR #578 the entry preflight.",
+      "desired_state": "A reader of any page of the site follows a widget's badge to the evidence of its subject and sees the verdict at the commit the page was built from, with the run that produced it and every record that weakened it. `majordomus evidence subject <key>` answers the same question from a terminal, over HTTP and over MCP, and the Cockpit shows the same verdict. A merge to master is followed by a recording pull request that moves claims to `proven`, a skipped test reads `not_run` with its reason, and no surface anywhere reads greener than the ledger for the revision it presents.",
+      "scope": [
+        ".ai/repo/adrs",
+        ".ai/repo/project",
+        ".ai/repo/evidence",
+        ".ai/repo/evidence-baseline.txt",
+        ".ai/repo/features/evidence.md",
+        ".ai/repo/ci",
+        "apps/majordomus-cli/src/evidence",
+        "apps/majordomus-cli/src/rules",
+        "apps/majordomus-cli/src/git",
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/commands/evidence.rs",
+        "apps/majordomus-cli/src/cockpit",
+        "apps/majordomus-cli/src/environment/preflight.rs",
+        "apps/majordomus-cli/src/redaction.rs",
+        ".github/workflows",
+        "scripts/ci",
+        "scripts/pages",
+        "scripts/generate-site-data",
+        "scripts/evidence-check",
+        "share/design/tokens.yaml",
+        "site/templates",
+        "site/data/registry/evidence-subjects.json",
+        "docs/EVIDENCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        "test/cases"
+      ],
+      "non_scope": [
+        "Accepting ADR 0041, 0068, 0080 or 0087; acceptance is the owner's act",
+        "Bumping the version; a pull request that moves the public surface inherits the version already on master by merging it",
+        "Judging a commit other than the checked-out one or the site's build commit",
+        "MCP resource templates per subject; evidence is reached through tool calls",
+        "Making the required `ci` check depend on the evidence job",
+        "New shell automation (ADR 0069)",
+        "A regex crate or any other new dependency for the redactor",
+        "Stamping use-case evidence with a commit in the committed catalogue"
+      ],
+      "acceptance_criteria": [
+        "Model: one freshness function, one presented revision, one containment and one aggregation judge every verdict, a skip reads `not_run`, and one derived index names every subject; proven by test/cases/502_evidence_is_judged_at_the_presented_revision.sh, test/cases/507_evidence_subjects_are_derived.sh and test/cases/501_verdict_words_are_status_words.sh",
+        "Producer: every recorded run carries the commit and tree it measured, a crate binary that ran nothing is a skip, CI's report is the tracked ledger's verdict derived before the run records, and a trunk run reaches the ledger through one recording pull request; proven by test/cases/505_a_recording_carries_what_its_run_measured.sh, test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh, test/cases/357_ci_records_evidence.sh, test/cases/510_ci_evidence_reaches_the_ledger_through_a_recording_branch.sh and test/cases/511_every_runner_report_carries_its_revision_and_reason.sh",
+        "Surfaces: the CLI, HTTP, MCP, the Cockpit and the entry preflight answer by subject from the one authority, and a supplementary record only weakens; proven by test/cases/508_evidence_answers_by_subject.sh, test/cases/509_supplementary_records_only_weaken.sh, test/cases/513_cockpit_shows_evidence.sh, test/cases/514_every_test_line_is_read.sh, test/cases/515_a_local_run_stays_local.sh and test/cases/529_the_preflight_reads_the_one_verdict.sh",
+        "Site: every widget names its subject, every subject has an evidence route, the publication is bound to its build and allow-listed, and published text is redacted once; proven by test/cases/504_public_text_is_redacted_once.sh, test/cases/512_evidence_publication_is_a_projection.sh, test/cases/516_evidence_routes_render_from_the_subject_index.sh, test/cases/517_a_panel_subject_is_joined_from_its_route.sh, test/cases/518_evidence_publication_is_bound_to_its_build.sh and test/cases/520_every_widget_names_its_proof.sh",
+        "Policy: subject findings refuse, the evidence baseline is rewritten in the same change, and the validator reads every widget; proven by test/cases/522_evidence_check_reads_widgets.sh and test/cases/523_evidence_rules_are_gated.sh",
+        "Tests: no surface is greener than the ledger, the badge works in a browser at phone width, tampered evidence is refused, and coverage is shown with its commit; proven by test/cases/524_no_surface_is_greener_than_the_ledger.sh, test/cases/525_an_evidence_badge_works_in_a_browser.sh, test/cases/526_tampered_evidence_is_refused.sh and test/cases/527_coverage_is_shown_with_its_commit.sh",
+        "Docs: the evidence reference names what the code declares and is held to the tree; proven by test/cases/528_the_evidence_reference_is_held_to_the_tree.sh",
+        "Deploy: a deploy verifies the evidence routes it publishes, and the evidence survives artifact expiry on gh-pages; proven by test/cases/521_deploy_verifies_evidence_routes.sh, test/cases/519_evidence_survives_artifact_expiry.sh and the live page https://majordomus.dev/evidence/"
+      ],
+      "validation": [
+        "bin/majordomus adr check",
+        "bin/majordomus plan validate",
+        "bin/majordomus-cli evidence show --check",
+        "scripts/evidence-check",
+        "scripts/ci/claim-proof-check --strict",
+        "bash test/run.sh",
+        "cargo test --workspace --all-features",
+        "majordomus generate --check",
+        "scripts/ci/pages-check"
+      ],
+      "evidence_required": [
+        "one_authority_one_freshness",
+        "subjects_derived_once",
+        "runs_measured_where_they_ran",
+        "no_surface_greener_than_the_ledger",
+        "every_widget_names_its_subject",
+        "publication_bound_to_its_build"
+      ],
+      "risks": [
+        "Until the recording branch runs, the tracked ledger holds only local rows and the site renders mostly `not_run`. That is the true state; the badges follow the CI wiring for that reason.",
+        "The decisions this milestone builds on are proposed on open pull requests (#577, #578, #597, #600, #629). A slice stacked on one of them waits for it, and the landing order is the owner's.",
+        "The recording pull request needs a token whose events start the required workflow. Until the owner chooses between dispatching validate.yml and an App token, the CI wiring slice cannot land.",
+        "Every landing makes the open slices' pull requests conflict on derived files; each is refreshed by merging master with the derived merge driver, never by a rebase."
+      ],
+      "evidence": [],
+      "issues": [
+        "I1945",
+        "I1946",
+        "I1947",
+        "I1948",
+        "I1949",
+        "I1950",
+        "I1951",
+        "I1952",
+        "I1953",
+        "I1954",
+        "I1955",
+        "I1956",
+        "I1957",
+        "I1958",
+        "I1959",
+        "I1960",
+        "I1961",
+        "I1962",
+        "I1963",
+        "I1964",
+        "I1965"
+      ],
+      "mermaid": "flowchart LR\n    I1945[\"I1945<br/>The test-evidence decision and its plan are recorded\"]:::active\n    I1946[\"I1946<br/>The verdict words are status words of the design system\"]:::ready\n    I1947[\"I1947<br/>Every feature reaches a test, and every use case has a feature\"]:::ready\n    I1948[\"I1948<br/>Evidence is judged at the presented revision, by one freshness function\"]:::ready\n    I1949[\"I1949<br/>CI evidence is recorded clean, and its report is the tracked ledger's verdict\"]:::ready\n    I1950[\"I1950<br/>Text a run printed is redacted by one rule set\"]:::ready\n    I1951[\"I1951<br/>Evidence runs are typed, and a recording carries what its run measured\"]:::blocked\n    I1952[\"I1952<br/>Evidence subjects are derived once, in Rust\"]:::blocked\n    I1953[\"I1953<br/>Evidence answers by subject, on every surface\"]:::blocked\n    I1954[\"I1954<br/>Every runner reaches the ledger, through the recording branch\"]:::blocked\n    I1955[\"I1955<br/>The evidence publication is an allow-listed projection\"]:::blocked\n    I1956[\"I1956<br/>The Cockpit shows evidence by subject\"]:::blocked\n    I1957[\"I1957<br/>Every test line is read, and a local run stays local\"]:::blocked\n    I1958[\"I1958<br/>Evidence has one route per subject, and every panel is joined to its subject\"]:::blocked\n    I1959[\"I1959<br/>The evidence publication is typed, bound to its build, and kept on gh-pages\"]:::blocked\n    I1960[\"I1960<br/>Every widget names its proof\"]:::blocked\n    I1961[\"I1961<br/>A deploy verifies the evidence routes it publishes\"]:::blocked\n    I1962[\"I1962<br/>The evidence gates read subject findings and widgets\"]:::blocked\n    I1963[\"I1963<br/>Evidence is tested end to end\"]:::blocked\n    I1964[\"I1964<br/>The evidence reference is documented and held to the tree\"]:::blocked\n    I1965[\"I1965<br/>The entry preflight reads the one verdict\"]:::blocked\n    I1946 --> I1958\n    I1946 --> I1960\n    I1947 --> I1952\n    I1948 --> I1951\n    I1948 --> I1952\n    I1948 --> I1965\n    I1949 --> I1951\n    I1950 --> I1955\n    I1951 --> I1953\n    I1951 --> I1954\n    I1952 --> I1953\n    I1952 --> I1958\n    I1952 --> I1962\n    I1953 --> I1955\n    I1953 --> I1956\n    I1953 --> I1962\n    I1954 --> I1959\n    I1955 --> I1957\n    I1955 --> I1958\n    I1955 --> I1959\n    I1956 --> I1963\n    I1958 --> I1960\n    I1958 --> I1961\n    I1959 --> I1960\n    I1959 --> I1961\n    I1959 --> I1963\n    I1960 --> I1962\n    I1960 --> I1963\n    I1962 --> I1964\n    I1963 --> I1964\n    classDef done stroke:#16a34a,fill:#052e16,stroke-width:2px\n    classDef active stroke:#2563eb,fill:#eff6ff,stroke-width:2px\n    classDef verify stroke:#7c3aed,fill:#f5f3ff,stroke-width:2px\n    classDef ready stroke:#0891b2,fill:#ecfeff,stroke-width:2px\n    classDef blocked stroke:#b45309,fill:#fffbeb,stroke-width:2px\n    classDef cancelled stroke:#6b7280,fill:#f9fafb,stroke-width:2px",
+      "counts": {
+        "total": 21,
+        "required": 21,
+        "by_status": {
+          "READY": 5,
+          "BLOCKED": 15,
+          "ACTIVE": 1,
           "VERIFY": 0,
           "DONE": 0,
           "CANCELLED": 0
@@ -13546,6 +13668,1336 @@
       "started_at": "2026-09-15",
       "verified_at": "",
       "completed_at": ""
+    },
+    {
+      "id": "I1945",
+      "slug": "evidence-subject-adr",
+      "milestone": "test-evidence",
+      "status": "ACTIVE",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The test-evidence decision and its plan are recorded",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [],
+      "scope": [
+        ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+        ".ai/repo/project/milestones/test-evidence.yaml",
+        ".ai/repo/project/issues",
+        "site/content/adrs/adr-0087.md"
+      ],
+      "non_scope": [
+        "Any code, script or case",
+        "docs/CLAIMS.yaml and docs/EVIDENCE.md",
+        "Accepting any ADR, which is the owner's act",
+        "A version bump"
+      ],
+      "objective": "Record the test-evidence design as ADR 0087 with status proposed, create the milestone test-evidence, and give every slice of the design one issue, so that `majordomus plan` tracks the work and each slice is held to one written definition.",
+      "why": "The design reconciles two proposed decisions that disagree about where CI evidence goes (ADR 0068 and ADR 0080) and defines what every surface reads. Without a record, each slice would carry its own reading of it, and the reconciliation would live only in a gitignored plan.",
+      "current_state": "The design exists only under tmp/plans, which is gitignored. No ADR, milestone or issue names the work.",
+      "desired_state": "ADR 0087 is proposed on master, the milestone test-evidence exists, and I1945 to I1965 describe the slices with their dependencies, so that `majordomus plan waves` orders them.",
+      "acceptance_criteria": [
+        "ADR 0087 has status proposed, cites ADR 0068, 0080 and 0071 by number and title only, and passes majordomus adr check",
+        "Its Decision amends ADR 0068 sentence by sentence, quoting each sentence it changes and listing every sentence that stands",
+        "The milestone and every issue pass majordomus plan validate with no failure",
+        "No prose states a number a command can compute; where one matters, the command is named"
+      ],
+      "validation": [
+        "bin/majordomus adr check",
+        "bin/majordomus plan validate",
+        "bash test/run.sh 28_no_hardcoded_values",
+        "bash test/run.sh 104_strict_derivation",
+        "scripts/ci/english-only-check",
+        "scripts/ci/diagram-check",
+        "scripts/derive-check"
+      ],
+      "evidence_required": [
+        "adr_proposed",
+        "plan_valid"
+      ],
+      "evidence": [],
+      "risk": "The ADR names proposed pull requests (#577, #578, #597, #600, #629) whose content may still change. It cites them by number and quotes only what it amends, so a later change to one of them shows as a quotation that no longer matches.",
+      "completion": "",
+      "started_at": "2026-09-26",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1946",
+      "slug": "verdicts-are-status-words",
+      "milestone": "test-evidence",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The verdict words are status words of the design system",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I1958",
+        "I1960"
+      ],
+      "scope": [
+        "share/design",
+        "share/cockpit/cockpit.css",
+        "apps/majordomus-cli/src/web/tokens.css",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "test/cases/501_verdict_words_are_status_words.sh"
+      ],
+      "non_scope": [
+        "Rust code: ProofState::token() belongs to I1948",
+        "Re-adding stale, pending or unknown, which are already filed",
+        "share/cockpit/src",
+        "docs/CLAIMS.yaml"
+      ],
+      "objective": "File the proof-state verdict words as hyphenated status tokens with a declared role, so that every surface renders a verdict through the design system and a verdict added later must get a role before it can render (ADR 0087 decision 13).",
+      "why": "The verdict words proven, inputs-unchanged, failing, unrunnable, not-run and no-test are not status tokens, so a surface that wants to colour a verdict has to invent a mapping. The token name pattern refuses underscores, so the keys are the wire words with hyphens.",
+      "current_state": "share/design/tokens.yaml files stale, pending and unknown under status.states, and none of the verdict words above. share/cockpit/cockpit.css is compiled from the tokens and carries no selector for them.",
+      "desired_state": "Each verdict word is filed exactly once under its role (proven ok; inputs-unchanged info; failing and unrunnable bad; not-run and no-test neutral), the derived stylesheets carry one selector per word, and a case reads the vocabulary from the executable's own schema rather than from a list.",
+      "acceptance_criteria": [
+        "Every word of the ProofState schema, with each underscore replaced by a hyphen, is filed exactly once in status.states under its declared role",
+        "A schema word the case's role table does not place fails the case, naming the word",
+        "scripts/cockpit-assets --check exits 0 over the rebuilt stylesheet"
+      ],
+      "validation": [
+        "bash test/run.sh 501_verdict_words_are_status_words",
+        "scripts/cockpit-assets --check"
+      ],
+      "evidence_required": [
+        "verdict_words_filed"
+      ],
+      "evidence": [],
+      "risk": "share/cockpit/cockpit.css is compiled and not merge=derived, so a conflict on it is resolved by rebuilding it with scripts/cockpit-assets, never by hand.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1947",
+      "slug": "every-feature-reaches-a-test",
+      "milestone": "test-evidence",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Every feature reaches a test, and every use case has a feature",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I1952"
+      ],
+      "scope": [
+        ".ai/repo/features/finish-contract.md",
+        ".ai/repo/features/commit.md",
+        ".ai/repo/features/install.md",
+        ".ai/repo/features/continuity.md",
+        ".ai/repo/features/cockpit.md",
+        ".ai/repo/features/deployments.md",
+        "apps/majordomus-cli/tests/cockpit.rs",
+        "test/cases/84_deployment_contract.sh",
+        "test/cases/503_every_use_case_has_a_feature.sh",
+        "docs/CLAIMS.yaml",
+        "docs/claims"
+      ],
+      "non_scope": [
+        "Editing any use case file",
+        ".ai/repo/features/finish-contract.md.tmp",
+        "docs/CLAIMS.yaml beyond the two rows this slice appends"
+      ],
+      "objective": "Give every active use case an owning feature, and give the cockpit and deployments features a claim naming their own tests, so that a homepage panel routed to a use case reaches a feature and every feature reaches a test through the subject index (ADR 0087 decision 9).",
+      "why": "The subject index derives subjects from existing declarations. A use case no feature names is a subject the index cannot place under a feature, and a feature with no claim reaches tests only through its rules. Nothing checks use-case ownership today.",
+      "current_state": "Some active use cases are named by no feature's use_cases list: `git grep <use-case-id> -- .ai/repo/features` is empty for each of them. .ai/repo/features/cockpit.md and .ai/repo/features/deployments.md carry no claims line.",
+      "desired_state": "Every active use case is named by at least one feature; the cockpit and deployments features each carry a claim whose test names it back; and a case fails, naming each one, when an active use case has no owning feature.",
+      "acceptance_criteria": [
+        "Every use case whose status is active is named by at least one feature, and the case fails naming each one that is not",
+        "The case fails when any list it reads is empty or a command in its pipeline fails",
+        "The cockpit and deployments features carry a claim each, and each claim's test names the claim id",
+        "bin/majordomus-cli product validate and bin/majordomus usecase validate pass"
+      ],
+      "validation": [
+        "bash test/run.sh 503_every_use_case_has_a_feature",
+        "bin/majordomus-cli product validate",
+        "bin/majordomus usecase validate",
+        "scripts/ci/claim-proof-check --strict"
+      ],
+      "evidence_required": [
+        "every_use_case_has_a_feature",
+        "every_feature_reaches_a_test"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1948",
+      "slug": "evidence-is-judged-at-the-presented-revision",
+      "milestone": "test-evidence",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Evidence is judged at the presented revision, by one freshness function",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I1951",
+        "I1952",
+        "I1965"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/git/mod.rs",
+        "apps/majordomus-cli/src/evidence/mod.rs",
+        "apps/majordomus-cli/src/evidence/freshness.rs",
+        "apps/majordomus-cli/src/evidence/ledger.rs",
+        "apps/majordomus-cli/src/rules/mod.rs",
+        "apps/majordomus-cli/src/rules/tests.rs",
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/commands/evidence.rs",
+        "docs/EVIDENCE.md",
+        "docs/DOCTRINE.md",
+        "docs/HOW_IT_WORKS.md",
+        "docs/CONCEPTS.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md",
+        "test/cases/502_evidence_is_judged_at_the_presented_revision.sh",
+        "test/cases/133_rule_graph.sh"
+      ],
+      "non_scope": [
+        "apps/majordomus-cli/src/environment: the entry preflight is I1965's",
+        "Changing evidence::changed_since, which PR #578 calls from the preflight",
+        "Adding a field to Execution or RunRef",
+        "A version bump"
+      ],
+      "objective": "Write the freshness table, the presented revision, containment and aggregation of ADR 0087 once each (decisions 4, 5, 7 and 8), so that evidence show can judge the checked-out commit by the ledger committed in it and every verdict comes from one derivation.",
+      "why": "The rules module holds a second copy of the freshness derivation, a skip reads failing, a plain maximum hides a failure behind an absence, and the corpus verdict proposed in PR #597 says proven over rules whose inputs are merely unchanged. No command judges a commit rather than the working tree.",
+      "current_state": "evidence/mod.rs and rules/mod.rs each derive freshness; containment lives privately in the delivery module of PR #600; PR #597 adds RulesVerdict, which accepts inputs_unchanged as proven. This slice is stacked on PR #597 (fix/a-verdict-says-what-was-proven), with its pull request into that branch.",
+      "desired_state": "evidence::freshness implements ADR 0087's freshness table and one aggregate() with failure precedence; `evidence show --presented <rev> --presented-tree <state>` judges the checked-out commit by its committed ledger and reads the working ledger's uncommitted executions through the monotone rule; containment lives in git/mod.rs; the rules module's copy is gone while evidence::changed_since stays byte-for-byte; RulesVerdict is proven only when every blocking rule is proven; ProofState::token() maps each wire word to its design token.",
+      "acceptance_criteria": [
+        "Each row of ADR 0087's freshness table is reached by a case assertion, and only row 10 yields proven",
+        "evidence show --presented refuses a revision that is not the checked-out commit, reads the ledger committed in it, and caps proven at stale over a clean failing run the working ledger holds uncommitted",
+        "A skip reads not_run with its reason, never failing and never proven",
+        "aggregate() returns failing whenever any part fails, before any absence",
+        "RulesVerdict is proven only when every blocking rule is proven",
+        "The rules module's own freshness derivation is removed, and evidence::changed_since is unchanged byte-for-byte",
+        "Merging with PR #578 in either order produces no conflict"
+      ],
+      "validation": [
+        "bash test/run.sh 502_evidence_is_judged_at_the_presented_revision",
+        "bash test/run.sh 133_rule_graph",
+        "bash test/run.sh 124_evidence",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "one_freshness_function",
+        "presented_revision_judged",
+        "failure_precedes_absence"
+      ],
+      "evidence": [],
+      "risk": "Stacked on PR #597, it lands with #597: merged into it, or retargeted to master after #597 lands. If scripts/ci/version-matches-surface asks for a bump, the slice stops and reports; it never bumps.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1949",
+      "slug": "the-ci-evidence-is-recorded-clean",
+      "milestone": "test-evidence",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "CI evidence is recorded clean, and its report is the tracked ledger's verdict",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I1951"
+      ],
+      "scope": [
+        ".github/workflows/validate.yml",
+        "scripts/ci/evidence-collect",
+        "scripts/pages",
+        "site/templates/evidence.html",
+        "docs/EVIDENCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims/evidence-recorded-in-ci.md",
+        "test/cases/357_ci_records_evidence.sh"
+      ],
+      "non_scope": [
+        "The behavioural-tests environment, the summary step and the ci-metrics-suite upload of the suite job",
+        "Moving suite.tsv out of the workspace, where the suite budget of PR #627 reads it",
+        "Any row of docs/CLAIMS.yaml other than the claim and note of evidence-recorded-in-ci",
+        "docs/EVIDENCE.md outside its Recorded in CI section",
+        "The leading comment and the article line of site/templates/evidence.html"
+      ],
+      "objective": "Fix PR #577 on its own branch so that the CI evidence job derives its report from the tracked ledger before it records the run's executions, every job that runs tests measures its tree where it ran, and the site publishes current only under ADR 0087's interim rule (decision 1).",
+      "why": "As PR #577 is written, the collector records first and derives the report after, so the transcript the site publishes as current is a verdict over the run's own rows from a checkout nobody measured. ADR 0087 amends ADR 0068 on exactly those sentences.",
+      "current_state": "PR #577 (feature/ci-records-evidence) records the run's executions, then runs evidence show, and publishes the result as current when the manifest's commit is the published commit. The producing jobs write their reports into their workspaces, and nothing measures those trees. This slice's branch is fix/the-ci-evidence-is-recorded-clean, with its pull request into feature/ci-records-evidence.",
+      "desired_state": "The evidence job derives its report over the tracked ledger as committed at the run's commit before it records; the suite and rust jobs measure their trees, excluding only their named outputs, and upload the measurement; scripts/pages evidence publishes current only when the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and nothing was absent, refused or failed, and otherwise stale or unknown, naming each reason.",
+      "acceptance_criteria": [
+        "The evidence job derives its report before it records, over the tracked ledger as committed at the run's commit",
+        "Every job that ran tests measures its tree, excluding only its named outputs, and the manifest carries each measurement",
+        "scripts/pages evidence publishes current only under ADR 0087's interim rule, and otherwise stale or unknown naming each reason",
+        "Case 357 asserts both halves, and this slice's own pull-request run shows crate executions and clean measured trees"
+      ],
+      "validation": [
+        "bash test/run.sh 357_ci_records_evidence"
+      ],
+      "evidence_required": [
+        "report_derived_before_recording",
+        "producer_trees_measured"
+      ],
+      "evidence": [],
+      "risk": "Stacked on PR #577, which conflicts with master and so gets no pull-request run of its own: this slice's acceptance is its own pull-request run. A run of #577 after it merges master is a gate of #577's landing, not of this slice.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1950",
+      "slug": "evidence-output-is-redacted-once",
+      "milestone": "test-evidence",
+      "status": "READY",
+      "wave": 0,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Text a run printed is redacted by one rule set",
+      "depends_on": [],
+      "blocked_by": [],
+      "dependents": [
+        "I1955"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/redaction.rs",
+        "apps/majordomus-cli/src/lib.rs",
+        "apps/majordomus-cli/tests/redaction.rs",
+        "test/fixtures/redaction",
+        "test/cases/504_public_text_is_redacted_once.sh"
+      ],
+      "non_scope": [
+        "lib/capture.sh and lib/usecase.sh: switching the shell to call Rust is a later change",
+        "apps/majordomus-cli/src/execution and apps/majordomus-cli/src/evidence",
+        "A new crate dependency",
+        "docs/CLAIMS.yaml: the publication slice claims the behaviour when it publishes text"
+      ],
+      "objective": "Port the credential table that lib/capture.sh applies into one Rust redactor, held equal to the shell table by one fixture, so that every text the evidence publication carries passes through one rule set (ADR 0087 decision 14).",
+      "why": "The publication will carry text a run printed, such as the tail of a failure's log. The repository has a shell credential table, a redactor for schema-marked fields of structured input, and a refusal of machine paths in published artifacts, but no function that turns printed text into public text.",
+      "current_state": "mj_capture_redact in lib/capture.sh applies MJ_CAPTURE_SECRETS and MJ_CAPTURE_SECRET_ASSIGN with sed; execution/redact.rs redacts schema-marked fields; generate::forbidden_in refuses machine paths and credential markers. The crate has no regex dependency.",
+      "desired_state": "apps/majordomus-cli/src/redaction.rs offers redact_secrets, normalise_machine_paths and public_text with hand-written matchers; one fixture holds it equal to the shell table; and its output passes generate::forbidden_in.",
+      "acceptance_criteria": [
+        "The Rust redactor and the shell table produce the same output on one shared fixture",
+        "The output of public_text passes generate::forbidden_in",
+        "cargo test --test redaction and the redaction doctests pass"
+      ],
+      "validation": [
+        "bash test/run.sh 504_public_text_is_redacted_once",
+        "cargo test --test redaction"
+      ],
+      "evidence_required": [
+        "one_redactor"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1951",
+      "slug": "evidence-runs-are-typed",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Evidence runs are typed, and a recording carries what its run measured",
+      "depends_on": [
+        "I1948",
+        "I1949"
+      ],
+      "blocked_by": [
+        "I1948",
+        "I1949"
+      ],
+      "dependents": [
+        "I1953",
+        "I1954"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/git/mod.rs",
+        "apps/majordomus-cli/src/evidence/provenance.rs",
+        "apps/majordomus-cli/src/evidence/run.rs",
+        "apps/majordomus-cli/src/evidence/coverage.rs",
+        "apps/majordomus-cli/src/evidence/record.rs",
+        "apps/majordomus-cli/src/evidence/ledger.rs",
+        "apps/majordomus-cli/src/evidence/mod.rs",
+        "apps/majordomus-cli/src/evidence/freshness.rs",
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/commands/evidence.rs",
+        "scripts/ci/evidence-collect",
+        "test/cases/505_a_recording_carries_what_its_run_measured.sh",
+        "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "docs/EVIDENCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md"
+      ],
+      "non_scope": [
+        "A second copy of the monotone rule: run records feed the one I1948 writes",
+        "Wiring the runners in CI, which is I1954's",
+        "A version bump"
+      ],
+      "objective": "Add the run record, the measured provenance, the coverage record and the crate count rule of ADR 0087 decisions 2, 6 and 12, and feed run records to the one monotone rule, so that a recording states the commit and tree its run measured and only what ran.",
+      "why": "The recorder stamps the commit and tree at record time rather than what the run measured, a crate binary summary that says ok is read as a pass even when nothing ran, and an evidence record call leaves no record of the run beside the ledger.",
+      "current_state": "record.rs stamps HEAD and the recorder's own tree; the crate parser reads ok as a pass without counting and without stripping colour codes; there is no run record, no coverage record, no evidence stamp and no --ledger local.",
+      "desired_state": "evidence stamp measures a run's commit and tree; evidence record --provenance stamps them, refuses a measured commit that is not HEAD, and records T as unknown without a measurement; each call writes an EvidenceRunRecord; coverage is an EvidenceCoverage, current only for its own commit with a clean tree; a crate binary that ran no test or a filtered subset is a skip; --ledger local writes an advisory local ledger, and the default still writes the tracked one.",
+      "acceptance_criteria": [
+        "A report whose measured commit is not HEAD is refused, and one without a measurement is recorded with T unknown",
+        "A crate binary that ran no test or a filtered subset is recorded as a skip, and one with a failed test as a failure, whatever colour codes its output carries",
+        "Each evidence record call writes a run record carrying its commit, its tree, its totals, what was absent and what was dropped",
+        "A clean failing run record caps a proven verdict at stale through the one monotone rule, naming the record",
+        "evidence record with no ledger flag still writes the tracked ledger"
+      ],
+      "validation": [
+        "bash test/run.sh 505_a_recording_carries_what_its_run_measured",
+        "bash test/run.sh 506_a_crate_binary_that_ran_nothing_is_not_a_pass",
+        "bash test/run.sh 124_evidence",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "provenance_measured_by_the_run",
+        "crate_count_rule",
+        "run_records_typed"
+      ],
+      "evidence": [],
+      "risk": "It needs the run reference of PR #577 (with I1949) and the tree state of I1948, and it is the second capability change of the chain, so it starts only after both have landed.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1952",
+      "slug": "evidence-subjects-are-derived",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Evidence subjects are derived once, in Rust",
+      "depends_on": [
+        "I1948",
+        "I1947"
+      ],
+      "blocked_by": [
+        "I1948",
+        "I1947"
+      ],
+      "dependents": [
+        "I1953",
+        "I1958",
+        "I1962"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/evidence/subject.rs",
+        "apps/majordomus-cli/src/evidence/mod.rs",
+        "apps/majordomus-cli/src/rules/mod.rs",
+        "apps/majordomus-cli/src/generate.rs",
+        "apps/majordomus-cli/tests/generated_documents.rs",
+        "share/schemas/generated/site-evidence-subjects.schema.json",
+        "site/data/registry/evidence-subjects.json",
+        "test/cases/507_evidence_subjects_are_derived.sh",
+        "docs/EVIDENCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".gitattributes"
+      ],
+      "non_scope": [
+        "site/data/generated, which scripts/generate-site-data owns and replaces wholesale",
+        "An authored list of subjects",
+        "A capability: the index is read by I1953",
+        "Making subject findings refuse, which is I1962's"
+      ],
+      "objective": "Derive the subject index of ADR 0087 decision 9 from existing declarations, compute a subject's verdict over its members through the one aggregation, and have majordomus generate write it as site/data/registry/evidence-subjects.json.",
+      "why": "Nothing ties a widget to a subject, and the command-to-test join is derived in shell more than once, with different rules for which header line counts.",
+      "current_state": "No subject index exists. scripts/generate-site-data derives the tests of commands.json, lib/commands.sh reads the first header line, and scripts/ci/command-furnished reads any line.",
+      "desired_state": "evidence::subject derives claim, rule, feature, command, capability, mcp and use_case subjects; RuleState::as_proof() is the one declared mapping from a rule state; subject findings are a separate, advisory list; majordomus generate writes site/data/registry/evidence-subjects.json, declared in docs/generated/artifacts.json so its merge is derived; and a case holds the shell derivations equal to the index.",
+      "acceptance_criteria": [
+        "The index is written only by majordomus generate, to site/data/registry/evidence-subjects.json, and holds no ledger content and no commit",
+        "A subject's verdict is computed over its members' own verdicts, a rule member contributing through RuleState::as_proof()",
+        "A case holds the tests of commands.json equal to the index's command routes",
+        "Subject findings never enter the claim report's findings"
+      ],
+      "validation": [
+        "bash test/run.sh 507_evidence_subjects_are_derived",
+        "majordomus generate --check",
+        "cargo test --workspace --all-features"
+      ],
+      "evidence_required": [
+        "subjects_derived_once",
+        "parity_with_shell_derivations"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1953",
+      "slug": "evidence-answers-by-subject",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Evidence answers by subject, on every surface",
+      "depends_on": [
+        "I1952",
+        "I1951"
+      ],
+      "blocked_by": [
+        "I1952",
+        "I1951"
+      ],
+      "dependents": [
+        "I1955",
+        "I1956",
+        "I1962"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/commands/evidence.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/evidence/supplementary.rs",
+        "apps/majordomus-cli/src/evidence/mod.rs",
+        "apps/majordomus-cli/src/evidence/subject.rs",
+        "test/cases/508_evidence_answers_by_subject.sh",
+        "test/cases/509_supplementary_records_only_weaken.sh",
+        "docs/EVIDENCE.md",
+        "docs/HOW_IT_WORKS.md",
+        "docs/README.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md"
+      ],
+      "non_scope": [
+        "MCP resource templates per subject",
+        "A version bump"
+      ],
+      "objective": "Add the evidence.subject, evidence.coverage, evidence.runs and evidence.run capabilities, so that the CLI, HTTP and MCP answer by subject from the one authority and read supplementary records only through the monotone rule (ADR 0087 decision 3).",
+      "why": "Only claims and rules can be asked about today. A feature, a command, a capability, an MCP tool and a use case have no answer, although each is what a reader of the site or the Cockpit is looking at.",
+      "current_state": "evidence show, evidence claim and evidence proves answer by claim; rules answers by rule; nothing answers for any other subject, and nothing lists run or coverage records.",
+      "desired_state": "majordomus evidence subject <key>, evidence coverage, evidence runs and evidence run <id> exist as declared capabilities served over the CLI, HTTP and MCP tool calls; an unknown subject exits 13; supplementary records are listed beside the verdict and applied only through the monotone rule.",
+      "acceptance_criteria": [
+        "Every subject kind of the index answers through evidence subject with the same verdict over the CLI, HTTP and MCP",
+        "An unknown subject is refused with exit 13",
+        "A supplementary record only ever weakens a verdict, and each weakening names its record",
+        "Coverage is shown as current only for its own commit with a clean tree"
+      ],
+      "validation": [
+        "bash test/run.sh 508_evidence_answers_by_subject",
+        "bash test/run.sh 509_supplementary_records_only_weaken",
+        "majordomus generate --check"
+      ],
+      "evidence_required": [
+        "answers_by_subject",
+        "supplementary_only_weakens"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1954",
+      "slug": "every-runner-reaches-the-ledger",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 2,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Every runner reaches the ledger, through the recording branch",
+      "depends_on": [
+        "I1951"
+      ],
+      "blocked_by": [
+        "I1951"
+      ],
+      "dependents": [
+        "I1959"
+      ],
+      "scope": [
+        ".github/workflows/validate.yml",
+        "scripts/ci/evidence-collect",
+        "scripts/rust-check",
+        "scripts/rust-coverage",
+        "scripts/shell-coverage",
+        "test/run.sh",
+        "test/cases/94_ci_plan.sh",
+        "test/cases/357_ci_records_evidence.sh",
+        "test/cases/510_ci_evidence_reaches_the_ledger_through_a_recording_branch.sh",
+        "test/cases/511_every_runner_report_carries_its_revision_and_reason.sh",
+        ".ai/repo/automation/inventory.jsonl",
+        "docs/EVIDENCE.md",
+        "docs/COVERAGE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md",
+        ".ai/repo/features/ci.md",
+        ".ai/repo/features/coverage.md"
+      ],
+      "non_scope": [
+        "Committing the ledger from a validating run",
+        "New shell automation (ADR 0069)",
+        "Making the required ci check depend on the evidence job"
+      ],
+      "objective": "Wire the trunk's runs to the recording branch of ADR 0080 and every runner to a measured report, so that a merge to master is followed by one recording pull request that changes only the ledger (ADR 0087 decisions 1, 6 and 16).",
+      "why": "CI runs every test on every merge and keeps none of it in the tracked ledger. Until this lands, the ledger holds only local rows and the site renders mostly not_run.",
+      "current_state": "No workflow records CI's executions into the tracked ledger. The suite runner's report has no reason column and no measurement, and the crate and coverage runners emit no provenance.",
+      "desired_state": "A trunk run, after a merge and on a schedule, records with --origin ci and with the provenance evidence stamp measured, and opens at most one recording pull request whose diff is the ledger, by a token whose events start the required workflow; every runner's report carries its revision and the reason a case did not pass.",
+      "acceptance_criteria": [
+        "A trunk run's executions reach the tracked ledger only through a recording pull request whose diff is the ledger alone, and at most one such pull request is open",
+        "The recording pull request starts the required workflow, by the token the owner chose",
+        "Every runner's report carries the commit and tree its run measured, and a case that did not pass carries its reason"
+      ],
+      "validation": [
+        "bash test/run.sh 510_ci_evidence_reaches_the_ledger_through_a_recording_branch",
+        "bash test/run.sh 511_every_runner_report_carries_its_revision_and_reason",
+        "bash test/run.sh 357_ci_records_evidence",
+        "bash test/run.sh 94_ci_plan"
+      ],
+      "evidence_required": [
+        "recording_branch_wired",
+        "runner_reports_measured"
+      ],
+      "evidence": [],
+      "risk": "It also waits on PR #629 (the skip word), PR #587 (new shell refused), PR #566 and PR #355, and on the owner's choice of token (ADR 0087 decision 16). Each recording costs a full suite run.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1955",
+      "slug": "evidence-publication-is-a-projection",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The evidence publication is an allow-listed projection",
+      "depends_on": [
+        "I1953",
+        "I1950"
+      ],
+      "blocked_by": [
+        "I1953",
+        "I1950"
+      ],
+      "dependents": [
+        "I1957",
+        "I1958",
+        "I1959"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/evidence",
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/commands/evidence.rs",
+        "apps/majordomus-cli/tests/evidence_publication.rs",
+        "test/cases/512_evidence_publication_is_a_projection.sh",
+        "docs/EVIDENCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md"
+      ],
+      "non_scope": [
+        "scripts/pages and the site build, which are I1959's",
+        "A version bump"
+      ],
+      "objective": "Add evidence publish, which reads the ledger committed at the presented commit, the run records and coverage, applies the monotone rule, and writes an allow-listed publication with its publication state, carrying text only through the one redactor (ADR 0087 decisions 3 and 14).",
+      "why": "The site needs a typed dataset whose verdicts are the tracked ledger's at the build commit. The interim publication of ADR 0068 computes its state in a shell script.",
+      "current_state": "scripts/pages evidence (PR #577, with I1949) writes site/data/evidence.json from a CI artifact; no typed publication exists.",
+      "desired_state": "majordomus evidence publish --presented <commit> --presented-tree <state> --from <dir> --out <dir> writes an EvidencePublication whose states are current, stale, pending, unknown and dirty as ADR 0087 defines them, whose every field is on the allow-list, and whose every text has passed the redactor.",
+      "acceptance_criteria": [
+        "The publication carries only allow-listed fields, and a field off the list is not published",
+        "Every text it carries has passed the one redactor, and the artifact passes generate::forbidden_in",
+        "The publication state is current, stale, pending, unknown or dirty exactly as ADR 0087 decision 3 defines them",
+        "No verdict in it is stronger than the ledger committed at the presented commit"
+      ],
+      "validation": [
+        "bash test/run.sh 512_evidence_publication_is_a_projection",
+        "cargo test --test evidence_publication"
+      ],
+      "evidence_required": [
+        "publication_allow_listed",
+        "publication_states_defined"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1956",
+      "slug": "cockpit-shows-evidence",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 3,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The Cockpit shows evidence by subject",
+      "depends_on": [
+        "I1953"
+      ],
+      "blocked_by": [
+        "I1953"
+      ],
+      "dependents": [
+        "I1963"
+      ],
+      "scope": [
+        "apps/majordomus-cli/src/cockpit/nav.rs",
+        "apps/majordomus-cli/src/cockpit/mod.rs",
+        "apps/majordomus-cli/src/cockpit/pages.rs",
+        "apps/majordomus-cli/tests/cockpit_evidence.rs",
+        "test/cases/513_cockpit_shows_evidence.sh",
+        "docs/COCKPIT.md",
+        ".ai/repo/features/evidence.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims"
+      ],
+      "non_scope": [
+        ".ai/repo/features/cockpit.md, whose claims are I1947's",
+        "A verdict the subject answer does not give"
+      ],
+      "objective": "Show every subject's verdict in the Cockpit, read through the subject index from the tracked ledger at the working tree, with a separate, advisory local-run column that can only weaken it (ADR 0087 decision 3).",
+      "why": "The Cockpit renders rule, feature, capability, command, skill and provider pages, and none of them says what verifies the thing it shows.",
+      "current_state": "The Cockpit has no evidence area, and its pages carry no Verified by section.",
+      "desired_state": "A Cockpit evidence area, and a Verified by section on rule, feature, capability, command, skill and provider pages, each the answer of evidence subject for the page's subject; beside it, a local-run column that is advisory and applied through the monotone rule.",
+      "acceptance_criteria": [
+        "The Cockpit's Verified by section is the evidence subject answer for the page's subject",
+        "A local run can only weaken what the Cockpit shows, and the Cockpit says which run did"
+      ],
+      "validation": [
+        "bash test/run.sh 513_cockpit_shows_evidence",
+        "cargo test --test cockpit_evidence"
+      ],
+      "evidence_required": [
+        "cockpit_reads_the_subject_answer"
+      ],
+      "evidence": [],
+      "risk": "It edits Cockpit files that another session's pull request (#638) also edits, so it starts after that one lands.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1957",
+      "slug": "every-test-line-is-read",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "Every test line is read, and a local run stays local",
+      "depends_on": [
+        "I1955"
+      ],
+      "blocked_by": [
+        "I1955"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/evidence/adapters.rs",
+        "apps/majordomus-cli/src/evidence/local_runs.rs",
+        "apps/majordomus-cli/src/evidence/supplementary.rs",
+        "apps/majordomus-cli/src/evidence/record.rs",
+        "apps/majordomus-cli/src/evidence/run.rs",
+        "apps/majordomus-cli/src/evidence/ledger.rs",
+        "apps/majordomus-cli/src/evidence/freshness.rs",
+        "apps/majordomus-cli/src/evidence/mod.rs",
+        "apps/majordomus-cli/src/capability/builtin/evidence.rs",
+        "apps/majordomus-cli/src/cli.rs",
+        "apps/majordomus-cli/src/commands/evidence.rs",
+        "apps/majordomus-cli/src/web/report/tests.rs",
+        "apps/majordomus-cli/tests/evidence_local_runs.rs",
+        "test/fixtures/evidence-adapters",
+        "test/cases/514_every_test_line_is_read.sh",
+        "test/cases/515_a_local_run_stays_local.sh",
+        "docs/EVIDENCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md"
+      ],
+      "non_scope": [
+        "A change of the ledger's version",
+        "apps/majordomus-cli/src/evidence/public.rs and subject.rs, beyond a literal the compiler names"
+      ],
+      "objective": "Read each runner's per-test lines into the execution (case results, detail and dropped lines), add evidence record --run suite and the local run index, and move the web report onto the same typed adapters.",
+      "why": "An execution records one outcome per test file, so a failure's reason and a line no claim names are lost, and a local run has nowhere to be kept apart from the tracked ledger.",
+      "current_state": "Execution carries no per-case results and no detail; web/report/tests.rs parses runner output on its own; no local run index exists.",
+      "desired_state": "Per-runner adapters fill Execution.cases and Execution.detail and list every line they drop; evidence record --run suite stamps its own run and appends it to .ai/local/evidence/runs/, bounded; web/report/tests.rs reads the same adapters.",
+      "acceptance_criteria": [
+        "Every line a runner prints is either read into a case result or listed as dropped",
+        "A local run is kept only under .ai/local/evidence/runs/, bounded, and never reaches the tracked ledger",
+        "web/report/tests.rs reads the same adapters as the recorder"
+      ],
+      "validation": [
+        "bash test/run.sh 514_every_test_line_is_read",
+        "bash test/run.sh 515_a_local_run_stays_local"
+      ],
+      "evidence_required": [
+        "every_test_line_read",
+        "local_run_stays_local"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1958",
+      "slug": "evidence-has-routes",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Evidence has one route per subject, and every panel is joined to its subject",
+      "depends_on": [
+        "I1952",
+        "I1946",
+        "I1955"
+      ],
+      "blocked_by": [
+        "I1952",
+        "I1946",
+        "I1955"
+      ],
+      "dependents": [
+        "I1960",
+        "I1961"
+      ],
+      "scope": [
+        "scripts/generate-site-data",
+        "scripts/lib/panel-subjects.jq",
+        "site/content-src/evidence.md",
+        "site/content-src/evidence",
+        "site/templates/evidence.html",
+        "site/data/nav.toml",
+        "test/cases/516_evidence_routes_render_from_the_subject_index.sh",
+        "test/cases/517_a_panel_subject_is_joined_from_its_route.sh",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".gitattributes"
+      ],
+      "non_scope": [
+        "Deriving a subject in shell or jq beyond the join",
+        "The badge, which is I1960's"
+      ],
+      "objective": "Generate one evidence route per subject from site/data/registry/evidence-subjects.json, as sections of the one evidence template, and join every homepage panel to its subject by its route, failing generation for a subject the index does not have (ADR 0087 decision 9).",
+      "why": "The site only joins to the index. Today no panel names a subject, and /evidence/ is one page.",
+      "current_state": "/evidence/ is a single page whose CI view is the Recorded by CI section of PR #577; panels carry a route and no subject; the tests of commands.json are derived in shell.",
+      "desired_state": "/evidence/ is a section with a child per subject kind, plus suites, coverage and runs; the Recorded by CI section becomes the runs section; scripts/generate-site-data sets each panel's subject by joining its route to an index key and passes the executable's refusal through; the tests of commands.json are read from the artifact.",
+      "acceptance_criteria": [
+        "Every subject of the index has a route, and no route exists for a subject the index does not have",
+        "Every panel carries the subject its route joins to, or an explicit illustration marker, and an unknown subject fails generation with the executable's refusal",
+        "The Recorded by CI section is folded into the runs section"
+      ],
+      "validation": [
+        "bash test/run.sh 516_evidence_routes_render_from_the_subject_index",
+        "bash test/run.sh 517_a_panel_subject_is_joined_from_its_route"
+      ],
+      "evidence_required": [
+        "routes_from_the_index",
+        "panels_joined_to_subjects"
+      ],
+      "evidence": [],
+      "risk": "It also waits on PR #621 and PR #626, which change the templates it edits.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1959",
+      "slug": "evidence-publication-is-typed",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 4,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The evidence publication is typed, bound to its build, and kept on gh-pages",
+      "depends_on": [
+        "I1955",
+        "I1954"
+      ],
+      "blocked_by": [
+        "I1955",
+        "I1954"
+      ],
+      "dependents": [
+        "I1960",
+        "I1961",
+        "I1963"
+      ],
+      "scope": [
+        "scripts/pages",
+        "scripts/site-build",
+        "scripts/site-deploy",
+        "scripts/ci/link-check",
+        ".github/workflows/pages.yml",
+        ".github/workflows/validate.yml",
+        ".ai/repo/ci/pages.yaml",
+        ".gitignore",
+        "test/cases/518_evidence_publication_is_bound_to_its_build.sh",
+        "test/cases/519_evidence_survives_artifact_expiry.sh",
+        "test/cases/357_ci_records_evidence.sh",
+        "docs/EVIDENCE.md",
+        "docs/GITHUB_PAGES_ARCHITECTURE.md",
+        "docs/GITHUB_PAGES_PERFORMANCE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/ci.md"
+      ],
+      "non_scope": [
+        "A new shell unit",
+        "A verdict computed in the script"
+      ],
+      "objective": "Make scripts/pages call evidence publish in the build's checkout, refuse a dataset that is not bound to the build, and keep each deployed revision's evidence on gh-pages under evidence/<sha>/, retiring the interim publication of PR #577 (ADR 0087 decision 3).",
+      "why": "ADR 0087 retires the interim Recorded by CI publication once the script calls evidence publish, and CI artifacts expire, so the evidence of a deployed revision has to outlive them.",
+      "current_state": "scripts/pages evidence (PR #577 with I1949) computes its own publication state in shell; nothing refuses a dataset for another commit; the evidence exists only as a CI artifact.",
+      "desired_state": "scripts/pages evidence calls majordomus evidence publish; site-build refuses a dataset whose presented commit is not build.json.commit and any proven whose evidence commit the build does not contain; gh-pages keeps evidence/<sha>/ for every deployed revision; the artifact listing is paginated.",
+      "acceptance_criteria": [
+        "The site's evidence dataset is produced only by evidence publish, run in the build's checkout",
+        "site-build refuses a dataset for another commit, and a proven whose evidence commit the build does not contain",
+        "A deployed revision's evidence stays reachable on gh-pages after its CI artifact expires"
+      ],
+      "validation": [
+        "bash test/run.sh 518_evidence_publication_is_bound_to_its_build",
+        "bash test/run.sh 519_evidence_survives_artifact_expiry"
+      ],
+      "evidence_required": [
+        "publication_bound_to_its_build",
+        "evidence_outlives_artifacts"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1960",
+      "slug": "every-widget-names-its-proof",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Every widget names its proof",
+      "depends_on": [
+        "I1958",
+        "I1959",
+        "I1946"
+      ],
+      "blocked_by": [
+        "I1958",
+        "I1959",
+        "I1946"
+      ],
+      "dependents": [
+        "I1962",
+        "I1963"
+      ],
+      "scope": [
+        "site/templates/partials/evidence-badge.html",
+        "site/templates/partials/terminal-figure.html",
+        "site/templates/partials/terminal.html",
+        "site/templates/partials/cli-examples.html",
+        "site/templates/partials/api-operation.html",
+        "site/templates/partials/proof.html",
+        "site/templates/index.html",
+        "site/templates/feature.html",
+        "site/templates/claim.html",
+        "site/templates/use-case.html",
+        "site/templates/components.html",
+        "site/data/homepage.toml",
+        "scripts/ci/homepage-check",
+        "apps/majordomus-cli/src/delivery/mod.rs",
+        "test/cases/520_every_widget_names_its_proof.sh",
+        "test/cases/333_homepage_narrative.sh",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md"
+      ],
+      "non_scope": [
+        "Alpine, details elements or an interaction spec for the badge",
+        "A count or a percentage written into a template",
+        "Custom CSS or an inline style"
+      ],
+      "objective": "Render one evidence badge on every widget that states behaviour, linking to its subject's route with the verdict at the published commit, and compute the delivery report's required_tests_current and test_evidence_published dimensions as ADR 0087 decision 3 says.",
+      "why": "Nothing ties a site widget to a subject: where a page says verified, the word was placed by hand, and the delivery report's test dimensions are pending for want of a verdict to read.",
+      "current_state": "Widgets carry no subject badge; the proof partial of PR #626 is a separate component; the delivery dimensions are pending on PR #600.",
+      "desired_state": "One partial, evidence-badge.html, is a plain link with a glyph, a text and a label, and renders unknown for a subject missing from the dataset, never nothing; every widget header carries it and the proof partial is absorbed into it; homepage-check budgets bytes per badge; required_tests_current passes only on a proven subject verdict at the trunk revision, and test_evidence_published reads the site's publication.",
+      "acceptance_criteria": [
+        "Every widget that states behaviour carries one badge linking to its subject's route, and a subject missing from the dataset renders unknown",
+        "The badge renders verified only for a proven verdict at the published commit",
+        "The badge is a plain link that works without JavaScript and fits a phone-width viewport",
+        "Each badge stays under its byte ceiling in homepage-check",
+        "The delivery report's test dimensions read the subject verdict and the site's publication, and never a CI run's own rows"
+      ],
+      "validation": [
+        "bash test/run.sh 520_every_widget_names_its_proof",
+        "bash test/run.sh 333_homepage_narrative",
+        "scripts/ci/homepage-check"
+      ],
+      "evidence_required": [
+        "every_widget_names_its_subject",
+        "delivery_test_dimensions_computed"
+      ],
+      "evidence": [],
+      "risk": "It also waits on PR #593, PR #600, PR #621 and PR #626; the delivery module exists only once PR #600 has landed.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1961",
+      "slug": "deploy-verifies-evidence-routes",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 5,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "A deploy verifies the evidence routes it publishes",
+      "depends_on": [
+        "I1959",
+        "I1958"
+      ],
+      "blocked_by": [
+        "I1959",
+        "I1958"
+      ],
+      "dependents": [],
+      "scope": [
+        "scripts/ci/pages-check",
+        "scripts/pages",
+        ".github/workflows/pages.yml",
+        "test/cases/521_deploy_verifies_evidence_routes.sh",
+        "docs/CLAIMS.yaml",
+        "docs/claims/deploy-verifies-evidence-routes.md",
+        ".ai/repo/features/ci.md"
+      ],
+      "non_scope": [
+        "A hand-declared list of routes to verify"
+      ],
+      "objective": "Make pages-check probe the evidence routes a deploy published, deriving the probes from the published evidence-subjects.json rather than from a hand-written list.",
+      "why": "A route the build generated and the deploy lost is a badge that links nowhere. ADR 0087 names the deploy check as one mechanism against a badge verified for a revision it did not test.",
+      "current_state": "scripts/ci/pages-check verifies the published site and knows nothing of evidence routes.",
+      "desired_state": "pages-check reads the published subject index and probes the evidence index, the first subject of each kind, coverage and runs, and refuses published evidence that does not name the deployed commit.",
+      "acceptance_criteria": [
+        "The probes are derived from the published subject index, and a route missing from the deploy fails the check naming it",
+        "Published evidence that does not name the deployed commit is refused"
+      ],
+      "validation": [
+        "bash test/run.sh 521_deploy_verifies_evidence_routes"
+      ],
+      "evidence_required": [
+        "deploy_verifies_evidence_routes"
+      ],
+      "evidence": [],
+      "risk": "It also waits on PR #593.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1962",
+      "slug": "evidence-check-reads-widgets",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": false,
+      "title": "The evidence gates read subject findings and widgets",
+      "depends_on": [
+        "I1960",
+        "I1953",
+        "I1952"
+      ],
+      "blocked_by": [
+        "I1960",
+        "I1953",
+        "I1952"
+      ],
+      "dependents": [
+        "I1964"
+      ],
+      "scope": [
+        "scripts/evidence-check",
+        ".ai/repo/evidence-baseline.txt",
+        "scripts/rust-coverage",
+        "lib/commands.sh",
+        "scripts/ci/command-furnished",
+        "scripts/ci/surface-coverage",
+        "scripts/lib/evidence-widgets.mjs",
+        "scripts/lib/interactions.mjs",
+        "scripts/site-check",
+        ".ai/repo/automation/inventory.jsonl",
+        ".ai/repo/ci/gates.yaml",
+        ".ai/repo/rules/project/no-stable-feature-without-a-test.v1.md",
+        ".ai/repo/rules/project/a-widget-names-its-evidence-subject.v1.md",
+        ".ai/repo/features/evidence.md",
+        ".ai/repo/features/coverage.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        "test/cases/522_evidence_check_reads_widgets.sh",
+        "test/cases/523_evidence_rules_are_gated.sh"
+      ],
+      "non_scope": [
+        "Weakening the baseline's ratchet"
+      ],
+      "objective": "Make subject findings refusing, rewriting the evidence baseline in the same change, and make the evidence validator read every rendered widget, so that a widget without a subject or a count hard-coded into a template fails CI (ADR 0087 decision 10).",
+      "why": "Subject findings stay advisory until a gate reads them, and ADR 0087 names this validator as the mechanism against a widget without a subject and a hard-coded count.",
+      "current_state": "scripts/evidence-check ratchets claims only; subject findings are advisory; no gate reads the site's widgets for a subject; lib/commands.sh and scripts/ci/command-furnished derive command coverage in shell.",
+      "desired_state": "evidence-check refuses a subject finding beyond the rewritten baseline; a stable feature without evidence and a widget without a subject each fail a gate by name; the shell command-coverage readers read the index artifact or are held equal to it by a case.",
+      "acceptance_criteria": [
+        "Subject findings refuse, and the baseline is rewritten in the same change, with its reason",
+        "A rendered widget without a subject fails the validator, naming the widget",
+        "A count or a percentage hard-coded into a template fails the validator",
+        "The shell command-coverage readers agree with the subject index"
+      ],
+      "validation": [
+        "bash test/run.sh 522_evidence_check_reads_widgets",
+        "bash test/run.sh 523_evidence_rules_are_gated",
+        "scripts/evidence-check"
+      ],
+      "evidence_required": [
+        "subject_findings_refuse",
+        "widgets_name_subjects"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1963",
+      "slug": "evidence-is-tested-end-to-end",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 6,
+      "priority": "p1",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "Evidence is tested end to end",
+      "depends_on": [
+        "I1960",
+        "I1956",
+        "I1959"
+      ],
+      "blocked_by": [
+        "I1960",
+        "I1956",
+        "I1959"
+      ],
+      "dependents": [
+        "I1964"
+      ],
+      "scope": [
+        "test/cases/524_no_surface_is_greener_than_the_ledger.sh",
+        "test/cases/525_an_evidence_badge_works_in_a_browser.sh",
+        "test/cases/526_tampered_evidence_is_refused.sh",
+        "test/cases/527_coverage_is_shown_with_its_commit.sh",
+        "test/fixtures/evidence-end-to-end",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        ".ai/repo/features/evidence.md"
+      ],
+      "non_scope": [
+        "A change to code: a defect the cases find is reported to the slice that owns it",
+        "scripts/ui and interaction specs"
+      ],
+      "objective": "Prove across every surface that no surface is greener than the ledger, that the badge works in a browser, that tampered evidence is refused, and that coverage is shown with its commit.",
+      "why": "Each slice proves its own part. Only a case across surfaces can prove that they agree, which is what the anti-goal of a surface greener than the ledger requires.",
+      "current_state": "No case compares the verdict of one subject across the CLI, HTTP, MCP, the Cockpit and the site.",
+      "desired_state": "Cases cover the cross-surface comparison with the monotone rule; the badge in a browser at phone width, by click, deep link and keyboard; the refusal of a tampered dataset, ledger row and artifact; and the coverage view with its commit.",
+      "acceptance_criteria": [
+        "One subject reads the same verdict on every surface, and each difference names its record",
+        "The badge reaches its evidence by click, by deep link and by keyboard at phone width",
+        "A tampered dataset, ledger row or artifact is refused, never rendered",
+        "Coverage is shown with its commit, and never as current for another commit"
+      ],
+      "validation": [
+        "bash test/run.sh 524_no_surface_is_greener_than_the_ledger",
+        "bash test/run.sh 525_an_evidence_badge_works_in_a_browser",
+        "bash test/run.sh 526_tampered_evidence_is_refused",
+        "bash test/run.sh 527_coverage_is_shown_with_its_commit"
+      ],
+      "evidence_required": [
+        "no_surface_greener_than_the_ledger",
+        "badge_works_in_a_browser",
+        "tampering_refused"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1964",
+      "slug": "evidence-is-documented",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 7,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The evidence reference is documented and held to the tree",
+      "depends_on": [
+        "I1962",
+        "I1963"
+      ],
+      "blocked_by": [
+        "I1962",
+        "I1963"
+      ],
+      "dependents": [],
+      "scope": [
+        "docs/EVIDENCE.md",
+        "docs/COVERAGE.md",
+        "docs/README.md",
+        "docs/CI.md",
+        "docs/GITHUB_PAGES_ARCHITECTURE.md",
+        "docs/CLAIMS.yaml",
+        "docs/claims",
+        "test/cases/528_the_evidence_reference_is_held_to_the_tree.sh",
+        ".ai/repo/features/evidence.md",
+        ".ai/repo/features/coverage.md",
+        ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+        ".ai/repo/evidence/README.md",
+        ".ai/repo/doc-command-baseline.txt"
+      ],
+      "non_scope": [
+        "A diagram in box art: a relationship is drawn in mermaid",
+        "Accepting ADR 0087, which is the owner's act"
+      ],
+      "objective": "Rewrite docs/EVIDENCE.md as the reference of the finished model, with the pipeline drawn in mermaid and a case named on every row of the matrix, and hold it to the tree with a case; cite ADR 0068, 0080 and 0087 structurally once they have landed.",
+      "why": "docs/EVIDENCE.md is shared by section while the work runs, so it can describe the finished model only after the slices land, and a reference that names what the code no longer declares is a stale projection.",
+      "current_state": "docs/EVIDENCE.md describes the ledger and its states; its sections are edited by I1948 and I1949 while the work runs.",
+      "desired_state": "The reference names every command, capability, state and file the code declares for evidence, draws the pipeline in mermaid, and a case fails when it names something the tree does not have or omits something it does.",
+      "acceptance_criteria": [
+        "The reference names what the code declares, and the case fails on a name the tree does not have",
+        "Every row of the matrix names a case",
+        "The pipeline is a mermaid diagram and passes diagram-check"
+      ],
+      "validation": [
+        "bash test/run.sh 528_the_evidence_reference_is_held_to_the_tree",
+        "scripts/ci/diagram-check"
+      ],
+      "evidence_required": [
+        "reference_held_to_the_tree"
+      ],
+      "evidence": [],
+      "risk": "",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
+    },
+    {
+      "id": "I1965",
+      "slug": "the-preflight-reads-the-one-verdict",
+      "milestone": "test-evidence",
+      "status": "BLOCKED",
+      "wave": 1,
+      "priority": "p2",
+      "profile": "implementation",
+      "parallel_safe": true,
+      "title": "The entry preflight reads the one verdict",
+      "depends_on": [
+        "I1948"
+      ],
+      "blocked_by": [
+        "I1948"
+      ],
+      "dependents": [],
+      "scope": [
+        "apps/majordomus-cli/src/environment/preflight.rs",
+        "test/cases/529_the_preflight_reads_the_one_verdict.sh"
+      ],
+      "non_scope": [
+        "A capability declaration or an output schema change: if one proves necessary, the slice stops and joins the capability chain after I1953",
+        "apps/majordomus-cli/src/evidence and apps/majordomus-cli/src/rules"
+      ],
+      "objective": "Move the entry preflight's verification.tests check onto the freshness function and its verification.enforcement check onto the rules corpus verdict, ending the one known exception ADR 0087 names in decisions 3 and 4. It depends on PR #578 as well as on I1948, because the preflight exists only on #578.",
+      "why": "The preflight proposed in PR #578 counts a run as current by a filter of its own, with no containment test, and recounts rules::report instead of reading RulesVerdict. The entry briefing, the Cockpit overview, /api/v1/environment/preflight and the MCP tool majordomus_preflight render it, so every entry surface carries a second derivation of proven.",
+      "current_state": "The preflight exists only on PR #578 (feature/entry-proves-what-is-active). Its observe_ledger calls evidence::changed_since and matches digests with no containment test; its enforcement_check compares the proven count with the owed count.",
+      "desired_state": "observe_ledger judges each recorded run through the freshness function, with the test source as its input, at the working tree: a run counts as current only when proven, as failing only on a failure, and a skip as not run. enforcement_check says verified only when RulesVerdict is proven. The cache keeps its fingerprint, and no capability declaration or schema changes.",
+      "acceptance_criteria": [
+        "A run recorded on a commit HEAD does not contain, with an identical tree, is not current",
+        "A corpus whose blocking rule is only inputs_unchanged is not verified",
+        "A skip is counted as not run, never as a failure",
+        "The entry briefing and the Cockpit overview render the verdict evidence show gives"
+      ],
+      "validation": [
+        "bash test/run.sh 529_the_preflight_reads_the_one_verdict"
+      ],
+      "evidence_required": [
+        "preflight_reads_the_one_verdict"
+      ],
+      "evidence": [],
+      "risk": "It starts only once PR #578 and PR #597, carrying I1948's slice, are both on master. The case name is this slice's to confirm when it is written.",
+      "completion": "",
+      "started_at": "",
+      "verified_at": "",
+      "completed_at": ""
     }
   ],
   "waves": [
@@ -13582,7 +15034,13 @@
         "I1510",
         "I1511",
         "I1512",
-        "I1520"
+        "I1520",
+        "I1945",
+        "I1946",
+        "I1947",
+        "I1948",
+        "I1949",
+        "I1950"
       ]
     },
     {
@@ -13616,7 +15074,10 @@
         "I1302",
         "I1402",
         "I1405",
-        "I1505"
+        "I1505",
+        "I1951",
+        "I1952",
+        "I1965"
       ]
     },
     {
@@ -13654,7 +15115,9 @@
         "I1303",
         "I1304",
         "I1404",
-        "I1506"
+        "I1506",
+        "I1953",
+        "I1954"
       ]
     },
     {
@@ -13695,7 +15158,9 @@
         "I1403",
         "I1407",
         "I1408",
-        "I1507"
+        "I1507",
+        "I1955",
+        "I1956"
       ]
     },
     {
@@ -13735,7 +15200,10 @@
         "I1207",
         "I1306",
         "I1307",
-        "I1309"
+        "I1309",
+        "I1957",
+        "I1958",
+        "I1959"
       ]
     },
     {
@@ -13763,7 +15231,9 @@
         "I1111",
         "I1112",
         "I1206",
-        "I1310"
+        "I1310",
+        "I1960",
+        "I1961"
       ]
     },
     {
@@ -13783,7 +15253,9 @@
         "I1114",
         "I1116",
         "I1121",
-        "I1208"
+        "I1208",
+        "I1962",
+        "I1963"
       ]
     },
     {
@@ -13796,7 +15268,8 @@
         "I1115",
         "I1118",
         "I1119",
-        "I1122"
+        "I1122",
+        "I1964"
       ]
     },
     {
@@ -14944,6 +16417,126 @@
     {
       "from": "I1506",
       "to": "I1507"
+    },
+    {
+      "from": "I1946",
+      "to": "I1958"
+    },
+    {
+      "from": "I1946",
+      "to": "I1960"
+    },
+    {
+      "from": "I1947",
+      "to": "I1952"
+    },
+    {
+      "from": "I1948",
+      "to": "I1951"
+    },
+    {
+      "from": "I1948",
+      "to": "I1952"
+    },
+    {
+      "from": "I1948",
+      "to": "I1965"
+    },
+    {
+      "from": "I1949",
+      "to": "I1951"
+    },
+    {
+      "from": "I1950",
+      "to": "I1955"
+    },
+    {
+      "from": "I1951",
+      "to": "I1953"
+    },
+    {
+      "from": "I1951",
+      "to": "I1954"
+    },
+    {
+      "from": "I1952",
+      "to": "I1953"
+    },
+    {
+      "from": "I1952",
+      "to": "I1958"
+    },
+    {
+      "from": "I1952",
+      "to": "I1962"
+    },
+    {
+      "from": "I1953",
+      "to": "I1955"
+    },
+    {
+      "from": "I1953",
+      "to": "I1956"
+    },
+    {
+      "from": "I1953",
+      "to": "I1962"
+    },
+    {
+      "from": "I1954",
+      "to": "I1959"
+    },
+    {
+      "from": "I1955",
+      "to": "I1957"
+    },
+    {
+      "from": "I1955",
+      "to": "I1958"
+    },
+    {
+      "from": "I1955",
+      "to": "I1959"
+    },
+    {
+      "from": "I1956",
+      "to": "I1963"
+    },
+    {
+      "from": "I1958",
+      "to": "I1960"
+    },
+    {
+      "from": "I1958",
+      "to": "I1961"
+    },
+    {
+      "from": "I1959",
+      "to": "I1960"
+    },
+    {
+      "from": "I1959",
+      "to": "I1961"
+    },
+    {
+      "from": "I1959",
+      "to": "I1963"
+    },
+    {
+      "from": "I1960",
+      "to": "I1962"
+    },
+    {
+      "from": "I1960",
+      "to": "I1963"
+    },
+    {
+      "from": "I1962",
+      "to": "I1964"
+    },
+    {
+      "from": "I1963",
+      "to": "I1964"
     }
   ],
   "findings": [
@@ -14970,6 +16563,12 @@
       "code": "scope_conflict",
       "subject": "I0201",
       "message": "shares share with I1504; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0201",
+      "message": "shares share with I1946; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -15034,6 +16633,36 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I0701",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0701",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0701",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0701",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I0701",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I0821",
       "message": "shares lib/common.sh with I0837; they may not run concurrently"
     },
@@ -15054,6 +16683,12 @@
       "code": "scope_conflict",
       "subject": "I0901",
       "message": "shares share/kinds.yaml with I1201; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1101",
+      "message": "shares .ai/repo/adrs with I1945; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -15112,6 +16747,36 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1409",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1409",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1409",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1409",
+      "message": "shares scripts with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1409",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1501",
       "message": "shares test/cases with I1502; they may not run concurrently"
     },
@@ -15156,6 +16821,36 @@
       "code": "scope_conflict",
       "subject": "I1501",
       "message": "shares test/cases with I1520; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1501",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1501",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1501",
+      "message": "shares apps/majordomus-cli/src/commands with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1501",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1501",
+      "message": "shares test/cases with I1950; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -15208,6 +16903,36 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1502",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1502",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1502",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1502",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1502",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1503",
       "message": "shares lib with I1504; they may not run concurrently"
     },
@@ -15244,6 +16969,36 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1503",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1503",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1503",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1503",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1503",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1504",
       "message": "shares test/cases with I1508; they may not run concurrently"
     },
@@ -15270,6 +17025,36 @@
       "code": "scope_conflict",
       "subject": "I1504",
       "message": "shares test/cases with I1520; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1504",
+      "message": "shares test/cases with I1950; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -15304,6 +17089,36 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1508",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1508",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1508",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1508",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1508",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1509",
       "message": "shares docs/COCKPIT.md with I1511; they may not run concurrently"
     },
@@ -15312,6 +17127,18 @@
       "code": "scope_conflict",
       "subject": "I1509",
       "message": "shares docs/COCKPIT.md with I1512; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1509",
+      "message": "shares apps/majordomus-cli/tests with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1509",
+      "message": "shares apps/majordomus-cli/tests with I1950; they may not run concurrently"
     },
     {
       "level": "WARN",
@@ -15334,6 +17161,36 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1510",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1510",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1510",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1510",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1510",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1511",
       "message": "shares docs/COCKPIT.md with I1512; they may not run concurrently"
     },
@@ -15346,8 +17203,116 @@
     {
       "level": "WARN",
       "code": "scope_conflict",
+      "subject": "I1511",
+      "message": "shares apps/majordomus-cli/src/web with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1511",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1511",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1511",
+      "message": "shares test/cases with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1511",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
       "subject": "I1512",
       "message": "shares scripts/ci with I1520; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1512",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1512",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1512",
+      "message": "shares apps/majordomus-cli/src/capability/builtin with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1512",
+      "message": "shares scripts/ci with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1512",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1520",
+      "message": "shares test/cases with I1946; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1520",
+      "message": "shares test/cases with I1947; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1520",
+      "message": "shares test/cases with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1520",
+      "message": "shares scripts/ci with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1520",
+      "message": "shares test/cases with I1950; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1947",
+      "message": "shares docs/CLAIMS.yaml with I1948; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1947",
+      "message": "shares docs/CLAIMS.yaml with I1949; they may not run concurrently"
+    },
+    {
+      "level": "WARN",
+      "code": "scope_conflict",
+      "subject": "I1948",
+      "message": "shares docs/EVIDENCE.md with I1949; they may not run concurrently"
     }
   ]
 }

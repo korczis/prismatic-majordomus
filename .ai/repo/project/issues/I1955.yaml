@@ -1,0 +1,41 @@
+id: I1955
+milestone: test-evidence
+title: The evidence publication is an allow-listed projection
+slug: evidence-publication-is-a-projection
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Add evidence publish, which reads the ledger committed at the presented commit, the run records and coverage, applies the monotone rule, and writes an allow-listed publication with its publication state, carrying text only through the one redactor (ADR 0087 decisions 3 and 14)."
+why: "The site needs a typed dataset whose verdicts are the tracked ledger's at the build commit. The interim publication of ADR 0068 computes its state in a shell script."
+current_state: "scripts/pages evidence (PR #577, with I1949) writes site/data/evidence.json from a CI artifact; no typed publication exists."
+desired_state: "majordomus evidence publish --presented <commit> --presented-tree <state> --from <dir> --out <dir> writes an EvidencePublication whose states are current, stale, pending, unknown and dirty as ADR 0087 defines them, whose every field is on the allow-list, and whose every text has passed the redactor."
+scope:
+  - apps/majordomus-cli/src/evidence
+  - apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - apps/majordomus-cli/tests/evidence_publication.rs
+  - test/cases/512_evidence_publication_is_a_projection.sh
+  - docs/EVIDENCE.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/evidence.md
+non_scope:
+  - "scripts/pages and the site build, which are I1959's"
+  - "A version bump"
+depends_on:
+  - I1953
+  - I1950
+acceptance_criteria:
+  - "The publication carries only allow-listed fields, and a field off the list is not published"
+  - "Every text it carries has passed the one redactor, and the artifact passes generate::forbidden_in"
+  - "The publication state is current, stale, pending, unknown or dirty exactly as ADR 0087 decision 3 defines them"
+  - "No verdict in it is stronger than the ledger committed at the presented commit"
+validation:
+  - bash test/run.sh 512_evidence_publication_is_a_projection
+  - cargo test --test evidence_publication
+evidence_required:
+  - publication_allow_listed
+  - publication_states_defined
+created_at: 2026-09-26
+updated_at: 2026-09-26

@@ -1,0 +1,49 @@
+id: I1957
+milestone: test-evidence
+title: Every test line is read, and a local run stays local
+slug: every-test-line-is-read
+priority: p2
+profile: implementation
+parallel_safe: false
+objective: "Read each runner's per-test lines into the execution (case results, detail and dropped lines), add evidence record --run suite and the local run index, and move the web report onto the same typed adapters."
+why: "An execution records one outcome per test file, so a failure's reason and a line no claim names are lost, and a local run has nowhere to be kept apart from the tracked ledger."
+current_state: "Execution carries no per-case results and no detail; web/report/tests.rs parses runner output on its own; no local run index exists."
+desired_state: "Per-runner adapters fill Execution.cases and Execution.detail and list every line they drop; evidence record --run suite stamps its own run and appends it to .ai/local/evidence/runs/, bounded; web/report/tests.rs reads the same adapters."
+scope:
+  - apps/majordomus-cli/src/evidence/adapters.rs
+  - apps/majordomus-cli/src/evidence/local_runs.rs
+  - apps/majordomus-cli/src/evidence/supplementary.rs
+  - apps/majordomus-cli/src/evidence/record.rs
+  - apps/majordomus-cli/src/evidence/run.rs
+  - apps/majordomus-cli/src/evidence/ledger.rs
+  - apps/majordomus-cli/src/evidence/freshness.rs
+  - apps/majordomus-cli/src/evidence/mod.rs
+  - apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - apps/majordomus-cli/src/web/report/tests.rs
+  - apps/majordomus-cli/tests/evidence_local_runs.rs
+  - test/fixtures/evidence-adapters
+  - test/cases/514_every_test_line_is_read.sh
+  - test/cases/515_a_local_run_stays_local.sh
+  - docs/EVIDENCE.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/evidence.md
+non_scope:
+  - "A change of the ledger's version"
+  - "apps/majordomus-cli/src/evidence/public.rs and subject.rs, beyond a literal the compiler names"
+depends_on:
+  - I1955
+acceptance_criteria:
+  - "Every line a runner prints is either read into a case result or listed as dropped"
+  - "A local run is kept only under .ai/local/evidence/runs/, bounded, and never reaches the tracked ledger"
+  - "web/report/tests.rs reads the same adapters as the recorder"
+validation:
+  - bash test/run.sh 514_every_test_line_is_read
+  - bash test/run.sh 515_a_local_run_stays_local
+evidence_required:
+  - every_test_line_read
+  - local_run_stays_local
+created_at: 2026-09-26
+updated_at: 2026-09-26

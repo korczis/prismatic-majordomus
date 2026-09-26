@@ -1,0 +1,43 @@
+id: I1947
+milestone: test-evidence
+title: Every feature reaches a test, and every use case has a feature
+slug: every-feature-reaches-a-test
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Give every active use case an owning feature, and give the cockpit and deployments features a claim naming their own tests, so that a homepage panel routed to a use case reaches a feature and every feature reaches a test through the subject index (ADR 0087 decision 9)."
+why: "The subject index derives subjects from existing declarations. A use case no feature names is a subject the index cannot place under a feature, and a feature with no claim reaches tests only through its rules. Nothing checks use-case ownership today."
+current_state: "Some active use cases are named by no feature's use_cases list: `git grep <use-case-id> -- .ai/repo/features` is empty for each of them. .ai/repo/features/cockpit.md and .ai/repo/features/deployments.md carry no claims line."
+desired_state: "Every active use case is named by at least one feature; the cockpit and deployments features each carry a claim whose test names it back; and a case fails, naming each one, when an active use case has no owning feature."
+scope:
+  - .ai/repo/features/finish-contract.md
+  - .ai/repo/features/commit.md
+  - .ai/repo/features/install.md
+  - .ai/repo/features/continuity.md
+  - .ai/repo/features/cockpit.md
+  - .ai/repo/features/deployments.md
+  - apps/majordomus-cli/tests/cockpit.rs
+  - test/cases/84_deployment_contract.sh
+  - test/cases/503_every_use_case_has_a_feature.sh
+  - docs/CLAIMS.yaml
+  - docs/claims
+non_scope:
+  - "Editing any use case file"
+  - ".ai/repo/features/finish-contract.md.tmp"
+  - "docs/CLAIMS.yaml beyond the two rows this slice appends"
+depends_on: []
+acceptance_criteria:
+  - "Every use case whose status is active is named by at least one feature, and the case fails naming each one that is not"
+  - "The case fails when any list it reads is empty or a command in its pipeline fails"
+  - "The cockpit and deployments features carry a claim each, and each claim's test names the claim id"
+  - "bin/majordomus-cli product validate and bin/majordomus usecase validate pass"
+validation:
+  - bash test/run.sh 503_every_use_case_has_a_feature
+  - bin/majordomus-cli product validate
+  - bin/majordomus usecase validate
+  - scripts/ci/claim-proof-check --strict
+evidence_required:
+  - every_use_case_has_a_feature
+  - every_feature_reaches_a_test
+created_at: 2026-09-26
+updated_at: 2026-09-26

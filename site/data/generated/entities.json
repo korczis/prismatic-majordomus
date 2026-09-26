@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -133,7 +133,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 216
+      "count": 237
     },
     {
       "kind": "knowledge",
@@ -157,7 +157,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 19
+      "count": 20
     },
     {
       "kind": "moment",
@@ -2455,6 +2455,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0048/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0087",
+          "kind": "adr",
+          "route": "/adrs/adr-0087/",
+          "external": false
         }
       ]
     },
@@ -3338,6 +3345,89 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0087",
+      "identity": "adr-0087",
+      "slug": "adr-0087",
+      "cockpit": "/cockpit/objects/adr/adr-0087",
+      "title": "Evidence is indexed by subject and judged at the presented revision",
+      "status": "proposed",
+      "tags": [
+        "evidence",
+        "claims",
+        "ci",
+        "verification",
+        "site"
+      ],
+      "source": ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/evidence/ledger.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/evidence/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/rules/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0041",
+          "kind": "adr",
+          "route": "/adrs/adr-0041/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-currency-is-not-collapsed",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-proof-is-an-execution",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-unsupported-guarantee-is-reported",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EVIDENCE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/124_evidence.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
