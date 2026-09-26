@@ -30,7 +30,7 @@
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
         <h3 class="font-mono text-xs uppercase tracking-wide text-body-subtle">What implements it</h3>
         <ul class="mt-2 space-y-1 text-sm">
-          <li><a href="{{ repo }}/blob/master/{{ r.implementation }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ r.implementation }}</a></li>
+          <li><a href="{{ <source_blob path={r.implementation} /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ r.implementation }}</a></li>
         </ul>
         <h3 class="mt-4 font-mono text-xs uppercase tracking-wide text-body-subtle">Specified in</h3>
         <ul class="mt-2 space-y-1 text-sm">
@@ -108,7 +108,7 @@
       <li class="rounded-base border border-default bg-neutral-primary-soft p-4">
         <span class="flex flex-wrap items-center gap-2">{{ <badge status={c.status} /> }}
           <a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="text-sm text-heading hover:underline">{{ c.claim }}</a></span>
-        {%- if c.test %}<span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="{{ repo }}/blob/master/{{ c.test }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ c.test }}</a></span>{% endif -%}
+        {%- if c.test %}<span class="mt-2 block text-xs"><span class="text-body-subtle">proved by</span> <a href="{{ <source_blob path={c.test} /> }}" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">{{ c.test }}</a></span>{% endif -%}
       </li>
       {%- endfor -%}
     </ul>

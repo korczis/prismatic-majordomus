@@ -21,8 +21,8 @@
       <dt class="text-body-subtle">current version</dt><dd class="min-w-0 break-all font-mono text-heading">{{ log.current }}</dd>
       <dt class="text-body-subtle">document</dt><dd class="min-w-0 break-all font-mono text-heading">{{ log.source_schema }}</dd>
       {%- if log.generator %}<dt class="text-body-subtle">generator</dt><dd class="min-w-0 break-all font-mono text-heading">{{ log.generator }}</dd>{% endif %}
-      <dt class="text-body-subtle">projected from</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ project.repository_url }}/blob/master/{{ log.source }}" class="inline-block py-1 text-fg-brand hover:underline">{{ log.source }}</a></dd>
-      <dt class="text-body-subtle">for a reader</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="inline-block py-1 text-fg-brand hover:underline">{{ page.extra.source }}</a></dd>
+      <dt class="text-body-subtle">projected from</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ <source_blob path={log.source} /> }}" class="inline-block py-1 text-fg-brand hover:underline">{{ log.source }}</a></dd>
+      <dt class="text-body-subtle">for a reader</dt><dd class="min-w-0 break-all font-mono text-heading"><a href="{{ <source_blob path={page.extra.source} /> }}" class="inline-block py-1 text-fg-brand hover:underline">{{ page.extra.source }}</a></dd>
     </dl>
   </div>
 

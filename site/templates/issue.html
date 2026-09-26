@@ -6,7 +6,7 @@
 {%- set plan = load_data(path="data/generated/plan.json") -%}
 {%- set it = [i for i in plan.issues if i.id == page.extra.plan_id][0] -%}
 {%- set ms = [m for m in plan.milestones if m.id == it.milestone][0] -%}
-{%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
+{%- set repo = <source_blob path="" /> -%}
 <div class="min-w-0">
   <p class="flex flex-wrap items-center gap-3">{{ <plan_status status={it.status} /> }}<span class="text-sm text-body">wave {{ it.wave }} · {{ it.priority }} · {{ it.profile }} profile{% if it.parallel_safe %} · parallel safe{% else %} · runs alone{% endif %}</span></p>
   <p class="mt-3 text-sm text-body">Part of <a href="{{ get_url(path="/plan/" ~ (ms.id | lower) ~ "/", trailing_slash=true) }}" class="text-fg-brand underline">{{ ms.id }} — {{ ms.title }}</a>.</p>

@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# source-pin-check — a page's link into its own source names the commit it was built from.
+#
+# A template that writes `<repository>/blob/master/<path>` publishes a page that points at
+# whatever master holds on the day the link is followed, not at the text the page was
+# rendered from; page and source drift apart the moment either moves. The templates make
+# those links through site/templates/source-links.html instead, which names the commit
+# scripts/site-build recorded in data/build.json.
+#
+# Some links follow master deliberately (the footer's licence and security policy are the
+# ones a reader acts on today), and some templates are converted by the work that owns
+# them, so this is a ratchet rather than a ban: the occurrences of blob/master and
+# tree/master under site/templates are recorded per file in the baseline, and the check
+# fails when a file has more than the baseline allows. A file that has fewer is reported,
+# never failed, so the baseline can be tightened deliberately.
+#
+#   scripts/ci/source-pin-check                   report, and fail on a new occurrence
+#   scripts/ci/source-pin-check --write-baseline  record today's counts (a deliberate act)
+#
+# Exit: 0 clean or unchanged, 10 an occurrence the baseline does not allow, 12 unusable.
+set -eu
+set -o pipefail
+
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+BASELINE=".ai/repo/source-pin-baseline.txt"
+DIR="site/templates"
+MODE="report"
+while [ $# -gt 0 ]; do case "$1" in
+  --write-baseline) MODE="write"; shift ;;
+  *) echo "source-pin-check: unknown option $1" >&2; exit 2 ;;
+esac; done
+[ -d "$DIR" ] || { echo "source-pin-check: no $DIR" >&2; exit 12; }
+
+# "<path> <count>" for every template that names master as the ref of a source link,
+# measured from the tree: a template added tomorrow is counted the day it lands.
+measured() {
+  find "$DIR" -type f | LC_ALL=C sort | while IFS= read -r f; do
+    n="$(grep -oE '(blob|tree)/master' "$f" | wc -l | tr -d ' ' || true)"
+    [ "$n" = 0 ] || printf '%s %s\n' "$f" "$n"
+  done
+}
+now="$(measured)"
+total="$(printf '%s\n' "$now" | awk 'NF == 2 { s += $2 } END { print s + 0 }')"
+
+if [ "$MODE" = write ]; then
+  {
+    echo "# The occurrences of blob/master and tree/master under site/templates, per file: source"
+    echo "# links that name master rather than the commit the page was built from."
+    echo "#"
+    echo "# Written by scripts/ci/source-pin-check --write-baseline; never by hand. A count may"
+    echo "# only shrink: a new source link goes through site/templates/source-links.html."
+    printf '%s\n' "$now" | grep -v '^$' || true
+  } > "$BASELINE"
+  echo "source-pin-check: baseline written — $total occurrence(s)"
+  exit 0
+fi
+
+[ -f "$BASELINE" ] || { echo "source-pin-check: no baseline at $BASELINE (run --write-baseline)" >&2; exit 12; }
+allowed() { awk -v f="$1" '$1 == f && NF == 2 { print $2; found = 1 } END { if (!found) print 0 }' "$BASELINE"; }
+
+rc=0
+new="$(printf '%s\n' "$now" | grep -v '^$' | while read -r f n; do
+  a="$(allowed "$f")"
+  [ "$n" -le "$a" ] || echo "  NEW  $f names master in $n source link(s), the baseline allows $a"
+done)"
+if [ -n "$new" ]; then
+  echo "source-pin-check: a source link names master instead of the commit the page was built from:"
+  printf '%s\n' "$new"
+  echo "  write it as {{ <source_blob path=... /> }} (site/templates/source-links.html); a link that must"
+  echo "  follow master says why in a comment and is recorded deliberately with --write-baseline"
+  rc=10
+fi
+
+# a baseline entry that has since shrunk: report, never fail
+grep -v '^#' "$BASELINE" | grep -v '^$' | while read -r f a; do
+  n="$(printf '%s\n' "$now" | awk -v f="$f" '$1 == f { print $2; found = 1 } END { if (!found) print 0 }')"
+  [ "$n" -ge "$a" ] || echo "  FIXED $f: $a -> $n — tighten the baseline: scripts/ci/source-pin-check --write-baseline"
+done
+
+[ "$rc" = 0 ] && echo "source-pin-check: $total occurrence(s) under $DIR, none beyond the baseline"
+exit "$rc"

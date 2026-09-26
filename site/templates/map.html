@@ -18,8 +18,8 @@
 </div>
 <p class="mt-6 text-sm text-body-subtle">
   Every number above is counted from the scan at build time. The scanner is
-  <a class="underline" href="{{ project.repository_url }}/blob/master/scripts/lib/architecture-scan.awk">scripts/lib/architecture-scan.awk</a>;
-  the data it produced for this build is <a class="underline" href="{{ project.repository_url }}/blob/master/site/data/generated/architecture.json">architecture.json</a>.
+  <a class="underline" href="{{ <source_blob path="scripts/lib/architecture-scan.awk" /> }}">scripts/lib/architecture-scan.awk</a>;
+  the data it produced for this build is <a class="underline" href="{{ <source_blob path="site/data/generated/architecture.json" /> }}">architecture.json</a>.
 </p>
 {% endblock body %}
 {% block scripts %}{% include "partials/graph-scripts.html" %}{% endblock scripts %}

@@ -1,0 +1,35 @@
+{#- The one place a page's link into its own source is made (Tera 2 components; no import needed).
+
+    A page generated from a file links to that file on the forge. Linked to the default
+    branch, the link names whatever master holds on the day it is followed, not the text the page
+    was rendered from, so page and source drift apart the moment either moves. These links
+    name the commit this site was built from instead: scripts/site-build records it in
+    data/build.json (ignored, never committed: a committed file cannot name the commit it
+    is in), that commit is HEAD at build time, so the forge has it and scripts/ci/link-check
+    resolves it against git like any other ref.
+
+    They fall back to the default branch when no commit can be named: a plain `zola serve`
+    has no build.json, a checkout without git records "unknown", and a build of a dirty tree
+    was rendered from bytes no commit holds, so naming HEAD there would claim a pin the page
+    does not have.
+
+      {{ <source_blob path=p /> }}   the URL of a file at the built commit
+      {{ <source_tree path=p /> }}   the URL of a directory at the built commit
+      {{ <source_ref /> }}           the ref alone
+
+    The ratchet over what is still hard-coded is scripts/ci/source-pin-check. -#}
+
+{% component source_ref() %}
+{%- set build = load_data(path="data/build.json", required=false) -%}
+{%- if build and build.commit and build.commit != "unknown" and not build.dirty -%}{{ build.commit }}{%- else -%}master{%- endif -%}
+{% endcomponent source_ref %}
+
+{% component source_blob(path) %}
+{%- set project = load_data(path="data/generated/project.json") -%}
+{{ project.repository_url }}/blob/{{ <source_ref /> }}/{{ path }}
+{%- endcomponent source_blob %}
+
+{% component source_tree(path) %}
+{%- set project = load_data(path="data/generated/project.json") -%}
+{{ project.repository_url }}/tree/{{ <source_ref /> }}/{{ path }}
+{%- endcomponent source_tree %}

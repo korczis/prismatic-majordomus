@@ -4,7 +4,8 @@
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
 {%- set cmds = load_data(path="data/generated/commands.json") -%}
 {%- set d = doc.doctrines[doc.index[page.extra.id]] -%}
-{%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
+{%- set repo = <source_blob path="" /> -%}
+{%- set tree = <source_tree path="" /> -%}
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3">{{ <doctrine_class class={d.class} /> }}<span class="text-sm text-body">{% if d.class == "blocking" %}A violation stops the command with exit {{ d.exit_code }}.{% else %}A violation is reported and the command still succeeds.{% endif %}</span></p>
@@ -16,7 +17,7 @@
       {{ <chain_link step="2" label="Validator" detail={d.validator_function} href={repo ~ d.defined_in} /> }}
       {{ <chain_link step="3" label="Runs under" detail={d.enforced_by | join(sep=", ")} /> }}
       {%- if d.class == "blocking" -%}{{ <chain_link step="4" label="On violation" detail={"exit " ~ d.exit_code} /> }}{%- else -%}{{ <chain_link step="4" label="On violation" detail="reported; the command still exits 0" /> }}{%- endif -%}
-      {{ <chain_link step="5" label="Proved by" detail={d.test} href={"https://github.com/korczis/prismatic-majordomus/tree/master/" ~ d.test} /> }}
+      {{ <chain_link step="5" label="Proved by" detail={d.test} href={tree ~ d.test} /> }}
       {{ <chain_link step="6" label="Run by CI" detail=".github/workflows/validate.yml" href={repo ~ ".github/workflows/validate.yml"} /> }}
     </ol>
 
