@@ -3127,7 +3127,7 @@ pub fn release(ctx: &Context) -> Page {
                 Node::Element(mono(short_digest(&plan.fingerprint))),
             ),
             (
-                "Writers agree",
+                "Projection current",
                 Node::Element(badge(
                     if plan.writers_agree { "ok" } else { "fail" },
                     if plan.writers_agree { "yes" } else { "no" },

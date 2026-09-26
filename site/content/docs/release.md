@@ -1,6 +1,6 @@
 +++
 title = "The release"
-description = "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the two statements of the version and the one command that writes them; the bump the commits imply and the evidence for it; and every surface derived from both"
+description = "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version authored in one place, its projection for the shell tool, and the one command that writes it; the bump the commits imply and the evidence for it; and every surface derived from both"
 weight = 27
 [extra]
 source = "docs/RELEASE.md"
@@ -61,7 +61,7 @@ majordomus release analyze                     # the tree against the last relea
 majordomus release analyze --explain           # every movement, and why each counts
 majordomus release analyze --format json       # the canonical VersionPlan every surface renders
 scripts/ci/version-matches-surface             # the gate: the same thing, mapping exit codes
-majordomus release bump                        # raise both writers to the measured minimum
+majordomus release bump                        # raise the one authored version to the measured minimum
 ```
 
 There is **one** engine and it lives in `apps/majordomus-cli/src/release/compat.rs`, reading
@@ -136,11 +136,12 @@ nobody afterwards. The facts it would have contained were already in the tree, u
   git log <commit>..<commit> everything that has no object of its own
 ```
 
-**Nothing raised the version.** It is stated in two files — `apps/majordomus-cli/Cargo.toml`
+**Nothing raised the version.** It was stated in two files — `apps/majordomus-cli/Cargo.toml`
 and `bin/majordomus` (`MJ_VERSION`) — and `scripts/release-version --check` compared them and
 exited 10 when they disagreed. A check with no writer behind it verifies a person's memory:
 it can say the two disagree, and it can say so only after someone has already edited one of
-them and forgotten the other.
+them and forgotten the other. (The version has since lost its second statement altogether;
+see [The version](#the-version-authored-once-written-by-one-command).)
 
 Neither gap needed a new source of truth. The changelog needed a join; the version needed a
 writer.
@@ -318,17 +319,48 @@ Counts of what that yields go stale; measure them instead:
     | jq '[.sections[].groups[].changes[].references[]?] | length'
 ```
 
-## The version: two statements, one writer
+## The version: authored once, written by one command
 
-The version stays stated in two places, and should. `scripts/release-version` gives the
-reason and it is a real one: an installed tree has no `Cargo.toml`, and the crate is
-compiled before the shell tool exists, so neither program can read the other's copy at run
-time. [`DISTRIBUTION.md`](@/docs/distribution.md#the-two-versions-and-why-there-are-two) is where
-that is argued. What was missing was not a single source — it was a single writer.
+The version is authored in exactly one place, the `[package] version` of
+`apps/majordomus-cli/Cargo.toml`, and every other statement of it is derived
+([ADR 0085](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md),
+`project.release-is-a-projection` v2):
 
-`majordomus release version` answers what both files state and whether they agree. It exits
-10 when they do not, which is the same verdict and the same exit code
-`scripts/release-version --check` gives, so a person and a pipeline get one answer.
+```text
+  apps/majordomus-cli/Cargo.toml   authored    the one place; `release bump` writes it
+  crate::VERSION                   compiled    everything the executable prints
+  share/version.txt                projected   `majordomus generate`; bin/majordomus reads it
+  apps/majordomus-cli/Cargo.lock   derived     cargo's record; the writer keeps it in step
+  generator stamps, the changelog  generated   `majordomus generate`
+  .ai/repo/releases/*.yaml         records     the release pipeline, after publication
+```
+
+The shell tool cannot read the manifest where it is installed — an installed tree has no
+`Cargo.toml` — so it reads `share/version.txt`, a typed generated artifact that ships in
+every archive beside it; [`DISTRIBUTION.md`](@/docs/distribution.md#one-version-and-one-projection-of-it)
+covers the distribution side. There is one reader of the authority per language:
+`release::version::declared` in Rust and `scripts/release-version` in shell.
+
+`majordomus release version` answers what the manifest declares, whether the projection the
+tool prints is current, and whether anybody wrote a version down by hand where the tool's own
+files live. It exits 10 when anything is wrong — the same exit code
+`scripts/release-version --check` gives — and it is what the `version-authored-once` gate
+runs. The findings come from `release::version::diagnose`, and `release analyze` carries the
+same ones in its plan:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| diagnostic | severity | when |
+|---|---|---|
+| `version-stated-by-hand` | error | an assignment to a name ending in `version` (shell, TOML, JavaScript or Python), a `version:` or `"version":` member, or `majordomus X.Y.Z`, written by hand in `bin/`, `lib/`, `scripts/` or `share/` outside a generated artifact |
+| `projection-stale` | warning | `share/version.txt` is behind the manifest or missing — the state every bump leaves until `scripts/derive`, refused by `generate --check` |
+| `writers-disagree` | error | `share/version.txt` is ahead of the manifest or unrelated to it — a version no derivation writes |
+
+</div>
+
+
+A stale projection is a warning rather than an error on purpose: a writer that refused its
+own un-derived state could not correct a bump it had just made.
 
 `majordomus release bump` is the writer, and it **computes nothing**. It reads the same
 `VersionPlan` that `release analyze`, the HTTP route, the MCP tool and the gate read, and
@@ -357,8 +389,11 @@ the measurement decorative. `--dry-run` prints what would change and writes noth
 Two properties of the write matter:
 
 - **It is byte-narrow.** Only the `version` line inside `[package]` of the manifest and the
-  `MJ_VERSION=` line of the shell tool are rewritten. A dependency pinned at the same
-  version, or the string in a comment, is untouched.
+  `version` line of the lock's own `majordomus-cli` entry are rewritten — the one line cargo
+  would rewrite, kept in step because a lock left behind fails every `--locked` build,
+  including the launcher the git hooks and the MCP server use. A dependency pinned at the
+  same version is untouched, in either file. `share/version.txt` and every generator stamp
+  are not the writer's: `scripts/derive` builds and then projects them, and the bump says so.
 - **It checks its own work.** After writing, the bump re-reads both files and reports a
   disagreement with exit 10 — so a bump that half-applied is caught by the thing built to
   catch it rather than by the release three commits later.
@@ -433,9 +468,10 @@ refusing would make the document unavailable exactly where it is read from a mac
 The release procedure itself — the tag, the pipeline, the build matrix, the record written
 from what was published, and recovery from a bad release — is
 [`DISTRIBUTION.md`](@/docs/distribution.md#releasing). This document owns only the version and the
-changelog it produces. The first step of that procedure is now `majordomus release bump`
-rather than an editor over two files, and `scripts/release-version --check` still runs
-after it: the check proves the work of one writer instead of the memory of one person.
+changelog it produces. The first step of that procedure is `majordomus release bump` followed
+by `scripts/derive`, and `scripts/release-version --check` still runs after it: it proves that
+the shell tool prints the version the manifest declares, which `generate --check` — proving
+only that the projection file is current — does not.
 
 ## What proves it
 
@@ -444,12 +480,14 @@ after it: the check proves the work of one writer instead of the memory of one p
 | | |
 |---|---|
 | `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole; and the resolution: an id the layer holds becomes a reference carrying that record's title, an id of the same shape that names nothing does not, a name mentioned twice is carried once, and a word that merely starts with the letter is not an id |
-| `apps/majordomus-cli/src/release/version.rs` | the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, and writing touches only the two lines that state the version |
+| `apps/majordomus-cli/src/release/version.rs` | the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, writing touches only the manifest's line and the lock's own entry, the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
 | `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the groups reach the renderer in rank order whatever order the commits arrived in |
 | `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
-| `scripts/ci/release-check` | the two declarations of where the version is stated have not drifted, the two sites agree on every plan rather than only at publication, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
-| `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog still describes the tree |
-| `scripts/release-version --check` | the two writers agree — the same verdict `majordomus release version` gives, with the same exit code |
+| `test/cases/484_the_version_is_authored_once.sh` | the shell tool states no version; it prints the authority because it reads its own projection, generated from the manifest and never from `MAJORDOMUS_SHARE`; a hand-edited projection is refused by `generate --check`; the writer writes the manifest's line and the lock's own entry and nothing else; a version written by hand in `lib/` is refused — each section first shown to fail against the tree before ADR 0085 |
+| `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
+| gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
+| `scripts/rust-check` (gate `rust-check`) | `generate --check`: the committed changelog and `share/version.txt` still describe the tree |
+| `scripts/release-version --check` | the shell tool prints the version the manifest declares — the question `generate --check` leaves open |
 
 </div>
 

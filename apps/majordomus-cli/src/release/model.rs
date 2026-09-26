@@ -388,12 +388,13 @@ pub struct Changelog {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseVersionReport")]
 pub struct VersionReport {
-    /// The version the crate manifest declares — the authority.
+    /// The version the crate manifest declares — the one place it is authored.
     pub declared: String,
-    /// The version `bin/majordomus` prints.
+    /// The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.
     pub tool: String,
-    /// Whether the two agree. `scripts/release-version --check` is the gate; this is the
-    /// same question asked by the executable, so every surface can show the answer.
+    /// Whether that projection is current. `generate --check` refuses a stale one and
+    /// `scripts/release-version --check` proves the tool prints it; this is the same question
+    /// asked by the executable, so every surface can show the answer.
     pub agree: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The last release the layer records.

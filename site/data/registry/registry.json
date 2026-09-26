@@ -6,23 +6,23 @@
     "version": "0.9.0"
   },
   "registry": {
-    "fingerprint": "5a74dc58f2f29144b87ed7dee959c47fcda7c9b4221a32d26118765948e65d13",
+    "fingerprint": "57428653fcf21902afe66de7b85fbe1178788213350d55ce1b56f3ebabf21932",
     "summary": {
-      "total": 1489,
+      "total": 1491,
       "builtin": 115,
-      "declarative": 1374,
+      "declarative": 1376,
       "by_kind": {
         "command": 7,
         "query": 108,
-        "resource": 1374
+        "resource": 1376
       },
       "by_stability": {
         "behaviorally_verified": 100,
         "experimental": 7,
-        "implemented": 1382
+        "implemented": 1384
       },
       "mcp_tools": 112,
-      "mcp_resources": 1415,
+      "mcp_resources": 1417,
       "http_routes": 114,
       "cli_commands": 54,
       "modules": 67,
@@ -30233,15 +30233,15 @@
               },
               "declared_version": {
                 "type": "string",
-                "description": "The version the crate manifest declares."
+                "description": "The version the crate manifest declares — the one place it is authored."
               },
               "tool_version": {
                 "type": "string",
-                "description": "The version `bin/majordomus` prints, and whether the two agree."
+                "description": "The version `bin/majordomus` prints: what its projection, `share/version.txt`, states."
               },
               "writers_agree": {
                 "type": "boolean",
-                "description": "Whether the two writers of the version state one value."
+                "description": "Whether that projection is current — states what the manifest declares. The name is\nkept from when the version had two writers; the manifest is the only one now."
               },
               "atoms": {
                 "type": "integer",
@@ -31135,7 +31135,7 @@
         "module": "release",
         "kind": "query",
         "title": "The version, and the one the commits imply",
-        "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -31152,15 +31152,15 @@
             "properties": {
               "declared": {
                 "type": "string",
-                "description": "The version the crate manifest declares — the authority."
+                "description": "The version the crate manifest declares — the one place it is authored."
               },
               "tool": {
                 "type": "string",
-                "description": "The version `bin/majordomus` prints."
+                "description": "The version `bin/majordomus` prints: what its projection, `share/version.txt`, states."
               },
               "agree": {
                 "type": "boolean",
-                "description": "Whether the two agree. `scripts/release-version --check` is the gate; this is the\nsame question asked by the executable, so every surface can show the answer."
+                "description": "Whether that projection is current. `generate --check` refuses a stale one and\n`scripts/release-version --check` proves the tool prints it; this is the same question\nasked by the executable, so every surface can show the answer."
               },
               "last_release": {
                 "type": [
@@ -40781,7 +40781,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 52,
+        "capabilities": 53,
         "capability_ids": []
       },
       {
@@ -41347,7 +41347,7 @@
       {
         "id": "release",
         "title": "Release",
-        "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
+        "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become.",
         "stability": "implemented",
         "source": "builtin",
         "capabilities": 3,
@@ -41464,7 +41464,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 225,
+        "capabilities": 226,
         "capability_ids": []
       },
       {
@@ -41544,7 +41544,7 @@
     ]
   },
   "index": {
-    "fingerprint": "16716298331074bc0243c089d8641ad7a8cedcdd360823348cfee593cfdd9d81",
+    "fingerprint": "ab26af764c1fff1c59d34188d3c1a2fc2098be3f403ec3eccb514e4f6c5960ca",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -41567,7 +41567,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 52,
+      "adr": 53,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -41593,7 +41593,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 225,
+      "test": 226,
       "use-case": 46,
       "workspace": 1
     },
@@ -41890,7 +41890,7 @@
         "path": ".ai/repo/adrs/0019-distribution-is-one-model-and-every-surface-that-ships-the-t.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 7389,
+        "bytes": 7947,
         "tags": [
           "distribution",
           "release"
@@ -42058,7 +42058,7 @@
         "path": ".ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 11333,
+        "bytes": 12159,
         "tags": [
           "release",
           "changelog",
@@ -42359,7 +42359,7 @@
         "path": ".ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
         "section": "adrs",
         "source_class": "adr",
-        "bytes": 13228,
+        "bytes": 13804,
         "tags": [
           "release",
           "versioning",
@@ -42447,6 +42447,23 @@
           "governance",
           "routing",
           "web"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0085",
+        "kind": "adr",
+        "identity": "adr-0085",
+        "title": "The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection",
+        "description": "The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection",
+        "path": ".ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 9816,
+        "tags": [
+          "release",
+          "versioning",
+          "projections",
+          "distribution"
         ]
       },
       {
@@ -45410,7 +45427,7 @@
         "title": "CLI specification — `majordomus`",
         "path": "docs/CLI.md",
         "source_class": "document",
-        "bytes": 119243
+        "bytes": 119508
       },
       {
         "uri": "majordomus://document/docs/COCKPIT.md",
@@ -45428,7 +45445,7 @@
         "title": "The Cockpit as a development surface: baseline, archaeology and gap matrix",
         "path": "docs/COCKPIT_IDE_AUDIT.md",
         "source_class": "document",
-        "bytes": 50134
+        "bytes": 50160
       },
       {
         "uri": "majordomus://document/docs/COMMANDS.md",
@@ -45518,7 +45535,7 @@
         "title": "Distribution",
         "path": "docs/DISTRIBUTION.md",
         "source_class": "document",
-        "bytes": 22003
+        "bytes": 23143
       },
       {
         "uri": "majordomus://document/docs/DOCTRINE.md",
@@ -45635,7 +45652,7 @@
         "title": "Guide — what Majordomus does for a team, how each part works, and the tests that prove it",
         "path": "docs/GUIDE.md",
         "source_class": "document",
-        "bytes": 26756
+        "bytes": 26852
       },
       {
         "uri": "majordomus://document/docs/HOW_IT_WORKS.md",
@@ -45644,7 +45661,7 @@
         "title": "How Majordomus works — one repository model, many projections",
         "path": "docs/HOW_IT_WORKS.md",
         "source_class": "document",
-        "bytes": 72886
+        "bytes": 73224
       },
       {
         "uri": "majordomus://document/docs/INSTALL.md",
@@ -45743,7 +45760,7 @@
         "title": "Documentation index",
         "path": "docs/README.md",
         "source_class": "document",
-        "bytes": 18958
+        "bytes": 18992
       },
       {
         "uri": "majordomus://document/docs/RELEASE.md",
@@ -45752,7 +45769,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 27602
+        "bytes": 30834
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -47833,7 +47850,7 @@
         "identity": "bin/majordomus",
         "path": "bin/majordomus",
         "source_class": "entrypoint",
-        "bytes": 7451
+        "bytes": 8339
       },
       {
         "uri": "majordomus://implementation/bin/majordomus-cli",
@@ -52794,7 +52811,7 @@
         "path": ".ai/repo/rules/project/distribution-canonical.v1.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 5259,
+        "bytes": 5312,
         "tags": [
           "distribution",
           "release",
@@ -53410,15 +53427,15 @@
         ]
       },
       {
-        "uri": "majordomus://rule/project.release-is-a-projection@1",
+        "uri": "majordomus://rule/project.release-is-a-projection@2",
         "kind": "rule",
-        "identity": "project.release-is-a-projection@1",
-        "title": "The changelog is composed and the version has one writer",
-        "description": "What this project has shipped is derived from the layer's own release records, the decisions dated inside each release's window and the commits in its range, so no changelog is kept by hand; the version is stated in the two sites that must state it and raised by one command that writes both, so the two never drift apart by an edit somebody forgot to make twice.",
-        "path": ".ai/repo/rules/project/release-is-a-projection.v1.md",
+        "identity": "project.release-is-a-projection@2",
+        "title": "The changelog is composed, and the version is authored once",
+        "description": "What this project has shipped is derived from the layer's own release records, the decisions dated inside each release's window and the commits in its range, so no changelog is kept by hand; the version is authored in exactly one place, the crate manifest, projected once for the shell tool, recorded by the release pipeline, and written by one command, so there is no second statement of it anybody could forget to change.",
+        "path": ".ai/repo/rules/project/release-is-a-projection.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 8135,
+        "bytes": 8731,
         "tags": [
           "release",
           "changelog",
@@ -53642,7 +53659,7 @@
         "path": ".ai/repo/rules/project/the-version-is-measured.v2.md",
         "section": "rules",
         "source_class": "rule",
-        "bytes": 11925,
+        "bytes": 11919,
         "tags": [
           "release",
           "versioning",
@@ -54317,7 +54334,7 @@
         "identity": "test/cases/103_release_projection.sh",
         "path": "test/cases/103_release_projection.sh",
         "source_class": "case",
-        "bytes": 30300
+        "bytes": 32228
       },
       {
         "uri": "majordomus://test/test/cases/104_published_site.sh",
@@ -54389,7 +54406,7 @@
         "identity": "test/cases/10_site_data.sh",
         "path": "test/cases/10_site_data.sh",
         "source_class": "case",
-        "bytes": 6597
+        "bytes": 6642
       },
       {
         "uri": "majordomus://test/test/cases/110_lease_reader.sh",
@@ -54421,7 +54438,7 @@
         "identity": "test/cases/112_version_matches_surface.sh",
         "path": "test/cases/112_version_matches_surface.sh",
         "source_class": "case",
-        "bytes": 16673
+        "bytes": 16550
       },
       {
         "uri": "majordomus://test/test/cases/113_clean_owns_its_target.sh",
@@ -54469,7 +54486,7 @@
         "identity": "test/cases/11_site_derivation.sh",
         "path": "test/cases/11_site_derivation.sh",
         "source_class": "case",
-        "bytes": 4344
+        "bytes": 4640
       },
       {
         "uri": "majordomus://test/test/cases/120_design_contrast.sh",
@@ -54733,7 +54750,7 @@
         "identity": "test/cases/15_command_surface.sh",
         "path": "test/cases/15_command_surface.sh",
         "source_class": "case",
-        "bytes": 5640
+        "bytes": 5704
       },
       {
         "uri": "majordomus://test/test/cases/16_profiles.sh",
@@ -55205,7 +55222,7 @@
         "identity": "test/cases/33_stale_executable.sh",
         "path": "test/cases/33_stale_executable.sh",
         "source_class": "case",
-        "bytes": 8682
+        "bytes": 8726
       },
       {
         "uri": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -55382,6 +55399,14 @@
         "path": "test/cases/47_mutation.sh",
         "source_class": "case",
         "bytes": 12234
+      },
+      {
+        "uri": "majordomus://test/test/cases/484_the_version_is_authored_once.sh",
+        "kind": "test",
+        "identity": "test/cases/484_the_version_is_authored_once.sh",
+        "path": "test/cases/484_the_version_is_authored_once.sh",
+        "source_class": "case",
+        "bytes": 8507
       },
       {
         "uri": "majordomus://test/test/cases/48_roadmap_graph.sh",
@@ -55709,7 +55734,7 @@
         "identity": "test/cases/85_installer.sh",
         "path": "test/cases/85_installer.sh",
         "source_class": "case",
-        "bytes": 15405
+        "bytes": 15572
       },
       {
         "uri": "majordomus://test/test/cases/85_ui_conformance.sh",
@@ -56518,7 +56543,7 @@
       "identity": [
         "id"
       ],
-      "objects": 52
+      "objects": 53
     },
     {
       "name": "application",
@@ -56783,7 +56808,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 225
+      "objects": 226
     },
     {
       "name": "use-case",
@@ -58442,7 +58467,7 @@
               },
               {
                 "name": "distribution",
-                "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/"
+                "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/; and share/version.txt, the version the shell tool ships with, from the crate manifest"
               },
               {
                 "name": "web",
@@ -70290,7 +70315,7 @@
         "route": "/docs/cli/release/",
         "executable": true,
         "usage": "majordomus release [OPTIONS] [COMMAND]",
-        "about": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both",
+        "about": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it",
         "args": [
           {
             "name": "repo",
@@ -70514,7 +70539,7 @@
             "route": "/docs/cli/release/version/",
             "executable": true,
             "usage": "majordomus release version [OPTIONS]",
-            "about": "The version the two writers state, whether they agree, and the bump the commits since the last release imply",
+            "about": "The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply",
             "args": [
               {
                 "name": "repo",
@@ -70605,7 +70630,7 @@
               {
                 "id": "release-version",
                 "title": "The version, and the one the commits imply",
-                "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
+                "description": "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.",
                 "argv": [
                   "release",
                   "version",
@@ -70768,7 +70793,7 @@
             "route": "/docs/cli/release/bump/",
             "executable": true,
             "usage": "majordomus release bump [OPTIONS]",
-            "about": "Raise the version in both places at once, to at least what the public contract requires",
+            "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
             "args": [
               {
                 "name": "level",
@@ -70896,8 +70921,8 @@
             "examples": [
               {
                 "id": "release-bump-dry-run",
-                "title": "Raising it, in both places, once",
-                "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
+                "title": "Raising it, in the one place it is authored",
+                "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the manifest's one version line and the lock's record of it, reads both back, and leaves share/version.txt and the generator stamps to scripts/derive. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
                 "argv": [
                   "release",
                   "bump",
@@ -75957,7 +75982,7 @@
         "name": "majordomus_release_version",
         "id": "release.version",
         "title": "The version, and the one the commits imply",
-        "description": "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",

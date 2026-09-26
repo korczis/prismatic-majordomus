@@ -34,6 +34,13 @@ provenance:
 > The subsystem below is implemented, gated and tested; whether the *decision* stands is not
 > something this record may assert about itself.
 
+> **Amended by [ADR 0085](0085-the-version-is-authored-once-and-shipped-as-a-projection.md) (proposed), 2026-09-24.**
+> Where this record says the version "is stated in two files" and "keeps two statements and
+> one writer", read *one authored, one projected*: the crate manifest is the one place the
+> version is written, and `share/version.txt` is its generated projection for the shell tool.
+> The measurement, the policy and the writer's floor below are unchanged. The closing remark
+> that ADR 0029 "stays `accepted`" is a slip — ADR 0029 is `proposed`, and stays so.
+
 ## Context
 
 ADR 0029 gave the version one *writer*, which it had never had, and that half of it stands:

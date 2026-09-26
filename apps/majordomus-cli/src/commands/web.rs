@@ -51,7 +51,7 @@ pub fn run(args: WebArgs) -> Result<u8> {
         }
         WebCommand::Manifest => {
             let findings = validate::validate(&selected, &root, Artifacts::Ignore);
-            let manifest = Manifest::new(selected.clone(), findings, env!("CARGO_PKG_VERSION"));
+            let manifest = Manifest::new(selected.clone(), findings, crate::VERSION);
             let path = manifest.write(&root)?;
             writeln!(
                 out,

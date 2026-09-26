@@ -36,7 +36,8 @@ REGISTRY="$ROOT/docs/generated/registry.json"
 expect_file "$REGISTRY"
 
 running="$("$BIN" version 2>/dev/null | tr -d ' \n' | sed 's/^majordomus//')"
-declared="$(sed -n '/^\[package\]/,/^\[/p' "$MANIFEST" | sed -n 's/^version = "\(.*\)"/\1/p' | head -1)"
+# the one shell reader of the authority, never a second parse of the manifest here
+declared="$("$ROOT/scripts/release-version" 2>/dev/null || true)"
 [ -n "$declared" ] || { echo "    the manifest declares no version"; exit 1; }
 
 # ---------------------------------------------------------------- 1. the ordinary path

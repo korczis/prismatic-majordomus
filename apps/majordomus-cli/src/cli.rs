@@ -68,7 +68,7 @@ pub enum Command {
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
-    /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
+    /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it
     Release(ReleaseArgs),
     /// What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
     Quality(QualityArgs),
@@ -329,7 +329,7 @@ pub enum EnvCommand {
 
 #[derive(Debug, Args)]
 /// `majordomus release`. The read half is derived and the write half is one command, so
-/// that raising a version is a thing that happens once rather than in two files by hand.
+/// that raising a version is one edit to the one place it is authored, and the rest is derived.
 pub struct ReleaseArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -353,7 +353,7 @@ pub enum ReleaseCommand {
         #[arg(value_name = "VERSION")]
         version: Option<String>,
     },
-    /// The version the two writers state, whether they agree, and the bump the commits since the last release imply
+    /// The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply
     Version,
     /// What the public contract did since the last release, and the smallest version this tree may therefore declare
     Analyze {
@@ -364,7 +364,7 @@ pub enum ReleaseCommand {
         #[arg(long)]
         explain: bool,
     },
-    /// Raise the version in both places at once, to at least what the public contract requires
+    /// Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest
     Bump {
         /// Raise by this much instead of by the measured minimum; never below it
         #[arg(long, value_name = "LEVEL")]
@@ -1534,7 +1534,8 @@ pub enum GenerateTarget {
     /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
     Manifest,
     /// The installer, the installation guide, the release build matrix and the public
-    /// release metadata, from share/distribution.yaml and .ai/repo/releases/
+    /// release metadata, from share/distribution.yaml and .ai/repo/releases/; and
+    /// share/version.txt, the version the shell tool ships with, from the crate manifest
     Distribution,
     /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
     Web,
@@ -2206,7 +2207,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "release-version",
             title: "The version, and the one the commits imply",
-            description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
+            description: "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.",
             argv: &["release", "version", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/declared", "/agree", "/bump"]),
@@ -2227,8 +2228,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "release bump",
         examples: &[ExampleDoc {
             id: "release-bump-dry-run",
-            title: "Raising it, in both places, once",
-            description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
+            title: "Raising it, in the one place it is authored",
+            description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the manifest's one version line and the lock's record of it, reads both back, and leaves share/version.txt and the generator stamps to scripts/derive. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
             argv: &["release", "bump", "--dry-run"],
             setup: &[],
             expect: Expect::ExitCode(12),

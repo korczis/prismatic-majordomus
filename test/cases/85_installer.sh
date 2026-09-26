@@ -134,9 +134,10 @@ printf '%s\n' "$out" | grep -q "not a file or directory" || { echo "    an archi
 # --- an archive whose tool reports another version is refused --------------------------------------
 rm -rf "$T/mal3"; mkdir -p "$T/mal3"
 tar -xzf "$T/$name.good" -C "$T/mal3"
-sed 's/^MJ_VERSION=".*"/MJ_VERSION="9.9.9"/' "$T/mal3/$root/bin/majordomus" > "$T/mal3/$root/bin/majordomus.new"
-mv "$T/mal3/$root/bin/majordomus.new" "$T/mal3/$root/bin/majordomus"
-chmod 0755 "$T/mal3/$root/bin/majordomus"
+# the tool reads its version from share/version.txt beside it, so that is what is tampered with
+sed 's/^version=.*/version=9.9.9/' "$T/mal3/$root/share/version.txt" > "$T/mal3/$root/share/version.txt.new"
+mv "$T/mal3/$root/share/version.txt.new" "$T/mal3/$root/share/version.txt"
+grep -qx 'version=9.9.9' "$T/mal3/$root/share/version.txt" || { echo "    the tamper did not apply"; exit 1; }
 ( cd "$T/mal3" && tar -czf "$T/evil.tar.gz" "$root" )
 serve_malicious
 out="$(install_run --force || true)"

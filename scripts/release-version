@@ -1,27 +1,27 @@
 #!/usr/bin/env bash
-# release-version — the project's version, and the proof that its two writers agree.
+# release-version — the project's version, read from the one place it is authored, and the
+# proof that the shell tool prints it.
 #
 #   scripts/release-version                 print the version
-#   scripts/release-version --check         exit 10 unless every place that states it agrees
+#   scripts/release-version --check         exit 10 unless `bin/majordomus version` prints it
 #   scripts/release-version --check --tag v0.2.0
 #                                           also require the tag to be v followed by it
 #
-# The version is stated in exactly two places, because two programs are shipped from one
-# tree and each must be able to say what it is without reading the other:
+# The version is authored once, in apps/majordomus-cli/Cargo.toml (`[package] version`), and
+# this is the one shell reader of it: the release plan, the fixtures, the gates and the cases
+# ask this script rather than parse the manifest again. It needs no toolchain, which is why it
+# exists beside `majordomus release version`.
 #
-#   apps/majordomus-cli/Cargo.toml   the crate's version — the authority
-#   bin/majordomus                   MJ_VERSION, which `majordomus version` prints
-#
-# Neither can derive the other at run time: an installed tree has no Cargo.toml, and the
-# crate is compiled before the shell tool exists. So they are checked instead, here, by CI
-# and by the release workflow before a single artifact is built.
+# The shell tool cannot read the manifest — an installed tree has none — so it reads
+# share/version.txt, the manifest's projection, which `majordomus generate` writes and
+# `generate --check` refuses when it is stale. `--check` asks the question that leaves open:
+# not whether the file is current, but whether the tool actually prints the authority.
 #
 # Exit codes: 0 ok · 2 usage · 10 they disagree · 12 a file could not be read.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
-ENTRY="$ROOT/bin/majordomus"
 
 check=0
 tag=""
@@ -29,19 +29,18 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --check) check=1; shift ;;
     --tag) tag="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,18p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
     *) printf 'release-version: unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 done
 
 [ -f "$MANIFEST" ] || { printf 'release-version: no %s\n' "$MANIFEST" >&2; exit 12; }
-[ -f "$ENTRY" ] || { printf 'release-version: no %s\n' "$ENTRY" >&2; exit 12; }
 
 # the first `version = "..."` under [package]
 crate="$(awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}' "$MANIFEST")"
-shell_version="$(sed -n 's/^MJ_VERSION="\([^"]*\)".*/\1/p' "$ENTRY" | head -n 1)"
 
 if [ "$check" = 0 ]; then
+  [ -n "$crate" ] || { printf 'release-version: %s declares no version\n' "$MANIFEST" >&2; exit 12; }
   printf '%s\n' "$crate"
   exit 0
 fi
@@ -49,13 +48,18 @@ fi
 bad=0
 if [ -z "$crate" ]; then printf 'release-version: FAIL the crate states no version (%s)\n' "$MANIFEST" >&2; bad=1
 else printf 'release-version: OK   crate %s\n' "$crate"; fi
-if [ "$shell_version" != "$crate" ]; then
-  printf 'release-version: FAIL bin/majordomus states MJ_VERSION="%s" and the crate states "%s"\n' \
-    "$shell_version" "$crate" >&2
-  printf '                      one release has one version; edit bin/majordomus to match the crate\n' >&2
+# What the tool prints, asked of the tool: the same answer a person or the installer gets.
+# MAJORDOMUS_SHARE is cleared because the tool never reads its version from there, and a
+# value inherited from another checkout must not be what this check happens to exercise.
+printed="$(env -u MAJORDOMUS_SHARE "$ROOT/bin/majordomus" version 2>&1)" || true
+if [ "$printed" != "majordomus $crate" ]; then
+  printf 'release-version: FAIL bin/majordomus prints "%s" and the crate states "%s"\n' \
+    "${printed:-nothing}" "$crate" >&2
+  printf '                      share/version.txt is generated from the crate — run scripts/derive;\n' >&2
+  printf '                      never edit it or bin/majordomus\n' >&2
   bad=1
 else
-  printf 'release-version: OK   bin/majordomus %s\n' "$shell_version"
+  printf 'release-version: OK   bin/majordomus prints %s\n' "$crate"
 fi
 if [ -n "$tag" ]; then
   if [ "$tag" != "v$crate" ]; then

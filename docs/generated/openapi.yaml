@@ -80,7 +80,7 @@ tags:
   - name: recover
     description: "The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks."
   - name: release
-    description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become."
+    description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become."
   - name: repository
     description: "The repository this process serves: its layer, its git state, the state of the index built from it, and its scope: what a worker reads of it and what it never reads."
   - name: rules
@@ -5881,7 +5881,7 @@ paths:
     get:
       operationId: release.version
       summary: "The version, and the one the commits imply"
-      description: "The version the crate manifest declares, the version the shell tool prints, and whether they agree — the same question `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it."
+      description: "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it."
       tags:
         - release
       parameters: []
@@ -19749,13 +19749,13 @@ components:
           description: The release this was measured against.
         declared_version:
           type: string
-          description: The version the crate manifest declares.
+          description: The version the crate manifest declares — the one place it is authored.
         tool_version:
           type: string
-          description: "The version `bin/majordomus` prints, and whether the two agree."
+          description: "The version `bin/majordomus` prints: what its projection, `share/version.txt`, states."
         writers_agree:
           type: boolean
-          description: Whether the two writers of the version state one value.
+          description: "Whether that projection is current — states what the manifest declares. The name is\nkept from when the version had two writers; the manifest is the only one now."
         atoms:
           type: integer
           format: uint
@@ -19821,13 +19821,13 @@ components:
       properties:
         declared:
           type: string
-          description: The version the crate manifest declares — the authority.
+          description: The version the crate manifest declares — the one place it is authored.
         tool:
           type: string
-          description: "The version `bin/majordomus` prints."
+          description: "The version `bin/majordomus` prints: what its projection, `share/version.txt`, states."
         agree:
           type: boolean
-          description: "Whether the two agree. `scripts/release-version --check` is the gate; this is the\nsame question asked by the executable, so every surface can show the answer."
+          description: "Whether that projection is current. `generate --check` refuses a stale one and\n`scripts/release-version --check` proves the tool prints it; this is the same question\nasked by the executable, so every surface can show the answer."
         last_release:
           type:
             - string

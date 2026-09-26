@@ -2352,7 +2352,8 @@
       ],
       "tests": {
         "behaviour": [
-          "15_command_surface"
+          "15_command_surface",
+          "484_the_version_is_authored_once"
         ],
         "negative": [
           "15_command_surface"
@@ -2407,7 +2408,7 @@
           }
         ]
       },
-      "doc_md": "\nPrint the version and exit. `--version` is accepted as a synonym, and `version` works\nwithout an installation: it never reads `.ai/`.\n\n**Reads:** nothing.\n**Writes:** nothing.\n\n**Behaviour:**\n- Prints `majordomus <version>` on stdout and exits `0`.\n- The same string is the single source of the version everywhere else, including the\n  public site's footer."
+      "doc_md": "\nPrint the version and exit. `--version` is accepted as a synonym, and `version` works\nwithout an installation: it never reads `.ai/`.\n\n**Reads:** `share/version.txt` beside the tool — never the one `MAJORDOMUS_SHARE` names.\n**Writes:** nothing.\n\n**Behaviour:**\n- Prints `majordomus <version>` on stdout and exits `0`.\n- The version is authored in `apps/majordomus-cli/Cargo.toml`; `share/version.txt` is its\n  generated projection, shipped in every archive, and this command prints it. The public\n  site's footer reads the same answer.\n- Exits `12`, naming the file, when the distribution carries no `share/version.txt`."
     },
     {
       "name": "session",

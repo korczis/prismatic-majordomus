@@ -2,7 +2,7 @@
 # generate-site-data — normalise canonical repository data into a stable site data schema.
 #
 #   canonical                              derived (site/data/generated/)
-#   bin/majordomus (MJ_VERSION)        ->  project.json
+#   bin/majordomus version             ->  project.json (it reads share/version.txt)
 #   share/skeleton/profiles/*.yaml     ->  profiles.json
 #   share/skeleton/policy.yaml         ->  policy.json
 #   docs/CLAIMS.yaml                   ->  capabilities.json
@@ -61,6 +61,7 @@ GEN_VERSION=1
 # ---------------------------------------------------------------- inputs
 GEN_T0="$(mj_phase_begin "gen:inputs")"
 INPUTS="bin/majordomus
+share/version.txt
 share/commands.yaml
 share/skeleton/policy.yaml
 share/skeleton/ai/repo/workflows/task-lifecycle.md
@@ -208,13 +209,19 @@ jq_inplace() {
 mj_phase_end "gen:inputs" "$GEN_T0"
 # ---------------------------------------------------------------- project.json
 GEN_T0="$(mj_phase_begin "gen:project.json")"
-VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus" | head -1)"
+# What the tool itself says it is: the version is authored once, in the crate manifest, and
+# the shell tool prints its projection, share/version.txt — a declared input above, so a
+# changed version is a changed fingerprint. Asked of the tool rather than parsed here, which
+# would be one more reader of a fact that has one.
+VERSION="$(env -u MAJORDOMUS_SHARE "$ROOT/bin/majordomus" version)" \
+  || { echo "generate-site-data: bin/majordomus could not say its version" >&2; exit 12; }
+VERSION="${VERSION#majordomus }"
 # The version of the tree, and the version a reader can actually obtain, are two facts and
-# the site needs both. `version` is what this checkout declares; it runs ahead of the last
-# release by design, because the release policy is surface-measured — twenty-one commits of
-# gates, tests and publisher work owe no bump, so the tree sits at 0.6.1 while 0.6.0 is the
-# newest release. Presenting the first as the product's version tells a visitor standing next
-# to the install command that they are getting something that does not exist.
+# the site needs both. `version` is what this checkout declares; it may run ahead of the last
+# release by design, because the release policy is surface-measured — a stretch of gates,
+# tests and publisher work owes no bump, so the tree can declare a version no release carries
+# yet. Presenting the first as the product's version tells a visitor standing next to the
+# install command that they are getting something that does not exist.
 #
 # `release` is therefore read from the newest record under `.ai/repo/releases/`, which is what
 # the changelog, the baselines and `/releases/latest.json` all read. Empty when the layer

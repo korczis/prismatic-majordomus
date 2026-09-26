@@ -102,7 +102,7 @@
           "route": "/docs/cli/product/"
         },
         {
-          "about": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both",
+          "about": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it",
           "command": "majordomus release",
           "name": "release",
           "route": "/docs/cli/release/"
@@ -1998,7 +1998,7 @@
               "name": "manifest"
             },
             {
-              "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/",
+              "help": "The installer, the installation guide, the release build matrix and the public release metadata, from share/distribution.yaml and .ai/repo/releases/; and share/version.txt, the version the shell tool ships with, from the crate manifest",
               "name": "distribution"
             },
             {
@@ -15554,7 +15554,7 @@
       "usage": "majordomus product validate [OPTIONS]"
     },
     {
-      "about": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both",
+      "about": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it",
       "ancestors": [
         {
           "command": "majordomus",
@@ -15656,7 +15656,7 @@
           "route": "/docs/cli/release/changelog/"
         },
         {
-          "about": "The version the two writers state, whether they agree, and the bump the commits since the last release imply",
+          "about": "The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply",
           "command": "majordomus release version",
           "name": "version",
           "route": "/docs/cli/release/version/"
@@ -15668,7 +15668,7 @@
           "route": "/docs/cli/release/analyze/"
         },
         {
-          "about": "Raise the version in both places at once, to at least what the public contract requires",
+          "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
           "command": "majordomus release bump",
           "name": "bump",
           "route": "/docs/cli/release/bump/"
@@ -15832,7 +15832,7 @@
       "usage": "majordomus release changelog [OPTIONS]"
     },
     {
-      "about": "The version the two writers state, whether they agree, and the bump the commits since the last release imply",
+      "about": "The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply",
       "ancestors": [
         {
           "command": "majordomus",
@@ -15943,7 +15943,7 @@
             "json"
           ],
           "command": "majordomus release version --format json",
-          "description": "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
+          "description": "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.",
           "expectation": "exits 0; prints one JSON document carrying /declared, /agree, /bump",
           "id": "release-version",
           "setup": [],
@@ -16120,7 +16120,7 @@
       "usage": "majordomus release analyze [OPTIONS]"
     },
     {
-      "about": "Raise the version in both places at once, to at least what the public contract requires",
+      "about": "Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest",
       "ancestors": [
         {
           "command": "majordomus",
@@ -16268,11 +16268,11 @@
             "--dry-run"
           ],
           "command": "majordomus release bump --dry-run",
-          "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
+          "description": "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the manifest's one version line and the lock's record of it, reads both back, and leaves share/version.txt and the generator stamps to scripts/derive. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
           "expectation": "exits 12",
           "id": "release-bump-dry-run",
           "setup": [],
-          "title": "Raising it, in both places, once"
+          "title": "Raising it, in the one place it is authored"
         }
       ],
       "executable": true,
