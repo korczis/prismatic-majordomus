@@ -569,13 +569,17 @@ cmd_built() {
 # The dataset the site's evidence section renders: the newest evidence CI gathered
 # (scripts/ci/evidence-collect, the `evidence` artifact of validate.yml) for this commit or for
 # its nearest ancestor that has any. It is an input of one deployment, like data/build.json, and
-# it is never a gate on publishing. What it may never do is claim a currency it cannot back, so
-# it says one of three things: evidence of this very commit is `current`; evidence of an
-# ancestor is published with `current: false`, naming how many commits and changed files lie
-# between; and no evidence at all is published as unavailable, with the reason. ADR 68.
+# it is never a gate on publishing. What it may never do is claim a currency it cannot back. The
+# report it carries is the tracked ledger's verdict at the run's commit; the run only confirms
+# it or not. So it is `current` only when the run is of this very commit, measured clean trees,
+# derived the report on a clean checkout, and nothing was absent, refused or failed; `stale`
+# for an ancestor's run, naming how many commits and changed files lie between, or for a run
+# that recorded a failure; `unknown`, with every reason, when the run cannot confirm the
+# report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
+# ADR 0087 amends it; the reasons withhold `current` and never change the report.
 cmd_evidence() {
   local commit="" from="" out="$ROOT/site/data/evidence.json" slug="" tmp="" aid="" sha="" best=""
-  local m ecommit behind changed repo_url cov_json cov_txt report_txt
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
   while [ $# -gt 0 ]; do case "$1" in
     --commit) commit="$2"; shift 2 ;;
     --from) from="$2"; shift 2 ;;
@@ -628,13 +632,35 @@ cmd_evidence() {
   jq -n --arg published "$commit" --argjson behind "$behind" --argjson changed "$changed" --arg repo "$repo_url" \
     --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" '
     $m[0] as $man
+    # What the run cannot confirm about the report it carries. Each reason only withholds
+    # `current`; none of them changes the report. A manifest written before the run measured
+    # its trees has no such key, and reads as not measured.
+    | ([($man.totals.outcomes // {}) | (.fail // 0), (.timeout // 0), (.error // 0)] | add) as $failed
+    | [
+        (if $man.working_tree == "clean" then empty
+         elif $man.working_tree == "dirty" then "A job that ran tests ran them in a dirty tree."
+         else "Not every job that ran tests measured the tree it ran them in." end),
+        (if $man.report_tree == "clean" then empty
+         elif $man.report_tree == "dirty" then "The report was derived in a dirty checkout."
+         else "The checkout the report was derived in was not measured." end),
+        (($man.refused // []) | if length > 0
+          then "The run refused the report of " + (map(.runner) | join(", ")) + ", measured at another commit."
+          else empty end),
+        (($man.absent // []) | if length > 0 then "The run has no report from " + join(", ") + "." else empty end),
+        (if $failed > 0 then "The run recorded \($failed) failed, timed-out or errored execution(s)." else empty end)
+      ] as $unconfirmed
+    | (if $man.commit == $published and ($unconfirmed | length) == 0 then "current"
+       elif $man.commit != $published or $failed > 0 then "stale"
+       else "unknown" end) as $state
     | {
         schema: 1,
         available: true,
         published_commit: $published,
         commit: $man.commit,
         commit_url: (if $repo != "" then $repo + "/commit/" + $man.commit else null end),
-        current: ($man.commit == $published),
+        state: $state,
+        current: ($state == "current"),
+        unconfirmed: $unconfirmed,
         behind: $behind,
         changed: $changed,
         produced_at: $man.produced_at,
@@ -652,10 +678,16 @@ cmd_evidence() {
              ]}
         ]
       }' > "$out" || { echo "pages evidence: could not write $out" >&2; exit 12; }
-  if [ "$behind" = 0 ]; then
-    echo "pages evidence: current: recorded against ${commit:0:12}"
+  state="$(jq -r .state "$out")"
+  reasons="$(jq -r '.unconfirmed | join(" ")' "$out")"
+  if [ "$state" = current ]; then
+    echo "pages evidence: current: the run of ${commit:0:12} confirms the report it carries"
+  elif [ "$behind" != 0 ]; then
+    echo "pages evidence: stale: recorded against ${ecommit:0:12}, $behind commit(s) and $changed changed file(s) behind ${commit:0:12}${reasons:+. $reasons}"
+  elif [ "$state" = stale ]; then
+    echo "pages evidence: stale: the run of ${commit:0:12} recorded failures, so it does not confirm the report it carries. $reasons"
   else
-    echo "pages evidence: stale: recorded against ${ecommit:0:12}, $behind commit(s) and $changed changed file(s) behind ${commit:0:12}"
+    echo "pages evidence: unknown: the run of ${commit:0:12} cannot confirm the report it carries. $reasons"
   fi
 }
 

@@ -15,19 +15,37 @@
   {%- if ci and ci.available %}
   {%- set short = ci.commit | truncate(length=12, end="") %}
   <p class="mt-3 text-body">
-    {%- if ci.current %}
+    {%- if ci.state == "current" %}
     <span class="rounded bg-success-soft px-1.5 py-0.5 font-mono text-sm font-semibold text-fg-success-strong">CURRENT</span>
-    The executions below were recorded by CI against commit
+    The report below is the tracked ledger's verdict at commit
     <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
-    the commit this site was built from.
-    {%- else %}
+    the commit this site was built from, and CI's run of that commit confirms it: every job that
+    ran tests measured a clean tree, nothing was absent or refused, and nothing failed.
+    {%- elif ci.state == "stale" and ci.behind > 0 %}
     <span class="rounded bg-warning-soft px-1.5 py-0.5 font-mono text-sm font-semibold text-fg-warning">STALE</span>
     The newest executions CI recorded are of commit
     <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
     {{ ci.behind }} commit(s) and {{ ci.changed }} changed file(s) before the one this site was built from.
     They say what held there, not what holds here; the site is published again once CI has recorded this commit.
+    {%- elif ci.state == "stale" %}
+    <span class="rounded bg-warning-soft px-1.5 py-0.5 font-mono text-sm font-semibold text-fg-warning">STALE</span>
+    CI's run of commit
+    <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
+    the commit this site was built from, recorded failures, so it does not confirm the report below.
+    {%- else %}
+    <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-sm font-semibold text-heading">UNKNOWN</span>
+    CI ran commit
+    <a class="font-mono underline" href="{{ ci.commit_url }}">{{ short }}</a>,
+    the commit this site was built from, but its run cannot confirm the report below.
     {%- endif %}
   </p>
+  {%- if ci.unconfirmed | length > 0 %}
+  <ul class="mt-3 list-disc space-y-1 break-words ps-5 text-sm text-body">
+    {%- for reason in ci.unconfirmed %}
+    <li>{{ reason }}</li>
+    {%- endfor %}
+  </ul>
+  {%- endif %}
   <dl class="mt-4 grid gap-x-8 font-mono text-sm sm:grid-cols-2">
     <div class="flex justify-between gap-3 border-b border-default py-1.5"><dt class="text-body-subtle">executions recorded</dt><dd class="text-heading">{{ ci.totals.executions }}</dd></div>
     {%- for outcome, n in ci.totals.outcomes %}
@@ -49,7 +67,7 @@
   <div class="mt-6">
     {%- set tx = ci.panels %}
     {%- set tx_id = "ci-evidence" %}
-    {%- set tx_label = "What CI ran to produce this evidence" %}
+    {%- set tx_label = "The tracked ledger's verdict, as CI derived it at this commit" %}
     {% include "partials/terminal.html" %}
   </div>
   {%- else %}

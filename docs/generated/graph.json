@@ -5535,12 +5535,11 @@
         "id": "majordomus://claim/evidence-recorded-in-ci",
         "kind": "claim",
         "label": "evidence-recorded-in-ci",
-        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
         "route": "/cockpit/objects/claim/evidence-recorded-in-ci",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
           "implementation": "scripts/ci/evidence-collect",
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",

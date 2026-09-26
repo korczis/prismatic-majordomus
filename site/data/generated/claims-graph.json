@@ -1430,11 +1430,11 @@
     {
       "id": "claim:evidence-recorded-in-ci",
       "kind": "claim",
-      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
       "status": "guaranteed",
       "route": "/guarantees/evidence-recorded-in-ci/",
       "external": false,
-      "note": "The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68."
+      "note": "The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names, and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report. ADR 68, as ADR 0087 amends it."
     },
     {
       "id": "claim:rule-proof-is-named-and-resolves",
