@@ -10,6 +10,7 @@
 #   share/standard/majordomus/         ->  principles (the rules tagged principle, in package order)
 #   share/skeleton/ai/repo/workflows/  ->  lifecycle steps and the worker sequence
 #   docs/*.md                          ->  docs index
+#   share/schemas/**                   ->  schemas.json (every schema file, linked to its source)
 #   git                                ->  source.json (commit, input hash, generator version)
 #
 # Deterministic: same inputs, byte-identical outputs (except generated_at, kept in source.json
@@ -103,6 +104,8 @@ for f in "$ROOT"/share/skeleton/profiles/*.yaml "$ROOT"/share/standard/majordomu
          "$ROOT"/test/fixtures/commands/stdin/* \
          "$ROOT"/.ai/repo/use-cases/*.md "$ROOT"/.ai/repo/use-cases/taxonomy.yaml "$ROOT"/.ai/repo/applications/*.md \
          "$ROOT"/lib/usecase.sh \
+         "$ROOT"/share/schemas/*/*.proto "$ROOT"/share/schemas/*/*.schema.json \
+         "$ROOT"/share/schemas/*/*/*.proto "$ROOT"/share/schemas/*/*/*.schema.json \
          "$ROOT/$PJ"/project.yaml "$ROOT/$PJ"/milestones/*.yaml \
          "$ROOT/$PJ"/issues/*.yaml; do
   case "$f" in */docs/SITE_CLAIMS.md|*/docs/PLAN_STATUS.md|*/docs/PAGES_STATUS.md) continue ;; esac   # written by this script; never its own input
@@ -1345,6 +1348,26 @@ source = "AGENTS.md"
 +++
 
 '; printf '{%% raw %%}\n'; sed '1{/^<!--/d;}' "$ROOT/AGENTS.md" | sed '1{/^# /d;}' | project_links AGENTS.md | awk -f "$ROOT/scripts/lib/project-markdown.awk"; printf '{%% endraw %%}\n'; } > "$CONTENT/contract.md"
+# ---------------------------------------------------------------- schemas.json (the files the schema reference links)
+# Every schema file under share/schemas/, each linked to its source on the forge, for the
+# reference docs/SCHEMAS.md renders into. The list is the generator's own inputs (the globs
+# above), not a second inventory: a schema file added there is a row here because it exists.
+# A kind schema's identity is its path read backwards — kinds.yaml fixes `majordomus.adr/v1`
+# as share/schemas/majordomus/adr/adr.v1.* — so the page joins each row to the kinds that
+# declare it (site/data/registry/registry.json) and to where each kind is published
+# (entities.json's catalogue) without anything here naming a kind. A generated document's
+# schema (share/schemas/generated/) belongs to no kind and carries no identity.
+printf '%s\n' $INPUTS | grep '^share/schemas/' \
+  | jq -Rn --arg repo "$LINK_REPO" --arg doc "docs/SCHEMAS.md" '
+    {schema: 1, document: $doc, source: "share/schemas",
+     files: ([inputs | select(. != "") | . as $p | ($p | split("/")) as $s | ($s | last) as $f
+              | {path: $p, url: "\($repo)/blob/master/\($p)", file: $f, vendor: $s[2],
+                 format: (if ($f | endswith(".proto")) then "protobuf" else "json-schema" end),
+                 id: (if ($s | length) == 5 and ($f | test("^" + $s[3] + "[.]v[0-9]+[.]"))
+                      then "\($s[2]).\($s[3])/v\($f | capture("^[^.]+[.]v(?<n>[0-9]+)[.]").n)"
+                      else null end)}]
+             | sort_by(.path))}' > "$OUT/schemas.json"
+[ "$(jq '.files | length' "$OUT/schemas.json")" -gt 0 ] || { echo "generate-site-data: no schema file under share/schemas/" >&2; exit 10; }
 # ---------------------------------------------------------------- changelog.json (what shipped)
 # The changelog the Rust executable composes from the layer's release records, the decisions
 # dated inside each release's window and the conventional commits in its range, committed as
