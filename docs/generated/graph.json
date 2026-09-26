@@ -1342,6 +1342,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/evidence/ledger.json",
+        "kind": "file",
+        "label": "ledger.json",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/evidence/ledger.json",
+        "external": true
+      },
+      {
         "id": "file:.ai/repo/knowledge/sources.yaml",
         "kind": "file",
         "label": "sources.yaml",
@@ -4053,6 +4061,37 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0080",
+        "kind": "adr",
+        "label": "adr-0080",
+        "summary": "A CI run reaches the tracked ledger through a recording branch, never through the run that produced it",
+        "route": "/cockpit/objects/adr/adr-0080",
+        "source": ".ai/repo/adrs/0080-a-recorded-run-reaches-the-tracked-ledger-through-a-recording-branch.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-20",
+          "related": [
+            "claim:evidence-proof-is-an-execution",
+            "claim:a-skipped-case-is-not-a-proof",
+            "rule:project.never-reported-is-not-green",
+            "file:docs/EVIDENCE.md",
+            "file:.ai/repo/evidence/ledger.json",
+            "file:.ai/repo/evidence-baseline.txt",
+            "file:scripts/evidence-check",
+            "file:.ai/repo/ci/gates.yaml",
+            "file:apps/majordomus-cli/src/evidence/record.rs",
+            "test:test/cases/124_evidence.sh",
+            "file:.ai/repo/adrs/0041-proof-is-a-recorded-execution-and-inputs-unchanged-is-not-proven.md"
+          ],
+          "tags": [
+            "evidence",
+            "claims",
+            "ci",
+            "verification"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -4624,6 +4663,22 @@
           "responsibility": "none",
           "source": "docs/DOCTRINE.md",
           "test": "test/cases/138_governance_gates.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/a-skipped-case-is-not-a-proof",
+        "kind": "claim",
+        "label": "a-skipped-case-is-not-a-proof",
+        "summary": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
+        "route": "/cockpit/objects/claim/a-skipped-case-is-not-a-proof",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
+          "implementation": "test/run.sh",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/413_a_skipped_case_is_not_a_proof.sh"
         }
       },
       {
@@ -9892,6 +9947,14 @@
         "summary": "Every finding a command reports names the command that reproduces it",
         "route": "/cockpit/objects/document/docs-claims-a-finding-names-how-to-see-it-again-md",
         "source": "docs/claims/a-finding-names-how-to-see-it-again.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/a-skipped-case-is-not-a-proof.md",
+        "kind": "document",
+        "label": "docs/claims/a-skipped-case-is-not-a-proof.md",
+        "summary": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
+        "route": "/cockpit/objects/document/docs-claims-a-skipped-case-is-not-a-proof-md",
+        "source": "docs/claims/a-skipped-case-is-not-a-proof.md"
       },
       {
         "id": "majordomus://document/docs/claims/adr-catalogue.md",
@@ -33009,6 +33072,13 @@
         "source": "test/cases/40_project_model.sh"
       },
       {
+        "id": "majordomus://test/test/cases/413_a_skipped_case_is_not_a_proof.sh",
+        "kind": "test",
+        "label": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
+        "route": "/cockpit/objects/test/test-cases-413-a-skipped-case-is-not-a-proof-sh",
+        "source": "test/cases/413_a_skipped_case_is_not_a_proof.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/41_project_status.sh",
         "kind": "test",
         "label": "test/cases/41_project_status.sh",
@@ -39423,6 +39493,66 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://adr/adr-0080",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "file:.ai/repo/evidence-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "file:.ai/repo/evidence/ledger.json",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "file:scripts/evidence-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "majordomus://adr/adr-0041",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "majordomus://claim/a-skipped-case-is-not-a-proof",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "majordomus://claim/evidence-proof-is-an-execution",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "majordomus://rule/project.never-reported-is-not-green@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0080",
+        "target": "majordomus://test/test/cases/124_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -39625,6 +39755,26 @@
       {
         "source": "majordomus://claim/a-finding-names-how-to-see-it-again",
         "target": "majordomus://test/test/cases/138_governance_gates.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/a-skipped-case-is-not-a-proof",
+        "target": "file:test/run.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/a-skipped-case-is-not-a-proof",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/a-skipped-case-is-not-a-proof",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/a-skipped-case-is-not-a-proof",
+        "target": "majordomus://test/test/cases/413_a_skipped_case_is_not_a_proof.sh",
         "kind": "tested_by"
       },
       {
@@ -43949,6 +44099,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/a-skipped-case-is-not-a-proof.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51633,6 +51788,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/413_a_skipped_case_is_not_a_proof.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/41_project_status.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -55309,8 +55469,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1756,
-      "edges": 3908,
+      "nodes": 1761,
+      "edges": 3926,
       "acyclic": true,
       "truncated": false
     }
