@@ -23577,7 +23577,8 @@
           ],
           "evidence_required": [
             "recording_branch_wired",
-            "recording_stops_at_a_ledger_only_commit",
+            "recording_stops_at_a_covered_commit",
+            "recording_resumes_over_an_unrecorded_merge",
             "runner_reports_measured"
           ],
           "milestone": "test-evidence",
@@ -23841,11 +23842,6 @@
         "route": "/cockpit/objects/issue/i1959",
         "source": ".ai/repo/project/issues/I1959.yaml",
         "facts": {
-          "acceptance_criteria": [
-            "The site's evidence dataset is produced only by evidence publish, run in the build's checkout",
-            "site-build refuses a dataset for another commit, and a proven whose evidence commit the build does not contain",
-            "A deployed revision's evidence stays reachable on gh-pages after its CI artifact expires"
-          ],
           "created_at": "2026-09-26",
           "current_state": "scripts/pages evidence (PR #577 with I1949) computes its own publication state in shell; nothing refuses a dataset for another commit; the evidence exists only as a CI artifact.",
           "depends_on": [
@@ -23927,7 +23923,6 @@
           "parallel_safe": true,
           "priority": "p1",
           "profile": "implementation",
-          "risk": "It also waits on PR #593, PR #600, PR #621 and PR #626; the delivery module exists only once PR #600 has landed.",
           "scope": [
             "site/templates/partials/evidence-badge.html",
             "site/templates/partials/terminal-figure.html",
@@ -25127,12 +25122,6 @@
           ],
           "order": 105,
           "priority": "p1",
-          "risks": [
-            "Until the recording branch runs, the tracked ledger holds only local rows and the site renders mostly `not_run`. That is the true state; the badges follow the CI wiring for that reason.",
-            "The decisions this milestone builds on are proposed on open pull requests (#577, #578, #597, #600, #629). A slice stacked on one of them waits for it, and the landing order is the owner's.",
-            "The recording pull request needs a token whose events start the required workflow. Until the owner chooses between dispatching validate.yml and an App token, the CI wiring slice cannot land.",
-            "Every landing makes the open slices' pull requests conflict on derived files; each is refreshed by merging master with the derived merge driver, never by a rebase."
-          ],
           "scope": [
             ".ai/repo/adrs",
             ".ai/repo/project",

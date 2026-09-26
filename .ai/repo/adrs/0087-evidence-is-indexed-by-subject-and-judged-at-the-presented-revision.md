@@ -103,17 +103,27 @@ A verdict (`ProofState`) is derived only from the tracked ledger
   any other pull request;
 - **deliberate, committed local recordings.**
 
-**The recording stops at a ledger-only commit.** A trunk commit whose diff from its first
-parent is only `.ai/repo/evidence/ledger.json` is not recorded, whether a merge or the
-schedule started its run: the recording job ends before it runs a test. Decision 4 judges
-every execution in the ledger the same at that commit as at its parent, because the ledger path
-is outside `changed'`, so a diff that touches only the ledger still proves. Recording it would
-change nothing but the commits the ledger names, and that change would open the next recording
-pull request, whose merge would start the next run, without end, each round costing one full
-suite run. Landing a recording pull request is such a commit, however it is merged: its diff
-from the trunk it lands on is the ledger alone. The schedule still records a trunk whose newest
-commit is not ledger-only, which is what it exists for: a merge whose recording never opened or
-never landed.
+**The recording stops at a covered commit.** A trunk commit C is covered when the ledger
+committed in C already holds what a recording of C would add: E, the commit that the newest
+`ci` execution in that ledger names (by its recorded time), is contained in C, and `changed'`
+from E to C is empty. A trunk run of a covered commit is not recorded, whether a merge or the
+schedule started it: the recording job ends before it runs a test. Decision 4 judges every
+execution in the ledger the same at C as at E, because the ledger path is outside `changed'`,
+so a diff that touches only the ledger still proves. Recording C would change nothing but the
+commits the ledger names, and that change would open the next recording pull request, whose
+merge would start the next run, without end, each round costing one full suite run. Landing a
+recording pull request on the commit it measured makes a covered commit, however it is merged:
+its diff from E is the ledger alone. A recording job that cannot compare E with C fails and
+says why; it neither records nor passes C as covered.
+
+The stop reads what the ledger covers, never the newest commit's own diff, because a
+ledger-only commit is not always covered. When the recording of a merge M1 lands on top of a
+later merge M2 whose own recording never opened or never landed, the landing commit's diff from
+its first parent is the ledger alone, but `changed'` from M1 to it holds M2's changes. It is
+not covered, so it is recorded: by the run its own landing starts, or, if that run is lost too,
+by the schedule, which is what the schedule exists for on a quiet trunk (ADR 0080, decision 1).
+A ledger-only commit on top of a covered one, such as a deliberate local recording, stays
+covered.
 
 **This amends ADR 0068 sentence by sentence.** The paragraphs of its Decision section, as
 written on PR #577's branch, are in order the artifact (¶1), the run reference (¶2), the
@@ -136,16 +146,42 @@ publication (¶3), the dispatch refresh (¶4) and the offline run link (¶5).
   each reason. The rule can only withhold `current`; it never changes the report.
 - ¶4, "That publication finds evidence of its own commit and says `current`." **Amended** the
   same way: the dispatched publication says `current` only when that definition holds.
+- **Amended when the interim section retires.** These sentences hold for the interim "Recorded
+  by CI" section and change when the publication slice (I1959) makes `scripts/pages` call
+  `evidence publish`. From then on, the site's publication carries the first matching row of
+  decision 3's publication table:
+  - ¶3, "`scripts/pages evidence` runs before the build, finds the `evidence` artifact of
+    master's validation recorded against the commit being published or its nearest ancestor,
+    and writes `site/data/evidence.json`." **Amended**: the script calls `evidence publish` in
+    the build's checkout, which reads that run record from the artifact or from its gh-pages
+    copy under `evidence/<sha>/`.
+  - ¶3, "Evidence of an ancestor is published as stale, naming the commits and the changed
+    files between." **Amended**: a record of an ancestor is listed by its commit, with the
+    commits and the changed files between. It can cap the verdicts it contradicts (row 2), and
+    it never makes the publication `current`: without P's own record, the table's first
+    matching row is `dirty`, `stale`, `pending` or `unknown`.
+  - ¶3, "No evidence at all is published as unavailable, with the reason." **Amended**: no
+    evidence at all is `pending` while P's CI run has not concluded and `unknown` after that,
+    naming the reason. `unavailable` is not a publication state, and it retires with the
+    section.
+  - ¶3, "None of the three blocks publishing." **Amended**: no publication state blocks
+    publishing. The site build refuses only a dataset that is not bound to it (I1959).
+  - ¶4, "If master has moved on, nothing is dispatched: the newer commit's publication already
+    shows this evidence as stale, and the newer commit's own run will refresh it."
+    **Amended**: the newer commit's publication lists this evidence as an ancestor's record
+    (decision 3), and the newer commit's own run refreshes it.
 - **Standing, by sentence**:
   - in ¶1, "CI evidence is an artifact of the run that produced it."; the sentence naming the
     `evidence` job and the reports it gives the collector; the coverage summary and the
     manifest; and the ninety-day retention;
   - ¶2 whole;
-  - in ¶3, every sentence but the amended one: the nearest evidence; the dataset as an
-    uncommitted input of one deployment; an ancestor's evidence published as stale, with the
-    commits and the changed files between; no evidence published as unavailable, with the
-    reason; none of the three blocking publishing; and the one thing ruled out;
-  - in ¶4, every sentence but the amended one;
+  - in ¶3: the nearest evidence, and saying how near it is; the dataset as an uncommitted
+    input of one deployment; and the one thing ruled out. Until the interim section retires,
+    every other ¶3 sentence but the `current` one stands too;
+  - in ¶4: the refresh as a dispatch, not a chain; the dispatch of `pages.yml` while the run's
+    commit is still master's tip; and `pages.yml` triggered by the push alone, a dispatched run
+    waiting for a running publication. Until the interim section retires, the moved-on
+    sentence stands too;
   - ¶5 whole.
 
 **What a run's executions are**, stated once: a validating run's executions decide no verdict in
@@ -199,13 +235,15 @@ neither reads verified.
 | The site: `evidence publish`, run in the build's checkout of P | the ledger committed in P | `build.json.commit`, capped by `build.json.dirty` | P's CI run record if there is one, else the nearest ancestor's, marked with its commit; through the monotone rule |
 | The site's interim "Recorded by CI" section: `scripts/pages evidence`, ADR 0068 as amended by decision 1. **Retired** when the publication slice (I1959) makes `scripts/pages` call `evidence publish` and the routes slice (I1958) folds the section into the runs section | the tracked ledger as committed at the run's commit, derived by the CI `evidence` job before it records the run's executions | the published commit: `current` needs the run's commit to equal it, and an ancestor's run is `stale` | the run's manifest (totals, the producers' measured trees, the report's tree, what was absent or refused): it can only withhold `current`, never change the transcript |
 | The entry preflight (`majordomus env preflight`, PR #578): its `verification.tests` and `verification.enforcement` checks, and what renders them (the entry briefing, the Cockpit overview, `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight`). **The one known exception** to decisions 4 and 8 | the tracked ledger at the working tree. The tests check counts a run as current by its own filter, which has no containment test; the enforcement check recounts `rules::report` instead of reading the corpus verdict | the working tree | not read. The follow-up slice (I1965) moves the tests check onto the freshness function and the enforcement check onto the corpus verdict |
-| The delivery report's `required_tests_current` and `test_evidence_published` dimensions (PR #600, ADR 0071) | pending there today. When computed: the first passes only when the feature's subject verdict at the trunk revision is `proven`; the second reads the site's publication, which carries the tracked ledger's verdict at the published commit (decision 1) | the trunk revision; the published commit | through the publication only. Neither reads a CI run's own rows, and neither has a reader of its own |
+| The delivery report's `required_tests_current` and `test_evidence_published` dimensions (PR #600, ADR 0071) | pending there today. When computed: the first passes only when the feature's subject verdict at the trunk revision is `proven`, which a busy trunk does not reach (Consequences; the owner decides before I1960 lands whether the process makes it reachable or the dimension binds to a reachable state); the second reads the site's publication, which carries the tracked ledger's verdict at the published commit (decision 1) | the trunk revision; the published commit | through the publication only. Neither reads a CI run's own rows, and neither has a reader of its own |
 | `evidence record` (the writer) | writes the tracked ledger by default; `--ledger local` writes `.ai/local/evidence/ledger.json` | stamps the E and T its run measured (decision 6); until that lands, HEAD and the recorder's own tree | writes a run record for the call; with `--ledger local` it also appends to the local run index |
 
 **Publication states** are site-level words, not proof states, and each is already filed as a
-status token of the design system. A publication carries exactly one, decided at publication
-time from what it can observe: `build.json`, the run records it read and the conclusion of P's
-CI run. The first matching row wins.
+status token of the design system. They govern the site's publication through `evidence
+publish`. The interim section keeps ADR 0068's words as decision 1 amends them, among them
+`unavailable`, which is not a publication state and retires with the section. A publication
+carries exactly one state, decided at publication time from what it can observe: `build.json`,
+the run records it read and the conclusion of P's CI run. The first matching row wins.
 
 | # | Observed at publication | State |
 |---|---|---|
@@ -219,10 +257,11 @@ CI run. The first matching row wins.
   verdict is listed beside it, so a dirty build that a record also contradicts reads `dirty`
   and still names that record.
 - A record of an ancestor only can cap a verdict (row 2) and nothing else. It never makes a
-  publication `current`: without P's own record the state is `pending` or `unknown`, with the
-  ancestor's record listed by its commit and the commits between. The interim rule of decision
-  1 publishes an ancestor's run as `stale` only because there the transcript itself is the
-  ancestor's.
+  publication `current`: without P's own record the state is `dirty`, `stale` when the record
+  capped a verdict, and otherwise `pending` or `unknown`, with the ancestor's record listed by
+  its commit, the commits between and the changed files. The interim rule of decision 1
+  publishes an ancestor's run as `stale` only because there the transcript itself is the
+  ancestor's; this table replaces that rule when the interim section retires (decision 1).
 - `pending` is the one state a later publication of the same P is expected to replace, when
   P's run concludes (ADR 0068's dispatch refresh, ¶4).
 
@@ -399,8 +438,24 @@ The owner decides between them before the CI wiring slice (I1954) lands.
 
 - Until the recording branch runs, the tracked ledger holds only local rows and the site renders
   mostly `not_run`. That is the true state, and it is why the CI wiring precedes the badges.
-- ADR 0068 changes only in the sentences decision 1 names. ADR 0041 changes only outside the
-  tracked ledger: run records keep history, and the ledger still keeps one execution per test.
+- `proven` at a trunk revision needs a quiet trunk. Row 10 holds at a trunk commit only when
+  nothing but ledger-only commits separates it from E. A recording costs one full suite run,
+  whose wall time ADR 0080's consequences measure, and its pull request then passes the
+  required checks, while ADR 0068's context describes a trunk that moves every few minutes.
+  When a code merge lands in that window, `changed'` from E to the landing commit is not empty,
+  and the landed recording moves claims from `not_run` to `inputs_unchanged` (row 13) or
+  `stale` (rows 9 and 14), not to `proven`. ADR 0080's expectation that a recording moves
+  claims to `proven`, a rendered "verified" on the site, and the delivery dimension
+  `required_tests_current` (decision 3) all hold only after such a quiet window. The owner
+  decides between two ways out before I1960 lands: a process that makes row 10 reachable (for
+  example, a merge queue that holds code merges from a trunk run's commit until its recording
+  lands), or binding `required_tests_current` and the milestone's desired state to a state that
+  is reachable. This record does not choose.
+- A ledger-only commit landing on top of a merge that no landed recording covers is recorded
+  (decision 1), so a lost recording never leaves a merge unrecorded while the trunk is quiet.
+- ADR 0068 changes only in the sentences decision 1 names: some at once, and the others when
+  the interim section retires (I1959). ADR 0041 changes only outside the tracked ledger: run
+  records keep history, and the ledger still keeps one execution per test.
 - Every rendered "verified" traces to row 10 of one function, and every weaker word that differs
   between surfaces names the record that weakened it.
 - A skipped test reads `not_run` with its reason instead of `failing`, and a guaranteed claim
@@ -428,7 +483,8 @@ The owner decides between them before the CI wiring slice (I1954) lands.
   The publication states are kept apart from the proof states for that reason.
 - **Commit equality, E = P, as the test for `proven`.** It is unreachable once the record is
   committed: the commit that lands a recording is a child of E, never E. The ledger-only diff
-  gives the same guarantee and can be met.
+  gives the same guarantee and can be met, but only at a trunk commit that nothing but
+  ledger-only commits separates from E (Consequences).
 - **Three evidence stores without a read rule.** The tracked ledger, the CI artifact and a local
   ledger would each answer differently, and a reader could not tell which one a surface showed.
 - **Recording from the validating run itself.** ADR 0080 rejects it: a pull-request run has no
@@ -448,7 +504,8 @@ The owner decides between them before the CI wiring slice (I1954) lands.
 | a skipped case recorded as a pass | the skip word lands before CI recording (Sequence) |
 | a failure hidden behind an absence | decision 8 |
 | a corpus verdict `proven` over rules whose inputs are merely unchanged | decision 4 |
-| a recording that records its own landing, without end | decision 1's stop at a ledger-only commit |
+| a recording that records its own landing, without end | decision 1's stop at a covered commit |
+| a merge left unrecorded behind a ledger-only commit | decision 1: the stop reads what the ledger covers, not the newest commit's own diff |
 | a publication state that two rows could both claim, or that no row covers | decision 3's first-match publication table |
 | a surface greener than the ledger | the monotone rule |
 | a named revision judged `proven` over a clean failing run the checkout holds uncommitted | the monotone rule over the working ledger's uncommitted executions (decisions 2 and 5) |
@@ -476,7 +533,7 @@ The work is cut into slices, one issue each under the milestone `test-evidence`:
 | A2 | I1951 | `feature/evidence-runs-are-typed` | run records, measured provenance, coverage records and the crate count rule (decisions 2, 6 and 12) |
 | SI | I1952 | `feature/evidence-subjects-are-derived` | the subject index (decisions 9 to 11) |
 | C | I1953 | `feature/evidence-answers-by-subject` | the subject, coverage and run commands |
-| B | I1954 | `feature/every-runner-reaches-the-ledger` | the recording branch, its stop at a ledger-only commit, and every runner's measured report (decisions 1 and 16) |
+| B | I1954 | `feature/every-runner-reaches-the-ledger` | the recording branch, its stop at a covered commit, and every runner's measured report (decisions 1 and 16) |
 | P | I1955 | `feature/evidence-publication-is-a-projection` | the allow-listed publication and its first-match states (decisions 3 and 14) |
 | E | I1956 | `feature/cockpit-shows-evidence` | the Cockpit's evidence view |
 | A3 | I1957 | `feature/every-test-line-is-read` | per-test results and the local run index |
