@@ -398,12 +398,15 @@ impl ExecutionStore {
     /// handler decides when it stops, and a handler that never looks at its token will
     /// finish normally, which the final state will say.
     ///
-    /// Both happen under one hold of the lock, the state first. A worker reads the token
-    /// without the lock, but a handler that stops publishes `execution.cancelled`, which
-    /// needs it, so whoever sees the token finds `cancelling` already recorded. Were the
-    /// token visible first, a handler looking in between would publish `cancelled` from
-    /// `running` — a move the state machine refuses — and the `cancelling` that followed
-    /// would be the last thing the execution ever said.
+    /// Both happen under one hold of the lock. A worker reads the token without the lock,
+    /// but a handler that stops publishes `execution.cancelled`, which needs the lock that
+    /// `cancelling` is recorded under, so a handler that sees the token cannot publish
+    /// until `cancelling` is recorded, whichever of the two is done first inside. Recording
+    /// the state before the token is extra ordering on top of that: on its own it would
+    /// hold even were the token set after the lock is let go. What neither may be is the
+    /// token set in one hold and `cancelling` published in the next: a handler looking in
+    /// between publishes `cancelled` from `running` — a move the state machine refuses —
+    /// and the `cancelling` that follows is the last thing the execution ever says.
     pub fn request_cancel(&self, id: &ExecutionId, by: &str) -> CancelOutcome {
         let published = {
             let mut inner = self.lock();
@@ -870,11 +873,12 @@ mod tests {
     #[test]
     fn a_handler_that_stops_the_instant_it_sees_the_token_still_ends_cancelled() {
         // A worker reads the token without the lock and publishes `cancelled` the moment it
-        // sees it. Were the token visible before `cancelling` is recorded, that `cancelled`
-        // would arrive from `running`, which the state machine refuses, and the `cancelling`
-        // that landed after it would be the execution's last word — the engine's test once
-        // waited its whole ten seconds on exactly that. A worker spinning on the token makes
-        // the loaded runner's rare interleaving the common one.
+        // sees it. Were the token visible, with the lock let go, before `cancelling` is
+        // recorded, that `cancelled` would arrive from `running`, which the state machine
+        // refuses, and the `cancelling` that landed after it would be the execution's last
+        // word — the engine's test once waited its whole ten seconds on exactly that. A
+        // worker spinning on the token makes the loaded runner's rare interleaving the
+        // common one.
         for round in 0..300 {
             let store = Arc::new(store());
             let id = start(&store);
