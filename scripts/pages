@@ -447,7 +447,7 @@ cmd_verify_docs() {
   url="${url%/}"
   # The index lists every page, so it is the one large document here (half a megabyte at
   # 1283 pages): it gets a bound of its own. And not reading it is not the same finding as
-  # reading something else — a fetch that timed out once reported itself as "not a
+  # reading something else — a fetch that ran past its bound once reported itself as "not a
   # documentation index" and sent the reader looking at a file that was fine.
   local fetched=0
   ix="$(curl -fsSL --max-time "${MJ_PAGES_INDEX_SECONDS:-60}" -H 'Cache-Control: no-cache' "$url/docs/index.json?t=$(now)" 2>/dev/null)" && fetched=1
