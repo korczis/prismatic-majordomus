@@ -294,7 +294,8 @@ It is observation: nothing is executed remotely.
 **Proved by.** `test/cases/130_mesh.sh`, `apps/majordomus-cli/tests/mesh.rs`.
 
 **Maturity.** On master, off by default (`.ai/repo/mesh/majordomus.yaml`). There is no Tailscale
-or mDNS provider. Sharing work claims between machines is branch only.
+or mDNS provider. The peer board and the claims replicate across runtimes, on one machine or
+several, over authenticated links (ADR 0067).
 
 ### Rules, doctrines and the rule proof
 
@@ -487,7 +488,7 @@ $ majordomus-cli evidence show
 
 - CI runs every gate but does not record its runs into the evidence ledger, so most rules and
   claims read `not run` until someone records a run.
-- The mesh discovers instances; it does not share work claims between machines.
+- The mesh has no Tailscale or mDNS provider.
 - Overlap is reported, never enforced. The only refusal is a task's own scope.
 - Automatic session capture exists for Claude Code only.
 - Intent as a typed record, plan and board views in the Cockpit, and a richer entry preflight are

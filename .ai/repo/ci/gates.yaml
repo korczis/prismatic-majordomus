@@ -279,7 +279,16 @@ gates:
   - id: mesh-check
     job: structure
     runs: scripts/ci/mesh-check
-    summary: the mesh stays one subsystem — UDP sockets only under src/mesh/, one MeshRegistry constructed only there, and the mesh-declaration kind, its schema and the rule that holds it move together (project.mesh-is-observation-not-authority)
+    summary: the mesh stays one subsystem — UDP sockets, link transports, link handlers and the journal only under src/mesh/ (and its capability module), one MeshRegistry constructed only there, a Cockpit mesh page that asks the mesh capabilities, and the mesh-declaration kind, its schema and both rules moving together (project.mesh-is-observation-not-authority, project.mesh-cooperation-is-authenticated)
+
+  # Cooperation accepted over a real network: four Linux containers on one docker bridge,
+  # multicast discovery with no seeds, links, a claim and a handover across nodes, a node
+  # disconnected from the network and healed, a node killed and restarted, and mesh verify
+  # inside a node. Loopback integration tests prove the protocol; this proves a network.
+  - id: mesh-lab
+    job: mesh-lab
+    runs: test/mesh-lab/run
+    summary: separate Linux nodes on a real bridge discover each other by multicast, link, share claims and handovers, converge, and recover from a partition and a crash, and scripts/ci/mesh-lab-evidence then judges the record the lab wrote — a complete acceptance or nothing (project.mesh-cooperation-is-authenticated, claim mesh-network-acceptance)
 
   # ADR 0032 keeps the network half of a workspace adapter out of the crate and asks for a
   # gate, "or the boundary is a sentence rather than a constraint". It reads the manifest
@@ -486,13 +495,13 @@ classes:
   # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, crate-boundary, version-surface, release-check]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, mesh-lab, crate-boundary, version-surface, release-check]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
-  # to ADR 0050, and the architecture document
+  # to ADR 0050 and ADR 0067, the network lab that accepts it, and the architecture document
   - id: mesh
-    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, docs/MESH.md]
-    gates: [mesh-check, rust-integration, shell-suite]
+    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, scripts/ci/mesh-lab-evidence, test/mesh-lab/**, test/cases/414_mesh_lab_evidence.sh, apps/majordomus-cli/src/mesh/**, docs/MESH.md, docs/claims/mesh-*.md]
+    gates: [mesh-check, mesh-lab, rust-integration, shell-suite]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite

@@ -578,6 +578,24 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.claim",
+        "kind": "capability",
+        "label": "mesh.claim",
+        "summary": "Claim a scope across the mesh",
+        "route": "/cockpit/capabilities/mesh.claim",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.cooperation",
+        "kind": "capability",
+        "label": "mesh.cooperation",
+        "summary": "Cooperation, at a glance",
+        "route": "/cockpit/capabilities/mesh.cooperation",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:mesh.doctor",
         "kind": "capability",
         "label": "mesh.doctor",
@@ -585,6 +603,33 @@
         "route": "/cockpit/capabilities/mesh.doctor",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:mesh.events",
+        "kind": "capability",
+        "label": "mesh.events",
+        "summary": "The cooperation journal",
+        "route": "/cockpit/capabilities/mesh.events",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.handover.consume",
+        "kind": "capability",
+        "label": "mesh.handover.consume",
+        "summary": "Consume a handover from the mesh",
+        "route": "/cockpit/capabilities/mesh.handover.consume",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.handover.publish",
+        "kind": "capability",
+        "label": "mesh.handover.publish",
+        "summary": "Publish a handover to the mesh",
+        "route": "/cockpit/capabilities/mesh.handover.publish",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
       },
       {
         "id": "capability:mesh.identity",
@@ -596,11 +641,47 @@
         "status": "query"
       },
       {
+        "id": "capability:mesh.link.hello",
+        "kind": "capability",
+        "label": "mesh.link.hello",
+        "summary": "Open a link (the handshake)",
+        "route": "/cockpit/capabilities/mesh.link.hello",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.link.sync",
+        "kind": "capability",
+        "label": "mesh.link.sync",
+        "summary": "One sync round of a link",
+        "route": "/cockpit/capabilities/mesh.link.sync",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
         "id": "capability:mesh.nodes",
         "kind": "capability",
         "label": "mesh.nodes",
         "summary": "The discovered nodes",
         "route": "/cockpit/capabilities/mesh.nodes",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.peer",
+        "kind": "capability",
+        "label": "mesh.peer",
+        "summary": "One runtime",
+        "route": "/cockpit/capabilities/mesh.peer",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:mesh.peers",
+        "kind": "capability",
+        "label": "mesh.peers",
+        "summary": "Who cooperates, machine by machine",
+        "route": "/cockpit/capabilities/mesh.peers",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
       },
@@ -614,6 +695,60 @@
         "status": "command"
       },
       {
+        "id": "capability:mesh.release",
+        "kind": "capability",
+        "label": "mesh.release",
+        "summary": "Release a claim",
+        "route": "/cockpit/capabilities/mesh.release",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.review.answer",
+        "kind": "capability",
+        "label": "mesh.review.answer",
+        "summary": "Answer a review request",
+        "route": "/cockpit/capabilities/mesh.review.answer",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.review.request",
+        "kind": "capability",
+        "label": "mesh.review.request",
+        "summary": "Ask the mesh for a review",
+        "route": "/cockpit/capabilities/mesh.review.request",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.session.close",
+        "kind": "capability",
+        "label": "mesh.session.close",
+        "summary": "Close a session on the mesh",
+        "route": "/cockpit/capabilities/mesh.session.close",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.session.open",
+        "kind": "capability",
+        "label": "mesh.session.open",
+        "summary": "Open or update a session on the mesh",
+        "route": "/cockpit/capabilities/mesh.session.open",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:mesh.state",
+        "kind": "capability",
+        "label": "mesh.state",
+        "summary": "The state every linked runtime converges on",
+        "route": "/cockpit/capabilities/mesh.state",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:mesh.status",
         "kind": "capability",
         "label": "mesh.status",
@@ -621,6 +756,15 @@
         "route": "/cockpit/capabilities/mesh.status",
         "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
         "status": "query"
+      },
+      {
+        "id": "capability:mesh.verify",
+        "kind": "capability",
+        "label": "mesh.verify",
+        "summary": "Prove cooperation now",
+        "route": "/cockpit/capabilities/mesh.verify",
+        "source": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
+        "status": "command"
       },
       {
         "id": "capability:models.list",
@@ -1782,11 +1926,43 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
+        "kind": "file",
+        "label": "cooperation.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/cooperation.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/journal.rs",
+        "kind": "file",
+        "label": "journal.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/journal.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/registry.rs",
         "kind": "file",
         "label": "registry.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/mesh/registry.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/repository.rs",
+        "kind": "file",
+        "label": "repository.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/repository.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/mesh/state.rs",
+        "kind": "file",
+        "label": "state.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/state.rs",
         "external": true
       },
       {
@@ -2075,6 +2251,14 @@
         "label": "mesh.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/mesh.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "kind": "file",
+        "label": "mesh_cooperation.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/mesh_cooperation.rs",
         "external": true
       },
       {
@@ -2619,6 +2803,14 @@
         "label": "why.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/why.html",
+        "external": true
+      },
+      {
+        "id": "file:test/mesh-lab/run",
+        "kind": "file",
+        "label": "run",
+        "summary": "named by the layer; not an object of this index",
+        "source": "test/mesh-lab/run",
         "external": true
       },
       {
@@ -4049,6 +4241,32 @@
             "governance",
             "routing",
             "web"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0067",
+        "kind": "adr",
+        "label": "adr-0067",
+        "summary": "Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere",
+        "route": "/cockpit/objects/adr/adr-0067",
+        "source": ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-15",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "rule:project.mesh-cooperation-is-authenticated",
+            "rule:project.mesh-is-observation-not-authority",
+            "file:docs/MESH.md"
+          ],
+          "tags": [
+            "mesh",
+            "cooperation",
+            "security",
+            "distributed"
           ]
         }
       },
@@ -6042,6 +6260,69 @@
         }
       },
       {
+        "id": "majordomus://claim/mesh-claims-cross-runtime",
+        "kind": "claim",
+        "label": "mesh-claims-cross-runtime",
+        "summary": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+        "route": "/cockpit/objects/claim/mesh-claims-cross-runtime",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+          "implementation": "apps/majordomus-cli/src/mesh/state.rs",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-cooperation-links",
+        "kind": "claim",
+        "label": "mesh-cooperation-links",
+        "summary": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+        "route": "/cockpit/objects/claim/mesh-cooperation-links",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+          "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-liveness-expiry",
+        "kind": "claim",
+        "label": "mesh-liveness-expiry",
+        "summary": "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate",
+        "route": "/cockpit/objects/claim/mesh-liveness-expiry",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/cooperation.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-network-acceptance",
+        "kind": "claim",
+        "label": "mesh-network-acceptance",
+        "summary": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+        "route": "/cockpit/objects/claim/mesh-network-acceptance",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+          "implementation": "test/mesh-lab/run",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/414_mesh_lab_evidence.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/mesh-observation-not-authority",
         "kind": "claim",
         "label": "mesh-observation-not-authority",
@@ -6077,7 +6358,7 @@
         "id": "majordomus://claim/mesh-one-registry",
         "kind": "claim",
         "label": "mesh-one-registry",
-        "summary": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+        "summary": "Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
         "route": "/cockpit/objects/claim/mesh-one-registry",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
@@ -6085,7 +6366,39 @@
           "implementation": "apps/majordomus-cli/src/mesh/registry.rs",
           "responsibility": "none",
           "source": "docs/MESH.md",
-          "test": "test/cases/130_mesh.sh"
+          "test": "apps/majordomus-cli/tests/mesh.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-repository-isolation",
+        "kind": "claim",
+        "label": "mesh-repository-isolation",
+        "summary": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+        "route": "/cockpit/objects/claim/mesh-repository-isolation",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+          "implementation": "apps/majordomus-cli/src/mesh/repository.rs",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-three-runtime-convergence",
+        "kind": "claim",
+        "label": "mesh-three-runtime-convergence",
+        "summary": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+        "route": "/cockpit/objects/claim/mesh-three-runtime-convergence",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+          "implementation": "apps/majordomus-cli/src/mesh/journal.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
         }
       },
       {
@@ -9721,7 +10034,7 @@
         "id": "majordomus://document/docs/MESH.md",
         "kind": "document",
         "label": "docs/MESH.md",
-        "summary": "The mesh: discovery of running Majordomus instances",
+        "summary": "Majordomus Mesh",
         "route": "/cockpit/objects/document/docs-mesh-md",
         "source": "docs/MESH.md"
       },
@@ -10598,6 +10911,38 @@
         "source": "docs/claims/mcp-uri-resolution.md"
       },
       {
+        "id": "majordomus://document/docs/claims/mesh-claims-cross-runtime.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-claims-cross-runtime.md",
+        "summary": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+        "route": "/cockpit/objects/document/docs-claims-mesh-claims-cross-runtime-md",
+        "source": "docs/claims/mesh-claims-cross-runtime.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-cooperation-links.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-cooperation-links.md",
+        "summary": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+        "route": "/cockpit/objects/document/docs-claims-mesh-cooperation-links-md",
+        "source": "docs/claims/mesh-cooperation-links.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-liveness-expiry.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-liveness-expiry.md",
+        "summary": "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate",
+        "route": "/cockpit/objects/document/docs-claims-mesh-liveness-expiry-md",
+        "source": "docs/claims/mesh-liveness-expiry.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-network-acceptance.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-network-acceptance.md",
+        "summary": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+        "route": "/cockpit/objects/document/docs-claims-mesh-network-acceptance-md",
+        "source": "docs/claims/mesh-network-acceptance.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
         "kind": "document",
         "label": "docs/claims/mesh-observation-not-authority.md",
@@ -10617,9 +10962,25 @@
         "id": "majordomus://document/docs/claims/mesh-one-registry.md",
         "kind": "document",
         "label": "docs/claims/mesh-one-registry.md",
-        "summary": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+        "summary": "Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
         "route": "/cockpit/objects/document/docs-claims-mesh-one-registry-md",
         "source": "docs/claims/mesh-one-registry.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-repository-isolation.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-repository-isolation.md",
+        "summary": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+        "route": "/cockpit/objects/document/docs-claims-mesh-repository-isolation-md",
+        "source": "docs/claims/mesh-repository-isolation.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-three-runtime-convergence.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-three-runtime-convergence.md",
+        "summary": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+        "route": "/cockpit/objects/document/docs-claims-mesh-three-runtime-convergence-md",
+        "source": "docs/claims/mesh-three-runtime-convergence.md"
       },
       {
         "id": "majordomus://document/docs/claims/minimum-context.md",
@@ -12317,18 +12678,25 @@
         "id": "majordomus://feature/mesh",
         "kind": "feature",
         "label": "mesh",
-        "summary": "Running instances find each other, and prove who they are",
+        "summary": "Sessions on several machines work one repository without colliding",
         "route": "/cockpit/objects/feature/mesh",
         "source": ".ai/repo/features/mesh.md",
         "status": "stable",
         "facts": {
           "adrs": [
-            "adr-0050"
+            "adr-0050",
+            "adr-0067"
           ],
           "areas": [
             "coordination"
           ],
           "claims": [
+            "mesh-cooperation-links",
+            "mesh-claims-cross-runtime",
+            "mesh-repository-isolation",
+            "mesh-liveness-expiry",
+            "mesh-three-runtime-convergence",
+            "mesh-network-acceptance",
             "mesh-observation-not-authority",
             "mesh-one-registry",
             "mesh-off-by-default"
@@ -12340,7 +12708,6 @@
             "docs/MESH.md"
           ],
           "featured": true,
-          "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
           "kinds": [
             "mesh-declaration"
           ],
@@ -12351,14 +12718,17 @@
             "coordination"
           ],
           "rules": [
-            "project.mesh-is-observation-not-authority"
+            "project.mesh-is-observation-not-authority",
+            "project.mesh-cooperation-is-authenticated"
           ],
           "short_title": "Mesh",
           "tags": [
             "mesh",
             "discovery",
+            "cooperation",
             "network",
-            "security"
+            "security",
+            "distributed"
           ],
           "use_cases": [],
           "weight": 45
@@ -29027,6 +29397,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "rule",
+        "label": "project.mesh-cooperation-is-authenticated@1",
+        "summary": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
+        "route": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
+        "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.mesh-is-observation-not-authority@1"
+          ],
+          "tags": [
+            "mesh",
+            "security",
+            "cooperation",
+            "doctrine"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.mesh-is-observation-not-authority@1",
         "kind": "rule",
         "label": "project.mesh-is-observation-not-authority@1",
@@ -32946,6 +33337,13 @@
         "source": "test/cases/360_the_crate_boundary_is_measured.sh"
       },
       {
+        "id": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
+        "kind": "test",
+        "label": "test/cases/368_mesh_handover_resolves.sh",
+        "route": "/cockpit/objects/test/test-cases-368-mesh-handover-resolves-sh",
+        "source": "test/cases/368_mesh_handover_resolves.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/36_command_doctrines.sh",
         "kind": "test",
         "label": "test/cases/36_command_doctrines.sh",
@@ -33007,6 +33405,13 @@
         "label": "test/cases/40_project_model.sh",
         "route": "/cockpit/objects/test/test-cases-40-project-model-sh",
         "source": "test/cases/40_project_model.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/414_mesh_lab_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-414-mesh-lab-evidence-sh",
+        "source": "test/cases/414_mesh_lab_evidence.sh"
       },
       {
         "id": "majordomus://test/test/cases/41_project_status.sh",
@@ -36748,6 +37153,36 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.claim",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.claim",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.claim",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.cooperation",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.cooperation",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.cooperation",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.doctor",
         "target": "projection:cli",
         "kind": "projects"
@@ -36768,6 +37203,51 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.events",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.events",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.events",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.handover.consume",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.handover.consume",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.handover.consume",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.handover.publish",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.handover.publish",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.handover.publish",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.identity",
         "target": "projection:cli",
         "kind": "projects"
@@ -36788,6 +37268,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.link.hello",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.link.hello",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.link.sync",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.link.sync",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.nodes",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -36799,6 +37299,36 @@
       },
       {
         "source": "capability:mesh.nodes",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.peer",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.peer",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.peer",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.peers",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.peers",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.peers",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -36818,6 +37348,96 @@
         "kind": "projects"
       },
       {
+        "source": "capability:mesh.release",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.release",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.release",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.answer",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.answer",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.answer",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.request",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.request",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.review.request",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.session.close",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.session.close",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.session.close",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.session.open",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.session.open",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.session.open",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.state",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.state",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:mesh.status",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -36829,6 +37449,21 @@
       },
       {
         "source": "capability:mesh.status",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.verify",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.verify",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:mesh.verify",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -39423,6 +40058,41 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://adr/adr-0067",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0067",
+        "target": "majordomus://adr/adr-0003",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0067",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0067",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0067",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0067",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0067",
+        "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -41368,6 +42038,86 @@
         "kind": "defined_in"
       },
       {
+        "source": "majordomus://claim/mesh-claims-cross-runtime",
+        "target": "file:apps/majordomus-cli/src/mesh/state.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-claims-cross-runtime",
+        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-claims-cross-runtime",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-claims-cross-runtime",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-cooperation-links",
+        "target": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-cooperation-links",
+        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-cooperation-links",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-cooperation-links",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-liveness-expiry",
+        "target": "file:apps/majordomus-cli/src/mesh/cooperation.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-liveness-expiry",
+        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-liveness-expiry",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-liveness-expiry",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-network-acceptance",
+        "target": "file:test/mesh-lab/run",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-network-acceptance",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-network-acceptance",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-network-acceptance",
+        "target": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/mesh-observation-not-authority",
         "target": "file:apps/majordomus-cli/src/mesh/trust.rs",
         "kind": "implemented_by"
@@ -41414,6 +42164,11 @@
       },
       {
         "source": "majordomus://claim/mesh-one-registry",
+        "target": "file:apps/majordomus-cli/tests/mesh.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-one-registry",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -41423,9 +42178,44 @@
         "kind": "defined_in"
       },
       {
-        "source": "majordomus://claim/mesh-one-registry",
-        "target": "majordomus://test/test/cases/130_mesh.sh",
+        "source": "majordomus://claim/mesh-repository-isolation",
+        "target": "file:apps/majordomus-cli/src/mesh/repository.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-repository-isolation",
+        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
         "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-repository-isolation",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-repository-isolation",
+        "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-three-runtime-convergence",
+        "target": "file:apps/majordomus-cli/src/mesh/journal.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-three-runtime-convergence",
+        "target": "file:apps/majordomus-cli/tests/mesh_cooperation.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-three-runtime-convergence",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-three-runtime-convergence",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
       },
       {
         "source": "majordomus://claim/minimum-context",
@@ -44393,6 +45183,26 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/mesh-claims-cross-runtime.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-cooperation-links.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-liveness-expiry.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-network-acceptance.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/mesh-observation-not-authority.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -44404,6 +45214,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/mesh-one-registry.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-repository-isolation.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-three-runtime-convergence.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -50253,6 +51073,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+        "target": "majordomus://rule/project.mesh-is-observation-not-authority@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.mesh-is-observation-not-authority@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -51588,6 +52418,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/368_mesh_handover_resolves.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/36_command_doctrines.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -51629,6 +52464,11 @@
       },
       {
         "source": "majordomus://test/test/cases/40_project_model.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/414_mesh_lab_evidence.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -55019,7 +55859,32 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.claim",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.cooperation",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.doctor",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.events",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.handover.consume",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.handover.publish",
         "kind": "composes"
       },
       {
@@ -55029,7 +55894,27 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.link.hello",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.link.sync",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.nodes",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.peer",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.peers",
         "kind": "composes"
       },
       {
@@ -55039,7 +55924,42 @@
       },
       {
         "source": "module:mesh",
+        "target": "capability:mesh.release",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.review.answer",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.review.request",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.session.close",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.session.open",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.state",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
         "target": "capability:mesh.status",
+        "kind": "composes"
+      },
+      {
+        "source": "module:mesh",
+        "target": "capability:mesh.verify",
         "kind": "composes"
       },
       {
@@ -55309,8 +56229,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1756,
-      "edges": 3908,
+      "nodes": 1794,
+      "edges": 4011,
       "acyclic": true,
       "truncated": false
     }

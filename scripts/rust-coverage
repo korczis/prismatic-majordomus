@@ -107,7 +107,11 @@ if [ -z "$FROM" ]; then
   cargo llvm-cov --version >/dev/null 2>&1 || {
     printf 'rust-coverage: cargo-llvm-cov is not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview)\n' >&2
     exit 12; }
-  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
+  # No suffix after the Xs: GNU mktemp accepts a template with one, BSD mktemp refuses it and
+  # dies with "mkstemp failed ... File exists", so this script measured nothing at all on a
+  # Mac while CI was unaffected. The name only has to be unique — cargo-llvm-cov is told the
+  # format by --json, never by the extension.
+  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX")"
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
   # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
@@ -117,7 +121,12 @@ if [ -z "$FROM" ]; then
   # that vocabulary; it is cargo's own error wearing this gate's name. So the failure is
   # caught here, and the export is judged on whether it exists and parses.
   cov_status=0
-  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
+  # Instrumented binaries run several times slower, and the suite's networked tests are
+  # bounded by the wall clock: a bound that is generous uninstrumented expires here, and the
+  # run then reports a coverage failure for what is really a stopwatch. The tests read this
+  # and stretch their own bounds rather than every bound being written for the slowest case.
+  ( cd "$CRATE" && RUSTFLAGS='' MAJORDOMUS_TEST_PATIENCE="${MAJORDOMUS_TEST_PATIENCE:-4}" \
+      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
   if [ ! -s "$FROM" ]; then
     printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and wrote no export\n' "$cov_status" >&2
     exit 12

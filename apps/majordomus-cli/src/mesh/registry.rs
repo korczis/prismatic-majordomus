@@ -111,6 +111,11 @@ impl crate::order::Ordered for Sighting {
 pub struct NodeRecord {
     /// The node id: the digest of the key below.
     pub node_id: NodeId,
+    /// The runtime slot: which server of the node (one per checkout), 16 hex; empty for a
+    /// version-1 advertisement. A record is one runtime: two worktrees of one machine are
+    /// two records under one node id and one key.
+    #[serde(default)]
+    pub runtime: String,
     /// The Ed25519 public key that proved this record's advertisements.
     pub public_key: String,
     /// The node's own display name. Presentation only.
@@ -171,7 +176,8 @@ struct Slot {
 }
 
 struct Inner {
-    slots: BTreeMap<NodeId, Slot>,
+    /// Keyed by (node, runtime): node-id order first, as every listing promises.
+    slots: BTreeMap<(NodeId, String), Slot>,
     tallies: Tallies,
 }
 
@@ -201,13 +207,28 @@ impl MeshRegistry {
     /// The key currently bound to a node id, for trust evaluation.
     pub fn known_key(&self, node: &NodeId) -> Option<String> {
         let inner = self.inner.lock().expect("mesh registry lock");
-        inner.slots.get(node).map(|s| s.record.public_key.clone())
+        inner
+            .slots
+            .iter()
+            .find(|((n, _), _)| n == node)
+            .map(|(_, s)| s.record.public_key.clone())
     }
 
-    /// The current trust state of a node id.
+    /// The current trust state of a node id: the one its runtimes share, the first
+    /// rejection winning, because trust is a property of the key and not of a server.
     pub fn trust_of(&self, node: &NodeId) -> Option<TrustState> {
         let inner = self.inner.lock().expect("mesh registry lock");
-        inner.slots.get(node).map(|s| s.record.trust.clone())
+        let states: Vec<&TrustState> = inner
+            .slots
+            .iter()
+            .filter(|((n, _), _)| n == node)
+            .map(|(_, s)| &s.record.trust)
+            .collect();
+        states
+            .iter()
+            .find(|t| matches!(t, TrustState::Rejected(_)))
+            .or(states.first())
+            .map(|t| (*t).clone())
     }
 
     /// Record one verified observation; `raw` is the envelope as heard, kept verbatim
@@ -226,7 +247,8 @@ impl MeshRegistry {
         let stamp = crate::peers::rfc3339(std::time::SystemTime::now());
         let mut inner = self.inner.lock().expect("mesh registry lock");
         self.expire_locked(&mut inner, now);
-        if let Some(slot) = inner.slots.get_mut(&node_id) {
+        let key = (node_id.clone(), adv.rt.clone());
+        if let Some(slot) = inner.slots.get_mut(&key) {
             let same_instance = slot.record.instance_id == adv.inst;
             if same_instance && adv.seq <= slot.last_seq {
                 inner.tallies.replayed += 1;
@@ -261,14 +283,16 @@ impl MeshRegistry {
             inner.tallies.accepted += 1;
             return true;
         }
-        // A new node. Make room if the table is full: the longest-unseen untrusted
-        // record goes; if every record is trusted, the observation is dropped instead —
-        // a full table of trusted nodes is not something an attacker gets to flush.
+        // A new node. Make room if the table is full: the longest-unseen record not on the
+        // allowlist goes; if every record is allowlisted, the observation is dropped instead —
+        // a full table of a person's own fleet is not something an attacker gets to flush. A
+        // record trusted by TOFU is evictable: under TOFU anyone on the segment is trusted,
+        // and exempting them would let one key lock the fleet out of the table.
         if inner.slots.len() >= MAX_NODES {
             let victim = inner
                 .slots
                 .iter()
-                .filter(|(_, s)| !s.record.trust.is_trusted())
+                .filter(|(_, s)| !matches!(&s.record.trust, TrustState::Trusted(by) if by == "allowlist"))
                 .min_by_key(|(_, s)| s.last_seen)
                 .map(|(id, _)| id.clone());
             match victim {
@@ -280,10 +304,11 @@ impl MeshRegistry {
             }
         }
         inner.slots.insert(
-            node_id.clone(),
+            key,
             Slot {
                 record: NodeRecord {
                     node_id,
+                    runtime: adv.rt.clone(),
                     public_key: adv.pk.clone(),
                     display_name: adv.name.clone(),
                     instance_id: adv.inst.clone(),

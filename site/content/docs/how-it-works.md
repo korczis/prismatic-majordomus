@@ -1029,10 +1029,13 @@ tailnet is the supported way to span machines. Data flow is the same as every ot
 `mesh.status` and `mesh.nodes` capabilities, served over HTTP and MCP and rendered at
 `/cockpit/mesh`.
 
-**The mesh and the board are not connected yet.** The board gathers checkouts of one machine
-through lease files; the mesh registry is not consulted. Cross-machine cooperation — sharing
-claims between nodes — is a proposal on an unmerged branch, not a feature. The mesh makes
-instances visible; it does not orchestrate agents.
+**The board is projected into the mesh.** The board still gathers the checkouts of one machine
+through lease files, and that remains the machine-local view. Above discovery, cooperation links
+the runtimes of one repository — a server per checkout, on this machine or another — over
+authenticated links (ADR 0067): every heartbeat a runtime's board sessions become mesh sessions
+and their announcements advisory claims, in one signed journal that every linked runtime
+replicates and folds the same way. So the peer board and the claims replicate across runtimes;
+a link needs an enabled mesh and a trusted key. The mesh does not orchestrate agents.
 
 ## The repository environment
 

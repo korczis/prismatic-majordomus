@@ -28,7 +28,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::identity::NodeIdentity;
-use super::protocol::{advertise, Envelope};
+use super::protocol::{advertise_as, Envelope};
 use super::registry::MeshSource;
 use super::MeshError;
 
@@ -48,6 +48,7 @@ pub struct Observation {
 /// deduplicates by (instance, seq) regardless of which transport delivered first.
 pub struct Beacon {
     identity: Arc<NodeIdentity>,
+    runtime: String,
     seq: AtomicU64,
     endpoints: Vec<String>,
     caps: Vec<String>,
@@ -56,7 +57,8 @@ pub struct Beacon {
 }
 
 impl Beacon {
-    /// A beacon over this node's identity and advertised facts.
+    /// A beacon over this node's identity and advertised facts, for the node's unnamed
+    /// runtime; [`Beacon::with_runtime`] names one.
     pub fn new(
         identity: Arc<NodeIdentity>,
         endpoints: Vec<String>,
@@ -66,6 +68,7 @@ impl Beacon {
     ) -> Self {
         Beacon {
             identity,
+            runtime: String::new(),
             seq: AtomicU64::new(0),
             endpoints,
             caps,
@@ -74,11 +77,37 @@ impl Beacon {
         }
     }
 
+    /// The same beacon, announcing one runtime slot of the node (16 hex). A node may run a
+    /// server per checkout, and a listener that only heard the node could not tell those
+    /// apart or address one of them; naming the runtime is what makes an advertisement
+    /// answerable by the particular server that sent it. It is a builder step rather than
+    /// an argument to [`Beacon::new`] because a node with a single unnamed runtime is a
+    /// complete configuration.
+    ///
+    /// ```
+    /// use std::sync::Arc;
+    /// use majordomus_cli::mesh::identity::NodeIdentity;
+    /// use majordomus_cli::mesh::provider::Beacon;
+    ///
+    /// let identity = Arc::new(NodeIdentity::ephemeral().unwrap());
+    /// let bare = Beacon::new(identity.clone(), vec![], vec![], vec![], "docs");
+    /// assert_eq!(bare.runtime(), "", "a node may run one unnamed runtime");
+    ///
+    /// let named = Beacon::new(identity, vec![], vec![], vec![], "docs").with_runtime("0123456789abcdef");
+    /// assert_eq!(named.runtime(), "0123456789abcdef");
+    /// assert_eq!(named.next_envelope().adv.rt, "0123456789abcdef");
+    /// ```
+    pub fn with_runtime(mut self, runtime: &str) -> Self {
+        self.runtime = runtime.into();
+        self
+    }
+
     /// The next signed envelope, sequence advanced.
     pub fn next_envelope(&self) -> Envelope {
         let seq = self.seq.fetch_add(1, Ordering::SeqCst) + 1;
-        advertise(
+        advertise_as(
             &self.identity,
+            &self.runtime,
             seq,
             &self.endpoints,
             &self.caps,
@@ -90,6 +119,19 @@ impl Beacon {
     /// The public identity behind the beacon.
     pub fn identity(&self) -> &NodeIdentity {
         &self.identity
+    }
+
+    /// The runtime slot this beacon announces; empty for the unnamed runtime.
+    pub fn runtime(&self) -> &str {
+        &self.runtime
+    }
+
+    /// The `host:port` authorities this beacon puts into every advertisement it signs.
+    /// They are fixed when the beacon is built, so that every transport announces the same
+    /// reachability and a listener never has to reconcile two accounts of where one node
+    /// answers.
+    pub fn endpoints(&self) -> &[String] {
+        &self.endpoints
     }
 }
 

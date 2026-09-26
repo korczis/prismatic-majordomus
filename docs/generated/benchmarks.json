@@ -5,26 +5,26 @@
   "coverage": [
     {
       "scope": "direct",
-      "required": 115,
-      "covered": 110,
+      "required": 131,
+      "covered": 117,
       "missing": 0,
-      "waived": 5,
+      "waived": 14,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 114,
-      "covered": 110,
+      "required": 130,
+      "covered": 117,
       "missing": 0,
-      "waived": 4,
+      "waived": 13,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 112,
-      "covered": 108,
+      "required": 126,
+      "covered": 113,
       "missing": 0,
-      "waived": 4,
+      "waived": 13,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 354,
-      "covered": 341,
+      "required": 400,
+      "covered": 360,
       "missing": 0,
-      "waived": 13,
+      "waived": 40,
       "inapplicable": 0
     }
   ],
@@ -751,6 +751,28 @@
       ]
     },
     {
+      "id": "mesh.claim",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.cooperation",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "mesh.doctor",
       "module": "mesh",
       "kind": "query",
@@ -761,6 +783,38 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.events",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.handover.consume",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.handover.publish",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "mesh.identity",
@@ -775,7 +829,55 @@
       ]
     },
     {
+      "id": "mesh.link.hello",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "malformed"
+      ]
+    },
+    {
+      "id": "mesh.link.sync",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "malformed"
+      ]
+    },
+    {
       "id": "mesh.nodes",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.peer",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "unknown"
+      ]
+    },
+    {
+      "id": "mesh.peers",
       "module": "mesh",
       "kind": "query",
       "cache": "—",
@@ -799,6 +901,68 @@
       ]
     },
     {
+      "id": "mesh.release",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.review.answer",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.review.request",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.session.close",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.session.open",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.state",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "mesh.status",
       "module": "mesh",
       "kind": "query",
@@ -809,6 +973,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.verify",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "models.list",

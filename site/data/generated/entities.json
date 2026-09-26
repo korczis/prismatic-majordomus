@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 138,
+      "count": 139,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 176
+      "count": 182
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 252
+      "count": 258
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 138
+      "count": 139
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 225
+      "count": 227
     },
     {
       "kind": "use-case",
@@ -335,6 +335,13 @@
           "label": "adr-0050",
           "kind": "adr",
           "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
           "external": false
         }
       ]
@@ -2528,7 +2535,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2884,7 +2899,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3338,6 +3361,67 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0067",
+      "identity": "adr-0067",
+      "slug": "adr-0067",
+      "cockpit": "/cockpit/objects/adr/adr-0067",
+      "title": "Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "cooperation",
+        "security",
+        "distributed"
+      ],
+      "source": ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0003",
+          "kind": "adr",
+          "route": "/adrs/adr-0003/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-cooperation-is-authenticated@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.mesh-is-observation-not-authority@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-is-observation-not-authority-1/",
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -7911,6 +7995,61 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
+      "identity": "project.mesh-cooperation-is-authenticated@1",
+      "slug": "project-mesh-cooperation-is-authenticated-1",
+      "cockpit": "/cockpit/objects/rule/project-mesh-cooperation-is-authenticated-1",
+      "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
+      "status": "active",
+      "tags": [
+        "mesh",
+        "security",
+        "cooperation",
+        "doctrine"
+      ],
+      "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.mesh-is-observation-not-authority@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-is-observation-not-authority-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "defined_in",
+          "label": "mesh-claims-cross-runtime",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "defined_in",
+          "label": "mesh-cooperation-links",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "defined_in",
+          "label": "mesh-repository-isolation",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.mesh-is-observation-not-authority@1",
       "identity": "project.mesh-is-observation-not-authority@1",
       "slug": "project-mesh-is-observation-not-authority-1",
@@ -7933,10 +8072,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
           "edge": "defined_in",
           "label": "mesh-observation-not-authority",
           "kind": "claim",
           "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.mesh-cooperation-is-authenticated@1",
+          "kind": "rule",
+          "route": "/rules/project-mesh-cooperation-is-authenticated-1/",
           "external": false
         }
       ]

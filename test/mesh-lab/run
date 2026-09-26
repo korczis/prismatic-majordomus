@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+# The mesh lab: Majordomus Mesh accepted over a real network between separate Linux nodes.
+#
+# Each node is a container with its own filesystem, node key, checkout and network
+# interface on one bridge. Nodes find each other by UDP multicast (no seeds), link through
+# the signed handshake, and replicate over HTTP between their own addresses. The network
+# is then broken on purpose — a node is disconnected from the bridge, a node is killed —
+# and healed, and every scenario asserts what every node's HTTP surface and command line
+# answer.
+#
+#   test/mesh-lab/run                 build a Linux executable in a container, then run
+#   MESH_LAB_BIN=path test/mesh-lab/run   use an executable already built for this platform
+#   MESH_LAB_KEEP=1 test/mesh-lab/run     leave the nodes running for inspection
+#
+# docs/CLAIMS.yaml names this script as the proof of `mesh-network-acceptance`.
+#
+# Writes target/mesh-lab/evidence.json (schema mesh-lab-evidence/v1): the protocol versions,
+# the topology, and every scenario's verdict with its measured timings. Exits 0 when every
+# scenario passes, 10 when one fails (the failing scenario and the nodes' answers are
+# printed), 2 when the lab cannot be built or started.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+HERE="$ROOT/test/mesh-lab"
+LAB="${MESH_LAB_DIR:-$ROOT/target/mesh-lab}"
+IMAGE="majordomus-mesh-lab:local"
+NET="mjlab-net"
+P="mjlab"
+EXPIRY=6
+REPO="majordomus-mesh-lab"
+mkdir -p "$LAB"
+
+declare -A VERDICT=()
+declare -A DETAIL=()
+declare -a ORDER=()
+STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+die() { printf 'mesh-lab: %s\n' "$*" >&2; exit 2; }
+now_ms() { python3 -c 'import time; print(int(time.time()*1000))' 2>/dev/null || echo $(( $(date +%s) * 1000 )); }
+
+cleanup() {
+  [ "${MESH_LAB_KEEP:-0}" = 1 ] && return 0
+  docker rm -f "$P-a" "$P-b" "$P-c" "$P-x" >/dev/null 2>&1 || true
+  docker network rm "$NET" >/dev/null 2>&1 || true
+}
+
+write_evidence() {
+  local status="$1" scenarios="{}" name
+  for name in "${ORDER[@]}"; do
+    scenarios="$(jq -c --arg n "$name" --arg v "${VERDICT[$name]}" --arg d "${DETAIL[$name]:-}" \
+      '. + {($n): {verdict: $v, detail: $d}}' <<<"$scenarios")"
+  done
+  jq -n \
+    --arg schema "mesh-lab-evidence/v1" \
+    --arg started "$STARTED" \
+    --arg finished "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg status "$status" \
+    --arg version "$(docker exec "$P-a" majordomus --version 2>/dev/null || echo unknown)" \
+    --arg platform "$(docker exec "$P-a" uname -sm 2>/dev/null || echo unknown)" \
+    --argjson scenarios "$scenarios" \
+    '{schema: $schema, started_at: $started, finished_at: $finished, status: $status,
+      executable: $version, platform: $platform,
+      protocols: {discovery: 2, link: {min: 1, max: 1}, event: 1},
+      topology: {nodes: ["a", "b", "c", "x"], network: "one docker bridge per run",
+                 transports: ["udp_multicast", "http"], repository: {a: "lab", b: "lab", c: "lab", x: "other"}},
+      scenarios: $scenarios}' > "$LAB/evidence.json"
+}
+
+trap 'rc=$?; if [ $rc -ne 0 ] && [ -n "${ORDER[*]:-}" ]; then write_evidence failed; fi; cleanup' EXIT
+
+pass() { ORDER+=("$1"); VERDICT[$1]=pass; DETAIL[$1]="$2"; printf 'pass  %-34s %s\n' "$1" "$2"; }
+fail() {
+  ORDER+=("$1"); VERDICT[$1]=fail; DETAIL[$1]="$2"
+  printf 'FAIL  %-34s %s\n' "$1" "$2" >&2
+  for n in a b c; do
+    printf -- '--- node %s cooperation\n' "$n" >&2
+    docker exec "$P-$n" curl -fsS http://127.0.0.1:8741/api/v1/mesh/cooperation 2>/dev/null | jq -c '{runtime, peers: [.peers[] | {runtime, state, failures, last_error}], refused: [.refused[] | .refusal.code], journal}' >&2 || true
+    docker logs --tail 15 "$P-$n" >&2 2>&1 || true
+  done
+  write_evidence failed
+  exit 10
+}
+
+api() { docker exec "$P-$1" curl -fsS "http://127.0.0.1:8741$2"; }
+post() { docker exec "$P-$1" curl -sS -o /tmp/mjlab.body -w '%{http_code}' -H 'Content-Type: application/json' -d "$3" "http://127.0.0.1:8741$2" && docker exec "$P-$1" cat /tmp/mjlab.body >&2 && echo; }
+post_status() { docker exec "$P-$1" curl -sS -o /dev/null -w '%{http_code}' -H 'Content-Type: application/json' -d "$3" "http://127.0.0.1:8741$2"; }
+post_json() { docker exec "$P-$1" curl -sS -H 'Content-Type: application/json' -d "$3" "http://127.0.0.1:8741$2"; }
+
+# wait_for SECONDS DESCRIPTION COMMAND... — poll until COMMAND succeeds; prints elapsed ms.
+wait_for() {
+  local seconds="$1" start; shift 2
+  start="$(now_ms)"
+  while :; do
+    if "$@" >/dev/null 2>&1; then echo $(( $(now_ms) - start )); return 0; fi
+    [ $(( $(now_ms) - start )) -lt $(( seconds * 1000 )) ] || return 1
+    sleep 0.25
+  done
+}
+
+connected_count() { api "$1" /api/v1/mesh/cooperation | jq -e --argjson n "$2" '[.peers[] | select(.state == "connected")] | length == $n'; }
+digest_of() { api "$1" /api/v1/mesh/state | jq -r '.state.digest'; }
+same_digest() { local d; d="$(digest_of "$1")"; for n in "${@:2}"; do [ "$(digest_of "$n")" = "$d" ] || return 1; done; }
+
+# ------------------------------------------------------------------ build
+command -v docker >/dev/null || die "docker is required"
+command -v jq >/dev/null || die "jq is required"
+BIN="${MESH_LAB_BIN:-}"
+if [ -z "$BIN" ]; then
+  mkdir -p "$LAB/cargo-registry" "$LAB/target"
+  printf 'mesh-lab: building a Linux executable in rust:1.98.1-bookworm\n'
+  docker run --rm -v "$ROOT":/src -v "$LAB/cargo-registry":/usr/local/cargo/registry \
+    -v "$LAB/target":/target -e CARGO_TARGET_DIR=/target -w /src/apps/majordomus-cli \
+    rust:1.98.1-bookworm cargo build --locked --bin majordomus >/dev/null || die "the build failed"
+  BIN="$LAB/target/debug/majordomus"
+fi
+[ -x "$BIN" ] || die "no executable at $BIN"
+CTX="$LAB/image"
+rm -rf "$CTX"; mkdir -p "$CTX"
+cp "$BIN" "$CTX/majordomus"
+cp -R "$ROOT/share" "$CTX/share"
+cp "$HERE/node-entrypoint" "$CTX/node-entrypoint"
+cp "$HERE/Dockerfile" "$CTX/Dockerfile"
+git -C "$ROOT" archive --format=tar HEAD -o "$CTX/repo.tar"
+docker build -q -t "$IMAGE" "$CTX" >/dev/null || die "the image did not build"
+
+# ------------------------------------------------------------------ topology
+cleanup
+docker network create "$NET" >/dev/null
+start_node() { # name repository [extra env...]
+  local name="$1" repo="$2"; shift 2
+  docker run -d --name "$P-$name" --hostname "node-$name" --network "$NET" \
+    -e REPO_ID="$repo" -e EXPIRY="$EXPIRY" "$@" "$IMAGE" >/dev/null
+}
+start_node a "$REPO"
+start_node b "$REPO"
+start_node c "$REPO"
+# x serves another repository and dials a on purpose: discovery alone would never make a
+# lab node try x (candidates are filtered by repository), so the seed is what puts the
+# handshake's own isolation check under test.
+start_node x "some-other-repository" -e SEEDS="http://$P-a:8741"
+for n in a b c x; do
+  wait_for 60 "node $n serves" api "$n" /api/v1/mesh/cooperation >/dev/null || die "node $n did not start: $(docker logs --tail 20 "$P-$n" 2>&1)"
+done
+
+# ------------------------------------------------------------------ scenarios
+# 1. Discovery by multicast between separate network interfaces, no seeds declared.
+if ms="$(wait_for 30 "a hears b, c and x" bash -c "docker exec $P-a curl -fsS http://127.0.0.1:8741/api/v1/mesh/nodes | jq -e '[.nodes[] | select(.sources[].source == \"udp_multicast\")] | length >= 3'")"; then
+  pass multicast_discovery "node a heard b, c and x by udp multicast in ${ms}ms"
+else fail multicast_discovery "node a did not hear three nodes by multicast"; fi
+
+# 2. Handshake: a, b and c each hold two connected links; x holds none.
+if ms="$(wait_for 30 "full mesh of a, b, c" bash -c "$(declare -f api connected_count); P=$P; connected_count a 2 && connected_count b 2 && connected_count c 2")"; then
+  pass handshake "a, b and c each hold two connected links in ${ms}ms after discovery"
+else fail handshake "the three lab nodes did not link to each other"; fi
+peers_a="$(api a /api/v1/mesh/cooperation | jq '.peers | length')"
+[ "$peers_a" = 2 ] || fail handshake "node a lists $peers_a peers, not 2"
+
+# 3. Repository isolation, at both layers: discovery never offers x as a candidate to a lab
+# node, and x's own deliberate hello to a is refused as repository_mismatch on both sides.
+if wait_for 30 "x refused" bash -c "docker exec $P-x curl -fsS http://127.0.0.1:8741/api/v1/mesh/cooperation | jq -e '(.peers | length == 0) and ([.refused[] | select(.refusal.code == \"repository_mismatch\")] | length >= 1)'" >/dev/null \
+  && api a /api/v1/mesh/cooperation | jq -e '([.refused[] | select(.direction == "inbound" and .refusal.code == "repository_mismatch")] | length >= 1) and ([.peers[] | select(.runtime | startswith("x"))] | length == 0)' >/dev/null \
+  && api a /api/v1/mesh/nodes | jq -e --arg lab "$(api a /api/v1/mesh/cooperation | jq -r '.repository.id')" '[.nodes[] | select((.repositories | index($lab)) == null)] | length == 1' >/dev/null; then
+  pass repository_isolation "a observes x (another repository) by multicast, never dials it, refuses x's hello as repository_mismatch; x holds 0 links"
+else fail repository_isolation "x formed a link, or a hello across repositories was not refused as repository_mismatch on both sides"; fi
+
+# 4. A claim on a is held on c; b's conflicting exclusive claim is refused.
+claim="$(post_json a /api/v1/mesh/claims '{"session":"lab-a","scope":["apps/majordomus-cli"],"issue":"#184","intent":"lab claim"}' | jq -r '.key')"
+[ -n "$claim" ] && [ "$claim" != null ] || fail cross_node_claim "node a could not claim"
+if ms="$(wait_for 15 "c sees the claim" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'")"; then
+  pass cross_node_claim "a's claim was held on c ${ms}ms after it was written"
+else fail cross_node_claim "c never saw a's claim"; fi
+# Admission refuses what the admitting runtime has already heard, so b is asked only once
+# a's claim has reached b. Waiting on c alone left b whatever slack remained — 57ms on a
+# contended runner, where b had received one of a's two events and so had nothing to
+# conflict with. Eventual delivery is the design; this scenario is about the refusal.
+wait_for 15 "b sees the claim" bash -c "docker exec $P-b curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg k '$claim' '[.state.claims[] | select(.key == \$k and .state.state == \"held\")] | length == 1'" >/dev/null \
+  || fail claim_conflict "b never saw a's claim, so there was nothing for it to conflict with"
+code="$(post_status b /api/v1/mesh/claims '{"session":"lab-b","scope":["apps"]}')"
+[ "$code" = 422 ] && pass claim_conflict "b's overlapping exclusive claim was refused with 422 claim_conflict" \
+  || fail claim_conflict "b's overlapping claim answered $code, not 422"
+
+# 5. A handover published on a is consumed on c into c's own checkout.
+docker exec "$P-a" bash -c 'mkdir -p /work/repo/.ai/local/state/handovers && printf -- "---\nschema_version: 1\ncreated_at: 2026-09-15T12:00:00Z\ntask_id: t-lab\nprofile: implementation\nowner: \"lab\"\nrepository_id: /work/repo/.git\nworktree: /work/repo\nbranch: feature/lab\nhead: 0123456789abcdef0123456789abcdef01234567\nworking_tree: clean\nchanged_files:\n---\n\n# Objective\nlab\n\n# Current State\nhalf\n\n# Next Action\nconsume on c\n" > /work/repo/.ai/local/state/handovers/20260915T120000Z--feature-lab--0123456--00000000000000ab.md'
+handover="$(post_json a /api/v1/mesh/handovers '{"issue":"#184"}' | jq -r '.key')"
+wait_for 15 "c holds the handover" bash -c "docker exec $P-c curl -fsS http://127.0.0.1:8741/api/v1/mesh/state | jq -e --arg h '$handover' '[.state.handovers[] | select(.id == \$h)] | length == 1'" >/dev/null \
+  || fail cross_node_handover "c never received the handover"
+path="$(post_json c /api/v1/mesh/handovers/consume "{\"handover\":\"$handover\",\"session\":\"lab-c\"}" | jq -r '.path')"
+if docker exec "$P-c" grep -q "consume on c" "/work/repo/$path"; then
+  pass cross_node_handover "published on a, consumed on c, written to c's checkout as $path"
+else fail cross_node_handover "the consumed handover is not a record on c"; fi
+
+# 6. Three-node convergence: one digest, each event once.
+if wait_for 15 "digests agree" bash -c "$(declare -f api digest_of same_digest); P=$P; same_digest a b c" >/dev/null; then
+  counts="$(for n in a b c; do api "$n" '/api/v1/mesh/events?limit=1000' | jq '.count'; done | sort -u | wc -l | tr -d ' ')"
+  [ "$counts" = 1 ] && pass three_node_convergence "a, b and c agree on digest $(digest_of a) and hold the same event count" \
+    || fail three_node_convergence "the nodes hold different event counts"
+else fail three_node_convergence "the digests of a, b and c differ"; fi
+
+# 7. Network partition: c is cut off, both sides claim, the partition heals, one winner.
+docker network disconnect "$NET" "$P-c"
+if ms="$(wait_for $((EXPIRY + 15)) "a expires c" bash -c "docker exec $P-a curl -fsS http://127.0.0.1:8741/api/v1/mesh/cooperation | jq -e '[.peers[] | select(.state == \"expired\")] | length == 1'")"; then :; else fail network_partition "a never expired the partitioned node c"; fi
+post_json a /api/v1/mesh/claims '{"session":"lab-a2","scope":["site"]}' >/dev/null
+post_json c /api/v1/mesh/claims '{"session":"lab-c2","scope":["site/content"]}' >/dev/null
+docker network connect "$NET" "$P-c"
+if wait_for 40 "healed" bash -c "$(declare -f api digest_of same_digest); P=$P; same_digest a b c" >/dev/null; then
+  winners="$(api a /api/v1/mesh/state | jq '[.state.claims[] | select((.scope[0] | startswith("site")) and .state.state == "held")] | length')"
+  losers="$(api a /api/v1/mesh/state | jq '[.state.claims[] | select((.scope[0] | startswith("site")) and .state.state == "conflicted")] | length')"
+  if [ "$winners" = 1 ] && [ "$losers" = 1 ]; then
+    pass network_partition "c expired on a after ${ms}ms; after healing the three digests agree with 1 held and 1 conflicted claim on site"
+  else fail network_partition "after healing: $winners held and $losers conflicted claims on site"; fi
+else fail network_partition "the digests did not converge after the partition healed"; fi
+
+# 8. Process crash: b is killed, expires, restarts as the same runtime, reconnects once.
+rb="$(api b /api/v1/mesh/cooperation | jq -r '.runtime')"
+docker kill "$P-b" >/dev/null
+if ms="$(wait_for $((EXPIRY + 15)) "a expires b" bash -c "docker exec $P-a curl -fsS http://127.0.0.1:8741/api/v1/mesh/cooperation | jq -e --arg r '$rb' '[.peers[] | select(.runtime == \$r and .state == \"expired\")] | length == 1'")"; then :; else fail process_crash_recovery "a never expired the killed node b"; fi
+docker start "$P-b" >/dev/null
+wait_for 60 "b serves again" api b /api/v1/mesh/cooperation >/dev/null || fail process_crash_recovery "b did not restart"
+[ "$(api b /api/v1/mesh/cooperation | jq -r '.runtime')" = "$rb" ] || fail process_crash_recovery "b came back as a different runtime"
+if wait_for 30 "b reconnected" bash -c "$(declare -f api connected_count); P=$P; connected_count a 2 && connected_count b 2" >/dev/null; then
+  listed="$(api a /api/v1/mesh/cooperation | jq '.peers | length')"
+  restarts="$(api a /api/v1/mesh/cooperation | jq --arg r "$rb" '[.peers[] | select(.runtime == $r)][0].restarts')"
+  if [ "$listed" = 2 ] && [ "${restarts:-0}" -ge 1 ]; then
+    pass process_crash_recovery "b expired on a after ${ms}ms, restarted as $rb, reconnected; a lists 2 peers, restarts=$restarts"
+  else fail process_crash_recovery "after the restart a lists $listed peers with restarts=$restarts"; fi
+else fail process_crash_recovery "b did not reconnect"; fi
+wait_for 30 "converged after crash" bash -c "$(declare -f api digest_of same_digest); P=$P; same_digest a b c" >/dev/null \
+  || fail process_crash_recovery "the state did not converge after the restart"
+
+# 9. The command line inside a node verifies the same cooperation.
+if docker exec -w /work/repo "$P-a" majordomus mesh verify --format json | jq -e '.ok == true and (.peers | length == 2)' >/dev/null; then
+  pass cli_verify "majordomus mesh verify on a: ok, 2 peers verified live"
+else fail cli_verify "mesh verify on a did not pass"; fi
+
+write_evidence passed
+printf 'mesh-lab: every scenario passed; evidence at %s\n' "${LAB#$ROOT/}/evidence.json"
