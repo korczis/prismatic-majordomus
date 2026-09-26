@@ -85,6 +85,14 @@ pub const MAX_SCOPE_PATHS: usize = 64;
 /// single trusted key must not be able to fill the stream table.
 pub const MAX_STREAMS_PER_NODE: usize = 64;
 
+/// How many streams of one node make its dead streams due for compaction: three quarters of
+/// [`MAX_STREAMS_PER_NODE`]. Every worktree of a machine signs with the machine's one key
+/// and every server restart opens a new stream, so a machine reaches its quota by running,
+/// not by misbehaving — and one node alone never reaches the journal-wide bounds that
+/// otherwise start a compaction. Compacting the node at three quarters keeps the last
+/// quarter free for the runs to come.
+pub const NODE_COMPACTION_STREAMS: usize = MAX_STREAMS_PER_NODE * 3 / 4;
+
 /// The most events (held and pending) one node may occupy.
 pub const MAX_EVENTS_PER_NODE: usize = 20_000;
 
@@ -1226,7 +1234,6 @@ pub struct JournalTallies {
     pub lamport: u64,
 }
 
-#[derive(Default)]
 struct StreamLog {
     events: BTreeMap<u64, MeshEvent>,
     pending: BTreeMap<u64, MeshEvent>,
@@ -1234,11 +1241,33 @@ struct StreamLog {
     beat_pk: Option<String>,
     beat_sig: Option<String>,
     fresh_at: Option<Instant>,
+    /// When this journal first held the stream: a stream whose beat has never been heard
+    /// here has been silent since then, not since forever.
+    learned_at: Instant,
 }
 
 impl StreamLog {
+    fn new() -> Self {
+        StreamLog {
+            events: BTreeMap::new(),
+            pending: BTreeMap::new(),
+            beat: 0,
+            beat_pk: None,
+            beat_sig: None,
+            fresh_at: None,
+            learned_at: Instant::now(),
+        }
+    }
+
     fn high_water(&self) -> u64 {
         self.events.keys().next_back().copied().unwrap_or(0)
+    }
+
+    /// How long the stream has been silent on this runtime's clock: since its beat last
+    /// rose, or — never heard — since the journal learned of it. A reloaded journal learns
+    /// every stream at its start, so a restart does not make a running sibling look dead.
+    fn silent_for(&self, now: Instant) -> Duration {
+        now.saturating_duration_since(self.fresh_at.unwrap_or(self.learned_at))
     }
 }
 
@@ -1338,7 +1367,7 @@ impl Journal {
             MeshError::Protocol(format!("runtime '{runtime}' is not 16 hex characters"))
         })?;
         let mut streams = BTreeMap::new();
-        streams.insert(own.clone(), StreamLog::default());
+        streams.insert(own.clone(), StreamLog::new());
         let journal = Journal {
             identity,
             own,
@@ -1419,7 +1448,10 @@ impl Journal {
         body.validate().map_err(MeshError::Protocol)?;
         let body = serde_json::to_value(&body).map_err(|e| MeshError::Protocol(e.to_string()))?;
         let mut inner = self.inner.lock().expect("journal lock");
-        let log = inner.streams.entry(self.own.clone()).or_default();
+        let log = inner
+            .streams
+            .entry(self.own.clone())
+            .or_insert_with(StreamLog::new);
         let seq = log.high_water().saturating_add(1);
         let lamport = inner.lamport.saturating_add(1);
         let mut event = MeshEvent {
@@ -1479,7 +1511,10 @@ impl Journal {
     /// ```
     pub fn beat_own(&self) {
         let mut inner = self.inner.lock().expect("journal lock");
-        let log = inner.streams.entry(self.own.clone()).or_default();
+        let log = inner
+            .streams
+            .entry(self.own.clone())
+            .or_insert_with(StreamLog::new);
         log.beat += 1;
         log.beat_sig = Some(self.identity.sign(&beat_bytes(&self.own, log.beat)));
         log.beat_pk = Some(self.identity.public.public_key.clone());
@@ -1546,7 +1581,10 @@ impl Journal {
     /// cannot mint one — and the relayed age is clamped to the expiry, so a stale report can
     /// age a stream but never hold a dead one alive past one expiry after its last real beat.
     /// Sequences are not merged: only events move high-water marks. A stream is created from
-    /// a mark only when the mark verifies, and only within the stream quotas.
+    /// a mark only when the mark verifies, only within the stream quotas, and only when the
+    /// beat it carries is fresh: a mark that can only report a stream dead — a relay still
+    /// advertising a stream this runtime has compacted — gives the journal nothing to hold,
+    /// and must not take a slot of its node's quota.
     ///
     /// ```
     /// use std::sync::Arc;
@@ -1570,6 +1608,12 @@ impl Journal {
     /// c.beat_own();
     /// b.merge_marks(&c.marks(), &|_| false, Duration::from_secs(30));
     /// assert_eq!(b.liveness(c.own_stream(), Duration::from_secs(30)), StreamLiveness::Expired);
+    ///
+    /// // a trusted beat heard a minute ago says only that C is dead: B holds nothing for it
+    /// let mut stale = c.marks();
+    /// stale.get_mut(c.own_stream()).unwrap().age_ms = Some(60_000);
+    /// b.merge_marks(&stale, &|_| true, Duration::from_secs(30));
+    /// assert_eq!(b.tallies().streams, 2, "B's own stream and A's");
     /// ```
     pub fn merge_marks(&self, marks: &Marks, trusted: &dyn Fn(&str) -> bool, expiry: Duration) {
         let now = Instant::now();
@@ -1589,6 +1633,12 @@ impl Journal {
                 continue;
             }
             if !inner.streams.contains_key(id) {
+                if !mark
+                    .age_ms
+                    .is_some_and(|age| Duration::from_millis(age) <= expiry)
+                {
+                    continue;
+                }
                 let of_node = inner
                     .streams
                     .keys()
@@ -1598,7 +1648,10 @@ impl Journal {
                     continue;
                 }
             }
-            let log = inner.streams.entry(id.clone()).or_default();
+            let log = inner
+                .streams
+                .entry(id.clone())
+                .or_insert_with(StreamLog::new);
             if mark.beat > log.beat {
                 log.beat = mark.beat;
                 log.beat_pk = Some(pk.clone());
@@ -1834,7 +1887,10 @@ impl Journal {
         }
         let pending_total: usize = inner.streams.values().map(|l| l.pending.len()).sum();
         let lamport = event.lamport;
-        let log = inner.streams.entry(event.stream.clone()).or_default();
+        let log = inner
+            .streams
+            .entry(event.stream.clone())
+            .or_insert_with(StreamLog::new);
         let high = log.high_water();
         if event.seq <= high || log.pending.contains_key(&event.seq) {
             report.duplicate += 1;
@@ -2047,12 +2103,21 @@ impl Journal {
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
     /// release to compaction.
     ///
+    /// A node that holds [`NODE_COMPACTION_STREAMS`] streams is due on its own, whatever the
+    /// journal's size: its dead streams go by the same rule, the other nodes' stay. One
+    /// machine's worktrees share its key and every server restart is a new stream, so
+    /// without this a machine's own runs would fill its quota and nothing would ever free
+    /// it — the journal-wide bounds are out of one node's reach — and every later run of
+    /// a sibling would be refused here, its claims with it.
+    ///
     /// The two exclusions are what make dropping events safe. Only a stream that has been
     /// silent well past its expiry goes, so no claim can lose the release that would have
     /// ended it; and a stream holding a published handover stays, because a handover is
-    /// continuity somebody may still be waiting to pick up. What is dropped leaves a
-    /// tombstone carrying the sequence it reached, so a peer that still holds the stream
-    /// is not sent it all over again.
+    /// continuity somebody may still be waiting to pick up. A stream whose beat was never
+    /// heard here counts as silent from when this journal learned of it, so the streams a
+    /// restart reloads are not taken for dead before their runtimes could be heard. What is
+    /// dropped leaves a tombstone carrying the sequence it reached, so a peer that still
+    /// holds the stream is not sent it all over again.
     ///
     /// ```
     /// use std::sync::Arc;
@@ -2080,7 +2145,17 @@ impl Journal {
         let now = Instant::now();
         let mut inner = self.inner.lock().expect("journal lock");
         let total: usize = inner.streams.values().map(|l| l.events.len()).sum();
-        if !force && total <= MAX_EVENTS && inner.streams.len() <= MAX_STREAMS * 3 / 4 {
+        let over = force || total > MAX_EVENTS || inner.streams.len() > MAX_STREAMS * 3 / 4;
+        let mut per_node: BTreeMap<&str, usize> = BTreeMap::new();
+        for id in inner.streams.keys() {
+            *per_node.entry(id.node()).or_default() += 1;
+        }
+        let crowded: Vec<String> = per_node
+            .into_iter()
+            .filter(|(_, streams)| *streams >= NODE_COMPACTION_STREAMS)
+            .map(|(node, _)| node.to_string())
+            .collect();
+        if !over && crowded.is_empty() {
             return 0;
         }
         let dead: Vec<StreamId> = inner
@@ -2088,9 +2163,8 @@ impl Journal {
             .iter()
             .filter(|(id, log)| {
                 **id != self.own
-                    && log
-                        .fresh_at
-                        .is_none_or(|t| now.saturating_duration_since(t) > expiry + retention)
+                    && (over || crowded.iter().any(|node| node == id.node()))
+                    && log.silent_for(now) > expiry + retention
                     && !log
                         .events
                         .values()
@@ -2512,6 +2586,236 @@ mod tests {
         let dropped = b.compact(Duration::ZERO, Duration::ZERO, true);
         assert_eq!(dropped, 1, "A's session event goes; the handover stays");
         assert_eq!(b.events().len(), 1);
+    }
+
+    /// Every worktree of one machine signs with the machine's one key, and every restart of
+    /// every server is a new stream of that node: a machine reaches its stream quota by
+    /// running, not by misbehaving. The supervisor's periodic compaction is never forced, so
+    /// it alone must keep the node under its quota, or a sibling's run past the quota is
+    /// refused here for good — and a claim it takes is then invisible to this runtime.
+    #[test]
+    fn a_machine_that_restarts_past_its_stream_quota_still_reaches_its_siblings() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        // One worktree's server, running throughout.
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        for run in 0..(MAX_STREAMS_PER_NODE + 6) {
+            // Another worktree's server of the same machine, restarted: a new instance.
+            let restarted =
+                Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+            let report = observer.ingest(&[opened(&restarted, "s1")], &accept_all);
+            assert_eq!(
+                report.accepted, 1,
+                "run {run} of a sibling server was refused: {:?}",
+                report.rejected
+            );
+            // The supervisor's compaction, as it runs: unforced, and every earlier run has
+            // been silent for longer than the retention (zero here).
+            observer.compact(Duration::ZERO, Duration::ZERO, false);
+        }
+    }
+
+    /// A relay that has not compacted yet keeps advertising the beats of streams this
+    /// runtime has just compacted. Those beats are stale — the streams are long dead — and
+    /// a stale beat must not bring a stream back as an empty entry that holds a slot of
+    /// its node's quota for another retention period.
+    #[test]
+    fn a_stale_relayed_beat_takes_no_slot_of_its_node() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let expiry = Duration::from_secs(30);
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        let relay = Journal::open(machine(), "0000000000000003", "repo".into(), None).unwrap();
+        for _ in 0..(MAX_STREAMS_PER_NODE - 1) {
+            let run = Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+            run.beat_own();
+            relay.merge_marks(&run.marks(), &|_| true, expiry);
+            let event = [opened(&run, "s1")];
+            assert_eq!(relay.ingest(&event, &accept_all).accepted, 1);
+            assert_eq!(observer.ingest(&event, &accept_all).accepted, 1);
+        }
+        // The relay heard those runs beat, long ago: its marks say how long.
+        let mut stale = relay.marks();
+        for mark in stale.values_mut().filter(|m| m.beat > 0) {
+            mark.age_ms = Some(10 * 60 * 1000);
+        }
+        observer.merge_marks(&stale, &|_| true, expiry);
+        let dropped = observer.compact(expiry, Duration::ZERO, true);
+        assert_eq!(dropped, (MAX_STREAMS_PER_NODE - 1) as u64);
+
+        // The relay advertises the same stale beats in its next round.
+        observer.merge_marks(&stale, &|_| true, expiry);
+        assert_eq!(
+            observer.tallies().streams,
+            1,
+            "a stale beat brought compacted streams back"
+        );
+        let next = Journal::open(machine(), "0000000000000004", "repo".into(), None).unwrap();
+        let report = observer.ingest(&[opened(&next, "s1")], &accept_all);
+        assert_eq!(report.accepted, 1, "{:?}", report.rejected);
+    }
+
+    /// A restarted runtime reloads its siblings' streams without having heard any of them
+    /// beat yet. Silence is measured from when the journal learned of a stream, so a
+    /// sibling that is running but not yet linked is not compacted away — with its claims —
+    /// the first time compaction runs after the restart.
+    #[test]
+    fn a_restart_does_not_compact_the_streams_it_has_not_heard_yet() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("journal.jsonl");
+        let sibling = journal("0000000000000001");
+        opened(&sibling, "s1");
+        let before = Journal::open(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000002",
+            "repo".into(),
+            Some(path.clone()),
+        )
+        .unwrap();
+        before.ingest(
+            &sibling.missing_for(&before.marks(), usize::MAX),
+            &accept_all,
+        );
+        drop(before);
+
+        let restarted = Journal::open(
+            Arc::new(NodeIdentity::ephemeral().unwrap()),
+            "0000000000000002",
+            "repo".into(),
+            Some(path),
+        )
+        .unwrap();
+        let (expiry, retention) = (Duration::from_secs(30), Duration::from_secs(15 * 60));
+        assert_eq!(
+            restarted.compact(expiry, retention, true),
+            0,
+            "the sibling may still be running: it has not been silent here for a retention"
+        );
+        assert_eq!(restarted.events().len(), 1);
+        // Once it has been silent for as long as any stream must be, it goes.
+        assert_eq!(restarted.compact(Duration::ZERO, Duration::ZERO, true), 1);
+    }
+
+    /// The scopes the fold property's claims are drawn from: some meet, some do not.
+    const SCOPES: [&str; 4] = ["apps", "apps/majordomus-cli", "docs", "site"];
+
+    /// One run's history for the fold property: a session, a claim in it over one of
+    /// [`SCOPES`], and how it ended — `0` still held, `1` released, `2` its session closed,
+    /// `3` nothing written at all (a run that only beat).
+    fn history(j: &Journal, scope: usize, exclusive: bool, ending: u8) -> Vec<MeshEvent> {
+        if ending == 3 {
+            return Vec::new();
+        }
+        let mode = if exclusive {
+            ClaimMode::Exclusive
+        } else {
+            ClaimMode::Advisory
+        };
+        let mut out = vec![opened(j, "s1")];
+        let acquired = EventBody::ClaimAcquired {
+            claim: "c1".into(),
+            session: "s1".into(),
+            scope: vec![SCOPES[scope].into()],
+            intent: None,
+            mode,
+            issue: None,
+        };
+        out.push(j.append_own(acquired).unwrap());
+        let ended = match ending {
+            1 => Some(EventBody::ClaimReleased { claim: "c1".into() }),
+            2 => Some(EventBody::SessionClosed {
+                session: "s1".into(),
+            }),
+            _ => None,
+        };
+        out.extend(ended.map(|body| j.append_own(body).unwrap()));
+        out
+    }
+
+    type Run = (usize, bool, u8);
+
+    fn runs(count: std::ops::Range<usize>) -> impl proptest::strategy::Strategy<Value = Vec<Run>> {
+        proptest::collection::vec((0usize..4, proptest::bool::ANY, 0u8..4), count)
+    }
+
+    proptest::proptest! {
+        #![proptest_config(proptest::prelude::ProptestConfig::with_cases(32))]
+
+        /// Compacting a crowded node takes away the records of the streams it drops — every
+        /// one of them long dead — and nothing else. The claims that hold or conflict, the
+        /// sessions still open and the overlaps between them are the same before and after;
+        /// every record of a stream that stays is the same; and the digest moves exactly
+        /// when compaction forgets something that had been said, because the fold lists
+        /// ended sessions and claims too.
+        #[test]
+        fn compacting_a_crowded_node_changes_nothing_live(
+            dead in runs(NODE_COMPACTION_STREAMS..MAX_STREAMS_PER_NODE - 8),
+            live in runs(1..6),
+            dead_were_silent in proptest::bool::weighted(0.2),
+        ) {
+            use crate::mesh::state::{fold, CooperationState, SessionState};
+            use std::collections::BTreeSet;
+
+            let dir = tempfile::tempdir().unwrap();
+            let key = dir.path().join("node.json");
+            let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+            let expiry = Duration::from_secs(30);
+            let observer =
+                Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+            let mut ended: BTreeSet<StreamId> = BTreeSet::new();
+            for &(scope, exclusive, ending) in &dead {
+                // Earlier runs of one sibling server: heard beating, then silent long ago.
+                let run =
+                    Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+                run.beat_own();
+                observer.merge_marks(&run.marks(), &|_| true, expiry);
+                let ending = if dead_were_silent { 3 } else { ending };
+                observer.ingest(&history(&run, scope, exclusive, ending), &accept_all);
+                run.beat_own();
+                let mut stale = run.marks();
+                stale.get_mut(run.own_stream()).unwrap().age_ms = Some(10 * 60 * 1000);
+                observer.merge_marks(&stale, &|_| true, expiry);
+                ended.insert(run.own_stream().clone());
+            }
+            for (slot, &(scope, exclusive, ending)) in live.iter().enumerate() {
+                // The servers of the machine's other worktrees, beating now.
+                let runtime = format!("{:016x}", 16 + slot);
+                let run = Journal::open(machine(), &runtime, "repo".into(), None).unwrap();
+                run.beat_own();
+                observer.ingest(&history(&run, scope, exclusive, ending), &accept_all);
+                observer.merge_marks(&run.marks(), &|_| true, expiry);
+            }
+            let state = |j: &Journal| fold(&j.events(), &|s| j.liveness(s, expiry));
+            let before = state(&observer);
+
+            // Unforced, and the journal is far under its own bounds: the node alone is due.
+            let dropped = observer.compact(expiry, Duration::ZERO, false);
+            let after = state(&observer);
+
+            proptest::prop_assert_eq!(observer.tallies().streams, 1 + live.len());
+            let alive = |s: &CooperationState| {
+                (
+                    s.claims.iter().filter(|c| c.state.is_live()).cloned().collect::<Vec<_>>(),
+                    s.sessions
+                        .iter()
+                        .filter(|v| v.state == SessionState::Active)
+                        .cloned()
+                        .collect::<Vec<_>>(),
+                    s.overlaps.clone(),
+                )
+            };
+            proptest::prop_assert_eq!(alive(&before), alive(&after));
+            let kept = |s: &CooperationState| {
+                (
+                    s.sessions.iter().filter(|v| !ended.contains(&v.stream)).cloned().collect::<Vec<_>>(),
+                    s.claims.iter().filter(|c| !ended.contains(&c.stream)).cloned().collect::<Vec<_>>(),
+                )
+            };
+            proptest::prop_assert_eq!(kept(&before), (after.sessions.clone(), after.claims.clone()));
+            proptest::prop_assert_eq!(before.digest == after.digest, dropped == 0);
+        }
     }
 
     proptest::proptest! {
