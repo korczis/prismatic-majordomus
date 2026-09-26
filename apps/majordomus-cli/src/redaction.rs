@@ -257,10 +257,6 @@ const fn run(class: &'static str, min: usize, max: Option<usize>) -> Atom {
     }
 }
 
-const fn one(class: &'static str) -> Atom {
-    Atom::One(Class(class))
-}
-
 /// `MJ_CAPTURE_SECRETS`, shape for shape and in its order.
 const SHAPES: &[Shape] = &[
     Shape {
@@ -285,7 +281,7 @@ const SHAPES: &[Shape] = &[
         kept: &[],
         secret: &[
             Atom::Lit("gh"),
-            one("pousr"),
+            Atom::One(Class("pousr")),
             Atom::Lit("_"),
             run("A-Za-z0-9_", 20, None),
         ],
@@ -310,7 +306,7 @@ const SHAPES: &[Shape] = &[
         kept: &[],
         secret: &[
             Atom::Lit("xox"),
-            one("abprs"),
+            Atom::One(Class("abprs")),
             Atom::Lit("-"),
             run("A-Za-z0-9-", 10, None),
         ],
@@ -319,7 +315,7 @@ const SHAPES: &[Shape] = &[
         name: "stripe-key",
         kept: &[],
         secret: &[
-            one("rs"),
+            Atom::One(Class("rs")),
             Atom::Lit("k_"),
             Atom::Group {
                 alternatives: &[&[Atom::Lit("live")], &[Atom::Lit("test")]],
@@ -345,7 +341,7 @@ const SHAPES: &[Shape] = &[
         name: "bearer-token",
         kept: &[],
         secret: &[
-            one("Bb"),
+            Atom::One(Class("Bb")),
             Atom::Lit("earer "),
             run("A-Za-z0-9._~+/=-", 20, None),
         ],
@@ -382,7 +378,7 @@ const ASSIGNMENT: Shape = Shape {
             alternatives: &[&[
                 run("\\\"'", 0, Some(1)),
                 run(" ", 0, None),
-                one(":="),
+                Atom::One(Class(":=")),
                 run(" ", 0, None),
                 run("\\\"'", 0, Some(1)),
             ]],
