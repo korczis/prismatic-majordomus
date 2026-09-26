@@ -230,6 +230,25 @@ jobs:
           MJ_TEST_JOBS: 4
           MJ_TEST_REPORT: suite.tsv
         run: bash test/run.sh
+      # The tree the suite ran in, measured here, right after its run: the evidence job records
+      # the suite's report against this measurement, never against its own fresh checkout
+      # (ADR 0087 decision 6). The one output the run names, its report, is excluded by name,
+      # and nothing else is; whatever else the run left behind makes the tree dirty, and the
+      # first lines of it are printed.
+      - name: the tree the suite ran in
+        if: always()
+        run: |
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)suite.tsv')"
+          if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["suite.tsv"]}' > "$RUNNER_TEMP/suite-tree.json"
+      # an artifact of its own: the ci job reads every ci-metrics-* artifact as metrics
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-suite-tree
+          path: ${{ runner.temp }}/suite-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
       - if: always()
         run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
       - if: always()
@@ -270,14 +289,27 @@ jobs:
         if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
-          # the crate's results, for the evidence job to record (ADR 68)
-          MJ_CARGO_TEST_OUTPUT: ${{ github.workspace }}/cargo-test.txt
+          # the crate's results, for the evidence job to record (ADR 68): plain text, which the
+          # recorder reads line by line, and outside the checkout the next step measures
+          CARGO_TERM_COLOR: never
+          MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
+      # The tree the crate ran in, measured here, before the plan below is downloaded into it
+      # (ADR 0087 decision 6). The two outputs the step above names, its timings and its
+      # artifact directory, are excluded by name, and nothing else is.
+      - name: the tree the crate ran in
+        if: always() && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
+        run: |
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)timings.tsv' ':(exclude)dist')"
+          if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["timings.tsv","dist"]}' > "$RUNNER_TEMP/crate-tree.json"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ci-evidence-crate
-          path: cargo-test.txt
+          path: |
+            ${{ runner.temp }}/cargo-test.txt
+            ${{ runner.temp }}/crate-tree.json
           if-no-files-found: ignore
           retention-days: 14
       - uses: actions/download-artifact@v4
@@ -343,13 +375,16 @@ jobs:
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
 
   # ------------------------------------------------------------------ evidence
-  # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68). The suite, the crate
-  # and the coverage jobs each leave a raw report; scripts/ci/evidence-collect records the first
-  # two into the ledger as `ci` executions stamped with this run, derives the report, summarises
-  # the coverage, and this job keeps the result as the artifact `evidence`. It is not a gate and
-  # the verdict does not need it: it reads jobs that have already decided, and a red suite is
-  # exactly the evidence worth keeping. It runs whenever the suite or the crate produced
-  # anything, whatever they concluded.
+  # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68 as ADR 0087 amends
+  # it). The suite, the crate and the coverage jobs each leave a raw report, and the suite and
+  # the crate a measurement of the tree they ran in. scripts/ci/evidence-collect first derives
+  # the report from the tracked ledger on this checkout, then records the suite's and the
+  # crate's results as `ci` executions stamped with this run (a run record, which decides no
+  # verdict), summarises the coverage, and this job keeps the result as the artifact `evidence`.
+  # The reports and the result live under the runner's temporary directory, never in the
+  # checkout the report is derived in. It is not a gate and the verdict does not need it: it
+  # reads jobs that have already decided, and a red suite is exactly the evidence worth
+  # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
   #
   # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
   # site that was published at once with the nearest older evidence (labelled stale) republishes
@@ -363,6 +398,9 @@ jobs:
       contents: read
       # `gh workflow run pages.yml`, and nothing else of Actions
       actions: write
+    env:
+      # the head a pull request was built from, carried beside the merge commit that ran
+      MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
@@ -376,15 +414,15 @@ jobs:
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       - uses: actions/download-artifact@v4
         with:
-          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-crate}'
-          path: reports
+          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-crate,ci-evidence-suite-tree}'
+          path: ${{ runner.temp }}/reports
           merge-multiple: true
       - name: gather
-        run: scripts/ci/evidence-collect --out evidence --suite reports/suite.tsv --crate-output reports/cargo-test.txt --coverage reports/coverage.json
+        run: scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$RUNNER_TEMP/reports/suite.tsv" --suite-tree "$RUNNER_TEMP/reports/suite-tree.json" --crate-output "$RUNNER_TEMP/reports/cargo-test.txt" --crate-tree "$RUNNER_TEMP/reports/crate-tree.json" --coverage "$RUNNER_TEMP/reports/coverage.json"
       - uses: actions/upload-artifact@v4
         with:
           name: evidence
-          path: evidence
+          path: ${{ runner.temp }}/evidence
           retention-days: 90
       - name: refresh the publication
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'

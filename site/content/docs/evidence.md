@@ -473,21 +473,24 @@ exactly as this repository's is.
 
 ## Recorded in CI
 
-The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, but
-they are kept where they happened rather than committed. A run cannot commit what it proved
-without adding a commit after the one it proved, on a trunk that moves faster than the suite
-finishes. The decision is
-[ADR 68](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md).
+The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, and
+a validating run never commits its rows: they are kept where the run happened, as a run record.
+A trunk run's rows are committed later, by a separate pull request (ADR 0080), because a run
+cannot commit what it proved without adding a commit after the one it proved, on a trunk that
+moves faster than the suite finishes. That recording pull request is not wired yet. The
+decision is
+[ADR 68](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md),
+as ADR 0087 amends it.
 
 <pre class="mermaid">
 flowchart LR
-  suite["suite job&lt;br&gt;suite.tsv"]
-  crate["rust job&lt;br&gt;cargo-test.txt"]
+  suite["suite job&lt;br&gt;suite.tsv · suite-tree.json"]
+  crate["rust job&lt;br&gt;cargo-test.txt · crate-tree.json"]
   cov["coverage job&lt;br&gt;coverage.json"]
   collect["evidence job&lt;br&gt;scripts/ci/evidence-collect"]
-  artifact["artifact `evidence`&lt;br&gt;ledger · report · coverage · manifest"]
+  artifact["artifact `evidence`&lt;br&gt;report · ledger · coverage · manifest"]
   pages["pages.yml&lt;br&gt;scripts/pages evidence"]
-  site["/evidence/&lt;br&gt;current · stale · unavailable"]
+  site["/evidence/&lt;br&gt;current · stale · unknown · unavailable"]
   suite --&gt; collect
   crate --&gt; collect
   cov --&gt; collect
@@ -496,19 +499,44 @@ flowchart LR
 </pre>
 
 
-**What the collector does.** `scripts/ci/evidence-collect` takes the raw reports the jobs left
-and records the suite's and the crate's results through `majordomus evidence record --origin ci`.
-It derives the report through `majordomus evidence show` and summarises the coverage export
-through `scripts/rust-coverage --summary-json`. It writes `manifest.json`, naming:
+**What the collector derives first.** Before it records anything, `scripts/ci/evidence-collect`
+measures the checkout it runs in and derives the report through `majordomus evidence show`, as
+`report.txt` and `report.json`. The reports it is handed and the directory it writes are under
+the runner's temporary directory, outside that checkout. The report is therefore the tracked
+ledger's verdict at the run's commit, the answer a clean checkout of that commit gives, and the
+manifest's `report_tree` says whether the checkout was clean when it was derived.
 
-- the commit;
-- the run;
+**What the run's rows are.** Only then does it record the suite's and the crate's results
+through `majordomus evidence record --origin ci`, and keep the ledger that now holds them as
+`ledger.json`. Those rows are a run record. They are counted in the manifest and decide no
+verdict, in the artifact or on the site. A trunk run's rows become verdicts only when ADR
+0080's recording pull request lands them in the tracked ledger. The collector also summarises
+the coverage export through `scripts/rust-coverage --summary-json`.
+
+**What the producers and the recorder measure.** Each job that ran tests measures its own
+checkout right after its run and hands the measurement over beside its report:
+`suite-tree.json` from the suite job, `crate-tree.json` from the rust job. Each excludes by name
+the outputs its own run names, and nothing else: the suite its report, the rust job its timings
+and its artifact directory. The manifest's `working_tree` is derived from those measurements
+alone: clean when every recorded job measured a clean tree, dirty when any measured a dirty one,
+unknown otherwise. It is never read from the recorder's checkout, which is clean by
+construction. The recorded rows still carry the recorder's own stamp, which the manifest keeps
+apart as `rows_working_tree`. A report whose job measured a commit other than the one the
+collector runs on is refused: it is not recorded, and it is named.
+
+The collector writes `manifest.json`, naming:
+
+- the commit that ran (for a pull request, GitHub's merge commit), and `head_sha`, the head it
+  was built from, carried beside it and never in its place;
+- the event and the run;
 - the outcomes of that run's executions;
-- which reports were absent.
+- the producers' measurements, the `working_tree` derived from them, and the `report_tree`;
+- which reports were absent, a report that yielded no execution included, and which were
+  refused, with the reason.
 
 An absent report is named, never counted as a pass. The job keeps the directory as the artifact
-`evidence` for ninety days. It is not a gate: it reads jobs that have already decided, and a red
-suite is exactly the evidence worth keeping.
+`evidence`. It is not a gate: it reads jobs that have already decided, and a red suite is
+exactly the evidence worth keeping.
 
 **An execution names its run.** A `ci` recording made inside a GitHub Actions environment stamps
 every execution with `run`: the provider, the run's identifier, its attempt, the workflow, the
@@ -530,28 +558,33 @@ before runs were named have no `run` at all.
 **What a publication says about it.** Before the build, `scripts/pages evidence` finds the
 `evidence` artifact recorded against the commit being published or its nearest ancestor. It
 chooses the nearest ancestor by history, not the newest upload. It writes
-`site/data/evidence.json`, which is never committed. It says exactly one of three things:
+`site/data/evidence.json`, which is never committed. It publishes the report as it was derived,
+and reads the manifest only to decide whether the run confirms it: a reason can withhold
+`current`, and never changes the report. ADR 0087 defines the states it says:
 
 <div class="overflow-x-auto" tabindex="0">
 
 | state | when | what the page says |
 |---|---|---|
-| current | the evidence was recorded against the published commit | CURRENT, with the commit and the run |
-| stale | the evidence is of an ancestor | STALE, with how many commits and changed files lie between |
+| current | the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout, and nothing was absent, refused or failed | CURRENT, with the commit and the run |
+| stale | the run is of an ancestor, or it is of the published commit and recorded a failure | STALE, with how many commits and changed files lie between, or with the failures |
+| unknown | the run is of the published commit and cannot confirm the report: a tree not measured or not clean, a report absent or refused | UNKNOWN, with every reason |
 | unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
 
 </div>
 
 
-None of the three stops a publication. When a master run's evidence is kept while its commit is
-still the tip, the job dispatches `pages.yml`, and that publication says current. When master
-has moved on, the newer publication already carries the evidence as stale and the newer run
-will refresh it.
+Whatever withholds `current` is listed under the sentence. None of the states stops a
+publication. When a master run's evidence is kept while its commit is still the tip, the job
+dispatches `pages.yml`, and that publication says current when the run confirms the report.
+When master has moved on, the newer publication already carries the evidence as stale and the
+newer run will refresh it.
 
-```
+```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
-scripts/ci/evidence-collect --out <dir> --suite suite.tsv --crate-output cargo-test.txt --coverage coverage.json
+scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
+  --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json
 ```
 
 The behavioural proof is `test/cases/357_ci_records_evidence.sh`.
