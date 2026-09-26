@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 52,
+      "count": 53,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 138,
+      "count": 139,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 52
+      "count": 53
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 176
+      "count": 181
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 252
+      "count": 258
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 138
+      "count": 139
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 225
+      "count": 230
     },
     {
       "kind": "use-case",
@@ -703,6 +703,13 @@
           "label": "adr-0033",
           "kind": "adr",
           "route": "/adrs/adr-0033/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
           "external": false
         },
         {
@@ -1495,7 +1502,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2952,7 +2967,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3338,6 +3361,229 @@
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
       "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0086",
+      "identity": "adr-0086",
+      "slug": "adr-0086",
+      "cockpit": "/cockpit/objects/adr/adr-0086",
+      "title": "The crate's rustdoc is a published web surface at /rustdoc, produced by the invocation its gate proves and verified at the public URL",
+      "status": "proposed",
+      "tags": [
+        "rust",
+        "documentation",
+        "web",
+        "publication",
+        "ci"
+      ],
+      "source": ".ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".github/workflows/pages.yml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/quality/source.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/web/discover.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/link-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/pages-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/pages",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/rust-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-build",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/site-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0013",
+          "kind": "adr",
+          "route": "/adrs/adr-0013/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0028",
+          "kind": "adr",
+          "route": "/adrs/adr-0028/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0051",
+          "kind": "adr",
+          "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "rustdoc-complete",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "rustdoc-composed-from-the-topology",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "rustdoc-discoverable",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "rustdoc-published",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "rustdoc-verified-live",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/GITHUB_PAGES_ARCHITECTURE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/GITHUB_PAGES_PERFORMANCE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/RUSTDOC.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/WEB.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/common.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.empty-is-not-failure@1",
+          "kind": "rule",
+          "route": "/rules/project-empty-is-not-failure-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.rust-public-api-quality@1",
+          "kind": "rule",
+          "route": "/rules/project-rust-public-api-quality-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/77_rust_evidence.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
       "referenced_by": []
     },
     {
@@ -6942,10 +7188,24 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-verdict-states-its-subject@1",
           "kind": "rule",
           "route": "/rules/project-a-verdict-states-its-subject-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
           "external": false
         }
       ]
@@ -7147,7 +7407,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7894,10 +8169,24 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.never-reported-is-not-green@1",
           "kind": "rule",
           "route": "/rules/project-never-reported-is-not-green-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
           "external": false
         },
         {
@@ -9147,6 +9436,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0028/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
         }
       ]
     },
@@ -9240,6 +9543,69 @@
         }
       ],
       "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-crate-reference-is-published@1",
+      "identity": "project.the-crate-reference-is-published@1",
+      "slug": "project-the-crate-reference-is-published-1",
+      "cockpit": "/cockpit/objects/rule/project-the-crate-reference-is-published-1",
+      "title": "Generated reference documentation is part of documentation closure, from its source to its public URL",
+      "status": "active",
+      "tags": [
+        "rust",
+        "documentation",
+        "web",
+        "publication",
+        "testing"
+      ],
+      "source": ".ai/repo/rules/project/the-crate-reference-is-published.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.empty-is-not-failure@1",
+          "kind": "rule",
+          "route": "/rules/project-empty-is-not-failure-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.every-link-and-control-is-tested@1",
+          "kind": "rule",
+          "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.rust-public-api-quality@1",
+          "kind": "rule",
+          "route": "/rules/project-rust-public-api-quality-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -9525,10 +9891,24 @@
       ],
       "referenced_by": [
         {
+          "edge": "put_in_force",
+          "label": "adr-0086",
+          "kind": "adr",
+          "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
           "edge": "defined_in",
           "label": "web-namespaces-reserved",
           "kind": "claim",
           "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-crate-reference-is-published@1",
+          "kind": "rule",
+          "route": "/rules/project-the-crate-reference-is-published-1/",
           "external": false
         }
       ]

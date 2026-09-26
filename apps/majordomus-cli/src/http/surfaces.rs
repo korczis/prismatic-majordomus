@@ -300,6 +300,83 @@ mod tests {
         assert!(!served.topology().ids().contains(&discover::APPLICATION));
     }
 
+    /// The crate's rustdoc, discovered from the crate, bound to the directory its producer
+    /// writes, and answered for every kind of file the reference is made of — through the
+    /// same table the router consults, so what is proved here is what a request gets.
+    #[test]
+    fn the_crates_rustdoc_is_bound_to_its_directory_beside_the_documentation() {
+        let tmp = with_a_site();
+        let krate = tmp.path().join(crate::capability::model::CRATE_DIR);
+        std::fs::create_dir_all(krate.join("src")).expect("mkdir");
+        std::fs::write(krate.join("Cargo.toml"), "").expect("write");
+        std::fs::write(krate.join("src/lib.rs"), "//! x\n").expect("write");
+
+        // declared before it is built: the mount is held and answers what to run
+        let unbuilt = discover::discover(tmp.path(), Runtime::full()).expect("discovers");
+        let served = Served::resolve(&unbuilt, tmp.path(), Runtime::full())
+            .expect("an unbuilt reference is servable");
+        assert!(!served.ready(discover::RUSTDOC));
+        let Some((surface, Bound::Directory(files))) = served.owner("/rustdoc/") else {
+            panic!("the rustdoc mount is bound to a directory");
+        };
+        assert_eq!(surface.id, discover::RUSTDOC);
+        let response = files.respond("/rustdoc/");
+        assert_eq!(response.status, 503);
+        assert!(
+            response.body.text().contains(discover::RUSTDOC_PRODUCER),
+            "{}",
+            response.body
+        );
+
+        let dir = tmp.path().join(discover::RUSTDOC_ARTIFACT);
+        for (file, body) in [
+            ("index.html", "<h1>landing</h1>"),
+            ("static.files/a.css", "body{}"),
+            ("static.files/b.js", "var b;"),
+            ("static.files/c.woff2", "wOF2"),
+            ("majordomus_cli/index.html", "<h1>crate</h1>"),
+            ("majordomus_cli/macro.m!.html", "<p>redirect</p>"),
+        ] {
+            let path = dir.join(file);
+            std::fs::create_dir_all(path.parent().expect("a parent")).expect("mkdir");
+            std::fs::write(path, body).expect("write");
+        }
+        let built = discover::discover(tmp.path(), Runtime::full()).expect("discovers");
+        let served =
+            Served::resolve(&built, tmp.path(), Runtime::full()).expect("the reference serves");
+        assert!(served.ready(discover::RUSTDOC));
+        for (path, media) in [
+            ("/rustdoc/", "text/html; charset=utf-8"),
+            ("/rustdoc/static.files/a.css", "text/css; charset=utf-8"),
+            (
+                "/rustdoc/static.files/b.js",
+                "text/javascript; charset=utf-8",
+            ),
+            ("/rustdoc/static.files/c.woff2", "font/woff2"),
+            (
+                "/rustdoc/majordomus_cli/index.html",
+                "text/html; charset=utf-8",
+            ),
+            (
+                "/rustdoc/majordomus_cli/macro.m!.html",
+                "text/html; charset=utf-8",
+            ),
+        ] {
+            let Some((surface, Bound::Directory(files))) = served.owner(path) else {
+                panic!("{path} is not owned by a directory");
+            };
+            assert_eq!(surface.id, discover::RUSTDOC, "{path}");
+            let response = files.respond(path);
+            assert_eq!(response.status, 200, "{path}: {}", response.body);
+            assert_eq!(response.content_type, media, "{path}");
+        }
+        // the documentation keeps its own mount, and the reference does not swallow it
+        assert_eq!(served.owner("/docs/").unwrap().0.id, discover::DOCS);
+        assert!(served
+            .summary("http://x")
+            .contains("rustdoc http://x/rustdoc"));
+    }
+
     #[test]
     fn a_process_without_a_feature_serves_none_of_its_surfaces() {
         let topology = Topology::new(discover::native_all());

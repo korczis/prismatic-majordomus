@@ -10624,6 +10624,131 @@ cli:
               setup: []
               expectation: "exits 0; prints one JSON document carrying /measured, /passes, /report/schema"
           subcommands: []
+        - path:
+            - majordomus
+            - quality
+            - rustdoc
+          route: /docs/cli/quality/rustdoc/
+          executable: true
+          usage: "majordomus quality rustdoc [OPTIONS]"
+          about: "Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked"
+          args:
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: false
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+            - name: kind
+              long: kind
+              positional: false
+              help: "Only findings of this kind, e.g. missing-page, orphan-page, stale, link, machine-path"
+              value_name: KIND
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: summary
+              long: summary
+              positional: false
+              help: Print the verdict and the counts and leave the findings out
+              value_name: SUMMARY
+              takes_value: false
+              required: false
+              global: false
+              possible_values: []
+              defaults:
+                - "false"
+            - name: tree
+              long: tree
+              positional: false
+              help: "Judge this directory instead of the rustdoc surface's artifact, e.g. site/public/rustdoc"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+          examples:
+            - id: quality-rustdoc
+              title: "Whether the crate's rustdoc tree is complete, current and sound"
+              description: "The rustdoc surface's tree judged against the crate's own inventory: every exported item's page at its route, no page without an item, built from HEAD, the index and its assets present, every relative link resolved, nothing naming the machine or shaped like a credential. Exits 0 clean, 10 with findings, and 12 when there is nothing to judge — as here, in a repository that carries no Rust crate, or wherever the producer (scripts/rust-check --doc) has not run. A check that cannot see its subject says so; it never reports clean."
+              argv:
+                - quality
+                - rustdoc
+              command: majordomus quality rustdoc
+              setup: []
+              expectation: exits 12
+            - id: quality-rustdoc-tree-json
+              title: "Another copy of the tree, judged the same way"
+              description: "A directory named on the command line — the tree scripts/site-build composed into the site — judged by the same judgement, as the document every transport answers with: the verdict, the counts, every exported module with its page, and one typed finding per defect. Only a person at their own terminal names a directory; over HTTP and MCP the subject is always the surface's artifact."
+              argv:
+                - quality
+                - rustdoc
+                - "--tree"
+                - site/public/rustdoc
+                - "--format"
+                - json
+              command: majordomus quality rustdoc --tree site/public/rustdoc --format json
+              setup: []
+              expectation: exits 12
+          subcommands: []
     - path:
         - majordomus
         - run

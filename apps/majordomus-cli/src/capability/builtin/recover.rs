@@ -56,7 +56,7 @@
 //! call site of `remove_stray`, and nothing else in this file touches the filesystem for
 //! writing.
 //!
-//! [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+//! [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
 //!
 //! # The one capability, as the registry states it
 //!

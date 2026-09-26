@@ -857,6 +857,15 @@
         "status": "query"
       },
       {
+        "id": "capability:quality.rustdoc",
+        "kind": "capability",
+        "label": "quality.rustdoc",
+        "summary": "Rustdoc tree integrity",
+        "route": "/cockpit/capabilities/quality.rustdoc",
+        "source": "apps/majordomus-cli/src/capability/builtin/quality.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:recover.orphans",
         "kind": "capability",
         "label": "recover.orphans",
@@ -1878,6 +1887,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/quality/rustdoc.rs",
+        "kind": "file",
+        "label": "rustdoc.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/quality/rustdoc.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/quality/source.rs",
         "kind": "file",
         "label": "source.rs",
@@ -2174,11 +2191,27 @@
         "external": true
       },
       {
+        "id": "file:scripts/ci/link-check",
+        "kind": "file",
+        "label": "link-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/link-check",
+        "external": true
+      },
+      {
         "id": "file:scripts/ci/order-check",
         "kind": "file",
         "label": "order-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci/order-check",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/pages-check",
+        "kind": "file",
+        "label": "pages-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/pages-check",
         "external": true
       },
       {
@@ -2347,6 +2380,22 @@
         "label": "rust-coverage",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/rust-coverage",
+        "external": true
+      },
+      {
+        "id": "file:scripts/site-build",
+        "kind": "file",
+        "label": "site-build",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/site-build",
+        "external": true
+      },
+      {
+        "id": "file:scripts/site-check",
+        "kind": "file",
+        "label": "site-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/site-check",
         "external": true
       },
       {
@@ -4049,6 +4098,56 @@
             "governance",
             "routing",
             "web"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0086",
+        "kind": "adr",
+        "label": "adr-0086",
+        "summary": "The crate's rustdoc is a published web surface at /rustdoc, produced by the invocation its gate proves and verified at the public URL",
+        "route": "/cockpit/objects/adr/adr-0086",
+        "source": ".ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-24",
+          "related": [
+            "rule:project.the-crate-reference-is-published",
+            "rule:project.web-surface-declared-once",
+            "rule:project.land-and-publish",
+            "rule:project.every-link-and-control-is-tested",
+            "rule:project.rust-public-api-quality",
+            "rule:project.empty-is-not-failure",
+            "claim:rustdoc-discoverable",
+            "claim:rustdoc-composed-from-the-topology",
+            "claim:rustdoc-published",
+            "claim:rustdoc-complete",
+            "claim:rustdoc-verified-live",
+            "file:docs/RUSTDOC.md",
+            "file:docs/WEB.md",
+            "file:docs/GITHUB_PAGES_ARCHITECTURE.md",
+            "file:docs/GITHUB_PAGES_PERFORMANCE.md",
+            "file:scripts/rust-check",
+            "file:scripts/site-build",
+            "file:scripts/site-check",
+            "file:scripts/ci/link-check",
+            "file:lib/common.sh",
+            "file:scripts/pages",
+            "file:scripts/ci/pages-check",
+            "file:.github/workflows/pages.yml",
+            "file:apps/majordomus-cli/src/web/discover.rs",
+            "file:apps/majordomus-cli/src/quality/source.rs",
+            "file:.ai/repo/adrs/0013-every-web-surface-is-discovered-from-its-producer-resolved-o.md",
+            "file:.ai/repo/adrs/0028-the-crates-public-surface-is-measured-by-the-crate-and-absence.md",
+            "file:.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md",
+            "test:test/cases/77_rust_evidence.sh"
+          ],
+          "tags": [
+            "rust",
+            "documentation",
+            "web",
+            "publication",
+            "ci"
           ]
         }
       },
@@ -6892,6 +6991,83 @@
           "responsibility": "none",
           "source": ".ai/repo/rules/project/rust-cli-evidence.v1.md",
           "test": "test/cases/77_rust_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/rustdoc-complete",
+        "kind": "claim",
+        "label": "rustdoc-complete",
+        "summary": "Every item the crate exports has its rustdoc page at the route derived from its path and kind, no item page exists without its item, and a module added to the crate becomes a required page with no list edited",
+        "route": "/cockpit/objects/claim/rustdoc-complete",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/quality/rustdoc.rs",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/490_rustdoc_new_module.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/rustdoc-composed-from-the-topology",
+        "kind": "claim",
+        "label": "rustdoc-composed-from-the-topology",
+        "summary": "The site build composes every published static surface into its output at that surface's mount, read from the committed topology with no surface named by hand, and refuses, naming the producer, when a published surface's artifact is absent",
+        "route": "/cockpit/objects/claim/rustdoc-composed-from-the-topology",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/site-build",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/486_rustdoc_composition.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/rustdoc-discoverable",
+        "kind": "claim",
+        "label": "rustdoc-discoverable",
+        "summary": "The crate's rustdoc is a web surface at /rustdoc declared by discovery from the crate, present in the topology, its committed projection and the home page whether or not its producer has run, and a running server answers /rustdoc/ from the tree its producer wrote",
+        "route": "/cockpit/objects/claim/rustdoc-discoverable",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/web/discover.rs",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/488_rustdoc_discoverable.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/rustdoc-published",
+        "kind": "claim",
+        "label": "rustdoc-published",
+        "summary": "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names, and is never committed",
+        "route": "/cockpit/objects/claim/rustdoc-published",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names, and is never committed",
+          "implementation": "scripts/site-deploy",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/489_rustdoc_deploy.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/rustdoc-verified-live",
+        "kind": "claim",
+        "label": "rustdoc-verified-live",
+        "summary": "A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it",
+        "route": "/cockpit/objects/claim/rustdoc-verified-live",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it",
+          "implementation": "scripts/pages",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/487_rustdoc_staleness.sh"
         }
       },
       {
@@ -9806,6 +9982,14 @@
         "source": "docs/ROADMAP.md"
       },
       {
+        "id": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "document",
+        "label": "docs/RUSTDOC.md",
+        "summary": "The crate's reference — rustdoc, published at `/rustdoc`",
+        "route": "/cockpit/objects/document/docs-rustdoc-md",
+        "source": "docs/RUSTDOC.md"
+      },
+      {
         "id": "majordomus://document/docs/SCHEMAS.md",
         "kind": "document",
         "label": "docs/SCHEMAS.md",
@@ -11022,6 +11206,46 @@
         "source": "docs/claims/rust-hot-path-benchmarks.md"
       },
       {
+        "id": "majordomus://document/docs/claims/rustdoc-complete.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-complete.md",
+        "summary": "Every exported item has its rustdoc page at its derived route, and no page is an orphan",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-complete-md",
+        "source": "docs/claims/rustdoc-complete.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/rustdoc-composed-from-the-topology.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-composed-from-the-topology.md",
+        "summary": "The site build composes every published static surface from the committed topology, and refuses one whose artifact is absent",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-composed-from-the-topology-md",
+        "source": "docs/claims/rustdoc-composed-from-the-topology.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/rustdoc-discoverable.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-discoverable.md",
+        "summary": "The crate's rustdoc is a web surface at /rustdoc, declared from the crate and served from the tree its producer wrote",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-discoverable-md",
+        "source": "docs/claims/rustdoc-discoverable.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/rustdoc-published.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-published.md",
+        "summary": "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-published-md",
+        "source": "docs/claims/rustdoc-published.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/rustdoc-verified-live.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-verified-live.md",
+        "summary": "A rustdoc tree built from another commit is refused, before publication and at the public URL",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-verified-live-md",
+        "source": "docs/claims/rustdoc-verified-live.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/schema-driven-kinds.md",
         "kind": "document",
         "label": "docs/claims/schema-driven-kinds.md",
@@ -12230,7 +12454,8 @@
             "openapi",
             "swagger",
             "mcp",
-            "docs"
+            "docs",
+            "rustdoc"
           ],
           "weight": 20
         }
@@ -29676,6 +29901,32 @@
         }
       },
       {
+        "id": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "kind": "rule",
+        "label": "project.the-crate-reference-is-published@1",
+        "summary": "Generated reference documentation is part of documentation closure, from its source to its public URL",
+        "route": "/cockpit/objects/rule/project-the-crate-reference-is-published-1",
+        "source": ".ai/repo/rules/project/the-crate-reference-is-published.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.web-surface-declared-once@1",
+            "project.land-and-publish@1",
+            "project.every-link-and-control-is-tested@1",
+            "project.rust-public-api-quality@1",
+            "project.empty-is-not-failure@1"
+          ],
+          "tags": [
+            "rust",
+            "documentation",
+            "web",
+            "publication",
+            "testing"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.the-lease-is-read-once@1",
         "kind": "rule",
         "label": "project.the-lease-is-read-once@1",
@@ -33058,11 +33309,46 @@
         "source": "test/cases/47_mutation.sh"
       },
       {
+        "id": "majordomus://test/test/cases/486_rustdoc_composition.sh",
+        "kind": "test",
+        "label": "test/cases/486_rustdoc_composition.sh",
+        "route": "/cockpit/objects/test/test-cases-486-rustdoc-composition-sh",
+        "source": "test/cases/486_rustdoc_composition.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/487_rustdoc_staleness.sh",
+        "kind": "test",
+        "label": "test/cases/487_rustdoc_staleness.sh",
+        "route": "/cockpit/objects/test/test-cases-487-rustdoc-staleness-sh",
+        "source": "test/cases/487_rustdoc_staleness.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/488_rustdoc_discoverable.sh",
+        "kind": "test",
+        "label": "test/cases/488_rustdoc_discoverable.sh",
+        "route": "/cockpit/objects/test/test-cases-488-rustdoc-discoverable-sh",
+        "source": "test/cases/488_rustdoc_discoverable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/489_rustdoc_deploy.sh",
+        "kind": "test",
+        "label": "test/cases/489_rustdoc_deploy.sh",
+        "route": "/cockpit/objects/test/test-cases-489-rustdoc-deploy-sh",
+        "source": "test/cases/489_rustdoc_deploy.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/48_roadmap_graph.sh",
         "kind": "test",
         "label": "test/cases/48_roadmap_graph.sh",
         "route": "/cockpit/objects/test/test-cases-48-roadmap-graph-sh",
         "source": "test/cases/48_roadmap_graph.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/490_rustdoc_new_module.sh",
+        "kind": "test",
+        "label": "test/cases/490_rustdoc_new_module.sh",
+        "route": "/cockpit/objects/test/test-cases-490-rustdoc-new-module-sh",
+        "source": "test/cases/490_rustdoc_new_module.sh"
       },
       {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
@@ -37263,6 +37549,26 @@
         "kind": "projects"
       },
       {
+        "source": "capability:quality.rustdoc",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.rustdoc",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.rustdoc",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:quality.rustdoc",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
         "source": "capability:recover.orphans",
         "target": "projection:cockpit",
         "kind": "projects"
@@ -39421,6 +39727,156 @@
         "source": "majordomus://adr/adr-0056",
         "target": "kind:adr",
         "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:.github/workflows/pages.yml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:apps/majordomus-cli/src/quality/source.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:apps/majordomus-cli/src/web/discover.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:scripts/ci/link-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:scripts/ci/pages-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:scripts/pages",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:scripts/rust-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:scripts/site-build",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "file:scripts/site-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://adr/adr-0013",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://adr/adr-0028",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://adr/adr-0051",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://claim/rustdoc-complete",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://claim/rustdoc-composed-from-the-topology",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://claim/rustdoc-discoverable",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://claim/rustdoc-published",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://claim/rustdoc-verified-live",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://document/docs/GITHUB_PAGES_ARCHITECTURE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://document/docs/GITHUB_PAGES_PERFORMANCE.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://document/docs/WEB.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://implementation/lib/common.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://rule/project.rust-public-api-quality@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0086",
+        "target": "majordomus://test/test/cases/77_rust_evidence.sh",
+        "kind": "put_in_force"
       },
       {
         "source": "majordomus://application/ci-gated-project",
@@ -42408,6 +42864,106 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/rustdoc-complete",
+        "target": "file:apps/majordomus-cli/src/quality/rustdoc.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-complete",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-complete",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-complete",
+        "target": "majordomus://test/test/cases/490_rustdoc_new_module.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-composed-from-the-topology",
+        "target": "file:scripts/site-build",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-composed-from-the-topology",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-composed-from-the-topology",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-composed-from-the-topology",
+        "target": "majordomus://test/test/cases/486_rustdoc_composition.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-discoverable",
+        "target": "file:apps/majordomus-cli/src/web/discover.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-discoverable",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-discoverable",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-discoverable",
+        "target": "majordomus://test/test/cases/488_rustdoc_discoverable.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-published",
+        "target": "file:scripts/site-deploy",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-published",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-published",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-published",
+        "target": "majordomus://test/test/cases/489_rustdoc_deploy.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-verified-live",
+        "target": "file:scripts/pages",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-verified-live",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-verified-live",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-verified-live",
+        "target": "majordomus://test/test/cases/487_rustdoc_staleness.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/schema-driven-kinds",
         "target": "file:apps/majordomus-cli/src/metadata/mod.rs",
         "kind": "implemented_by"
@@ -43898,6 +44454,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/RUSTDOC.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/SCHEMAS.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -44654,6 +45215,31 @@
       },
       {
         "source": "majordomus://document/docs/claims/rust-hot-path-benchmarks.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-complete.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-composed-from-the-topology.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-discoverable.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-published.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-verified-live.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -50573,6 +51159,36 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "target": "majordomus://rule/project.every-link-and-control-is-tested@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "target": "majordomus://rule/project.rust-public-api-quality@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-crate-reference-is-published@1",
+        "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.the-lease-is-read-once@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -51668,7 +52284,32 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/486_rustdoc_composition.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/487_rustdoc_staleness.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/488_rustdoc_discoverable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/489_rustdoc_deploy.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/48_roadmap_graph.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/490_rustdoc_new_module.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -55173,6 +55814,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:quality",
+        "target": "capability:quality.rustdoc",
+        "kind": "composes"
+      },
+      {
         "source": "module:recover",
         "target": "capability:recover.orphans",
         "kind": "composes"
@@ -55309,8 +55955,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1756,
-      "edges": 3908,
+      "nodes": 1780,
+      "edges": 3980,
       "acyclic": true,
       "truncated": false
     }

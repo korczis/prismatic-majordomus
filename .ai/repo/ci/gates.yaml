@@ -333,9 +333,11 @@ gates:
     runs: scripts/cockpit-probe
     summary: every Cockpit route the server serves answered, and the pages and interactions measured in a real browser; the route set is the one the UI audit uses
 
+  # The build composes the crate's rustdoc at /rustdoc and refuses without it (ADR 0086), so the
+  # command a person runs produces it first, as the site job does through .github/actions/rustdoc.
   - id: site-build
     job: site
-    runs: scripts/site-build && scripts/site-check
+    runs: scripts/rust-check --doc && scripts/site-build && scripts/site-check
     summary: the derived data current, the site built once, every static check over the output
 
   - id: site-probe
@@ -344,12 +346,26 @@ gates:
     runs: SITE_PROBE_JOBS=4 scripts/site-probe
     summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
 
+  # The crate's Rust API reference, judged as the published surface it is (ADR 0086): the pages
+  # rustdoc wrote for the one invocation the rust-check gate proves warning-free, handed off by
+  # that same step into target/web/rustdoc — so it `requires` rust-check, whose --ci run in this
+  # job is what produces the tree, and a plan that selects it can never run it against no tree
+  # or an older one. The site's own contracts do not read these pages (they are another
+  # producer's); this is their contract: every exported item at its derived route, no orphan
+  # page, the tree built from HEAD, the crate index and its assets present, every internal link
+  # resolving, and no machine path or secret in a published byte.
+  - id: rustdoc
+    job: rust
+    requires: [rust-check]
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality rustdoc
+    summary: the crate's published rustdoc tree is this commit's and complete — every exported item has its page at its derived route, no page is an orphan, the crate index and its assets are present, every internal link resolves, and no machine path or secret is published
+
   # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
   # that claims it (project.every-link-and-control-is-tested). A job of its own: the site job's browser
   # steps already use its whole bound, and a gate that shares a job which never finishes enforces nothing.
   - id: interaction-probe
     job: interactions
-    runs: scripts/site-build --no-data && scripts/interaction-probe
+    runs: scripts/rust-check --doc && scripts/site-build --no-data && scripts/interaction-probe
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
   # A job of its own for the same reason as interaction-probe: after the site job's build, check and
@@ -357,7 +373,7 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/ui audit --report
+    runs: scripts/rust-check --doc && scripts/ui audit --report
     summary: every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
 
   # The one gate that measures the published site rather than this tree: the advertised
@@ -483,10 +499,14 @@ classes:
     paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile, .just/**]
     gates: full
 
-  # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
+  # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline.
+  # The crate's sources and the web module that serves the reference are under
+  # apps/majordomus-cli/**, and scripts/rust-check is its producer, so this class is the one
+  # that selects the rustdoc gate; the composite action that runs the producer in CI
+  # (.github/actions/rustdoc) is under the `ci` class above, which plans everything.
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, crate-boundary, version-surface, release-check]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, crate-boundary, version-surface, release-check, rustdoc]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
   # to ADR 0050, and the architecture document

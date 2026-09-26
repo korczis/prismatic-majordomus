@@ -63,8 +63,11 @@ edited.
   was fixed.
 
 Two exceptions, both narrow and both necessary. The fixtures under `test/` name such a path
-deliberately, because a gate that cannot be shown to fail is decoration. And the gate
-scripts themselves write the pattern down, because something has to.
+deliberately, because a gate that cannot be shown to fail is decoration. And the pattern
+itself is written down once, because something has to:
+`apps/majordomus-cli/src/quality/leak-patterns.tsv`, which `scripts/ci/no-machine-paths`,
+`scripts/site-check` and `majordomus quality rustdoc` all read, so no gate keeps a copy of it
+that can drift from the others.
 
 # Failure behaviour
 
