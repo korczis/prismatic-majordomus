@@ -1,5 +1,5 @@
 +++
-title = "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor naming the object and the reason, with no registration anywhere"
+title = "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named"
 description = "A deployment of the executable is one YAML object under the layer's deployments section,"
 weight = 172
 [extra]
@@ -13,7 +13,8 @@ source = "docs/claims/deployment-contract-refuses-by-name.md"
 
 A deployment of the executable is one YAML object under the layer's deployments section,
 read against the `deployment/v1` contract. `majordomus doctor` refuses an object that could
-not work or must not exist, and names the object and the reason when it does:
+not work or must not exist, with a `FAIL` finding under the `deployment` category that
+names the reason:
 
 - a key the contract does not have, including a field invented to hold a token;
 - a schema version other than the one this tool reads;
@@ -25,9 +26,8 @@ not work or must not exist, and names the object and the reason when it does:
 - a value that reads as a credential, in a field that does exist;
 - two objects claiming one identity.
 
-Nothing is registered for any of it. The section, its contract and its source class are
-seeded by `init`, so a repository that deploys something adds one file, and the index, the
-object listing and `doctor` follow the kind as data.
+`init` seeds the section with its contract and no objects, an empty section is not a
+finding, and a valid object added as one file is accepted and counted by `doctor`.
 
 ## How it works
 
@@ -37,8 +37,8 @@ flattens each object, compares its keys with `share/allow/deployment.txt` (an al
 generated from the contract's schema, never written by hand), and then checks the schema
 version, the required fields, the interface, the port range, the machine counts, the health
 routes, the values that match known credential prefixes and the identities already seen.
-Each violation is a `FAIL` finding under the `deployment` category with the command that
-shows the offending lines, and the command exits 10.
+Each violation is a `FAIL` finding under the `deployment` category with the reason and the
+command that shows the offending lines.
 
 `test/cases/84_deployment_contract.sh` proves it by mutation. It initialises a repository,
 confirms an empty section is not a finding, adds one valid deployment and confirms `doctor`
@@ -56,6 +56,12 @@ cat share/allow/deployment.txt                     # the keys the contract allow
 ```
 
 ## What it does not cover
+
+The case matches each refusal by its reason, not by the object it names. A finding that
+named the wrong file, or no file, would still pass it, so which object a refusal names is
+not part of this guarantee. It does not check the exit status `doctor` returns on a
+refusal, and it does not show that an accepted object reaches the index or the object
+listing.
 
 This is the half of the contract that is decided without a Rust toolchain. Whether a
 deployment works against this repository in particular, whether its health routes are
@@ -75,6 +81,6 @@ here contacts a hosting provider or proves that a deployment, once accepted, wil
 A deployment that cannot work should cost a failing test rather than a failed rollout, and
 a credential must never reach a file every clone of the repository carries. Both failures
 are cheap to find while the object is being written and expensive after it has shipped, so
-the contract is closed and checked locally, and every refusal says which object and why,
-so the fix is one edit rather than an investigation.
+the contract is closed and checked locally, and every refusal names its reason, so the fix
+is one edit rather than an investigation.
 {% endraw %}
