@@ -109,7 +109,7 @@ use super::link::{
     HELLO_PATH, LINK_PROTOCOL_MAX, LINK_PROTOCOL_MIN, MAX_LINK_MESSAGE, MAX_LINK_SKEW_SECONDS,
     SYNC_EVENT_BUDGET, SYNC_PATH,
 };
-use super::registry::MeshRegistry;
+use super::registry::{MeshRegistry, NodeRecord, Presence};
 use super::repository::MeshRepositoryIdentity;
 use super::state::{admission_conflicts, fold, ClaimView, CooperationState, HandoverView};
 use super::trust::{self, TrustState};
@@ -1027,6 +1027,80 @@ struct Target {
     id: String,
     key: Option<String>,
     endpoints: Vec<String>,
+}
+
+/// A registry record this runtime may dial, under the runtime key it would be dialed by.
+///
+/// Its order is the order [`MAX_TARGETS_PER_NODE`] cuts a node's runtimes in: by node, then
+/// the runtimes answering now before the ones that stopped, then by runtime. Presence comes
+/// before the runtime because the registry keeps a stopped runtime's record for its retention
+/// and every runtime of a machine orders the records alike: cut by runtime alone, stopped
+/// servers that sort first fill the cap on every live runtime at once, and no live runtime of
+/// the node dials a live sibling until the stopped records expire.
+struct DialCandidate<'a> {
+    record: &'a NodeRecord,
+    key: String,
+}
+
+impl crate::order::Ordered for DialCandidate<'_> {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        let rank = match self.record.presence {
+            Presence::Present => 0,
+            Presence::Absent => 1,
+        };
+        crate::order::OrderKey::grouped(
+            self.record.node_id.as_str(),
+            &self.record.runtime,
+            &self.key,
+        )
+        .ranked(rank)
+    }
+}
+
+/// The registry records this runtime dials: every record of `repository` that names a
+/// runtime slot and an endpoint, whose key `trusted` accepts, other than `own_key` — at most
+/// [`MAX_TARGETS_PER_NODE`] of one node, taken in [`DialCandidate`] order, so a node's present
+/// runtimes are dialed before its stopped ones. The same records in any order choose the
+/// same targets.
+fn dial_targets(
+    records: &[NodeRecord],
+    repository: &str,
+    own_key: &str,
+    trusted: impl Fn(&str) -> bool,
+) -> Vec<Target> {
+    let mut candidates: Vec<DialCandidate<'_>> = records
+        .iter()
+        .filter(|record| {
+            !record.runtime.is_empty()
+                && !record.endpoints.is_empty()
+                && record.repositories.iter().any(|r| r == repository)
+        })
+        .map(|record| DialCandidate {
+            key: format!("{}-{}", record.node_id, record.runtime),
+            record,
+        })
+        .filter(|candidate| candidate.key != own_key && trusted(&candidate.record.public_key))
+        .collect();
+    crate::order::canonical(&mut candidates);
+    // At most MAX_TARGETS_PER_NODE runtimes of one node are dialed: runtime slots are free
+    // to invent, and a key must not turn this runtime into a dialer of arbitrary endpoints.
+    let mut per_node: BTreeMap<&str, usize> = BTreeMap::new();
+    let mut targets = Vec::new();
+    for candidate in candidates {
+        let dialed = per_node
+            .entry(candidate.record.node_id.as_str())
+            .or_default();
+        if *dialed >= MAX_TARGETS_PER_NODE {
+            continue;
+        }
+        *dialed += 1;
+        targets.push(Target {
+            id: candidate.key.clone(),
+            key: Some(candidate.key),
+            endpoints: candidate.record.endpoints.clone(),
+        });
+    }
+    targets
 }
 
 /// One runtime's whole part in the mesh, behind one handle. It holds the single journal
@@ -2426,31 +2500,12 @@ impl Cooperation {
                 endpoints: vec![seed.trim_start_matches("http://").to_string()],
             })
             .collect();
-        // At most MAX_TARGETS_PER_NODE runtimes of one node are dialed: runtime slots are free
-        // to invent, and a key must not turn this runtime into a dialer of arbitrary endpoints.
-        let mut per_node: BTreeMap<String, usize> = BTreeMap::new();
-        for record in self.registry.list() {
-            if record.runtime.is_empty()
-                || record.endpoints.is_empty()
-                || !record.repositories.contains(&self.repository.id)
-            {
-                continue;
-            }
-            let key = format!("{}-{}", record.node_id, record.runtime);
-            if key == self.own_key || !self.trust_of_key(&record.public_key).is_trusted() {
-                continue;
-            }
-            let dialed = per_node.entry(record.node_id.to_string()).or_default();
-            if *dialed >= MAX_TARGETS_PER_NODE {
-                continue;
-            }
-            *dialed += 1;
-            targets.push(Target {
-                id: key.clone(),
-                key: Some(key),
-                endpoints: record.endpoints.clone(),
-            });
-        }
+        targets.extend(dial_targets(
+            &self.registry.list(),
+            &self.repository.id,
+            &self.own_key,
+            |public_key| self.trust_of_key(public_key).is_trusted(),
+        ));
         targets
     }
 
@@ -4171,5 +4226,123 @@ mod tests {
             second.state,
             crate::mesh::state::ClaimState::Expired(_)
         ));
+    }
+
+    /// A registry record of node `node` (as a 32-hex node id) for the dial selection: the
+    /// runtime slot `runtime`, one endpoint, repository `root`, public key `key`.
+    fn record(node: usize, runtime: &str, presence: Presence, key: &str) -> NodeRecord {
+        NodeRecord {
+            node_id: serde_json::from_value(serde_json::json!(format!("{node:032x}"))).unwrap(),
+            runtime: runtime.into(),
+            public_key: key.into(),
+            display_name: format!("node-{node}"),
+            instance_id: serde_json::from_value(serde_json::json!("0000000000000001")).unwrap(),
+            trust: TrustState::Observed,
+            presence,
+            endpoints: vec![format!("{runtime}:1")],
+            capabilities: vec![],
+            repositories: vec!["root".into()],
+            protocol_version: 2,
+            version: "test".into(),
+            sources: vec![],
+            first_seen: String::new(),
+            last_seen: String::new(),
+            restarts: 0,
+        }
+    }
+
+    fn ids(targets: &[Target]) -> Vec<String> {
+        targets.iter().map(|t| t.id.clone()).collect()
+    }
+
+    /// The registry keeps a stopped runtime's record for its retention, fifteen minutes, and
+    /// every runtime of a machine lists the registry in one order. Twenty stopped worktree
+    /// servers whose keys sort before the five that run filled the per-node cap with the
+    /// dead: no live runtime dialed a live sibling, and the machine's worktrees shared no
+    /// claims until the stopped records expired.
+    #[test]
+    fn a_node_s_present_runtimes_are_dialed_before_the_stopped_ones() {
+        let mut records: Vec<NodeRecord> = (0..20)
+            .map(|i| record(1, &format!("{i:016}"), Presence::Absent, "trusted"))
+            .collect();
+        records.extend(
+            (100..105).map(|i| record(1, &format!("{i:016}"), Presence::Present, "trusted")),
+        );
+        let key = |r: &NodeRecord| format!("{}-{}", r.node_id, r.runtime);
+        let live: Vec<String> = records[20..].iter().map(key).collect();
+        let own = live[0].clone();
+
+        let chosen = ids(&dial_targets(&records, "root", &own, |k| k == "trusted"));
+
+        assert_eq!(chosen.len(), MAX_TARGETS_PER_NODE, "the cap still holds");
+        assert!(!chosen.contains(&own), "a runtime never dials itself");
+        let siblings: Vec<&String> = live[1..].iter().filter(|k| chosen.contains(k)).collect();
+        assert_eq!(
+            siblings.len(),
+            live.len() - 1,
+            "every live sibling is dialed; chosen: {chosen:?}"
+        );
+    }
+
+    use proptest::strategy::{Just, Strategy};
+
+    proptest::proptest! {
+        /// For any registry: of a node with present runtimes, min(cap, present) of them are
+        /// dialed; of every node, min(cap, eligible); and the choice does not depend on the
+        /// order the records arrive in.
+        #[test]
+        fn the_dial_selection_takes_present_runtimes_first_whatever_the_order(
+            (mix, order) in proptest::collection::vec(
+                (0usize..3, proptest::bool::ANY, 0usize..4),
+                0..48,
+            )
+            .prop_flat_map(|mix| {
+                let order: Vec<usize> = (0..mix.len()).collect();
+                (Just(mix), Just(order).prop_shuffle())
+            })
+        ) {
+            let records: Vec<NodeRecord> = mix
+                .iter()
+                .enumerate()
+                .map(|(i, (node, present, kind))| {
+                    let presence = if *present { Presence::Present } else { Presence::Absent };
+                    let key = if *kind == 0 { "stranger" } else { "trusted" };
+                    record(*node, &format!("{i:016x}"), presence, key)
+                })
+                .collect();
+            let shuffled: Vec<NodeRecord> = order.iter().map(|&i| records[i].clone()).collect();
+            let own = format!("{:032x}-{:016x}", 0, 0);
+            let trusted = |k: &str| k == "trusted";
+
+            let chosen = ids(&dial_targets(&records, "root", &own, trusted));
+            proptest::prop_assert_eq!(
+                &chosen,
+                &ids(&dial_targets(&shuffled, "root", &own, trusted)),
+                "the same records in another order choose the same targets"
+            );
+            for node in 0..3 {
+                let prefix = format!("{node:032x}-");
+                let eligible: Vec<(String, bool)> = records
+                    .iter()
+                    .filter(|r| r.node_id.as_str() == format!("{node:032x}"))
+                    .filter(|r| trusted(&r.public_key))
+                    .map(|r| {
+                        let key = format!("{}-{}", r.node_id, r.runtime);
+                        (key, r.presence == Presence::Present)
+                    })
+                    .filter(|(k, _)| *k != own)
+                    .collect();
+                let present = eligible.iter().filter(|(_, p)| *p).count();
+                let of_node: Vec<&String> =
+                    chosen.iter().filter(|k| k.starts_with(&prefix)).collect();
+                let present_chosen = of_node
+                    .iter()
+                    .filter(|k| eligible.iter().any(|(e, p)| *p && e == **k))
+                    .count();
+                let cap = MAX_TARGETS_PER_NODE;
+                proptest::prop_assert_eq!(of_node.len(), eligible.len().min(cap));
+                proptest::prop_assert_eq!(present_chosen, present.min(cap));
+            }
+        }
     }
 }

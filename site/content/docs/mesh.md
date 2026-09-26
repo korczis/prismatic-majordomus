@@ -304,7 +304,7 @@ What the mesh defends against, and how:
 | a runtime of another repository | `repository_mismatch` at the handshake, `repository` rejection at ingest |
 | an unknown or untrusted key on the network | observed by discovery, refused `untrusted` at the handshake; its relayed events refused `untrusted` at ingest |
 | a relay that alters or invents events | the origin's signature fails at every consumer |
-| flooding | bounded datagrams, messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node), listed refusals (128), registry (256; only allowlisted records are never evicted) |
+| flooding | bounded datagrams, messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted) |
 | a forged or replayed liveness report | beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh |
 | a hostile handover consumed here | every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and `[A-Za-z0-9_-]`, and a path outside the handovers directory is refused |
 | a web page driving the server (DNS rebinding) | a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or `localhost` |
