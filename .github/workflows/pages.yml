@@ -226,9 +226,10 @@ jobs:
       # wait above this is definite — the bytes are ours — so a failure fails the run.
       - name: The documentation it publishes
         if: steps.public.outcome == 'success'
-        timeout-minutes: 1
+        timeout-minutes: 2
         env:
           MJ_PAGES_PROBE_SECONDS: 5
+          MJ_PAGES_INDEX_SECONDS: 30
         run: scripts/pages verify-docs --commit "$GITHUB_SHA"
 
       # The third way a deploy fails, and the only one that used to end in a green tick.
