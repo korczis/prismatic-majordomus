@@ -1,15 +1,33 @@
-# The mesh declaration of this repository. Disabled as committed: enabling the mesh is
-# an operator's explicit decision (edit `enabled`, review, commit), and until then no
-# discovery socket opens anywhere this repository's servers run (ADR 0050).
+# The mesh declaration of this repository. Enabled as committed: the runtimes this
+# repository is developed with — every worktree's shared server on the owner's machines —
+# find each other, link, and share one journal of sessions, claims, handovers and reviews
+# (ADR 0050, ADR 0067). Enabling it was this repository's reviewed decision; the tool's
+# own default is unchanged: the skeleton a new repository starts from ships no
+# declaration, and no socket opens there until its own operator commits one.
+# docs/MESH.md, "This repository's mesh", says what is on, what travels, and how to add
+# a machine.
 #
-# `trust.allow` lists Ed25519 public keys (hex) — `majordomus mesh identity` prints a
-# machine's. With `policy: deny_unknown` and an allowlist, only your own machines are
-# ever trusted; everything else that shouts on the network is recorded as observed and
-# trusted for nothing.
+# Least privilege: multicast on the local segment only (TTL 1), no broadcast, no seed,
+# cooperation at its defaults, and `deny_unknown` — a key that is not listed below is
+# observed and trusted for nothing, and its hellos are refused as `untrusted`. The
+# worktrees of one machine share that machine's key, which is trusted as itself; another
+# machine links only when both machines' keys are listed. Multicast sockets are bound
+# with SO_REUSEADDR and SO_REUSEPORT, so every server on a machine hears the group.
+# `trust.allow` holds Ed25519 public keys (hex), never a secret: `majordomus mesh
+# identity` prints a machine's, and `majordomus mesh doctor` fails its `trust` check on a
+# machine whose key is missing.
+#
+# The rendezvous endpoints are the hubs: servers of this repository on the owner's jetson
+# and lundra, listening beyond loopback on port 8791, each listed by its LAN and its
+# tailnet address. Multicast cannot cross the tailnet, and the macOS firewall drops it
+# inbound, which is why the hubs exist. Every server registers with every hub it can
+# reach, one thread per hub and a 5-second bound per request; a hub that does not answer
+# is asked less and less often (the interval doubles per failure, up to eight times) and
+# stops nothing else.
 schema: mesh/v1
 kind: mesh-declaration
 id: majordomus
-enabled: false
+enabled: true
 multicast:
   enabled: true
   group: 239.255.77.77
@@ -19,8 +37,20 @@ multicast:
 broadcast:
   mode: disabled
 rendezvous:
-  endpoints: []
-  interval_seconds: 60
+  endpoints:
+    # jetson: LAN, tailnet
+    - http://192.168.100.30:8791
+    - http://100.92.246.32:8791
+    # lundra: LAN, tailnet
+    - http://192.168.100.10:8791
+    - http://100.65.22.118:8791
+  interval_seconds: 30
 trust:
   policy: deny_unknown
-  allow: []
+  allow:
+    # 641bdb94 — the owner's MacBook Pro (Darwin arm64)
+    - 946e8aa593fe16c58d5eb43493338810896cd10bc6bdd44ffa8e9bfebd37ca1f
+    # 9d652b2c — jetson (hub)
+    - f945cae627707f2df99d292285414e40635e2baa5ae3b1a5243ab854334fe6e9
+    # 25c9758f — lundra (hub)
+    - 7cf4caea612d67ac8b75ea090acd8a9d1c0051d53aac3fcfd18ee59ca8aedf4c

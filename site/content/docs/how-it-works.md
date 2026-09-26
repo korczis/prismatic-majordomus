@@ -1022,8 +1022,11 @@ nothing can be executed remotely.
 </div>
 
 
-The declaration `.ai/repo/mesh/majordomus.yaml` ships with the mesh disabled and no rendezvous
-endpoints, so a default checkout opens no discovery socket. There is no Tailscale or mDNS
+A repository with no mesh declaration, or one declared `enabled: false`, opens no discovery
+socket, and the skeleton a new repository starts from ships none. This repository's own
+declaration, `.ai/repo/mesh/majordomus.yaml`, is enabled: multicast on the local segment, two
+rendezvous hubs on the owner's private network and tailnet, and three trusted keys
+(`docs/MESH.md`, "This repository's mesh"). There is no Tailscale or mDNS
 provider; ADR 0050 lists them as future providers, and a rendezvous endpoint reachable over a
 tailnet is the supported way to span machines. Data flow is the same as every other surface:
 `mesh.status` and `mesh.nodes` capabilities, served over HTTP and MCP and rendered at
@@ -1235,7 +1238,8 @@ Each strong statement in this document, with how to check it.
 | a rule's state is the weakest of its tests | `apps/majordomus-cli/src/rules/mod.rs`; `bin/majordomus-cli rules report` |
 | issue status is derived with no stored status | an issue YAML has no status key; `lib/project.awk`; `bin/majordomus plan status` |
 | overlap is advisory | `lib/check.sh` returns 0 after `--overlap`; `peers.rs` documents informational overlaps |
-| the mesh is off by default and has no Tailscale provider | `.ai/repo/mesh/majordomus.yaml`; `ls apps/majordomus-cli/src/mesh` |
+| the mesh is off by default and has no Tailscale provider | `ls share/skeleton/ai/repo` has no `mesh/`; `ls apps/majordomus-cli/src/mesh` |
+| this repository runs its own mesh, trusting three keys | `.ai/repo/mesh/majordomus.yaml`; `test/cases/491_the_mesh_is_on_here.sh` |
 | the board is in memory only | module comment of `apps/majordomus-cli/src/peers.rs` |
 | publication is verified against the public endpoint | `scripts/pages verify`; `curl -s https://majordomus.dev/build.json` |
 | the version has one writer with three sites | `apps/majordomus-cli/src/release/version.rs`; `scripts/ci/release-check` |

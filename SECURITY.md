@@ -31,7 +31,11 @@ it is described as real.
   executes anything, and the only file a peer's event can cause to be written is a handover,
   into this checkout's handovers directory, by an explicit `mesh handover consume`.
   `scripts/ci/mesh-check`, `apps/majordomus-cli/tests/mesh_cooperation.rs` and
-  `test/mesh-lab/run` hold it; `docs/MESH.md` has the threat model.
+  `test/mesh-lab/run` hold it; `docs/MESH.md` has the threat model. The skeleton a new
+  repository starts from ships no declaration. This repository commits its own enabled:
+  multicast on the local segment only, rendezvous hubs on the owner's private network and
+  tailnet, and `deny_unknown` trust listing the owner's three machines' keys and no other
+  (`docs/MESH.md`, "This repository's mesh"; `test/cases/491_the_mesh_is_on_here.sh`).
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

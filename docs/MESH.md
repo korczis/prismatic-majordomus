@@ -287,8 +287,8 @@ advertisements and — for linked peers — session intents, claim scopes, revie
 published handover bodies, because nothing is encrypted; run it on a private network or an
 overlay. A holder of an allowed node key is that node. A compromised trusted peer can publish
 misleading claims and handovers under its own identity — they are attributed to it and expire
-with it, but they are believed until then. The committed default, `enabled: false`, exists for
-environments where presence disclosure is unacceptable.
+with it, but they are believed until then. The default — no declaration, or `enabled: false` —
+exists for environments where presence disclosure is unacceptable.
 
 ## Configuration
 
@@ -318,6 +318,61 @@ The declaration is the one place mesh behaviour is configured; there are no envi
 variables for it. To be dialed from other machines, the server must listen beyond loopback:
 `majordomus serve --host 0.0.0.0` (or a deployment object). A server on loopback can still dial
 out, and a link, once dialed, replicates both ways.
+
+## This repository's mesh
+
+This repository runs its own mesh: `.ai/repo/mesh/majordomus.yaml` is committed with
+`enabled: true`, so every server of every worktree of it announces, listens and links. That is
+this repository's reviewed decision, not the tool's default: the skeleton a new repository
+starts from ships no declaration, and nothing opens there until its own operator commits one
+(the guarantee `mesh-off-by-default`).
+
+| | declared |
+|---|---|
+| multicast | `239.255.77.77:7741`, TTL 1 — the local segment only; the sockets are bound with `SO_REUSEADDR` and `SO_REUSEPORT`, so every server on a machine hears the group |
+| broadcast | disabled |
+| rendezvous hubs | jetson (`192.168.100.30`, tailnet `100.92.246.32`) and lundra (`192.168.100.10`, tailnet `100.65.22.118`), port 8791, every 30 s |
+| seeds | none |
+| cooperation | the defaults: heartbeat 5 s, expiry 30 s |
+| trust | `deny_unknown` with three keys: `641bdb94` (the owner's MacBook Pro), `9d652b2c` (jetson), `25c9758f` (lundra) |
+
+**Who is trusted.** The owner's three machines and nothing else. The worktrees of one machine
+share that machine's key and link as itself; two machines link only when both keys are listed,
+which is why the MacBook's own key is on the list. Any other key on the segment is observed,
+trusted for nothing, and refused `untrusted` if it dials.
+
+**Where the hubs are.** A hub is a server of this repository on jetson or lundra, listening
+beyond loopback on port 8791, listed by its LAN and its tailnet address. Multicast cannot cross
+the tailnet, and the macOS firewall drops it inbound, so the hubs are how machines on different
+segments find each other. Every server registers with every hub it can reach, one thread per
+hub with a 5-second bound per request. A hub that does not answer is asked less and less often
+— the 30-second interval doubles per failure, up to eight times — and delays nothing else: a
+server whose four hubs are all unreachable starts, discovers and links over multicast, and
+answers requests, exactly as one with none (`mesh status` shows the `rendezvous` provider
+`running` with `sent 0`).
+
+**What travels.** What the security model above says: advertisements on the local segment and
+to the hubs; to linked runtimes of the owner's machines, session metadata, claim scopes, review
+subjects and published handover bodies. Nothing is encrypted; every hub address is on the
+private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refuses a
+declaration that names a public one.
+
+**Adding a machine.** Run `majordomus mesh identity` there, add the key under `trust.allow` with
+a comment naming the machine, and commit it; `majordomus mesh doctor` on that machine passes its
+`trust` check once the key is listed, and names the remedy until then. A new hub is a server
+started with `majordomus serve --host 0.0.0.0 --port 8791` on the machine, and its addresses
+added under `rendezvous.endpoints`.
+
+**Turning it off.** Commit `enabled: false`; a server started after that opens nothing and
+`mesh status` says why.
+
+**What holds it.** `test/cases/491_the_mesh_is_on_here.sh`: the committed declaration is the
+reviewed one as the executable reads it, `mesh doctor` holds over this repository, two
+worktrees under one key link, an unlisted key is refused `untrusted`, and a machine whose key is
+missing is told so. A fuller design — the doctor judging the running server and not only the
+machine, a session-start briefing line naming the mesh, and a script that installs a hub as a
+systemd user unit — is proposed on the branch `feature/the-mesh-is-on-and-held` (its ADR 0059)
+and is not part of this tree.
 
 ## Operating it
 
