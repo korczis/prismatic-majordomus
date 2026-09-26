@@ -9,6 +9,10 @@ Current version: **0.9.0**
 
 ## v0.9.0 — 2026-09-25
 
+### Decisions
+
+- **ADR-0056** Every object of the layer has a derived address, both directions of every relation, and a declared place of publication _(proposed)_
+
 ### Added
 
 - **docs**: the documentation hub and its index are read off the registry and the build (`c3555511c`)
