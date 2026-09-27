@@ -15,8 +15,8 @@
 # scripts/derive-check's verdict, not this case's. --no-css: the styling is irrelevant to a
 # link. Skips itself without zola, as the other site cases do.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null 2>&1 || { echo "    zola absent; skipping"; exit 0; }
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+command -v zola >/dev/null 2>&1 || skip "zola absent"
+command -v jq >/dev/null 2>&1 || skip "jq absent"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj532.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 P="$S/public"
 rc=0; "$ROOT/scripts/site-build" --no-data --no-css --base-url "https://site.invalid" --output-dir "$P" > "$S/build.log" 2>&1 || rc=$?
