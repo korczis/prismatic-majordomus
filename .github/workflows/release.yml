@@ -131,6 +131,9 @@ jobs:
     needs: [plan, build]
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    outputs:
+      # the pull request that proposes the record; smoke names it when the record is unmerged
+      record_pr: ${{ steps.record.outputs.record_pr }}
     permissions:
       contents: write
       # to start the pages workflow by hand. A push made with GITHUB_TOKEN starts no
@@ -191,11 +194,22 @@ jobs:
           # derived from immutable assets, so replacing it on a rerun changes nothing it states
           gh release upload '${{ needs.plan.outputs.tag }}' dist/SHA256SUMS --clobber
 
-      - name: the record of what was published
+      # Staged the moment it exists, before anything derives from it. The layer is what git's
+      # index lists (VcsIndex runs `git ls-files`, apps/majordomus-cli/src/discovery/mod.rs):
+      # an untracked record is not an object of it. The generators that read files by path —
+      # releases/latest.json, docs/INSTALL.md, site/data/registry/distribution.json — see a
+      # record the moment it is written; the ones that enumerate the index — the changelog,
+      # the registry, the product graph — see it only once it is staged. v0.8.0 derived with
+      # the record untracked and proposed a tree that stated both answers at once: the
+      # installer data named the release and the changelog did not, so the record's pull
+      # request (#624) failed generate --check on arrival and was repaired by hand.
+      - name: the record of what was published, staged so the index sees it
         run: |
-          scripts/release-record --tag "${{ needs.plan.outputs.tag }}" --dir dist \
+          tag='${{ needs.plan.outputs.tag }}'
+          scripts/release-record --tag "$tag" --dir dist \
             --commit "${{ github.sha }}" \
-            --notes-url "${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ needs.plan.outputs.tag }}"
+            --notes-url "${{ github.server_url }}/${{ github.repository }}/releases/tag/$tag"
+          git add -- ".ai/repo/releases/$tag.yaml"
 
       # Not `generate --target distribution` alone: the record moves docs/INSTALL.md, and that
       # document is a canonical input of the site's derived data, so regenerating only the
@@ -208,6 +222,25 @@ jobs:
           MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
         run: scripts/derive
 
+      # The verdict CI will give the record's pull request, given here, where a red one can
+      # still be withheld. It is taken over the index as it will be committed, because that is
+      # the tree CI checks out: whatever the derivation wrote is staged first, rather than a
+      # list of trees that can fall behind it — a release changes more than its own metadata;
+      # the installation guide gains a row, and the site's data and content are projections
+      # of that guide. Only the downloaded artifacts are kept out; the build outputs are
+      # already ignored. A tree this refuses is not proposed: a pull request born red is one
+      # a person has to repair before the release can reach the site, which is the state the
+      # staging above exists to prevent and this step exists to prove absent.
+      - name: the proposal is what the derivation produces, judged before it is proposed
+        env:
+          MAJORDOMUS_BIN: ${{ github.workspace }}/apps/majordomus-cli/target/debug/majordomus
+        run: |
+          git add -A -- . ':(exclude)dist'
+          scripts/derive-check || {
+            echo "::error::the record and its projections are not what scripts/derive produces from them, so the record pull request would fail generate --check; nothing was pushed. Run scripts/derive over the record and propose the result by hand."
+            exit 1
+          }
+
       - name: propose the record and the metadata it publishes
         id: record
         env:
@@ -215,11 +248,7 @@ jobs:
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          # whatever the derivation wrote, rather than a list of trees that can fall behind
-          # it: a release changes more than its own metadata — the installation guide gains a
-          # row, and the site's data and content are projections of that guide. Only the
-          # downloaded artifacts are kept out; the build outputs are already ignored.
-          git add -A -- . ':(exclude)dist'
+          # Everything to commit was staged, and judged, by the step above.
           # A rerun over a release whose record is already committed has nothing to add, and
           # that is success, not failure: the state this step exists to reach is already there.
           if git diff --cached --quiet; then
@@ -312,15 +341,32 @@ jobs:
       - name: wait for the published metadata to name this release
         env:
           GH_TOKEN: ${{ github.token }}
+          RECORD_PR: ${{ needs.publish.outputs.record_pr }}
         run: |
           # The record now reaches the default branch through review, so there is a window in
           # which the release is published and its metadata is not. Waiting sixty times for a
           # file that a human has not merged yet is not a smoke test, it is a timeout wearing
-          # one — so the wait is skipped, loudly, while the record is still a proposal.
+          # one — so the wait does not begin while the record is still a proposal. Nor does
+          # the step pass: it used to exit 0 here with a notice, and the next step then failed
+          # inside the installer with a message about a download, not about the unmerged pull
+          # request that was the whole cause. So the step fails, and names what to merge.
           tag='${{ needs.plan.outputs.tag }}'
-          if ! gh api "repos/${{ github.repository }}/contents/.ai/repo/releases/$tag.yaml?ref=${{ github.event.repository.default_branch }}" >/dev/null 2>&1; then
-            echo "::notice::$tag is published, but its record is still a proposal: the site cannot name it yet. Merge the release-record pull request, then re-run this job."
-            exit 0
+          record=".ai/repo/releases/$tag.yaml"
+          branch='${{ github.event.repository.default_branch }}'
+          rc=0
+          answer="$(gh api "repos/${{ github.repository }}/contents/$record?ref=$branch" 2>&1 >/dev/null)" || rc=$?
+          if [ "$rc" != 0 ]; then
+            case "$answer" in
+              *'HTTP 404'*)
+                pr="${RECORD_PR:-the pull request from release/record-$tag (${{ github.server_url }}/${{ github.repository }}/pulls?q=is%3Apr+head%3Arelease%2Frecord-$tag)}"
+                echo "::error::$tag is published, but $record is not on $branch: its record is still a proposal, so the site cannot name it and the installer cannot install it. Merge $pr, then re-run this job; its wait gives Pages fifteen minutes to publish the metadata."
+                ;;
+              *)
+                # a question that could not be asked is not an answer that the record is absent
+                echo "::error::could not ask whether $record is on $branch, so this release was not smoked: $(printf '%s' "$answer" | tr '\n' ' ')"
+                ;;
+            esac
+            exit 1
           fi
           base="$(sed -n 's/.*"installer_url": "\([^"]*\)".*/\1/p' site/data/registry/distribution.json | head -n 1)"
           base="${base%/install.sh}"
