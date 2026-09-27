@@ -495,6 +495,17 @@ gates:
     runs: bin/majordomus-cli release version
     summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, and no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact
 
+  # A page's link into its own source names the commit the site was built from, not master:
+  # a link to master points at whatever the file says today, and the page beside it says
+  # what the file said when it was rendered. The templates make those links through
+  # site/templates/source-links.html; this is the ratchet over the ones still hard-coded
+  # (test/cases/533_source_links_name_the_built_commit.sh). File reads only.
+  - id: source-pin-check
+    job: structure
+    always: true
+    runs: scripts/ci/source-pin-check
+    summary: no template under site/templates adds a source link that names master instead of the commit the page was built from — a ratchet over the blob/master and tree/master occurrences, per file, against .ai/repo/source-pin-baseline.txt
+
 classes:
   # the pipeline itself: a change here can only be validated by running everything
   - id: ci
