@@ -2054,6 +2054,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/tests/cockpit.rs",
+        "kind": "file",
+        "label": "cockpit.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/cockpit.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/tests/executor.rs",
         "kind": "file",
         "label": "executor.rs",
@@ -5067,6 +5075,22 @@
         }
       },
       {
+        "id": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
+        "kind": "claim",
+        "label": "cockpit-is-a-projection-of-the-registry",
+        "summary": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+        "route": "/cockpit/objects/claim/cockpit-is-a-projection-of-the-registry",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+          "implementation": "apps/majordomus-cli/src/cockpit/mod.rs",
+          "responsibility": "none",
+          "source": "docs/COCKPIT.md",
+          "test": "apps/majordomus-cli/tests/cockpit.rs"
+        }
+      },
+      {
         "id": "majordomus://claim/command-coverage",
         "kind": "claim",
         "label": "command-coverage",
@@ -5340,6 +5364,21 @@
           "responsibility": "state",
           "source": "docs/SCHEMAS.md",
           "test": "test/cases/21_decision_question.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/deployment-contract-refuses-by-name",
+        "kind": "claim",
+        "label": "deployment-contract-refuses-by-name",
+        "summary": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+        "route": "/cockpit/objects/claim/deployment-contract-refuses-by-name",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "lib/deployment.sh",
+          "responsibility": "none",
+          "source": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+          "test": "test/cases/84_deployment_contract.sh"
         }
       },
       {
@@ -10172,6 +10211,14 @@
         "source": "docs/claims/cli-documentation-executable.md"
       },
       {
+        "id": "majordomus://document/docs/claims/cockpit-is-a-projection-of-the-registry.md",
+        "kind": "document",
+        "label": "docs/claims/cockpit-is-a-projection-of-the-registry.md",
+        "summary": "A capability added to the registry reaches every Cockpit surface without one line of the Cockpit being edited",
+        "route": "/cockpit/objects/document/docs-claims-cockpit-is-a-projection-of-the-registry-md",
+        "source": "docs/claims/cockpit-is-a-projection-of-the-registry.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/command-coverage.md",
         "kind": "document",
         "label": "docs/claims/command-coverage.md",
@@ -10306,6 +10353,14 @@
         "summary": "A decision is recorded with its reason, and superseded rather than edited",
         "route": "/cockpit/objects/document/docs-claims-decision-record-md",
         "source": "docs/claims/decision-record.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/deployment-contract-refuses-by-name.md",
+        "kind": "document",
+        "label": "docs/claims/deployment-contract-refuses-by-name.md",
+        "summary": "A deployment that breaks its closed contract is refused by doctor with the reason named",
+        "route": "/cockpit/objects/document/docs-claims-deployment-contract-refuses-by-name-md",
+        "source": "docs/claims/deployment-contract-refuses-by-name.md"
       },
       {
         "id": "majordomus://document/docs/claims/derivation-one-graph.md",
@@ -11531,6 +11586,9 @@
           "areas": [
             "observability"
           ],
+          "claims": [
+            "cockpit-is-a-projection-of-the-registry"
+          ],
           "cockpit": [
             "overview",
             "capabilities",
@@ -11613,6 +11671,9 @@
             "git",
             "commit",
             "governance"
+          ],
+          "use_cases": [
+            "plan-a-commit-and-judge-its-message"
           ],
           "weight": 205
         }
@@ -11775,7 +11836,9 @@
             "checkpoint-long-work",
             "open-and-close-a-session",
             "capture-the-prompts-that-started-the-work",
-            "let-the-provider-draw-the-episode-boundary"
+            "let-the-provider-draw-the-episode-boundary",
+            "recover-an-episode-nobody-closed",
+            "resume-from-a-prompt-asset"
           ],
           "weight": 50
         }
@@ -11986,6 +12049,9 @@
           "areas": [
             "governance"
           ],
+          "claims": [
+            "deployment-contract-refuses-by-name"
+          ],
           "featured": false,
           "headline": "The port, the routes, the resources and the build inputs of a hosted executable are stated once, and the container definition and the provider configuration are projections that cannot drift from it.",
           "kinds": [
@@ -12190,7 +12256,10 @@
           "use_cases": [
             "accept-or-refuse-finished-work",
             "block-acceptance-on-an-open-question",
-            "carry-a-blocker-across-a-handover"
+            "carry-a-blocker-across-a-handover",
+            "know-whether-this-work-is-finished",
+            "prove-what-a-task-owed-before-calling-it-done",
+            "say-what-reached-the-remote-and-what-did-not"
           ],
           "weight": 80
         }
@@ -12258,7 +12327,8 @@
           "use_cases": [
             "install-the-tool-in-one-command",
             "migrate-from-the-old-layout",
-            "know-which-tool-is-running"
+            "know-which-tool-is-running",
+            "hand-the-repository-to-a-reader"
           ],
           "weight": 120
         }
@@ -33217,6 +33287,13 @@
         "source": "test/cases/501_verdict_words_are_status_words.sh"
       },
       {
+        "id": "majordomus://test/test/cases/503_every_use_case_has_a_feature.sh",
+        "kind": "test",
+        "label": "test/cases/503_every_use_case_has_a_feature.sh",
+        "route": "/cockpit/objects/test/test-cases-503-every-use-case-has-a-feature-sh",
+        "source": "test/cases/503_every_use_case_has_a_feature.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "kind": "test",
         "label": "test/cases/50_blocker_across_handover.sh",
@@ -40330,6 +40407,26 @@
         "kind": "defined_in"
       },
       {
+        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
+        "target": "file:apps/majordomus-cli/src/cockpit/mod.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
+        "target": "file:apps/majordomus-cli/tests/cockpit.rs",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/cockpit-is-a-projection-of-the-registry",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "defined_in"
+      },
+      {
         "source": "majordomus://claim/command-coverage",
         "target": "kind:claim",
         "kind": "is_a"
@@ -40657,6 +40754,26 @@
       {
         "source": "majordomus://claim/decision-record",
         "target": "majordomus://test/test/cases/21_decision_question.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/deployment-contract-refuses-by-name",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/deployment-contract-refuses-by-name",
+        "target": "majordomus://implementation/lib/deployment.sh",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/deployment-contract-refuses-by-name",
+        "target": "majordomus://rule/majordomus.deployment-contract@1",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/deployment-contract-refuses-by-name",
+        "target": "majordomus://test/test/cases/84_deployment_contract.sh",
         "kind": "tested_by"
       },
       {
@@ -44355,6 +44472,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/cockpit-is-a-projection-of-the-registry.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/command-coverage.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -44436,6 +44558,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/decision-record.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/deployment-contract-refuses-by-name.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -52000,6 +52127,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/503_every_use_case_has_a_feature.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -55636,8 +55768,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1769,
-      "edges": 3943,
+      "nodes": 1775,
+      "edges": 3954,
       "acyclic": true,
       "truncated": false
     }
