@@ -7,8 +7,11 @@ git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 # 1. version — whatever it is now, not a version written down here: pinning 0.1.0 meant the
 #    sed stopped matching at the first release and the mutation silently did nothing, so the
 #    assertion below compared the real version with 9.9.9 and failed on every run since.
-sed -i.bak -E 's/^MJ_VERSION="[^"]*"/MJ_VERSION="9.9.9"/' "$T/bin/majordomus"; rm -f "$T/bin/majordomus.bak"
-grep -q '^MJ_VERSION="9.9.9"$' "$T/bin/majordomus" || { echo "    the version mutation did not apply"; exit 1; }
+#    The fixture carries no crate, so the mutation is made where the shell tool reads the
+#    version: share/version.txt, the projection of the manifest and a declared input.
+sed -i.bak -E 's/^version=.*/version=9.9.9/' "$T/share/version.txt"; rm -f "$T/share/version.txt.bak"
+grep -q '^version=9.9.9$' "$T/share/version.txt" || { echo "    the version mutation did not apply"; exit 1; }
+[ "$("$T/bin/majordomus" version)" = "majordomus 9.9.9" ] || { echo "    the tool does not print the mutated version"; exit 1; }
 # 2. a profile description and effort
 sed -i.bak 's/^description: .*/description: CHANGED DESCRIPTION/; s/^effort: low$/effort: max/' "$T/share/skeleton/profiles/routine.yaml"; rm -f "$T/share/skeleton/profiles/routine.yaml.bak"
 # 3. a principle label (the title of the rule tagged principle in the standard package).

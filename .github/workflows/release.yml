@@ -4,9 +4,10 @@
 #
 #   git tag v0.2.0 && git push origin v0.2.0
 #
-# The version is not chosen here: the tag must already agree with the crate's version and
-# with bin/majordomus, which is the first thing checked and the reason a mistyped tag costs
-# thirty seconds rather than a published release.
+# The version is not chosen here: the tag must already equal the version the crate manifest
+# declares — the one place it is authored — and the shell tool must print it, which is the
+# first thing checked and the reason a mistyped tag costs thirty seconds rather than a
+# published release.
 #
 # Phases: plan -> build (matrix) -> publish -> smoke. Nothing is published unless every
 # supported target built and verified; a release missing a platform is not a release.
@@ -48,7 +49,7 @@ jobs:
           fetch-depth: 0
 
       - id: resolve
-        name: the tag, and the version every writer of it agrees on
+        name: the tag equals the authority, and the tool prints it
         run: |
           tag="${{ github.event.inputs.tag || github.ref_name }}"
           scripts/release-version --check --tag "$tag"

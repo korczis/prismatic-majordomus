@@ -473,7 +473,8 @@ mean when they say `planned`. §7 records which row each one answers.
 The repository reconciles most of its mirrors, and that is the finding as much as the
 drift is: the CLI against the registry, every generated artifact against its source, the
 plan's two status engines against each other by byte equality, the dispatch table against
-the command registry, providers against templates, the version against its two writers.
+the command registry, providers against templates, the version's projection against the one
+place it is authored.
 `docs/HARDCODING_LEDGER.yaml` is the honest register of what remains. What follows is only
 what is **not** reconciled, by the classes the pack names.
 

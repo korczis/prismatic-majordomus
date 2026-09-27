@@ -10,8 +10,9 @@ version: 1
 
 # ---------------------------------------------------------------- what triggers a release
 # A tag, and nothing else. The version is not chosen by the workflow: the tag must already
-# agree with the crate's version and with bin/majordomus, which `release-version --check`
-# proves before a single artifact is built.
+# equal the version the crate manifest declares — the one place it is authored — and the
+# shell tool must print it from its projection, which `release-version --check` proves before
+# a single artifact is built.
 trigger:
   tags: 'v*'
   dispatch: true
@@ -32,7 +33,7 @@ phases:
   - id: plan
     job: plan
     runs: scripts/release-version --check --tag "$TAG"
-    summary: the tag, the crate and the shell tool state one version, and the distribution model and every recorded release hold their invariants
+    summary: the tag equals the version the crate manifest declares and the shell tool prints it, and the distribution model and every recorded release hold their invariants
 
   - id: build
     job: build

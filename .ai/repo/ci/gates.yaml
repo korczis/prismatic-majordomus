@@ -441,11 +441,6 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
-  # The release's own declarations, which `generate --check` cannot reach: it proves the
-  # written changelog matches the tree, not that the two version sites the crate writes are
-  # the two the release script reads, nor that they still agree. Until this gate, the second
-  # question was asked only when a tag was cut, so a half-applied bump lived on the default
-  # branch until somebody tried to publish. File reads only; it belongs in the structure job.
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
   # job; the ratchet is meant to reach zero.
@@ -472,10 +467,33 @@ gates:
     runs: scripts/ci/entity-check
     summary: every object of the layer is addressable — no two identities of a kind reduce to one route — and site/data/publication.toml declares, for every kind the index holds and for no kind it does not, whether the site publishes it as entity pages, as an editorial section, or not at all and why
 
+  # The release's own declarations, which `generate --check` cannot reach: it proves the
+  # written changelog and share/version.txt match the tree, not that the one place the
+  # version is authored is the place the release script reads, nor that the shell tool
+  # actually prints what that place declares. Until this gate, the second question was asked
+  # only when a tag was cut, so a half-applied bump lived on the default branch until
+  # somebody tried to publish. File reads only; it belongs in the structure job.
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
-    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
+    summary: the version is authored in one place with one writer — the crate's writer and the release script name the same manifest, the shell tool prints what it declares, the lock records it, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
+
+  # The version is authored once, in apps/majordomus-cli/Cargo.toml, and the shell tool reads
+  # its projection share/version.txt (ADR 0085). What refuses a second statement is the
+  # release module itself — `release::version::diagnose`, the same findings `release analyze`
+  # carries on every surface — and this gate is only its caller: `release version` exits 10
+  # when the projection is not what the manifest declares, or when a version is written down
+  # by hand in bin/, lib/, scripts/ or share/ outside a generated artifact.
+  #
+  # `always`, because no path class can name where a second statement will be written: the
+  # shell class does not select release-check, and a `FOO_VERSION="1.2.3"` added to lib/ or a
+  # hand edit of share/version.txt would otherwise merge green and fail the next master push.
+  # It needs the executable, which the structure job already builds for evidence-check.
+  - id: version-authored-once
+    job: structure
+    always: true
+    runs: bin/majordomus-cli release version
+    summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, and no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact
 
 classes:
   # the pipeline itself: a change here can only be validated by running everything
@@ -602,13 +620,14 @@ classes:
     paths: [.gitignore, .editorconfig, .github/ISSUE_TEMPLATE/**, .github/pull_request_template.md]
     gates: []
 
-  # the release as a projection: the module that composes the changelog and writes the two
-  # version sites, the sites themselves, and the records the changelog is composed from.
-  # Every path here is already in `rust`, `shell` or `layer`; the overlap is deliberate and
-  # can only widen a plan, and it is what keeps the class readable as one subject rather
-  # than as four edits to lists that are about something else.
+  # the release as a projection: the module that composes the changelog and writes the
+  # version, the one place it is authored and the lock's record of it, the projection the
+  # shell tool reads and the tool that reads it, and the records the changelog is composed
+  # from. Every path here is already in `rust`, `shell`, `share` or `layer`; the overlap is
+  # deliberate and can only widen a plan, and it is what keeps the class readable as one
+  # subject rather than as four edits to lists that are about something else.
   - id: release
-    paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
+    paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, apps/majordomus-cli/Cargo.lock, share/version.txt, bin/majordomus, .ai/repo/releases/**]
     gates: [release-check]
 
   # The commands that keep the self-accumulating quantities bounded (rule
