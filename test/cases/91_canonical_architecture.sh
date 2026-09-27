@@ -11,7 +11,7 @@
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj91.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE

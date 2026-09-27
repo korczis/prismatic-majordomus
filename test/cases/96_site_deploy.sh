@@ -7,8 +7,8 @@
 #
 # Skips itself without zola or node_modules, as 12_site_build does; the build is real.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || { echo "    zola absent; skipping"; exit 0; }
-[ -d "$ROOT/node_modules/tailwindcss" ] || { echo "    node_modules absent; skipping"; exit 0; }
+command -v zola >/dev/null || skip "zola absent"
+[ -d "$ROOT/node_modules/tailwindcss" ] || skip "node_modules absent"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj96.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 
 # a clone of this checkout's HEAD with a bare remote of its own, so nothing here touches origin

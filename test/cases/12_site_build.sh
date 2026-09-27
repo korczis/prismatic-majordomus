@@ -1,9 +1,9 @@
 # majordomus-exclusive: builds the site into site/public of this checkout and runs site-check over it
 # The built site (when zola is present): routes, sections, derived content, prefix, mermaid, and site-check.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || { echo "    zola absent; skipping build test"; exit 0; }
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
-[ -d "$ROOT/node_modules/tailwindcss" ] || { echo "    node_modules absent; skipping build test"; exit 0; }
+command -v zola >/dev/null || skip "zola absent"
+command -v jq >/dev/null || skip "jq absent"
+[ -d "$ROOT/node_modules/tailwindcss" ] || skip "node_modules absent"
 expect_exit 0 "$ROOT/scripts/site-build"
 P="$ROOT/site/public"
 for r in "" why why/two-agents-one-bug features features/matrix getting-started limitations roadmap profiles profiles/debugging policy guarantees guarantees/guaranteed guarantees/init-refuses supervises supervises/finish commands commands/doctor architecture docs docs/cli docs/design render-test; do [ -f "$P/$r/index.html" ] || { echo "    missing route /$r/"; exit 1; }; done

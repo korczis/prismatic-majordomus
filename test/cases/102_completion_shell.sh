@@ -13,7 +13,7 @@
 #
 # Skips itself where there is no zsh, and where there is no cargo and no MAJORDOMUS_BIN.
 . "$ROOT/test/lib.sh"
-command -v zsh >/dev/null 2>&1 || { echo "    skip: no zsh"; exit 0; }
+command -v zsh >/dev/null 2>&1 || skip "no zsh"
 RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 

@@ -1593,3 +1593,12 @@ claims:
     responsibility: policy
     note: Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data.
 
+
+  - id: a-skipped-case-is-not-a-proof
+    claim: A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names
+    source: docs/EVIDENCE.md
+    implementation: test/run.sh
+    test: test/cases/413_a_skipped_case_is_not_a_proof.sh
+    status: guaranteed
+    responsibility: none
+    note: A case that cannot meet a precondition said so with `exit 0`, which is the status the runner wrote `ok` for, so `majordomus evidence record` entered a run that measured nothing into the ledger as a pass. test/lib.sh's `skip` exits 4 and writes the file the runner names in MJ_SKIP_MARK, the runner writes SKIP into the TSV in both the serial and the parallel phase, and Outcome::Skip does not prove. A skip is still not a failure: the run's exit status is unchanged and a run whose cases all declined is a run rather than "no cases found". A failure is not a skip either: a case runs under `set -e`, `jq -e` fails with 4 when it produced no result, and a 4 without the mark is recorded as FAIL. The old shape is refused where it would be written: the case that proves this claim reads every file in test/cases/ and fails when one says `exit 0` before its last statement outside a heredoc body or a comment, so a case can leave with status 0 only by reaching its end.

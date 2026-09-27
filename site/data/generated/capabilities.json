@@ -2300,6 +2300,19 @@
       "source_route": "/docs/commit/",
       "command": null,
       "test_case": "274_commit_policy"
+    },
+    {
+      "id": "a-skipped-case-is-not-a-proof",
+      "claim": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "test/run.sh",
+      "test": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
+      "status": "guaranteed",
+      "note": "A case that cannot meet a precondition said so with `exit 0`, which is the status the runner wrote `ok` for, so `majordomus evidence record` entered a run that measured nothing into the ledger as a pass. test/lib.sh's `skip` exits 4 and writes the file the runner names in MJ_SKIP_MARK, the runner writes SKIP into the TSV in both the serial and the parallel phase, and Outcome::Skip does not prove. A skip is still not a failure: the run's exit status is unchanged and a run whose cases all declined is a run rather than \"no cases found\". A failure is not a skip either: a case runs under `set -e`, `jq -e` fails with 4 when it produced no result, and a 4 without the mark is recorded as FAIL. The old shape is refused where it would be written: the case that proves this claim reads every file in test/cases/ and fails when one says `exit 0` before its last statement outside a heredoc body or a comment, so a case can leave with status 0 only by reaching its end.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "413_a_skipped_case_is_not_a_proof"
     }
   ]
 }
