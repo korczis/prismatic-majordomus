@@ -293,9 +293,10 @@ It is observation: nothing is executed remotely.
 
 **Proved by.** `test/cases/130_mesh.sh`, `apps/majordomus-cli/tests/mesh.rs`.
 
-**Maturity.** On master, off by default (`.ai/repo/mesh/majordomus.yaml`). There is no Tailscale
-or mDNS provider. The peer board and the claims replicate across runtimes, on one machine or
-several, over authenticated links (ADR 0067).
+**Maturity.** On master, off by default: a new repository has no declaration. This repository
+runs its own (`.ai/repo/mesh/majordomus.yaml`, enabled; `docs/MESH.md`, "This repository's
+mesh"). There is no Tailscale or mDNS provider. The peer board and the claims replicate across
+runtimes, on one machine or several, over authenticated links (ADR 0067).
 
 ### Rules, doctrines and the rule proof
 
