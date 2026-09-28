@@ -76,8 +76,8 @@ use crate::capability::model::{
 };
 use crate::capability::module::ModuleDescriptor;
 use crate::evidence::{
-    self, freshness, ClaimProof, EvidenceReport, Execution, Ledger, Origin, ProofState,
-    RecordRequest, TreeState,
+    self, freshness, ClaimProof, EvidenceDropped, EvidenceReport, Execution, Ledger, Origin,
+    ProofState, RecordRequest, TreeState,
 };
 use crate::{capability, module};
 
@@ -418,6 +418,7 @@ pub struct TestEvidence {
 ///     commit: "06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f".to_string(),
 ///     working_tree: "clean".to_string(),
 ///     unknown: vec!["docs/CLAIMS.yaml".to_string()],
+///     dropped: vec![],
 ///     ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),
 /// };
 /// // the failing test is one of the three recorded, not a fourth thing that was dropped
@@ -427,6 +428,8 @@ pub struct TestEvidence {
 /// let json = serde_json::to_value(&report).unwrap();
 /// assert_eq!(json["unknown"].as_array().unwrap().len(), 1);
 /// assert_eq!(json["working_tree"], "clean");
+/// // a suite-only recording listed nothing, and its document is what it always was
+/// assert!(json.get("dropped").is_none());
 /// ```
 pub struct RecordReport {
     /// How many executions were written.
@@ -439,6 +442,10 @@ pub struct RecordReport {
     pub working_tree: String,
     /// Results the run named that no runner in this repository owns.
     pub unknown: Vec<String>,
+    /// What the reports held that no claim can name yet: the crate's unit-test binary, its
+    /// doctests. Listed rather than ignored, and absent from the document when empty.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub dropped: Vec<EvidenceDropped>,
     /// Where the ledger was written.
     pub ledger: String,
 }
@@ -610,6 +617,7 @@ fn record(ctx: &Context, input: EvidenceRecordInput) -> Result<RecordReport, Cap
         commit: got.commit,
         working_tree: got.working_tree,
         unknown: got.unknown,
+        dropped: got.dropped,
         ledger: evidence::LEDGER_PATH.to_string(),
     })
 }
@@ -711,7 +719,7 @@ pub fn module() -> ModuleDescriptor {
                 id: "evidence.record",
                 kind: CapabilityKind::Command,
                 title: "Record a run that happened",
-                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing.",
+                description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped.",
                 input: EvidenceRecordInput,
                 output: RecordReport,
                 stability: Stability::BehaviorallyVerified,

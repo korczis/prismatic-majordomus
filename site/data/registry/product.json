@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.9.0"
   },
-  "fingerprint": "89b29aa8db0607ef77d5602742559c941082a7e741d32afdf31abd3df67d05ee",
+  "fingerprint": "e0c4ca81e9eda28310b796b41c07056078d4e8c79b61dd5e0594bcee6c02ab4f",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -294,7 +294,7 @@
         },
         {
           "name": "claim",
-          "objects": 180
+          "objects": 181
         }
       ],
       "rule_refs": [
@@ -558,11 +558,11 @@
       "counts": {
         "capabilities": 10,
         "mcp_tools": 10,
-        "mcp_resources": 241,
+        "mcp_resources": 242,
         "http_routes": 10,
         "cli_paths": 9,
         "commands": 2,
-        "objects": 236,
+        "objects": 237,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3081,7 +3081,7 @@
         },
         {
           "name": "document",
-          "objects": 256
+          "objects": 257
         }
       ],
       "rule_refs": [
@@ -3330,11 +3330,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 311,
+        "mcp_resources": 312,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 310,
+        "objects": 311,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -7428,7 +7428,8 @@
         "evidence-unsupported-guarantee-is-reported",
         "evidence-judged-at-the-presented-revision",
         "evidence-a-skip-is-not-run",
-        "evidence-a-failure-outranks-an-absence"
+        "evidence-a-failure-outranks-an-absence",
+        "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass"
       ],
       "use_cases": [],
       "cockpit": [],
@@ -7564,6 +7565,11 @@
           "id": "evidence-a-failure-outranks-an-absence",
           "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
           "status": "guaranteed"
+        },
+        {
+          "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+          "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+          "status": "guaranteed"
         }
       ],
       "use_case_refs": [],
@@ -7583,13 +7589,13 @@
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 8,
+        "claims": 9,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 8
+          "guaranteed": 9
         },
         "modules": {
           "behaviorally_verified": 1
@@ -9541,7 +9547,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (180)",
+        "title": "claim (181)",
         "features": [
           "declare-once"
         ]
@@ -10468,28 +10474,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1499,
+    "capabilities": 1502,
     "builtin": 115,
-    "declarative": 1384,
+    "declarative": 1387,
     "modules": 38,
     "mcp_tools": 112,
-    "mcp_resources": 1425,
+    "mcp_resources": 1428,
     "http_routes": 114,
     "cli_commands": 118,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1384,
+    "objects": 1387,
     "by_kind": {
       "adr": 53,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 180,
+      "claim": 181,
       "command": 31,
       "context": 29,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 256,
+      "document": 257,
       "feature": 25,
       "implementation": 49,
       "issue": 216,
@@ -10506,7 +10512,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 227,
+      "test": 228,
       "use-case": 46,
       "workspace": 1
     },

@@ -120,6 +120,16 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
                     .map_err(Error::Transport)?;
                     writeln!(out, "ledger       {}", v["ledger"].as_str().unwrap_or("?"))
                         .map_err(Error::Transport)?;
+                    // what the reports held that no claim can name yet, listed, never hidden
+                    for d in v["dropped"].as_array().into_iter().flatten() {
+                        writeln!(
+                            out,
+                            "dropped      {} ({})",
+                            d["what"].as_str().unwrap_or("?"),
+                            d["reason"].as_str().unwrap_or("?")
+                        )
+                        .map_err(Error::Transport)?;
+                    }
                     for u in v["unknown"].as_array().into_iter().flatten() {
                         writeln!(out, "unknown      {} (no such test here)", u)
                             .map_err(Error::Transport)?;

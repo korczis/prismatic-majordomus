@@ -388,10 +388,18 @@ Refusals, all of them deliberate:
   list rather than recorded or dropped, because it means the runner and the matrix have
   diverged.
 
-Two shapes in `cargo test`'s output are handled specifically: `Running unittests
-src/lib.rs` is the crate's own unit-test binary and is not an integration test a claim can
-name, so it is not recorded as one; and a `test result:` line with no `Running` line before
-it belongs to no binary and is dropped rather than credited to the previous one.
+A crate binary states only what ran. `cargo test` prints `ok` on the result line of a
+binary that ran nothing at all, so the recorder reads the counts, not only the word: a
+binary with a failed test is a failure whatever its word says; one that passed nothing
+(every test ignored, or none there) or ran only a subset a name filter chose is a skip, the
+absence of a proof rather than a proof; one whose result line carries no count, or that
+printed no result line before the next binary, is an error, because the harness could not
+say what ran. Colour codes are stripped from every line before it is matched, so a coloured
+run reads as a plain one. What the output held that no claim can name yet is listed, with
+the reason, in the recording's `dropped` list (a `dropped` line in the text output) rather
+than ignored: the crate's own unit-test binary (`Running unittests src/lib.rs`), its
+doctests (`Doc-tests <crate>`), a binary outside `tests/`, and a `test result:` line with no
+`Running` line before it, which is never credited to the previous binary.
 
 ### In CI
 

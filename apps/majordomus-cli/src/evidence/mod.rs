@@ -146,6 +146,7 @@ use crate::index::Index;
 pub mod freshness;
 pub mod ledger;
 pub mod record;
+pub mod run;
 
 pub use freshness::{
     aggregate, changed_between, compare, freshness, ledger_at, presented_commit, uncommitted,
@@ -153,7 +154,11 @@ pub use freshness::{
     UNCOMMITTED_RUN,
 };
 pub use ledger::{Ledger, LEDGER_PATH};
-pub use record::{parse_crate_binaries, record, RecordOutcome, RecordRequest};
+pub use record::{
+    parse_crate_binaries, read_crate_output, record, CrateBinary, CrateRead, RecordOutcome,
+    RecordRequest,
+};
+pub use run::{EvidenceDropped, EvidenceProducer};
 
 /// Which runner produced a result, and therefore how the test is named and re-run.
 ///
