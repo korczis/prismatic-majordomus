@@ -40,7 +40,11 @@ the home page, the publication and the validator all read.
 
 ## What it does not do
 
-Nothing here writes to the repository: every capability over MCP and HTTP is a read, and
-the one command that changes anything changes this process's memory. There is no
+Almost nothing here writes to the repository: all but two of the capabilities over MCP and
+HTTP are reads, and most of the commands that change anything change only this process's
+memory. The exceptions are named rather than implied — `plan.transition` and
+`recover.orphans` — and the `initialize` instructions every client reads name them too,
+counted off the registry rather than stated by hand, because a sentence that promises a
+read-only surface is exactly the sentence an agent acts on. There is no
 authentication and no remote binding by default; the server is for the clients on this
 machine. It does not run a model and it does not route work to one.
