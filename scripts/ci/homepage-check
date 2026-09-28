@@ -38,12 +38,30 @@ set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 command -v python3 >/dev/null 2>&1 || { echo "homepage-check: python3 is not installed" >&2; exit 12; }
 [ -f "$ROOT/site/public/index.html" ] || { echo "homepage-check: $ROOT/site/public/index.html missing; run scripts/site-build" >&2; exit 12; }
+# The pages walked below are the site's own: a surface scripts/site-build composes into the
+# build at its mount (ADR 0086) is another producer's pages, which neither tell this story nor
+# follow this indexing policy. Its mounts come from the tree's own topology, through the one
+# helper every site check asks, so nothing here names one.
+# shellcheck source=../../lib/common.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/common.sh"
+MJ_COMPOSED_MOUNTS="$(mj_web_composed "$ROOT" mounts)" || exit 12
+export MJ_COMPOSED_MOUNTS
 exec python3 - "$ROOT" <<'PY'
 import html, json, os, re, sys, tomllib
 
 root = sys.argv[1]
 pub = os.path.join(root, "site", "public")
 fails = 0
+
+# the composed mounts, as paths relative to the build ("/rustdoc" -> "rustdoc")
+composed = {m.strip("/") for m in os.environ.get("MJ_COMPOSED_MOUNTS", "").split() if m.strip("/")}
+
+def site_walk():
+    """os.walk over the build, never descending into a composed surface's mount."""
+    for dirpath, dirs, files in os.walk(pub):
+        rel = os.path.relpath(dirpath, pub).replace(os.sep, "/")
+        dirs[:] = [d for d in dirs if (d if rel == "." else rel + "/" + d) not in composed]
+        yield dirpath, dirs, files
 
 def ok(name, msg):
     print(f"OK   {name:<12} {msg}")
@@ -134,7 +152,7 @@ else:
 mermaid_src = re.compile(r'<script\b[^>]*\bsrc="[^"]*mermaid(\.min)?\.js"')
 mermaid_block = re.compile(r'class="[^"]*\bmermaid\b')
 idle = []
-for dirpath, _, files in os.walk(pub):
+for dirpath, _, files in site_walk():
     if "index.html" not in files:
         continue
     text = open(os.path.join(dirpath, "index.html"), errors="replace").read()
@@ -255,7 +273,7 @@ for loc in re.findall(r"<loc>([^<]+)</loc>", sitemap):
 noindex_re = re.compile(r'<meta name="robots" content="noindex">')
 problems = []
 pages = 0
-for dirpath, _, files in os.walk(pub):
+for dirpath, _, files in site_walk():
     if "index.html" not in files:
         continue
     rel = os.path.relpath(dirpath, pub)

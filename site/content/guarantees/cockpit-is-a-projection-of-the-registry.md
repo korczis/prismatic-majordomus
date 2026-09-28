@@ -1,7 +1,7 @@
 +++
 title = "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited"
 description = "The Cockpit at /cockpit holds no list of its own. What it shows is what the registry"
-weight = 171
+weight = 176
 [extra]
 claim_id = "cockpit-is-a-projection-of-the-registry"
 status = "guaranteed"

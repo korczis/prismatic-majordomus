@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 137 | 120 | 0 | 17 |
-| http | 135 | 120 | 0 | 15 |
-| mcp | 131 | 116 | 0 | 15 |
+| direct | 138 | 121 | 0 | 17 |
+| http | 136 | 121 | 0 | 15 |
+| mcp | 132 | 117 | 0 | 15 |
 | system | 13 | 13 | 0 | 0 |
-| total | 416 | 369 | 0 | 47 |
+| total | 419 | 372 | 0 | 47 |
 
 ## Capabilities
 
@@ -126,6 +126,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.providers` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
+| `quality.rustdoc` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default`, `missing-pages-summary` |
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |

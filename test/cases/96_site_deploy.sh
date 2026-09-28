@@ -18,6 +18,22 @@ cd "$S/work" || exit 1
 git remote set-url origin "$S/remote.git"
 git push -q origin HEAD:refs/heads/master
 ln -s "$ROOT/node_modules" node_modules
+# The surfaces scripts/site-build composes into the site (ADR 0086) are producer outputs, never
+# committed, so a clone has none and the build refuses without them. The clone borrows this
+# checkout's, as it borrows node_modules; which ones, and where, is the clone's own topology.
+# Under CI the suite job produced them first (.github/actions/rustdoc), so their absence there
+# is a failure; locally it is the one thing the person has not run yet, and is said so.
+composed="$(. "$ROOT/lib/common.sh"; mj_web_composed "$PWD" rows)" || { echo "    the clone's topology cannot be read"; exit 1; }
+while IFS="$(printf '\t')" read -r c_id c_mount c_artifact c_producer; do
+  [ -n "$c_id" ] || continue
+  if [ ! -d "$ROOT/$c_artifact" ]; then
+    [ "${CI:-}" = true ] && { echo "    surface $c_id ($c_artifact) was not produced before the suite; run: $c_producer"; exit 1; }
+    echo "    surface $c_id at $c_mount is not produced in this checkout (run: $c_producer); skipping"; exit 0
+  fi
+  mkdir -p "$(dirname "$c_artifact")"; ln -s "$ROOT/$c_artifact" "$c_artifact"
+done <<EOF
+$composed
+EOF
 # the derived-data check reads the tool version from bin/majordomus and the commit from git,
 # and the Rust check needs a built executable; both belong to CI's gate, so the case builds
 # site/public itself and publishes with --skip-build, which is how the workflow calls it too.
@@ -53,6 +69,16 @@ git fetch -q origin gh-pages
 git show origin/gh-pages:index.html | grep -q "/commit/$head" || { echo "    the published index does not name the source commit"; exit 1; }
 git show origin/gh-pages:.nojekyll >/dev/null 2>&1 || { echo "    .nojekyll missing on gh-pages"; exit 1; }
 git show origin/gh-pages:guarantees/index.html >/dev/null 2>&1 || { echo "    /guarantees/ missing on gh-pages"; exit 1; }
+# every composed surface is published at its mount, with the declaration that says what it was
+# built from: the deploy carries the build as composed, not the site's own pages alone
+while IFS="$(printf '\t')" read -r c_id c_mount _; do
+  [ -n "$c_id" ] || continue
+  git show "origin/gh-pages:${c_mount#/}/index.html" >/dev/null 2>&1 || { echo "    surface $c_id is missing from gh-pages at $c_mount"; exit 1; }
+  git show "origin/gh-pages:${c_mount#/}/surface.json" | jq -e --arg i "$c_id" '.id == $i and (.built_from | length) >= 7' >/dev/null \
+    || { echo "    gh-pages carries no declaration of surface $c_id at $c_mount/surface.json"; exit 1; }
+done <<EOF
+$composed
+EOF
 git log -1 --format=%B origin/gh-pages | grep -q "source: $head" || { echo "    the gh-pages commit does not name its source"; exit 1; }
 
 # --- the same site again: nothing to push, no second commit

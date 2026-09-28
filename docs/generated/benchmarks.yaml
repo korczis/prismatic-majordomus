@@ -6,20 +6,20 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.10.0
 coverage:
   - scope: direct
-    required: 137
-    covered: 120
+    required: 138
+    covered: 121
     missing: 0
     waived: 17
     inapplicable: 0
   - scope: http
-    required: 135
-    covered: 120
+    required: 136
+    covered: 121
     missing: 0
     waived: 15
     inapplicable: 0
   - scope: mcp
-    required: 131
-    covered: 116
+    required: 132
+    covered: 117
     missing: 0
     waived: 15
     inapplicable: 0
@@ -30,8 +30,8 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 416
-    covered: 369
+    required: 419
+    covered: 372
     missing: 0
     waived: 47
     inapplicable: 0
@@ -1025,6 +1025,16 @@ capabilities:
     http: covered
     cases:
       - default
+  - id: quality.rustdoc
+    module: quality
+    kind: query
+    cache: "process, 8 entries, 10s"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+      - missing-pages-summary
   - id: recover.orphans
     module: recover
     kind: command

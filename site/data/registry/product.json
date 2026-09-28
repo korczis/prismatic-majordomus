@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.10.0"
   },
-  "fingerprint": "b5763b587fad7867794c6bc3d82e566d7af3b77f81b39e629d0e1ffb01e78d20",
+  "fingerprint": "431823e1c4cd242fe717711916292e9458c618cad384448fc00b74eaa889e1d2",
   "route": "/features/",
   "counts": {
     "features": 24,
@@ -265,6 +265,16 @@
               "resource": "majordomus://quality",
               "route": "GET /api/v1/quality",
               "cli": "majordomus quality report"
+            },
+            {
+              "id": "quality.rustdoc",
+              "title": "Rustdoc tree integrity",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_quality_rustdoc",
+              "resource": "majordomus://quality/rustdoc",
+              "route": "GET /api/v1/quality/rustdoc",
+              "cli": "majordomus quality rustdoc"
             }
           ]
         }
@@ -294,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 186
+          "objects": 191
         }
       ],
       "rule_refs": [
@@ -556,13 +566,13 @@
         "why"
       ],
       "counts": {
-        "capabilities": 10,
-        "mcp_tools": 10,
-        "mcp_resources": 247,
-        "http_routes": 10,
-        "cli_paths": 9,
+        "capabilities": 11,
+        "mcp_tools": 11,
+        "mcp_resources": 253,
+        "http_routes": 11,
+        "cli_paths": 10,
         "commands": 2,
-        "objects": 242,
+        "objects": 247,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -647,7 +657,8 @@
         "openapi",
         "swagger",
         "mcp",
-        "docs"
+        "docs",
+        "rustdoc"
       ],
       "related": [
         "declare-once",
@@ -1087,6 +1098,12 @@
           "id": "docs",
           "title": "The documentation, as this process serves it",
           "mount": "/docs",
+          "category": "documentation"
+        },
+        {
+          "id": "rustdoc",
+          "title": "The Rust crate's documentation, as rustdoc renders it",
+          "mount": "/rustdoc",
           "category": "documentation"
         }
       ],
@@ -3274,7 +3291,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 59
+          "objects": 60
         },
         {
           "name": "knowledge",
@@ -3282,7 +3299,7 @@
         },
         {
           "name": "document",
-          "objects": 265
+          "objects": 271
         }
       ],
       "rule_refs": [
@@ -3531,11 +3548,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 326,
+        "mcp_resources": 333,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 325,
+        "objects": 332,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3745,7 +3762,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 140
+          "objects": 141
         }
       ],
       "rule_refs": [
@@ -4109,11 +4126,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 142,
+        "mcp_resources": 143,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 140,
+        "objects": 141,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -9810,7 +9827,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (59)",
+        "title": "adr (60)",
         "features": [
           "knowledge"
         ]
@@ -9838,7 +9855,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (186)",
+        "title": "claim (191)",
         "features": [
           "declare-once"
         ]
@@ -9941,7 +9958,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (140)",
+        "title": "rule (141)",
         "features": [
           "doctrine"
         ]
@@ -10773,28 +10790,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1585,
-    "builtin": 137,
-    "declarative": 1448,
+    "capabilities": 1604,
+    "builtin": 138,
+    "declarative": 1466,
     "modules": 41,
-    "mcp_tools": 131,
-    "mcp_resources": 1491,
-    "http_routes": 135,
-    "cli_commands": 137,
+    "mcp_tools": 132,
+    "mcp_resources": 1510,
+    "http_routes": 136,
+    "cli_commands": 138,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1448,
+    "objects": 1466,
     "by_kind": {
-      "adr": 59,
+      "adr": 60,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 186,
+      "claim": 191,
       "command": 31,
       "context": 30,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 265,
+      "document": 271,
       "feature": 25,
       "implementation": 49,
       "issue": 237,
@@ -10806,18 +10823,18 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 6,
-      "rule": 140,
+      "rule": 141,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 244,
+      "test": 249,
       "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
     "features": 24,
-    "web_surfaces": 9
+    "web_surfaces": 10
   },
   "valid": true
 }

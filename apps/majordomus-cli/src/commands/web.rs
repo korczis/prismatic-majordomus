@@ -465,6 +465,54 @@ mod tests {
     }
 
     #[test]
+    fn the_crates_rustdoc_is_listed_and_explained_from_where_it_was_found() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let krate = tmp.path().join(crate::capability::model::CRATE_DIR);
+        std::fs::create_dir_all(krate.join("src")).expect("mkdir");
+        std::fs::write(krate.join("Cargo.toml"), "").expect("write");
+        std::fs::write(krate.join("src/lib.rs"), "//! x\n").expect("write");
+        let topology = discover::discover(tmp.path(), Runtime::full()).expect("discovers");
+
+        let text = rendered(|out| list(out, &topology, OutputFormat::Text));
+        let line = text
+            .lines()
+            .find(|l| l.starts_with("rustdoc "))
+            .unwrap_or_else(|| panic!("the rustdoc is not listed:\n{text}"));
+        for column in [
+            "static",
+            discover::RUSTDOC_MOUNT,
+            "documentation",
+            "served+published",
+            discover::RUSTDOC_ARTIFACT,
+        ] {
+            assert!(line.contains(column), "{column} is missing from: {line}");
+        }
+
+        let text =
+            rendered(|out| explain(out, &topology, Some(discover::RUSTDOC), OutputFormat::Text));
+        for said in [
+            "producer   scripts/rust-check --doc",
+            "category   documentation",
+            "visibility public",
+            "where      Both",
+            "artifact   target/web/rustdoc",
+            "index      index.html",
+            "kind       came from filesystem apps/majordomus-cli",
+            "mount      came from default",
+            "artifact   came from filesystem target/web/rustdoc",
+        ] {
+            assert!(text.contains(said), "'{said}' is missing:\n{text}");
+        }
+        // unbuilt, it names no revision rather than inventing one
+        assert!(!text.contains("built from"), "{text}");
+        let json =
+            rendered(|out| explain(out, &topology, Some(discover::RUSTDOC), OutputFormat::Json));
+        let parsed: Vec<crate::web::Surface> = serde_json::from_str(&json).expect("surfaces");
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].provenance.len(), 3, "{json}");
+    }
+
+    #[test]
     fn a_process_that_offers_nothing_lists_only_what_it_can_answer() {
         let bare = Topology::new(discover::native(Runtime::default()));
         let text = rendered(|out| list(out, &bare, OutputFormat::Text));

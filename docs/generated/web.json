@@ -6,6 +6,7 @@
   "reserved": {
     "home": "/",
     "documentation": "/docs",
+    "rustdoc": "/rustdoc",
     "swagger": "/swagger",
     "openapi": "/openapi.json",
     "capabilities": "/api/v1/",
@@ -114,6 +115,31 @@
       "provenance": {
         "mount": {
           "source": "registry"
+        }
+      }
+    },
+    {
+      "id": "rustdoc",
+      "title": "The Rust crate's documentation, as rustdoc renders it",
+      "category": "documentation",
+      "visibility": "public",
+      "kind": "static-directory",
+      "mount": "/rustdoc",
+      "producer": "scripts/rust-check --doc",
+      "artifact": "target/web/rustdoc",
+      "index": "index.html",
+      "availability": "both",
+      "provenance": {
+        "artifact": {
+          "source": "filesystem",
+          "path": "target/web/rustdoc"
+        },
+        "kind": {
+          "source": "filesystem",
+          "path": "apps/majordomus-cli"
+        },
+        "mount": {
+          "source": "default"
         }
       }
     },
