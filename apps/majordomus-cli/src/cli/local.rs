@@ -418,6 +418,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the same facts with where each one was read from.",
     },
     LocalCommand {
+        command: "env preflight",
+        reason: LocalReason::RendersCapability("environment.preflight"),
+        note: "prints what is proven about this checkout, verdict by verdict with its evidence; it resolves fast from the cached rule tally unless --full asks it to count.",
+    },
+    LocalCommand {
         command: "env banner",
         reason: LocalReason::SessionLocal,
         note: "prints the one-line banner direnv shows on entering this worktree; it is about the shell that just arrived.",

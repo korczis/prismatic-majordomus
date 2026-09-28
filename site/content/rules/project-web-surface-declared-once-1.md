@@ -1,7 +1,7 @@
 +++
 title = "A web surface is declared once and every web projection is derived from it"
 description = "A web surface is declared once and every web projection is derived from it"
-weight = 134
+weight = 135
 [extra]
 kind = "rule"
 slug = "project-web-surface-declared-once-1"

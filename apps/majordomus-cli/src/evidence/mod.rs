@@ -1174,7 +1174,10 @@ fn claims_of(index: &Index) -> Vec<IndexedClaim> {
 ///
 /// `None` when git could not answer, which the caller must not read as "nothing changed":
 /// an unanswerable comparison is why [`ProofState`] has to be able to say it does not know.
-fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
+///
+/// Shared with the preflight (`environment::preflight`), whose verdict about recorded test
+/// runs must mean what `proven` means here and nothing looser.
+pub(crate) fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
     let git = |args: &[&str]| -> Option<Vec<String>> {
         let out = crate::git::read_only(root).args(args).output().ok()?;
         if !out.status.success() {

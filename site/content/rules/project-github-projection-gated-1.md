@@ -1,7 +1,7 @@
 +++
 title = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
 description = "The GitHub projection is checked by a gate, not by somebody remembering to run it"
-weight = 90
+weight = 91
 [extra]
 kind = "rule"
 slug = "project-github-projection-gated-1"

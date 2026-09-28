@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 117 | 110 | 0 | 7 |
-| http | 116 | 110 | 0 | 6 |
-| mcp | 114 | 108 | 0 | 6 |
+| direct | 118 | 111 | 0 | 7 |
+| http | 117 | 111 | 0 | 6 |
+| mcp | 115 | 109 | 0 | 6 |
 | system | 13 | 13 | 0 | 0 |
-| total | 360 | 341 | 0 | 19 |
+| total | 363 | 344 | 0 | 19 |
 
 ## Capabilities
 
@@ -54,6 +54,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `entity.kinds` | entity | query | — | covered | covered | covered | `default` |
 | `entity.show` | entity | query | — | covered | covered | covered | `first-object` |
 | `environment.explain` | environment | query | — | covered | covered | covered | `all`, `one-field` |
+| `environment.preflight` | environment | query | — | covered | covered | covered | `sealed` |
 | `environment.status` | environment | query | — | covered | covered | covered | `default` |
 | `evidence.claim` | evidence | query | — | covered | covered | covered | `first-claim` |
 | `evidence.record` | evidence | command | — | waived | — | — | — |

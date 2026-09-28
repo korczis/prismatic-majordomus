@@ -1,7 +1,7 @@
 +++
 title = "An operational failure mode is a catalogue object, never a page"
 description = "An operational failure mode is a catalogue object, never a page"
-weight = 136
+weight = 137
 [extra]
 kind = "rule"
 slug = "project-why-catalogue-is-canonical-1"
