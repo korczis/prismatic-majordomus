@@ -418,7 +418,7 @@ $ curl -s http://127.0.0.1:8742/openapi.json | jq '.paths | keys'
 
 **How it works.**
 
-- **Versions.** The version is written by one command, `majordomus-cli release bump`. `release analyze` measures the minimum bump by comparing the public capability surface with the last release.
+- **Versions.** The version is authored in one place, the crate manifest, and written by one command, `majordomus-cli release bump`; `scripts/derive` projects it for the shell tool. `release analyze` measures the minimum bump by comparing the public capability surface with the last release.
 - **Releases.** A tag builds, publishes, writes a release record and smoke-tests the public installer.
 - **Site deploys.** A merge to master publishes the site from committed projections. The deploy is verified when `majordomus.dev/build.json` serves the merge commit, and the `pages-live` gate checks that no publication is overdue.
 

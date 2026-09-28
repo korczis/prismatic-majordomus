@@ -1,0 +1,110 @@
+# What the behavioural suite costs, what it may cost, and the bound that backstops it.
+# `scripts/ci/suite-budget` reads this file and nothing else; the `suite` job of
+# .github/workflows/validate.yml is an adapter over that script, and
+# test/cases/417_the_suite_finishes_inside_its_bound.sh holds the two to each other.
+#
+# Why this file exists. The bound was set once, from a cost that has since doubled, and
+# nothing measured the drift: a suite that outgrows its bound is not reported as slow, it is
+# `cancelled` — indistinguishable in GitHub's own interface from a run somebody superseded.
+# That is how master went days without a suite verdict and nobody noticed. A budget turns
+# the growth into a failure a reader can act on, while the bound still has room; the bound
+# alone only decides how long the repository waits before losing the verdict entirely.
+version: 1
+
+# ---------------------------------------------------------------- the bound
+# `timeout-minutes` of the suite job. It is a backstop against a wedged runner, not a target:
+# every case already carries its own `majordomus-timeout:`. One declaration, two readers —
+# the workflow and this file must agree, and case 417 refuses it when they do not.
+#
+# Measured, eleven consecutive runs on ubuntu-latest, 2026-09-19 to 2026-09-20 (wall minutes
+# of the `suite` job, from the GitHub jobs API):
+#
+#   94.2  98.4  121.8  126.1  142.3  142.9  144.7  145.0  145.3  145.4  148.3
+#
+# The old bound of 150 was set from a 93-100 minute cost with a ~50% margin. The cost is now
+# 148.3 at its worst, so that margin had become 1.7 minutes — under two minutes of runner
+# weather between a verdict and a silent cut. 225 restores the same doctrine against the cost
+# actually measured (148.3 x 1.5), and the budgets below are what keep it from being eaten
+# again in silence.
+#
+# Re-measured, ten runs on 2026-09-24 (this pull request's own, master's green run
+# 36033138251 on f7e05f4, and eight other branches'):
+#
+#   101.9  113.4  113.5  131.3  136.5  144.7  145.9  148.6  149.6  156.6
+#
+# 156.6 is this pull request's run 36037232050, which finished inside 225 with a verdict: it
+# was not cut here, it failed on the case bound below. 225 holds 68 minutes over it, and the
+# case budget fires long before the wall gets there.
+bound_minutes: 225
+
+# ---------------------------------------------------------------- the bound of one case
+# The default of `MJ_TEST_CASE_TIMEOUT` in test/run.sh: what a case runs under when its
+# header declares no `majordomus-timeout:` of its own. The same failure one level down. It was
+# 2400, set when the site cases cost about half an hour. In the fifty runs from 2026-09-19 to
+# 2026-09-24 whose 95_executable_reference ran to its end or to that bound (every
+# ci-metrics-suite artifact of the period), the case finished in 1485 to 2380 s forty-six
+# times, and four times it was killed at 2415-2418 s, the bound plus its grace: 35493050180,
+# 35989296689, 36037232050 (this pull request's) and 36045696495. Whether a case passed came
+# down to runner weather, and a killed case fails the suite for a cost, not a defect.
+#
+# Those four are censored. The runner stopped the clock, so 2418 is a lower bound on what the
+# case costs, not a measurement of it. 95_skills, which ran uncut in the same runs, gives an
+# estimate: where both finished, executable_reference cost 1.012 to 1.072 times skills
+# (median 1.027, n = 46), which puts 36037232050's (skills 2399 s) at about 2430 to 2570 s.
+# That is not a bound either: in 36045696495 and 35493050180 the case was already 1.082 and
+# 1.069 times skills when it was killed, at the top of that range or past it.
+#
+# 3600 is where a case is killed, not what it may cost: the ~50% doctrine applied to the
+# lower bound (2416 x 1.5), so that a slow case finishes and its cost is measured instead of
+# cut. What passes is decided by `slowest_case_seconds` below, and the bound sits above it on
+# purpose: the budget has to be able to refuse a case that grew while the bound still has
+# room, or the budget is a number nothing can reach. One declaration, two readers —
+# test/run.sh and this file must agree, and case 417 refuses it when they do not, or when the
+# budget is not below the bound.
+case_bound_seconds: 3600
+
+# ---------------------------------------------------------------- what a healthy run costs
+# Seconds of case time, summed over every case the runner executed, from MJ_TEST_REPORT.
+# Not wall clock: wall depends on MJ_TEST_JOBS and on the runner's cores, and a budget that
+# moved with either would fail on GitHub's weather rather than on a regression anybody can
+# fix. Case time is the quantity this repository controls — though not the only thing that
+# moves it: a slower runner slows every case, and the ten runs below span a factor of 1.5 on
+# one day's code. So the budget sits above the worst run measured, never above a typical one.
+#
+# Measured over two complete runs on 2026-09-20:
+#
+#   run 35483875283   27103 s over 223 cases   slowest 2295 s (95_executable_reference)
+#   run 35484107998   26748 s over 224 cases   slowest 2245 s (95_executable_reference)
+#
+# and re-measured over ten on 2026-09-24, when the 30000 set from those two was already
+# within 2.2% of the worst — the suite had grown since:
+#
+#   run 36037232050   29337+ s over 225 cases  slowest 2416+ s (95_executable_reference, killed)
+#   run 35989296689   28056+ s over 225 cases  slowest 2415+ s (95_executable_reference, killed)
+#   run 36033138251   27477 s over 224 cases   slowest 2354 s (95_executable_reference)
+#   seven more        18951 to 27300 s         slowest 1657 to 2294 s
+#
+# A `+` marks a censored cost: the case was killed, so the number is a lower bound. The
+# budgets sit about a tenth above the worst of these, so a suite that grows by more than that
+# fails here — loudly, with the case named — while the bounds above hold the rest in reserve.
+# Raising a number here is a decision that cites a measurement, the way the bounds above do.
+#
+# What decides a run is `slowest_case_seconds`, not `case_bound_seconds`. The suite job's step
+# "the suite finishes inside its bound" runs under `if: always()` and exits 10 on any case over
+# the budget, so a case that costs 2701 to 3600 s still fails the job — by name, through the
+# budget, instead of as a TIMEOUT. The pass limit therefore rose from 2400 to 2700 (+12.5%),
+# not by the half the case bound did. 2700 was set on 2026-09-20 about a tenth above 2295 and
+# is kept here provisionally, because every higher cost of this case is censored: it holds 12%
+# over the censored worst (2418) and 5 to 11% over the estimate above (2430-2570 s), while
+# runner load alone moves the case by a factor of 1.6 (1485 to 2380 s uncut). Run 36065279236,
+# the first under the 3600 s bound, is the first that lets it finish past 2400; this number is
+# re-derived from the uncensored costs of that run and the ones after it, citing them, and not
+# from a killed value. Until then a refusal of 95_executable_reference between 2700 and 3600 s
+# is that measurement arriving — read it before calling it a regression.
+budget:
+  # every case, summed
+  cases_seconds: 33000
+  # the single slowest case; one case that runs away is invisible in the total until it is
+  # most of it, and it is also what decides whether the parallel phase can still be packed.
+  # Provisional: see above.
+  slowest_case_seconds: 2700

@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 53,
+      "count": 56,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 53
+      "count": 56
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 179
+      "count": 182
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 255
+      "count": 258
     },
     {
       "kind": "feature",
@@ -133,7 +133,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 216
+      "count": 237
     },
     {
       "kind": "knowledge",
@@ -157,7 +157,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 19
+      "count": 20
     },
     {
       "kind": "moment",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 227
+      "count": 235
     },
     {
       "kind": "use-case",
@@ -2455,6 +2455,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0048/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0080",
+          "kind": "adr",
+          "route": "/adrs/adr-0080/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0087",
+          "kind": "adr",
+          "route": "/adrs/adr-0087/",
+          "external": false
         }
       ]
     },
@@ -2939,9 +2953,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         },
         {
@@ -3342,6 +3356,102 @@
     },
     {
       "kind": "adr",
+      "id": "majordomus://adr/adr-0080",
+      "identity": "adr-0080",
+      "slug": "adr-0080",
+      "cockpit": "/cockpit/objects/adr/adr-0080",
+      "title": "A CI run reaches the tracked ledger through a recording branch, never through the run that produced it",
+      "status": "proposed",
+      "tags": [
+        "evidence",
+        "claims",
+        "ci",
+        "verification"
+      ],
+      "source": ".ai/repo/adrs/0080-a-recorded-run-reaches-the-tracked-ledger-through-a-recording-branch.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/gates.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/evidence-baseline.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/evidence/ledger.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/evidence/record.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/evidence-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0041",
+          "kind": "adr",
+          "route": "/adrs/adr-0041/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "a-skipped-case-is-not-a-proof",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-proof-is-an-execution",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EVIDENCE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.never-reported-is-not-green@1",
+          "kind": "rule",
+          "route": "/rules/project-never-reported-is-not-green-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/124_evidence.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
       "id": "majordomus://adr/adr-0082",
       "identity": "adr-0082",
       "slug": "adr-0082",
@@ -3386,6 +3496,185 @@
         {
           "edge": "put_in_force",
           "label": "test/cases/431_economics_claims_gated.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0085",
+      "identity": "adr-0085",
+      "slug": "adr-0085",
+      "cockpit": "/cockpit/objects/adr/adr-0085",
+      "title": "The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection",
+      "status": "proposed",
+      "tags": [
+        "release",
+        "versioning",
+        "projections",
+        "distribution"
+      ],
+      "source": ".ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/generate.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/release/version.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/release-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/release-version",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "bin/majordomus",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.distribution-canonical@1",
+          "kind": "rule",
+          "route": "/rules/project-distribution-canonical-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.generated-artifacts-are-typed@1",
+          "kind": "rule",
+          "route": "/rules/project-generated-artifacts-are-typed-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.release-is-a-projection@2",
+          "kind": "rule",
+          "route": "/rules/project-release-is-a-projection-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-version-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/103_release_projection.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/484_the_version_is_authored_once.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0087",
+      "identity": "adr-0087",
+      "slug": "adr-0087",
+      "cockpit": "/cockpit/objects/adr/adr-0087",
+      "title": "Evidence is indexed by subject and judged at the presented revision",
+      "status": "proposed",
+      "tags": [
+        "evidence",
+        "claims",
+        "ci",
+        "verification",
+        "site"
+      ],
+      "source": ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/evidence/ledger.json",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/evidence/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/rules/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0041",
+          "kind": "adr",
+          "route": "/adrs/adr-0041/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-currency-is-not-collapsed",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-proof-is-an-execution",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "evidence-unsupported-guarantee-is-reported",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/EVIDENCE.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/124_evidence.sh",
           "kind": "test",
           "route": null,
           "external": false
@@ -4134,7 +4423,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "defined_in",
+          "label": "deployment-contract-refuses-by-name",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -6961,7 +7258,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7481,6 +7786,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.design-tokens-declared-once@2",
           "kind": "rule",
@@ -7496,9 +7808,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         }
       ]
@@ -7858,9 +8170,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         },
         {
@@ -8135,6 +8447,13 @@
           "label": "adr-0041",
           "kind": "adr",
           "route": "/adrs/adr-0041/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0080",
+          "kind": "adr",
+          "route": "/adrs/adr-0080/",
           "external": false
         },
         {
@@ -8863,11 +9182,11 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.release-is-a-projection@1",
-      "identity": "project.release-is-a-projection@1",
-      "slug": "project-release-is-a-projection-1",
-      "cockpit": "/cockpit/objects/rule/project-release-is-a-projection-1",
-      "title": "The changelog is composed and the version has one writer",
+      "id": "majordomus://rule/project.release-is-a-projection@2",
+      "identity": "project.release-is-a-projection@2",
+      "slug": "project-release-is-a-projection-2",
+      "cockpit": "/cockpit/objects/rule/project-release-is-a-projection-2",
+      "title": "The changelog is composed, and the version is authored once",
       "status": "active",
       "tags": [
         "release",
@@ -8875,7 +9194,7 @@
         "version",
         "projections"
       ],
-      "source": ".ai/repo/rules/project/release-is-a-projection.v1.md",
+      "source": ".ai/repo/rules/project/release-is-a-projection.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -8898,6 +9217,13 @@
           "label": "adr-0051",
           "kind": "adr",
           "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
           "external": false
         },
         {
@@ -9400,9 +9726,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.release-is-a-projection@1",
+          "label": "project.release-is-a-projection@2",
           "kind": "rule",
-          "route": "/rules/project-release-is-a-projection-1/",
+          "route": "/rules/project-release-is-a-projection-2/",
           "external": false
         }
       ],
@@ -9419,6 +9745,13 @@
           "label": "adr-0051",
           "kind": "adr",
           "route": "/adrs/adr-0051/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0085",
+          "kind": "adr",
+          "route": "/adrs/adr-0085/",
           "external": false
         }
       ]

@@ -4,8 +4,8 @@
 schema: majordomus/design-system/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`"
 generator: majordomus-cli 0.9.0
-fingerprint: e6bf12153d9f8ec6562be979f2fda8bc516c7c093fb829891292f2773d7cff1a
-design: e6bf12153d9f
+fingerprint: 5513f7466963b9e89aa59a88dad266f6c8747bfeb13b7ceae530123ebda6e7f0
+design: 5513f7466963
 source: share/design/tokens.yaml
 projections:
   - share/design/theme.css
@@ -22,7 +22,7 @@ counts:
   font: 2
   role: 22
   status: 5
-  state: 99
+  state: 105
   type: 4
   tracking: 1
   layout: 3
@@ -729,6 +729,7 @@ tokens:
       - clean
       - merged
       - documented
+      - proven
     aliases:
       - "--color-fg-success-strong"
       - "--color-success-soft"
@@ -877,6 +878,8 @@ tokens:
       - owed
       - foreign
       - misplaced
+      - failing
+      - unrunnable
     aliases:
       - "--color-fg-danger-strong"
       - "--color-danger-soft"
@@ -950,6 +953,7 @@ tokens:
       - inherited
       - unmerged
       - detached
+      - inputs-unchanged
     projections:
       - share/design/theme.css
       - share/design/surface.css
@@ -1024,6 +1028,8 @@ tokens:
       - work
       - inspect
       - conclude
+      - not-run
+      - no-test
     projections:
       - share/design/theme.css
       - share/design/surface.css
@@ -1362,6 +1368,20 @@ tokens:
     css:
       - .mj-badge--documented
       - .mj-status--documented
+    role: ok
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: proven
+    kind: state
+    about: "a state word filed under `ok`"
+    css:
+      - .mj-badge--proven
+      - .mj-status--proven
     role: ok
     projections:
       - share/design/status.css
@@ -1874,6 +1894,34 @@ tokens:
       - docs/generated/design.json
       - docs/generated/design.yaml
       - docs/generated/design.md
+  - name: failing
+    kind: state
+    about: "a state word filed under `bad`"
+    css:
+      - .mj-badge--failing
+      - .mj-status--failing
+    role: bad
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: unrunnable
+    kind: state
+    about: "a state word filed under `bad`"
+    css:
+      - .mj-badge--unrunnable
+      - .mj-status--unrunnable
+    role: bad
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
   - name: running
     kind: state
     about: "a state word filed under `info`"
@@ -2104,6 +2152,20 @@ tokens:
     css:
       - .mj-badge--detached
       - .mj-status--detached
+    role: info
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: inputs-unchanged
+    kind: state
+    about: "a state word filed under `info`"
+    css:
+      - .mj-badge--inputs-unchanged
+      - .mj-status--inputs-unchanged
     role: info
     projections:
       - share/design/status.css
@@ -2412,6 +2474,34 @@ tokens:
     css:
       - .mj-badge--conclude
       - .mj-status--conclude
+    role: neutral
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: not-run
+    kind: state
+    about: "a state word filed under `neutral`"
+    css:
+      - .mj-badge--not-run
+      - .mj-status--not-run
+    role: neutral
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: no-test
+    kind: state
+    about: "a state word filed under `neutral`"
+    css:
+      - .mj-badge--no-test
+      - .mj-status--no-test
     role: neutral
     projections:
       - share/design/status.css
@@ -3303,6 +3393,7 @@ declaration:
         - clean
         - merged
         - documented
+        - proven
       warn:
         - warn
         - warning
@@ -3343,6 +3434,8 @@ declaration:
         - owed
         - foreign
         - misplaced
+        - failing
+        - unrunnable
       info:
         - info
         - running
@@ -3362,6 +3455,7 @@ declaration:
         - inherited
         - unmerged
         - detached
+        - inputs-unchanged
       neutral:
         - neutral
         - unknown
@@ -3386,6 +3480,8 @@ declaration:
         - work
         - inspect
         - conclude
+        - not-run
+        - no-test
   type:
     scale:
       meta:

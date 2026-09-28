@@ -9,8 +9,8 @@
 # site's own, and a spec that drives fewer controls than it claims. It needs a browser: without one it skips
 # locally and fails under CI=true, because a behaviour nobody ran is not a behaviour that holds.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || { echo "    skip: no node"; exit 0; }
-[ -d "$ROOT/node_modules/playwright" ] || { [ "${CI:-}" = true ] && { echo "    playwright absent under CI"; exit 1; }; echo "    skip: playwright absent (npm ci)"; exit 0; }
+command -v node >/dev/null 2>&1 || skip "no node"
+[ -d "$ROOT/node_modules/playwright" ] || { [ "${CI:-}" = true ] && { echo "    playwright absent under CI"; exit 1; }; skip "playwright absent (npm ci)"; }
 PROBE="$ROOT/scripts/interaction-probe"
 
 F="$PWD/site"; mkdir -p "$F/site/public/good" "$F/site/public/broken" "$F/site/public/vanishing" "$F/site/public/noisy" "$F/site/public/foreign" "$F/site/public/lazy" specs
@@ -50,7 +50,7 @@ run --only /good/
 # only a missing browser is a reason to skip; playwright was checked above, so any other SKIP is a failure
 if grep -q '^SKIP interaction-probe: no browser' out.txt; then
   [ "${CI:-}" = true ] && { echo "    the probe skipped under CI"; exit 1; }
-  echo "    skip: no browser could be started"; exit 0
+  skip "no browser could be started"
 fi
 if grep -q '^SKIP' out.txt; then echo "    the probe skipped for a reason other than a missing browser"; cat out.txt; exit 1; fi
 [ "$rc" = 0 ] || { echo "    a page whose control works did not pass (exit $rc)"; cat out.txt; exit 1; }

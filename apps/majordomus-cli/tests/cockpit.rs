@@ -5,6 +5,7 @@
 //! in the Cockpit — in its listing, in its navigation, in its search, on a page of its own,
 //! with a form generated from its schema — without one line of the Cockpit being edited.
 //! `a_capability_the_repository_adds_reaches_every_cockpit_surface` is that claim, run.
+//! Claims: cockpit-is-a-projection-of-the-registry.
 
 mod common;
 

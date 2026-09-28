@@ -9,7 +9,7 @@
 # holding ">" (an Alpine arrow function) does not end the tag early and hide the control; and an Alpine expression
 # that does not compile fails, naming the page and the directive.
 . "$ROOT/test/lib.sh"
-command -v node >/dev/null 2>&1 || { echo "    skip: no node"; exit 0; }
+command -v node >/dev/null 2>&1 || skip "no node"
 CHECK="$ROOT/scripts/ci/interaction-check"
 
 F="$PWD/site-fixture"; mkdir -p "$F/site/public/tools" specs

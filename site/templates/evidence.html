@@ -17,7 +17,7 @@
   {%- endfor %}
 </div>
 <p class="mt-6 text-sm text-body-subtle">
-  The canonical source is <a class="underline" href="{{ project.repository_url }}/blob/master/docs/CLAIMS.yaml">docs/CLAIMS.yaml</a>;
+  The canonical source is <a class="underline" href="{{ <source_blob path="docs/CLAIMS.yaml" /> }}">docs/CLAIMS.yaml</a>;
   the full table with sources, implementations and tests is on <a class="underline" href="{{ get_url(path='@/guarantees/_index.md', trailing_slash=true) }}">guarantees</a>.
 </p>
 {% endblock body %}

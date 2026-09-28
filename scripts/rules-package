@@ -12,7 +12,10 @@
 # without rewriting the manifest fails `check`, which the test suite runs.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-MJ_VERSION="$(sed -n 's/^MJ_VERSION="\(.*\)"/\1/p' "$ROOT/bin/majordomus")"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
+# the executable's version, as the tool itself prints it: authored once in the crate
+# manifest and read by bin/majordomus from its projection, never parsed out of a file here
+MJ_VERSION="$(env -u MAJORDOMUS_SHARE "$ROOT/bin/majordomus" version)"; MJ_VERSION="${MJ_VERSION#majordomus }"
+MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"
 export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../lib/common.sh
 . "$ROOT/lib/common.sh"

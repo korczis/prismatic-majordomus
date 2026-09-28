@@ -1070,17 +1070,20 @@ endpoint — `build.json` on `majordomus.dev` carries the commit it was built fr
 publication has been owed longer than the deploy window
 (`share/standard/majordomus/rules/publication-currency.v1.md`).
 
-### The version has one writer
+### The version is authored once
 
-The version is stated in three sites — the crate manifest, the crate's lock entry and the shell
-tool's `MJ_VERSION` — and written by one command, `majordomus-cli release bump`
-(`apps/majordomus-cli/src/release/version.rs`), which reads all three back and refuses when they
-disagree. The minimum bump is measured, not chosen: `release analyze` compares the public
-capability surface — ids, exposures and schemas, with input and output compatibility judged in
-opposite directions — against the last release (ADR 0051). Conventional commits are evidence,
-not the authority. The same analysis is `GET /api/v1/release/analysis`, an MCP tool and
-`/cockpit/release`. After a bump, `just derive` rewrites every generator stamp, the changelog,
-`docs/INSTALL.md` and the site's version data.
+The version is authored in one place, the crate manifest's `[package] version`, and written by
+one command, `majordomus-cli release bump` (`apps/majordomus-cli/src/release/version.rs`), which
+also keeps the lock's own entry in step and reads both back. The shell tool states no version:
+it reads `share/version.txt`, a generated projection of the manifest that ships beside it
+(ADR 0085), and `release::version::diagnose` refuses a version written by hand anywhere the
+tool's files live — the gate `version-authored-once`. The minimum bump is measured, not
+chosen: `release analyze` compares the public capability surface — ids, exposures and schemas,
+with input and output compatibility judged in opposite directions — against the last release
+(ADR 0051). Conventional commits are evidence, not the authority. The same analysis is
+`GET /api/v1/release/analysis`, an MCP tool and `/cockpit/release`. After a bump, `just derive`
+rewrites `share/version.txt`, every generator stamp, the changelog, `docs/INSTALL.md` and the
+site's version data.
 
 A tag starts the release workflow: build the platform matrix from
 `docs/generated/distribution-matrix.json`, publish, write the release record under
@@ -1238,7 +1241,7 @@ Each strong statement in this document, with how to check it.
 | the mesh is off by default and has no Tailscale provider | `.ai/repo/mesh/majordomus.yaml`; `ls apps/majordomus-cli/src/mesh` |
 | the board is in memory only | module comment of `apps/majordomus-cli/src/peers.rs` |
 | publication is verified against the public endpoint | `scripts/pages verify`; `curl -s https://majordomus.dev/build.json` |
-| the version has one writer with three sites | `apps/majordomus-cli/src/release/version.rs`; `scripts/ci/release-check` |
+| the version is authored in one place and projected for the shell tool | `apps/majordomus-cli/src/release/version.rs`; `share/version.txt`; `scripts/ci/release-check`; gate `version-authored-once` |
 
 </div>
 

@@ -138,6 +138,20 @@ let a recorder write "this did not run" and have it counted among the things tha
 `origin` is provider-neutral. A CI adapter records `ci`; nothing in the model knows or
 cares which CI it was.
 
+The runner speaks that vocabulary. A case that cannot meet a precondition calls `skip` from
+`test/lib.sh`, which exits 4; `test/run.sh` prints `skip`, writes `SKIP` into the TSV in
+both the serial and the parallel phase, and counts it in a third tally beside passed and
+failed. It is not a failure — the run's exit status is unchanged — and it is not a pass
+either, which it was until the word existed: a case that declined exited 0, the runner
+wrote `ok`, and the ledger recorded the proof of a claim from a run that asserted nothing.
+The status is not the declaration on its own: `skip` also writes the file the runner names
+in `MJ_SKIP_MARK`, and a case that ends with 4 without it — `jq -e` fails with 4 when it
+produced no result, and a case runs under `set -e` — is a failure, not a skip.
+The claim is `a-skipped-case-is-not-a-proof` and the case is
+`test/cases/413_a_skipped_case_is_not_a_proof.sh`, which also refuses any case in
+`test/cases/` that still says `exit 0` before its last statement, so the old shape cannot
+come back with a new case.
+
 ## The seven states
 
 Ranked from strongest to weakest, so a summary that sorts by the state reads as a ranking.
