@@ -316,8 +316,8 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
             .kinds
             .iter()
             .map(|(kind, count)| Item {
-                label: kind.clone(),
-                href: format!("/cockpit/objects?kind={}", percent_encode(kind)),
+                label: kind.to_string(),
+                href: crate::entity::kind_route(kind),
                 area: Area::Objects,
                 group: None,
                 count: Some(*count),

@@ -72,6 +72,15 @@ A file under `repo/` that no manifest section covers is not context and carries 
 authority. Discoverability is not eager loading: discover what may apply, resolve what
 does apply, then load the minimum that suffices.
 
+Every file discovery reads becomes an object with a kind, an identity, a `majordomus://`
+URI and an **address** derived from the two: `majordomus://rule/project.x@1` is served at
+`/cockpit/objects/rule/project-x-1`, answered by `majordomus entity show rule/project-x-1`
+and by `GET /api/v1/entity`, and — when the kind is published — has a page of its own on the
+website. Nothing registers any of that. Adding a valid file to a discovered section is the
+whole of adding an entity; `scripts/ci/entity-check` refuses a tree where two identities of
+one kind reduce to one address, or where a kind exists that nobody has decided how to
+publish. The decision is ADR 0056 and the rule is `project.entities-are-routable`.
+
 ## Scoped context
 
 Every `README.md` in this tree is a context document: Markdown whose front matter declares

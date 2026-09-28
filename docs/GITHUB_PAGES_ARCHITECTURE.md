@@ -448,6 +448,20 @@ branch source is kept instead of the native Pages artifact flow, which would mak
 run the only way to publish. The procedure is `.ai/repo/skills/deploy-site/SKILL.md`. Pointing
 Pages at the branch is a one-time `scripts/site-deploy --configure-pages`.
 
+### The documentation a deploy publishes
+
+The build writes `/docs/index.json` last, with `scripts/lib/docs-index.mjs`. It reads the
+pages the build just produced, so it lists no route of its own. Each page has its route, its
+title and its description; an entity page is also joined to its object, and the index
+carries the `/build.json` identity of the build. The build fails when a route that
+`site/data/publication.toml` publishes, or an entity page, was not built. After the site
+serves the pushed commit, the workflow runs `scripts/pages verify-docs --commit <sha>`. The
+public index must name that commit, and each of the following must answer 200: the
+documentation root, every route the catalogue publishes a kind at, one page of every entity
+kind, `/openapi.json` and `/build.json`. Run the same command by hand against any deployed
+commit. `test/cases/500_docs_index.sh` holds the generator and the probe to their refusals
+against a served fixture.
+
 ### When a deploy does not happen
 
 Publication is two steps owned by two parties, and either can be missing while everything
