@@ -572,6 +572,7 @@ mod tests {
             suite: Some(tsv.clone()),
             crate_output: None,
             origin: Origin::Local,
+            run: None,
         };
 
         // the first recording writes the ledger; the second one sees it pending
