@@ -2090,7 +2090,9 @@ fn summarize_from(root: &Path, query: &EconomicsQuery, source: Source) -> Econom
 
 /// Explain one metric: its value, formula and class, and every pair, run, suite and
 /// exclusion it rests on, with the commands that reproduce it. `Err` names the metrics that
-/// exist when `metric` is not one of them.
+/// exist when `metric` is not one of them. A repository that declares no methodology has no
+/// metric at all, and is answered with `present: false` and the statement the summary makes,
+/// for any id: never an error, and never a number.
 ///
 /// A metric over pairs lists the valid pairs it rests on and the invalid pairs of the same
 /// suites, so that what was left out is in view; a metric over runs (completion rate,
@@ -2122,13 +2124,33 @@ fn summarize_from(root: &Path, query: &EconomicsQuery, source: Source) -> Econom
 /// # ].join("\n")).unwrap();
 /// // a methodology and one live suite `pilot`, with no run recorded
 /// let e = explain(dir.path(), EFFECTIVE_TOKEN_REDUCTION).unwrap();
-/// assert_eq!(e.metric.status, EconomicsMetricStatus::NotMeasured);
+/// assert_eq!(e.metric.unwrap().status, EconomicsMetricStatus::NotMeasured);
 /// assert!(e.reproduce.iter().any(|c| c.starts_with("majordomus economics run --suite pilot")));
 /// let refused = explain(dir.path(), "tokens_saved").unwrap_err();
 /// assert!(refused.contains(EFFECTIVE_TOKEN_REDUCTION), "the refusal lists what exists");
+///
+/// // a repository that benchmarks nothing: an answer, not a refusal, and no number in it
+/// let bare = tempfile::tempdir().unwrap();
+/// let none = explain(bare.path(), EFFECTIVE_TOKEN_REDUCTION).unwrap();
+/// assert!(!none.present && none.metric.is_none() && none.methodology.is_none());
+/// assert!(none.statement.unwrap().contains("no benchmark methodology is declared"));
 /// ```
 pub fn explain(root: &Path, metric: &str) -> Result<EconomicsExplanation, String> {
     let summary = summarize(root, &EconomicsQuery::default());
+    if !summary.present {
+        return Ok(EconomicsExplanation {
+            present: false,
+            statement: Some(summary.verdict.statement),
+            metric: None,
+            class_meaning: String::new(),
+            methodology: None,
+            suites: Vec::new(),
+            pairs: Vec::new(),
+            excluded: Vec::new(),
+            variants: Vec::new(),
+            reproduce: Vec::new(),
+        });
+    }
     let Some(found) = summary.metrics.iter().find(|x| x.id == metric).cloned() else {
         let known: Vec<&str> = summary.metrics.iter().map(|x| x.id.as_str()).collect();
         return Err(format!(
@@ -2187,8 +2209,10 @@ pub fn explain(root: &Path, metric: &str) -> Result<EconomicsExplanation, String
         .chain(std::iter::once(format!("majordomus economics explain {metric}")))
         .collect();
     Ok(EconomicsExplanation {
+        present: true,
+        statement: None,
         class_meaning,
-        methodology: summary.methodology.unwrap_or(0),
+        methodology: summary.methodology,
         suites,
         pairs,
         excluded: decl
@@ -2196,7 +2220,7 @@ pub fn explain(root: &Path, metric: &str) -> Result<EconomicsExplanation, String
             .unwrap_or_default(),
         variants: summary.variants.clone(),
         reproduce,
-        metric: found,
+        metric: Some(found),
     })
 }
 

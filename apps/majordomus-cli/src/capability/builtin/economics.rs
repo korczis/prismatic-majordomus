@@ -160,7 +160,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "economics.explain",
                 title: "Explain one economics metric",
-                description: "One metric and everything it rests on: its formula, its measurement class and what that class means, the pairs and runs behind it (including the invalid ones), excluded runs, the suites and revisions, and the commands that reproduce it.",
+                description: "One metric and everything it rests on: its formula, its measurement class and what that class means, the pairs and runs behind it (including the invalid ones), excluded runs, the suites and revisions, and the commands that reproduce it. A repository that declares no methodology has no metric, and any id is answered with `present: false` and the statement why, not refused.",
                 input: EconomicsExplainInput,
                 output: EconomicsExplanation,
                 stability: Stability::BehaviorallyVerified,

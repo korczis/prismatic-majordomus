@@ -1550,9 +1550,16 @@ pub struct EconomicsExplainInput {
 
 /// The answer of `economics.explain`: one metric, and everything it rests on.
 ///
+/// A repository that declares no benchmark methodology measures nothing, so it has no
+/// metric to explain: it is answered as `economics.summary` answers it — `present: false`,
+/// the statement why, no metric and no number — rather than refused, because a repository
+/// that does not benchmark itself is not a malformed request. A metric id that a declared
+/// methodology does not have is still refused.
+///
 /// ```
 /// use majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};
 /// let e: EconomicsExplanation = serde_json::from_value(serde_json::json!({
+///     "present": true,
 ///     "metric": { "id": "context_reduction_ratio", "title": "Context reduction",
 ///         "class": "derived", "inputs": "counted", "unit": "ratio",
 ///         "formula": "median over seeds of 1 - selected_tokens / candidate_tokens",
@@ -1562,17 +1569,32 @@ pub struct EconomicsExplainInput {
 ///     "reproduce": ["majordomus economics measure --suite context"]
 /// }))
 /// .unwrap();
-/// assert_eq!(e.metric.inputs, Some(EconomicsClass::Counted));
+/// assert_eq!(e.metric.unwrap().inputs, Some(EconomicsClass::Counted));
 /// assert!(e.pairs.is_empty(), "a counted metric rests on seeds, not on pairs");
+///
+/// let none: EconomicsExplanation = serde_json::from_value(serde_json::json!({
+///     "present": false, "statement": "No verified total-token-savings claim is available",
+///     "class_meaning": "", "suites": [], "pairs": [], "excluded": [], "variants": [],
+///     "reproduce": []
+/// }))
+/// .unwrap();
+/// assert!(none.metric.is_none() && none.methodology.is_none(), "nothing declared, no number");
 /// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct EconomicsExplanation {
-    /// The metric.
-    pub metric: EconomicsMetric,
+    /// Whether a methodology is declared here at all.
+    pub present: bool,
+    /// Why there is nothing to explain, when `present` is false.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub statement: Option<String>,
+    /// The metric; absent when no methodology is declared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metric: Option<EconomicsMetric>,
     /// What its class means, in the methodology's words.
     pub class_meaning: String,
-    /// The methodology version.
-    pub methodology: u32,
+    /// The methodology version; absent when none is declared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub methodology: Option<u32>,
     /// The suites it draws on.
     pub suites: Vec<EconomicsSuiteView>,
     /// The pairs it rests on, valid or not, when it rests on pairs.

@@ -256,10 +256,14 @@ fn explain(a: EconomicsExplainArgs) -> Result<u8> {
         return Ok(0);
     }
     let e: EconomicsExplanation = read(&value, "economics.explain")?;
-    let m = &e.metric;
     let mut out = std::io::stdout().lock();
     let w =
         |out: &mut std::io::StdoutLock, s: String| writeln!(out, "{s}").map_err(Error::Transport);
+    // a repository that declares no methodology has no metric: the statement, and no number
+    let Some(m) = &e.metric else {
+        w(&mut out, e.statement.clone().unwrap_or_default())?;
+        return Ok(0);
+    };
     w(&mut out, format!("{}  —  {}", m.id, m.title))?;
     w(
         &mut out,
@@ -275,7 +279,13 @@ fn explain(a: EconomicsExplainArgs) -> Result<u8> {
     }
     w(
         &mut out,
-        format!("sample       n={} (methodology {})", m.n, e.methodology),
+        format!(
+            "sample       n={}{}",
+            m.n,
+            e.methodology
+                .map(|v| format!(" (methodology {v})"))
+                .unwrap_or_default()
+        ),
     )?;
     if let Some(d) = &m.distribution {
         let a = |v: f64| amount(v, &m.unit);
