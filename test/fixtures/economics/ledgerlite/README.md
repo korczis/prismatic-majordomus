@@ -16,7 +16,7 @@ monthly reports and a CSV export, with a command-line front end.
 | `ledgerlite/csv_export.py` | CSV export of invoices |
 | `ledgerlite/dates.py` | UTC date handling |
 | `ledgerlite/cli.py` | the `ledgerlite` command |
-| `docs/CONVENTIONS.md` | the conventions every change follows |
+| `docs/` | `CONVENTIONS.md`: the conventions every change follows |
 | `docs/decisions/` | the decisions behind the conventions |
 | `docs/specs/` | specifications of planned features |
 
