@@ -28,7 +28,7 @@ while IFS="$(printf '\t')" read -r c_id c_mount c_artifact c_producer; do
   [ -n "$c_id" ] || continue
   if [ ! -d "$ROOT/$c_artifact" ]; then
     [ "${CI:-}" = true ] && { echo "    surface $c_id ($c_artifact) was not produced before the suite; run: $c_producer"; exit 1; }
-    echo "    surface $c_id at $c_mount is not produced in this checkout (run: $c_producer); skipping"; exit 0
+    skip "surface $c_id at $c_mount is not produced in this checkout (run: $c_producer)"
   fi
   mkdir -p "$(dirname "$c_artifact")"; ln -s "$ROOT/$c_artifact" "$c_artifact"
 done <<EOF

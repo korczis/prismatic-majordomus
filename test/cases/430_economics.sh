@@ -17,7 +17,7 @@
 # serves.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v python3 >/dev/null || { echo "    skip: no python3, which the fixture's tests need"; exit 0; }
+command -v python3 >/dev/null || skip "no python3, which the fixture's tests need"
 
 R="$T/repo"
 fixture_repo "$R" .ai/repo/benchmarks/economics test/fixtures/economics >/dev/null

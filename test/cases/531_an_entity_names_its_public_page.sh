@@ -21,7 +21,7 @@
 # declaration.
 . "$ROOT/test/lib.sh"
 
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq absent"
 DATA="$ROOT/site/data/generated/entities.json"
 PUB="$ROOT/site/data/publication.toml"
 [ -f "$DATA" ] || { echo "    $DATA is missing; run scripts/derive"; exit 1; }

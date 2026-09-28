@@ -41,7 +41,7 @@ printf '{"schema":1,"commit":"%s","dirty":false,"source_version":"0.0.0"}\n' "$B
 printf '{"schema":1,"commit":"%s","dirty":true}\n' "$B" > "$site/dirty.json"
 printf '<html>not an identity</html>\n' > "$site/garbage.json"
 printf '{"schema":1,"commit":"%s","dirty":false}\n' "ffffffffffffffffffffffffffffffffffffffff" > "$site/foreign.json"
-start_http "$site" || { echo "    skip: no python3 or node to serve the fixture site"; exit 0; }
+start_http "$site" || skip "no python3 or node to serve the fixture site"
 trap stop_http EXIT
 
 observe() { # <expected-exit> <verdict> <args...>
