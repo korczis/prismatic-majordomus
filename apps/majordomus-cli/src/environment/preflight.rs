@@ -580,9 +580,10 @@ impl RulesTally {
     ///
     /// ```
     /// use majordomus_cli::environment::preflight::RulesTally;
-    /// use majordomus_cli::rules::RulesReport;
-    /// let empty = RulesReport { head: None, working_tree: "clean".into(), rules: vec![],
-    ///     states: Default::default(), coverage: Default::default(), findings: vec![], satisfied: true };
+    /// use majordomus_cli::rules::{RulesReport, RulesVerdict};
+    /// let empty = RulesReport { head: None, working_tree: "clean".into(),
+    ///     verdict: RulesVerdict::Unproven, rules: vec![], states: Default::default(),
+    ///     coverage: Default::default(), findings: vec![], satisfied: true };
     /// assert_eq!(RulesTally::of(&empty).rules, 0);
     /// ```
     pub fn of(report: &RulesReport) -> Self {
