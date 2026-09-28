@@ -89,6 +89,10 @@ permissions:
   # and until 2026-09-11 this run could not read it — which is why an errored build was the one
   # failure mode of the three that left a green tick.
   pages: read
+  # The evidence the site publishes beside its claims: `scripts/pages evidence` downloads the
+  # `evidence` artifact validate.yml kept for this commit or its nearest ancestor, and reading
+  # another run's artifact is this permission. Nothing here writes to Actions.
+  actions: read
 
 # The site is a projection of the newest commit, so an older deployment of an older commit is
 # worth nothing the moment a newer push exists. A superseded run is cancelled rather than
@@ -137,12 +141,15 @@ jobs:
   # The three controlled steps below bound 9 minutes between them, against the 96 seconds
   # .ai/repo/ci/pages.yaml budgets them warm and the 225 it allows the whole controlled half
   # cold; the probe bounds 11, against a wait this repository does not control and that same
-  # file says never to budget. 25 covers those 20 plus the unbounded checkout, setup and
-  # report steps on a cold runner, and leaves the job's bound where it belongs: as the last
-  # resort behind every step's own.
+  # file says never to budget. The job's 30 covers the sum of every step's bound, the evidence
+  # read before the build and the reads after the probe included, plus the unbounded checkout,
+  # setup and report steps on a cold runner, and leaves the job's bound where it belongs: as
+  # the last resort behind every step's own. No sum is written here, because a step's bound
+  # changes without this comment: test/cases/26_ci_wiring.sh computes it and holds the job
+  # strictly above it.
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       # when the push was accepted, so that queue and runner allocation are measured as what
       # they are — GitHub's latency, reported beside this repository's and never mixed into it
@@ -172,6 +179,16 @@ jobs:
         run: |
           echo "MJ_PAGES_TIMINGS=$PWD/pages-timings.tsv" >> "$GITHUB_ENV"
           printf 'pages\tcheckout-setup\t%s\n' "$(( $(date -u +%s) - ${{ steps.t.outputs.start }} ))" > "$PWD/pages-timings.tsv"
+
+      # The CI evidence of this commit or of its nearest ancestor, as site/data/evidence.json: a
+      # deployment input like build.json, never committed. Never a gate: evidence of an ancestor
+      # is published labelled stale, none at all as unavailable. validate.yml's evidence job
+      # dispatches this workflow again once this commit's own evidence exists (ADR 68).
+      - name: evidence
+        timeout-minutes: 2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/pages evidence --commit "$GITHUB_SHA"
 
       # the committed derived data proved current by hash, then rendered; no generation
       - name: build

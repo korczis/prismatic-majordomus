@@ -59,6 +59,7 @@
 //!     at: "2026-09-11T00:00:00Z".into(),
 //!     origin: Origin::Local,
 //!     command: id.reproduce(),
+//!     run: None,
 //! };
 //! assert!(run.outcome.proves());
 //!
@@ -526,6 +527,7 @@ impl TestId {
 ///     at: "2026-09-11T00:00:00Z".into(),
 ///     origin: Origin::Ci,
 ///     command: id.reproduce(),
+///     run: None,
 /// };
 ///
 /// // it is a value in a tracked JSON file, so it has to survive the file unchanged
@@ -555,6 +557,7 @@ impl TestId {
 ///     at: "2026-09-11T00:00:00Z".into(),
 ///     origin: Origin::Local,
 ///     command: "bash test/run.sh 07_scope".into(),
+///     run: None,
 /// };
 /// assert!(e.outcome.proves());
 /// ```
@@ -582,6 +585,97 @@ pub struct Execution {
     pub origin: Origin,
     /// The exact command that runs this one test again.
     pub command: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The continuous-integration run the execution was recorded in, when it was recorded in
+    /// one that could name itself. Absent for a local run, and absent from every row recorded
+    /// before runs were named, which is why the ledger's version did not change.
+    pub run: Option<RunRef>,
+}
+
+/// The continuous-integration run an execution was recorded in: enough to navigate back to
+/// the run that produced it.
+///
+/// [`Origin`] says what kind of run it was and deliberately names no provider. This names the
+/// one run, in the words the provider addressed it with when it happened — its identifier,
+/// its attempt, the workflow and job, and the address a reader follows — because a link built
+/// later from a template would point wherever the template's idea of the provider had drifted
+/// to. Only an adapter constructs it; nothing in the model reads the provider's name.
+///
+/// ```
+/// use majordomus_cli::evidence::RunRef;
+///
+/// let actions = |k: &str| {
+///     let v = match k {
+///         "GITHUB_ACTIONS" => "true",
+///         "GITHUB_SERVER_URL" => "https://github.com",
+///         "GITHUB_REPOSITORY" => "owner/repo",
+///         "GITHUB_RUN_ID" => "42",
+///         "GITHUB_RUN_ATTEMPT" => "2",
+///         "GITHUB_WORKFLOW" => "validate",
+///         "GITHUB_JOB" => "evidence",
+///         _ => return None,
+///     };
+///     Some(v.to_string())
+/// };
+/// let run = RunRef::from_env(actions).unwrap();
+/// assert_eq!(run.id, "42");
+/// assert_eq!(run.attempt, 2);
+/// assert_eq!(run.url, "https://github.com/owner/repo/actions/runs/42/attempts/2");
+///
+/// // outside a run there is nothing to name, and a half-described run is not a run
+/// assert!(RunRef::from_env(|_| None).is_none());
+/// assert!(RunRef::from_env(|k| (k == "GITHUB_ACTIONS").then(|| "true".to_string())).is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EvidenceRun")]
+pub struct RunRef {
+    /// The provider that ran it, as the adapter that recorded it names it.
+    pub provider: String,
+    /// The provider's identifier of the run.
+    pub id: String,
+    /// Which attempt of the run, counted from 1.
+    pub attempt: u32,
+    /// The workflow the run belongs to.
+    pub workflow: String,
+    /// The job within the run that recorded the execution.
+    pub job: String,
+    /// Where a reader finds the run, as the provider addressed it at the time.
+    pub url: String,
+}
+
+impl RunRef {
+    /// The run described by a GitHub Actions environment, read through `var`, or `None` when
+    /// the environment is not one or leaves out any part a reader would need to find it.
+    ///
+    /// The variable reader is a parameter so the adapter can be exercised without mutating
+    /// the process environment, which other threads of a test binary share.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::RunRef;
+    /// assert!(RunRef::from_env(|k| (k == "GITHUB_RUN_ID").then(|| "1".to_string())).is_none());
+    /// ```
+    pub fn from_env(var: impl Fn(&str) -> Option<String>) -> Option<RunRef> {
+        if var("GITHUB_ACTIONS").as_deref() != Some("true") {
+            return None;
+        }
+        let server = var("GITHUB_SERVER_URL")?;
+        let repository = var("GITHUB_REPOSITORY")?;
+        let id = var("GITHUB_RUN_ID")?;
+        let attempt: u32 = var("GITHUB_RUN_ATTEMPT")
+            .and_then(|a| a.parse().ok())
+            .unwrap_or(1);
+        Some(RunRef {
+            provider: "github_actions".into(),
+            url: format!(
+                "{}/{repository}/actions/runs/{id}/attempts/{attempt}",
+                server.trim_end_matches('/')
+            ),
+            id,
+            attempt,
+            workflow: var("GITHUB_WORKFLOW")?,
+            job: var("GITHUB_JOB")?,
+        })
+    }
 }
 
 /// A ledger holds one execution per test, so the test identifies it; the label and the
@@ -622,6 +716,7 @@ impl Execution {
     ///     at: "2026-09-11T00:00:00Z".into(),
     ///     origin: Origin::Local,
     ///     command: id.reproduce(),
+    ///     run: None,
     /// };
     /// assert_eq!(run.digest_matches(repo.path()), Some(true));
     ///

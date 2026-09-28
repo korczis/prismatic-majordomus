@@ -13,6 +13,10 @@
 #                                         BASE must be covered. Exit 0 clean, 10 on an
 #                                         uncovered changed item, 13 when git cannot resolve
 #                                         BASE (UNKNOWN — never a silent pass).
+#   scripts/rust-coverage --summary-json FILE
+#                                         also write the measurement as JSON: the crate, the
+#                                         domain and every source file, covered/total per
+#                                         dimension (with --report or a gate; ignored by --changed)
 #
 # WHY THIS EXISTS.
 #
@@ -68,6 +72,8 @@ while [ $# -gt 0 ]; do
     --export) EXPORT="$2"; shift 2 ;;
     --export=*) EXPORT="${1#--export=}"; shift ;;
     --domain) ONLY=domain; shift ;;
+    --summary-json) SUMMARY_JSON="$2"; export SUMMARY_JSON; shift 2 ;;
+    --summary-json=*) SUMMARY_JSON="${1#--summary-json=}"; export SUMMARY_JSON; shift ;;
     --changed) MODE=changed; CHANGED="$2"; shift 2 ;;
     --changed=*) MODE=changed; CHANGED="${1#--changed=}"; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
@@ -433,6 +439,33 @@ for rel, t in files.items():
     if rel in domain:
         domain_total.add(t)
 missing = [d for d in domain if d not in files]
+
+# ------------------------------------------------------------------ the summary, as data
+# The same tallies the report below prints, written for a program: the crate, the domain and
+# every source file that holds executable code under test, each as covered/total per
+# dimension. It is the only machine-readable form of this measurement, so an evidence page
+# or a per-subject attribution reads these numbers rather than a second parser of the export.
+summary_json = os.environ.get("SUMMARY_JSON", "")
+if summary_json:
+    def dims(t):
+        out = {}
+        for what in ("lines", "functions", "regions"):
+            got, of = getattr(t, what)
+            out[what] = {"covered": got, "total": of, "percent": round(pct((got, of)), 2)}
+        return out
+    doc = {
+        "schema": 1,
+        "measurement": "scripts/rust-coverage",
+        "test_code": "excluded",
+        "crate": dims(crate_total),
+        "domain": dict(dims(domain_total),
+                       files=sorted(d for d in domain if d in files), missing=sorted(missing)),
+        "files": {rel: dims(t) for rel, t in sorted(files.items())
+                  if t.lines[1] or t.functions[1] or t.regions[1]},
+    }
+    with open(summary_json, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, sort_keys=True)
+        fh.write("\n")
 
 def row(label, t):
     return ("%-56s %7.2f%%  %8.2f%%  %7.2f%%   %6d/%-6d lines"
