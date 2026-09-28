@@ -104,37 +104,7 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             let v = execute(ctx, &["evidence", "record"], input)?;
             match args.format {
                 OutputFormat::Json => writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?,
-                OutputFormat::Text => {
-                    writeln!(
-                        out,
-                        "recorded     {} execution(s), {} passing",
-                        v["recorded"], v["passed"]
-                    )
-                    .map_err(Error::Transport)?;
-                    writeln!(
-                        out,
-                        "against      {} ({})",
-                        short(v["commit"].as_str().unwrap_or("?")),
-                        v["working_tree"].as_str().unwrap_or("?")
-                    )
-                    .map_err(Error::Transport)?;
-                    writeln!(out, "ledger       {}", v["ledger"].as_str().unwrap_or("?"))
-                        .map_err(Error::Transport)?;
-                    // what the reports held that no claim can name yet, listed, never hidden
-                    for d in v["dropped"].as_array().into_iter().flatten() {
-                        writeln!(
-                            out,
-                            "dropped      {} ({})",
-                            d["what"].as_str().unwrap_or("?"),
-                            d["reason"].as_str().unwrap_or("?")
-                        )
-                        .map_err(Error::Transport)?;
-                    }
-                    for u in v["unknown"].as_array().into_iter().flatten() {
-                        writeln!(out, "unknown      {} (no such test here)", u)
-                            .map_err(Error::Transport)?;
-                    }
-                }
+                OutputFormat::Text => record_text(&mut out, &v)?,
             }
             Ok(0)
         }
@@ -142,6 +112,40 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
 }
 
 // ---------------------------------------------------------------- text
+
+/// A recording, one line per fact: what reached the ledger, against what, where, what the
+/// reports held that no claim can name yet, and what they named that this repository lacks.
+fn record_text(out: &mut impl Write, v: &Value) -> Result<()> {
+    writeln!(
+        out,
+        "recorded     {} execution(s), {} passing",
+        v["recorded"], v["passed"]
+    )
+    .map_err(Error::Transport)?;
+    writeln!(
+        out,
+        "against      {} ({})",
+        short(v["commit"].as_str().unwrap_or("?")),
+        v["working_tree"].as_str().unwrap_or("?")
+    )
+    .map_err(Error::Transport)?;
+    writeln!(out, "ledger       {}", v["ledger"].as_str().unwrap_or("?"))
+        .map_err(Error::Transport)?;
+    // what the reports held that no claim can name yet, listed, never hidden
+    for d in v["dropped"].as_array().into_iter().flatten() {
+        writeln!(
+            out,
+            "dropped      {} ({})",
+            d["what"].as_str().unwrap_or("?"),
+            d["reason"].as_str().unwrap_or("?")
+        )
+        .map_err(Error::Transport)?;
+    }
+    for u in v["unknown"].as_array().into_iter().flatten() {
+        writeln!(out, "unknown      {} (no such test here)", u).map_err(Error::Transport)?;
+    }
+    Ok(())
+}
 
 fn show_text(out: &mut std::io::StdoutLock<'_>, v: &Value) -> Result<()> {
     let w =
@@ -545,6 +549,45 @@ mod tests {
             "{}",
             lines[1]
         );
+    }
+
+    /// A recording prints one `dropped` line per entry, with its reason, after the ledger and
+    /// before what the reports named that this repository lacks; one with nothing dropped
+    /// prints no such line.
+    #[test]
+    fn a_recording_lists_what_it_dropped_after_the_ledger() {
+        let render = |v: Value| {
+            let mut buf = Vec::new();
+            record_text(&mut buf, &v).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(json!({
+            "recorded": 1,
+            "passed": 1,
+            "commit": "0123456789abcdef0123456789abcdef01234567",
+            "working_tree": "clean",
+            "ledger": ".ai/repo/evidence/ledger.json",
+            "unknown": ["crate:ghost"],
+            "dropped": [
+                { "producer": "crate", "what": "unittests src/lib.rs", "reason": "unit" },
+                { "producer": "crate", "what": "doc-tests majordomus_cli", "reason": "doc" }
+            ]
+        }));
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "recorded     1 execution(s), 1 passing",
+                "against      01234567 (clean)",
+                "ledger       .ai/repo/evidence/ledger.json",
+                "dropped      unittests src/lib.rs (unit)",
+                "dropped      doc-tests majordomus_cli (doc)",
+                "unknown      \"crate:ghost\" (no such test here)",
+            ]
+        );
+
+        let none = render(json!({ "recorded": 0, "passed": 0, "commit": "c", "ledger": "l" }));
+        assert!(!none.contains("dropped"), "{none}");
     }
 
     /// A claim whose state needs a reason prints it on the line under the claim, and one

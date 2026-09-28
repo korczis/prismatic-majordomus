@@ -887,6 +887,75 @@ mod tests {
         assert_eq!(v["presented"]["revision"], "working_tree");
     }
 
+    /// What a crate run held that no claim can name yet reaches the recording's answer, in
+    /// the order the output held it, and a recording with nothing dropped carries no
+    /// `dropped` at all, so a suite-only recording answers as it did before the list existed.
+    #[test]
+    fn the_recording_answers_with_what_it_dropped() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+        let ctx = repo.context().unwrap();
+
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running unittests src/lib.rs (target/debug/deps/majordomus_cli-1)\n\
+             test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                Doc-tests majordomus_cli\n\
+             test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let v = ctx
+            .execute(
+                "evidence.record",
+                serde_json::json!({ "crate_output": log.to_string_lossy() }),
+            )
+            .unwrap();
+        assert_eq!(v["recorded"], 0, "{v}");
+        let dropped: Vec<(&str, &str)> = v["dropped"]
+            .as_array()
+            .unwrap_or_else(|| panic!("no dropped list: {v}"))
+            .iter()
+            .map(|d| {
+                (
+                    d["producer"].as_str().unwrap_or("?"),
+                    d["what"].as_str().unwrap_or("?"),
+                )
+            })
+            .collect();
+        assert_eq!(
+            dropped,
+            [
+                ("crate", "unittests src/lib.rs"),
+                ("crate", "doc-tests majordomus_cli")
+            ]
+        );
+
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(&tsv, "99_ghost\tok\t1\tparallel\n").unwrap();
+        let v = ctx
+            .execute(
+                "evidence.record",
+                serde_json::json!({ "suite": tsv.to_string_lossy() }),
+            )
+            .unwrap();
+        assert!(v.get("dropped").is_none(), "{v}");
+    }
+
     /// Each ledger a report reads — the one a presented commit holds, the working copy
     /// beside it, and the working tree's own — is refused when it cannot be read, rather
     /// than read as a ledger that recorded nothing.

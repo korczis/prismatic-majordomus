@@ -1199,6 +1199,67 @@ mod tests {
         }
     }
 
+    /// The lines cargo and the harness print between a `Running` line and its result, the
+    /// per-test lines among them, close nothing: the result that follows is still the
+    /// binary's. A part of the result line that is not a count is passed over, and the counts
+    /// after it are still read.
+    #[test]
+    fn the_lines_between_a_binary_and_its_result_are_read_past() {
+        let b = only(
+            "     Running tests/alpha.rs (target/debug/deps/alpha-1)\n\
+             \n\
+             running 3 tests\n\
+             test alpha_holds ... ok\n\
+             test alpha_is_fast ... ok\n\
+             test alpha_later ... ignored\n\
+             \n\
+             test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; \
+             finished in 0.40s\n\
+             \n",
+        );
+        assert_eq!((b.name.as_str(), b.outcome), ("alpha", Outcome::Pass));
+        assert_eq!((b.passed, b.ignored), (2, 1));
+
+        let noted = only(
+            "     Running tests/alpha.rs (target/debug/deps/alpha-1)\n\
+             test result: ok. a note; 3 passed; 0 failed; 0 ignored; 0 measured; \
+             0 filtered out; finished in 1.40s\n",
+        );
+        assert_eq!(noted.outcome, Outcome::Pass, "the counts after the note");
+        assert_eq!((noted.passed, noted.seconds), (3, 1));
+    }
+
+    /// A crate binary the output names and this repository does not have is named, not
+    /// recorded, exactly as a suite case would be: its execution would prove nothing here.
+    #[test]
+    fn a_crate_binary_this_repository_does_not_have_is_named_not_recorded() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running tests/ghost.rs (target/debug/deps/ghost-1)\n\
+             test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let got = record(
+            d.path(),
+            &RecordRequest {
+                suite: None,
+                crate_output: Some(log),
+                origin: Origin::Local,
+                run: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(got.recorded, 0);
+        assert_eq!(got.unknown, ["crate:ghost"]);
+        assert!(
+            !d.path().join(crate::evidence::LEDGER_PATH).exists(),
+            "a recording of nothing this repository has writes no ledger"
+        );
+    }
+
     /// A result line that says `ok` and no count says nothing about what ran, and a word
     /// nobody knows is not a verdict: both are errors, never a pass.
     #[test]
@@ -1288,6 +1349,11 @@ mod tests {
             "the harness's own reset on an xterm, whose `B` is part of the escape"
         );
         assert_eq!(strip_ansi(&format!("a{e}#8b{e})0c{e} Fd")), "abcd");
+        assert_eq!(
+            strip_ansi(&format!("a{e}$(Bb")),
+            "ab",
+            "every intermediate byte, then the final one"
+        );
         assert_eq!(strip_ansi(&format!("a{e}[?25lb")), "ab");
         assert_eq!(strip_ansi(&format!("a{e}]0;title\u{7}b")), "ab");
         assert_eq!(strip_ansi(&format!("a{e}]8;;http://x{e}\\b")), "ab");
