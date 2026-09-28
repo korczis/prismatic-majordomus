@@ -1,7 +1,7 @@
 +++
 title = "GitHub Pages performance status"
 description = "the current numbers behind that document: the controlled budgets, the paths that start a publication, and the last measured build-and-check path per platform. Generated from `.ai/repo/ci/pages.yaml` and `.ai/repo/benchmarks/pages/`; never edited"
-weight = 61
+weight = 62
 [extra]
 source = "docs/PAGES_STATUS.md"
 +++
@@ -13,7 +13,7 @@ baselines under `.ai/repo/benchmarks/pages/`. Do not edit; measure with
 `scripts/pages benchmark --write-baseline` and regenerate. The architecture behind these
 numbers is `GITHUB_PAGES_PERFORMANCE.md`.
 
-Generated from canonical inputs `a2e5f36c3d24`.
+Generated from canonical inputs `5cb539775117`.
 
 ## Controlled budget
 
