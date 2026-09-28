@@ -107,7 +107,10 @@ if [ -z "$FROM" ]; then
   cargo llvm-cov --version >/dev/null 2>&1 || {
     printf 'rust-coverage: cargo-llvm-cov is not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview)\n' >&2
     exit 12; }
-  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
+  # The X's end the template: BSD mktemp (macOS) replaces only trailing X's, so a template
+  # with a suffix after them names one literal file that every run shares. cargo llvm-cov
+  # writes --output-path as given and needs no .json extension.
+  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX")"
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
   # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
   # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
