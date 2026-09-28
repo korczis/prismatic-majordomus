@@ -64,6 +64,7 @@ pub mod release;
 pub mod repository;
 pub mod rules;
 mod scope;
+pub mod served;
 pub mod server;
 pub mod session_domain;
 pub mod trace;
@@ -163,6 +164,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         gates,
         deploy,
         delivery,
+        served,
         evidence,
         rules,
         executions,

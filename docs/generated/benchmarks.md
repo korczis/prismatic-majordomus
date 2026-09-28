@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 118 | 111 | 0 | 7 |
-| http | 117 | 111 | 0 | 6 |
-| mcp | 115 | 109 | 0 | 6 |
+| direct | 120 | 112 | 0 | 8 |
+| http | 118 | 112 | 0 | 6 |
+| mcp | 116 | 110 | 0 | 6 |
 | system | 13 | 13 | 0 | 0 |
-| total | 363 | 344 | 0 | 19 |
+| total | 367 | 347 | 0 | 20 |
 
 ## Capabilities
 
@@ -120,6 +120,8 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `rules.proves` | rules | query | — | covered | covered | covered | `suite` |
 | `rules.report` | rules | query | — | covered | covered | covered | `all`, `findings`, `blocking` |
 | `rules.show` | rules | query | — | covered | covered | covered | `first` |
+| `served.observe` | served | command | — | waived | — | — | — |
+| `served.show` | served | query | — | covered | covered | covered | `head`, `pages-against-head` |
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |

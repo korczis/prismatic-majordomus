@@ -4,7 +4,7 @@ description = "Whether each product feature exists: on master, deployed, publicl
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 129
+weight = 132
 [extra]
 route = "/docs/cli/delivery/"
 command = "majordomus delivery"
