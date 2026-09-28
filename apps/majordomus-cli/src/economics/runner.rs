@@ -141,7 +141,7 @@ struct Job {
 fn sha256_file_tree(repo: &Path, root: &Path, extra: &[&Path]) -> String {
     let mut files = Vec::new();
     walk(root, root, &mut files);
-    files.sort();
+    crate::order::canonical(&mut files);
     let mut h = Sha256::new();
     for rel in &files {
         h.update(rel.as_bytes());
@@ -793,7 +793,7 @@ fn changed_files(ws: &Path, base: &str) -> Vec<String> {
         .filter(|l| !l.starts_with(".ai/local/") && !l.contains("__pycache__"))
         .map(str::to_string)
         .collect();
-    files.sort();
+    crate::order::canonical(&mut files);
     files
 }
 
@@ -1191,7 +1191,7 @@ pub fn run(
     let queue = Arc::new(Mutex::new(
         jobs.into_iter().collect::<std::collections::VecDeque<_>>(),
     ));
-    let (tx, rx) = mpsc::channel::<Result<PathBuf, String>>();
+    let (tx, rx) = mpsc::channel::<Result<String, String>>();
     std::thread::scope(|scope| {
         for _ in 0..opts.parallel.max(1) {
             let queue = Arc::clone(&queue);
@@ -1208,23 +1208,29 @@ pub fn run(
                         "{id}: recorded, completed={}",
                         run.outcome.completed
                     ));
-                    Ok(path)
+                    Ok(run.id)
                 });
                 let _ = tx.send(result.map_err(|e| format!("{id}: {e}")));
             });
         }
     });
     drop(tx);
-    let mut written = Vec::new();
+    let mut recorded = Vec::new();
     let mut failed = Vec::new();
     for r in rx {
         match r {
-            Ok(p) => written.push(p),
+            Ok(id) => recorded.push(id),
             Err(e) => failed.push(e),
         }
     }
-    written.sort();
-    failed.sort();
+    // in the order of the runs, not of whichever thread finished first; a record's path is
+    // its run's id, so the ids are what is ordered
+    crate::order::canonical(&mut recorded);
+    crate::order::canonical(&mut failed);
+    let written = recorded
+        .iter()
+        .map(|id| record_path(&opts.root, &suite.id, id))
+        .collect();
     Ok((written, failed))
 }
 

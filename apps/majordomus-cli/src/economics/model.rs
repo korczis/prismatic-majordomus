@@ -626,6 +626,13 @@ pub struct EconomicsModelTotal {
     pub cost_microusd: Option<u64>,
 }
 
+/// A model's totals order by the model's name, which the provider reports once per run.
+impl crate::order::Ordered for EconomicsModelTotal {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.model, &self.model)
+    }
+}
+
 /// What a session did before its first edit: the cost of getting oriented.
 ///
 /// ```
@@ -934,6 +941,16 @@ pub struct EconomicsContextRun {
     /// A record written before this field existed reads as an empty list.
     #[serde(default)]
     pub refused: Vec<String>,
+}
+
+/// A context measurement orders by when it was taken, then by the commit it measured, never
+/// by its file name, so the last one is the latest. `measured_at` is a UTC RFC 3339 timestamp
+/// at whole seconds, whose digit runs have fixed widths, so the natural order reads it
+/// chronologically.
+impl crate::order::Ordered for EconomicsContextRun {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.measured_at, &self.repository.commit)
+    }
 }
 
 // ---------------------------------------------------------------- derived answers
@@ -1438,6 +1455,15 @@ pub struct EconomicsHistoryPoint {
     pub n: usize,
 }
 
+/// A point of the history orders within its suite by when it was measured, then by the
+/// revision it was measured at. `at` is a UTC RFC 3339 timestamp at whole seconds, whose
+/// digit runs have fixed widths, so the natural order reads it chronologically.
+impl crate::order::Ordered for EconomicsHistoryPoint {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(&self.suite, &self.at, &self.revision)
+    }
+}
+
 /// The answer of `economics.summary`: every metric, where each comes from, and the one
 /// statement the evidence allows.
 ///
@@ -1674,6 +1700,13 @@ pub struct EconomicsRunView {
     pub usage: Option<EconomicsUsage>,
     /// Where the raw record is.
     pub path: String,
+}
+
+/// A run in brief orders by its id, and by the path of its record when two share one.
+impl crate::order::Ordered for EconomicsRunView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.path)
+    }
 }
 
 /// The answer of `economics.runs`: the raw facts every metric is computed from.

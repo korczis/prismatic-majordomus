@@ -451,7 +451,7 @@ pub fn read_stream(text: &str) -> Result<StreamFacts, String> {
                             cost_microusd: microusd(m.get("costUSD")),
                         })
                         .collect();
-                    facts.models.sort_by(|a, b| a.model.cmp(&b.model));
+                    crate::order::canonical(&mut facts.models);
                 }
             }
             _ => {}

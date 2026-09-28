@@ -65,7 +65,7 @@ pub fn quantile(sorted: &[f64], q: f64) -> Option<f64> {
 
 fn sorted(values: &[f64]) -> Vec<f64> {
     let mut v: Vec<f64> = values.iter().copied().filter(|x| x.is_finite()).collect();
-    v.sort_by(|a, b| a.total_cmp(b));
+    crate::order::numeric(&mut v);
     v
 }
 
@@ -140,7 +140,7 @@ fn percentile_interval(
     seed: u64,
     method: &str,
 ) -> Option<EconomicsInterval> {
-    medians.sort_by(|a, b| a.total_cmp(b));
+    crate::order::numeric(&mut medians);
     let tail = (1.0 - level_bp as f64 / 10_000.0) / 2.0;
     Some(EconomicsInterval {
         level_bp,
@@ -198,7 +198,7 @@ pub fn bootstrap_median(
         for slot in sample.iter_mut() {
             *slot = v[rng.below(n as u64) as usize];
         }
-        sample.sort_by(|a, b| a.total_cmp(b));
+        crate::order::numeric(&mut sample);
         medians.push(quantile(&sample, 0.5)?);
     }
     percentile_interval(medians, level_bp, resamples, seed, INDEPENDENT_METHOD)
@@ -242,13 +242,7 @@ pub fn bootstrap_median_clustered(
         .map(|v| sorted(v.as_slice()))
         .filter(|v| !v.is_empty())
         .collect();
-    c.sort_by(|a, b| {
-        a.iter()
-            .zip(b.iter())
-            .map(|(x, y)| x.total_cmp(y))
-            .find(|o| o.is_ne())
-            .unwrap_or_else(|| a.len().cmp(&b.len()))
-    });
+    crate::order::numeric_samples(&mut c);
     let n: usize = c.iter().map(Vec::len).sum();
     let k = c.len();
     if n < min_n.max(2) || k < 2 || resamples == 0 {
@@ -262,7 +256,7 @@ pub fn bootstrap_median_clustered(
         for _ in 0..k {
             pool.extend_from_slice(&c[rng.below(k as u64) as usize]);
         }
-        pool.sort_by(|a, b| a.total_cmp(b));
+        crate::order::numeric(&mut pool);
         medians.push(quantile(&pool, 0.5)?);
     }
     percentile_interval(medians, level_bp, resamples, seed, CLUSTER_METHOD)
