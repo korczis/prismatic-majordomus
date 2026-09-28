@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 121 | 113 | 0 | 8 |
-| http | 119 | 113 | 0 | 6 |
-| mcp | 117 | 111 | 0 | 6 |
+| direct | 137 | 120 | 0 | 17 |
+| http | 135 | 120 | 0 | 15 |
+| mcp | 131 | 116 | 0 | 15 |
 | system | 13 | 13 | 0 | 0 |
-| total | 370 | 350 | 0 | 20 |
+| total | 416 | 369 | 0 | 47 |
 
 ## Capabilities
 
@@ -79,11 +79,27 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
 | `lifecycle.recovery` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.runtime` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
+| `mesh.claim` | mesh | command | — | waived | waived | waived | — |
+| `mesh.cooperation` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.doctor` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.events` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.handover.consume` | mesh | command | — | waived | waived | waived | — |
+| `mesh.handover.publish` | mesh | command | — | waived | waived | waived | — |
 | `mesh.identity` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.link.hello` | mesh | command | — | covered | — | covered | `malformed` |
+| `mesh.link.sync` | mesh | command | — | covered | — | covered | `malformed` |
 | `mesh.nodes` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.peer` | mesh | query | — | covered | covered | covered | `unknown` |
+| `mesh.peers` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.register` | mesh | command | — | covered | covered | covered | `refused` |
+| `mesh.release` | mesh | command | — | waived | waived | waived | — |
+| `mesh.review.answer` | mesh | command | — | waived | waived | waived | — |
+| `mesh.review.request` | mesh | command | — | waived | waived | waived | — |
+| `mesh.session.close` | mesh | command | — | waived | waived | waived | — |
+| `mesh.session.open` | mesh | command | — | waived | waived | waived | — |
+| `mesh.state` | mesh | query | — | covered | covered | covered | `default` |
 | `mesh.status` | mesh | query | — | covered | covered | covered | `default` |
+| `mesh.verify` | mesh | command | — | waived | waived | waived | — |
 | `models.list` | models | query | process, 4 entries, 5s | covered | covered | covered | `default`, `narrowed` |
 | `models.route` | models | query | — | covered | covered | covered | `default` |
 | `objects.get` | objects | query | — | covered | covered | covered | `first-object`, `repository` |

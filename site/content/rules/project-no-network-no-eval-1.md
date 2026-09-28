@@ -1,7 +1,7 @@
 +++
 title = "No network, no telemetry, no eval, no silent overwrite, no recursive deletion"
 description = "No network, no telemetry, no eval, no silent overwrite, no recursive deletion"
-weight = 106
+weight = 107
 [extra]
 kind = "rule"
 slug = "project-no-network-no-eval-1"

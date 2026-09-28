@@ -1,7 +1,7 @@
 +++
 title = "A use case is proved by execution, and a capability is covered by a use case"
 description = "A use case is proved by execution, and a capability is covered by a use case"
-weight = 134
+weight = 135
 [extra]
 kind = "rule"
 slug = "project-use-case-evidence-1"

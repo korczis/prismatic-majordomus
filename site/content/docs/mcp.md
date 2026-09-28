@@ -203,9 +203,12 @@ agent's entry is owed a server before its first attach, and a checkout nobody wo
 does not keep one.
 
 `serve stop` signals the server the lease names, when that server answers for this
-checkout, and waits for the lease to go. A lease that names a server of another checkout,
-or one that does not answer, is left alone and said so; nothing here kills a process that
-was not asked for by name.
+checkout, and waits for *that server's* lease to go — the document it read, by its token,
+not merely the path. A `serve ensure` still waiting in the election takes the freed path
+within milliseconds, so waiting for the path would report a server that would not stop
+when it had already stopped; the take-over is named in the answer instead. A lease that
+names a server of another checkout, or one that does not answer, is left alone and said
+so; nothing here kills a process that was not asked for by name.
 
 **Who calls `ensure`.** The provider's start event does (`session.ensure_server_on_start`
 in the policy, on by default): the one moment a server nobody has started yet is owed one is
