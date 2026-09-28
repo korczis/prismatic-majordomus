@@ -252,6 +252,13 @@ fn with_no_methodology_nothing_is_claimed_and_nothing_is_numbered() {
     assert!(!s.verdict.publishable);
     assert!(s.verdict.statement.starts_with(NO_CLAIM));
     assert!(s.metrics.is_empty());
+    // the explanation of any metric is the same answer, never a refusal: a repository that
+    // does not benchmark itself is not a malformed request
+    let x = economics::explain(&f.root(), economics::EFFECTIVE_TOKEN_REDUCTION).unwrap();
+    assert!(!x.present);
+    assert_eq!(x.statement.as_deref(), Some(s.verdict.statement.as_str()));
+    assert!(x.metric.is_none() && x.methodology.is_none());
+    assert!(x.pairs.is_empty() && x.suites.is_empty() && x.reproduce.is_empty());
 }
 
 #[test]
@@ -1256,7 +1263,8 @@ fn explain_names_what_a_metric_rests_on_and_refuses_one_that_does_not_exist() {
     let f = declared(&[("t1", "bug-fix")], 1);
     pair(&f, "t1", 1, vec![100_000], vec![50_000]);
     let x = economics::explain(&f.root(), economics::EFFECTIVE_TOKEN_REDUCTION).unwrap();
-    assert_eq!(x.metric.value, Some(0.5));
+    assert!(x.present);
+    assert_eq!(x.metric.as_ref().unwrap().value, Some(0.5));
     assert_eq!(x.pairs.len(), 1);
     assert!(x.class_meaning.contains("Arithmetic"));
     assert!(x

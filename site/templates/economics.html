@@ -167,8 +167,8 @@
 {%- endif %}
 
 <p class="mt-10 text-sm text-body-subtle">
-  Generated from <a class="underline" href="{{ project.repository_url }}/blob/master/docs/generated/economics.json">docs/generated/economics.json</a>;
-  the human-readable report is <a class="underline" href="{{ project.repository_url }}/blob/master/docs/generated/economics.md">docs/generated/economics.md</a>,
-  and the raw runs are under <a class="underline" href="{{ project.repository_url }}/tree/master/.ai/repo/benchmarks/economics/runs">.ai/repo/benchmarks/economics/runs</a>.
+  Generated from <a class="underline" href="{{ <source_blob path="docs/generated/economics.json" /> }}">docs/generated/economics.json</a>;
+  the human-readable report is <a class="underline" href="{{ <source_blob path="docs/generated/economics.md" /> }}">docs/generated/economics.md</a>,
+  and the raw runs are under <a class="underline" href="{{ <source_tree path=".ai/repo/benchmarks/economics/runs" /> }}">.ai/repo/benchmarks/economics/runs</a>.
 </p>
 {% endblock body %}

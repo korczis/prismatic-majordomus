@@ -19,4 +19,4 @@ used fewer tokens, and a negative reduction means Majordomus used more tokens. I
 it is, with the sign the calculator gave it.
 
 The methodology, the control and treatment definitions and the reproduction commands are in
-the [economics document](/docs/economics/).
+the [economics document](@/docs/economics.md).

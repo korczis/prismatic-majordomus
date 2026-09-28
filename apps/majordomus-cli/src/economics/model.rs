@@ -626,6 +626,13 @@ pub struct EconomicsModelTotal {
     pub cost_microusd: Option<u64>,
 }
 
+/// A model's totals order by the model's name, which the provider reports once per run.
+impl crate::order::Ordered for EconomicsModelTotal {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.model, &self.model)
+    }
+}
+
 /// What a session did before its first edit: the cost of getting oriented.
 ///
 /// ```
@@ -934,6 +941,16 @@ pub struct EconomicsContextRun {
     /// A record written before this field existed reads as an empty list.
     #[serde(default)]
     pub refused: Vec<String>,
+}
+
+/// A context measurement orders by when it was taken, then by the commit it measured, never
+/// by its file name, so the last one is the latest. `measured_at` is a UTC RFC 3339 timestamp
+/// at whole seconds, whose digit runs have fixed widths, so the natural order reads it
+/// chronologically.
+impl crate::order::Ordered for EconomicsContextRun {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.measured_at, &self.repository.commit)
+    }
 }
 
 // ---------------------------------------------------------------- derived answers
@@ -1438,6 +1455,15 @@ pub struct EconomicsHistoryPoint {
     pub n: usize,
 }
 
+/// A point of the history orders within its suite by when it was measured, then by the
+/// revision it was measured at. `at` is a UTC RFC 3339 timestamp at whole seconds, whose
+/// digit runs have fixed widths, so the natural order reads it chronologically.
+impl crate::order::Ordered for EconomicsHistoryPoint {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::grouped(&self.suite, &self.at, &self.revision)
+    }
+}
+
 /// The answer of `economics.summary`: every metric, where each comes from, and the one
 /// statement the evidence allows.
 ///
@@ -1550,9 +1576,16 @@ pub struct EconomicsExplainInput {
 
 /// The answer of `economics.explain`: one metric, and everything it rests on.
 ///
+/// A repository that declares no benchmark methodology measures nothing, so it has no
+/// metric to explain: it is answered as `economics.summary` answers it — `present: false`,
+/// the statement why, no metric and no number — rather than refused, because a repository
+/// that does not benchmark itself is not a malformed request. A metric id that a declared
+/// methodology does not have is still refused.
+///
 /// ```
 /// use majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};
 /// let e: EconomicsExplanation = serde_json::from_value(serde_json::json!({
+///     "present": true,
 ///     "metric": { "id": "context_reduction_ratio", "title": "Context reduction",
 ///         "class": "derived", "inputs": "counted", "unit": "ratio",
 ///         "formula": "median over seeds of 1 - selected_tokens / candidate_tokens",
@@ -1562,17 +1595,32 @@ pub struct EconomicsExplainInput {
 ///     "reproduce": ["majordomus economics measure --suite context"]
 /// }))
 /// .unwrap();
-/// assert_eq!(e.metric.inputs, Some(EconomicsClass::Counted));
+/// assert_eq!(e.metric.unwrap().inputs, Some(EconomicsClass::Counted));
 /// assert!(e.pairs.is_empty(), "a counted metric rests on seeds, not on pairs");
+///
+/// let none: EconomicsExplanation = serde_json::from_value(serde_json::json!({
+///     "present": false, "statement": "No verified total-token-savings claim is available",
+///     "class_meaning": "", "suites": [], "pairs": [], "excluded": [], "variants": [],
+///     "reproduce": []
+/// }))
+/// .unwrap();
+/// assert!(none.metric.is_none() && none.methodology.is_none(), "nothing declared, no number");
 /// ```
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 pub struct EconomicsExplanation {
-    /// The metric.
-    pub metric: EconomicsMetric,
+    /// Whether a methodology is declared here at all.
+    pub present: bool,
+    /// Why there is nothing to explain, when `present` is false.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub statement: Option<String>,
+    /// The metric; absent when no methodology is declared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metric: Option<EconomicsMetric>,
     /// What its class means, in the methodology's words.
     pub class_meaning: String,
-    /// The methodology version.
-    pub methodology: u32,
+    /// The methodology version; absent when none is declared.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub methodology: Option<u32>,
     /// The suites it draws on.
     pub suites: Vec<EconomicsSuiteView>,
     /// The pairs it rests on, valid or not, when it rests on pairs.
@@ -1652,6 +1700,13 @@ pub struct EconomicsRunView {
     pub usage: Option<EconomicsUsage>,
     /// Where the raw record is.
     pub path: String,
+}
+
+/// A run in brief orders by its id, and by the path of its record when two share one.
+impl crate::order::Ordered for EconomicsRunView {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.id, &self.path)
+    }
 }
 
 /// The answer of `economics.runs`: the raw facts every metric is computed from.

@@ -147,7 +147,7 @@ pub fn seeds(root: &Path, suite: &EconomicsSuite) -> Vec<String> {
                 .flatten()
         })
         .collect();
-    out.sort();
+    crate::order::canonical(&mut out);
     out
 }
 

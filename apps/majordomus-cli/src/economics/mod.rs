@@ -121,15 +121,33 @@ fn read_yaml<T: serde::de::DeserializeOwned>(root: &Path, path: &Path) -> Result
     yaml::parse_into(&text).map_err(|e| format!("{shown}: {e}"))
 }
 
+/// A directory's entries in canonical order, by name.
 fn sorted_entries(dir: &Path) -> Vec<PathBuf> {
-    let mut out: Vec<PathBuf> = std::fs::read_dir(dir)
+    let mut out: Vec<Entry> = std::fs::read_dir(dir)
         .into_iter()
         .flatten()
         .flatten()
-        .map(|e| e.path())
+        .map(|e| Entry {
+            name: e.file_name().to_string_lossy().into_owned(),
+            path: e.path(),
+        })
         .collect();
-    out.sort();
-    out
+    crate::order::canonical(&mut out);
+    out.into_iter().map(|e| e.path).collect()
+}
+
+/// A directory entry, ordered by its name. The path is kept as the filesystem gave it, so a
+/// name that is not UTF-8 is still read from where it is; only its place in the order is
+/// taken from its lossy spelling.
+struct Entry {
+    name: String,
+    path: PathBuf,
+}
+
+impl crate::order::Ordered for Entry {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.name, &self.name)
+    }
 }
 
 /// Read every declaration under `root`. `Ok(None)` when no methodology is declared, which
@@ -322,7 +340,7 @@ enum Source {
     Tracked,
 }
 
-/// The files of `runs/<suite>/` the source admits, sorted by path. Only the directory's
+/// The files of `runs/<suite>/` the source admits, in canonical order. Only the directory's
 /// own entries, never a nested one, in both sources, so the two differ only in what git
 /// tracks.
 fn record_files(root: &Path, suite: &str, source: Source) -> Result<Vec<PathBuf>, String> {
@@ -333,13 +351,12 @@ fn record_files(root: &Path, suite: &str, source: Source) -> Result<Vec<PathBuf>
             let rel = format!("{DIR}/runs/{suite}");
             let tracked = crate::git::ls_files_any(root, &[rel.as_str()])
                 .map_err(|e| format!("{rel}: the tracked records could not be listed: {e}"))?;
-            let mut out: Vec<PathBuf> = tracked
-                .iter()
+            let mut own: Vec<String> = tracked
+                .into_iter()
                 .filter(|f| Path::new(f.as_str()).parent() == Some(Path::new(&rel)))
-                .map(|f| root.join(f))
                 .collect();
-            out.sort();
-            Ok(out)
+            crate::order::canonical(&mut own);
+            Ok(own.iter().map(|f| root.join(f)).collect())
         }
     }
 }
@@ -373,7 +390,7 @@ fn load_runs_from(
             Err(e) => errors.push(format!("{rel}: {e}")),
         }
     }
-    runs.sort_by(|a, b| a.1.id.cmp(&b.1.id));
+    crate::order::canonical(&mut runs);
     let mut seen = BTreeSet::new();
     for (rel, r) in &runs {
         if !seen.insert(r.id.clone()) {
@@ -381,6 +398,15 @@ fn load_runs_from(
         }
     }
     (runs, errors)
+}
+
+/// A run record, with the path it was read from, orders by the run's id; two records of one
+/// id — the duplicate the loader reports — by their paths, so the order is total and the
+/// record reported is the later one on every machine.
+impl crate::order::Ordered for (String, EconomicsRun) {
+    fn order_key(&self) -> crate::order::OrderKey<'_> {
+        crate::order::OrderKey::plain(&self.1.id, &self.0)
+    }
 }
 
 /// Every context measurement recorded under `root` for `suite`, oldest first.
@@ -446,11 +472,7 @@ fn load_context_runs_from(
             Err(e) => errors.push(format!("{rel}: {e}")),
         }
     }
-    runs.sort_by(|a, b| {
-        a.measured_at
-            .cmp(&b.measured_at)
-            .then(a.repository.commit.cmp(&b.repository.commit))
-    });
+    crate::order::canonical(&mut runs);
     (runs, errors)
 }
 
@@ -2057,13 +2079,7 @@ fn summarize_from(root: &Path, query: &EconomicsQuery, source: Source) -> Econom
             });
         }
     }
-    history.sort_by(|a, b| {
-        (a.suite.as_str(), a.at.as_str(), a.revision.as_str()).cmp(&(
-            b.suite.as_str(),
-            b.at.as_str(),
-            b.revision.as_str(),
-        ))
-    });
+    crate::order::canonical(&mut history);
 
     EconomicsSummary {
         present: true,
@@ -2090,7 +2106,9 @@ fn summarize_from(root: &Path, query: &EconomicsQuery, source: Source) -> Econom
 
 /// Explain one metric: its value, formula and class, and every pair, run, suite and
 /// exclusion it rests on, with the commands that reproduce it. `Err` names the metrics that
-/// exist when `metric` is not one of them.
+/// exist when `metric` is not one of them. A repository that declares no methodology has no
+/// metric at all, and is answered with `present: false` and the statement the summary makes,
+/// for any id: never an error, and never a number.
 ///
 /// A metric over pairs lists the valid pairs it rests on and the invalid pairs of the same
 /// suites, so that what was left out is in view; a metric over runs (completion rate,
@@ -2122,13 +2140,33 @@ fn summarize_from(root: &Path, query: &EconomicsQuery, source: Source) -> Econom
 /// # ].join("\n")).unwrap();
 /// // a methodology and one live suite `pilot`, with no run recorded
 /// let e = explain(dir.path(), EFFECTIVE_TOKEN_REDUCTION).unwrap();
-/// assert_eq!(e.metric.status, EconomicsMetricStatus::NotMeasured);
+/// assert_eq!(e.metric.unwrap().status, EconomicsMetricStatus::NotMeasured);
 /// assert!(e.reproduce.iter().any(|c| c.starts_with("majordomus economics run --suite pilot")));
 /// let refused = explain(dir.path(), "tokens_saved").unwrap_err();
 /// assert!(refused.contains(EFFECTIVE_TOKEN_REDUCTION), "the refusal lists what exists");
+///
+/// // a repository that benchmarks nothing: an answer, not a refusal, and no number in it
+/// let bare = tempfile::tempdir().unwrap();
+/// let none = explain(bare.path(), EFFECTIVE_TOKEN_REDUCTION).unwrap();
+/// assert!(!none.present && none.metric.is_none() && none.methodology.is_none());
+/// assert!(none.statement.unwrap().contains("no benchmark methodology is declared"));
 /// ```
 pub fn explain(root: &Path, metric: &str) -> Result<EconomicsExplanation, String> {
     let summary = summarize(root, &EconomicsQuery::default());
+    if !summary.present {
+        return Ok(EconomicsExplanation {
+            present: false,
+            statement: Some(summary.verdict.statement),
+            metric: None,
+            class_meaning: String::new(),
+            methodology: None,
+            suites: Vec::new(),
+            pairs: Vec::new(),
+            excluded: Vec::new(),
+            variants: Vec::new(),
+            reproduce: Vec::new(),
+        });
+    }
     let Some(found) = summary.metrics.iter().find(|x| x.id == metric).cloned() else {
         let known: Vec<&str> = summary.metrics.iter().map(|x| x.id.as_str()).collect();
         return Err(format!(
@@ -2187,8 +2225,10 @@ pub fn explain(root: &Path, metric: &str) -> Result<EconomicsExplanation, String
         .chain(std::iter::once(format!("majordomus economics explain {metric}")))
         .collect();
     Ok(EconomicsExplanation {
+        present: true,
+        statement: None,
         class_meaning,
-        methodology: summary.methodology.unwrap_or(0),
+        methodology: summary.methodology,
         suites,
         pairs,
         excluded: decl
@@ -2196,7 +2236,7 @@ pub fn explain(root: &Path, metric: &str) -> Result<EconomicsExplanation, String
             .unwrap_or_default(),
         variants: summary.variants.clone(),
         reproduce,
-        metric: found,
+        metric: Some(found),
     })
 }
 
@@ -2285,7 +2325,7 @@ pub fn runs(root: &Path, q: &EconomicsRunsQuery) -> EconomicsRunList {
             });
         }
     }
-    out.sort_by(|a, b| a.id.cmp(&b.id));
+    crate::order::canonical(&mut out);
     EconomicsRunList {
         count: out.len(),
         runs: out,

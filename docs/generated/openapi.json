@@ -3770,7 +3770,7 @@
       "get": {
         "operationId": "economics.explain",
         "summary": "Explain one economics metric",
-        "description": "One metric and everything it rests on: its formula, its measurement class and what that class means, the pairs and runs behind it (including the invalid ones), excluded runs, the suites and revisions, and the commands that reproduce it.",
+        "description": "One metric and everything it rests on: its formula, its measurement class and what that class means, the pairs and runs behind it (including the invalid ones), excluded runs, the suites and revisions, and the commands that reproduce it. A repository that declares no methodology has no metric, and any id is answered with `present: false` and the statement why, not refused.",
         "tags": [
           "economics"
         ],
@@ -21761,19 +21761,40 @@
       "EconomicsExplanation": {
         "type": "object",
         "properties": {
+          "present": {
+            "type": "boolean",
+            "description": "Whether a methodology is declared here at all."
+          },
+          "statement": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why there is nothing to explain, when `present` is false."
+          },
           "metric": {
-            "$ref": "#/components/schemas/EconomicsMetric",
-            "description": "The metric."
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EconomicsMetric"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The metric; absent when no methodology is declared."
           },
           "class_meaning": {
             "type": "string",
             "description": "What its class means, in the methodology's words."
           },
           "methodology": {
-            "type": "integer",
+            "type": [
+              "integer",
+              "null"
+            ],
             "format": "uint32",
             "minimum": 0,
-            "description": "The methodology version."
+            "description": "The methodology version; absent when none is declared."
           },
           "suites": {
             "type": "array",
@@ -21812,16 +21833,15 @@
           }
         },
         "required": [
-          "metric",
+          "present",
           "class_meaning",
-          "methodology",
           "suites",
           "pairs",
           "excluded",
           "variants",
           "reproduce"
         ],
-        "description": "The answer of `economics.explain`: one metric, and everything it rests on.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};\nlet e: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \"metric\": { \"id\": \"context_reduction_ratio\", \"title\": \"Context reduction\",\n        \"class\": \"derived\", \"inputs\": \"counted\", \"unit\": \"ratio\",\n        \"formula\": \"median over seeds of 1 - selected_tokens / candidate_tokens\",\n        \"status\": \"not_measured\", \"n\": 0, \"suite\": \"context\" },\n    \"class_meaning\": \"Arithmetic over observed or counted values.\", \"methodology\": 1,\n    \"suites\": [], \"pairs\": [], \"excluded\": [], \"variants\": [],\n    \"reproduce\": [\"majordomus economics measure --suite context\"]\n}))\n.unwrap();\nassert_eq!(e.metric.inputs, Some(EconomicsClass::Counted));\nassert!(e.pairs.is_empty(), \"a counted metric rests on seeds, not on pairs\");\n```"
+        "description": "The answer of `economics.explain`: one metric, and everything it rests on.\n\nA repository that declares no benchmark methodology measures nothing, so it has no\nmetric to explain: it is answered as `economics.summary` answers it — `present: false`,\nthe statement why, no metric and no number — rather than refused, because a repository\nthat does not benchmark itself is not a malformed request. A metric id that a declared\nmethodology does not have is still refused.\n\n```\nuse majordomus_cli::economics::model::{EconomicsClass, EconomicsExplanation};\nlet e: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"metric\": { \"id\": \"context_reduction_ratio\", \"title\": \"Context reduction\",\n        \"class\": \"derived\", \"inputs\": \"counted\", \"unit\": \"ratio\",\n        \"formula\": \"median over seeds of 1 - selected_tokens / candidate_tokens\",\n        \"status\": \"not_measured\", \"n\": 0, \"suite\": \"context\" },\n    \"class_meaning\": \"Arithmetic over observed or counted values.\", \"methodology\": 1,\n    \"suites\": [], \"pairs\": [], \"excluded\": [], \"variants\": [],\n    \"reproduce\": [\"majordomus economics measure --suite context\"]\n}))\n.unwrap();\nassert_eq!(e.metric.unwrap().inputs, Some(EconomicsClass::Counted));\nassert!(e.pairs.is_empty(), \"a counted metric rests on seeds, not on pairs\");\n\nlet none: EconomicsExplanation = serde_json::from_value(serde_json::json!({\n    \"present\": false, \"statement\": \"No verified total-token-savings claim is available\",\n    \"class_meaning\": \"\", \"suites\": [], \"pairs\": [], \"excluded\": [], \"variants\": [],\n    \"reproduce\": []\n}))\n.unwrap();\nassert!(none.metric.is_none() && none.methodology.is_none(), \"nothing declared, no number\");\n```"
       },
       "EconomicsFinding": {
         "type": "object",
