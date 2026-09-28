@@ -67,6 +67,7 @@ mod scope;
 pub mod served;
 pub mod server;
 pub mod session_domain;
+pub(crate) mod shell;
 pub mod trace;
 mod views;
 pub mod web;
@@ -173,6 +174,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         peers,
         server,
         session_domain,
+        shell,
         perf,
         plan,
         recover,

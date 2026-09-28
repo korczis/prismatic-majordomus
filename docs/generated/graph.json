@@ -1019,6 +1019,15 @@
         "status": "query"
       },
       {
+        "id": "capability:shell.check",
+        "kind": "capability",
+        "label": "shell.check",
+        "summary": "Refuse undeclared shell",
+        "route": "/cockpit/capabilities/shell.check",
+        "source": "apps/majordomus-cli/src/capability/builtin/shell.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:trace.commit",
         "kind": "capability",
         "label": "trace.commit",
@@ -8955,6 +8964,27 @@
         }
       },
       {
+        "id": "majordomus://context/ai.repo.automation",
+        "kind": "context",
+        "label": "ai.repo.automation",
+        "summary": "Automation inventory",
+        "route": "/cockpit/objects/context/ai-repo-automation",
+        "source": ".ai/repo/automation/README.md",
+        "status": "active",
+        "facts": {
+          "audience": [
+            "human",
+            "agent"
+          ],
+          "composition": "extend",
+          "order": 100,
+          "providers": [
+            "*"
+          ],
+          "scope": "subtree"
+        }
+      },
+      {
         "id": "majordomus://context/ai.repo.benchmarks",
         "kind": "context",
         "label": "ai.repo.benchmarks",
@@ -10140,6 +10170,14 @@
         "summary": "The repository scope",
         "route": "/cockpit/objects/document/docs-scope-md",
         "source": "docs/SCOPE.md"
+      },
+      {
+        "id": "majordomus://document/docs/SHELL.md",
+        "kind": "document",
+        "label": "docs/SHELL.md",
+        "summary": "Shell automation",
+        "route": "/cockpit/objects/document/docs-shell-md",
+        "source": "docs/SHELL.md"
       },
       {
         "id": "majordomus://document/docs/SITE_CLAIMS.md",
@@ -34544,6 +34582,20 @@
         "source": "test/cases/360_the_crate_boundary_is_measured.sh"
       },
       {
+        "id": "majordomus://test/test/cases/365_new_shell_is_refused.sh",
+        "kind": "test",
+        "label": "test/cases/365_new_shell_is_refused.sh",
+        "route": "/cockpit/objects/test/test-cases-365-new-shell-is-refused-sh",
+        "source": "test/cases/365_new_shell_is_refused.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/366_automation_inventory_agrees_with_the_tree.sh",
+        "kind": "test",
+        "label": "test/cases/366_automation_inventory_agrees_with_the_tree.sh",
+        "route": "/cockpit/objects/test/test-cases-366-automation-inventory-agrees-with-the-tree-sh",
+        "source": "test/cases/366_automation_inventory_agrees_with_the_tree.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/36_command_doctrines.sh",
         "kind": "test",
         "label": "test/cases/36_command_doctrines.sh",
@@ -37406,6 +37458,11 @@
         "label": "session_domain"
       },
       {
+        "id": "module:shell",
+        "kind": "module",
+        "label": "shell"
+      },
+      {
         "id": "module:trace",
         "kind": "module",
         "label": "trace"
@@ -39264,6 +39321,26 @@
       },
       {
         "source": "capability:session_domain.machine",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:shell.check",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:shell.check",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:shell.check",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:shell.check",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -45318,6 +45395,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://context/ai.repo.automation",
+        "target": "kind:context",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
@@ -46019,6 +46101,11 @@
       },
       {
         "source": "majordomus://document/docs/SCOPE.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/SHELL.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -54108,6 +54195,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/365_new_shell_is_refused.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/366_automation_inventory_agrees_with_the_tree.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/36_command_doctrines.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -57843,6 +57940,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:shell",
+        "target": "capability:shell.check",
+        "kind": "composes"
+      },
+      {
         "source": "module:trace",
         "target": "capability:trace.commit",
         "kind": "composes"
@@ -57914,8 +58016,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1821,
-      "edges": 4089,
+      "nodes": 1827,
+      "edges": 4098,
       "acyclic": true,
       "truncated": false
     }

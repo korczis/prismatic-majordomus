@@ -187,8 +187,15 @@ for attempt in '{"capability":"sh -c echo"}' '{"capability":"../../bin/sh"}'; do
   case "$CODE" in 400|404) ;; *) echo "    '$attempt' was answered $CODE, not a refusal"; cat "$S/refused.json"; exit 1 ;; esac
 done
 get /openapi.json > "$S/openapi.json"
-jq -e '[.paths | keys[] | select(test("shell|/exec/"))] | length == 0' "$S/openapi.json" >/dev/null \
+# `shell.check` is the one route whose name says shell, and it runs nothing: it reads the
+# tree against the automation inventory, so it must stay a GET with no parameter and no body.
+jq -e '[.paths | keys[] | select(. != "/api/v1/shell/check") | select(test("shell|/exec/"))]
+       | length == 0' "$S/openapi.json" >/dev/null \
   || { echo "    a shell-shaped route is in the document"; exit 1; }
+jq -e '.paths["/api/v1/shell/check"]
+       | (keys == ["get"]) and (.get.requestBody == null) and ((.get.parameters // []) == [])' \
+  "$S/openapi.json" >/dev/null \
+  || { echo "    the shell inventory check is not a read-only GET that takes nothing"; exit 1; }
 # a plain GET of the live channel says what it is rather than upgrading
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$U$CHANNEL")" = 426 ] \
   || { echo "    a plain GET of the live channel did not answer 426"; exit 1; }

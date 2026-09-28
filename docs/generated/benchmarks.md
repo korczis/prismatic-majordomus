@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 120 | 112 | 0 | 8 |
-| http | 118 | 112 | 0 | 6 |
-| mcp | 116 | 110 | 0 | 6 |
+| direct | 121 | 113 | 0 | 8 |
+| http | 119 | 113 | 0 | 6 |
+| mcp | 117 | 111 | 0 | 6 |
 | system | 13 | 13 | 0 | 0 |
-| total | 367 | 347 | 0 | 20 |
+| total | 370 | 350 | 0 | 20 |
 
 ## Capabilities
 
@@ -125,6 +125,7 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `server.status` | server | query | — | covered | covered | covered | `repository`, `this-checkout` |
 | `session_domain.identity` | session_domain | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `session_domain.machine` | session_domain | query | process, 1 entries, 600s | covered | covered | covered | `default` |
+| `shell.check` | shell | query | — | covered | covered | covered | `default` |
 | `trace.commit` | trace | query | — | covered | covered | covered | `head` |
 | `trace.issue` | trace | query | — | covered | covered | covered | `first-issue` |
 | `trace.report` | trace | query | — | covered | covered | covered | `default`, `ten` |

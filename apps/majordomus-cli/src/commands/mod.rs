@@ -53,6 +53,7 @@ pub(crate) mod rules;
 pub(crate) mod scope;
 pub(crate) mod serve;
 pub(crate) mod served;
+pub(crate) mod shell;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -91,6 +92,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Rules(args) => rules::run(args),
         Command::Delivery(args) => delivery::run(args),
         Command::Entity(args) => entity::run(args),
+        Command::Shell(args) => shell::run(args),
     }
 }
 
