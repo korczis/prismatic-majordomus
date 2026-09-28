@@ -180,7 +180,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/devtask.md` | `modules/devtask` | markdown | 4469 | `ef6d9d6139ae267c` |
 | `docs/generated/modules/directories.md` | `modules/directories` | markdown | 1653 | `1c359d3749939b2b` |
 | `docs/generated/modules/distribution.md` | `modules/distribution` | markdown | 4534 | `7e632f05f6df93d1` |
-| `docs/generated/modules/economics.md` | `modules/economics` | markdown | 4507 | `cfc7242ef1ede29d` |
+| `docs/generated/modules/economics.md` | `modules/economics` | markdown | 4645 | `666f60f54a5cec30` |
 | `docs/generated/modules/entity.md` | `modules/entity` | markdown | 2322 | `ce569635fd9bcfa3` |
 | `docs/generated/modules/environment.md` | `modules/environment` | markdown | 2695 | `0cb6005207fde2d7` |
 | `docs/generated/modules/evidence.md` | `modules/evidence` | markdown | 5740 | `8286c8c1f1a36883` |
@@ -208,13 +208,13 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/modules/web.md` | `modules/web` | markdown | 1462 | `f26ff15597ae7c8a` |
 | `docs/generated/modules/why.md` | `modules/why` | markdown | 6121 | `78e26ffd3b84cfa7` |
 | `docs/generated/modules/worktree.md` | `modules/worktree` | markdown | 4892 | `ae250b2581b2fd28` |
-| `docs/generated/openapi.json` | `openapi` | json | 1411058 | `b9da2341ee9191bd` |
-| `docs/generated/openapi.yaml` | `openapi` | yaml | 1137001 | `1b9ca8b0aa3ace2a` |
+| `docs/generated/openapi.json` | `openapi` | json | 1412622 | `42ef399f0f954e7d` |
+| `docs/generated/openapi.yaml` | `openapi` | yaml | 1138383 | `1d11aa6c2ecd0bc0` |
 | `docs/generated/providers.json` | `providers` | json | 2008 | `721571390379510a` |
 | `docs/generated/providers.md` | `providers` | markdown | 2301 | `ac75ce4c1210b991` |
 | `docs/generated/providers.yaml` | `providers` | yaml | 1753 | `3d3e3ba4f3ffd929` |
-| `docs/generated/registry.json` | `registry` | json | 1876343 | `79e88e138db77dc7` |
-| `docs/generated/registry.yaml` | `registry` | yaml | 1504335 | `635555d78bf58145` |
+| `docs/generated/registry.json` | `registry` | json | 1877947 | `5d4543c90c391067` |
+| `docs/generated/registry.yaml` | `registry` | yaml | 1505739 | `af80c316063b6617` |
 | `docs/generated/web.json` | `web` | json | 4472 | `2662551694835fb1` |
 | `docs/generated/web.yaml` | `web` | yaml | 3429 | `df545c80022cc83d` |
 | `fly.toml` | `deployment` | text | 919 | `5a88e46d6a0cf98e` |
@@ -270,7 +270,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `7c516dfdc1f9d8e5` |
 | `site/data/registry/product-graph.json` | `site-product-graph` | json | 85246 | `dd0c5881e77424d1` |
 | `site/data/registry/product.json` | `site-product` | json | 385284 | `d5cf4374105c00dd` |
-| `site/data/registry/registry.json` | `site-registry` | json | 3774609 | `a478a2b369a31d29` |
+| `site/data/registry/registry.json` | `site-registry` | json | 3776391 | `0e1de1b51c260c7a` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `ac73339d2c5d2a8c` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a5d149881dd9c1a8` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `2509e94ffd11242a` |
