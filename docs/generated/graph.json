@@ -1686,6 +1686,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/evidence/subject.rs",
+        "kind": "file",
+        "label": "subject.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/evidence/subject.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/execution/engine.rs",
         "kind": "file",
         "label": "engine.rs",
@@ -5551,6 +5559,37 @@
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
           "test": "test/cases/124_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "kind": "claim",
+        "label": "evidence-subject-commands-agree-with-the-command-pages",
+        "summary": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+        "route": "/cockpit/objects/claim/evidence-subject-commands-agree-with-the-command-pages",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+          "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/507_evidence_subjects_are_derived.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/evidence-subjects-are-derived",
+        "kind": "claim",
+        "label": "evidence-subjects-are-derived",
+        "summary": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+        "route": "/cockpit/objects/claim/evidence-subjects-are-derived",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/subject.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/507_evidence_subjects_are_derived.sh"
         }
       },
       {
@@ -10403,6 +10442,22 @@
         "summary": "A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves",
         "route": "/cockpit/objects/document/docs-claims-evidence-proof-is-an-execution-md",
         "source": "docs/claims/evidence-proof-is-an-execution.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-subject-commands-agree-with-the-command-pages.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-subject-commands-agree-with-the-command-pages.md",
+        "summary": "The behavioural and negative tests the subject index names for a command are exactly the ones its command page lists, both read from the first coverage and negative header of each case",
+        "route": "/cockpit/objects/document/docs-claims-evidence-subject-commands-agree-with-the-command-pages-md",
+        "source": "docs/claims/evidence-subject-commands-agree-with-the-command-pages.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/evidence-subjects-are-derived.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-subjects-are-derived.md",
+        "summary": "Every claim, rule, feature, command, capability, MCP tool and use case the repository declares is an evidence subject whose members and tests are derived from declarations that already exist, and a committed subject index that differs from that derivation is refused",
+        "route": "/cockpit/objects/document/docs-claims-evidence-subjects-are-derived-md",
+        "source": "docs/claims/evidence-subjects-are-derived.md"
       },
       {
         "id": "majordomus://document/docs/claims/evidence-unsupported-guarantee-is-reported.md",
@@ -33145,6 +33200,13 @@
         "source": "test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
       },
       {
+        "id": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "test",
+        "label": "test/cases/507_evidence_subjects_are_derived.sh",
+        "route": "/cockpit/objects/test/test-cases-507-evidence-subjects-are-derived-sh",
+        "source": "test/cases/507_evidence_subjects_are_derived.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "kind": "test",
         "label": "test/cases/50_blocker_across_handover.sh",
@@ -40814,6 +40876,46 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "file:apps/majordomus-cli/src/evidence/subject.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-subject-commands-agree-with-the-command-pages",
+        "target": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "file:apps/majordomus-cli/src/evidence/subject.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-subjects-are-derived",
+        "target": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-unsupported-guarantee-is-reported",
         "target": "file:scripts/evidence-check",
         "kind": "implemented_by"
@@ -44360,6 +44462,16 @@
       },
       {
         "source": "majordomus://document/docs/claims/evidence-proof-is-an-execution.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-subject-commands-agree-with-the-command-pages.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-subjects-are-derived.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -51824,6 +51936,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/507_evidence_subjects_are_derived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -55450,8 +55567,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1763,
-      "edges": 3923,
+      "nodes": 1769,
+      "edges": 3934,
       "acyclic": true,
       "truncated": false
     }

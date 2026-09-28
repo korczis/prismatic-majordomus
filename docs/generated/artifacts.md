@@ -123,6 +123,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `sections/use-case` | `text` | — | the document schema `share/schemas/majordomus/use-case/use-case.v1.proto` |
 | `site-design` | `json` | `majordomus-site-design/v1` | share/design/tokens.yaml, the one declaration of the design |
 | `site-distribution` | `json` | — | share/distribution.yaml and the release records |
+| `site-evidence-subjects` | `json` | `majordomus-site-evidence-subjects/v1` | the claims, rules, features, use cases, commands, documented command-line examples and builtin capabilities this repository declares, and the first coverage and negative headers of its test cases |
 | `site-product` | `json` | `majordomus-site-product/v1` | the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology |
 | `site-product-graph` | `json` | — | the features, what they are made of, and the interfaces that follow, as the derived `product` graph |
 | `site-registry` | `json` | `majordomus-site-registry/v2` | the capability registry and the index of this repository's layer |
@@ -160,7 +161,7 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `docs/generated/design.md` | `design` | markdown | 9232 | `135c0b9791f2770a` |
 | `docs/generated/design.yaml` | `design` | yaml | 102269 | `da66f31c94336f17` |
 | `docs/generated/distribution-matrix.json` | `distribution-matrix` | json | 2672 | `babb306155a4fc7c` |
-| `docs/generated/graph.json` | `graph` | json | 2066743 | `f774ba74adc3d07d` |
+| `docs/generated/graph.json` | `graph` | json | 2072592 | `4b18192654befa35` |
 | `docs/generated/graph.schema.json` | `graph-schema` | json | 7616 | `a6a4d1c725ae9aa2` |
 | `docs/generated/modules/artifacts.md` | `modules/artifacts` | markdown | 1741 | `68a617f3b8368475` |
 | `docs/generated/modules/capabilities.md` | `modules/capabilities` | markdown | 3129 | `90ad8df33b847467` |
@@ -259,9 +260,10 @@ Every file `majordomus generate` writes, with the document it projects, the enco
 | `share/sections/use-case.txt` | `sections/use-case` | text | 289 | `905adb47a46fdc08` |
 | `site/data/registry/design.json` | `site-design` | json | 9987 | `b4ba374f25787d74` |
 | `site/data/registry/distribution.json` | `site-distribution` | json | 3001 | `88330d760638a0b8` |
-| `site/data/registry/product-graph.json` | `site-product-graph` | json | 83337 | `dc4983fa1e762bec` |
-| `site/data/registry/product.json` | `site-product` | json | 376983 | `74af5ff6cadf4900` |
-| `site/data/registry/registry.json` | `site-registry` | json | 3597532 | `ced83a13c52f3b7d` |
+| `site/data/registry/evidence-subjects.json` | `site-evidence-subjects` | json | 507624 | `b4faec82d928f92a` |
+| `site/data/registry/product-graph.json` | `site-product-graph` | json | 83337 | `1d9caf12b0030a88` |
+| `site/data/registry/product.json` | `site-product` | json | 376983 | `ff50dab3afaa173d` |
+| `site/data/registry/registry.json` | `site-registry` | json | 3601785 | `c0aa22a5148c513e` |
 | `site/data/registry/why-graph.json` | `site-why-graph` | json | 180162 | `ac73339d2c5d2a8c` |
 | `site/data/registry/why.json` | `site-why` | json | 349951 | `a5d149881dd9c1a8` |
 | `site/static/favicon.svg` | `design-mark` | text | 903 | `2509e94ffd11242a` |

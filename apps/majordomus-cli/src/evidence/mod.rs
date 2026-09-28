@@ -145,6 +145,7 @@ use crate::index::Index;
 pub mod freshness;
 pub mod ledger;
 pub mod record;
+pub mod subject;
 
 pub use freshness::{
     aggregate, changed_between, compare, freshness, ledger_at, presented_commit, uncommitted,

@@ -1,7 +1,7 @@
 +++
 title = "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding"
 description = "A rule that names several tests takes one state from all of them. When any of those tests"
-weight = 183
+weight = 185
 [extra]
 claim_id = "evidence-a-failure-outranks-an-absence"
 status = "guaranteed"
