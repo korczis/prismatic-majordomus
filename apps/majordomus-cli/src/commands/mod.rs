@@ -38,6 +38,7 @@ pub(crate) mod delivery;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
+pub(crate) mod economics;
 pub(crate) mod entity;
 pub(crate) mod env;
 pub(crate) mod evidence;
@@ -91,6 +92,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Served(args) => served::run(args),
         Command::Rules(args) => rules::run(args),
         Command::Delivery(args) => delivery::run(args),
+        Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
     }
@@ -144,6 +146,9 @@ mod tests {
             }),
             (&["majordomus", "quality", "report"], |c| {
                 matches!(c, Command::Quality(_))
+            }),
+            (&["majordomus", "economics", "summary"], |c| {
+                matches!(c, Command::Economics(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],

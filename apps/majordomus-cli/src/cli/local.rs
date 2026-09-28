@@ -163,6 +163,21 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the committed projections of the registry into the working tree, which a read-only API never offers.",
     },
     LocalCommand {
+        command: "economics measure",
+        reason: LocalReason::WritesRepository,
+        note: "records a counted measurement of the context compiler into the benchmark's evidence directory, which a read-only API never offers.",
+    },
+    LocalCommand {
+        command: "economics run",
+        reason: LocalReason::WritesRepository,
+        note: "spends provider usage running real harness sessions and records their usage and gate verdicts as evidence; a deliberate act of a person, never a request.",
+    },
+    LocalCommand {
+        command: "economics references",
+        reason: LocalReason::SessionLocal,
+        note: "builds disposable workspaces on this machine and runs each task's tests in them; a remote caller shares neither the machine nor the toolchain.",
+    },
+    LocalCommand {
         command: "bench",
         reason: LocalReason::WritesRepository,
         note: "times every capability through every transport and writes the results; a measurement served over a transport would be measuring itself.",

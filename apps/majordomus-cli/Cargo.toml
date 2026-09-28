@@ -58,6 +58,11 @@ getrandom = "0.2"
 # apply with grep; the crate applies the same file rather than a translation of it. Already
 # in the build through jsonschema, with the same features, so it adds no code.
 regex = "1"
+# tiktoken-rs: the economics subsystem counts context in tokens of a named, pinned
+# tokenizer (o200k_base, vocabulary embedded, no network) rather than dividing bytes by
+# four. It is not the tokenizer of every model, and every count it produces says which one
+# it is; provider-reported usage is recorded as the provider reported it and never recounted.
+tiktoken-rs = "=0.12.0"
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

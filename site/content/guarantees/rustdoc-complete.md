@@ -1,7 +1,7 @@
 +++
 title = "Every item the crate exports has its rustdoc page at the route derived from its path and kind, no item page exists without its item, and a module added to the crate becomes a required page with no list edited"
 description = "The published reference is complete with respect to the crate: every item the crate exports has"
-weight = 167
+weight = 170
 [extra]
 claim_id = "rustdoc-complete"
 status = "guaranteed"

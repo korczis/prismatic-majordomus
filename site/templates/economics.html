@@ -1,0 +1,174 @@
+{% extends "page.html" %}
+{#- A figure in its unit, as every other surface spells it (economics::report::amount): a ratio is a
+    signed percentage with one decimal, any other unit a signed whole number and the unit, and
+    neither carries a sign when it rounds to zero, so nothing reads -0.0%. Every ratio a pair yields
+    is a reduction, 1 - treatment / control, and is printed with the sign the calculator gave it. -#}
+{% component economics_amount(value, unit="ratio") %}
+{%- if unit == "ratio" -%}
+{%- set x = value * 100 -%}{%- set x = x | round(precision=1) -%}
+{%- if x < 0.05 and x > -0.05 -%}0.0%{%- elif x > 0 -%}+{{ x }}%{%- else -%}{{ x }}%{%- endif -%}
+{%- else -%}
+{%- set y = value | round -%}
+{%- if y < 0.5 and y > -0.5 -%}0{%- elif y > 0 -%}+{{ y | int }}{%- else -%}{{ y | int }}{%- endif %} {{ unit }}
+{%- endif -%}
+{% endcomponent economics_amount %}
+{#- A confidence level in basis points as economics::stats::level_text spells it: 9500 is 95%, 9750 is
+    97.5%, never rounded into a level the methodology did not declare. -#}
+{% component economics_level(bp) %}
+{%- set whole = bp / 100 -%}
+{%- if bp % 100 == 0 -%}{{ whole | int }}%{%- else -%}{{ whole }}%{%- endif -%}
+{% endcomponent economics_level %}
+{% block body %}
+{#- Every figure here is a field of data/generated/economics.json, which scripts/generate-site-data
+    copies from docs/generated/economics.json, which `majordomus generate economics` derives from
+    the recorded runs. The template formats; it computes nothing and states no number of its own. -#}
+{%- set doc = load_data(path="data/generated/economics.json") -%}
+{%- set s = doc.summary -%}
+<article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg">{{ page.content | safe }}</article>
+
+<section class="mt-10" aria-labelledby="economics-verdict">
+  <h2 id="economics-verdict" class="text-xl font-semibold text-heading">Verdict</h2>
+  <p class="mt-3 rounded-base border {% if s.verdict.publishable %}border-success{% else %}border-warning{% endif %} bg-neutral-primary-soft p-4 text-body">
+    <span class="font-mono text-xs uppercase tracking-wide text-body-subtle">{% if s.verdict.publishable %}verified claim{% else %}no verified claim{% endif %}</span><br>
+    {{ s.verdict.statement }}
+  </p>
+  {%- if s.verdict.unmet | length > 0 %}
+  <p class="mt-3 text-sm text-body">The publication rule is not met:</p>
+  <ul class="mt-2 list-disc pl-6 text-sm text-body">
+    {%- for u in s.verdict.unmet %}<li>{{ u }}</li>{% endfor %}
+  </ul>
+  {%- endif %}
+</section>
+
+{%- if s.diagnostics is defined and s.diagnostics | length > 0 %}
+<section class="mt-10" aria-labelledby="economics-unread">
+  <h2 id="economics-unread" class="text-xl font-semibold text-heading">Records that could not be read</h2>
+  <p class="mt-2 text-sm text-body-subtle">Nothing in them is counted anywhere on this page.</p>
+  <ul class="mt-3 list-disc pl-6 text-sm text-body">
+    {%- for d in s.diagnostics %}<li class="break-words font-mono text-xs">{{ d }}</li>{% endfor %}
+  </ul>
+</section>
+{%- endif %}
+
+{%- if s.present %}
+<section class="mt-10" aria-labelledby="economics-metrics">
+  <h2 id="economics-metrics" class="text-xl font-semibold text-heading">Metrics</h2>
+  <p class="mt-2 text-sm text-body-subtle">Class says how a number came to be: <em>observed</em> (reported by the provider), <em>counted</em> (a pinned tokenizer over bytes on disk), <em>derived</em> (arithmetic over those), <em>counterfactual</em> (modelled, never a saving).</p>
+  <div class="mt-4 overflow-x-auto" tabindex="0" role="region" aria-label="Economics metrics">
+    <table class="w-full text-left text-sm">
+      <thead><tr>
+        <th scope="col" class="p-2">Metric</th><th scope="col" class="p-2">Value</th><th scope="col" class="p-2">Status</th>
+        <th scope="col" class="p-2">Class</th><th scope="col" class="p-2">n</th><th scope="col" class="p-2">Interval</th><th scope="col" class="p-2">What it is not</th>
+      </tr></thead>
+      <tbody>
+      {%- for m in s.metrics %}
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">{{ m.id }}</td>
+          <td class="p-2 font-mono">{%- if m.value is defined -%}{{ <economics_amount value={m.value} unit={m.unit} /> }}{%- else -%}—{%- endif -%}</td>
+          <td class="p-2">{{ m.status | replace(from="_", to=" ") }}</td>
+          <td class="p-2">{{ m.class }}{% if m.inputs is defined %} from {{ m.inputs }}{% endif %}</td>
+          <td class="p-2 font-mono">{{ m.n }}</td>
+          <td class="p-2 font-mono text-xs">{% if m.interval is defined %}{{ <economics_level bp={m.interval.level_bp} /> }}: {{ <economics_amount value={m.interval.low} unit={m.unit} /> }} to {{ <economics_amount value={m.interval.high} unit={m.unit} /> }}{% else %}—{% endif %}</td>
+          <td class="p-2 text-xs text-body-subtle">{% if m.not is defined %}{{ m.not }}{% endif %}</td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="mt-10" aria-labelledby="economics-evidence">
+  <h2 id="economics-evidence" class="text-xl font-semibold text-heading">Evidence</h2>
+  <div class="mt-4 overflow-x-auto" tabindex="0" role="region" aria-label="Benchmark suites">
+    <table class="w-full text-left text-sm">
+      <thead><tr>
+        <th scope="col" class="p-2">Suite</th><th scope="col" class="p-2">Kind</th><th scope="col" class="p-2">Evidence</th><th scope="col" class="p-2">Runs</th>
+        <th scope="col" class="p-2">Valid pairs</th><th scope="col" class="p-2">Failed (control / treatment / both)</th><th scope="col" class="p-2">Revisions</th><th scope="col" class="p-2">Models</th>
+      </tr></thead>
+      <tbody>
+      {%- for v in s.suites %}
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono">{{ v.id }}</td>
+          <td class="p-2">{{ v.kind }}</td>
+          <td class="p-2">{{ v.freshness | replace(from="_", to=" ") }}{% if v.freshness_detail is defined %}<br><span class="text-xs text-body-subtle">{{ v.freshness_detail }}</span>{% endif %}</td>
+          <td class="p-2 font-mono">{{ v.runs }}</td>
+          <td class="p-2 font-mono">{% if v.kind == "live" %}{{ v.pairs.valid }} / {{ v.pairs.attempted }}{% else %}—{% endif %}</td>
+          <td class="p-2 font-mono">{% if v.kind == "live" %}{{ v.pairs.control_failed }} / {{ v.pairs.treatment_failed }} / {{ v.pairs.both_failed }}{% else %}—{% endif %}</td>
+          <td class="p-2 font-mono text-xs">{% for r in v.revisions %}<a class="underline" href="{{ project.repository_url }}/tree/{{ r }}">{{ r | truncate(length=12, end="") }}</a> {% endfor %}</td>
+          <td class="p-2 text-xs">{{ v.models_reported | join(sep=", ") }}</td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{%- if s.segments | length > 0 %}
+<section class="mt-10" aria-labelledby="economics-segments">
+  <h2 id="economics-segments" class="text-xl font-semibold text-heading">By segment</h2>
+  <p class="mt-2 text-sm text-body-subtle">Median per-pair reduction in total tokens over valid pairs, 1 - treatment / control: positive means Majordomus used fewer tokens, and a negative reduction means Majordomus used more tokens.</p>
+  <div class="mt-4 overflow-x-auto" tabindex="0" role="region" aria-label="Results by segment">
+    <table class="w-full text-left text-sm">
+      <thead><tr><th scope="col" class="p-2">Dimension</th><th scope="col" class="p-2">Segment</th><th scope="col" class="p-2">Valid pairs</th><th scope="col" class="p-2">Median reduction</th><th scope="col" class="p-2">Range of reductions</th></tr></thead>
+      <tbody>
+      {%- for g in s.segments %}{% if g.token_reduction is defined %}
+        <tr class="border-t border-default">
+          <td class="p-2">{{ g.dimension }}</td><td class="p-2">{{ g.value }}</td><td class="p-2 font-mono">{{ g.n }}</td>
+          <td class="p-2 font-mono">{{ <economics_amount value={g.token_reduction.median} /> }}</td>
+          <td class="p-2 font-mono text-xs">{{ <economics_amount value={g.token_reduction.min} /> }} to {{ <economics_amount value={g.token_reduction.max} /> }}</td>
+        </tr>
+      {%- endif %}{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{%- endif %}
+
+{%- if s.pairs | length > 0 %}
+<section class="mt-10" aria-labelledby="economics-pairs">
+  <h2 id="economics-pairs" class="text-xl font-semibold text-heading">Every pair</h2>
+  <p class="mt-2 text-sm text-body-subtle">Valid or not. Tokens are everything the provider reported for every session of the run; the reduction is 1 - treatment / control, and a negative reduction means Majordomus used more tokens. An excluded pair shows its reduction so that the outlier rule's effect is visible; only valid pairs enter the metrics.</p>
+  <div class="mt-4 overflow-x-auto" tabindex="0" role="region" aria-label="Every pair of runs">
+    <table class="w-full text-left text-sm">
+      <thead><tr><th scope="col" class="p-2">Task</th><th scope="col" class="p-2">Category</th><th scope="col" class="p-2">Rep</th><th scope="col" class="p-2">Status</th><th scope="col" class="p-2">Control tokens</th><th scope="col" class="p-2">Treatment tokens</th><th scope="col" class="p-2">Token reduction</th></tr></thead>
+      <tbody>
+      {%- for p in s.pairs %}
+        <tr class="border-t border-default">
+          <td class="p-2 font-mono text-xs">{{ p.task }}</td><td class="p-2">{{ p.category }}</td><td class="p-2 font-mono">{{ p.repetition }}</td>
+          <td class="p-2">{{ p.status | replace(from="_", to=" ") }}</td>
+          <td class="p-2 font-mono">{% if p.control_usage is defined %}{{ p.control_usage.total }}{% else %}—{% endif %}</td>
+          <td class="p-2 font-mono">{% if p.treatment_usage is defined %}{{ p.treatment_usage.total }}{% else %}—{% endif %}</td>
+          <td class="p-2 font-mono">{% if p.token_reduction is defined %}{{ <economics_amount value={p.token_reduction} /> }}{% else %}—{% endif %}</td>
+        </tr>
+      {%- endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{%- endif %}
+
+{%- if s.context is defined %}
+<section class="mt-10" aria-labelledby="economics-context">
+  <h2 id="economics-context" class="text-xl font-semibold text-heading">Context selection</h2>
+  <p class="mt-2 text-sm text-body">At revision <a class="font-mono underline" href="{{ project.repository_url }}/tree/{{ s.context.revision }}">{{ s.context.revision | truncate(length=12, end="") }}</a>, {{ s.context.seeds }} issues of the plan were compiled by the context compiler; counted with {{ s.context.tokenizer.encoding }} ({{ s.context.tokenizer.implementation }}), it selected {{ s.context.selected_tokens }} of {{ s.context.candidate_tokens }} candidate tokens across all of them. This is selection, not a session's saving, and it counts the corpus at that revision, not at the current one.</p>
+  {%- for m in s.metrics %}{% if m.id == "context_reduction_ratio" and m.status == "not_measured" %}
+  <p class="mt-2 text-sm text-body-subtle">No figure on this page is taken from this record: {{ m.warnings | join(sep="; ") }}.</p>
+  {%- endif %}{% endfor %}
+</section>
+{%- endif %}
+
+<section class="mt-10" aria-labelledby="economics-hypotheses">
+  <h2 id="economics-hypotheses" class="text-xl font-semibold text-heading">Hypotheses</h2>
+  <p class="mt-2 text-sm text-body-subtle">Stated before any evidence existed, so that the evidence can refute them. They are not results.</p>
+  <ul class="mt-3 list-disc pl-6 text-sm text-body">
+    {%- for h in s.hypotheses %}<li><span class="font-mono text-xs">{{ h.id }} ({{ h.status }})</span>: {{ h.statement }}</li>{% endfor %}
+  </ul>
+</section>
+{%- endif %}
+
+<p class="mt-10 text-sm text-body-subtle">
+  Generated from <a class="underline" href="{{ project.repository_url }}/blob/master/docs/generated/economics.json">docs/generated/economics.json</a>;
+  the human-readable report is <a class="underline" href="{{ project.repository_url }}/blob/master/docs/generated/economics.md">docs/generated/economics.md</a>,
+  and the raw runs are under <a class="underline" href="{{ project.repository_url }}/tree/master/.ai/repo/benchmarks/economics/runs">.ai/repo/benchmarks/economics/runs</a>.
+</p>
+{% endblock body %}
