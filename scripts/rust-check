@@ -167,8 +167,13 @@ rustdoc_surface() {
   # The way back to the site is its public address, from the file the site is built with: a
   # relative "../" would climb out of the tree, which `majordomus quality rustdoc` refuses in
   # any page of it, and an origin-absolute "/" means another page on every server the tree is
-  # mounted in. A site with no base_url gets no such link rather than a guessed one.
-  site="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml" 2>/dev/null | head -n 1)"
+  # mounted in. A site with no base_url gets no such link rather than a guessed one, and a
+  # checkout with no site/config.toml has none to read: under this script's pipefail, a sed of
+  # a missing file would end the handoff here, silently, as it did the rustdoc cases' fixture.
+  site=""
+  if [ -f "$ROOT/site/config.toml" ]; then
+    site="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml" | head -n 1)"
+  fi
   [ -z "$site" ] || site="<li><a href=\"${site%/}/\">The site, ${site#*://}</a></li>"
   # the title discovery gives the surface (web::discover::rustdoc), so the two agree
   jq -n --arg built "$commit" --arg title "The Rust crate's documentation, as rustdoc renders it" \
