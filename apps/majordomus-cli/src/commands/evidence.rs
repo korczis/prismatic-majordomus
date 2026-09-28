@@ -104,7 +104,7 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             let v = execute(ctx, &["evidence", "record"], input)?;
             match args.format {
                 OutputFormat::Json => writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?,
-                OutputFormat::Text => record_text(&mut out, &v)?,
+                OutputFormat::Text => return record_text(&mut out, &v).map(|()| 0),
             }
             Ok(0)
         }
@@ -588,6 +588,139 @@ mod tests {
 
         let none = render(json!({ "recorded": 0, "passed": 0, "commit": "c", "ledger": "l" }));
         assert!(!none.contains("dropped"), "{none}");
+    }
+
+    /// A writer that takes whole lines until it holds `lines` of them, then refuses every
+    /// write, and counts the writes it was asked for after its first refusal.
+    struct ClosesAfter {
+        lines: usize,
+        held: Vec<u8>,
+        refused: usize,
+    }
+
+    impl Write for ClosesAfter {
+        fn write(&mut self, bytes: &[u8]) -> std::io::Result<usize> {
+            if self.held.iter().filter(|&&b| b == b'\n').count() >= self.lines {
+                self.refused += 1;
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::BrokenPipe,
+                    "the reader went away",
+                ));
+            }
+            self.held.extend_from_slice(bytes);
+            Ok(bytes.len())
+        }
+
+        fn flush(&mut self) -> std::io::Result<()> {
+            Ok(())
+        }
+    }
+
+    /// A line that cannot be written ends the recording's output with a transport error at
+    /// that line: nothing after it is attempted, and nothing before it is lost.
+    #[test]
+    fn a_recording_whose_output_cannot_be_written_says_so_at_the_first_line() {
+        let v = json!({
+            "recorded": 1,
+            "passed": 1,
+            "commit": "0123456789abcdef0123456789abcdef01234567",
+            "working_tree": "clean",
+            "ledger": ".ai/repo/evidence/ledger.json",
+            "unknown": ["crate:ghost"],
+            "dropped": [{ "producer": "crate", "what": "doc-tests x", "reason": "doc" }]
+        });
+        let mut all = ClosesAfter {
+            lines: usize::MAX,
+            held: Vec::new(),
+            refused: 0,
+        };
+        record_text(&mut all, &v).unwrap();
+        let total = String::from_utf8(all.held).unwrap().lines().count();
+        assert_eq!(
+            total, 5,
+            "recorded, against, ledger, one dropped, one unknown"
+        );
+
+        for lines in 0..total {
+            let mut out = ClosesAfter {
+                lines,
+                held: Vec::new(),
+                refused: 0,
+            };
+            let got = record_text(&mut out, &v);
+            assert!(
+                matches!(got, Err(Error::Transport(_))),
+                "the write of line {} was not reported: {got:?}",
+                lines + 1
+            );
+            assert_eq!(
+                out.refused,
+                1,
+                "a write was attempted after line {} failed",
+                lines + 1
+            );
+            let held = String::from_utf8(out.held).unwrap();
+            assert_eq!(held.lines().count(), lines, "{held}");
+        }
+    }
+
+    /// `evidence record` in its text format runs end to end through the command: the crate
+    /// run's binary is recorded, and the command answers with success.
+    #[test]
+    fn a_text_recording_runs_through_the_command() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(repo.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}");
+        };
+        std::fs::create_dir_all(repo.root().join("apps/majordomus-cli/tests")).unwrap();
+        std::fs::write(
+            repo.root().join("apps/majordomus-cli/tests/why.rs"),
+            "// why\n",
+        )
+        .unwrap();
+        git(&["init", "-q"]);
+        git(&["config", "user.email", "t@example.com"]);
+        git(&["config", "user.name", "t"]);
+        git(&["add", "-A"]);
+        git(&["commit", "-q", "-m", "fixture"]);
+
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running tests/why.rs (target/debug/deps/why-1)\n\
+             test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                Doc-tests majordomus_cli\n\
+             test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let args = EvidenceArgs {
+            repo: crate::cli::RepoArgs {
+                repo: Some(repo.root().to_path_buf()),
+                share: Some(crate::synthetic::crate_share()),
+                ..Default::default()
+            },
+            command: EvidenceCommand::Record {
+                suite: None,
+                crate_output: Some(log),
+                origin: None,
+            },
+            format: OutputFormat::Text,
+        };
+        assert_eq!(run(args).unwrap(), 0);
+        let ledger = crate::evidence::Ledger::load(repo.root()).unwrap();
+        let tests: Vec<&str> = ledger.executions.iter().map(|e| e.test.as_str()).collect();
+        assert_eq!(
+            tests,
+            ["crate:why"],
+            "the binary, and nothing the output dropped"
+        );
     }
 
     /// A claim whose state needs a reason prints it on the line under the claim, and one
