@@ -1428,6 +1428,15 @@
       "note": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence."
     },
     {
+      "id": "claim:evidence-recorded-in-ci",
+      "kind": "claim",
+      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-recorded-in-ci/",
+      "external": false,
+      "note": "The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it."
+    },
+    {
       "id": "claim:rule-proof-is-named-and-resolves",
       "kind": "claim",
       "label": "Every blocking rule names what proves it, and every path it names is in the tree",
@@ -2140,6 +2149,13 @@
       "id": "impl:scripts/ci/english-only-check",
       "kind": "implementation",
       "label": "scripts/ci/english-only-check",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:scripts/ci/evidence-collect",
+      "kind": "implementation",
+      "label": "scripts/ci/evidence-collect",
       "route": null,
       "external": false
     },
@@ -2912,6 +2928,13 @@
       "label": "test/cases/33_event_registry.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh"
+    },
+    {
+      "id": "test:test/cases/357_ci_records_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/357_ci_records_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/357_ci_records_evidence.sh"
     },
     {
       "id": "test:test/cases/359_live_scenarios.sh",
@@ -4002,6 +4025,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:rule-proof-is-named-and-resolves",
       "target": "source:docs/DOCTRINE.md",
       "kind": "specified_by"
@@ -4852,6 +4880,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "impl:scripts/ci/evidence-collect",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:rule-proof-is-named-and-resolves",
       "target": "impl:scripts/ci/rule-proof-check",
       "kind": "implemented_by"
@@ -5699,6 +5732,11 @@
     {
       "source": "claim:evidence-proof-is-an-execution",
       "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "test:test/cases/357_ci_records_evidence.sh",
       "kind": "proved_by"
     },
     {
