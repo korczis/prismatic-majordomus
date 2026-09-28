@@ -1283,7 +1283,7 @@ pub(crate) fn derive(d: &Declarations) -> SubjectIndex {
     let mut index = SubjectIndex { subjects, excluded };
 
     // ---- the structural finding, read off the one walk
-    let features: Vec<(String, String, Option<String>)> = index
+    let without_evidence: BTreeSet<String> = index
         .subjects
         .iter()
         .filter(|(_, e)| e.kind == SubjectKind::Feature)
@@ -1293,25 +1293,28 @@ pub(crate) fn derive(d: &Declarations) -> SubjectIndex {
                 .map(|routes| routes.iter().all(|r| r.test.is_none()))
                 .unwrap_or(false)
         })
-        .map(|(key, e)| (key.clone(), e.id.clone(), e.status.clone()))
+        .map(|(key, _)| key.clone())
         .collect();
-    for (key, id, status) in features {
-        let severity = if status.as_deref() == Some(crate::product::STABLE) {
+    for (key, e) in index
+        .subjects
+        .iter_mut()
+        .filter(|(key, _)| without_evidence.contains(key.as_str()))
+    {
+        let severity = if e.status.as_deref() == Some(crate::product::STABLE) {
             Severity::Error
         } else {
             Severity::Warning
         };
-        if let Some(e) = index.subjects.get_mut(&key) {
-            e.findings.push(SubjectFinding {
-                code: FEATURE_WITHOUT_EVIDENCE.to_string(),
-                severity,
-                subject: key.clone(),
-                message: format!(
-                    "the feature `{id}` reaches no test a runner drives through its claims, \
-                     rules, commands or use cases"
-                ),
-            });
-        }
+        e.findings.push(SubjectFinding {
+            code: FEATURE_WITHOUT_EVIDENCE.to_string(),
+            severity,
+            subject: key.clone(),
+            message: format!(
+                "the feature `{}` reaches no test a runner drives through its claims, rules, \
+                 commands or use cases",
+                e.id
+            ),
+        });
     }
     index
 }
@@ -2107,6 +2110,26 @@ mod tests {
         let unique: BTreeSet<&&Route> = reached.iter().collect();
         assert_eq!(unique.len(), reached.len());
         assert!(s.reach("feature:no-such").is_err());
+        // and once when two members each carry it: two claims naming one test from one
+        // implementation have one and the same route
+        let twins = Declarations {
+            claims: vec![
+                claim("one", "guaranteed", "lib/x.sh", "test/cases/01_x.sh"),
+                claim("two", "guaranteed", "lib/x.sh", "test/cases/01_x.sh"),
+            ],
+            features: vec![FeatureDecl {
+                id: "both".into(),
+                status: "stable".into(),
+                claims: strings(&["one", "two"]),
+                ..FeatureDecl::default()
+            }],
+            ..Declarations::default()
+        };
+        let t = derive(&twins);
+        assert_eq!(entry(&t, "claim:one").routes, entry(&t, "claim:two").routes);
+        let reached = t.reach("feature:both").unwrap();
+        assert_eq!(reached.len(), 1, "{reached:?}");
+        assert_eq!(reached[0].test.as_deref(), Some("suite:01_x"));
         // the finding is exactly a feature whose reach has no route with a test
         for (key, e) in s
             .subjects
@@ -2354,5 +2377,36 @@ mod tests {
         assert!(a.content.contains("\"command:version\""));
         assert!(!a.content.contains("\"command:hook\""));
         assert!(!a.content.contains("\"command:unstated\""));
+    }
+
+    #[test]
+    fn generate_site_writes_the_index_and_stops_at_one_it_would_not_publish() {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let args = crate::cli::RepoArgs {
+            repo: Some(repo.root().to_path_buf()),
+            share: Some(crate::synthetic::crate_share()),
+            discovery: crate::cli::DiscoveryMode::Filesystem,
+            ..Default::default()
+        };
+        let site = [crate::generate::Target::Site];
+        let app = crate::app::App::load(&args).unwrap();
+        let plan = crate::generate::plan(&app, &site).unwrap();
+        assert!(plan
+            .iter()
+            .any(|a| a.path == PATH && a.document == DOCUMENT));
+
+        // a case whose very name is a marker no published file may carry: the index would
+        // publish it, so the site plan stops there and nothing is written. The marker is
+        // joined at run time, so that this file does not carry it.
+        let cases = repo.root().join(CASES_DIR);
+        std::fs::create_dir_all(&cases).unwrap();
+        std::fs::write(cases.join(format!("{}BEGIN KEY.sh", "-----")), "").unwrap();
+        let app = crate::app::App::load(&args).unwrap();
+        let refused = crate::generate::plan(&app, &site)
+            .map(|_| ())
+            .unwrap_err()
+            .to_string();
+        assert!(refused.contains(PATH), "{refused}");
+        assert!(refused.contains("nothing was written"), "{refused}");
     }
 }
