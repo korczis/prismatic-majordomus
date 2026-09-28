@@ -27,8 +27,12 @@ MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj89.XXXXXX")"
 SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
 
-# Start a server on an ephemeral port against this fixture and set U to its base URL.
+# Start a server on an ephemeral port against this fixture and set U to its base URL. The
+# log is emptied first, here, rather than by the redirection below: that one runs in the
+# background child, so the wait could read the previous server's listening line before the
+# child truncated the file and then find no URL in it.
 serve_up() {
+  : > "$S/err.txt"
   "$RB" serve --repo "$PWD" --port 0 > "$S/out.txt" 2> "$S/err.txt" & SRV=$!
   local i=0
   until grep -q 'listening on http://' "$S/err.txt" 2>/dev/null; do
