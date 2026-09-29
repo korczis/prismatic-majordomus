@@ -46,7 +46,7 @@ TREE="$ROOT/target/web/rustdoc"
 built="$(jq -r '.built_from // empty' "$TREE/surface.json")"
 if [ "$built" != "$(git rev-parse HEAD)" ]; then
   git cat-file -e "${built:-none}^{commit}" 2>/dev/null \
-    && git diff --quiet "$built" HEAD -- apps/majordomus-cli rust-toolchain.toml \
+    && git --no-pager diff --quiet "$built" HEAD -- apps/majordomus-cli rust-toolchain.toml \
     || skip_case "target/web/rustdoc was built from ${built:-no recorded commit}, whose crate is not HEAD's (run: scripts/rust-check --doc), so no module page was read"
 fi
 mkdir -p target/web
