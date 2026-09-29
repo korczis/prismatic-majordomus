@@ -3,7 +3,7 @@
 {%- set catalogue = load_data(path="data/registry/why.json") -%}
 {%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
-{%- set ev = load_data(path="data/registry/product.json").evidence -%}
+{%- set ev_model = load_data(path="data/registry/product.json") -%}{%- set ev = ev_model.evidence -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
 {%- set why_base = config.base_url | trim_end(pat="/") -%}
