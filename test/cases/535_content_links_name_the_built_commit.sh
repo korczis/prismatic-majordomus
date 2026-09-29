@@ -16,7 +16,10 @@
 #      refuses the build (exit 10), and scripts/ci/link-check refuses a placeholder link by name;
 #   4. the pin is load-bearing: a copy of site-build whose pass names master whatever the build
 #      is, and a projection that writes master again, each fail step 1-2's checks, and the real
-#      files are left byte-identical.
+#      files are left byte-identical;
+#   5. the local preview, scripts/site-serve, serves the files site-build wrote (and pinned), never a
+#      `zola serve` that re-renders site/content in memory past the pass; a preview that runs
+#      zola serve again fails the check.
 . "$ROOT/test/lib.sh"
 command -v python3 >/dev/null 2>&1 || skip "no python3 for scripts/ci/link-check"
 
@@ -151,4 +154,26 @@ rc=0; pins "$M/scripts/site-build" "$PUB" >/dev/null || rc=$?
 
 [ "$(cksum < "$AWK")" = "$before_awk" ] || { echo "    a mutation touched the real project-links.awk"; exit 1; }
 [ "$(cksum < "$BUILD")" = "$before_build" ] || { echo "    a mutation touched the real site-build"; exit 1; }
+
+# ---------------------------------------------------------------- 5. the preview serves the build
+SERVE="$ROOT/scripts/site-serve"
+[ -x "$SERVE" ] || { echo "    scripts/site-serve is missing"; exit 1; }
+# serves_build <site-serve>: its commands (comments aside) build into a directory and serve that
+# directory, and never hand the rendering to zola serve
+serves_build() {
+  grep -v '^[[:space:]]*#' "$1" > serve.cmds
+  if grep -q 'zola serve' serve.cmds; then echo "    $1 re-renders with zola serve"; return 1; fi
+  grep -q 'site-build".*--output-dir "\$OUT"' serve.cmds \
+    || { echo "    $1 does not build into the directory it serves"; return 1; }
+  grep -q 'cd "\$OUT" && .*http.server' serve.cmds \
+    || { echo "    $1 does not serve the built directory"; return 1; }
+}
+serves_build "$SERVE" || exit 1
+before_serve="$(cksum < "$SERVE")"
+MS="$T/site-serve.mutant"
+sed 's#^cd "$OUT" \&\& python3 -m http.server.*#cd "$ROOT/site" \&\& zola serve --port "$PORT"#' "$SERVE" > "$MS"
+cmp -s "$SERVE" "$MS" && { echo "    the preview mutation changed nothing"; exit 1; }
+rc=0; serves_build "$MS" >/dev/null || rc=$?
+[ "$rc" != 0 ] || { echo "    the preview check passed on a zola serve preview; it proves nothing"; exit 1; }
+[ "$(cksum < "$SERVE")" = "$before_serve" ] || { echo "    a mutation touched the real site-serve"; exit 1; }
 exit 0
