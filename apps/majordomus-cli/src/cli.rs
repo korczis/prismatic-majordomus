@@ -96,6 +96,52 @@ pub enum Command {
     Entity(EntityArgs),
     /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
     Shell(ShellArgs),
+    /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
+    Dashboard(DashboardArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus dashboard`. Every subcommand is one page of the Dashboard Suite, run through
+/// the capability that answers it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DashboardArgs, DashboardCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "dashboard", "overview", "--format", "json"]).unwrap();
+/// let Command::Dashboard(args) = cli.command else { panic!("not the dashboard command") };
+/// let args: DashboardArgs = args;
+/// assert!(matches!(args.command, DashboardCommand::Overview));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct DashboardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `overview`. Required: the group runs nothing of its own.
+    pub command: DashboardCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus dashboard`: one per page of the suite.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DashboardCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "dashboard", "overview"]).unwrap();
+/// let Command::Dashboard(args) = cli.command else { panic!("not the dashboard command") };
+/// assert!(matches!(args.command, DashboardCommand::Overview));
+/// ```
+pub enum DashboardCommand {
+    /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
+    Overview,
 }
 
 #[derive(Debug, Args)]
@@ -3676,6 +3722,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "report", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "dashboard overview",
+        examples: &[ExampleDoc {
+            id: "dashboard-overview-json",
+            title: "The four questions, every card with the answer it was read from",
+            description: "The same answer `GET /api/v1/dashboard/overview`, the MCP tool `majordomus_dashboard_overview` and the first section of the Cockpit's overview return: is it healthy, what changed, what is broken, what needs action, each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list`. Every card carries its source capability, the input it was asked with and the JSON pointer its value was read from, so `majordomus run <capability>` read at that pointer gives the same value. The exit code is the overview's own word: 0 for ok and warn, 10 for fail and unknown. This fixture commits no registry manifest, so `health.report` cannot decide one of its checks, the health card is `unknown` rather than ok, and the answer is 10.",
+            argv: &["dashboard", "overview", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

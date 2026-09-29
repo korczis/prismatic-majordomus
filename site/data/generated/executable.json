@@ -205,6 +205,23 @@
       "tool": "majordomus_continuity"
     },
     {
+      "api_anchor": "/docs/api/dashboard/#op-dashboard-overview",
+      "claims": [],
+      "cli": "majordomus dashboard overview",
+      "id": "dashboard.overview",
+      "kind": "query",
+      "module": "dashboard",
+      "module_route": "/registry/modules/dashboard/",
+      "resource": null,
+      "route": "/registry/capabilities/dashboard-overview/",
+      "slug": "dashboard-overview",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "tests": [],
+      "title": "The Overview: four questions",
+      "tool": "majordomus_dashboard_overview"
+    },
+    {
       "api_anchor": "/docs/api/delivery/#op-delivery-feature",
       "claims": [],
       "cli": "majordomus delivery show",
@@ -2964,11 +2981,11 @@
     ]
   },
   "counts": {
-    "capabilities": 142,
+    "capabilities": 143,
     "claims": 61,
-    "modules": 42
+    "modules": 43
   },
-  "generator": "majordomus-cli 0.10.0",
+  "generator": "majordomus-cli 0.11.0",
   "modules": [
     {
       "capabilities": [
@@ -3084,6 +3101,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "dashboard.overview",
+          "route": "/registry/capabilities/dashboard-overview/",
+          "slug": "dashboard-overview"
+        }
+      ],
+      "claims": [],
+      "id": "dashboard",
+      "route": "/registry/modules/dashboard/",
+      "slug": "dashboard",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "title": "Dashboards"
     },
     {
       "capabilities": [
