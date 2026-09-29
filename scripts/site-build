@@ -12,8 +12,20 @@
 #                                 makes it discoverable. One source, one generator, two base URLs;
 #                                 there is no second copy of the documentation anywhere.
 #   scripts/site-build --output-dir DIR   write the build into DIR instead of site/public
+#
+# Every build, published or served, also COMPOSES the other published static surfaces into
+# its output at their mounts (ADR 0086): each surface of docs/generated/web.json of kind
+# static-directory that the published site carries, other than the app, is copied from its
+# artifact directory after Zola and after the accessibility pass, which is the site's and
+# never touches another surface's pages. Nothing here names one: the topology does. A
+# published surface whose producer has not run refuses the build (exit 12) and names the
+# producer, because a site that silently lost a surface is the stale deployment nobody sees.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; SITE="$ROOT/site"; NOCSS=0; NODATA=0; BASE=""; OUT=""; SERVE=0
+MJ_VERSION="site-build"; MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_VERSION MJ_BIN_DIR MJ_LIB_DIR
+# for mj_web_composed, the one reading of which surfaces are composed into the site
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
 # where a build for the running server goes and what it is mounted at; the same two values
 # the executable reads from web::discover (DOCS_ARTIFACT, DOCS_MOUNT)
 SERVE_OUT="target/web/docs"; SERVE_MOUNT="/docs"
@@ -30,6 +42,20 @@ if [ "$SERVE" = 1 ]; then
   [ -n "$OUT" ] || OUT="$SERVE_OUT"
 fi
 command -v zola >/dev/null || { echo "site-build: zola is required (brew install zola / see docs/GITHUB_PAGES_ARCHITECTURE.md)" >&2; exit 12; }
+# The surfaces this build composes, and whether each one's artifact exists — asked before any
+# generation or rendering is spent, because a build that cannot carry every published surface
+# is refused whatever else it would have produced.
+COMPOSED="$(mj_web_composed "$ROOT" rows)" || exit 12
+while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
+  [ -n "$c_id" ] || continue
+  if [ -z "$c_artifact" ] || [ ! -d "$ROOT/$c_artifact" ]; then
+    printf 'site-build: surface %s is published at %s and its artifact %s is absent; run its producer: %s\n' \
+      "$c_id" "$c_mount" "${c_artifact:-(none declared)}" "$c_producer" >&2
+    exit 12
+  fi
+done <<EOF
+$COMPOSED
+EOF
 if [ "$NODATA" = 0 ]; then echo "== data";    "$ROOT/scripts/generate-site-data"
 else echo "== data    (committed, not regenerated)"; fi
 echo "== assets"
@@ -54,14 +80,31 @@ cp "$ROOT/docs/generated/openapi.json" "$SITE/static/openapi.json"
 # stamped into its dataset, and the generators. Read by the templates (data/build.json) and
 # served at /build.json (static/build.json) so that a deployment can be verified from outside
 # against the commit that was meant to deploy. Both files are ignored, never committed.
+#
+# `surfaces` is every composed surface with the commit its own producer declared it was built
+# from (null when it declared none), read from the surface.json beside its output. It is what
+# lets scripts/site-check refuse a stale artifact, and lets a probe of the public site prove
+# from outside that a composed surface is this commit's, from the one identity file it serves.
 commit="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || echo unknown)"
 dirty=false; [ -z "$(git -C "$ROOT" status --porcelain --untracked-files=no 2>/dev/null)" ] || dirty=true
+SURFACES="$(mktemp "${TMPDIR:-/tmp}/mj-site-surfaces.XXXXXX")"; trap 'rm -f "$SURFACES"; mj_cleanup' EXIT
+while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
+  [ -n "$c_id" ] || continue
+  c_built=""
+  [ -f "$ROOT/$c_artifact/surface.json" ] && c_built="$(jq -r '.built_from // empty' "$ROOT/$c_artifact/surface.json" 2>/dev/null || true)"
+  jq -n --arg id "$c_id" --arg mount "$c_mount" --arg built "$c_built" \
+    '{id: $id, mount: $mount, built_from: (if $built == "" then null else $built end)}' >> "$SURFACES"
+done <<EOF
+$COMPOSED
+EOF
 jq -n --arg commit "$commit" --argjson dirty "$dirty" \
   --slurpfile src "$SITE/data/generated/source.json" --slurpfile reg "$SITE/data/registry/registry.json" \
+  --slurpfile surfaces "$SURFACES" \
   '{schema: 1, commit: $commit, dirty: $dirty,
     source_version: $src[0].source_version, source_hash: $src[0].source_hash, site_generator_version: $src[0].generator_version,
     registry_fingerprint: $reg[0].registry.fingerprint, index_fingerprint: $reg[0].index.fingerprint,
-    registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema}' \
+    registry_generator: ($reg[0].generator.id + " " + $reg[0].generator.version), registry_dataset: $reg[0].schema,
+    surfaces: $surfaces}' \
   > "$SITE/data/build.json"
 cp "$SITE/data/build.json" "$SITE/static/build.json"
 cp "$SITE/theme.js" "$SITE/static/js/theme.js"
@@ -160,9 +203,32 @@ for (const page of pages) {
 console.log(`  ${elements} scrolling element(s) put in the tab order (${scrollingTagNames.join(", ")}), ${named} task checkbox(es) named, over ${touched} page(s)`);
 '
 fi
+# the site's own routes, counted before another surface's pages join them
+routes="$(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ')"
+# The composition. After Zola, which empties its output directory on every build, and after
+# the accessibility pass above, which is the site's own normalisation and has no business in
+# another producer's pages. A mount the site already fills is a collision rather than a copy:
+# two owners of one path, and which one a reader got would depend on the order of two lines
+# here — so it is refused, not overwritten.
+composed=""
+while IFS="$MJ_TAB" read -r c_id c_mount c_artifact c_producer; do
+  [ -n "$c_id" ] || continue
+  echo "== compose $c_id at $c_mount (from $c_artifact)"
+  if [ -e "$PUBLIC$c_mount" ]; then
+    printf 'site-build: the site itself built %s, the mount of surface %s; one path has one owner\n' \
+      "${PUBLIC#"$ROOT/"}$c_mount" "$c_id" >&2
+    exit 10
+  fi
+  mkdir -p "$PUBLIC$c_mount"
+  cp -R "$ROOT/$c_artifact/." "$PUBLIC$c_mount/"
+  composed="$composed $c_id"
+done <<EOF
+$COMPOSED
+EOF
 # /docs/index.json: the machine-readable documentation index, read off the pages this build
 # just wrote rather than listed anywhere, so it names exactly the routes a visitor can open.
-# Written after every pass that edits a page, because it records what the pages say.
+# Written after every pass that edits a page and after the composition above, which adds
+# pages, because it records what the pages say.
 if [ -d "$PUBLIC" ]; then
   echo "== docs index"
   node "$ROOT/scripts/lib/docs-index.mjs" "$PUBLIC" "$SITE/data/generated/entities.json" \
@@ -179,4 +245,4 @@ if [ "$SERVE" = 1 ]; then
       availability: "served-only", category: "documentation", visibility: "public"}
      + (if $built == "" then {} else {built_from: $built} end)' > "$PUBLIC/surface.json"
 fi
-echo "site-build: ok — $(find "$PUBLIC" -name 'index.html' | wc -l | tr -d ' ') routes in ${PUBLIC#"$ROOT/"}/"
+echo "site-build: ok — $routes routes in ${PUBLIC#"$ROOT/"}/${composed:+, composed:$composed}"

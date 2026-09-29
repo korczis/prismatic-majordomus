@@ -65,7 +65,7 @@ pages still render, say so, and remain fully usable.
 | `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
 | `/cockpit/objects/<kind>` | one kind's index, at the kind's own address | `entity.kinds`, `objects.list` |
-| `/cockpit/objects/<kind>/<slug>` | one entity: what it is, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
+| `/cockpit/objects/<kind>/<slug>` | one entity: what it is and where the public site publishes it, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
 | `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
@@ -91,6 +91,13 @@ row, a page, and its place in every other page's backlinks without an edit anywh
 Cockpit. Two identities of one kind that reduce to one address would be a collision rather
 than a tie-break; `majordomus entity kinds` reports every one and `scripts/ci/entity-check`
 refuses the tree while one exists. The rule is `project.entities-are-routable`.
+
+An entity page also names the object's public documentation page — "Published at
+https://majordomus.dev/adrs/adr-0056/" — or the reason its kind is not published. The page
+derives no address: it renders the `documentation` field of `entity.show`, which reads
+`site/data/publication.toml` and the site's `base_url` at request time, the same declaration
+`scripts/generate-site-data` writes the site's pages from. A repository with no such
+declaration has no public page to name, and the page says so.
 
 ## How a listing of the whole layer is read
 

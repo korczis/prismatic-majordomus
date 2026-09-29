@@ -293,8 +293,10 @@ It is observation: nothing is executed remotely.
 
 **Proved by.** `test/cases/130_mesh.sh`, `apps/majordomus-cli/tests/mesh.rs`.
 
-**Maturity.** On master, off by default (`.ai/repo/mesh/majordomus.yaml`). There is no Tailscale
-or mDNS provider. Sharing work claims between machines is branch only.
+**Maturity.** On master, off by default: a new repository has no declaration. This repository
+runs its own (`.ai/repo/mesh/majordomus.yaml`, enabled; `docs/MESH.md`, "This repository's
+mesh"). There is no Tailscale or mDNS provider. The peer board and the claims replicate across
+runtimes, on one machine or several, over authenticated links (ADR 0067).
 
 ### Rules, doctrines and the rule proof
 
@@ -431,7 +433,7 @@ $ curl -s http://127.0.0.1:8742/openapi.json | jq '.paths | keys'
 
 **How it works.**
 
-- **Versions.** The version is written by one command, `majordomus-cli release bump`. `release analyze` measures the minimum bump by comparing the public capability surface with the last release.
+- **Versions.** The version is authored in one place, the crate manifest, and written by one command, `majordomus-cli release bump`; `scripts/derive` projects it for the shell tool. `release analyze` measures the minimum bump by comparing the public capability surface with the last release.
 - **Releases.** A tag builds, publishes, writes a release record and smoke-tests the public installer.
 - **Site deploys.** A merge to master publishes the site from committed projections. The deploy is verified when `majordomus.dev/build.json` serves the merge commit, and the `pages-live` gate checks that no publication is overdue.
 
@@ -487,7 +489,7 @@ $ majordomus-cli evidence show
 
 - CI runs every gate but does not record its runs into the evidence ledger, so most rules and
   claims read `not run` until someone records a run.
-- The mesh discovers instances; it does not share work claims between machines.
+- The mesh has no Tailscale or mDNS provider.
 - Overlap is reported, never enforced. The only refusal is a task's own scope.
 - Automatic session capture exists for Claude Code only.
 - Intent as a typed record, plan and board views in the Cockpit, and a richer entry preflight are

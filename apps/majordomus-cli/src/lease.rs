@@ -543,8 +543,8 @@ fn inspect(path: &Path, root: &Path) -> (Found, LeaseFile) {
         return (Found::Stale(reason), seen);
     }
     let found = match doc.url.as_deref() {
-        Some(url) => match ask(url, root) {
-            Answer::Ours => Found::Live(url.to_string()),
+        Some(url) => match ask(url, root, PROBE_TIMEOUT) {
+            Answer::Ours(_) => Found::Live(url.to_string()),
             Answer::Silent if alive(doc.pid) => Found::Busy(url.to_string()),
             Answer::Silent | Answer::NotOurs => Found::Stale(format!(
                 "stale lease: the server it names at {url} does not answer for this repository"
@@ -664,24 +664,43 @@ pub fn was_lost() -> bool {
 /// one here, and refusing it would be the worse failure: a live server taken for dead is
 /// taken over, which is how one checkout comes to have two.
 pub fn probe(url: &str, root: &Path) -> bool {
-    matches!(ask(url, root), Answer::Ours)
+    matches!(ask(url, root, PROBE_TIMEOUT), Answer::Ours(_))
+}
+
+/// [`probe`], keeping what the server answered: its index document when it answers as the
+/// leaseholder of this checkout, `None` otherwise. One decision, so a caller that also wants
+/// the surfaces the server lists makes neither a second request nor a second judgement.
+///
+/// ```
+/// use majordomus_cli::lease::probe_reply;
+/// use std::time::Duration;
+/// // nothing listens on port 1 of the loopback address
+/// let root = std::path::Path::new("/r");
+/// assert!(probe_reply("http://127.0.0.1:1", root, Duration::from_millis(50)).is_none());
+/// ```
+pub fn probe_reply(url: &str, root: &Path, timeout: Duration) -> Option<Value> {
+    match ask(url, root, timeout) {
+        Answer::Ours(index) => Some(index),
+        Answer::NotOurs | Answer::Silent => None,
+    }
 }
 
 /// What a probe of a published URL heard.
 enum Answer {
-    /// A Majordomus server that serves this root and holds its lease.
-    Ours,
+    /// A Majordomus server that serves this root and holds its lease, with the index
+    /// document it answered.
+    Ours(Value),
     /// Something answered that is not this checkout's server, or nothing is listening.
     NotOurs,
-    /// The connection was made and no answer came within [`PROBE_TIMEOUT`]: a server that
-    /// is busy looks exactly like this, and so does a hung one.
+    /// The connection was made and no answer came within the timeout: a server that is
+    /// busy looks exactly like this, and so does a hung one.
     Silent,
 }
 
-/// Ask a published URL the probe's three questions, telling a server that said no apart
-/// from one that said nothing in time.
-fn ask(url: &str, root: &Path) -> Answer {
-    match bridge::request(url, "GET", "/", &[], None, PROBE_TIMEOUT) {
+/// Ask a published URL the probe's three questions within `timeout`, telling a server that
+/// said no apart from one that said nothing in time.
+fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
+    match bridge::request(url, "GET", "/", &[], None, timeout) {
         Ok(reply) if reply.status == 200 => {
             let v: Value = serde_json::from_str(&reply.body).unwrap_or(Value::Null);
             // the identity and not the path: the index names the repository it serves
@@ -690,7 +709,7 @@ fn ask(url: &str, root: &Path) -> Answer {
                 && v["repository_id"].as_str() == Some(crate::repository::identity(root).as_str())
                 && v[LEASEHOLDER_KEY] != Value::Bool(false);
             if ours {
-                Answer::Ours
+                Answer::Ours(v)
             } else {
                 Answer::NotOurs
             }

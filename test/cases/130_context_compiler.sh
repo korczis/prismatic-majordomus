@@ -19,8 +19,8 @@
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
+command -v curl >/dev/null 2>&1 || skip "no curl"
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj130.XXXXXX")"
@@ -295,21 +295,13 @@ norm() { jq -S '{fingerprint, git, seeds, selected, excluded, deduplicated, conf
 norm "$S/cli.raw" > "$CLI"
 
 # --- over HTTP
-"$RB" serve --repo "$PWD" --port 0 > "$S/serve.out" 2> "$S/serve.err" & SRV=$!
-i=0
-until grep -q 'listening on http://' "$S/serve.err" 2>/dev/null; do
-  i=$((i+1)); [ "$i" -lt 300 ] || { echo "    the server never listened"; cat "$S/serve.err"; exit 1; }
-  kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$S/serve.err"; exit 1; }
-  sleep 0.1
-done
-U="$(sed -n 's#.*listening on \(http://127\.0\.0\.1:[0-9]*\).*#\1#p' "$S/serve.err" | head -n 1)"
-[ -n "$U" ] || { echo "    no URL on the listening line"; exit 1; }
+serve_up "$S/serve.out" "$S/serve.err" || exit 1
 curl -s -m 30 "$U/api/v1/devcontext?issue=I0001&budget_tokens=4000" > "$S/http.raw" \
   || { echo "    the HTTP route did not answer"; exit 1; }
 jq -e '.selected' "$S/http.raw" >/dev/null 2>&1 \
   || { echo "    the HTTP route answered something that is not a compiled context:"; head -c 400 "$S/http.raw"; exit 1; }
 norm "$S/http.raw" > "$HTTP"
-kill "$SRV" 2>/dev/null || true; wait "$SRV" 2>/dev/null || true; SRV=""
+serve_down
 
 # --- over MCP
 req() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }

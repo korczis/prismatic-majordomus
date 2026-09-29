@@ -20,33 +20,16 @@
 # claims: web-namespaces-reserved
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "no curl"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj89.XXXXXX")"
 SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
 
-# Start a server on an ephemeral port against this fixture and set U to its base URL.
-serve_up() {
-  "$RB" serve --repo "$PWD" --port 0 > "$S/out.txt" 2> "$S/err.txt" & SRV=$!
-  local i=0
-  until grep -q 'listening on http://' "$S/err.txt" 2>/dev/null; do
-    i=$((i+1)); [ "$i" -lt 300 ] || { echo "    the server never listened"; cat "$S/err.txt"; return 1; }
-    kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$S/err.txt"; return 1; }
-    sleep 0.1
-  done
-  U="$(sed -n 's#.*listening on \(http://127\.0\.0\.1:[0-9]*\).*#\1#p' "$S/err.txt" | head -n 1)"
-  [ -n "$U" ] || { echo "    no URL on the listening line"; cat "$S/err.txt"; return 1; }
-}
-# `wait` on a signalled child reports its signal, which is the expected outcome here and
-# not a failure of the case, so neither it nor the kill is allowed to trip `set -e`.
-serve_down() {
-  [ -n "$SRV" ] || return 0
-  kill "$SRV" 2>/dev/null || true
-  wait "$SRV" 2>/dev/null || true
-  SRV=""
-}
+# A server on an ephemeral port against this fixture, U its base URL: test/lib.sh's serve_up,
+# which empties the log before each start, so the second server's wait cannot read the
+# first one's listening line. serve_down stops it.
 code() { curl -s -o "$S/body" -w '%{http_code}' "$U$1"; }
 
 # --- a repository with a site, so the documentation surface is discovered at all
@@ -85,7 +68,7 @@ expect_exit 0 "$RB" web validate
 # ================================================================ documentation missing
 # Nothing is built yet. The documentation must say so and name the repair, and must never
 # answer with the viewer that used to live at this path.
-serve_up || exit 1
+serve_up "$S/out.txt" "$S/err.txt" || exit 1
 
 [ "$(code /swagger)" = 200 ] || { echo "    GET /swagger did not answer 200"; exit 1; }
 grep -qi 'swagger' "$S/body" || { echo "    /swagger is not the Swagger UI"; head -c 300 "$S/body"; exit 1; }
@@ -118,7 +101,7 @@ mkdir -p target/web/docs/cli
 printf '<!doctype html><title>Docs</title><h1>Majordomus documentation</h1>\n' > target/web/docs/index.html
 printf '<!doctype html><title>CLI</title><h1>CLI reference</h1>\n' > target/web/docs/cli/index.html
 printf 'body{color:#222}\n' > target/web/docs/style.css
-serve_up || exit 1
+serve_up "$S/out.txt" "$S/err.txt" || exit 1
 
 [ "$(code /docs/)" = 200 ] || { echo "    built documentation did not answer 200"; exit 1; }
 grep -q 'Majordomus documentation' "$S/body" || { echo "    /docs/ did not serve the documentation index"; exit 1; }

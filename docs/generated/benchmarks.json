@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.9.0",
+  "generator": "majordomus-cli 0.10.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 115,
-      "covered": 110,
+      "required": 142,
+      "covered": 125,
       "missing": 0,
-      "waived": 5,
+      "waived": 17,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 114,
-      "covered": 110,
+      "required": 140,
+      "covered": 125,
       "missing": 0,
-      "waived": 4,
+      "waived": 15,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 112,
-      "covered": 108,
+      "required": 136,
+      "covered": 121,
       "missing": 0,
-      "waived": 4,
+      "waived": 15,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 354,
-      "covered": 341,
+      "required": 431,
+      "covered": 384,
       "missing": 0,
-      "waived": 13,
+      "waived": 47,
       "inapplicable": 0
     }
   ],
@@ -195,6 +195,26 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "delivery.feature",
+      "module": "delivery",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "delivery.report",
+      "module": "delivery",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "deploy.check",
@@ -423,6 +443,56 @@
       ]
     },
     {
+      "id": "economics.check",
+      "module": "economics",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "economics.explain",
+      "module": "economics",
+      "kind": "query",
+      "cache": "process, 32 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "primary"
+      ]
+    },
+    {
+      "id": "economics.runs",
+      "module": "economics",
+      "kind": "query",
+      "cache": "process, 16 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "all",
+        "narrowed"
+      ]
+    },
+    {
+      "id": "economics.summary",
+      "module": "economics",
+      "kind": "query",
+      "cache": "process, 8 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "narrowed"
+      ]
+    },
+    {
       "id": "entity.kinds",
       "module": "entity",
       "kind": "query",
@@ -457,6 +527,18 @@
       "cases": [
         "all",
         "one-field"
+      ]
+    },
+    {
+      "id": "environment.preflight",
+      "module": "environment",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "sealed"
       ]
     },
     {
@@ -751,6 +833,28 @@
       ]
     },
     {
+      "id": "mesh.claim",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.cooperation",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "mesh.doctor",
       "module": "mesh",
       "kind": "query",
@@ -761,6 +865,38 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.events",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.handover.consume",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.handover.publish",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "mesh.identity",
@@ -775,7 +911,55 @@
       ]
     },
     {
+      "id": "mesh.link.hello",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "malformed"
+      ]
+    },
+    {
+      "id": "mesh.link.sync",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "none",
+      "http": "covered",
+      "cases": [
+        "malformed"
+      ]
+    },
+    {
       "id": "mesh.nodes",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "mesh.peer",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "unknown"
+      ]
+    },
+    {
+      "id": "mesh.peers",
       "module": "mesh",
       "kind": "query",
       "cache": "—",
@@ -799,6 +983,68 @@
       ]
     },
     {
+      "id": "mesh.release",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.review.answer",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.review.request",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.session.close",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.session.open",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "mesh.state",
+      "module": "mesh",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
       "id": "mesh.status",
       "module": "mesh",
       "kind": "query",
@@ -809,6 +1055,16 @@
       "cases": [
         "default"
       ]
+    },
+    {
+      "id": "mesh.verify",
+      "module": "mesh",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
     },
     {
       "id": "models.list",
@@ -1135,6 +1391,19 @@
       ]
     },
     {
+      "id": "quality.rustdoc",
+      "module": "quality",
+      "kind": "query",
+      "cache": "process, 8 entries, 10s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default",
+        "missing-pages-summary"
+      ]
+    },
+    {
       "id": "recover.orphans",
       "module": "recover",
       "kind": "command",
@@ -1261,6 +1530,29 @@
       ]
     },
     {
+      "id": "served.observe",
+      "module": "served",
+      "kind": "command",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "none",
+      "http": "none",
+      "cases": []
+    },
+    {
+      "id": "served.show",
+      "module": "served",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "head",
+        "pages-against-head"
+      ]
+    },
+    {
       "id": "server.status",
       "module": "server",
       "kind": "query",
@@ -1290,6 +1582,18 @@
       "module": "session_domain",
       "kind": "query",
       "cache": "process, 1 entries, 600s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "shell.check",
+      "module": "shell",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
