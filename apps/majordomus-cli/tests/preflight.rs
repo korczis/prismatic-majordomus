@@ -430,7 +430,10 @@ fn a_verified_coverage_check_names_its_record() {
     let c = p.check("verification.coverage").unwrap();
     assert_eq!(c.verdict, Verdict::Verified);
     assert!(c.summary.contains("lines 90.00% (90/100)"), "{}", c.summary);
-    assert!(c.evidence.iter().any(|e| e.source == COVERAGE_RECORD), "{c:?}");
+    assert!(
+        c.evidence.iter().any(|e| e.source == COVERAGE_RECORD),
+        "{c:?}"
+    );
 }
 
 #[test]
