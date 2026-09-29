@@ -293,7 +293,8 @@ the directory of the file they came from:
   writes a placeholder ref that `scripts/site-build` pins in the built pages to the commit
   `data/build.json` records (`master` for a dirty build), the ref `site/templates/source-links.html` gives
   template-made links. A placeholder left in a built page refuses the build, and `scripts/ci/link-check`
-  refuses a link that carries one.
+  refuses a link that carries one. The pin runs on built files only, so a plain `zola serve` shows the
+  placeholder; the local preview, `scripts/site-serve`, serves the pinned build instead.
 - A path git does not track, such as checkout-local state under `.ai/local`, keeps its text and loses its link.
 
 **Controls.** A control is anything a reader can operate:

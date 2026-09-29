@@ -11,7 +11,10 @@
     They fall back to the default branch when no commit can be named: a plain `zola serve`
     has no build.json, a checkout without git records "unknown", and a build of a dirty tree
     was rendered from bytes no commit holds, so naming HEAD there would claim a pin the page
-    does not have.
+    does not have. That fallback covers these template-made links only: a committed content
+    link carries the placeholder ref until scripts/site-build pins it in the built files, so a
+    plain `zola serve`, which renders in memory, serves it unresolved. scripts/site-serve
+    therefore serves the build's files rather than running `zola serve`.
 
       {{ <source_blob path=p /> }}   the URL of a file at the built commit
       {{ <source_tree path=p /> }}   the URL of a directory at the built commit
