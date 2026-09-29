@@ -128,7 +128,10 @@ fn failed(area: Area, title: &str, reason: String) -> Page {
 
 /// The landing page: what this process is serving, and whether it is healthy.
 pub fn overview(ctx: &Context) -> Page {
-    let report: RepositoryReport = match ask(ctx, "repository.info", json!({})) {
+    // The capability every statistic below is read from, named once: what the page asks is
+    // what each statistic says it was asked of, so a label cannot name another capability.
+    const ASKED: &str = "repository.info";
+    let report: RepositoryReport = match ask(ctx, ASKED, json!({})) {
         Ok(r) => r,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
@@ -136,6 +139,7 @@ pub fn overview(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
+    let now = std::time::SystemTime::now();
 
     let git = match &report.repository.git {
         crate::git::GitState::Available(info) => {
@@ -150,38 +154,48 @@ pub fn overview(ctx: &Context) -> Page {
         crate::git::GitState::Unavailable { reason } => reason.clone(),
     };
 
+    let counted = &report.capabilities;
     let statistics = el("div")
         .class("mj-stats")
-        .child(statistic(
-            report.capabilities.total.to_string(),
+        .child(super::view::asked_statistic(
+            counted.total.to_string(),
             "capabilities",
-            "capabilities.list",
+            ASKED,
+            "capabilities.total",
         ))
-        .child(statistic(
+        .child(super::view::asked_statistic(
             report.objects.to_string(),
             "objects of the layer",
-            "repository.info",
+            ASKED,
+            "objects",
         ))
-        .child(statistic(
-            report.capabilities.http_routes.to_string(),
+        .child(super::view::asked_statistic(
+            counted.http_routes.to_string(),
             "HTTP routes",
-            "the registry's HTTP exposures",
+            ASKED,
+            "capabilities.http_routes",
         ))
-        .child(statistic(
-            report.capabilities.mcp_tools.to_string(),
+        .child(super::view::asked_statistic(
+            counted.mcp_tools.to_string(),
             "MCP tools",
-            "the registry's MCP exposures",
+            ASKED,
+            "capabilities.mcp_tools",
         ))
-        .child(statistic(
-            report.capabilities.modules.to_string(),
+        .child(super::view::asked_statistic(
+            counted.modules.to_string(),
             "modules",
-            "compose_modules! and the layer's kinds",
+            ASKED,
+            "capabilities.modules",
         ))
-        .child(statistic(
-            report.capabilities.cached.to_string(),
+        .child(super::view::asked_statistic(
+            counted.cached.to_string(),
             "cached capabilities",
-            "the descriptors' cache policies",
+            ASKED,
+            "capabilities.cached",
         ));
+    let statistics = el("div")
+        .child(statistics)
+        .child(super::view::as_of(&report.repository.observed.index, now));
 
     let identity = card(
         "This repository",
@@ -191,7 +205,15 @@ pub fn overview(ctx: &Context) -> Page {
                 "Layer schema",
                 Node::Element(mono(&report.repository.layer_schema)),
             ),
-            ("Version control", Node::Element(mono(git))),
+            (
+                "Version control",
+                Node::Element(
+                    el("span")
+                        .child(mono(git))
+                        .text(" ")
+                        .child(super::view::as_of(&report.repository.observed.git, now)),
+                ),
+            ),
             (
                 "Discovery",
                 Node::Element(mono(&report.repository.discovery)),
@@ -3496,19 +3518,26 @@ pub fn health(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Health, "Health", e),
     };
+    let now = std::time::SystemTime::now();
     let cards: Vec<El> = health
         .checks
         .iter()
         .map(|c| {
+            // a check that judged a picture says when the picture was taken; one that
+            // decided live, during this call, has nothing older than the page to show
+            let mut decided = vec![(
+                "Decided by",
+                Node::Element(el("span").text(&c.decided_by)),
+            )];
+            if let Some(o) = health.observed.get(&c.id) {
+                decided.push(("Observed", Node::Element(super::view::as_of(o, now))));
+            }
             card_with(
                 c.title.clone(),
                 badge(c.status.as_str(), c.status.as_str()),
                 el("div")
                     .child(el("p").class("mj-prose").text(&c.detail))
-                    .child(facts(vec![(
-                        "Decided by",
-                        Node::Element(el("span").text(&c.decided_by)),
-                    )]))
+                    .child(facts(decided))
                     .when(!c.evidence.is_empty(), |d| {
                         d.child(
                             el("div")

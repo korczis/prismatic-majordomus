@@ -6,23 +6,23 @@
     "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "052c7049f95ace1d8c20312e719c9efaf04d9e31584a21351b5da9e00241f6cb",
+    "fingerprint": "eb2c065b20731ea74b2893e045bb18748be1354d62dd9d8a3b21d16f49510cf5",
     "summary": {
-      "total": 1619,
+      "total": 1621,
       "builtin": 142,
-      "declarative": 1477,
+      "declarative": 1479,
       "by_kind": {
         "command": 19,
         "query": 123,
-        "resource": 1477
+        "resource": 1479
       },
       "by_stability": {
         "behaviorally_verified": 109,
         "experimental": 25,
-        "implemented": 1485
+        "implemented": 1487
       },
       "mcp_tools": 136,
-      "mcp_resources": 1522,
+      "mcp_resources": 1524,
       "http_routes": 140,
       "cli_commands": 64,
       "modules": 71,
@@ -24105,6 +24105,13 @@
                   "$ref": "#/$defs/HealthCheck"
                 },
                 "description": "Every dimension, in a stable order."
+              },
+              "observed": {
+                "type": "object",
+                "additionalProperties": {
+                  "$ref": "#/$defs/AnswerObservation"
+                },
+                "description": "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
               }
             },
             "required": [
@@ -24186,6 +24193,31 @@
                   "decided_by"
                 ],
                 "description": "One dimension of the system, decided by one engine, with what a reader needs to check\nit themselves."
+              },
+              "AnswerObservation": {
+                "type": "object",
+                "properties": {
+                  "observed_at": {
+                    "type": "string",
+                    "description": "RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only\nin an answer from an index that was never built (a hand-made one in a test)."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "What was read at that time: `index build` or `git read`."
+                  },
+                  "stale_after": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "RFC 3339 UTC: after this the answer is not to be trusted as current even though\nnothing announced a change. Absent when there is no known blind spot."
+                  }
+                },
+                "required": [
+                  "observed_at",
+                  "source"
+                ],
+                "description": "When the state behind an answer was read: the freshness contract of a capability answer.\n\nDeclared once and carried in the output type of every answer that is a picture of\nstate, so that the output schema, OpenAPI, the MCP tool schemas and the command line's\nJSON all carry it without a transport of their own. It is set where the state is read —\nthe index build, the git read — never by the executor, which knows when a handler ran\nand not when the state it read was taken.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::AnswerObservation;\nlet at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);\nlet o = AnswerObservation::taken(\"git read\", at, Some(Duration::from_secs(120)));\nassert_eq!(o.observed_at, \"2026-08-29T10:40:00Z\");\nassert_eq!(o.stale_after.as_deref(), Some(\"2026-08-29T10:42:00Z\"));\nassert!(!o.is_stale_at(at + Duration::from_secs(120)));\nassert!(o.is_stale_at(at + Duration::from_secs(121)));\n```"
               }
             }
           }
@@ -41099,6 +41131,20 @@
                   "scope_path": {
                     "type": "string",
                     "description": "The scope file: repository-relative for the repository's own, the share path for\nthe distribution's default."
+                  },
+                  "observed": {
+                    "$ref": "#/$defs/RepositoryObservations",
+                    "description": "When the index and the git state it carries were read. Defaults to empty so that a\nrecord written before the freshness contract still reads.",
+                    "default": {
+                      "index": {
+                        "observed_at": "",
+                        "source": ""
+                      },
+                      "git": {
+                        "observed_at": "",
+                        "source": ""
+                      }
+                    }
                   }
                 },
                 "required": [
@@ -41197,6 +41243,49 @@
                   }
                 ],
                 "description": "Where the declaration was read from."
+              },
+              "RepositoryObservations": {
+                "type": "object",
+                "properties": {
+                  "index": {
+                    "$ref": "#/$defs/AnswerObservation",
+                    "description": "When the index was built: the objects, the kinds, the diagnostics."
+                  },
+                  "git": {
+                    "$ref": "#/$defs/AnswerObservation",
+                    "description": "When git was asked: the branch, the head, the working tree."
+                  }
+                },
+                "required": [
+                  "index",
+                  "git"
+                ],
+                "description": "The two pictures a process takes of the repository, each with when it was taken."
+              },
+              "AnswerObservation": {
+                "type": "object",
+                "properties": {
+                  "observed_at": {
+                    "type": "string",
+                    "description": "RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only\nin an answer from an index that was never built (a hand-made one in a test)."
+                  },
+                  "source": {
+                    "type": "string",
+                    "description": "What was read at that time: `index build` or `git read`."
+                  },
+                  "stale_after": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "RFC 3339 UTC: after this the answer is not to be trusted as current even though\nnothing announced a change. Absent when there is no known blind spot."
+                  }
+                },
+                "required": [
+                  "observed_at",
+                  "source"
+                ],
+                "description": "When the state behind an answer was read: the freshness contract of a capability answer.\n\nDeclared once and carried in the output type of every answer that is a picture of\nstate, so that the output schema, OpenAPI, the MCP tool schemas and the command line's\nJSON all carry it without a transport of their own. It is set where the state is read —\nthe index build, the git read — never by the executor, which knows when a handler ran\nand not when the state it read was taken.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::AnswerObservation;\nlet at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);\nlet o = AnswerObservation::taken(\"git read\", at, Some(Duration::from_secs(120)));\nassert_eq!(o.observed_at, \"2026-08-29T10:40:00Z\");\nassert_eq!(o.stale_after.as_deref(), Some(\"2026-08-29T10:42:00Z\"));\nassert!(!o.is_stale_at(at + Duration::from_secs(120)));\nassert!(o.is_stale_at(at + Duration::from_secs(121)));\n```"
               },
               "State": {
                 "oneOf": [
@@ -51971,7 +52060,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 251,
+        "capabilities": 253,
         "capability_ids": []
       },
       {
@@ -52051,7 +52140,7 @@
     ]
   },
   "index": {
-    "fingerprint": "57484f3e03a2291fdd4762a4c7c3f8ff52df0ec37e2a46b6be1e03d32c5bc3b9",
+    "fingerprint": "f1ec06d8183cf82a5b202012eeb940341eb51e7b43385e0b1ceb17d1dc15fe5d",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -52100,7 +52189,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 251,
+      "test": 253,
       "use-case": 46,
       "workspace": 1
     },
@@ -67021,6 +67110,22 @@
         "bytes": 5694
       },
       {
+        "uri": "majordomus://test/test/cases/545_every_answer_says_when_it_was_observed.sh",
+        "kind": "test",
+        "identity": "test/cases/545_every_answer_says_when_it_was_observed.sh",
+        "path": "test/cases/545_every_answer_says_when_it_was_observed.sh",
+        "source_class": "case",
+        "bytes": 6133
+      },
+      {
+        "uri": "majordomus://test/test/cases/546_a_statistic_names_the_capability_it_asked.sh",
+        "kind": "test",
+        "identity": "test/cases/546_a_statistic_names_the_capability_it_asked.sh",
+        "path": "test/cases/546_a_statistic_names_the_capability_it_asked.sh",
+        "source_class": "case",
+        "bytes": 3999
+      },
+      {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
         "kind": "test",
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
@@ -68364,7 +68469,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 251
+      "objects": 253
     },
     {
       "name": "use-case",

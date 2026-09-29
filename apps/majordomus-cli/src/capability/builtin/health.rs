@@ -139,6 +139,12 @@ pub struct Health {
     pub tallies: BTreeMap<String, usize>,
     /// Every dimension, in a stable order.
     pub checks: Vec<HealthCheck>,
+    /// When the state a check decided on was read, by check id: the freshness contract
+    /// ([`crate::index::AnswerObservation`]). A check absent here decided live, during this call.
+    /// `layer` and `git` are here because they judge the picture the index took, which is
+    /// as old as the index.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub observed: BTreeMap<String, crate::index::AnswerObservation>,
 }
 
 /// The answer to "is this process alive": the cheapest true thing this executable can
@@ -337,7 +343,7 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
             title: "Version control".into(),
             status: git_status,
             detail: git_detail,
-            decided_by: "git, as the index asked it once at startup".into(),
+            decided_by: "git, as the index asked it when it was built".into(),
             evidence: vec!["git status".into()],
             findings: Vec::new(),
         },
@@ -536,10 +542,19 @@ fn health(ctx: &Context, _: Empty) -> Result<Health, CapabilityError> {
     for c in &checks {
         *tallies.entry(c.status.as_str().into()).or_insert(0) += 1;
     }
+    let observed = [
+        ("layer", &index.repository.observed.index),
+        ("git", &index.repository.observed.git),
+    ]
+    .into_iter()
+    .filter(|(id, o)| !o.observed_at.is_empty() && checks.iter().any(|c| c.id == *id))
+    .map(|(id, o)| (id.to_string(), o.clone()))
+    .collect();
     Ok(Health {
         status,
         tallies,
         checks,
+        observed,
     })
 }
 

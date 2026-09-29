@@ -34,6 +34,92 @@ pub enum State {
     Degraded,
 }
 
+/// How long a picture of the repository is trusted as current when nothing announced a change.
+///
+/// [`crate::live::Live`] re-reads the repository whenever a git control file moves — a
+/// commit, a checkout, a `git add` — and cannot see an edit to a tracked file that is never
+/// staged. So an index, and a "working tree clean" read with it, can be wrong without
+/// anything having moved. Past this window a surface says so instead of presenting the
+/// picture as current. One window for both pictures, because they share the one blind spot.
+pub const STALE_AFTER: std::time::Duration = std::time::Duration::from_secs(120);
+
+/// When the state behind an answer was read: the freshness contract of a capability answer.
+///
+/// Declared once and carried in the output type of every answer that is a picture of
+/// state, so that the output schema, OpenAPI, the MCP tool schemas and the command line's
+/// JSON all carry it without a transport of their own. It is set where the state is read —
+/// the index build, the git read — never by the executor, which knows when a handler ran
+/// and not when the state it read was taken.
+///
+/// ```
+/// use std::time::{Duration, UNIX_EPOCH};
+/// use majordomus_cli::index::AnswerObservation;
+/// let at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);
+/// let o = AnswerObservation::taken("git read", at, Some(Duration::from_secs(120)));
+/// assert_eq!(o.observed_at, "2026-08-29T10:40:00Z");
+/// assert_eq!(o.stale_after.as_deref(), Some("2026-08-29T10:42:00Z"));
+/// assert!(!o.is_stale_at(at + Duration::from_secs(120)));
+/// assert!(o.is_stale_at(at + Duration::from_secs(121)));
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct AnswerObservation {
+    /// RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only
+    /// in an answer from an index that was never built (a hand-made one in a test).
+    pub observed_at: String,
+    /// What was read at that time: `index build` or `git read`.
+    pub source: String,
+    /// RFC 3339 UTC: after this the answer is not to be trusted as current even though
+    /// nothing announced a change. Absent when there is no known blind spot.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub stale_after: Option<String>,
+}
+
+impl AnswerObservation {
+    /// An observation of `source` taken at `at`, trusted for `window` when there is one.
+    ///
+    /// ```
+    /// use std::time::UNIX_EPOCH;
+    /// use majordomus_cli::index::AnswerObservation;
+    /// let o = AnswerObservation::taken("index build", UNIX_EPOCH, None);
+    /// assert_eq!((o.observed_at.as_str(), o.stale_after), ("1970-01-01T00:00:00Z", None));
+    /// ```
+    pub fn taken(
+        source: &str,
+        at: std::time::SystemTime,
+        window: Option<std::time::Duration>,
+    ) -> Self {
+        AnswerObservation {
+            observed_at: crate::peers::rfc3339(at),
+            source: source.to_string(),
+            stale_after: window.map(|w| crate::peers::rfc3339(at + w)),
+        }
+    }
+
+    /// Whether `now` is past [`Self::stale_after`]. RFC 3339 UTC in whole seconds is fixed
+    /// width, so the comparison is of the strings.
+    ///
+    /// ```
+    /// use std::time::{Duration, UNIX_EPOCH};
+    /// use majordomus_cli::index::AnswerObservation;
+    /// let o = AnswerObservation::taken("git read", UNIX_EPOCH, None);
+    /// assert!(!o.is_stale_at(UNIX_EPOCH + Duration::from_secs(86_400)), "no window, never stale");
+    /// ```
+    pub fn is_stale_at(&self, now: std::time::SystemTime) -> bool {
+        self.stale_after
+            .as_deref()
+            .is_some_and(|limit| crate::peers::rfc3339(now).as_str() > limit)
+    }
+}
+
+/// The two pictures a process takes of the repository, each with when it was taken.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct RepositoryObservations {
+    /// When the index was built: the objects, the kinds, the diagnostics.
+    pub index: AnswerObservation,
+    /// When git was asked: the branch, the head, the working tree.
+    pub git: AnswerObservation,
+}
+
 /// What the index knows about the repository it was built from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryInfo {
@@ -57,6 +143,10 @@ pub struct RepositoryInfo {
     /// The scope file: repository-relative for the repository's own, the share path for
     /// the distribution's default.
     pub scope_path: String,
+    /// When the index and the git state it carries were read. Defaults to empty so that a
+    /// record written before the freshness contract still reads.
+    #[serde(default)]
+    pub observed: RepositoryObservations,
 }
 
 #[derive(Debug)]
@@ -111,6 +201,7 @@ impl Index {
         git: GitState,
         scope: Scope,
     ) -> Result<Self> {
+        let started = std::time::SystemTime::now();
         let _phase = crate::perf::phase(crate::perf::Phase::IndexBuild);
         crate::perf::Counters::bump(&crate::perf::COUNTERS.index_builds);
         let (files, mut diagnostics) = discovery::discover(repo, sources, source)?;
@@ -177,6 +268,12 @@ impl Index {
             kind_sources: schema.sources().to_vec(),
             scope_origin: scope.origin(),
             scope_path: scope.path().to_string(),
+            // The git state was handed in, read just before; a caller that knows exactly
+            // when (App::load) overwrites `git` with its own reading of the clock.
+            observed: RepositoryObservations {
+                index: AnswerObservation::taken("index build", started, Some(STALE_AFTER)),
+                git: AnswerObservation::taken("git read", started, Some(STALE_AFTER)),
+            },
         };
         tracing::info!(
             objects = objects.len(),

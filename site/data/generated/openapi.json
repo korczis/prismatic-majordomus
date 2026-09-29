@@ -147,6 +147,7 @@
     "schema-AnnounceInput": "docs/api/peers/",
     "schema-Announced": "docs/api/peers/",
     "schema-Announcement": "docs/api/peers/",
+    "schema-AnswerObservation": "docs/api/shared/",
     "schema-AnswerView": "docs/api/objects/",
     "schema-Arch": "docs/api/distribution/",
     "schema-AreaList": "docs/api/why/",
@@ -638,6 +639,7 @@
     "schema-RepositoryEnvironment": "docs/api/environment/",
     "schema-RepositoryIdentity": "docs/api/environment/",
     "schema-RepositoryInfo": "docs/api/repository/",
+    "schema-RepositoryObservations": "docs/api/repository/",
     "schema-RepositoryRef": "docs/api/executions/",
     "schema-RepositoryReport": "docs/api/repository/",
     "schema-RepositoryTopology": "docs/api/worktree/",
@@ -839,7 +841,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 140,
-    "schemas": 653,
+    "schemas": 655,
     "tags": 42
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1076,6 +1078,7 @@
     "AnnounceInput": "peers",
     "Announced": "peers",
     "Announcement": "peers",
+    "AnswerObservation": "shared",
     "AnswerView": "objects",
     "Arch": "distribution",
     "AreaList": "why",
@@ -1567,6 +1570,7 @@
     "RepositoryEnvironment": "environment",
     "RepositoryIdentity": "environment",
     "RepositoryInfo": "repository",
+    "RepositoryObservations": "repository",
     "RepositoryRef": "executions",
     "RepositoryReport": "repository",
     "RepositoryTopology": "worktree",
@@ -2084,6 +2088,43 @@
       "used_by_schemas": [
         "Announced",
         "Peer"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "When the state behind an answer was read: the freshness contract of a capability answer.\n\nDeclared once and carried in the output type of every answer that is a picture of\nstate, so that the output schema, OpenAPI, the MCP tool schemas and the command line's\nJSON all carry it without a transport of their own. It is set where the state is read —\nthe index build, the git read — never by the executor, which knows when a handler ran\nand not when the state it read was taken.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::AnswerObservation;\nlet at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);\nlet o = AnswerObservation::taken(\"git read\", at, Some(Duration::from_secs(120)));\nassert_eq!(o.observed_at, \"2026-08-29T10:40:00Z\");\nassert_eq!(o.stale_after.as_deref(), Some(\"2026-08-29T10:42:00Z\"));\nassert!(!o.is_stale_at(at + Duration::from_secs(120)));\nassert!(o.is_stale_at(at + Duration::from_secs(121)));\n```",
+      "home": "shared",
+      "is_enum": false,
+      "name": "AnswerObservation",
+      "properties": [
+        {
+          "description": "RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only\nin an answer from an index that was never built (a hand-made one in a test).",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What was read at that time: `index build` or `git read`.",
+          "name": "source",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "RFC 3339 UTC: after this the answer is not to be trusted as current even though\nnothing announced a change. Absent when there is no known blind spot.",
+          "name": "stale_after",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "Health",
+        "RepositoryObservations"
       ],
       "values": [],
       "variants": []
@@ -18523,6 +18564,15 @@
           ],
           "required": true,
           "type": "array of HealthCheck"
+        },
+        {
+          "description": "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index.",
+          "name": "observed",
+          "refs": [
+            "AnswerObservation"
+          ],
+          "required": false,
+          "type": "map of AnswerObservation"
         }
       ],
       "type": "object",
@@ -29725,12 +29775,54 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "When the index and the git state it carries were read. Defaults to empty so that a\nrecord written before the freshness contract still reads.",
+          "name": "observed",
+          "refs": [
+            "RepositoryObservations"
+          ],
+          "required": false,
+          "type": "RepositoryObservations"
         }
       ],
       "type": "object",
       "used_by": [],
       "used_by_schemas": [
         "RepositoryReport"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The two pictures a process takes of the repository, each with when it was taken.",
+      "home": "repository",
+      "is_enum": false,
+      "name": "RepositoryObservations",
+      "properties": [
+        {
+          "description": "When the index was built: the objects, the kinds, the diagnostics.",
+          "name": "index",
+          "refs": [
+            "AnswerObservation"
+          ],
+          "required": true,
+          "type": "AnswerObservation"
+        },
+        {
+          "description": "When git was asked: the branch, the head, the working tree.",
+          "name": "git",
+          "refs": [
+            "AnswerObservation"
+          ],
+          "required": true,
+          "type": "AnswerObservation"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "RepositoryInfo"
       ],
       "values": [],
       "variants": []
