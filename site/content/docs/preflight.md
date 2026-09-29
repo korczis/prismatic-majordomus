@@ -93,7 +93,7 @@ that needs a look, the most urgent first: failed, degraded, stale, unavailable, 
 | `integration.mcp` / `api` / `cockpit` | the surfaces `GET /` lists with `ready` | verified, degraded, failed, unavailable, unknown |
 | `integration.peers` | this checkout's peer board (`checkouts=this`), the same board a served request reads | active, degraded, unavailable, unknown (not asked on entry) |
 | `verification.tests` | `.ai/repo/evidence/ledger.json`, each run judged by the evidence module's own tree comparison and the test's digest | verified, stale, failed, unavailable |
-| `verification.coverage` | nothing is recorded | unavailable |
+| `verification.coverage` | `.ai/local/state/coverage/rust.json`, the last whole-crate measurement `scripts/rust-coverage` ran itself, with the commit and tree it measured | verified (thresholds hold at HEAD), active (`--report`: measured at HEAD, nothing held), stale (another commit, or a tree that was not clean for the whole run), failed (a threshold, or the suite), unavailable (no record), unknown (unreadable) |
 | `verification.enforcement` | the rule proofs of `rules.report` | verified, degraded, stale (another commit, or a tree that is not clean — checked before a failure), failed, not_applicable (nothing owes a proof), unknown |
 | `verification.projections` | provider projections against their templates | verified, stale, unknown, not_applicable |
 | `verification.docs` | no recorded generation check | unknown |
