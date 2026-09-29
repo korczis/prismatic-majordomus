@@ -6,7 +6,7 @@ the file that implements it, and the test that proves it. The website renders th
 
 ## guaranteed
 
-Deterministic and blocking. Implemented, and a behavioural test proves it.
+Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.
 
 | claim | source | implementation | test |
 |---|---|---|---|
