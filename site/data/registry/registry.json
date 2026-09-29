@@ -6,23 +6,23 @@
     "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "052c7049f95ace1d8c20312e719c9efaf04d9e31584a21351b5da9e00241f6cb",
+    "fingerprint": "900b7473116ee8493139b100e87a612df040832777f11cbfabade561016040ea",
     "summary": {
-      "total": 1619,
+      "total": 1620,
       "builtin": 142,
-      "declarative": 1477,
+      "declarative": 1478,
       "by_kind": {
         "command": 19,
         "query": 123,
-        "resource": 1477
+        "resource": 1478
       },
       "by_stability": {
         "behaviorally_verified": 109,
         "experimental": 25,
-        "implemented": 1485
+        "implemented": 1486
       },
       "mcp_tools": 136,
-      "mcp_resources": 1522,
+      "mcp_resources": 1523,
       "http_routes": 140,
       "cli_commands": 64,
       "modules": 71,
@@ -128,6 +128,10 @@
                 "$ref": "#/$defs/ArtifactTallies",
                 "description": "The counts."
               },
+              "verdict": {
+                "$ref": "#/$defs/ArtifactVerdict",
+                "description": "Where the tree stands as a whole, decided from every tally."
+              },
               "regenerate": {
                 "type": "string",
                 "description": "The command that rewrites every one of them."
@@ -144,6 +148,7 @@
               "documents",
               "artifacts",
               "tallies",
+              "verdict",
               "regenerate",
               "verify"
             ],
@@ -338,6 +343,36 @@
                   "present"
                 ],
                 "description": "How many of each, so a caller needs no arithmetic of its own."
+              },
+              "ArtifactVerdict": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "current",
+                    "description": "Every file is there and hashes to what the manifest recorded."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unverified",
+                    "description": "Every file is there, none is stale, and some carry no recorded hash: their bytes\nwere not compared here, so the tree is not known to be current.\n`majordomus generate --check` is what decides them."
+                  },
+                  {
+                    "type": "string",
+                    "const": "stale",
+                    "description": "A file differs from what the manifest recorded."
+                  },
+                  {
+                    "type": "string",
+                    "const": "missing",
+                    "description": "A file the manifest names is not in the tree."
+                  },
+                  {
+                    "type": "string",
+                    "const": "not_generated",
+                    "description": "No manifest is committed: the repository has never run `majordomus generate`."
+                  }
+                ],
+                "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies."
               }
             }
           }
@@ -31465,9 +31500,15 @@
                     "description": "The context window, tokens."
                   },
                   "status": {
-                    "$ref": "#/$defs/ModelStatus",
-                    "description": "The lifecycle standing.",
-                    "default": "available"
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/ModelStatus"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "The lifecycle standing, when the catalogue declares one. Absent is undeclared: the\ncatalogue admits only facts with provenance, and routing still considers the model,\nbut nothing may say it is available on the catalogue's behalf."
                   },
                   "note": {
                     "type": [
@@ -31507,7 +31548,7 @@
                     "description": "Gone; kept so an old record's reference still resolves to a row with a story."
                   }
                 ],
-                "description": "A model's lifecycle standing, as the catalogue declares it."
+                "description": "A model's lifecycle standing, as the catalogue declares it. There is no default: a\ncatalogue entry that declares none has an undeclared standing, which is not the same\nfact as \"available\", and no reader may render it as one."
               }
             }
           }
@@ -51971,7 +52012,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 251,
+        "capabilities": 252,
         "capability_ids": []
       },
       {
@@ -52051,7 +52092,7 @@
     ]
   },
   "index": {
-    "fingerprint": "57484f3e03a2291fdd4762a4c7c3f8ff52df0ec37e2a46b6be1e03d32c5bc3b9",
+    "fingerprint": "26c29915746d3c83cb289a9faa35f9b08c0b010dd6dc3f6335e490f6ec5eca67",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -52100,7 +52141,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 251,
+      "test": 252,
       "use-case": 46,
       "workspace": 1
     },
@@ -67021,6 +67062,14 @@
         "bytes": 5694
       },
       {
+        "uri": "majordomus://test/test/cases/540_the_cockpit_says_only_what_it_knows.sh",
+        "kind": "test",
+        "identity": "test/cases/540_the_cockpit_says_only_what_it_knows.sh",
+        "path": "test/cases/540_the_cockpit_says_only_what_it_knows.sh",
+        "source_class": "case",
+        "bytes": 7641
+      },
+      {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
         "kind": "test",
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
@@ -68364,7 +68413,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 251
+      "objects": 252
     },
     {
       "name": "use-case",

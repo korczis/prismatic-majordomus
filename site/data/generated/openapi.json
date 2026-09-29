@@ -155,6 +155,7 @@
     "schema-ArtifactReport": "docs/api/artifacts/",
     "schema-ArtifactState": "docs/api/artifacts/",
     "schema-ArtifactTallies": "docs/api/artifacts/",
+    "schema-ArtifactVerdict": "docs/api/artifacts/",
     "schema-ArtifactView": "docs/api/artifacts/",
     "schema-AttestationTally": "docs/api/devtask/",
     "schema-AttestedCount": "docs/api/devtask/",
@@ -839,7 +840,7 @@
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
     "operations": 140,
-    "schemas": 653,
+    "schemas": 654,
     "tags": 42
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
@@ -1084,6 +1085,7 @@
     "ArtifactReport": "artifacts",
     "ArtifactState": "artifacts",
     "ArtifactTallies": "artifacts",
+    "ArtifactVerdict": "artifacts",
     "ArtifactView": "artifacts",
     "AttestationTally": "devtask",
     "AttestedCount": "devtask",
@@ -2413,6 +2415,15 @@
           "type": "ArtifactTallies"
         },
         {
+          "description": "Where the tree stands as a whole, decided from every tally.",
+          "name": "verdict",
+          "refs": [
+            "ArtifactVerdict"
+          ],
+          "required": true,
+          "type": "ArtifactVerdict"
+        },
+        {
           "description": "The command that rewrites every one of them.",
           "name": "regenerate",
           "refs": [],
@@ -2521,6 +2532,41 @@
         "ArtifactReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.",
+      "home": "artifacts",
+      "is_enum": true,
+      "name": "ArtifactVerdict",
+      "properties": [],
+      "type": "\"current\" | \"unverified\" | \"stale\" | \"missing\" | \"not_generated\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "ArtifactReport"
+      ],
+      "values": [
+        {
+          "description": "Every file is there and hashes to what the manifest recorded.",
+          "value": "current"
+        },
+        {
+          "description": "Every file is there, none is stale, and some carry no recorded hash: their bytes\nwere not compared here, so the tree is not known to be current.\n`majordomus generate --check` is what decides them.",
+          "value": "unverified"
+        },
+        {
+          "description": "A file differs from what the manifest recorded.",
+          "value": "stale"
+        },
+        {
+          "description": "A file the manifest names is not in the tree.",
+          "value": "missing"
+        },
+        {
+          "description": "No manifest is committed: the repository has never run `majordomus generate`.",
+          "value": "not_generated"
+        }
+      ],
       "variants": []
     },
     {
@@ -21823,13 +21869,13 @@
           "type": "integer | null"
         },
         {
-          "description": "The lifecycle standing.",
+          "description": "The lifecycle standing, when the catalogue declares one. Absent is undeclared: the\ncatalogue admits only facts with provenance, and routing still considers the model,\nbut nothing may say it is available on the catalogue's behalf.",
           "name": "status",
           "refs": [
             "ModelStatus"
           ],
           "required": false,
-          "type": "ModelStatus"
+          "type": "ModelStatus | null"
         },
         {
           "description": "One line a person needs when choosing; never pricing — a price the tool cannot\nverify is a fact it must not state (nothing here fabricates cost data).",
@@ -21848,7 +21894,7 @@
       "variants": []
     },
     {
-      "description": "A model's lifecycle standing, as the catalogue declares it.",
+      "description": "A model's lifecycle standing, as the catalogue declares it. There is no default: a\ncatalogue entry that declares none has an undeclared standing, which is not the same\nfact as \"available\", and no reader may render it as one.",
       "home": "models",
       "is_enum": true,
       "name": "ModelStatus",

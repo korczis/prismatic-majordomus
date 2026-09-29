@@ -438,6 +438,10 @@
               "$ref": "#/$defs/ArtifactTallies",
               "description": "The counts."
             },
+            "verdict": {
+              "$ref": "#/$defs/ArtifactVerdict",
+              "description": "Where the tree stands as a whole, decided from every tally."
+            },
             "regenerate": {
               "type": "string",
               "description": "The command that rewrites every one of them."
@@ -454,6 +458,7 @@
             "documents",
             "artifacts",
             "tallies",
+            "verdict",
             "regenerate",
             "verify"
           ],
@@ -648,6 +653,36 @@
                 "present"
               ],
               "description": "How many of each, so a caller needs no arithmetic of its own."
+            },
+            "ArtifactVerdict": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "current",
+                  "description": "Every file is there and hashes to what the manifest recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "unverified",
+                  "description": "Every file is there, none is stale, and some carry no recorded hash: their bytes\nwere not compared here, so the tree is not known to be current.\n`majordomus generate --check` is what decides them."
+                },
+                {
+                  "type": "string",
+                  "const": "stale",
+                  "description": "A file differs from what the manifest recorded."
+                },
+                {
+                  "type": "string",
+                  "const": "missing",
+                  "description": "A file the manifest names is not in the tree."
+                },
+                {
+                  "type": "string",
+                  "const": "not_generated",
+                  "description": "No manifest is committed: the repository has never run `majordomus generate`."
+                }
+              ],
+              "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies."
             }
           }
         }
@@ -31775,9 +31810,15 @@
                   "description": "The context window, tokens."
                 },
                 "status": {
-                  "$ref": "#/$defs/ModelStatus",
-                  "description": "The lifecycle standing.",
-                  "default": "available"
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ModelStatus"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The lifecycle standing, when the catalogue declares one. Absent is undeclared: the\ncatalogue admits only facts with provenance, and routing still considers the model,\nbut nothing may say it is available on the catalogue's behalf."
                 },
                 "note": {
                   "type": [
@@ -31817,7 +31858,7 @@
                   "description": "Gone; kept so an old record's reference still resolves to a row with a story."
                 }
               ],
-              "description": "A model's lifecycle standing, as the catalogue declares it."
+              "description": "A model's lifecycle standing, as the catalogue declares it. There is no default: a\ncatalogue entry that declares none has an undeclared standing, which is not the same\nfact as \"available\", and no reader may render it as one."
             }
           }
         }
