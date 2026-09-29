@@ -261,7 +261,6 @@ pub struct EvidenceCoverage {
 /// The summary as `scripts/rust-coverage --summary-json` writes it (schema 1).
 #[derive(Deserialize)]
 struct Summary {
-    schema: u32,
     measurement: String,
     test_code: String,
     #[serde(rename = "crate")]
@@ -299,7 +298,6 @@ impl EvidenceCoverage {
         }
         let s: Summary =
             serde_json::from_str(text).map_err(|e| format!("not a coverage summary: {e}"))?;
-        debug_assert_eq!(s.schema, 1);
         Ok(EvidenceCoverage {
             commit,
             working_tree,
