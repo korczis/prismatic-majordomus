@@ -1593,7 +1593,7 @@
       "implementation": "test/run.sh",
       "test": "test/cases/94_ci_plan.sh",
       "status": "guaranteed",
-      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.",
+      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary; test/lib.sh refuses a case that does not stand in the fixture test/run.sh made for it, so a case started by hand cannot write its fixture into a checkout. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.",
       "responsibility": "none",
       "source_route": "/docs/ci/",
       "command": null,

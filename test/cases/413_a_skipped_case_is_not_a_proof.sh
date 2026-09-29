@@ -211,9 +211,11 @@ cat > "$H/test/cases/04_fails_with_four.sh" <<'SH'
 : > out.json
 jq -e '.schema == 1' out.json >/dev/null
 SH
-# the fixture must really end with the skip status, or this section asserts nothing
+# the fixture must really end with the skip status, or this section asserts nothing; it is
+# started in a directory of its own named as its fixture, because test/lib.sh refuses a
+# case that does not stand in one
 mkdir -p "$W/four"; rc=0
-( cd "$W/four" && env -u MJ_SKIP_MARK ROOT="$H" bash -eu "$H/test/cases/04_fails_with_four.sh" ) \
+( cd "$W/four" && env -u MJ_SKIP_MARK T="$W/four" ROOT="$H" bash -eu "$H/test/cases/04_fails_with_four.sh" ) \
   >/dev/null 2>&1 || rc=$?
 [ "$rc" = 4 ] || { echo "    the fixture meant to fail with status 4 exited $rc"; exit 1; }
 for jobs in 1 2; do

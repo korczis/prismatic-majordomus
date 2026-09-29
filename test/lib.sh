@@ -1,4 +1,36 @@
 # Sourced by every test case. Provides expect_exit / expect_grep / expect_no_grep.
+
+# A case runs only in the fixture the runner made for it. Every case writes into the
+# directory it starts in (`printf ... > docs/CLAIMS.yaml`, `git add -A`, `git commit`),
+# because test/run.sh starts it in $T, a disposable repository of its own. Started by hand
+# from a checkout, it writes into that checkout. On 2026-09-28 the fixture of case 506,
+# run with a checkout as its working directory, emptied that checkout's claims matrix,
+# replaced its toolchain pin, added two stub files and staged all four; only the checkout's
+# own pre-commit hook stopped the `git commit -qm fixture` behind them.
+#
+# So before a case's first line runs: $T and $ROOT are set, the case stands in $T, and $T
+# is a fixture rather than a checkout of this repository, so it is neither $ROOT nor inside
+# it, and it has no test/run.sh. Setting T to the checkout is the first thing a caller tries
+# when this refuses, and it is refused too. The other callers that load this library
+# themselves (scripts/shell-coverage, case 35, the harness of case 413, and the use-case
+# runner in lib/usecase.sh, whose scenario setups use its helpers) set T and stand in it,
+# as test/run.sh does. Case 94 proves the refusal. The cost is two subshells.
+mj_case_in_its_fixture() {
+  local here fixture root
+  [ -n "${T:-}" ] && [ -n "${ROOT:-}" ] || return 1
+  here="$(pwd -P)" || return 1
+  fixture="$(cd "$T" 2>/dev/null && pwd -P)" || return 1
+  root="$(cd "$ROOT" 2>/dev/null && pwd -P)" || return 1
+  [ "$here" = "$fixture" ] || return 1
+  case "$fixture/" in "$root/"*) return 1 ;; esac
+  [ ! -e "$fixture/test/run.sh" ]
+}
+mj_case_in_its_fixture || {
+  printf '    run this case through test/run.sh: a case writes its fixture into the directory it starts in, and %s is not a fixture test/run.sh made (T=%s)\n' \
+    "$(pwd)" "${T:-unset}" >&2
+  exit 1
+}
+
 LAST_OUT=""
 
 # The exit status a case uses to say it declined to run. It is not 0 and it is not 1: the
