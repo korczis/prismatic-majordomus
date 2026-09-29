@@ -118,21 +118,50 @@ if [ -z "$FROM" ]; then
   # Mac while CI was unaffected. The name only has to be unique — cargo-llvm-cov is told the
   # format by --json, never by the extension.
   FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX")"
-  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
-  # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
-  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
-  # measurement. But cargo exits 101 when a test fails, and under `set -e` that status
-  # would escape this script, which answers only 0/10/12/13 and whose caller
-  # scripts/ci/coverage-differential declares the same four. A raw 101 is not a verdict in
-  # that vocabulary; it is cargo's own error wearing this gate's name. So the failure is
-  # caught here, and the export is judged on whether it exists and parses.
+  # --no-fail-fast: every test binary runs, so one failure does not hide another. It does not
+  # buy a measurement: cargo-llvm-cov writes no export for a suite that failed, so a failing
+  # test ends in the "wrote no export" refusal below. cargo exits 101 when a test fails, and
+  # under `set -e` that status would escape this script, which answers only 0/10/12/13 and
+  # whose caller scripts/ci/coverage-differential declares the same four. A raw 101 is not a
+  # verdict in that vocabulary; it is cargo's own error wearing this gate's name. So the
+  # failure is caught here, and the export is judged on whether it exists and parses.
   cov_status=0
+  # The test harness writes its verdicts to stdout (`test ... FAILED`, the `---- <name> stdout
+  # ----` section and the panic), and stdout used to go to /dev/null because the export goes to
+  # --output-path. What reached the job log was cargo's stderr line naming a binary, `to rerun
+  # pass --test bench`, and never the test or its panic, so an intermittent failure could not
+  # be told from a real one. stdout is kept in a file. A green run prints none of it: the
+  # thousands of `ok` lines an --all-targets run writes would bury the job's own report. A red
+  # run prints the harness's failure sections (see coverage_failures below).
+  COV_OUT="$(mktemp "${TMPDIR:-/tmp}/mj-cov-out.XXXXXX")"
   # Instrumented binaries run several times slower, and the suite's networked tests are
   # bounded by the wall clock: a bound that is generous uninstrumented expires here, and the
   # run then reports a coverage failure for what is really a stopwatch. The tests read this
   # and stretch their own bounds rather than every bound being written for the slowest case.
   ( cd "$CRATE" && RUSTFLAGS='' MAJORDOMUS_TEST_PATIENCE="${MAJORDOMUS_TEST_PATIENCE:-4}" \
-      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
+      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) > "$COV_OUT" || cov_status=$?
+  if [ "$cov_status" != 0 ]; then
+    # Every `failures:` ... `test result:` section the harness wrote, one per failing binary,
+    # capped at 400 lines. The cap is counted in awk rather than by `| head`, which under
+    # pipefail would end this script on SIGPIPE. A failure the harness never reported (a build
+    # error, a test binary killed by a signal) has no such section, and then the `FAILED` lines
+    # and the end of the output are what is left to name it.
+    printf 'rust-coverage: cargo llvm-cov exited %s; what the test harness reported:\n' "$cov_status" >&2
+    awk '
+      /^failures:$/ { p = 1 }
+      p { if (n < 400) print; else cut = 1; n++ }
+      /^test result: / { p = 0 }
+      END { if (cut) printf "rust-coverage: ... %d more line(s) of failure output not shown\n", n - 400 }
+    ' "$COV_OUT" > "$COV_OUT.failures"
+    if [ -s "$COV_OUT.failures" ]; then
+      cat "$COV_OUT.failures" >&2
+    else
+      grep -E '^test .* FAILED$' "$COV_OUT" >&2 || true
+      tail -n 40 "$COV_OUT" >&2
+    fi
+    rm -f "$COV_OUT.failures"
+  fi
+  rm -f "$COV_OUT"
   if [ ! -s "$FROM" ]; then
     printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and wrote no export\n' "$cov_status" >&2
     exit 12
