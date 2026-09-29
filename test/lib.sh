@@ -389,6 +389,46 @@ start_http() {
 
 stop_http() { [ -n "${HTTP_PID:-}" ] && kill "$HTTP_PID" 2>/dev/null; HTTP_PID=""; return 0; }
 
+# `majordomus serve` of the current directory on an ephemeral port, for the cases that ask a
+# real socket. Once it listens, SRV is its pid and U its base URL (http://127.0.0.1:<port>);
+# `serve_down` stops it. The caller has set RB (rust_bin) and kills $SRV in its EXIT trap, as
+# it does for anything it starts. Answers 1, having said why and printed the server's log,
+# when the server exits before it listens or has not listened within 30 s.
+#   serve_up <out> <err>      the server's stdout and stderr, which the case may read after
+#
+# Two things here are what the copies of this in cases 89 and 488 got wrong, seen on a loaded
+# runner as "no URL on the listening line" from a server that had listened:
+#  * The log is emptied in this shell before the server starts. The redirection empties it
+#    too, but in the background child, whenever that child gets to it: a wait that reads the
+#    file at once can find the previous server's listening line there, and the read after it
+#    the file the child has just emptied.
+#  * The wait polls for the URL itself, not for the words before it, and U is the value the
+#    poll found. Nothing reads the file a second time, so nothing can read it between states.
+serve_up() {
+  local out="$1" err="$2" i=0
+  local url='/listening on http:\/\/127\.0\.0\.1:[0-9]/'
+  url="$url"'{s#.*listening on \(http://127\.0\.0\.1:[0-9][0-9]*\).*#\1#p;q;}'
+  U=""
+  : > "$err"
+  "$RB" serve --repo "$PWD" --port 0 > "$out" 2> "$err" & SRV=$!
+  while :; do
+    U="$(sed -n "$url" "$err")"
+    [ -z "$U" ] || return 0
+    kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$err"; return 1; }
+    i=$((i+1))
+    [ "$i" -lt 300 ] || { echo "    the server has not listened in 30 s"; cat "$err"; return 1; }
+    sleep 0.1
+  done
+}
+# `wait` on a signalled child reports its signal, which is the expected outcome here and not
+# a failure of the case, so neither it nor the kill is allowed to trip `set -e`.
+serve_down() {
+  [ -n "${SRV:-}" ] || return 0
+  kill "$SRV" 2>/dev/null || true
+  wait "$SRV" 2>/dev/null || true
+  SRV=""
+}
+
 # A crate where the repository's own crate lives, shaped the way the rustdoc producer expects
 # the real one and small enough to document in seconds: the package majordomus-cli, its
 # library majordomus_cli, its executable majordomus, and a COMMIT constant the build is handed

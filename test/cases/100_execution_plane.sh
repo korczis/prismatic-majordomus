@@ -26,15 +26,7 @@ SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
 git add -A >/dev/null && git commit -qm layer
 
 # ---------------------------------------------------------------- the server
-"$RB" serve --repo "$PWD" --port 0 > "$S/out.txt" 2> "$S/err.txt" & SRV=$!
-i=0
-until grep -q 'listening on http://' "$S/err.txt" 2>/dev/null; do
-  i=$((i+1)); [ "$i" -lt 300 ] || { echo "    the server never listened"; cat "$S/err.txt"; exit 1; }
-  kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$S/err.txt"; exit 1; }
-  sleep 0.1
-done
-U="$(sed -n 's#.*listening on \(http://127\.0\.0\.1:[0-9]*\).*#\1#p' "$S/err.txt" | head -n 1)"
-[ -n "$U" ] || { echo "    no URL on the listening line"; exit 1; }
+serve_up "$S/out.txt" "$S/err.txt" || exit 1
 
 post() { curl -s -X POST -H 'Content-Type: application/json' -d "$2" "$U$1"; }
 get()  { curl -s "$U$1"; }

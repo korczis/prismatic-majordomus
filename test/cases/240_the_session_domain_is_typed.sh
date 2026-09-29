@@ -35,24 +35,7 @@ RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj240.XXXXXX")"
 SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
-
-serve_up() {
-  "$RB" serve --repo "$PWD" --port 0 > "$S/out.txt" 2> "$S/err.txt" & SRV=$!
-  i=0
-  until grep -q 'listening on http://' "$S/err.txt" 2>/dev/null; do
-    i=$((i+1)); [ "$i" -lt 300 ] || { echo "    the server never listened"; cat "$S/err.txt"; return 1; }
-    kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$S/err.txt"; return 1; }
-    sleep 0.1
-  done
-  U="$(sed -n 's#.*listening on \(http://127\.0\.0\.1:[0-9]*\).*#\1#p' "$S/err.txt" | head -n 1)"
-  [ -n "$U" ] || { echo "    no URL on the listening line"; cat "$S/err.txt"; return 1; }
-}
-serve_down() {
-  [ -n "$SRV" ] || return 0
-  kill "$SRV" 2>/dev/null || true
-  wait "$SRV" 2>/dev/null || true
-  SRV=""
-}
+# the server is test/lib.sh's serve_up and serve_down
 
 # --- a repository of the layer, with an open episode of its own
 "$MJ" init >/dev/null
@@ -89,7 +72,7 @@ jq -e '[.capabilities[] | select(.id | startswith("session_domain.")) | select(.
   || { echo "    a session_domain.* capability is not read-only"; exit 1; }
 
 # ---------------------------------------------------------------- the machine, over HTTP
-serve_up || exit 1
+serve_up "$S/out.txt" "$S/err.txt" || exit 1
 
 curl -fsS --connect-timeout 5 --max-time 30 "$U/api/v1/session/machine" > "$S/m.json" \
   || { echo "    GET /api/v1/session/machine failed"; exit 1; }
