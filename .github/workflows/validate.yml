@@ -267,7 +267,27 @@ jobs:
   rust:
     needs: plan
     if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true'
-    timeout-minutes: 30
+    # The bound. 30 minutes was set on 2026-09-09 from the observed maximum of twenty runs
+    # plus headroom, and the work grew into it: of the 110 rust jobs that reached a verdict
+    # from 2026-09-20 to 09-28 the slowest took 29.9 minutes (feature/mesh-cooperation, runs
+    # 35495674263 and 36075604033), and master's took 17.6 to 25.6. The integration batch
+    # int/batch-b (#651) — 27 capabilities and 398 doctests more (885 to 1283) — was then
+    # killed at the bound on both attempts of run 36508890963, and reported cancelled. Not a
+    # hang: `cargo test` finished both times, in 1666 s and 1668 s against Batch A's 1072 s
+    # (run 36356512201), 29.7 and 30.1 minutes into the job, and `cargo doc` had run 32 s
+    # and 10 s when the job was killed.
+    #
+    # What the batch costs, measured to the end of `cargo test` and estimated after it:
+    # Batch A's later rust-check phases (327 s: cargo doc, bench --no-run, build, the
+    # registry checks, quality report) scaled by the test ratio 1.556 are 509 s; the rust
+    # gates of the plan, which since #634 run the rustdoc gate and rebuild for web-topology,
+    # took 69 s on #634's own run 36241676207 and are 107 s scaled; the steps after them and
+    # the cache save that a partial restore owes (unmeasured) are allowed 65 s. That is
+    # 41.4 minutes, or 38.6 with #634's later phases unscaled. 60 is 1.45 and 1.55 times
+    # those, the ~50% doctrine the suite job's bound follows (.ai/repo/ci/suite.yaml): a
+    # slow runner still reaches a verdict, and a hang still fails inside the hour. Raise it
+    # again from a run that measured the whole job, not from this estimate.
+    timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
       # the whole history: `generate --check` runs here, and the changelog is composed from
