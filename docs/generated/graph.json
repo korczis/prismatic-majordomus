@@ -1,7 +1,7 @@
 {
   "schema": "majordomus/capability-graph/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and every object of the index; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.10.0",
+  "generator": "majordomus-cli 0.11.0",
   "graph": {
     "id": "composed",
     "title": "Everything, composed",
@@ -170,6 +170,15 @@
         "summary": "What the lifecycle is holding",
         "route": "/cockpit/capabilities/continuity.state",
         "source": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:dashboard.overview",
+        "kind": "capability",
+        "label": "dashboard.overview",
+        "summary": "The Overview: four questions",
+        "route": "/cockpit/capabilities/dashboard.overview",
+        "source": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
         "status": "query"
       },
       {
@@ -1673,6 +1682,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+        "kind": "file",
+        "label": "dashboard.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/delivery.rs",
         "kind": "file",
         "label": "delivery.rs",
@@ -1846,6 +1863,14 @@
         "label": "nav.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/cockpit/nav.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "file",
+        "label": "pages.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/pages.rs",
         "external": true
       },
       {
@@ -4757,6 +4782,34 @@
             "ci",
             "verification",
             "site"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0088",
+        "kind": "adr",
+        "label": "adr-0088",
+        "summary": "A dashboard is a projection of capabilities, and every card names the answer it was read from",
+        "route": "/cockpit/objects/adr/adr-0088",
+        "source": ".ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-29",
+          "related": [
+            "rule:project.interfaces-are-projections",
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:.ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md",
+            "file:apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:docs/COCKPIT.md",
+            "test:apps/majordomus-cli/tests/dashboard.rs",
+            "test:test/cases/534_the_overview_answers_four_questions.sh"
+          ],
+          "tags": [
+            "architecture",
+            "interface",
+            "capabilities",
+            "cockpit"
           ]
         }
       },
@@ -7853,6 +7906,21 @@
           "responsibility": "none",
           "source": "docs/RUSTDOC.md",
           "test": "test/cases/489_rustdoc_deploy.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/rustdoc-referenced",
+        "kind": "claim",
+        "label": "rustdoc-referenced",
+        "summary": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+        "route": "/cockpit/objects/claim/rustdoc-referenced",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/site.rs",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/492_rustdoc_module_links.sh"
         }
       },
       {
@@ -12220,6 +12288,14 @@
         "summary": "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names",
         "route": "/cockpit/objects/document/docs-claims-rustdoc-published-md",
         "source": "docs/claims/rustdoc-published.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/rustdoc-referenced.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-referenced.md",
+        "summary": "Every builtin module's page links its page in the crate's reference",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-referenced-md",
+        "source": "docs/claims/rustdoc-referenced.md"
       },
       {
         "id": "majordomus://document/docs/claims/rustdoc-verified-live.md",
@@ -35249,6 +35325,13 @@
         "source": "test/cases/240_the_session_domain_is_typed.sh"
       },
       {
+        "id": "majordomus://test/test/cases/241_merge_policy_claims_only_generator_output.sh",
+        "kind": "test",
+        "label": "test/cases/241_merge_policy_claims_only_generator_output.sh",
+        "route": "/cockpit/objects/test/test-cases-241-merge-policy-claims-only-generator-output-sh",
+        "source": "test/cases/241_merge_policy_claims_only_generator_output.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/24_prompt_search.sh",
         "kind": "test",
         "label": "test/cases/24_prompt_search.sh",
@@ -35795,6 +35878,13 @@
         "source": "test/cases/491_the_mesh_is_on_here.sh"
       },
       {
+        "id": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
+        "kind": "test",
+        "label": "test/cases/492_rustdoc_module_links.sh",
+        "route": "/cockpit/objects/test/test-cases-492-rustdoc-module-links-sh",
+        "source": "test/cases/492_rustdoc_module_links.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "kind": "test",
         "label": "test/cases/49_roadmap_doctrine.sh",
@@ -35870,6 +35960,27 @@
         "label": "test/cases/533_source_links_name_the_built_commit.sh",
         "route": "/cockpit/objects/test/test-cases-533-source-links-name-the-built-commit-sh",
         "source": "test/cases/533_source_links_name_the_built_commit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/534_the_overview_answers_four_questions.sh",
+        "kind": "test",
+        "label": "test/cases/534_the_overview_answers_four_questions.sh",
+        "route": "/cockpit/objects/test/test-cases-534-the-overview-answers-four-questions-sh",
+        "source": "test/cases/534_the_overview_answers_four_questions.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/535_content_links_name_the_built_commit.sh",
+        "kind": "test",
+        "label": "test/cases/535_content_links_name_the_built_commit.sh",
+        "route": "/cockpit/objects/test/test-cases-535-content-links-name-the-built-commit-sh",
+        "source": "test/cases/535_content_links_name_the_built_commit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/536_the_coverage_gate_names_the_failing_test.sh",
+        "kind": "test",
+        "label": "test/cases/536_the_coverage_gate_names_the_failing_test.sh",
+        "route": "/cockpit/objects/test/test-cases-536-the-coverage-gate-names-the-failing-test-sh",
+        "source": "test/cases/536_the_coverage_gate_names_the_failing_test.sh"
       },
       {
         "id": "majordomus://test/test/cases/53_status_vocabulary.sh",
@@ -38341,6 +38452,11 @@
         "label": "continuity"
       },
       {
+        "id": "module:dashboard",
+        "kind": "module",
+        "label": "dashboard"
+      },
+      {
         "id": "module:delivery",
         "kind": "module",
         "label": "delivery"
@@ -38555,6 +38671,14 @@
         "label": "cockpit.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/cockpit.rs",
+        "external": true
+      },
+      {
+        "id": "test:apps/majordomus-cli/tests/dashboard.rs",
+        "kind": "test",
+        "label": "dashboard.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/dashboard.rs",
         "external": true
       },
       {
@@ -38779,6 +38903,26 @@
       },
       {
         "source": "capability:continuity.state",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.overview",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.overview",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.overview",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:dashboard.overview",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43163,6 +43307,51 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0088",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "majordomus://adr/adr-0087",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "majordomus://document/docs/COCKPIT.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "majordomus://test/test/cases/534_the_overview_answers_four_questions.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0088",
+        "target": "test:apps/majordomus-cli/tests/dashboard.rs",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -46468,6 +46657,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "file:apps/majordomus-cli/src/site.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/rustdoc-verified-live",
         "target": "file:scripts/pages",
         "kind": "implemented_by"
@@ -48864,6 +49073,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/rustdoc-published.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-referenced.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -56038,6 +56252,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/241_merge_policy_claims_only_generator_output.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/24_prompt_search.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -56428,6 +56647,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -56479,6 +56703,21 @@
       },
       {
         "source": "majordomus://test/test/cases/533_source_links_name_the_built_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/534_the_overview_answers_four_questions.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/535_content_links_name_the_built_commit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/536_the_coverage_gate_names_the_failing_test.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -59578,6 +59817,11 @@
         "kind": "composes"
       },
       {
+        "source": "module:dashboard",
+        "target": "capability:dashboard.overview",
+        "kind": "composes"
+      },
+      {
         "source": "module:delivery",
         "target": "capability:delivery.feature",
         "kind": "composes"
@@ -60229,8 +60473,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1916,
-      "edges": 4332,
+      "nodes": 1929,
+      "edges": 4356,
       "acyclic": true,
       "truncated": false
     }
