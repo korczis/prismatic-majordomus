@@ -68,7 +68,7 @@ block() {
   printf '# %s path(s) from %s, plus the sections and documents %s publishes.\n' \
     "$(manifest_paths | wc -l | tr -d ' ')" "$MANIFEST" "$GEN"
   printf '# Regenerate with scripts/gitattributes; scripts/derive does it, --check proves it,\n'
-  printf '# and test/cases/241_merge_policy_claims_only_generator_outputs.sh proves the converse.\n'
+  printf '# and test/cases/241_merge_policy_claims_only_generator_output.sh proves the converse.\n'
   # This file is itself written by a generator — this one — so it belongs in its own list.
   # Neither authority can claim it: the manifest is the executable's, and the site generator
   # does not write it. A generator is the authority for its own output, and that is the only
