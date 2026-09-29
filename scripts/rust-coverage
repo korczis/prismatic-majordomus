@@ -141,22 +141,47 @@ if [ -z "$FROM" ]; then
   ( cd "$CRATE" && RUSTFLAGS='' MAJORDOMUS_TEST_PATIENCE="${MAJORDOMUS_TEST_PATIENCE:-4}" \
       cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) > "$COV_OUT" || cov_status=$?
   if [ "$cov_status" != 0 ]; then
-    # Every `failures:` ... `test result:` section the harness wrote, one per failing binary,
-    # capped at 400 lines. The cap is counted in awk rather than by `| head`, which under
-    # pipefail would end this script on SIGPIPE. A failure the harness never reported (a build
-    # error, a test binary killed by a signal) has no such section, and then the `FAILED` lines
-    # and the end of the output are what is left to name it.
+    # Two things the harness leaves on stdout name a failure, and both are printed, capped
+    # together at 400 lines (counted in awk rather than by `| head`, which under pipefail would
+    # end this script on SIGPIPE):
+    #  - every `failures:` ... `test result:` section, one per binary whose tests completed
+    #    and failed, with each failing test's name and panic;
+    #  - every `running N tests` block that never reached its `test result:` line: a binary
+    #    killed by a signal or aborted. libtest runs tests in parallel and writes a test's line
+    #    only when it completes, so such a binary's unfinished test cannot be named from stdout;
+    #    the block's header, how many tests completed and its last lines are what there is, and
+    #    cargo's own `process didn't exit successfully ... (signal: N)` on stderr names the
+    #    binary. Later binaries still run under --no-fail-fast, so the end of the whole output
+    #    would show their `ok` lines, not this one's.
+    # Only when neither exists (a build error, nothing ran) is the end of the output printed.
     printf 'rust-coverage: cargo llvm-cov exited %s; what the test harness reported:\n' "$cov_status" >&2
     awk '
+      function out(s) { if (n < 400) print s; else cut = 1; n++ }
+      function unfinished(   i, from) {
+        if (!open) return
+        out("rust-coverage: a test binary ended without a `test result:` line (killed or aborted):")
+        out(header)
+        out(sprintf("rust-coverage: %d test(s) of that binary completed before it ended; its last line(s):", done))
+        from = (seen > 5 ? seen - 4 : 1)
+        for (i = from; i <= seen; i++) out(last[i % 5])
+        open = 0
+      }
+      /^running [0-9]+ tests?$/ { unfinished(); open = 1; header = $0; done = 0; seen = 0; next }
       /^failures:$/ { p = 1 }
-      p { if (n < 400) print; else cut = 1; n++ }
-      /^test result: / { p = 0 }
-      END { if (cut) printf "rust-coverage: ... %d more line(s) of failure output not shown\n", n - 400 }
+      p { out($0) }
+      /^test result: / { p = 0; open = 0 }
+      open && !p {
+        if ($0 ~ /^test .* \.\.\. /) done++
+        if ($0 != "") { seen++; last[seen % 5] = $0 }
+      }
+      END {
+        unfinished()
+        if (cut) printf "rust-coverage: ... %d more line(s) of failure output not shown\n", n - 400
+      }
     ' "$COV_OUT" > "$COV_OUT.failures"
     if [ -s "$COV_OUT.failures" ]; then
       cat "$COV_OUT.failures" >&2
     else
-      grep -E '^test .* FAILED$' "$COV_OUT" >&2 || true
       tail -n 40 "$COV_OUT" >&2
     fi
     rm -f "$COV_OUT.failures"

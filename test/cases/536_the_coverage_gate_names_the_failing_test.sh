@@ -12,8 +12,11 @@
 #      a passing test's `ok` line does not, and the exit is the gate's own 12, never cargo's 101
 #      (cargo-llvm-cov writes no export for a suite that failed, and neither does the stand-in);
 #   2. a green suite prints none of the harness's output: the `ok` lines stay out of the log;
-#   3. a failure the harness never reported in a `failures:` section (a binary killed by a
-#      signal) still names what it has: the `FAILED` line and the end of the output.
+#   3. a binary killed by a signal writes no `failures:` section and no `test result:` line
+#      (libtest runs tests in parallel and writes a test's line only when it completes), and
+#      --no-fail-fast runs later binaries after it: the gate prints that unfinished block, not
+#      the later binaries' `ok` lines, both when it is the only failure and when another binary
+#      failed normally in the same run.
 . "$ROOT/test/lib.sh"
 
 FX_EXP="$ROOT/test/fixtures/coverage/export.json"
@@ -116,20 +119,47 @@ case "$out" in
     echo "    a green run printed the harness's output"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1 ;;
 esac
 
-# ---------------------------------------------------------------- 3. no failures section
-cat > "$T/killed.txt" <<'HARNESS'
-
-running 3 tests
-test mesh::a_peer_answers ... ok
-test mesh::a_peer_that_crashes ... FAILED
-HARNESS
+# ---------------------------------------------------------------- 3. a killed binary
+# What a parallel libtest binary killed mid-run leaves on stdout: its header and the tests that
+# completed, then nothing, followed by a later binary of --all-targets that ran to the end.
+{
+  printf '\nrunning 3 tests\ntest mesh::a_peer_answers ... ok\n'
+  printf '\nrunning 60 tests\n'
+  i=1
+  while [ "$i" -le 60 ]; do printf 'test later::t%s ... ok\n' "$i"; i=$((i + 1)); done
+  printf '\ntest result: ok. 60 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\n'
+} > "$T/killed.txt"
 rc=0
 out="$(gate "$T/killed.txt" 101)" || rc=$?
 [ "$rc" = 12 ] || { echo "    a killed binary exited $rc, not the gate's 12"; exit 1; }
+for want in "ended without a \`test result:\` line" "running 3 tests" \
+            "1 test(s) of that binary completed" "test mesh::a_peer_answers ... ok"; do
+  case "$out" in
+    *"$want"*) ;;
+    *) echo "    a killed binary is not shown: missing $want"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1 ;;
+  esac
+done
 case "$out" in
-  *"test mesh::a_peer_that_crashes ... FAILED"*) ;;
-  *) echo "    a failure with no failures section is not named"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1 ;;
+  *"later::t"*|*"60 passed"*)
+    echo "    the gate printed the later green binary instead of the killed one"
+    printf '%s\n' "$out" | sed 's/^/    | /'; exit 1 ;;
 esac
+
+# A binary that failed normally and a killed one in the same run: both are shown.
+{
+  sed -n '1,/^test result: FAILED/p' "$T/red.txt"
+  printf '\nrunning 3 tests\ntest mesh::a_peer_answers ... ok\n'
+} > "$T/both.txt"
+rc=0
+out="$(gate "$T/both.txt" 101)" || rc=$?
+[ "$rc" = 12 ] || { echo "    a failing and a killed binary exited $rc, not the gate's 12"; exit 1; }
+for want in "---- the_same_run_again_is_within_policy stdout ----" \
+            "ended without a \`test result:\` line" "running 3 tests"; do
+  case "$out" in
+    *"$want"*) ;;
+    *) echo "    with a failing binary beside it, missing: $want"; printf '%s\n' "$out" | sed 's/^/    | /'; exit 1 ;;
+  esac
+done
 
 # The scratch TMPDIR holds nothing the gate left behind but the export of the green run.
 left="$(find "$T" -maxdepth 1 -name 'mj-cov-out.*' | LC_ALL=C sort)"
