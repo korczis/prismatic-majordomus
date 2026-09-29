@@ -509,6 +509,35 @@ proves the executable. The members form a graph with no cycles — a use case ne
 includes the features that name it, and nothing includes a feature — and a reference that
 resolves to nothing is skipped here and reported by the product validation.
 
+A subject's verdict is the one aggregation the claims and the rules already use, over its
+parts: a failing part makes the subject failing; otherwise the verdict is the weakest of the
+parts that can carry proof; otherwise the weakest of all its parts; and a subject with no
+part reads `no_test`. The totals of its parts, by state, are always beside the verdict, so
+one `not_run` part is never hidden behind it. A subject is judged over its own routes and
+its members' own verdicts, never over its members' raw routes. It is judged at the presented
+revision, as `evidence show --presented` judges a claim: a claim route is the claim join's
+proof, a command's routes go through the same truth table and the same monotone rule over
+the working ledger's uncommitted run, and the rules report, which judges the working tree,
+is capped by the presented tree, so a rule-derived `proven` becomes `inputs unchanged` when
+the presented tree is not its commit, as every other route does. A surface that reads records
+beyond the tracked ledger may weaken a route before anything is aggregated, and never
+strengthen it: the route keeps the weaker of the two states.
+
+A rule subject reads its rule proof's state through one declared mapping:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| Rule state | Evidence state | Can carry proof |
+|---|---|---|
+| `proven`, `inputs_unchanged`, `stale`, `failing`, `not_run`, `unrunnable` | the same word | yes |
+| `gated` | `not_run`: a gate refuses violations, and no recorded run proves the behaviour | yes |
+| `reviewed` | `no_test` | no |
+| `unproven` | `no_test` | only for a blocking rule, for which naming nothing is a defect |
+| `dangling` | `unrunnable`, and a subject made of it carries the finding `dangling_member` | yes |
+
+</div>
+
+
 A scenario and a mechanism are listed so that a reader sees them, and neither ever decides
 a verdict: the ledger holds no scenario run, and a mechanism is a gate or a script that
 refuses violations rather than a run that passed. A feature whose members reach no test a

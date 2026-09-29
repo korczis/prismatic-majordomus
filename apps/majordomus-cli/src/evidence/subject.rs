@@ -77,9 +77,17 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::capability::{CapabilityRegistry, Context, Provenance};
-use crate::evidence::{Ledger, TestId};
+use crate::evidence::freshness::{
+    aggregate, compare, freshness, weakened_by, Comparison, Judgement, Presented, Recorded,
+    Supplementary, TreeState, UNCOMMITTED_RUN,
+};
+use crate::evidence::{
+    ClaimProof, EvidenceReport, Execution, Ledger, PresentedRevision, ProofState, TestId,
+};
+use crate::git::Containment;
 use crate::index::Index;
 use crate::product::ProductModel;
+use crate::rules::{RuleProof, RuleState, RulesReport};
 use crate::Severity;
 
 /// The schema the committed index declares, validated against its published contract.
@@ -1376,6 +1384,720 @@ fn rendered(s: &SubjectIndex, version: &str) -> crate::error::Result<crate::gene
     ))
 }
 
+// ---------------------------------------------------------------- the judgement
+
+/// A subject's verdict over its parts: the one aggregation
+/// ([`crate::evidence::freshness::aggregate`]) over the declared order, and whether any part
+/// can carry proof. A failing part makes the subject failing; otherwise the weakest part
+/// that can carry proof decides; otherwise the weakest of all; and no part reads `no_test`.
+///
+/// ```
+/// use majordomus_cli::evidence::subject::verdict;
+/// use majordomus_cli::evidence::ProofState::{Failing, NoTest, NotRun, Proven};
+///
+/// assert_eq!(verdict(&[(Failing, true), (NotRun, true)]), (Failing, true));
+/// assert_eq!(verdict(&[(Proven, true), (NotRun, false)]), (Proven, true));
+/// assert_eq!(verdict(&[(NotRun, false)]), (NotRun, false));
+/// assert_eq!(verdict(&[]), (NoTest, false));
+/// ```
+pub fn verdict(parts: &[(ProofState, bool)]) -> (ProofState, bool) {
+    match aggregate(parts, ProofState::Failing) {
+        None => (ProofState::NoTest, false),
+        Some(s) => (s, parts.iter().any(|(_, carries)| *carries)),
+    }
+}
+
+/// Why a scenario route reads `not_run`, and why it never decides.
+const SCENARIO_DETAIL: &str = "a use case's scenario run is not recorded in the ledger; its \
+                               catalogue evidence is supplementary and never decides a verdict";
+
+/// Why a proven rule test with no execution reads `stale`.
+const NO_EXECUTION_DETAIL: &str = "the rules report named no execution for a proven test";
+
+/// What the repository can say about one subject at the presented revision: its verdict,
+/// the parts it was made from and the totals beside it.
+///
+/// ```
+/// use majordomus_cli::evidence::subject::SubjectEvidence;
+///
+/// let answer: SubjectEvidence = serde_json::from_value(serde_json::json!({
+///     "subject": "claim:x", "kind": "claim", "id": "x",
+///     "presented": { "revision": "working_tree", "tree": "clean" },
+///     "verdict": "not_run", "meaning": "", "carries_proof": true,
+///     "totals": { "not run": 1 }, "routes": [], "members": [], "mechanisms": [],
+///     "subject_findings": []
+/// }))
+/// .unwrap();
+/// assert_eq!(answer.verdict.label(), "not run");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "SubjectEvidence")]
+pub struct SubjectEvidence {
+    /// The subject's key.
+    pub subject: String,
+    /// Its kind.
+    pub kind: SubjectKind,
+    /// Its id within the kind.
+    pub id: String,
+    /// Its page on the site.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub page: Option<String>,
+    /// The revision it was judged at, as the claim report states it.
+    pub presented: PresentedRevision,
+    /// The verdict over its parts.
+    pub verdict: ProofState,
+    /// That verdict, in one sentence.
+    pub meaning: String,
+    /// Whether any part can carry proof.
+    pub carries_proof: bool,
+    /// A rule subject's state, as capped by the presented tree.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rule_state: Option<RuleState>,
+    /// The parts in each state, by the state's printed word.
+    pub totals: BTreeMap<String, usize>,
+    /// Its own routes, judged.
+    pub routes: Vec<RouteProof>,
+    /// Its members, each with its own verdict.
+    pub members: Vec<MemberProof>,
+    /// A rule's named paths that no runner drives.
+    pub mechanisms: Vec<String>,
+    /// Advisory findings about the subject; never a finding of the evidence report.
+    pub subject_findings: Vec<SubjectFinding>,
+}
+
+/// One route of a subject, judged at the presented revision.
+///
+/// ```
+/// use majordomus_cli::evidence::subject::{RouteProof, Via};
+///
+/// let r: RouteProof = serde_json::from_value(serde_json::json!({
+///     "via": "behaviour", "test": "suite:07_scope", "path": "test/cases/07_scope.sh",
+///     "state": "not_run", "carries_proof": true, "changed": []
+/// }))
+/// .unwrap();
+/// assert_eq!(r.route.via, Via::Behaviour);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EvidenceSubjectRouteProof")]
+pub struct RouteProof {
+    /// The route.
+    #[serde(flatten)]
+    pub route: Route,
+    /// Its state.
+    pub state: ProofState,
+    /// Whether it can carry proof.
+    pub carries_proof: bool,
+    /// The declared inputs that changed since the run, when they made it stale.
+    pub changed: Vec<String>,
+    /// Why, when the state alone does not say.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+    /// The execution behind the state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub execution: Option<Execution>,
+    /// The command that runs the test again.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reproduce: Option<String>,
+}
+
+/// One member of a subject, with the member's own verdict.
+///
+/// ```
+/// use majordomus_cli::evidence::subject::{MemberProof, SubjectKind};
+///
+/// let m: MemberProof = serde_json::from_value(serde_json::json!({
+///     "subject": "rule:project.x", "kind": "rule", "state": "not_run",
+///     "carries_proof": true, "rule_state": "gated"
+/// }))
+/// .unwrap();
+/// assert_eq!(m.kind, SubjectKind::Rule);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EvidenceSubjectMember")]
+pub struct MemberProof {
+    /// The member's key.
+    pub subject: String,
+    /// Its kind.
+    pub kind: SubjectKind,
+    /// Its verdict.
+    pub state: ProofState,
+    /// Whether it can carry proof.
+    pub carries_proof: bool,
+    /// A rule member's state, as capped by the presented tree.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rule_state: Option<RuleState>,
+}
+
+/// A route judgement as a surface that reads records beyond the tracked ledger may weaken
+/// it: called with the test, the execution the judge holds for it and the judge's
+/// judgement, before any aggregation. The identity leaves every judgement as the tracked
+/// ledger made it.
+///
+/// ```
+/// use majordomus_cli::evidence::subject::Adjust;
+///
+/// let identity: &Adjust<'_> = &|_, _, judgement| judgement;
+/// let _ = identity;
+/// ```
+pub type Adjust<'a> = dyn Fn(&TestId, Option<&Execution>, Judgement) -> Judgement + 'a;
+
+/// One subject's verdict, carries flag and capped rule state, as members read it.
+type Verdict = (ProofState, bool, Option<RuleState>);
+
+/// Judges many subjects at one presented revision with one set of comparisons.
+///
+/// **Precondition:** `claims` is [`crate::evidence::report_at`]`(index, ledger, presented,
+/// uncommitted)` and `rules` is [`crate::rules::report`]`(index, ledger)`, for the same
+/// index, the same ledger and the same `uncommitted`. At a presented commit the ledger is
+/// [`crate::evidence::freshness::ledger_at`] of it and `uncommitted` is
+/// [`crate::evidence::freshness::uncommitted`]; for the working tree it is empty.
+///
+/// The rules report judges at the working tree, so when the presented tree is not clean a
+/// rule-derived `proven` is re-judged at the presented revision and reads `inputs
+/// unchanged`, as every other route does. At a presented commit, every route the judge
+/// computes passes through the monotone rule over the working ledger's uncommitted run of
+/// its test, as the claim report applies it, so a subject never reads greener than
+/// `evidence show --presented`.
+///
+/// ```
+/// use majordomus_cli::evidence::subject::{self, Judge};
+/// use majordomus_cli::evidence::{report_at, Ledger, Presented};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let s = subject::index(&ctx.index, &ctx.product, &ctx.registry);
+/// let ledger = Ledger::empty();
+/// let claims = report_at(&ctx.index, &ledger, &Presented::WorkingTree, &[]);
+/// let rules = majordomus_cli::rules::report(&ctx.index, &ledger);
+/// let presented = Presented::WorkingTree;
+/// let mut judge = Judge::new(&s, &claims, &rules, &ledger, &[], repo.root(), &presented);
+/// let key = s.subjects.keys().find(|k| k.starts_with("capability:")).unwrap().clone();
+/// let answer = judge.subject(&key).unwrap();
+/// assert_eq!(answer.presented.revision, "working_tree");
+/// assert!(judge.subject("gate:x").is_err());
+/// ```
+pub struct Judge<'a> {
+    subjects: &'a SubjectIndex,
+    claims: BTreeMap<&'a str, &'a ClaimProof>,
+    rules: BTreeMap<&'a str, &'a RuleProof>,
+    revision: &'a PresentedRevision,
+    ledger: &'a Ledger,
+    uncommitted: &'a [Execution],
+    root: &'a Path,
+    presented: &'a Presented,
+    presented_tree: TreeState,
+    adjust: Option<&'a Adjust<'a>>,
+    comparisons: BTreeMap<String, Comparison>,
+    containments: BTreeMap<(String, String), Containment>,
+    memo: BTreeMap<String, Verdict>,
+}
+
+impl<'a> Judge<'a> {
+    /// A judge over one subject index and the two reports made for the same ledger.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::subject::{self, Judge};
+    /// use majordomus_cli::evidence::{report_at, Ledger, Presented};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let s = subject::index(&ctx.index, &ctx.product, &ctx.registry);
+    /// let ledger = Ledger::empty();
+    /// let claims = report_at(&ctx.index, &ledger, &Presented::WorkingTree, &[]);
+    /// let rules = majordomus_cli::rules::report(&ctx.index, &ledger);
+    /// let p = Presented::WorkingTree;
+    /// let _judge = Judge::new(&s, &claims, &rules, &ledger, &[], repo.root(), &p);
+    /// ```
+    pub fn new(
+        subjects: &'a SubjectIndex,
+        claims: &'a EvidenceReport,
+        rules: &'a RulesReport,
+        ledger: &'a Ledger,
+        uncommitted: &'a [Execution],
+        root: &'a Path,
+        presented: &'a Presented,
+    ) -> Self {
+        Judge {
+            subjects,
+            claims: claims.claims.iter().map(|c| (c.id.as_str(), c)).collect(),
+            rules: rules
+                .rules
+                .iter()
+                .map(|r| (r.rule.id.as_str(), r))
+                .collect(),
+            revision: &claims.presented,
+            ledger,
+            uncommitted,
+            root,
+            presented,
+            presented_tree: presented.tree(),
+            adjust: None,
+            comparisons: BTreeMap::new(),
+            containments: BTreeMap::new(),
+            memo: BTreeMap::new(),
+        }
+    }
+
+    /// Pass every route judgement that has a test identity through `adjust` before any
+    /// aggregation. The route keeps the weaker of the two states, so an adjuster can weaken
+    /// a route and never strengthen it. Without it, the judge is the identity adjuster.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::subject::{self, Adjust, Judge};
+    /// use majordomus_cli::evidence::{report_at, Ledger, Presented};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let s = subject::index(&ctx.index, &ctx.product, &ctx.registry);
+    /// let ledger = Ledger::empty();
+    /// let claims = report_at(&ctx.index, &ledger, &Presented::WorkingTree, &[]);
+    /// let rules = majordomus_cli::rules::report(&ctx.index, &ledger);
+    /// let p = Presented::WorkingTree;
+    /// let identity: &Adjust<'_> = &|_, _, j| j;
+    /// let key = s.subjects.keys().next().unwrap().clone();
+    /// let plain = Judge::new(&s, &claims, &rules, &ledger, &[], repo.root(), &p).subject(&key);
+    /// let adjusted = Judge::new(&s, &claims, &rules, &ledger, &[], repo.root(), &p)
+    ///     .with_adjust(identity)
+    ///     .subject(&key);
+    /// assert_eq!(plain.unwrap(), adjusted.unwrap());
+    /// ```
+    pub fn with_adjust(mut self, adjust: &'a Adjust<'a>) -> Self {
+        self.adjust = Some(adjust);
+        self
+    }
+
+    /// One comparison per evidence commit, shared by every route and subject.
+    fn comparison(&mut self, commit: &str) -> Comparison {
+        let (root, presented) = (self.root, self.presented);
+        self.comparisons
+            .entry(commit.to_string())
+            .or_insert_with(|| compare(root, commit, presented))
+            .clone()
+    }
+
+    /// One containment per pair of commits the monotone rule asks about.
+    fn contains(&mut self, descendant: &str, ancestor: &str) -> Containment {
+        let root = self.root;
+        *self
+            .containments
+            .entry((descendant.to_string(), ancestor.to_string()))
+            .or_insert_with(|| crate::git::contains(root, descendant, ancestor))
+    }
+
+    /// The monotone rule over the working ledger's uncommitted run of `test`, at a presented
+    /// commit, built exactly as the claim report builds it.
+    fn uncommitted_weakens(
+        &mut self,
+        judgement: Judgement,
+        test: &str,
+        execution: Option<&Execution>,
+    ) -> Judgement {
+        let (Some(p), Some(e)) = (self.presented.commit(), execution) else {
+            return judgement;
+        };
+        if judgement.state >= ProofState::Stale {
+            return judgement;
+        }
+        let uncommitted = self.uncommitted;
+        let Some(u) = uncommitted.iter().find(|u| u.test == test) else {
+            return judgement;
+        };
+        let record = Supplementary {
+            execution: u,
+            named: UNCOMMITTED_RUN,
+            after_evidence: self.contains(&u.commit, &e.commit),
+            in_presented: self.contains(p, &u.commit),
+        };
+        weakened_by(judgement, &[record])
+    }
+
+    /// A recorded run judged at the presented revision, as a behaviour route is.
+    fn at_presented(&mut self, route: &Route, execution: Option<&Execution>) -> Judgement {
+        let source = route
+            .path
+            .as_deref()
+            .and_then(TestId::of)
+            .map(|t| t.source())
+            .unwrap_or_default();
+        let (recorded, cmp, moved) = match execution {
+            None => (Recorded::NotRun, None, false),
+            Some(e) => {
+                let moved = e.outcome.proves() && e.digest_matches(self.root) == Some(false);
+                (Recorded::Ran(e), Some(self.comparison(&e.commit)), moved)
+            }
+        };
+        freshness(
+            recorded,
+            route.inputs.as_deref(),
+            &source,
+            moved,
+            cmp.as_ref(),
+            self.presented_tree,
+        )
+    }
+
+    /// One route of `entry`, judged, and whether the working ledger or the adjuster moved it
+    /// away from the state its own row gave.
+    fn route(&mut self, entry: &SubjectEntry, route: &Route) -> (RouteProof, bool) {
+        let test = route.test.as_deref();
+        let mut carries = true;
+        let mut reproduce = test.and(route.path.as_deref()).and_then(TestId::of);
+        let (judgement, execution) = match route.via {
+            Via::Claim => match self.claims.get(entry.id.as_str()) {
+                Some(c) => {
+                    carries = !matches!(c.status.as_str(), "planned" | "rejected");
+                    let j = Judgement {
+                        state: c.state,
+                        changed: c.changed.clone(),
+                        detail: c.detail.clone(),
+                    };
+                    (j, c.execution.clone())
+                }
+                None => {
+                    carries = !matches!(entry.status.as_deref(), Some("planned" | "rejected"));
+                    (missing("claim"), None)
+                }
+            },
+            Via::Rule => {
+                let proof = self.rules.get(entry.id.as_str()).and_then(|r| {
+                    r.tests
+                        .iter()
+                        .find(|t| Some(t.path.as_str()) == route.path.as_deref())
+                });
+                match proof {
+                    None => (missing("rule"), None),
+                    Some(t) => {
+                        let e = t.execution.clone();
+                        let j = if self.presented_tree != TreeState::Clean
+                            && t.state == ProofState::Proven
+                        {
+                            // the presented-tree cap: the rules report judged a clean
+                            // working tree, and the presented tree is weaker
+                            match &e {
+                                Some(e) => self.at_presented(route, Some(e)),
+                                None => Judgement {
+                                    state: ProofState::Stale,
+                                    changed: Vec::new(),
+                                    detail: Some(NO_EXECUTION_DETAIL.to_string()),
+                                },
+                            }
+                        } else {
+                            Judgement {
+                                state: t.state,
+                                changed: Vec::new(),
+                                detail: None,
+                            }
+                        };
+                        (j, e)
+                    }
+                }
+            }
+            Via::Behaviour | Via::Negative | Via::Example => {
+                let e = test.and_then(|t| self.ledger.latest(t)).cloned();
+                (self.at_presented(route, e.as_ref()), e)
+            }
+            Via::Scenario => {
+                carries = false;
+                reproduce = None;
+                let mut j = freshness(
+                    Recorded::NotRun,
+                    None,
+                    route.path.as_deref().unwrap_or_default(),
+                    false,
+                    None,
+                    self.presented_tree,
+                );
+                j.detail = Some(SCENARIO_DETAIL.to_string());
+                (j, None)
+            }
+        };
+        let own = judgement.state;
+        let judgement = match (route.via, test) {
+            (Via::Claim | Via::Scenario, _) | (_, None) => judgement,
+            (_, Some(t)) => self.uncommitted_weakens(judgement, t, execution.as_ref()),
+        };
+        let judgement = self.adjusted(route, execution.as_ref(), judgement);
+        let proof = RouteProof {
+            route: route.clone(),
+            state: judgement.state,
+            carries_proof: carries,
+            changed: judgement.changed,
+            detail: judgement.detail,
+            execution,
+            reproduce: reproduce.map(|t| t.reproduce()),
+        };
+        (proof, own != judgement.state)
+    }
+
+    /// The adjuster, when one is set and the route names a test: the route keeps the weaker
+    /// of the two states, and the adjusted reasons only when they are what weakened it.
+    fn adjusted(
+        &self,
+        route: &Route,
+        execution: Option<&Execution>,
+        judgement: Judgement,
+    ) -> Judgement {
+        let Some(adjust) = self.adjust else {
+            return judgement;
+        };
+        let Some(id) = route
+            .test
+            .as_ref()
+            .and(route.path.as_deref())
+            .and_then(TestId::of)
+        else {
+            return judgement;
+        };
+        let state = judgement.state;
+        let adjusted = adjust(&id, execution, judgement.clone());
+        let weaker = aggregate(
+            &[(state, true), (adjusted.state, true)],
+            ProofState::Failing,
+        )
+        .unwrap_or(state);
+        if weaker == state {
+            judgement
+        } else {
+            Judgement {
+                state: weaker,
+                ..adjusted
+            }
+        }
+    }
+}
+
+impl<'a> Judge<'a> {
+    /// Everything the repository can say about the subject `key` at the presented revision.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::subject::{self, Judge};
+    /// use majordomus_cli::evidence::{report_at, Ledger, Presented};
+    /// use majordomus_cli::synthetic::SyntheticRepository;
+    ///
+    /// let repo = SyntheticRepository::small().unwrap();
+    /// let ctx = repo.context().unwrap();
+    /// let s = subject::index(&ctx.index, &ctx.product, &ctx.registry);
+    /// let ledger = Ledger::empty();
+    /// let claims = report_at(&ctx.index, &ledger, &Presented::WorkingTree, &[]);
+    /// let rules = majordomus_cli::rules::report(&ctx.index, &ledger);
+    /// let p = Presented::WorkingTree;
+    /// let mut judge = Judge::new(&s, &claims, &rules, &ledger, &[], repo.root(), &p);
+    /// let err = judge.subject("feature:no-such").unwrap_err();
+    /// assert!(err.to_string().contains("feature:no-such"));
+    /// ```
+    pub fn subject(&mut self, key: &str) -> Result<SubjectEvidence, UnknownSubject> {
+        let subjects = self.subjects;
+        let entry = subjects.get(key)?;
+        let (routes, v) = self.evaluate(key, entry);
+        let members: Vec<MemberProof> = entry
+            .members
+            .iter()
+            .filter_map(|m| {
+                let kind = SubjectKind::parse(m)?.0;
+                let (state, carries_proof, rule_state) = self.verdict_of(m)?;
+                Some(MemberProof {
+                    subject: m.clone(),
+                    kind,
+                    state,
+                    carries_proof,
+                    rule_state,
+                })
+            })
+            .collect();
+        let mut totals: BTreeMap<String, usize> = BTreeMap::new();
+        let counted = routes.iter().map(|r| r.state).chain(
+            members
+                .iter()
+                .filter(|_| entry.kind != SubjectKind::Rule)
+                .map(|m| m.state),
+        );
+        for state in counted {
+            *totals.entry(state.label().to_string()).or_insert(0) += 1;
+        }
+        let subject_findings = self.findings(key, entry, &routes);
+        Ok(SubjectEvidence {
+            subject: key.to_string(),
+            kind: entry.kind,
+            id: entry.id.clone(),
+            page: entry.page.clone(),
+            presented: self.revision.clone(),
+            verdict: v.0,
+            meaning: v.0.meaning().to_string(),
+            carries_proof: v.1,
+            rule_state: v.2,
+            totals,
+            routes,
+            members,
+            mechanisms: entry.mechanisms.clone(),
+            subject_findings,
+        })
+    }
+
+    /// A member's verdict, memoised: members form a DAG, and each is judged once.
+    fn verdict_of(&mut self, key: &str) -> Option<Verdict> {
+        if let Some(v) = self.memo.get(key) {
+            return Some(*v);
+        }
+        let subjects = self.subjects;
+        let entry = subjects.subjects.get(key)?;
+        Some(self.evaluate(key, entry).1)
+    }
+
+    /// A subject's own judged routes and its verdict, memoised by key.
+    fn evaluate(&mut self, key: &str, entry: &'a SubjectEntry) -> (Vec<RouteProof>, Verdict) {
+        let mut routes = Vec::new();
+        let mut moved = Vec::new();
+        for r in &entry.routes {
+            let (proof, was_moved) = self.route(entry, r);
+            if was_moved {
+                moved.push(proof.state);
+            }
+            routes.push(proof);
+        }
+        let v = if entry.kind == SubjectKind::Rule {
+            self.rule_verdict(entry, &moved)
+        } else {
+            let mut parts: Vec<(ProofState, bool)> =
+                routes.iter().map(|r| (r.state, r.carries_proof)).collect();
+            for m in &entry.members {
+                if let Some((state, carries, _)) = self.verdict_of(m) {
+                    parts.push((state, carries));
+                }
+            }
+            let (state, carries) = verdict(&parts);
+            (state, carries, None)
+        };
+        self.memo.insert(key.to_string(), v);
+        (routes, v)
+    }
+
+    /// A rule subject: its rule proof through [`RuleState::as_proof`], capped by the
+    /// presented tree, and re-aggregated only with the routes something moved.
+    fn rule_verdict(&self, entry: &SubjectEntry, moved: &[ProofState]) -> Verdict {
+        let Some(proof) = self.rules.get(entry.id.as_str()) else {
+            return (ProofState::NoTest, false, None);
+        };
+        let mut s = proof.state;
+        if self.presented_tree != TreeState::Clean && s == RuleState::Proven {
+            s = RuleState::InputsUnchanged;
+        }
+        let (mut p, carries) = s.as_proof(proof.rule.class);
+        if !moved.is_empty() {
+            let parts: Vec<(ProofState, bool)> = std::iter::once((p, true))
+                .chain(moved.iter().map(|m| (*m, true)))
+                .collect();
+            p = aggregate(&parts, ProofState::Failing).unwrap_or(p);
+        }
+        (p, carries, Some(s))
+    }
+
+    /// The entry's structural findings, then one `dangling_member` per direct rule member
+    /// that names a missing path, then one `freshness_unknown` per evidence commit of its own
+    /// passing routes that git could not compare.
+    fn findings(
+        &mut self,
+        key: &str,
+        entry: &SubjectEntry,
+        routes: &[RouteProof],
+    ) -> Vec<SubjectFinding> {
+        let mut findings = entry.findings.clone();
+        for m in &entry.members {
+            let Some((SubjectKind::Rule, id)) = SubjectKind::parse(m) else {
+                continue;
+            };
+            if self
+                .rules
+                .get(id)
+                .is_some_and(|r| r.state == RuleState::Dangling)
+            {
+                findings.push(SubjectFinding {
+                    code: DANGLING_MEMBER.to_string(),
+                    severity: Severity::Warning,
+                    subject: key.to_string(),
+                    message: format!("the rule `{id}` names a path that is not in the tree"),
+                });
+            }
+        }
+        let commits: BTreeSet<&str> = routes
+            .iter()
+            .filter_map(|r| r.execution.as_ref())
+            .filter(|e| e.outcome.proves())
+            .map(|e| e.commit.as_str())
+            .collect();
+        for commit in commits {
+            let cmp = self.comparison(commit);
+            if cmp.containment == Containment::CommitUnknown || cmp.changed.is_none() {
+                let short: String = commit.chars().take(12).collect();
+                findings.push(SubjectFinding {
+                    code: FRESHNESS_UNKNOWN.to_string(),
+                    severity: Severity::Warning,
+                    subject: key.to_string(),
+                    message: format!(
+                        "git could not compare the evidence commit {short} with the presented \
+                         revision, so the routes recorded on it read stale; not knowing is \
+                         not proof"
+                    ),
+                });
+            }
+        }
+        findings
+    }
+}
+
+/// One subject, judged at the presented revision from the two reports of the given ledger.
+///
+/// The caller passes the ledger and its uncommitted executions as `evidence show
+/// --presented` reads them: the checkout's ledger and nothing for the working tree, the
+/// commit's ledger and [`crate::evidence::freshness::uncommitted`] for a presented commit.
+/// An unknown key costs no git work. No adjuster is set; a caller that needs one builds the
+/// [`Judge`] itself.
+///
+/// ```
+/// use majordomus_cli::evidence::subject;
+/// use majordomus_cli::evidence::{Ledger, Presented};
+/// use majordomus_cli::synthetic::SyntheticRepository;
+///
+/// let repo = SyntheticRepository::small().unwrap();
+/// let ctx = repo.context().unwrap();
+/// let (ledger, p) = (Ledger::empty(), Presented::WorkingTree);
+/// let ask = |key: &str| {
+///     subject::answer(&ctx.index, &ctx.product, &ctx.registry, &ledger, &[], &p, key)
+/// };
+/// assert!(ask("nonsense").is_err());
+/// let tool = ask("mcp:majordomus_capabilities").unwrap();
+/// assert_eq!(tool.members.len(), 1, "an alias is made of its capability");
+/// ```
+pub fn answer(
+    index: &Index,
+    product: &ProductModel,
+    registry: &CapabilityRegistry,
+    ledger: &Ledger,
+    uncommitted: &[Execution],
+    presented: &Presented,
+    key: &str,
+) -> Result<SubjectEvidence, UnknownSubject> {
+    let s = self::index(index, product, registry);
+    s.get(key)?;
+    let claims = crate::evidence::report_at(index, ledger, presented, uncommitted);
+    let rules = crate::rules::report(index, ledger);
+    let root = PathBuf::from(&index.repository.root);
+    Judge::new(&s, &claims, &rules, ledger, uncommitted, &root, presented).subject(key)
+}
+
+/// A route whose proof the report the judge was given does not carry.
+fn missing(what: &str) -> Judgement {
+    Judgement {
+        state: ProofState::NoTest,
+        changed: Vec::new(),
+        detail: Some(format!(
+            "the report the judge was given does not carry this {what}"
+        )),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2408,5 +3130,693 @@ mod tests {
             .to_string();
         assert!(refused.contains(PATH), "{refused}");
         assert!(refused.contains("nothing was written"), "{refused}");
+    }
+
+    // ------------------------------------------------------------ verdict and mapping
+
+    #[test]
+    fn a_verdict_is_the_one_aggregation() {
+        use ProofState::{Failing, NoTest, NotRun, Proven};
+        assert_eq!(verdict(&[(Failing, true), (NotRun, true)]), (Failing, true));
+        assert_eq!(verdict(&[(Proven, true), (NotRun, false)]), (Proven, true));
+        assert_eq!(verdict(&[(NotRun, false)]), (NotRun, false));
+        assert_eq!(verdict(&[]), (NoTest, false));
+        assert_eq!(verdict(&[(Proven, true), (NotRun, true)]), (NotRun, true));
+    }
+
+    #[test]
+    fn as_proof_is_the_one_declared_mapping() {
+        use crate::rules::Class;
+        use ProofState as P;
+        use RuleState as R;
+        for class in [Class::Blocking, Class::Advisory, Class::Unknown] {
+            let same = [
+                (R::Proven, P::Proven),
+                (R::InputsUnchanged, P::InputsUnchanged),
+                (R::Stale, P::Stale),
+                (R::Failing, P::Failing),
+                (R::NotRun, P::NotRun),
+                (R::Unrunnable, P::Unrunnable),
+            ];
+            for (r, p) in same {
+                assert_eq!(r.as_proof(class), (p, true), "{r:?}");
+            }
+            assert_eq!(R::Gated.as_proof(class), (P::NotRun, true));
+            assert_eq!(R::Reviewed.as_proof(class), (P::NoTest, false));
+            assert_eq!(R::Dangling.as_proof(class), (P::Unrunnable, true));
+            let blocking = class == Class::Blocking;
+            assert_eq!(
+                R::Unproven.as_proof(class),
+                (P::NoTest, blocking),
+                "{class:?}"
+            );
+        }
+    }
+
+    // ------------------------------------------------------------ the judge
+
+    /// A git repository of its own, with the one case the small world names.
+    struct Repo {
+        dir: tempfile::TempDir,
+    }
+
+    const CASE: &str = "test/cases/01_alpha.sh";
+
+    impl Repo {
+        fn new() -> Repo {
+            let repo = Repo {
+                dir: tempfile::tempdir().unwrap(),
+            };
+            repo.git(&["init", "-q"]);
+            repo.git(&["config", "user.email", "t@example.com"]);
+            repo.git(&["config", "user.name", "t"]);
+            repo.git(&["config", "commit.gpgsign", "false"]);
+            repo.write(CASE, "echo ok\n");
+            repo.write("lib/alpha.sh", "alpha\n");
+            repo.commit("one");
+            repo
+        }
+        fn root(&self) -> &Path {
+            self.dir.path()
+        }
+        fn git(&self, args: &[&str]) -> String {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(self.root())
+                .args(args)
+                .output()
+                .unwrap();
+            assert!(out.status.success(), "git {args:?}: {out:?}");
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        }
+        fn write(&self, path: &str, text: &str) {
+            let p = self.root().join(path);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        }
+        fn commit(&self, message: &str) -> String {
+            self.git(&["add", "-A"]);
+            self.git(&["commit", "-q", "-m", message]);
+            self.git(&["rev-parse", "HEAD"])
+        }
+        fn presented(&self, tree: TreeState) -> Presented {
+            crate::evidence::freshness::presented_commit(self.root(), "HEAD", Some(tree)).unwrap()
+        }
+        /// The digest the ledger records for the case as it is now.
+        fn digest(&self) -> String {
+            crate::evidence::digest_of(&std::fs::read(self.root().join(CASE)).unwrap())
+        }
+    }
+
+    /// One execution, built the way the ledger reads one.
+    fn ran(test: &str, outcome: &str, commit: &str, tree: &str, digest: &str) -> Execution {
+        let source = TestId::of(CASE).unwrap().source();
+        serde_json::from_value(json!({
+            "test": test, "runner": "suite", "source": source, "outcome": outcome,
+            "seconds": 1, "commit": commit, "working_tree": tree, "digest": digest,
+            "at": "2026-09-26T00:00:00Z", "origin": "local", "command": "bash test/run.sh x"
+        }))
+        .unwrap()
+    }
+
+    fn ledger(executions: &[&Execution]) -> Ledger {
+        let mut l = Ledger::empty();
+        l.merge(executions.iter().map(|e| (*e).clone()));
+        l
+    }
+
+    /// A claim proof as the claim join would give it.
+    fn claim_proof(id: &str, status: &str, state: ProofState, e: Option<&Execution>) -> Value {
+        json!({
+            "id": id, "claim": id, "status": status, "source": "docs/A.md",
+            "test_path": CASE, "test": "suite:01_alpha", "state": state, "meaning": "",
+            "execution": e, "changed": [], "reproduce": "bash test/run.sh 01_alpha"
+        })
+    }
+
+    /// A claim report over `claims`, stating `presented` as the report would.
+    fn claims_report(claims: Vec<Value>, presented: &Presented) -> EvidenceReport {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let mut v =
+            serde_json::to_value(crate::evidence::report(&index, &Ledger::empty())).unwrap();
+        v["claims"] = Value::Array(claims);
+        v["presented"] = json!({
+            "revision": presented.commit().unwrap_or("working_tree"),
+            "tree": presented.tree(),
+        });
+        serde_json::from_value(v).unwrap()
+    }
+
+    /// A test proof as the rules report would give it.
+    fn test_proof(state: ProofState, e: Option<&Execution>) -> Value {
+        json!({
+            "path": CASE, "kind": crate::rules::ArtifactKind::Case, "present": true,
+            "test": "suite:01_alpha", "state": state, "meaning": "", "execution": e,
+            "reproduce": "bash test/run.sh 01_alpha"
+        })
+    }
+
+    /// A rules report over `(id, state, tests)`, each a blocking rule, on the synthetic
+    /// report's shape.
+    fn rules_report(rules: &[(&str, RuleState, Vec<Value>)]) -> RulesReport {
+        let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+        let index = repo.index().unwrap();
+        let mut v = serde_json::to_value(crate::rules::report(&index, &Ledger::empty())).unwrap();
+        let template = v["rules"][0].clone();
+        let rules: Vec<Value> = rules
+            .iter()
+            .map(|(id, state, tests)| {
+                let mut r = template.clone();
+                r["rule"]["id"] = json!(id);
+                r["rule"]["class"] = json!(crate::rules::Class::Blocking);
+                r["rule"]["path"] = json!(".ai/repo/rules/project/alpha.v1.md");
+                r["tests"] = json!(tests);
+                r["state"] = json!(state);
+                r
+            })
+            .collect();
+        v["rules"] = Value::Array(rules);
+        serde_json::from_value(v).unwrap()
+    }
+
+    /// The small world: `claim:alpha`, `rule:project.alpha` and `command:version` all reach
+    /// `suite:01_alpha`, and `feature:alpha` is made of them.
+    fn judged(
+        d: &Declarations,
+        g: &Given<'_>,
+        root: &Path,
+        presented: &Presented,
+        keys: &[&str],
+    ) -> Vec<SubjectEvidence> {
+        let s = derive(d);
+        let mut judge = Judge::new(
+            &s,
+            g.claims,
+            g.rules,
+            g.ledger,
+            g.uncommitted,
+            root,
+            presented,
+        );
+        keys.iter().map(|k| judge.subject(k).unwrap()).collect()
+    }
+
+    /// What a judge is given besides the index.
+    struct Given<'a> {
+        claims: &'a EvidenceReport,
+        rules: &'a RulesReport,
+        ledger: &'a Ledger,
+        uncommitted: &'a [Execution],
+    }
+
+    fn route(answer: &SubjectEvidence, via: Via) -> &RouteProof {
+        answer
+            .routes
+            .iter()
+            .find(|r| r.route.via == via)
+            .unwrap_or_else(|| panic!("{} has no {via:?} route", answer.subject))
+    }
+
+    /// `claim:alpha`, `rule:project.alpha` and `command:version` each reach `suite:01_alpha`;
+    /// `feature:alpha` is made of the three.
+    fn small() -> Declarations {
+        Declarations {
+            claims: vec![claim("alpha", "guaranteed", "lib/alpha.sh", CASE)],
+            rules: vec![RuleDecl {
+                id: "project.alpha".into(),
+                status: "active".into(),
+                path: ".ai/repo/rules/project/alpha.v1.md".into(),
+                tests: strings(&[CASE]),
+            }],
+            features: vec![FeatureDecl {
+                id: "alpha".into(),
+                status: "stable".into(),
+                claims: strings(&["alpha"]),
+                rules: strings(&["project.alpha"]),
+                commands: strings(&["version"]),
+                ..FeatureDecl::default()
+            }],
+            commands: strings(&["version"]),
+            cases: vec![case("01_alpha", &["version"], &[])],
+            ..Declarations::default()
+        }
+    }
+
+    #[test]
+    fn a_claim_route_is_the_claim_join() {
+        let repo = Repo::new();
+        let mut proof = claim_proof("alpha", "guaranteed", ProofState::Stale, None);
+        proof["changed"] = json!(["lib/alpha.sh"]);
+        proof["detail"] = json!("the join's own reason");
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        for presented in [Presented::WorkingTree, repo.presented(TreeState::Clean)] {
+            let claims = claims_report(vec![proof.clone()], &presented);
+            let g = Given {
+                claims: &claims,
+                rules: &rules,
+                ledger: &empty,
+                uncommitted: &[],
+            };
+            let a = &judged(&small(), &g, repo.root(), &presented, &["claim:alpha"])[0];
+            let r = route(a, Via::Claim);
+            assert_eq!(r.state, ProofState::Stale, "{presented:?}");
+            assert_eq!(r.changed, vec!["lib/alpha.sh".to_string()]);
+            assert_eq!(r.detail.as_deref(), Some("the join's own reason"));
+            assert_eq!((a.verdict, a.carries_proof), (ProofState::Stale, true));
+        }
+    }
+
+    #[test]
+    fn a_rule_subject_is_its_rule_proof_through_as_proof() {
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let e = ran("suite:01_alpha", "pass", &c1, "clean", &repo.digest());
+        let rules = rules_report(&[(
+            "project.alpha",
+            RuleState::Gated,
+            vec![test_proof(ProofState::Proven, Some(&e))],
+        )]);
+        let p = Presented::WorkingTree;
+        let claims = claims_report(vec![], &p);
+        let l = ledger(&[&e]);
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &l,
+            uncommitted: &[],
+        };
+        let a = &judged(&small(), &g, repo.root(), &p, &["rule:project.alpha"])[0];
+        assert_eq!(route(a, Via::Rule).state, ProofState::Proven);
+        assert_eq!(
+            a.verdict,
+            ProofState::NotRun,
+            "a gated rule is not a recorded run"
+        );
+        assert_eq!(a.rule_state, Some(RuleState::Gated));
+        assert!(a.carries_proof);
+    }
+
+    #[test]
+    fn a_command_route_is_judged_at_the_presented_revision() {
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let e = ran("suite:01_alpha", "pass", &c1, "clean", &repo.digest());
+        let l = ledger(&[&e]);
+        let rules = rules_report(&[]);
+        let at = |presented: &Presented| {
+            let claims = claims_report(vec![], presented);
+            let g = Given {
+                claims: &claims,
+                rules: &rules,
+                ledger: &l,
+                uncommitted: &[],
+            };
+            let a = judged(&small(), &g, repo.root(), presented, &["command:version"]);
+            let r = route(&a[0], Via::Behaviour);
+            (r.state, r.detail.clone())
+        };
+        // C2 commits only the ledger: nothing the route could be about changed
+        repo.write(crate::evidence::LEDGER_PATH, "{}\n");
+        repo.commit("the ledger");
+        assert_eq!(at(&repo.presented(TreeState::Clean)).0, ProofState::Proven);
+        assert_eq!(
+            at(&repo.presented(TreeState::Dirty)).0,
+            ProofState::InputsUnchanged,
+            "a dirty presented tree withholds proven"
+        );
+        // C3 commits an unrelated file, and the route declares no inputs
+        repo.write("docs/other.md", "other\n");
+        repo.commit("other");
+        let (state, detail) = at(&repo.presented(TreeState::Clean));
+        assert_eq!(state, ProofState::Stale);
+        assert!(detail.is_some(), "a stale route says why");
+    }
+
+    #[test]
+    fn an_uncommitted_clean_failure_caps_a_behaviour_route_at_a_commit() {
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let e = ran("suite:01_alpha", "pass", &c1, "clean", &repo.digest());
+        repo.write(crate::evidence::LEDGER_PATH, "{}\n");
+        let c2 = repo.commit("the ledger");
+        let failed = ran("suite:01_alpha", "fail", &c2, "clean", &repo.digest());
+        let l = ledger(&[&e]);
+        let rules = rules_report(&[]);
+        let uncommitted = vec![failed];
+        let at = |presented: &Presented| {
+            let claims = claims_report(vec![], presented);
+            let g = Given {
+                claims: &claims,
+                rules: &rules,
+                ledger: &l,
+                uncommitted: &uncommitted,
+            };
+            let a = judged(&small(), &g, repo.root(), presented, &["command:version"]);
+            route(&a[0], Via::Behaviour).clone()
+        };
+        let r = at(&repo.presented(TreeState::Clean));
+        assert_eq!(r.state, ProofState::Stale);
+        assert!(r.detail.unwrap().contains(UNCOMMITTED_RUN));
+        assert_eq!(at(&Presented::WorkingTree).state, ProofState::Proven);
+    }
+
+    #[test]
+    fn a_failure_outranks_an_absence_in_a_subject() {
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let failed = ran("suite:01_alpha", "fail", &c1, "clean", &repo.digest());
+        let l = ledger(&[&failed]);
+        let p = Presented::WorkingTree;
+        let claims = claims_report(
+            vec![claim_proof("alpha", "guaranteed", ProofState::NotRun, None)],
+            &p,
+        );
+        let rules = rules_report(&[(
+            "project.alpha",
+            RuleState::NotRun,
+            vec![test_proof(ProofState::NotRun, None)],
+        )]);
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &l,
+            uncommitted: &[],
+        };
+        let a = judged(
+            &small(),
+            &g,
+            repo.root(),
+            &p,
+            &["command:version", "feature:alpha"],
+        );
+        assert_eq!(a[0].verdict, ProofState::Failing);
+        assert_eq!(a[1].verdict, ProofState::Failing, "{:?}", a[1].members);
+    }
+
+    #[test]
+    fn a_scenario_never_decides_unless_it_is_all_there_is() {
+        let repo = Repo::new();
+        let mut d = small();
+        d.use_cases = vec![UseCaseDecl {
+            id: "lone".into(),
+            status: Some("active".into()),
+            path: ".ai/repo/use-cases/lone.md".into(),
+            ..UseCaseDecl::default()
+        }];
+        d.features = vec![FeatureDecl {
+            id: "f".into(),
+            status: "stable".into(),
+            claims: strings(&["alpha"]),
+            use_cases: strings(&["lone"]),
+            ..FeatureDecl::default()
+        }];
+        let p = Presented::WorkingTree;
+        let claims = claims_report(
+            vec![claim_proof("alpha", "guaranteed", ProofState::Proven, None)],
+            &p,
+        );
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &empty,
+            uncommitted: &[],
+        };
+        let a = judged(&d, &g, repo.root(), &p, &["use_case:lone", "feature:f"]);
+        assert_eq!(
+            (a[0].verdict, a[0].carries_proof),
+            (ProofState::NotRun, false)
+        );
+        assert!(route(&a[0], Via::Scenario).detail.is_some());
+        assert_eq!(a[1].verdict, ProofState::Proven);
+    }
+
+    #[test]
+    fn git_that_cannot_compare_is_a_finding() {
+        let repo = Repo::new();
+        let mut d = small();
+        d.cases = vec![case("01_alpha", &["version"], &["version"])];
+        let e = ran(
+            "suite:01_alpha",
+            "pass",
+            &"f".repeat(40),
+            "clean",
+            &repo.digest(),
+        );
+        let l = ledger(&[&e]);
+        let p = Presented::WorkingTree;
+        let claims = claims_report(vec![], &p);
+        let rules = rules_report(&[]);
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &l,
+            uncommitted: &[],
+        };
+        let a = &judged(&d, &g, repo.root(), &p, &["command:version"])[0];
+        assert_eq!(a.routes.len(), 2, "a behaviour and a negative route");
+        assert!(a.routes.iter().all(|r| r.state == ProofState::Stale));
+        let unknown: Vec<_> = a
+            .subject_findings
+            .iter()
+            .filter(|f| f.code == FRESHNESS_UNKNOWN)
+            .collect();
+        assert_eq!(unknown.len(), 1, "one per commit, not one per route");
+        assert!(unknown[0].message.contains(&"f".repeat(12)));
+    }
+
+    #[test]
+    fn a_dangling_rule_member_is_named() {
+        let repo = Repo::new();
+        let p = Presented::WorkingTree;
+        let claims = claims_report(vec![], &p);
+        let rules = rules_report(&[("project.alpha", RuleState::Dangling, vec![])]);
+        let empty = Ledger::empty();
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &empty,
+            uncommitted: &[],
+        };
+        let a = &judged(&small(), &g, repo.root(), &p, &["feature:alpha"])[0];
+        let dangling: Vec<_> = a
+            .subject_findings
+            .iter()
+            .filter(|f| f.code == DANGLING_MEMBER)
+            .collect();
+        assert_eq!(dangling.len(), 1, "{:?}", a.subject_findings);
+        assert!(dangling[0].message.contains("project.alpha"));
+    }
+
+    #[test]
+    fn an_unknown_subject_is_refused_by_name() {
+        let repo = Repo::new();
+        let p = Presented::WorkingTree;
+        let claims = claims_report(vec![], &p);
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        let s = derive(&small());
+        let mut judge = Judge::new(&s, &claims, &rules, &empty, &[], repo.root(), &p);
+        for key in ["feature:no-such", "nonsense", "gate:x"] {
+            let err = judge.subject(key).unwrap_err();
+            assert!(err.to_string().contains(key), "{err}");
+        }
+    }
+
+    #[test]
+    fn the_answer_names_the_revision_it_judged() {
+        let repo = Repo::new();
+        let head = repo.git(&["rev-parse", "HEAD"]);
+        let rules = rules_report(&[]);
+        let empty = Ledger::empty();
+        for (p, revision) in [
+            (Presented::WorkingTree, "working_tree".to_string()),
+            (repo.presented(TreeState::Clean), head.clone()),
+        ] {
+            let claims = claims_report(vec![], &p);
+            let g = Given {
+                claims: &claims,
+                rules: &rules,
+                ledger: &empty,
+                uncommitted: &[],
+            };
+            let a = &judged(&small(), &g, repo.root(), &p, &["command:version"])[0];
+            assert_eq!(a.presented, claims.presented);
+            assert_eq!(a.presented.revision, revision);
+        }
+    }
+
+    #[test]
+    fn totals_count_every_part_by_label() {
+        let repo = Repo::new();
+        let p = Presented::WorkingTree;
+        let claims = claims_report(
+            vec![claim_proof("alpha", "guaranteed", ProofState::NotRun, None)],
+            &p,
+        );
+        let rules = rules_report(&[(
+            "project.alpha",
+            RuleState::NotRun,
+            vec![test_proof(ProofState::NotRun, None)],
+        )]);
+        let empty = Ledger::empty();
+        let g = Given {
+            claims: &claims,
+            rules: &rules,
+            ledger: &empty,
+            uncommitted: &[],
+        };
+        let a = judged(
+            &small(),
+            &g,
+            repo.root(),
+            &p,
+            &["feature:alpha", "rule:project.alpha"],
+        );
+        // three members, each not run; the feature has no route of its own
+        assert_eq!(a[0].totals, BTreeMap::from([("not run".to_string(), 3)]));
+        // a rule counts its routes only
+        assert_eq!(a[1].totals, BTreeMap::from([("not run".to_string(), 1)]));
+    }
+
+    /// A world where one rule is the only member of a feature.
+    fn rule_only() -> Declarations {
+        let mut d = small();
+        d.features = vec![FeatureDecl {
+            id: "f".into(),
+            status: "stable".into(),
+            rules: strings(&["project.alpha"]),
+            ..FeatureDecl::default()
+        }];
+        d
+    }
+
+    #[test]
+    fn a_dirty_presented_tree_caps_every_rule_derived_state() {
+        // a clean checkout at C1, and the rule's one case passed there on a clean tree: the
+        // rules report, which judges the working tree, reads it proven
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let e = ran("suite:01_alpha", "pass", &c1, "clean", &repo.digest());
+        let rules = rules_report(&[(
+            "project.alpha",
+            RuleState::Proven,
+            vec![test_proof(ProofState::Proven, Some(&e))],
+        )]);
+        let l = ledger(&[&e]);
+        let at = |tree: TreeState| {
+            let p = repo.presented(tree);
+            let claims = claims_report(vec![], &p);
+            let g = Given {
+                claims: &claims,
+                rules: &rules,
+                ledger: &l,
+                uncommitted: &[],
+            };
+            judged(
+                &rule_only(),
+                &g,
+                repo.root(),
+                &p,
+                &["rule:project.alpha", "feature:f"],
+            )
+        };
+        let dirty = at(TreeState::Dirty);
+        let r = route(&dirty[0], Via::Rule);
+        assert_eq!(r.state, ProofState::InputsUnchanged);
+        assert!(r.detail.is_some(), "the cap states A1's reason");
+        assert_eq!(dirty[0].verdict, ProofState::InputsUnchanged);
+        assert_eq!(dirty[0].rule_state, Some(RuleState::InputsUnchanged));
+        assert_eq!(dirty[0].totals.get("proven"), None);
+        assert_eq!(dirty[1].verdict, ProofState::InputsUnchanged);
+        assert_eq!(
+            dirty[1].members[0].rule_state,
+            Some(RuleState::InputsUnchanged)
+        );
+        // the control: a clean presented tree leaves all three proven
+        let clean = at(TreeState::Clean);
+        assert_eq!(route(&clean[0], Via::Rule).state, ProofState::Proven);
+        assert_eq!(clean[0].verdict, ProofState::Proven);
+        assert_eq!(clean[0].rule_state, Some(RuleState::Proven));
+        assert_eq!(clean[1].verdict, ProofState::Proven);
+    }
+
+    #[test]
+    fn an_adjuster_weakens_before_aggregation_and_never_strengthens() {
+        let repo = Repo::new();
+        let c1 = repo.git(&["rev-parse", "HEAD"]);
+        let e = ran("suite:01_alpha", "pass", &c1, "clean", &repo.digest());
+        let l = ledger(&[&e]);
+        let p = Presented::WorkingTree;
+        let claims = claims_report(
+            vec![claim_proof(
+                "alpha",
+                "guaranteed",
+                ProofState::Proven,
+                Some(&e),
+            )],
+            &p,
+        );
+        let rules = rules_report(&[(
+            "project.alpha",
+            RuleState::Proven,
+            vec![test_proof(ProofState::Proven, Some(&e))],
+        )]);
+        let mut d = rule_only();
+        d.features.extend(small().features);
+        let keys = [
+            "command:version",
+            "claim:alpha",
+            "rule:project.alpha",
+            "feature:f",
+        ];
+        let s = derive(&d);
+        let run = |adjust: Option<&Adjust<'_>>, ledger: &Ledger| {
+            let mut judge = Judge::new(&s, &claims, &rules, ledger, &[], repo.root(), &p);
+            if let Some(a) = adjust {
+                judge = judge.with_adjust(a);
+            }
+            keys.iter()
+                .map(|k| judge.subject(k).unwrap())
+                .collect::<Vec<_>>()
+        };
+        let plain = run(None, &l);
+        assert!(
+            plain.iter().all(|a| a.verdict == ProofState::Proven),
+            "{plain:?}"
+        );
+        let identity: &Adjust<'_> = &|_, _, j| j;
+        assert_eq!(run(Some(identity), &l), plain);
+
+        let cap: &Adjust<'_> = &|t, _, j| match t.as_string().as_str() {
+            "suite:01_alpha" => Judgement {
+                state: ProofState::Stale,
+                changed: Vec::new(),
+                detail: Some("capped by a record".into()),
+            },
+            _ => j,
+        };
+        let capped = run(Some(cap), &l);
+        assert_eq!(route(&capped[0], Via::Behaviour).state, ProofState::Stale);
+        for a in &capped {
+            assert_eq!(a.verdict, ProofState::Stale, "{}", a.subject);
+        }
+        assert_eq!(
+            capped[2].rule_state,
+            Some(RuleState::Proven),
+            "the rule state stays"
+        );
+
+        let failed = ran("suite:01_alpha", "fail", &c1, "clean", &repo.digest());
+        let proven: &Adjust<'_> = &|_, _, _| Judgement {
+            state: ProofState::Proven,
+            changed: Vec::new(),
+            detail: None,
+        };
+        let never = run(Some(proven), &ledger(&[&failed]));
+        assert_eq!(route(&never[0], Via::Behaviour).state, ProofState::Failing);
     }
 }
