@@ -14,7 +14,7 @@ a server this worktree built and started itself. It is phase 01 of the Cockpit I
 control-plane pack and it implements nothing: it establishes what exists, proves it by
 running it, and says what the smallest safe next phase is.
 
-The architecture it measures against is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md)
+The architecture it measures against is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md)
 and [`DEVELOPMENT_RUNTIME.md`](@/docs/development-runtime.md): one canonical runtime — the
 capability registry of the Rust executable — and every surface a consumer of it. This
 document is the evidence behind that decision and the plan that follows from it.

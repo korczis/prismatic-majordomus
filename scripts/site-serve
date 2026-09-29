@@ -1,7 +1,14 @@
 #!/usr/bin/env bash
-# site-serve — local preview with the production path prefix, so links resolve as deployed.
+# site-serve — local preview of the pages scripts/site-build writes, served as built.
+# The preview serves the build's own files rather than re-rendering with `zola serve`: zola serve
+# renders site/content in memory, so the pass that pins each committed page's source links to
+# the built commit (site-build pin_source_refs) never runs on what it serves, and every such link
+# would name the unresolvable placeholder ref. There is no watch mode: rebuild by running this again.
 set -eu
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-"$ROOT/scripts/site-build"
-echo "serving http://127.0.0.1:1111/prismatic-majordomus/  (Ctrl-C to stop; rebuild with scripts/site-build in another shell)"
-cd "$ROOT/site" && zola serve --base-url 127.0.0.1 --port 1111
+PORT="${SITE_SERVE_PORT:-1111}"
+OUT="$(mktemp -d "${TMPDIR:-/tmp}/mj-site-serve.XXXXXX")"
+trap 'rm -rf "$OUT"' EXIT
+"$ROOT/scripts/site-build" --base-url "http://127.0.0.1:$PORT" --output-dir "$OUT"
+echo "serving http://127.0.0.1:$PORT/  (Ctrl-C to stop; run scripts/site-serve again to rebuild)"
+cd "$OUT" && python3 -m http.server "$PORT" --bind 127.0.0.1

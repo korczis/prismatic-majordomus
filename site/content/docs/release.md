@@ -10,7 +10,7 @@ source = "docs/RELEASE.md"
 
 What this project has shipped, what it would ship next, and the changelog that says so are
 one typed value, `release::Changelog`, composed by one module under
-[`apps/majordomus-cli/src/release/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/release). Every surface
+[`apps/majordomus-cli/src/release/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli/src/release). Every surface
 that states any of it renders that value: `majordomus release` on the command line, the HTTP
 route `/api/v1/changelog`, the MCP tool `majordomus_changelog` and the resource
 `majordomus://changelog`, and the generated document under `docs/generated/`. Nothing in it
@@ -19,8 +19,8 @@ Behaviour as implemented and tested; where this document and the executable disa
 document is wrong and changes in the same commit.
 
 The commands, their arguments and their executable examples are in the generated reference
-([`generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md), under `majordomus release`); the capabilities, their
-routes and their benchmark cases in [`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/capabilities.md),
+([`generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/cli.md), under `majordomus release`); the capabilities, their
+routes and their benchmark cases in [`generated/capabilities.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/capabilities.md),
 module `release`. Neither is restated here.
 
 ## The version is measured, not claimed
@@ -66,7 +66,7 @@ majordomus release bump                        # raise the one authored version 
 
 There is **one** engine and it lives in `apps/majordomus-cli/src/release/compat.rs`, reading
 `release/surface.rs`. The gate is an adapter over it; so is the Cockpit panel, the HTTP
-route, the MCP tool and the writer. Until [ADR 0051](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md)
+route, the MCP tool and the writer. Until [ADR 0051](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md)
 there were two answers — a shell comparison in CI and a commit-subject inference inside
 `release bump` — and the inference won, because the writer runs before the gate does.
 
@@ -91,7 +91,7 @@ The **release record** cannot hold it at all today. `release/v1`
 (`share/schemas/majordomus/release/release.v1.schema.json`) is `additionalProperties: false`
 and declares no field for a breaking change, and a record is written by the release workflow
 from the artifacts it published and by nobody else
-([`.ai/repo/releases/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/releases/README.md)) — so an unreleased version
+([`.ai/repo/releases/README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/releases/README.md)) — so an unreleased version
 has no record for anything to be written into. The smallest field that would close this is a
 proposal, not a change made here: a schema change does not belong inside a documentation
 change.
@@ -323,7 +323,7 @@ Counts of what that yields go stale; measure them instead:
 
 The version is authored in exactly one place, the `[package] version` of
 `apps/majordomus-cli/Cargo.toml`, and every other statement of it is derived
-([ADR 0085](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md),
+([ADR 0085](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0085-the-version-is-authored-once-and-shipped-as-a-projection.md),
 `project.release-is-a-projection` v2):
 
 ```text
@@ -423,7 +423,7 @@ was made and a changelog that was not regenerated disagree, and `generate --chec
 
 Nothing configures that last row. `release bump` writes tracked files, which
 `command_graph/semantics.rs` annotates as `RepositoryMutation`, and the exposure policy of
-[ADR 0027](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md)
+[ADR 0027](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0027-a-command-is-declared-once-and-every-surface-is-a-projection.md)
 keeps repository mutations off every machine surface. No capability declares it, and
 `majordomus commands explain executable.release.bump` prints the reason each surface
 withholds it. The read half is two capabilities, and the command line renders them by
@@ -498,7 +498,7 @@ thing those answers can be checked against.
 
 ## Related
 
-- [ADR 0029](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md) — the decision behind this document, and the four alternatives it rejected
+- [ADR 0029](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0029-the-changelog-is-a-projection-and-the-version-has-one-writer.md) — the decision behind this document, and the four alternatives it rejected
 - [`DISTRIBUTION.md`](@/docs/distribution.md) — how the tool is packaged, published and installed, and the release pipeline that writes the records this reads
 - [`COMMANDS.md`](@/docs/commands.md) — the effect model and the exposure policy that withhold `release bump`
 - [`CAPABILITIES.md`](@/docs/capabilities.md) — the registry the two read capabilities are declared in

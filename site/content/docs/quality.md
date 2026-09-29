@@ -11,8 +11,8 @@ source = "docs/QUALITY.md"
 What the Rust crate's exported surface is held to, how it is measured, and what to do when
 the gate says no.
 
-The rules are [`project.rust-public-api-quality`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/rust-public-api-quality.v1.md)
-and [`project.operation-transport-parity`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/operation-transport-parity.v1.md);
+The rules are [`project.rust-public-api-quality`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/rust-public-api-quality.v1.md)
+and [`project.operation-transport-parity`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/operation-transport-parity.v1.md);
 the decision behind them is ADR 0023.
 This page is the working reference: the rules say why, this says how.
 

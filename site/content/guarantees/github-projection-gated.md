@@ -50,7 +50,7 @@ Ratcheted against `.ai/repo/ci/github-drift-baseline.txt`:
 
 
 The baseline may fall and may never rise. Writing it is a deliberate act, in the same idiom
-[`.ai/repo/claim-proof-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/claim-proof-baseline.txt) already uses
+[`.ai/repo/claim-proof-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/claim-proof-baseline.txt) already uses
 for the rules and claims that name nothing a machine can run.
 
 A gate that cannot reach the remote — no `gh`, no token, no permission — exits 12 and names
@@ -97,5 +97,5 @@ model and never projected breaks the ratchet, a backlog at its baseline passes, 
 region and an unmanaged remote issue are refused, and a gate with no baseline refuses to
 guess one. `test/cases/45_github_projection.sh` proves the six states it reads.
 
-The rule is [`project.github-projection-gated@1`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/github-projection-gated.v1.md).
+The rule is [`project.github-projection-gated@1`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/github-projection-gated.v1.md).
 {% endraw %}
