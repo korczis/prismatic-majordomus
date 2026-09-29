@@ -256,6 +256,18 @@ gates:
     runs: scripts/ci/cockpit-projection-check
     summary: no Cockpit page reads the index directly; every fact a page shows is what a capability answered through Context::execute (ADR 0012)
 
+  # The same scan widened to what ADR 0089 (project.ui-derived-state) asks of an interface:
+  # no Cockpit page reads the registry, the product model or the Why catalogue itself outside
+  # the navigation's declared allow-list, no health check is ok by literal, no enum defaults
+  # to a healthy variant, and no page turns an absent count into zero. Line scans of the
+  # crate's sources, so it costs nothing and runs in every plan; the known findings are a
+  # ratchet in .ai/repo/ui-integrity-baseline.txt, and a new one fails.
+  - id: ui-integrity
+    job: structure
+    always: true
+    runs: scripts/ci/cockpit-projection-check --ui-integrity
+    summary: what an interface shows is derived and unknown is never drawn as healthy — no direct registry, product or Why read in a Cockpit page outside the navigation's allow-list, no health check ok by literal, no healthy #[default], no absent count rendered as zero, beyond the baseline (ADR 0089)
+
   # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
   # greps the tree for a design decision made outside share/design/tokens.yaml: a colour
   # literal, a raw palette utility, a bracketed size, a second declaration of a token, a

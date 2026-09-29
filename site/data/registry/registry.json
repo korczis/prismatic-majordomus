@@ -6,23 +6,23 @@
     "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "58056fc3638ddcf5abdf692c914dfff1e54002b8f903c2155842322ddbf9dc9e",
+    "fingerprint": "2b0ad1b7546e524c0d73b18dfeec69526d0074ec99f133677ef822e2102c8d90",
     "summary": {
-      "total": 1620,
+      "total": 1623,
       "builtin": 142,
-      "declarative": 1478,
+      "declarative": 1481,
       "by_kind": {
         "command": 19,
         "query": 123,
-        "resource": 1478
+        "resource": 1481
       },
       "by_stability": {
         "behaviorally_verified": 109,
         "experimental": 25,
-        "implemented": 1486
+        "implemented": 1489
       },
       "mcp_tools": 136,
-      "mcp_resources": 1523,
+      "mcp_resources": 1526,
       "http_routes": 140,
       "cli_commands": 64,
       "modules": 71,
@@ -51217,7 +51217,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 61,
+        "capabilities": 62,
         "capability_ids": []
       },
       {
@@ -51867,7 +51867,7 @@
         "title": "rule",
         "description": "Declarative objects of kind 'rule' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 141,
+        "capabilities": 142,
         "capability_ids": []
       },
       {
@@ -51971,7 +51971,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 251,
+        "capabilities": 252,
         "capability_ids": []
       },
       {
@@ -52051,7 +52051,7 @@
     ]
   },
   "index": {
-    "fingerprint": "9a4b3dbb6bebb76218bfb9e5a6261c7abdd3ae28154e075e791f69fbaa87ea2a",
+    "fingerprint": "0e3e1c2cd681ae853d8bc05e6935c0e76261f547b98ee7ef849dd0e043dec171",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -52074,7 +52074,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 61,
+      "adr": 62,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -52095,12 +52095,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 141,
+      "rule": 142,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 251,
+      "test": 252,
       "use-case": 46,
       "workspace": 1
     },
@@ -53108,6 +53108,24 @@
           "ci",
           "verification",
           "site"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0089",
+        "kind": "adr",
+        "identity": "adr-0089",
+        "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "description": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "path": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 12849,
+        "tags": [
+          "ui",
+          "cockpit",
+          "site",
+          "evidence",
+          "enforcement"
         ]
       },
       {
@@ -56280,7 +56298,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 38655
+        "bytes": 39352
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -65051,6 +65069,25 @@
         ]
       },
       {
+        "uri": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "rule",
+        "identity": "project.ui-derived-state@1",
+        "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "description": "Every fact, count, status and inventory the Cockpit and the site show is derived from a capability answer or a generated document with its provenance; nothing is mocked or hardcoded, no inventory is kept twice, a verdict carries its evidence, an absent or undecided value renders as unknown, a derived value says when it was observed, and the frontend computes presentation only. The ui-integrity gate refuses the violations a line scan can see.",
+        "path": ".ai/repo/rules/project/ui-derived-state.v1.md",
+        "section": "rules",
+        "source_class": "rule",
+        "bytes": 4987,
+        "tags": [
+          "ui",
+          "cockpit",
+          "site",
+          "evidence",
+          "derivation",
+          "enforcement"
+        ]
+      },
+      {
         "uri": "majordomus://rule/project.unknown-keys-are-errors@1",
         "kind": "rule",
         "identity": "project.unknown-keys-are-errors@1",
@@ -67031,6 +67068,14 @@
         "bytes": 5694
       },
       {
+        "uri": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "kind": "test",
+        "identity": "test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "path": "test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "source_class": "case",
+        "bytes": 8294
+      },
+      {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
         "kind": "test",
         "identity": "test/cases/54_session_lifecycle_hooks.sh",
@@ -68109,7 +68154,7 @@
       "identity": [
         "id"
       ],
-      "objects": 61
+      "objects": 62
     },
     {
       "name": "application",
@@ -68319,7 +68364,7 @@
         "id",
         "version"
       ],
-      "objects": 141
+      "objects": 142
     },
     {
       "name": "scope",
@@ -68374,7 +68419,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 251
+      "objects": 252
     },
     {
       "name": "use-case",

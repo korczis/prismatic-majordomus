@@ -1617,6 +1617,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/ui-integrity-baseline.txt",
+        "kind": "file",
+        "label": "ui-integrity-baseline.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/ui-integrity-baseline.txt",
+        "external": true
+      },
+      {
         "id": "file:.githooks/commit-msg",
         "kind": "file",
         "label": "commit-msg",
@@ -1846,6 +1854,14 @@
         "label": "nav.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/src/cockpit/nav.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "file",
+        "label": "pages.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/cockpit/pages.rs",
         "external": true
       },
       {
@@ -2486,6 +2502,14 @@
         "label": "ci-plan",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci-plan",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/cockpit-projection-check",
+        "kind": "file",
+        "label": "cockpit-projection-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/cockpit-projection-check",
         "external": true
       },
       {
@@ -4757,6 +4781,42 @@
             "ci",
             "verification",
             "site"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0089",
+        "kind": "adr",
+        "label": "adr-0089",
+        "summary": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "route": "/cockpit/objects/adr/adr-0089",
+        "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-29",
+          "related": [
+            "rule:project.ui-derived-state",
+            "rule:project.product-surface-derived",
+            "rule:project.derived-once",
+            "rule:project.ui-conformance",
+            "rule:project.web-surface-declared-once",
+            "rule:project.entry-reports-only-evidence",
+            "rule:project.interfaces-are-projections",
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:scripts/ci/cockpit-projection-check",
+            "file:.ai/repo/ui-integrity-baseline.txt",
+            "file:.ai/repo/ci/gates.yaml",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/health.rs",
+            "test:test/cases/547_the_ui_says_only_what_is_derived.sh",
+            "test:test/cases/389_cockpit_projection.sh"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "site",
+            "evidence",
+            "enforcement"
           ]
         }
       },
@@ -32357,6 +32417,32 @@
         }
       },
       {
+        "id": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "rule",
+        "label": "project.ui-derived-state@1",
+        "summary": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "route": "/cockpit/objects/rule/project-ui-derived-state-1",
+        "source": ".ai/repo/rules/project/ui-derived-state.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.product-surface-derived@1",
+            "project.entry-reports-only-evidence@1",
+            "project.web-surface-declared-once@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "site",
+            "evidence",
+            "derivation",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.unknown-keys-are-errors@1",
         "kind": "rule",
         "label": "project.unknown-keys-are-errors@1",
@@ -35877,6 +35963,13 @@
         "label": "test/cases/53_status_vocabulary.sh",
         "route": "/cockpit/objects/test/test-cases-53-status-vocabulary-sh",
         "source": "test/cases/53_status_vocabulary.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "kind": "test",
+        "label": "test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "route": "/cockpit/objects/test/test-cases-547-the-ui-says-only-what-is-derived-sh",
+        "source": "test/cases/547_the_ui_says_only_what_is_derived.sh"
       },
       {
         "id": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
@@ -43160,6 +43253,86 @@
       {
         "source": "majordomus://adr/adr-0087",
         "target": "majordomus://test/test/cases/124_evidence.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:.ai/repo/ui-integrity-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:scripts/ci/cockpit-projection-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.product-surface-derived@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
         "kind": "put_in_force"
       },
       {
@@ -55298,6 +55471,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.product-surface-derived@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.unknown-keys-are-errors@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -56484,6 +56682,11 @@
       },
       {
         "source": "majordomus://test/test/cases/53_status_vocabulary.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60229,8 +60432,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1916,
-      "edges": 4332,
+      "nodes": 1922,
+      "edges": 4354,
       "acyclic": true,
       "truncated": false
     }
