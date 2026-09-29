@@ -1,8 +1,8 @@
 {
   "schema": "majordomus/cli/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the clap declaration in apps/majordomus-cli/src/cli.rs and the examples beside it; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.10.0",
-  "version": "0.10.0",
+  "generator": "majordomus-cli 0.11.0",
+  "version": "0.11.0",
   "source": "apps/majordomus-cli/src/cli.rs",
   "route_prefix": "/docs/cli",
   "cli": {
@@ -22547,6 +22547,219 @@
                   "json"
                 ],
                 "command": "majordomus shell check --format json",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "dashboard"
+        ],
+        "route": "/docs/cli/dashboard/",
+        "executable": false,
+        "usage": "majordomus dashboard [OPTIONS] <COMMAND>",
+        "about": "The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "dashboard",
+              "overview"
+            ],
+            "route": "/docs/cli/dashboard/overview/",
+            "executable": true,
+            "usage": "majordomus dashboard overview [OPTIONS]",
+            "about": "Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "dashboard-overview-json",
+                "title": "The four questions, every card with the answer it was read from",
+                "description": "The same answer `GET /api/v1/dashboard/overview`, the MCP tool `majordomus_dashboard_overview` and the first section of the Cockpit's overview return: is it healthy, what changed, what is broken, what needs action, each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list`. Every card carries its source capability, the input it was asked with and the JSON pointer its value was read from, so `majordomus run <capability>` read at that pointer gives the same value. The exit code is the overview's own word: 0 for ok and warn, 10 for fail and unknown. This fixture commits no registry manifest, so `health.report` cannot decide one of its checks, the health card is `unknown` rather than ok, and the answer is 10.",
+                "argv": [
+                  "dashboard",
+                  "overview",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus dashboard overview --format json",
                 "setup": [],
                 "expectation": "exits 10"
               }

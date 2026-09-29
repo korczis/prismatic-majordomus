@@ -3,30 +3,30 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the capability registry and the index of this repository's layer; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "052c7049f95ace1d8c20312e719c9efaf04d9e31584a21351b5da9e00241f6cb",
+    "fingerprint": "3030c06c3aa5b0b6c05a9652b053d09fbfe3a3f5e119f6a5aec5fbcc2890a9bc",
     "summary": {
-      "total": 1619,
-      "builtin": 142,
-      "declarative": 1477,
+      "total": 1622,
+      "builtin": 143,
+      "declarative": 1479,
       "by_kind": {
         "command": 19,
-        "query": 123,
-        "resource": 1477
+        "query": 124,
+        "resource": 1479
       },
       "by_stability": {
-        "behaviorally_verified": 109,
+        "behaviorally_verified": 110,
         "experimental": 25,
-        "implemented": 1485
+        "implemented": 1487
       },
-      "mcp_tools": 136,
-      "mcp_resources": 1522,
-      "http_routes": 140,
-      "cli_commands": 64,
-      "modules": 71,
-      "benchmark_required": 125,
+      "mcp_tools": 137,
+      "mcp_resources": 1524,
+      "http_routes": 141,
+      "cli_commands": 65,
+      "modules": 72,
+      "benchmark_required": 126,
       "benchmark_waived": 17,
       "cached": 39
     },
@@ -5418,6 +5418,235 @@
           "concurrency": "unrestricted"
         },
         "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+      },
+      {
+        "id": "dashboard.overview",
+        "module": "dashboard",
+        "kind": "query",
+        "title": "The Overview: four questions",
+        "description": "Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout.",
+        "input": {
+          "name": "Empty",
+          "schema": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "No input.",
+            "title": "Empty"
+          }
+        },
+        "output": {
+          "name": "DashboardOverview",
+          "schema": {
+            "type": "object",
+            "properties": {
+              "status": {
+                "$ref": "#/$defs/HealthStatus",
+                "description": "The worst of the questions: `unknown` outranks `fail`, because an undecided fact is\nnot a healthy one."
+              },
+              "questions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/DashboardQuestion"
+                },
+                "description": "`healthy`, `changed`, `broken`, `action`, in that order."
+              }
+            },
+            "required": [
+              "status",
+              "questions"
+            ],
+            "description": "The Overview: four questions, each answered by facts other capabilities hold.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardOverview;\nuse majordomus_cli::capability::builtin::HealthStatus;\nuse serde_json::json;\n\nlet o: DashboardOverview = serde_json::from_value(json!({ \"status\": \"unknown\", \"questions\": [] })).unwrap();\nassert_eq!(o.status, HealthStatus::Unknown);\n```",
+            "title": "DashboardOverview",
+            "$defs": {
+              "HealthStatus": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "ok",
+                    "description": "The engine that decides this dimension is satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "warn",
+                    "description": "Nothing is broken and something is worth looking at."
+                  },
+                  {
+                    "type": "string",
+                    "const": "fail",
+                    "description": "The engine that decides this dimension is not satisfied."
+                  },
+                  {
+                    "type": "string",
+                    "const": "unknown",
+                    "description": "This process cannot decide it, and says so rather than reporting `ok`."
+                  }
+                ],
+                "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole."
+              },
+              "DashboardQuestion": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`healthy`, `changed`, `broken` or `action`."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "The question, as a reader asks it."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/HealthStatus",
+                    "description": "The worst of its cards."
+                  },
+                  "cards": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/DashboardCard"
+                    },
+                    "description": "The facts that answer it, each read from a capability."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "status",
+                  "cards"
+                ],
+                "description": "One of the four questions the Overview answers, with the cards that answer it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardQuestion;\nuse majordomus_cli::capability::builtin::HealthStatus;\nuse serde_json::json;\n\nlet q: DashboardQuestion = serde_json::from_value(json!({\n    \"id\": \"healthy\", \"title\": \"Is it healthy?\", \"status\": \"ok\", \"cards\": [],\n})).unwrap();\nassert_eq!(q.status, HealthStatus::Ok);\n```"
+              },
+              "DashboardCard": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "A stable id, `[a-z][a-z0-9-]*`, unique across the dashboard."
+                  },
+                  "title": {
+                    "type": "string",
+                    "description": "What the value is."
+                  },
+                  "value": {
+                    "description": "The value, read out of the source's answer by the source's measure: a number, a\nstring or a boolean, or `null` when the source holds none."
+                  },
+                  "status": {
+                    "$ref": "#/$defs/HealthStatus",
+                    "description": "The source's verdict on it; `unknown` when the source could not answer."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "One line: what the value means, or why the source could not answer."
+                  },
+                  "source": {
+                    "$ref": "#/$defs/DashboardSource",
+                    "description": "Where the value came from."
+                  },
+                  "route": {
+                    "type": "string",
+                    "description": "The Cockpit page a reader drills into for the evidence."
+                  },
+                  "action": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "description": "The command that acts on it, when one does."
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "value",
+                  "status",
+                  "detail",
+                  "source",
+                  "route"
+                ],
+                "description": "One fact on a dashboard: a value read out of one capability's answer, the verdict the\nsource gives it, where a reader drills in, and what acts on it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardCard;\nuse serde_json::json;\n\nlet card: DashboardCard = serde_json::from_value(json!({\n    \"id\": \"health-status\",\n    \"title\": \"Health\",\n    \"value\": \"ok\",\n    \"status\": \"ok\",\n    \"detail\": \"the worst of 8 check(s)\",\n    \"source\": { \"capability\": \"health.report\", \"input\": {}, \"pointer\": \"/status\", \"measure\": \"exact\" },\n    \"route\": \"/cockpit/health\",\n})).unwrap();\n// the value is the source's: reading the pointer out of its answer gives it back\nassert_eq!(card.source.measure.read(&json!({ \"status\": \"ok\" }), &card.source.pointer), card.value);\nassert!(card.action.is_none());\n```"
+              },
+              "DashboardSource": {
+                "type": "object",
+                "properties": {
+                  "capability": {
+                    "type": "string",
+                    "description": "The canonical id of the capability the value was read from."
+                  },
+                  "input": {
+                    "description": "The input it was asked with, as its input schema takes it."
+                  },
+                  "pointer": {
+                    "type": "string",
+                    "description": "An RFC 6901 JSON pointer into that capability's answer."
+                  },
+                  "measure": {
+                    "$ref": "#/$defs/DashboardMeasure",
+                    "description": "How the value is read at the pointer."
+                  }
+                },
+                "required": [
+                  "capability",
+                  "input",
+                  "pointer",
+                  "measure"
+                ],
+                "description": "Where a card's value came from: the capability asked, the input it was asked with, and\nthe pointer into its answer. Asking the capability the same question and reading the\npointer with the same measure yields the card's value; that is the whole contract.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::{DashboardMeasure, DashboardSource};\nuse serde_json::json;\n\nlet s: DashboardSource = serde_json::from_value(json!({\n    \"capability\": \"health.report\",\n    \"input\": {},\n    \"pointer\": \"/status\",\n    \"measure\": \"exact\",\n})).unwrap();\nassert_eq!(s.measure, DashboardMeasure::Exact);\nassert_eq!(s.measure.read(&json!({ \"status\": \"ok\" }), &s.pointer), json!(\"ok\"));\n```"
+              },
+              "DashboardMeasure": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "exact",
+                    "description": "The value at the pointer, exactly; `null` when the pointer resolves to nothing."
+                  },
+                  {
+                    "type": "string",
+                    "const": "count",
+                    "description": "The number at the pointer, or the length of the list or map there; `0` when the\nsource left it out, which is how the sources say an empty list or a zero tally."
+                  }
+                ],
+                "description": "How a card's value is read out of its source's answer. Neither reading is arithmetic on\nthe source's behalf.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardMeasure;\nuse serde_json::json;\n\nlet answer = json!({ \"status\": \"warn\", \"tallies\": { \"ok\": 6 }, \"overlaps\": [1, 2] });\n// exact: the value at the pointer, null when there is none\nassert_eq!(DashboardMeasure::Exact.read(&answer, \"/status\"), json!(\"warn\"));\nassert_eq!(DashboardMeasure::Exact.read(&answer, \"/tallies/fail\"), json!(null));\n// count: a number as it stands, a list or map by its length, and an omitted one is none\nassert_eq!(DashboardMeasure::Count.read(&answer, \"/tallies/ok\"), json!(6));\nassert_eq!(DashboardMeasure::Count.read(&answer, \"/overlaps\"), json!(2));\nassert_eq!(DashboardMeasure::Count.read(&answer, \"/tallies/fail\"), json!(0));\n```"
+              }
+            }
+          }
+        },
+        "provenance": {
+          "source": "builtin",
+          "module": "majordomus_cli::capability::builtin::dashboard"
+        },
+        "exposure": {
+          "mcp": {
+            "tool": "majordomus_dashboard_overview"
+          },
+          "http": {
+            "method": "GET",
+            "path": "/api/v1/dashboard/overview"
+          },
+          "cli": {
+            "path": [
+              "dashboard",
+              "overview"
+            ]
+          }
+        },
+        "availability": "runtime",
+        "visibility": "public",
+        "stability": "behaviorally_verified",
+        "tags": [
+          "dashboard",
+          "overview",
+          "introspection"
+        ],
+        "benchmark": {
+          "policy": "required"
+        },
+        "cache": {
+          "policy": "disabled"
+        },
+        "execution": {
+          "effect": "read",
+          "cancellable": false,
+          "concurrency": "unrestricted"
+        },
+        "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
       },
       {
         "id": "delivery.feature",
@@ -51217,7 +51446,7 @@
         "title": "adr",
         "description": "Declarative objects of kind 'adr' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 61,
+        "capabilities": 62,
         "capability_ids": []
       },
       {
@@ -51334,6 +51563,18 @@
           "continuity.state"
         ],
         "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs"
+      },
+      {
+        "id": "dashboard",
+        "title": "Dashboards",
+        "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088).",
+        "stability": "behaviorally_verified",
+        "source": "builtin",
+        "capabilities": 1,
+        "capability_ids": [
+          "dashboard.overview"
+        ],
+        "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs"
       },
       {
         "id": "delivery",
@@ -51971,7 +52212,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 251,
+        "capabilities": 252,
         "capability_ids": []
       },
       {
@@ -52051,7 +52292,7 @@
     ]
   },
   "index": {
-    "fingerprint": "57484f3e03a2291fdd4762a4c7c3f8ff52df0ec37e2a46b6be1e03d32c5bc3b9",
+    "fingerprint": "e5e9d45d75ba3c60cd99f3f0b1452feb25426f59bb78f3969c159f4e2a5436fb",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -52074,7 +52315,7 @@
       "workflows": ".ai/repo/workflows"
     },
     "by_kind": {
-      "adr": 61,
+      "adr": 62,
       "application": 5,
       "area": 9,
       "audience": 8,
@@ -52100,7 +52341,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 251,
+      "test": 252,
       "use-case": 46,
       "workspace": 1
     },
@@ -53108,6 +53349,23 @@
           "ci",
           "verification",
           "site"
+        ]
+      },
+      {
+        "uri": "majordomus://adr/adr-0088",
+        "kind": "adr",
+        "identity": "adr-0088",
+        "title": "A dashboard is a projection of capabilities, and every card names the answer it was read from",
+        "description": "A dashboard is a projection of capabilities, and every card names the answer it was read from",
+        "path": ".ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+        "section": "adrs",
+        "source_class": "adr",
+        "bytes": 7056,
+        "tags": [
+          "architecture",
+          "interface",
+          "capabilities",
+          "cockpit"
         ]
       },
       {
@@ -56280,7 +56538,7 @@
         "title": "The Cockpit — the registry, rendered for a person",
         "path": "docs/COCKPIT.md",
         "source_class": "document",
-        "bytes": 38655
+        "bytes": 40250
       },
       {
         "uri": "majordomus://document/docs/COCKPIT_IDE_AUDIT.md",
@@ -67013,6 +67271,14 @@
         "bytes": 6157
       },
       {
+        "uri": "majordomus://test/test/cases/534_the_overview_answers_four_questions.sh",
+        "kind": "test",
+        "identity": "test/cases/534_the_overview_answers_four_questions.sh",
+        "path": "test/cases/534_the_overview_answers_four_questions.sh",
+        "source_class": "case",
+        "bytes": 6860
+      },
+      {
         "uri": "majordomus://test/test/cases/53_status_vocabulary.sh",
         "kind": "test",
         "identity": "test/cases/53_status_vocabulary.sh",
@@ -68099,7 +68365,7 @@
       "identity": [
         "id"
       ],
-      "objects": 61
+      "objects": 62
     },
     {
       "name": "application",
@@ -68364,7 +68630,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 251
+      "objects": 252
     },
     {
       "name": "use-case",
@@ -90956,6 +91222,219 @@
             "subcommands": []
           }
         ]
+      },
+      {
+        "path": [
+          "majordomus",
+          "dashboard"
+        ],
+        "route": "/docs/cli/dashboard/",
+        "executable": false,
+        "usage": "majordomus dashboard [OPTIONS] <COMMAND>",
+        "about": "The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it",
+        "args": [
+          {
+            "name": "repo",
+            "long": "repo",
+            "positional": false,
+            "help": "Start the search for the repository root here (default: the current directory)",
+            "value_name": "PATH",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "discovery",
+            "long": "discovery",
+            "positional": false,
+            "help": "How declarative files are enumerated",
+            "value_name": "DISCOVERY",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "vcs",
+                "help": "Tracked files, through the version-control index (the layer's contract)"
+              },
+              {
+                "name": "filesystem",
+                "help": "A walk of the work tree with the same glob semantics; untracked files included"
+              }
+            ],
+            "defaults": [
+              "vcs"
+            ]
+          },
+          {
+            "name": "strict",
+            "long": "strict",
+            "positional": false,
+            "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+            "value_name": "STRICT",
+            "takes_value": false,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": [
+              "false"
+            ]
+          },
+          {
+            "name": "share",
+            "long": "share",
+            "positional": false,
+            "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+            "value_name": "DIR",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [],
+            "defaults": []
+          },
+          {
+            "name": "format",
+            "long": "format",
+            "positional": false,
+            "help": "Output shape",
+            "value_name": "FORMAT",
+            "takes_value": true,
+            "required": false,
+            "global": true,
+            "possible_values": [
+              {
+                "name": "text",
+                "help": "Lines for a person"
+              },
+              {
+                "name": "json",
+                "help": "One JSON document, deterministic"
+              }
+            ],
+            "defaults": [
+              "text"
+            ]
+          }
+        ],
+        "examples": [],
+        "subcommands": [
+          {
+            "path": [
+              "majordomus",
+              "dashboard",
+              "overview"
+            ],
+            "route": "/docs/cli/dashboard/overview/",
+            "executable": true,
+            "usage": "majordomus dashboard overview [OPTIONS]",
+            "about": "Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown",
+            "args": [
+              {
+                "name": "repo",
+                "long": "repo",
+                "positional": false,
+                "help": "Start the search for the repository root here (default: the current directory)",
+                "value_name": "PATH",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "discovery",
+                "long": "discovery",
+                "positional": false,
+                "help": "How declarative files are enumerated",
+                "value_name": "DISCOVERY",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "vcs",
+                    "help": "Tracked files, through the version-control index (the layer's contract)"
+                  },
+                  {
+                    "name": "filesystem",
+                    "help": "A walk of the work tree with the same glob semantics; untracked files included"
+                  }
+                ],
+                "defaults": [
+                  "vcs"
+                ]
+              },
+              {
+                "name": "strict",
+                "long": "strict",
+                "positional": false,
+                "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+                "value_name": "STRICT",
+                "takes_value": false,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
+              {
+                "name": "share",
+                "long": "share",
+                "positional": false,
+                "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+                "value_name": "DIR",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [],
+                "defaults": []
+              },
+              {
+                "name": "format",
+                "long": "format",
+                "positional": false,
+                "help": "Output shape",
+                "value_name": "FORMAT",
+                "takes_value": true,
+                "required": false,
+                "global": true,
+                "possible_values": [
+                  {
+                    "name": "text",
+                    "help": "Lines for a person"
+                  },
+                  {
+                    "name": "json",
+                    "help": "One JSON document, deterministic"
+                  }
+                ],
+                "defaults": [
+                  "text"
+                ]
+              }
+            ],
+            "examples": [
+              {
+                "id": "dashboard-overview-json",
+                "title": "The four questions, every card with the answer it was read from",
+                "description": "The same answer `GET /api/v1/dashboard/overview`, the MCP tool `majordomus_dashboard_overview` and the first section of the Cockpit's overview return: is it healthy, what changed, what is broken, what needs action, each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list`. Every card carries its source capability, the input it was asked with and the JSON pointer its value was read from, so `majordomus run <capability>` read at that pointer gives the same value. The exit code is the overview's own word: 0 for ok and warn, 10 for fail and unknown. This fixture commits no registry manifest, so `health.report` cannot decide one of its checks, the health card is `unknown` rather than ok, and the answer is 10.",
+                "argv": [
+                  "dashboard",
+                  "overview",
+                  "--format",
+                  "json"
+                ],
+                "command": "majordomus dashboard overview --format json",
+                "setup": [],
+                "expectation": "exits 10"
+              }
+            ],
+            "subcommands": []
+          }
+        ]
       }
     ]
   },
@@ -91086,6 +91565,16 @@
         "read_only": true,
         "input": "Empty",
         "output": "Continuity"
+      },
+      {
+        "name": "majordomus_dashboard_overview",
+        "id": "dashboard.overview",
+        "title": "The Overview: four questions",
+        "description": "Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout.",
+        "kind": "query",
+        "read_only": true,
+        "input": "Empty",
+        "output": "DashboardOverview"
       },
       {
         "name": "majordomus_delivery_feature",
@@ -92723,6 +93212,12 @@
       },
       {
         "method": "GET",
+        "path": "/api/v1/dashboard/overview",
+        "id": "dashboard.overview",
+        "kind": "query"
+      },
+      {
+        "method": "GET",
         "path": "/api/v1/delivery/feature",
         "id": "delivery.feature",
         "kind": "query"
@@ -94088,6 +94583,35 @@
         "case": "default",
         "cached": true,
         "route": "GET /api/v1/continuity"
+      },
+      {
+        "key": "dashboard.overview|direct|default",
+        "kind": "capability",
+        "transport": "direct",
+        "id": "dashboard.overview",
+        "module": "dashboard",
+        "case": "default",
+        "cached": false
+      },
+      {
+        "key": "dashboard.overview|mcp|default",
+        "kind": "capability",
+        "transport": "mcp",
+        "id": "dashboard.overview",
+        "module": "dashboard",
+        "case": "default",
+        "cached": false,
+        "tool": "majordomus_dashboard_overview"
+      },
+      {
+        "key": "dashboard.overview|http|default",
+        "kind": "capability",
+        "transport": "http",
+        "id": "dashboard.overview",
+        "module": "dashboard",
+        "case": "default",
+        "cached": false,
+        "route": "GET /api/v1/dashboard/overview"
       },
       {
         "key": "deploy.check|direct|default",
@@ -99153,6 +99677,27 @@
           "cases": 1
         },
         {
+          "subject": "dashboard.overview",
+          "module": "dashboard",
+          "transport": "direct",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "dashboard.overview",
+          "module": "dashboard",
+          "transport": "mcp",
+          "state": "covered",
+          "cases": 1
+        },
+        {
+          "subject": "dashboard.overview",
+          "module": "dashboard",
+          "transport": "http",
+          "state": "covered",
+          "cases": 1
+        },
+        {
           "subject": "delivery.feature",
           "module": "delivery",
           "transport": "direct",
@@ -101967,22 +102512,22 @@
       ],
       "tallies": {
         "direct": {
-          "required": 142,
-          "covered": 125,
+          "required": 143,
+          "covered": 126,
           "missing": 0,
           "waived": 17,
           "inapplicable": 0
         },
         "http": {
-          "required": 140,
-          "covered": 125,
+          "required": 141,
+          "covered": 126,
           "missing": 0,
           "waived": 15,
           "inapplicable": 0
         },
         "mcp": {
-          "required": 136,
-          "covered": 121,
+          "required": 137,
+          "covered": 122,
           "missing": 0,
           "waived": 15,
           "inapplicable": 0
@@ -101995,8 +102540,8 @@
           "inapplicable": 0
         },
         "total": {
-          "required": 431,
-          "covered": 384,
+          "required": 434,
+          "covered": 387,
           "missing": 0,
           "waived": 47,
           "inapplicable": 0

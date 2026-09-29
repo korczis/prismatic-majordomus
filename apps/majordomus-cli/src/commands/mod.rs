@@ -34,6 +34,7 @@ pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
 pub(crate) mod completion;
+pub(crate) mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
@@ -95,6 +96,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Dashboard(args) => dashboard::run(args),
     }
 }
 
@@ -149,6 +151,9 @@ mod tests {
             }),
             (&["majordomus", "economics", "summary"], |c| {
                 matches!(c, Command::Economics(_))
+            }),
+            (&["majordomus", "dashboard", "overview"], |c| {
+                matches!(c, Command::Dashboard(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],
