@@ -1,7 +1,7 @@
 +++
 title = "Completion is gated"
 description = "Completion is gated"
-weight = 9
+weight = 10
 [extra]
 kind = "rule"
 slug = "majordomus-completion-gates-1"

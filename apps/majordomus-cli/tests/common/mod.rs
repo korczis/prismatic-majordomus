@@ -145,6 +145,12 @@ sources:
     pathspec: ':(glob).ai/repo/deployments/*.yaml'
     required: false
 
+  - id: curated
+    kind: knowledge
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/knowledge/curated/*.md'
+    required: false
+
   - id: claim_page
     kind: document
     discovery: vcs
@@ -305,6 +311,34 @@ weight: 10
 # The fixture's area
 
 Because the fixture says so.
+";
+
+/// A knowledge record the fixture declares, so that the capabilities reading one have an
+/// object to read: `knowledge_base.record`'s benchmark case is the first record of the index,
+/// and a fixture without one would hand the benchmark a lookup that answers not-found. Every
+/// required field, and the provenance a verified record must carry, pointing at a file the
+/// fixture tracks.
+pub const KNOWLEDGE: &str = "---
+schema: knowledge/v1
+id: fixture-note
+kind: knowledge
+class: convention
+title: The fixture reads its command line from docs/CLI.md
+description: A curated note that exists so the capabilities reading one have a record to read.
+status: verified
+epistemics: decided
+date: 2026-01-01
+tags:
+  - fixture
+provenance:
+  origin: authored
+  derived_from:
+    - file:docs/CLI.md
+---
+
+# The fixture reads its command line from docs/CLI.md
+
+Every command the fixture answers is specified there first.
 ";
 
 /// A deployment the fixture declares, so that the capabilities reading one have an object
@@ -546,6 +580,7 @@ true
         );
         f.write(".ai/repo/project/issues/I0001.yaml", ISSUE);
         f.write(".ai/repo/knowledge/sources.yaml", SOURCES);
+        f.write(".ai/repo/knowledge/curated/fixture-note.md", KNOWLEDGE);
         f.write(
             ".ai/repo/workflows/task-lifecycle.md",
             "# The task lifecycle\n\nstart, check, finish.\n",

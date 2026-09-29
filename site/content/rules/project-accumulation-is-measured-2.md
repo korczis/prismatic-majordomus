@@ -1,7 +1,7 @@
 +++
 title = "Everything that accumulates is measured, bounded and reaped by a committed command"
 description = "Everything that accumulates is measured, bounded and reaped by a committed command"
-weight = 61
+weight = 64
 [extra]
 kind = "rule"
 slug = "project-accumulation-is-measured-2"

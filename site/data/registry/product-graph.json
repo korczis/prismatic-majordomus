@@ -155,7 +155,7 @@
       "id": "command:knowledge",
       "kind": "command",
       "label": "majordomus knowledge",
-      "summary": "The compiled index over what this repository states.",
+      "summary": "The compiled index over what this repository states, and the candidate records it derives from what an episode did.",
       "route": "/commands/knowledge/",
       "source": "share/commands.yaml",
       "status": "inspect"
@@ -515,7 +515,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "61 object(s) of the layer",
+      "summary": "62 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -543,7 +543,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "194 object(s) of the layer",
+      "summary": "203 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -557,7 +557,7 @@
       "id": "kind:context",
       "kind": "kind",
       "label": "context",
-      "summary": "31 object(s) of the layer",
+      "summary": "32 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -571,7 +571,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "274 object(s) of the layer",
+      "summary": "284 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -648,7 +648,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "141 object(s) of the layer",
+      "summary": "144 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -683,7 +683,7 @@
       "id": "kind:use-case",
       "kind": "kind",
       "label": "use-case",
-      "summary": "46 object(s) of the layer",
+      "summary": "47 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -837,6 +837,15 @@
       "summary": "Health",
       "route": "/registry/modules/health/",
       "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
+      "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:knowledge_base",
+      "kind": "module",
+      "label": "knowledge_base",
+      "summary": "Knowledge base",
+      "route": "/registry/modules/knowledge-base/",
+      "source": "apps/majordomus-cli/src/capability/builtin/knowledge_base.rs",
       "status": "behaviorally_verified"
     },
     {
@@ -1858,6 +1867,11 @@
     },
     {
       "source": "feature:knowledge",
+      "target": "module:knowledge_base",
+      "kind": "made_of"
+    },
+    {
+      "source": "feature:knowledge",
       "target": "surface:docs",
       "kind": "exposed_through"
     },
@@ -2682,6 +2696,26 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:knowledge_base",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:knowledge_base",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:knowledge_base",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:knowledge_base",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:lifecycle",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -3028,8 +3062,8 @@
     }
   ],
   "metadata": {
-    "nodes": 122,
-    "edges": 395,
+    "nodes": 123,
+    "edges": 400,
     "acyclic": false,
     "truncated": false
   },

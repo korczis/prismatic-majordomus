@@ -1,7 +1,7 @@
 +++
 title = "Handovers transfer state, not transcripts"
 description = "Handovers transfer state, not transcripts"
-weight = 22
+weight = 23
 [extra]
 kind = "rule"
 slug = "majordomus-handovers-carry-state-1"

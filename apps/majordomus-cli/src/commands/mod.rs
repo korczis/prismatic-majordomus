@@ -44,6 +44,7 @@ pub(crate) mod env;
 pub(crate) mod evidence;
 pub(crate) mod executions;
 pub(crate) mod generate;
+pub(crate) mod knowledge;
 pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -95,6 +96,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
         Command::Shell(args) => shell::run(args),
+        Command::Knowledge(args) => knowledge::run(args),
     }
 }
 
@@ -153,6 +155,13 @@ mod tests {
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],
                 |c| matches!(c, Command::Devcontext(_)),
+            ),
+            (&["majordomus", "knowledge", "status"], |c| {
+                matches!(c, Command::Knowledge(_))
+            }),
+            (
+                &["majordomus", "knowledge", "record", "e1-0123456789ab"],
+                |c| matches!(c, Command::Knowledge(_)),
             ),
         ];
         for (argv, is_expected) in cases {
