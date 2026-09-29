@@ -11,7 +11,7 @@ depends_on: [project.web-surface-declared-once@1, project.land-and-publish@1, pr
 tags: [rust, documentation, web, publication, testing]
 
 x-majordomus:
-  tests: [test/cases/486_rustdoc_composition.sh, test/cases/487_rustdoc_staleness.sh, test/cases/488_rustdoc_discoverable.sh, test/cases/489_rustdoc_deploy.sh, test/cases/490_rustdoc_new_module.sh, apps/majordomus-cli/tests/http_serve.rs, scripts/rust-check, scripts/site-build, scripts/site-check, scripts/ci/link-check, scripts/pages, scripts/ci/pages-check]
+  tests: [test/cases/486_rustdoc_composition.sh, test/cases/487_rustdoc_staleness.sh, test/cases/488_rustdoc_discoverable.sh, test/cases/489_rustdoc_deploy.sh, test/cases/490_rustdoc_new_module.sh, test/cases/492_rustdoc_module_links.sh, apps/majordomus-cli/tests/http_serve.rs, scripts/rust-check, scripts/site-build, scripts/site-check, scripts/ci/link-check, scripts/pages, scripts/ci/pages-check]
 ---
 
 # Rationale
@@ -61,7 +61,9 @@ Every stage of the closure holds, and each is decided by something executable.
    carries the tree at the same mount. No path to it is written anywhere but its declaration.
 5. **References.** Every exported item has its page at the route derived from its path and
    kind, no item page exists without its item, every internal link of the tree resolves, and a
-   link from a site page into `/rustdoc/` resolves against the composed tree.
+   link from a site page into `/rustdoc/` resolves against the composed tree. A site page that
+   describes a module the crate exports links that module's page, through the same module
+   routes the check derives, and only in a build that composed the reference.
 6. **Tests.** Each stage has a case that breaks it and watches the refusal. A case that cannot
    reach its subject says so rather than passing.
 7. **Deployment.** The publication is composed from the committed topology: every published
@@ -113,8 +115,8 @@ The gates are `rust-check` (whose rustdoc step denies warnings and produces the 
 
 # Verification
 
-`test/cases/486_rustdoc_composition.sh` through `test/cases/490_rustdoc_new_module.sh`, one
-stage each:
+`test/cases/486_rustdoc_composition.sh` through `test/cases/490_rustdoc_new_module.sh`, and
+`test/cases/492_rustdoc_module_links.sh`, one stage each:
 
 - 486: composition — the site build carries the reference at its mount from the topology, and
   refuses, naming the producer, when the artifact is absent.
@@ -126,6 +128,9 @@ stage each:
   carries the reference built from the commit the deployment names.
 - 490: completeness — a module added to a fixture crate becomes a required page without a list
   being edited, and its absence is a finding.
+- 492: referenced — every builtin module's site page links its rustdoc page exactly when the
+  check derives one for it, the linked file is in the composed tree, and a build whose topology
+  lacks the reference links none.
 
 The crate's own suites hold the two Rust halves:
 `cargo test --manifest-path apps/majordomus-cli/Cargo.toml quality::rustdoc` for the integrity

@@ -1422,6 +1422,15 @@ claims:
     responsibility: none      # the site's own deploy path, not a supervised responsibility
     note: Two witnesses that do not share a writer name the commit, the producer's built_from and the value rustdoc renders on the crate's own COMMIT constant page. scripts/pages verify-rustdoc is a hard step of the pages workflow once the site serves the deployed commit, so a deployment whose public reference is absent, broken or stale fails its run, and scripts/ci/pages-check asks again as the pages-live gate.
 
+  - id: rustdoc-referenced
+    claim: Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference
+    source: docs/RUSTDOC.md
+    implementation: apps/majordomus-cli/src/site.rs
+    test: test/cases/492_rustdoc_module_links.sh
+    status: guaranteed
+    responsibility: none      # the site's own pages, not a supervised responsibility
+    note: The mapping is quality::rustdoc::module_routes, the crate's exported modules each with the page derived from the crate's own inventory, which majordomus quality rustdoc requires of the tree as a missing-page finding. majordomus generate carries it into the site's registry dataset as rustdoc on each module, and a module rustdoc gives no page (pub(crate) or private) carries none. The template joins it with the surfaces the build composed, from data/build.json, which scripts/site-build writes from docs/generated/web.json; it derives no route, and a build without the reference links nothing. scripts/ci/link-check resolves every such link against the composed site.
+
   - id: worktree-topology-derived
     claim: A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured
     source: docs/WORKTREES.md
