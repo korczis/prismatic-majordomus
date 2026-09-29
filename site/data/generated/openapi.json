@@ -2535,7 +2535,7 @@
       "variants": []
     },
     {
-      "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.",
+      "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.\n\n```\nuse majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;\nlet v: ArtifactVerdict = serde_json::from_str(\"\\\"unverified\\\"\").unwrap();\nassert_eq!(v, ArtifactVerdict::Unverified);\nassert!(ArtifactVerdict::Current < ArtifactVerdict::Unverified);\n```",
       "home": "artifacts",
       "is_enum": true,
       "name": "ArtifactVerdict",

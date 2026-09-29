@@ -382,11 +382,14 @@ fn preflight_card(ctx: &Context) -> El {
 ///
 /// The verdict is worded as what it is. `distribution.status` reaches no network: it
 /// decides from the distribution model and the release records, so the card says
-/// "installable per release records" and not that the public install is healthy, which
+/// "installable", decided from the release records, and not that the public install is healthy, which
 /// only the release pipeline's smoke phase has observed.
 fn distribution_card(ctx: &Context) -> El {
     distribution_card_of(ask(ctx, "distribution.status", json!({})))
 }
+
+/// What `distribution.status` decides from, said beside its verdict.
+const RECORDS: &str = "the release records, with no network reached";
 
 fn distribution_card_of(answer: Result<InstallabilityReport, String>) -> El {
     let report = match answer {
@@ -396,10 +399,10 @@ fn distribution_card_of(answer: Result<InstallabilityReport, String>) -> El {
                 "Distribution",
                 badge("unknown", "unknown"),
                 el("div")
-                    .child(facts(vec![(
-                        "Installable per release records",
-                        Node::Element(badge("unknown", "unknown")),
-                    )]))
+                    .child(facts(vec![
+                        ("Installable", Node::Element(badge("unknown", "unknown"))),
+                        ("Decided from", Node::Element(el("span").text(RECORDS))),
+                    ]))
                     .child(
                         el("p")
                             .class("mj-note")
@@ -431,7 +434,8 @@ fn distribution_card_of(answer: Result<InstallabilityReport, String>) -> El {
                 report.published_artifacts, report.required_targets
             ))),
         ),
-        ("Installable per release records", Node::Element(verdict)),
+        ("Installable", Node::Element(verdict)),
+        ("Decided from", Node::Element(el("span").text(RECORDS))),
     ];
     // Why, and what to do about it — the same cause and next action every other projection
     // of this capability shows, rather than a second wording of them here.
@@ -5156,15 +5160,16 @@ fn program_chips(
     current: Option<&str>,
     here: impl Fn(Option<&str>) -> String,
 ) -> Vec<(String, String, usize, bool)> {
-    let mut present: Vec<(Option<crate::command_graph::Origin>, String)> = commands
-        .iter()
-        .map(|c| {
-            let typed = serde_json::from_value(json!(c.origin)).ok();
-            (typed, c.origin.clone())
-        })
-        .collect();
-    present.sort();
-    present.dedup();
+    // In the program's own declared order, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<crate::command_graph::Origin>, String)> =
+        commands
+            .iter()
+            .map(|c| {
+                let typed = serde_json::from_value(json!(c.origin)).ok();
+                (typed, c.origin.clone())
+            })
+            .collect();
     let mut chips = vec![(
         "every program".to_string(),
         here(None),
@@ -5193,12 +5198,12 @@ fn effect_chips(
 ) -> Vec<(String, String, usize, bool)> {
     use crate::command_graph::Effect;
     let typed = |word: &str| serde_json::from_value::<Effect>(json!(word)).ok();
-    let mut present: Vec<(Option<Effect>, String)> = commands
+    // In the order of increasing consequence, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<Effect>, String)> = commands
         .iter()
         .map(|c| (typed(&c.effect), c.effect.clone()))
         .collect();
-    present.sort();
-    present.dedup();
     let mut chips = vec![(
         "any effect".to_string(),
         here(None),
@@ -6428,7 +6433,7 @@ mod tests {
         assert!(html.contains("mj-badge--unknown"), "{html}");
         assert!(html.contains("no distribution model"), "{html}");
         assert!(!html.contains("healthy"), "{html}");
-        assert!(html.contains("Installable per release records"), "{html}");
+        assert!(html.contains(RECORDS), "{html}");
     }
 
     /// An installable answer is worded as what decided it — the release records — and not
@@ -6449,7 +6454,7 @@ mod tests {
         }))
         .expect("an installability report");
         let html = distribution_card_of(Ok(report)).render();
-        assert!(html.contains("Installable per release records"), "{html}");
+        assert!(html.contains(RECORDS), "{html}");
         assert!(
             !html.contains("healthy") && !html.contains("Public install"),
             "{html}"

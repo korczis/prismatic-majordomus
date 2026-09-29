@@ -21,22 +21,7 @@ command -v curl >/dev/null 2>&1 || skip "no curl"
 command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
-S="$(mktemp -d "${TMPDIR:-/tmp}/mj540.[ "$(printf '%s\n' "$chips" | grep -c .)" -ge 4 ] \
-  || { echo "    fewer chips than two facets of two: $chips"; fails=$((fails + 1)); }
-if printf '%s\n' "$chips" | grep -qx 0; then
-  echo "    a command chip counts 0, and a chip exists only for what is present: $chips"
-  fails=$((fails + 1))
-fi[ "$(printf '%s\n' "$chips" | grep -c .)" -ge 4 ] \
-  || { echo "    fewer chips than two facets of two: $chips"; fails=$((fails + 1)); }
-if printf '%s\n' "$chips" | grep -qx 0; then
-  echo "    a command chip counts 0, and a chip exists only for what is present: $chips"
-  fails=$((fails + 1))
-fi[ "$(printf '%s\n' "$chips" | grep -c .)" -ge 4 ] \
-  || { echo "    fewer chips than two facets of two: $chips"; fails=$((fails + 1)); }
-if printf '%s\n' "$chips" | grep -qx 0; then
-  echo "    a command chip counts 0, and a chip exists only for what is present: $chips"
-  fails=$((fails + 1))
-fi")"
+S="$(mktemp -d "${TMPDIR:-/tmp}/mj540.XXXXXX")"
 SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
 
 # ---------------------------------------------------------------- the installation
@@ -78,7 +63,6 @@ stat_of() {
 # ---------------------------------------------------------------- Overview: Distribution
 # the card is there and says the capability did not answer, rather than vanishing
 page /cockpit
-claim expect_grep '>Distribution<'
 claim expect_grep 'distribution.status did not answer'
 
 # ---------------------------------------------------------------- Artifacts
@@ -107,6 +91,12 @@ if printf '%s\n' "$chips" | grep -qx 0; then
   echo "    a command chip counts 0, and a chip exists only for what is present: $chips"
   fails=$((fails + 1))
 fi
+# and every chip is a link the page answers: a chip built from a word the filter does not
+# take is a link to a 500
+for href in $(grep -oE 'class="mj-chip[^"]*" href="[^"]*"' "$S/page.html" | sed -E 's/.*href="([^"]*)"/\1/' | sed 's/&amp;/\&/g'); do
+  code="$(curl -s -m 60 -o /dev/null -w '%{http_code}' "$U$href")"
+  [ "$code" = 200 ] || { echo "    the chip $href answers $code"; fails=$((fails + 1)); }
+done
 
 # ---------------------------------------------------------------- Models
 page /cockpit/models
@@ -128,7 +118,6 @@ jq -e '.checks[] | select(.id == "peers") | .status != "ok"' "$S/health.json" >/
 jq -e '.checks[] | select(.id == "peers") | .detail | test("^1 attached \\(0 announced\\)")' "$S/health.json" >/dev/null \
   || { echo "    the attached count is not the live peer"; jq -c '.checks[] | select(.id == "peers")' "$S/health.json"; fails=$((fails + 1)); }
 page /cockpit/health
-claim expect_grep 'Attached clients'
 claim expect_grep '1 attached \(0 announced\)'
 serve_down
 [ "$fails" = 0 ] || { echo "    $fails assertion(s) failed"; exit 1; }

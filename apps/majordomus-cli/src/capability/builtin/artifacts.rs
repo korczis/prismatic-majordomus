@@ -65,6 +65,13 @@ impl ArtifactState {
 
 /// Where the generated tree stands as a whole: the one verdict every surface renders,
 /// decided here so that no page decides it again from a subset of the tallies.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;
+/// let v: ArtifactVerdict = serde_json::from_str("\"unverified\"").unwrap();
+/// assert_eq!(v, ArtifactVerdict::Unverified);
+/// assert!(ArtifactVerdict::Current < ArtifactVerdict::Unverified);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -108,7 +115,8 @@ impl ArtifactVerdict {
         }
     }
 
-    /// The word as serialised.
+    /// The word the verdict is serialised as, which is also the word every surface prints
+    /// for it: the Cockpit, the command line and the HTTP answer never spell it differently.
     ///
     /// ```
     /// use majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;

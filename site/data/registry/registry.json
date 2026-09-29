@@ -6,7 +6,7 @@
     "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "900b7473116ee8493139b100e87a612df040832777f11cbfabade561016040ea",
+    "fingerprint": "b38fec90aafd05c93774e3f7f12cc45765eeb5f0088d9fcabefc1a3f850f7fbd",
     "summary": {
       "total": 1620,
       "builtin": 142,
@@ -372,7 +372,7 @@
                     "description": "No manifest is committed: the repository has never run `majordomus generate`."
                   }
                 ],
-                "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies."
+                "description": "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.\n\n```\nuse majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;\nlet v: ArtifactVerdict = serde_json::from_str(\"\\\"unverified\\\"\").unwrap();\nassert_eq!(v, ArtifactVerdict::Unverified);\nassert!(ArtifactVerdict::Current < ArtifactVerdict::Unverified);\n```"
               }
             }
           }
@@ -52092,7 +52092,7 @@
     ]
   },
   "index": {
-    "fingerprint": "26c29915746d3c83cb289a9faa35f9b08c0b010dd6dc3f6335e490f6ec5eca67",
+    "fingerprint": "0e5b7c033fb6e6dfc2e3bde1e6b35a57e4de951f5de75d690b68c25650e95a22",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -67067,7 +67067,7 @@
         "identity": "test/cases/540_the_cockpit_says_only_what_it_knows.sh",
         "path": "test/cases/540_the_cockpit_says_only_what_it_knows.sh",
         "source_class": "case",
-        "bytes": 7641
+        "bytes": 7096
       },
       {
         "uri": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
