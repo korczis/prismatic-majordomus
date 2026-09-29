@@ -4682,13 +4682,13 @@ majordomus economics explain [OPTIONS] <METRIC>
 
 Examples:
 
-- **Everything one metric rests on** — The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. A metric that does not exist is refused with the list of those that do: exit 12 where no methodology is declared.
+- **Everything one metric rests on** — The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. In a repository that declares no benchmark methodology — which is where the examples run — there is no metric: any id is answered with the statement why, exit 0 and no number. A metric id a declared methodology does not have is refused with the list of those that do (exit 12).
 
   ```console
   $ majordomus economics explain effective_token_reduction
   ```
 
-  Verified: exits 12.
+  Verified: exits 0; prints no benchmark methodology is declared.
 
 <a id="majordomus-economics-runs"></a>
 ## `majordomus economics runs`

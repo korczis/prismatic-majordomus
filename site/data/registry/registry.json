@@ -6,7 +6,7 @@
     "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "21cd206c9a1703fea50e85e683159b5aa7f3b6b2a0a9eafa48579f2d6c5feec5",
+    "fingerprint": "e13cda39c541d17d7b13f5a3ab788234e0f92f15f555b004bca07ef20fbe8fe7",
     "summary": {
       "total": 1619,
       "builtin": 142,
@@ -52051,7 +52051,7 @@
     ]
   },
   "index": {
-    "fingerprint": "fa4d5771ae8dc59b058ef42a4437985146be648a6e109ab496316ca085c49f89",
+    "fingerprint": "c347afbf5779be939e99a8543e2105da1c8c12bb606051c2ffec32b743c4e687",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -89670,7 +89670,7 @@
               {
                 "id": "economics-explain",
                 "title": "Everything one metric rests on",
-                "description": "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. A metric that does not exist is refused with the list of those that do: exit 12 where no methodology is declared.",
+                "description": "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. In a repository that declares no benchmark methodology — which is where the examples run — there is no metric: any id is answered with the statement why, exit 0 and no number. A metric id a declared methodology does not have is refused with the list of those that do (exit 12).",
                 "argv": [
                   "economics",
                   "explain",
@@ -89678,7 +89678,7 @@
                 ],
                 "command": "majordomus economics explain effective_token_reduction",
                 "setup": [],
-                "expectation": "exits 12"
+                "expectation": "exits 0; prints no benchmark methodology is declared"
               }
             ],
             "subcommands": []

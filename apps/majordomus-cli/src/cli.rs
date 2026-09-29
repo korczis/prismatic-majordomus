@@ -4792,10 +4792,10 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "economics-explain",
             title: "Everything one metric rests on",
-            description: "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. A metric that does not exist is refused with the list of those that do: exit 12 where no methodology is declared.",
+            description: "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. In a repository that declares no benchmark methodology — which is where the examples run — there is no metric: any id is answered with the statement why, exit 0 and no number. A metric id a declared methodology does not have is refused with the list of those that do (exit 12).",
             argv: &["economics", "explain", "effective_token_reduction"],
             setup: &[],
-            expect: Expect::ExitCode(12),
+            expect: Expect::StdoutContains(&["no benchmark methodology is declared"]),
         }],
     },
     CommandExamples {
