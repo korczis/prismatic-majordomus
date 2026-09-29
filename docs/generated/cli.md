@@ -137,6 +137,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus evidence claim`](#majordomus-evidence-claim) | `/docs/cli/evidence/claim/` | One claim: its proof state, the execution behind it, and how to reproduce it |
 | [`majordomus evidence proves`](#majordomus-evidence-proves) | `/docs/cli/evidence/proves/` | One test: its latest execution and every claim it proves |
 | [`majordomus evidence record`](#majordomus-evidence-record) | `/docs/cli/evidence/record/` | Record a run that happened into the ledger |
+| [`majordomus evidence stamp`](#majordomus-evidence-stamp) | `/docs/cli/evidence/stamp/` | Measure the checkout as a run left it, for `record --provenance` |
 | [`majordomus rules`](#majordomus-rules) | `/docs/cli/rules/` | Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about |
 | [`majordomus rules report`](#majordomus-rules-report) | `/docs/cli/rules/report/` | Every rule against the proof there is for it |
 | [`majordomus rules show`](#majordomus-rules-show) | `/docs/cli/rules/show/` | One rule: what proves it, what it depends on, and what is missing |
@@ -3689,7 +3690,7 @@ Examples:
 
 What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
 
-Subcommands: [`majordomus evidence show`](#majordomus-evidence-show), [`majordomus evidence claim`](#majordomus-evidence-claim), [`majordomus evidence proves`](#majordomus-evidence-proves), [`majordomus evidence record`](#majordomus-evidence-record).
+Subcommands: [`majordomus evidence show`](#majordomus-evidence-show), [`majordomus evidence claim`](#majordomus-evidence-claim), [`majordomus evidence proves`](#majordomus-evidence-proves), [`majordomus evidence record`](#majordomus-evidence-record), [`majordomus evidence stamp`](#majordomus-evidence-stamp).
 
 ```text
 majordomus evidence [OPTIONS] <COMMAND>
@@ -3814,6 +3815,10 @@ majordomus evidence record [OPTIONS]
 | `--suite` | `<SUITE>` | — | The runner's TSV report (`MJ_TEST_REPORT=<file> bash test/run.sh`) |
 | `--crate-output` | `<CRATE_OUTPUT>` | — | A file holding `cargo test`'s output, for the crate's own integration tests |
 | `--origin` | `<ORIGIN>` | — | Where the run happened: local (the default), ci or release |
+| `--provenance` | `<[PRODUCER=]FILE>` | — | The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=` when the file names no producer and several reports are given |
+| `--coverage` | `<COVERAGE>` | — | The summary `scripts/rust-coverage --summary-json` wrote |
+| `--ledger` | `<LEDGER>` | — | repo (the default) or local |
+| `--run-record` | `<RUN_RECORD>` | — | Also write the run record to this file |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -3829,6 +3834,37 @@ Examples:
   ```
 
   Verified: exits 13.
+
+<a id="majordomus-evidence-stamp"></a>
+## `majordomus evidence stamp`
+
+Measure the checkout as a run left it, for `record --provenance`
+
+```text
+majordomus evidence stamp [OPTIONS]
+```
+
+| argument | value | default | description |
+|---|---|---|---|
+| `--producer` | `<PRODUCER>` | — | The producer whose run this is: suite, crate or coverage |
+| `--report` | `<REPORT>` | — | The report the run wrote |
+| `--exclude` | `<EXCLUDE>` | — | One of the run's own untracked outputs (a file, or a directory with everything under it) |
+| `--out` | `<OUT>` | — | Write the measurement to this file |
+| `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
+| `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
+| `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
+| `--share` | `<DIR>` | — | The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable (accepted by every subcommand) |
+| `--format` | `text` \| `json` | `text` | Output shape (accepted by every subcommand) — `text`: Lines for a person; `json`: One JSON document, deterministic |
+
+Examples:
+
+- **What a run measured, as one document** — The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report.
+
+  ```console
+  $ majordomus evidence stamp --producer suite --format json
+  ```
+
+  Verified: exits 0; prints one JSON document carrying /producer, /commit, /working_tree, /recorder, /host.
 
 <a id="majordomus-rules"></a>
 ## `majordomus rules`

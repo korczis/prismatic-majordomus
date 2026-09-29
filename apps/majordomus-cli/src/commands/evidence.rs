@@ -10,6 +10,7 @@
 //! derivation cannot be inspected.
 
 use std::io::Write;
+use std::path::Path;
 
 use serde_json::{json, Value};
 
@@ -90,8 +91,24 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             suite,
             crate_output,
             origin,
+            provenance,
+            coverage,
+            ledger,
+            run_record,
         } => {
             let mut input = json!({});
+            if !provenance.is_empty() {
+                input["provenance"] = json!(provenance);
+            }
+            if let Some(p) = &coverage {
+                input["coverage"] = json!(p.to_string_lossy());
+            }
+            if let Some(l) = &ledger {
+                input["ledger"] = json!(l);
+            }
+            if let Some(p) = &run_record {
+                input["run_record"] = json!(p.to_string_lossy());
+            }
             if let Some(p) = &suite {
                 input["suite"] = json!(p.to_string_lossy());
             }
@@ -104,7 +121,35 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
             let v = execute(ctx, &["evidence", "record"], input)?;
             match args.format {
                 OutputFormat::Json => writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?,
-                OutputFormat::Text => return record_text(&mut out, &v).map(|()| 0),
+                OutputFormat::Text => {
+                    return record_text(&mut out, &v, run_record.as_deref()).map(|()| 0)
+                }
+            }
+            Ok(0)
+        }
+        EvidenceCommand::Stamp {
+            producer,
+            report,
+            exclude,
+            out: file,
+        } => {
+            let mut input = json!({ "exclude": exclude });
+            if let Some(p) = &producer {
+                input["producer"] = json!(p);
+            }
+            if let Some(p) = &report {
+                input["report"] = json!(p.to_string_lossy());
+            }
+            let v = execute(ctx, &["evidence", "stamp"], input)?;
+            if let Some(f) = &file {
+                if let Some(dir) = f.parent().filter(|d| !d.as_os_str().is_empty()) {
+                    std::fs::create_dir_all(dir).map_err(Error::Transport)?;
+                }
+                std::fs::write(f, format!("{}\n", pretty(&v))).map_err(Error::Transport)?;
+            }
+            match args.format {
+                OutputFormat::Json => writeln!(out, "{}", pretty(&v)).map_err(Error::Transport)?,
+                OutputFormat::Text => stamp_text(&mut out, &v, file.as_deref())?,
             }
             Ok(0)
         }
@@ -115,7 +160,7 @@ pub fn run(args: EvidenceArgs) -> Result<u8> {
 
 /// A recording, one line per fact: what reached the ledger, against what, where, what the
 /// reports held that no claim can name yet, and what they named that this repository lacks.
-fn record_text(out: &mut impl Write, v: &Value) -> Result<()> {
+fn record_text(out: &mut impl Write, v: &Value, run_record: Option<&Path>) -> Result<()> {
     writeln!(
         out,
         "recorded     {} execution(s), {} passing",
@@ -131,6 +176,32 @@ fn record_text(out: &mut impl Write, v: &Value) -> Result<()> {
     .map_err(Error::Transport)?;
     writeln!(out, "ledger       {}", v["ledger"].as_str().unwrap_or("?"))
         .map_err(Error::Transport)?;
+    let r = &v["run_record"];
+    writeln!(out, "run          {}", r["id"].as_str().unwrap_or("?")).map_err(Error::Transport)?;
+    let measured: Vec<String> = r["provenance"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .map(|p| {
+            let producer = p["producer"].as_str().unwrap_or("?");
+            format!("{producer} ({})", p["working_tree"].as_str().unwrap_or("?"))
+        })
+        .collect();
+    if measured.is_empty() {
+        writeln!(out, "measured     nothing: the tree is recorded as unknown")
+    } else {
+        writeln!(out, "measured     {}", measured.join(", "))
+    }
+    .map_err(Error::Transport)?;
+    for a in r["absent"].as_array().into_iter().flatten() {
+        writeln!(
+            out,
+            "absent       {} ({})",
+            a["producer"].as_str().unwrap_or("?"),
+            a["reason"].as_str().unwrap_or("?")
+        )
+        .map_err(Error::Transport)?;
+    }
     // what the reports held that no claim can name yet, listed, never hidden
     for d in v["dropped"].as_array().into_iter().flatten() {
         writeln!(
@@ -143,6 +214,46 @@ fn record_text(out: &mut impl Write, v: &Value) -> Result<()> {
     }
     for u in v["unknown"].as_array().into_iter().flatten() {
         writeln!(out, "unknown      {} (no such test here)", u).map_err(Error::Transport)?;
+    }
+    if let Some(p) = run_record {
+        writeln!(out, "run record   {}", p.display()).map_err(Error::Transport)?;
+    }
+    Ok(())
+}
+
+/// A measurement, one line per fact: what was stamped at which commit and tree, what was
+/// excluded, the report it names, and where it was written.
+fn stamp_text(out: &mut impl Write, v: &Value, written: Option<&Path>) -> Result<()> {
+    let commit = v["commit"].as_str().unwrap_or("?");
+    writeln!(
+        out,
+        "stamped      {} at {} ({})",
+        v["producer"].as_str().unwrap_or("a run"),
+        commit.get(..8).unwrap_or(commit),
+        v["working_tree"].as_str().unwrap_or("?")
+    )
+    .map_err(Error::Transport)?;
+    let excluded: Vec<&str> = v["excluded"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .collect();
+    if !excluded.is_empty() {
+        writeln!(out, "excluded     {}", excluded.join(", ")).map_err(Error::Transport)?;
+    }
+    if let Some(r) = v.get("report") {
+        let digest = r["digest"].as_str().unwrap_or("?");
+        writeln!(
+            out,
+            "report       {} {}",
+            r["path"].as_str().unwrap_or("?"),
+            digest.get(..19).unwrap_or(digest)
+        )
+        .map_err(Error::Transport)?;
+    }
+    if let Some(p) = written {
+        writeln!(out, "written      {}", p.display()).map_err(Error::Transport)?;
     }
     Ok(())
 }
@@ -558,7 +669,7 @@ mod tests {
     fn a_recording_lists_what_it_dropped_after_the_ledger() {
         let render = |v: Value| {
             let mut buf = Vec::new();
-            record_text(&mut buf, &v).unwrap();
+            record_text(&mut buf, &v, None).unwrap();
             String::from_utf8(buf).unwrap()
         };
         let text = render(json!({
@@ -571,7 +682,12 @@ mod tests {
             "dropped": [
                 { "producer": "crate", "what": "unittests src/lib.rs", "reason": "unit" },
                 { "producer": "crate", "what": "doc-tests majordomus_cli", "reason": "doc" }
-            ]
+            ],
+            "run_record": {
+                "id": "local:0123456789ab:20260926T120000Z",
+                "provenance": [{ "producer": "crate", "working_tree": "clean" }],
+                "absent": [{ "producer": "suite", "reason": "no suite report was given" }]
+            }
         }));
         let lines: Vec<&str> = text.lines().collect();
         assert_eq!(
@@ -580,6 +696,9 @@ mod tests {
                 "recorded     1 execution(s), 1 passing",
                 "against      01234567 (clean)",
                 "ledger       .ai/repo/evidence/ledger.json",
+                "run          local:0123456789ab:20260926T120000Z",
+                "measured     crate (clean)",
+                "absent       suite (no suite report was given)",
                 "dropped      unittests src/lib.rs (unit)",
                 "dropped      doc-tests majordomus_cli (doc)",
                 "unknown      \"crate:ghost\" (no such test here)",
@@ -634,11 +753,11 @@ mod tests {
             held: Vec::new(),
             refused: 0,
         };
-        record_text(&mut all, &v).unwrap();
+        record_text(&mut all, &v, Some(Path::new("run.json"))).unwrap();
         let total = String::from_utf8(all.held).unwrap().lines().count();
         assert_eq!(
-            total, 5,
-            "recorded, against, ledger, one dropped, one unknown"
+            total, 8,
+            "recorded, against, ledger, run, measured, one dropped, one unknown, run record"
         );
 
         for lines in 0..total {
@@ -647,7 +766,7 @@ mod tests {
                 held: Vec::new(),
                 refused: 0,
             };
-            let got = record_text(&mut out, &v);
+            let got = record_text(&mut out, &v, Some(Path::new("run.json")));
             assert!(
                 matches!(got, Err(Error::Transport(_))),
                 "the write of line {} was not reported: {got:?}",
@@ -710,6 +829,10 @@ mod tests {
                 suite: None,
                 crate_output: Some(log),
                 origin: None,
+                provenance: vec![],
+                coverage: None,
+                ledger: None,
+                run_record: None,
             },
             format: OutputFormat::Text,
         };
@@ -730,5 +853,38 @@ mod tests {
         assert_eq!(detail_line(&json!({ "state": "not_run" })), "");
         let d = detail_line(&json!({ "state": "not_run", "detail": "the test declined to run" }));
         assert_eq!(d, "\n                   the test declined to run");
+    }
+
+    /// A measurement prints what was stamped at which commit and tree, what was excluded,
+    /// the report and where it was written; a bare measurement prints only the first line.
+    #[test]
+    fn a_stamp_prints_one_line_per_fact() {
+        let render = |v: Value, written: Option<&Path>| {
+            let mut buf = Vec::new();
+            stamp_text(&mut buf, &v, written).unwrap();
+            String::from_utf8(buf).unwrap()
+        };
+        let text = render(
+            json!({
+                "producer": "suite",
+                "commit": "0123456789abcdef0123456789abcdef01234567",
+                "working_tree": "clean",
+                "excluded": ["dist", "suite.tsv"],
+                "report": { "path": "suite.tsv", "digest": "sha256:abcdef0123456789abcdef", "bytes": 3 }
+            }),
+            Some(Path::new("p.json")),
+        );
+        let lines: Vec<&str> = text.lines().collect();
+        assert_eq!(
+            lines,
+            [
+                "stamped      suite at 01234567 (clean)",
+                "excluded     dist, suite.tsv",
+                "report       suite.tsv sha256:abcdef012345",
+                "written      p.json",
+            ]
+        );
+        let bare = render(json!({ "commit": "0123", "working_tree": "dirty" }), None);
+        assert_eq!(bare, "stamped      a run at 0123 (dirty)\n");
     }
 }

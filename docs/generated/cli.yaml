@@ -12863,6 +12863,46 @@ cli:
               global: false
               possible_values: []
               defaults: []
+            - name: provenance
+              long: provenance
+              positional: false
+              help: "The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=` when the file names no producer and several reports are given"
+              value_name: "[PRODUCER=]FILE"
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: coverage
+              long: coverage
+              positional: false
+              help: "The summary `scripts/rust-coverage --summary-json` wrote"
+              value_name: COVERAGE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: ledger
+              long: ledger
+              positional: false
+              help: repo (the default) or local
+              value_name: LEDGER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: run_record
+              long: run-record
+              positional: false
+              help: Also write the run record to this file
+              value_name: RUN_RECORD
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
             - name: repo
               long: repo
               positional: false
@@ -12936,6 +12976,131 @@ cli:
               command: majordomus evidence record --suite target/no-such-run.tsv
               setup: []
               expectation: exits 13
+          subcommands: []
+        - path:
+            - majordomus
+            - evidence
+            - stamp
+          route: /docs/cli/evidence/stamp/
+          executable: true
+          usage: "majordomus evidence stamp [OPTIONS]"
+          about: "Measure the checkout as a run left it, for `record --provenance`"
+          args:
+            - name: producer
+              long: producer
+              positional: false
+              help: "The producer whose run this is: suite, crate or coverage"
+              value_name: PRODUCER
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: report
+              long: report
+              positional: false
+              help: The report the run wrote
+              value_name: REPORT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: exclude
+              long: exclude
+              positional: false
+              help: "One of the run's own untracked outputs (a file, or a directory with everything under it)"
+              value_name: EXCLUDE
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: out
+              long: out
+              positional: false
+              help: Write the measurement to this file
+              value_name: OUT
+              takes_value: true
+              required: false
+              global: false
+              possible_values: []
+              defaults: []
+            - name: repo
+              long: repo
+              positional: false
+              help: "Start the search for the repository root here (default: the current directory)"
+              value_name: PATH
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: discovery
+              long: discovery
+              positional: false
+              help: How declarative files are enumerated
+              value_name: DISCOVERY
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: vcs
+                  help: "Tracked files, through the version-control index (the layer's contract)"
+                - name: filesystem
+                  help: A walk of the work tree with the same glob semantics; untracked files included
+              defaults:
+                - vcs
+            - name: strict
+              long: strict
+              positional: false
+              help: Refuse to proceed when any file of the layer carries an error diagnostic
+              value_name: STRICT
+              takes_value: false
+              required: false
+              global: true
+              possible_values: []
+              defaults:
+                - "false"
+            - name: share
+              long: share
+              positional: false
+              help: "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable"
+              value_name: DIR
+              takes_value: true
+              required: false
+              global: true
+              possible_values: []
+              defaults: []
+            - name: format
+              long: format
+              positional: false
+              help: Output shape
+              value_name: FORMAT
+              takes_value: true
+              required: false
+              global: true
+              possible_values:
+                - name: text
+                  help: Lines for a person
+                - name: json
+                  help: "One JSON document, deterministic"
+              defaults:
+                - text
+          examples:
+            - id: evidence-stamp-json
+              title: "What a run measured, as one document"
+              description: "The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report."
+              argv:
+                - evidence
+                - stamp
+                - "--producer"
+                - suite
+                - "--format"
+                - json
+              command: majordomus evidence stamp --producer suite --format json
+              setup: []
+              expectation: "exits 0; prints one JSON document carrying /producer, /commit, /working_tree, /recorder, /host"
           subcommands: []
     - path:
         - majordomus

@@ -1,5 +1,5 @@
 # majordomus-covers: none
-# claims: evidence-a-crate-binary-that-ran-nothing-is-not-a-pass
+# claims: evidence-a-crate-binary-that-ran-nothing-is-not-a-pass, evidence-a-recording-is-a-typed-run
 # A crate test binary states only what ran. `cargo test` prints `ok` on the result line of a
 # binary that ran nothing at all, and a recorder that reads that word as a pass lets a claim
 # read proven on the strength of a run that measured nothing. This case drives the recorder
@@ -18,7 +18,13 @@
 #      test declined, the failure is failing, and the error is failing because the harness
 #      could not run it
 #   4  an output that names no binary at all, as a build that failed prints, records nothing
-#      and leaves the ledger as it was
+#      and leaves the ledger as it was, and its run record names the crate as absent
+#   5  (evidence-a-recording-is-a-typed-run) the crate run's stamp carries the pinned toolchain,
+#      and its run record counts the outcomes and lists the same dropped entries as the
+#      recording, one list
+#
+# Every recording carries the measurement its run's stamp took of the fixture, naming the
+# report, so the tree is the run's and the pass can read proven.
 #
 # The fixture is written into the current directory, so outside the harness's own fixture it
 # would overwrite the claims matrix and the toolchain pin of whatever checkout the case was
@@ -107,7 +113,9 @@ grep -qF "$(printf 'ok\033(B')" "$W/cargo.txt" \
 # ---------------------------------------------------------------- 1. what each binary ran
 # Proves `evidence-a-crate-binary-that-ran-nothing-is-not-a-pass`: the skips first, because
 # reading `ok` as a pass is the defect this claim exists to close.
-run_quiet "$W/rec.err" "$MJB" evidence --repo "$T" record --crate-output "$W/cargo.txt" > "$W/rec.txt"
+run_quiet "$W/stamp.err" "$MJB" evidence --repo "$T" stamp --producer crate --report "$W/cargo.txt" --out "$W/pc.json" > /dev/null
+run_quiet "$W/rec.err" "$MJB" evidence --repo "$T" record --crate-output "$W/cargo.txt" \
+  --provenance "crate=$W/pc.json" --run-record "$W/run.json" > "$W/rec.txt"
 for pair in beta:skip gamma:skip delta:fail eps:error alpha:pass zeta:pass; do
   b="${pair%%:*}"; want="${pair#*:}"
   got="$(outcome_of "crate:$b")"
@@ -127,7 +135,7 @@ expect_grep '^dropped +unittests src/lib\.rs \(the crate.s own unit tests' "$W/r
 expect_grep '^dropped +doc-tests majordomus_cli \(doctests' "$W/rec.txt"
 
 # ---------------------------------------------------------------- 2. dropped, as a document
-ev rec record --crate-output "$W/cargo.txt"
+ev rec record --crate-output "$W/cargo.txt" --provenance "crate=$W/pc.json"
 jqe rec '[.dropped[].what] == ["unittests src/lib.rs", "doc-tests majordomus_cli"]' \
   "the JSON output does not list the unit tests and the doctests, in order, as dropped"
 jqe rec '[.dropped[].producer] | length == 2 and all(. == "crate")' \
@@ -153,8 +161,25 @@ jqe verdict "$(claim crate-eps) | .state == \"failing\" and (.detail | test(\"co
 # No binary ran, so nothing is recorded and the ledger is exactly what it was.
 before="$(sha256_of_file "$LEDGER")"
 printf 'error: could not compile `majordomus-cli` (lib) due to 1 previous error\n' > "$W/none.txt"
-expect_exit 0 "$MJB" evidence --repo "$T" record --crate-output "$W/none.txt"
+run_quiet "$W/stamp-none.err" "$MJB" evidence --repo "$T" stamp --producer crate --report "$W/none.txt" --out "$W/pn.json" > /dev/null
+expect_exit 0 "$MJB" evidence --repo "$T" record --crate-output "$W/none.txt" --provenance "crate=$W/pn.json"
 expect_grep '^recorded +0 execution\(s\), 0 passing'
+expect_grep '^absent +crate \(the output named no integration test binary\)'
 expect_no_grep '^dropped '
+ev none record --crate-output "$W/none.txt" --provenance "crate=$W/pn.json"
+jqe none '[.run_record.absent[] | select(.producer == "crate") | .reason] == ["the output named no integration test binary"]' \
+  "the run record of an output that named no binary does not name the crate as absent"
 [ "$(sha256_of_file "$LEDGER")" = "$before" ] \
   || { echo "    a crate output that named no binary changed the ledger"; exit 1; }
+
+# ---------------------------------------------------------------- 5. the run, typed
+# Proves `evidence-a-recording-is-a-typed-run`: the crate run's measurement carries the
+# toolchain the fixture pins, and the run record is the recording's own account of it.
+jq -e '.toolchain == {"name": "rustc", "version": "1.2.3", "source": "pinned"}' "$W/pc.json" >/dev/null \
+  || { echo "    the crate stamp does not carry the pinned toolchain"; jq -c .toolchain "$W/pc.json"; exit 1; }
+jq -e '.totals.outcomes == {"error": 1, "fail": 1, "pass": 2, "skip": 2} and .totals.runners == {"crate": 6}' \
+  "$W/run.json" >/dev/null \
+  || { echo "    the run record does not count the six binaries' outcomes"; jq -c .totals "$W/run.json"; exit 1; }
+jq -e --slurpfile run "$W/run.json" '.dropped == $run[0].dropped and .run_record.dropped == .dropped' \
+  "$W/rec.json" >/dev/null \
+  || { echo "    the run record's dropped list is not the recording's"; jq -c .dropped "$W/run.json"; exit 1; }

@@ -198,15 +198,21 @@ impl Ledger {
     /// assert!(Ledger::parse("not json at all").is_err());
     /// ```
     pub fn parse(text: &str) -> Result<Ledger> {
+        Ledger::parse_named(text, LEDGER_PATH)
+    }
+
+    /// [`Ledger::parse`], naming `path` in a refusal: the tracked ledger and the local one
+    /// are refused for the same reasons, each in its own name.
+    fn parse_named(text: &str, path: &str) -> Result<Ledger> {
         let ledger: Ledger = serde_json::from_str(text).map_err(|e| Error::InvalidSurface {
             surface: "evidence".into(),
-            reason: format!("{LEDGER_PATH} is not a ledger this version can read: {e}"),
+            reason: format!("{path} is not a ledger this version can read: {e}"),
         })?;
         if ledger.version != LEDGER_VERSION {
             return Err(Error::InvalidSurface {
                 surface: "evidence".into(),
                 reason: format!(
-                    "{LEDGER_PATH} declares version {} and this executable reads version \
+                    "{path} declares version {} and this executable reads version \
                      {LEDGER_VERSION}; a ledger read under the wrong shape could report a pass \
                      that was never recorded",
                     ledger.version
@@ -239,12 +245,7 @@ impl Ledger {
     /// assert!(refused.contains("version 99"), "{refused}");
     /// ```
     pub fn load(root: &Path) -> Result<Ledger> {
-        let path = root.join(LEDGER_PATH);
-        if !path.exists() {
-            return Ok(Ledger::empty());
-        }
-        let text = std::fs::read_to_string(&path).map_err(Error::Transport)?;
-        Ledger::parse(&text)
+        Ledger::load_from(root, LedgerTarget::Repo)
     }
 
     /// Whether the file is there at all, as opposed to there and empty.
@@ -370,7 +371,41 @@ impl Ledger {
     /// assert_eq!(Ledger::load(root.path()).unwrap(), ledger);
     /// ```
     pub fn save(&self, root: &Path) -> Result<()> {
-        let path = root.join(LEDGER_PATH);
+        self.save_to(root, LedgerTarget::Repo)
+    }
+
+    /// Read the ledger `target` names. An absent one is empty, as with [`Ledger::load`], and
+    /// a bad one is refused in its own name.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ledger::{Ledger, LedgerTarget, LOCAL_LEDGER_PATH};
+    ///
+    /// let root = tempfile::tempdir().unwrap();
+    /// assert_eq!(Ledger::load_from(root.path(), LedgerTarget::Local).unwrap(), Ledger::empty());
+    /// Ledger::empty().save_to(root.path(), LedgerTarget::Local).unwrap();
+    /// assert!(root.path().join(LOCAL_LEDGER_PATH).is_file());
+    /// assert!(!Ledger::present(root.path()), "the tracked ledger is not written");
+    /// ```
+    pub fn load_from(root: &Path, target: LedgerTarget) -> Result<Ledger> {
+        let path = root.join(target.path());
+        if !path.exists() {
+            return Ok(Ledger::empty());
+        }
+        let text = std::fs::read_to_string(&path).map_err(Error::Transport)?;
+        Ledger::parse_named(&text, target.path())
+    }
+
+    /// Write the ledger `target` names, as [`Ledger::save`] writes the tracked one.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ledger::{Ledger, LedgerTarget, LEDGER_PATH};
+    ///
+    /// let root = tempfile::tempdir().unwrap();
+    /// Ledger::empty().save_to(root.path(), LedgerTarget::Repo).unwrap();
+    /// assert!(root.path().join(LEDGER_PATH).is_file());
+    /// ```
+    pub fn save_to(&self, root: &Path, target: LedgerTarget) -> Result<()> {
+        let path = root.join(target.path());
         if let Some(dir) = path.parent() {
             std::fs::create_dir_all(dir).map_err(Error::Transport)?;
         }
@@ -461,16 +496,74 @@ impl Ledger {
     /// assert_eq!(counts.get("skip"), None, "an outcome nothing recorded is absent");
     /// ```
     pub fn by_outcome(&self) -> BTreeMap<String, usize> {
-        let mut m = BTreeMap::new();
-        for e in &self.executions {
-            let k = serde_json::to_value(e.outcome)
-                .ok()
-                .and_then(|v| v.as_str().map(str::to_string))
-                .unwrap_or_else(|| "unknown".into());
-            *m.entry(k).or_insert(0) += 1;
-        }
-        m
+        outcome_counts(&self.executions)
     }
+}
+
+/// Where the untracked, per-checkout ledger lives: under `.ai/local/`, which a repository
+/// ignores, so a recording made there changes no tracked file and moves no verdict.
+pub const LOCAL_LEDGER_PATH: &str = ".ai/local/evidence/ledger.json";
+
+/// Which ledger a recording writes: the tracked one a verdict is derived from, or the local
+/// one nothing reads to judge anything.
+///
+/// ```
+/// use majordomus_cli::evidence::ledger::{LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};
+///
+/// assert_eq!(LedgerTarget::default(), LedgerTarget::Repo);
+/// assert_eq!(LedgerTarget::Repo.path(), LEDGER_PATH);
+/// assert_eq!(LedgerTarget::Local.path(), LOCAL_LEDGER_PATH);
+/// assert_eq!(serde_json::to_value(LedgerTarget::Local).unwrap(), "local");
+/// ```
+#[derive(
+    Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, schemars::JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+#[schemars(rename = "EvidenceLedgerTarget")]
+pub enum LedgerTarget {
+    /// The tracked ledger, [`LEDGER_PATH`].
+    #[default]
+    Repo,
+    /// The ignored local ledger, [`LOCAL_LEDGER_PATH`].
+    Local,
+}
+
+impl LedgerTarget {
+    /// The repository-relative path of the ledger this target names.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::ledger::LedgerTarget;
+    /// assert!(LedgerTarget::Local.path().starts_with(".ai/local/"));
+    /// ```
+    pub fn path(self) -> &'static str {
+        match self {
+            LedgerTarget::Repo => LEDGER_PATH,
+            LedgerTarget::Local => LOCAL_LEDGER_PATH,
+        }
+    }
+}
+
+/// How many of these executions there are of each outcome, keyed by the outcome's serde
+/// word; an outcome nothing recorded is absent rather than 0. The one count
+/// [`Ledger::by_outcome`] and a run record's totals both use.
+///
+/// ```
+/// use majordomus_cli::evidence::ledger::{outcome_counts, Ledger};
+///
+/// assert!(outcome_counts(&[]).is_empty());
+/// let ledger = Ledger::parse(r#"{"version": 1, "executions": []}"#).unwrap();
+/// assert_eq!(outcome_counts(&ledger.executions), ledger.by_outcome());
+/// ```
+pub fn outcome_counts(executions: &[Execution]) -> BTreeMap<String, usize> {
+    let mut m = BTreeMap::new();
+    for e in executions {
+        let k = serde_json::to_value(e.outcome)
+            .ok()
+            .and_then(|v| v.as_str().map(str::to_string))
+            .unwrap_or_else(|| "unknown".into());
+        *m.entry(k).or_insert(0) += 1;
+    }
+    m
 }
 
 #[cfg(test)]
@@ -586,5 +679,75 @@ mod tests {
         assert!(!l.summary().present);
         assert_eq!(l.summary().executions, 0);
         assert!(l.summary().newest.is_none());
+    }
+
+    #[test]
+    fn the_local_target_reads_and_writes_under_ai_local() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut ledger = Ledger::empty();
+        ledger.merge([execution("07_scope", Outcome::Pass)]);
+        ledger.save_to(dir.path(), LedgerTarget::Local).unwrap();
+        assert!(dir.path().join(".ai/local/evidence/ledger.json").is_file());
+        assert!(
+            !dir.path().join(LEDGER_PATH).exists(),
+            "the tracked ledger is untouched"
+        );
+        assert_eq!(
+            Ledger::load_from(dir.path(), LedgerTarget::Local).unwrap(),
+            ledger
+        );
+        assert_eq!(Ledger::load(dir.path()).unwrap(), Ledger::empty());
+    }
+
+    #[test]
+    fn an_absent_local_ledger_is_empty() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut tracked = Ledger::empty();
+        tracked.merge([execution("07_scope", Outcome::Pass)]);
+        tracked.save(dir.path()).unwrap();
+        assert_eq!(
+            Ledger::load_from(dir.path(), LedgerTarget::Local).unwrap(),
+            Ledger::empty()
+        );
+    }
+
+    #[test]
+    fn a_bad_local_ledger_names_its_own_path() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::create_dir_all(dir.path().join(".ai/local/evidence")).unwrap();
+        std::fs::write(dir.path().join(LOCAL_LEDGER_PATH), "not json").unwrap();
+        let err = Ledger::load_from(dir.path(), LedgerTarget::Local)
+            .unwrap_err()
+            .to_string();
+        assert!(err.contains(LOCAL_LEDGER_PATH), "{err}");
+        assert!(!err.contains(LEDGER_PATH), "{err}");
+        std::fs::write(
+            dir.path().join(LOCAL_LEDGER_PATH),
+            r#"{"version": 7, "executions": []}"#,
+        )
+        .unwrap();
+        let err = Ledger::load_from(dir.path(), LedgerTarget::Local)
+            .unwrap_err()
+            .to_string();
+        assert!(
+            err.contains(LOCAL_LEDGER_PATH) && err.contains("version 7"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn outcome_counts_is_what_by_outcome_answers_for_the_ledgers_executions() {
+        let mut ledger = Ledger::empty();
+        ledger.merge([
+            execution("01_a", Outcome::Pass),
+            execution("02_b", Outcome::Fail),
+            execution("03_c", Outcome::Pass),
+            execution("04_d", Outcome::Error),
+        ]);
+        let counts = outcome_counts(&ledger.executions);
+        assert_eq!(counts, ledger.by_outcome());
+        assert_eq!(counts.get("pass"), Some(&2));
+        assert_eq!(counts.get("error"), Some(&1));
+        assert_eq!(counts.get("skip"), None);
     }
 }

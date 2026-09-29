@@ -19,8 +19,9 @@
 #   8  a malformed report is refused and writes no ledger; a result for a test that does
 #      not exist is named as unknown and recorded for nobody
 #   9  the ratchet in scripts/evidence-check: new debt is not a regression, a lost proof is
-#  10  the tree a run measured is half of `proven`: a run recorded while an unrelated file
-#      was pending is never proven, however empty the diff is when the report is taken —
+#  10  the tree a run measured is half of `proven`: the tree is the one the run's own stamp
+#      measured, and a run stamped while an unrelated file was pending is never proven,
+#      however empty the diff is when the report is taken —
 #      in the evidence derivation and in the rules derivation, which read the same ledger
 #
 # Why the fixture tracks its ledger, as this repository does: `proven` is not "recorded at
@@ -48,6 +49,11 @@ ev() {           # ev <name> <args...> — the JSON answer into $W/<name>.json
 }
 jqe() {          # jqe <name> <filter> <what broke>
   jq -e "$2" "$W/$1.json" >/dev/null 2>&1 || { printf '    %s\n' "$3"; jq -c . "$W/$1.json" | head -c 2000; echo; return 1; }
+}
+stamped() {      # stamped <report> <record options...> — measure the fixture as the run left it, then record the report with that measurement
+  local report="$1"; shift
+  "$MJB" evidence --repo "$T" stamp --producer suite --report "$report" --out "$report.provenance.json" >/dev/null &&
+    "$MJB" evidence --repo "$T" record --suite "$report" --provenance "suite=$report.provenance.json" "$@"
 }
 
 # ---------------------------------------------------------------- the fixture
@@ -140,7 +146,7 @@ expect_grep 'name<TAB>result<TAB>seconds<TAB>phase'
 # recorded execution and the commit it ran against, not the fact that its `test:` path
 # resolves — section 1 already showed the path resolving and the answer was `not_run`.
 printf '01_alpha\tok\t12\tparallel\n02_beta\tok\t7\texclusive\n' > "$W/all.tsv"
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/all.tsv" --origin ci
+expect_exit 0 stamped "$W/all.tsv" --origin ci
 expect_grep 'recorded +2 execution\(s\), 2 passing'
 expect_file "$LEDGER"
 # Recording writes the ledger, so the tree is never clean afterwards — and the ledger is
@@ -199,7 +205,7 @@ jqe t2 '[.proves[].id] == ["beta-holds"]' "the second test claims the wrong clai
 # The regression that matters most: recording one case must not delete the evidence for
 # every case the run did not include.
 printf '01_alpha\tok\t3\tserial\n' > "$W/one.tsv"
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/one.tsv" --origin local
+expect_exit 0 stamped "$W/one.tsv" --origin local
 expect_grep 'recorded +1 execution\(s\), 1 passing'
 ev partial show
 jqe partial '.ledger.executions == 2' \
@@ -300,7 +306,7 @@ expect_grep 'is not a claim of docs/CLAIMS\.yaml'
 # of a test that does not exist is evidence for nothing, and dropping it silently would
 # hide a runner and a matrix that have diverged.
 printf '02_beta\tok\t4\tparallel\n99_ghost\tok\t1\tparallel\n' > "$W/ghost.tsv"
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/ghost.tsv"
+expect_exit 0 stamped "$W/ghost.tsv"
 expect_grep '99_ghost'
 expect_grep 'no such test here'
 expect_grep 'recorded +1 execution\(s\)'
@@ -496,7 +502,7 @@ ALPHA_TREE='[.rules[] | select(.rule.id == "project.alpha-tree") | .tests[] | se
 printf '01_alpha\tok\t2\tserial\n02_beta\tok\t2\tserial\n' > "$W/tree.tsv"
 
 # the clean half: recorded at this commit, on the tree the commit describes
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/tree.tsv"
+expect_exit 0 stamped "$W/tree.tsv"
 ev tree_clean show
 jqe tree_clean '(.claims[] | select(.id == "alpha-holds") | .execution.working_tree) == "clean"' \
   "a recording whose only pending change is the ledger's own row was stamped dirty"
@@ -512,7 +518,7 @@ jqe rules_clean "$ALPHA_TREE | map(.state) == [\"proven\"]" \
 
 # the dirty half: the same commit, the same empty diff, a run that did not measure it
 printf 'edited before the run\n' > tree.txt
-expect_exit 0 "$MJB" evidence --repo "$T" record --suite "$W/tree.tsv"
+expect_exit 0 stamped "$W/tree.tsv"
 git checkout -- tree.txt
 ev tree_dirty show
 jqe tree_dirty '(.claims[] | select(.id == "alpha-holds") | .execution.working_tree) == "dirty"' \
