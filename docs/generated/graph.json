@@ -7856,6 +7856,21 @@
         }
       },
       {
+        "id": "majordomus://claim/rustdoc-referenced",
+        "kind": "claim",
+        "label": "rustdoc-referenced",
+        "summary": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+        "route": "/cockpit/objects/claim/rustdoc-referenced",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/site.rs",
+          "responsibility": "none",
+          "source": "docs/RUSTDOC.md",
+          "test": "test/cases/492_rustdoc_module_links.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/rustdoc-verified-live",
         "kind": "claim",
         "label": "rustdoc-verified-live",
@@ -12220,6 +12235,14 @@
         "summary": "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names",
         "route": "/cockpit/objects/document/docs-claims-rustdoc-published-md",
         "source": "docs/claims/rustdoc-published.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/rustdoc-referenced.md",
+        "kind": "document",
+        "label": "docs/claims/rustdoc-referenced.md",
+        "summary": "Every builtin module's page links its page in the crate's reference",
+        "route": "/cockpit/objects/document/docs-claims-rustdoc-referenced-md",
+        "source": "docs/claims/rustdoc-referenced.md"
       },
       {
         "id": "majordomus://document/docs/claims/rustdoc-verified-live.md",
@@ -35772,6 +35795,13 @@
         "source": "test/cases/491_the_mesh_is_on_here.sh"
       },
       {
+        "id": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
+        "kind": "test",
+        "label": "test/cases/492_rustdoc_module_links.sh",
+        "route": "/cockpit/objects/test/test-cases-492-rustdoc-module-links-sh",
+        "source": "test/cases/492_rustdoc_module_links.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "kind": "test",
         "label": "test/cases/49_roadmap_doctrine.sh",
@@ -46445,6 +46475,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "file:apps/majordomus-cli/src/site.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "majordomus://document/docs/RUSTDOC.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/rustdoc-referenced",
+        "target": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/rustdoc-verified-live",
         "target": "file:scripts/pages",
         "kind": "implemented_by"
@@ -48841,6 +48891,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/rustdoc-published.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/rustdoc-referenced.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -56400,6 +56455,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/492_rustdoc_module_links.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60201,8 +60261,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1915,
-      "edges": 4331,
+      "nodes": 1918,
+      "edges": 4337,
       "acyclic": true,
       "truncated": false
     }
