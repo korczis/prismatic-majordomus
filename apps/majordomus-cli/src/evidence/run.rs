@@ -285,7 +285,8 @@ pub struct EvidenceRunTotals {
 }
 
 impl EvidenceRunTotals {
-    /// The totals of `executions`.
+    /// The totals of `executions`: how many there are, how many of each outcome word, and
+    /// how many of each runner, with a count nothing reached left out rather than written 0.
     ///
     /// ```
     /// use majordomus_cli::evidence::EvidenceRunTotals;
