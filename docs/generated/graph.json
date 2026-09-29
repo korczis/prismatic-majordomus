@@ -31529,6 +31529,25 @@
         }
       },
       {
+        "id": "majordomus://rule/project.independent-of-prismatic@1",
+        "kind": "rule",
+        "label": "project.independent-of-prismatic@1",
+        "summary": "Independent of Prismatic",
+        "route": "/cockpit/objects/rule/project-independent-of-prismatic-1",
+        "source": ".ai/repo/rules/project/independent-of-prismatic.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.clean-room@1"
+          ],
+          "tags": [
+            "provenance",
+            "dependencies"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "rule",
         "label": "project.interfaces-are-projections@1",
@@ -35891,6 +35910,13 @@
         "label": "test/cases/55_session_context.sh",
         "route": "/cockpit/objects/test/test-cases-55-session-context-sh",
         "source": "test/cases/55_session_context.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
+        "kind": "test",
+        "label": "test/cases/569_independent_of_prismatic.sh",
+        "route": "/cockpit/objects/test/test-cases-569-independent-of-prismatic-sh",
+        "source": "test/cases/569_independent_of_prismatic.sh"
       },
       {
         "id": "majordomus://test/test/cases/56_derived_current_gate.sh",
@@ -54848,6 +54874,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.independent-of-prismatic@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.independent-of-prismatic@1",
+        "target": "majordomus://rule/project.clean-room@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.interfaces-are-projections@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -56494,6 +56530,11 @@
       },
       {
         "source": "majordomus://test/test/cases/55_session_context.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60229,8 +60270,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1916,
-      "edges": 4332,
+      "nodes": 1918,
+      "edges": 4335,
       "acyclic": true,
       "truncated": false
     }
