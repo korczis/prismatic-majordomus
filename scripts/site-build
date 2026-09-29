@@ -12,6 +12,8 @@
 #                                 makes it discoverable. One source, one generator, two base URLs;
 #                                 there is no second copy of the documentation anywhere.
 #   scripts/site-build --output-dir DIR   write the build into DIR instead of site/public
+#   scripts/site-build --pin-source-refs DIR BUILD_JSON   only the source-ref pass below, over a
+#                                 built DIR with the provenance BUILD_JSON records (for the cases)
 #
 # Every build, published or served, also COMPOSES the other published static surfaces into
 # its output at their mounts (ADR 0086): each surface of docs/generated/web.json of kind
@@ -35,8 +37,40 @@ while [ $# -gt 0 ]; do case "$1" in
   --base-url) BASE="$2"; shift 2 ;;
   --output-dir) OUT="$2"; shift 2 ;;
   --serve) SERVE=1; shift ;;
+  --pin-source-refs) [ $# -ge 3 ] || { echo "site-build: --pin-source-refs DIR BUILD_JSON" >&2; exit 2; }
+    PIN_DIR="$2"; PIN_BUILD="$3"; shift 3 ;;
   *) echo "site-build: unknown option $1" >&2; exit 2 ;;
 esac; done
+# pin_source_refs <built dir> <build.json>: a committed page's link into its own source names the
+# commit the site was built from. scripts/lib/project-links.awk writes those links into committed
+# content with the placeholder ref @source-ref@, because a committed file cannot name the commit it
+# is in; this replaces it, in every file of the build, with the ref site/templates/source-links.html
+# gives the template-made links: the commit data/build.json records, or master when the build is
+# dirty (rendered from bytes no commit holds), the commit is unknown, or there is no build.json.
+# A placeholder left anywhere afterwards, in whatever spelling, is a link to no ref: refused.
+pin_source_refs() {
+  local dir="$1" build="$2" ref=master files f left
+  if [ -f "$build" ]; then
+    ref="$(jq -r 'if (.commit // "") != "" and .commit != "unknown" and (.dirty | not)
+                  then .commit else "master" end' "$build")" \
+      || { echo "site-build: $build does not parse" >&2; exit 12; }
+  fi
+  case "$ref" in *[!0-9a-zA-Z._-]*|"") echo "site-build: '$ref' in $build is not a ref" >&2; exit 12 ;; esac
+  files="$(grep -rlF '@source-ref@' "$dir" || true)"
+  for f in $files; do
+    sed "s#/blob/@source-ref@/#/blob/$ref/#g; s#/tree/@source-ref@/#/tree/$ref/#g" "$f" > "$f.pin"
+    mv "$f.pin" "$f"
+  done
+  left="$(grep -rliE '@source-ref@|%40source-ref%40' "$dir" || true)"
+  if [ -n "$left" ]; then
+    echo "site-build: a source-ref placeholder is left unresolved (not in a blob/ or tree/ link) in:" >&2
+    printf '  %s\n' $left >&2
+    exit 10
+  fi
+  printf '  %s file(s) name %s as the ref of their source links\n' \
+    "$(printf '%s' "$files" | grep -c . || true)" "$ref"
+}
+if [ -n "${PIN_DIR:-}" ]; then pin_source_refs "$PIN_DIR" "$PIN_BUILD"; exit 0; fi
 if [ "$SERVE" = 1 ]; then
   [ -n "$BASE" ] || BASE="$SERVE_MOUNT"
   [ -n "$OUT" ] || OUT="$SERVE_OUT"
@@ -141,6 +175,8 @@ if [ -n "$OUT" ]; then case "$OUT" in /*) PUBLIC="$OUT" ;; *) PUBLIC="$ROOT/$OUT
   [ "$PUBLIC" = "$SITE/public" ] || set -- "$@" --output-dir "$PUBLIC"
   zola "$@"
 )
+echo "== source refs"
+pin_source_refs "$PUBLIC" "$SITE/data/build.json"
 # Zola wrote the two highlighting themes into static/ and public/; scope the dark one under .dark
 # (generated CSS, not hand-written) so class-based dark mode picks the right palette.
 if [ -f "$PUBLIC/giallo-dark.css" ]; then

@@ -20,9 +20,9 @@ it, what the trust path is, how a release happens, and how to add a platform.
 > artifacts, installer resolution, documentation, release automation and the exposed
 > UI/API metadata derive from that model or are mechanically validated against it.
 
-The model is [`share/distribution.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/share/distribution.yaml), contract
+The model is [`share/distribution.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/distribution.yaml), contract
 `majordomus-distribution/v1`, schema
-[`share/schemas/majordomus/distribution/distribution.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/distribution/distribution.v1.schema.json). It
+[`share/schemas/majordomus/distribution/distribution.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/distribution/distribution.v1.schema.json). It
 declares the binary, the repository releases are published from, the installer's canonical
 URL and defaults, how an archive is named, and every target the project has an opinion
 about — supported, experimental, or unavailable with the reason.
@@ -185,8 +185,8 @@ git tag v0.3.0 && git push origin v0.3.0
 #    ran before the record was published
 ```
 
-The pipeline is [`.github/workflows/release.yml`](https://github.com/korczis/prismatic-majordomus/blob/master/.github/workflows/release.yml), an
-adapter over [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/release.yaml) and the generated
+The pipeline is [`.github/workflows/release.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/release.yml), an
+adapter over [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/release.yaml) and the generated
 matrix:
 
 ```text
@@ -224,7 +224,7 @@ Until one of those happens the advertised install command is broken for everyone
 
 A release changes things the world can see, and it can fail after some of them have changed.
 Rerunning the workflow for the same tag is the supported recovery, and it is safe at every
-stage. What "safe" means is declared in [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/release.yaml)
+stage. What "safe" means is declared in [`.ai/repo/ci/release.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/release.yaml)
 under `rerun:` and implemented in the publish job:
 
 * **the assets on an existing release are the release.** If the tag already has a GitHub
@@ -332,7 +332,7 @@ when it is merely a few minutes old. Run by hand the wait is zero, because a per
 whether the command works wants the answer now. A site that cannot serve the metadata inside
 the window is broken either way, and the finding stands.
 
-It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml),
+It is the gate `installer-live` in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/gates.yaml),
 job `install`, on Linux and macOS. No path class selects it, deliberately: no change to a
 tree can make it true or false — only a deployment can. It is also one of the model's
 on-demand gates, because half of its matrix is a macOS runner and this repository waits

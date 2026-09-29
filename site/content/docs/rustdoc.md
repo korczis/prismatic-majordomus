@@ -15,7 +15,7 @@ is produced, served, checked, published and verified — and what to do when one
 stages fails.
 
 The decision is
-[ADR 86](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md);
+[ADR 86](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md);
 the rule is `project.the-crate-reference-is-published`. Behaviour as implemented and tested;
 where this document and the scripts disagree, the document is wrong and changes in the same
 commit.

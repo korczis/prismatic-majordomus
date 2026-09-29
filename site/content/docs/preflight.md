@@ -12,12 +12,12 @@ Entering a Majordomus repository answers one question within the time a `cd` tak
 Majordomus actually in force here, what context am I working in, what integrations are alive,
 and which claims are currently proven?* The answer is one typed value,
 `environment::preflight::Preflight`, built under
-[`apps/majordomus-cli/src/environment/preflight.rs`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/environment/preflight.rs).
+[`apps/majordomus-cli/src/environment/preflight.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/environment/preflight.rs).
 Every surface renders that value and none computes a status of its own. Behaviour as implemented
 and tested; where this document and the executable disagree, the document is wrong.
 
 The rule is `project.entry-reports-only-evidence`
-([`.ai/repo/rules/project/entry-reports-only-evidence.v1.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/entry-reports-only-evidence.v1.md));
+([`.ai/repo/rules/project/entry-reports-only-evidence.v1.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/entry-reports-only-evidence.v1.md));
 the decision is ADR 0066.
 
 ## Architecture
