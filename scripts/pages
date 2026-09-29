@@ -118,8 +118,9 @@ cmd_current() {
 # The check is the executable's own `generate --check` rather than a comparison written here:
 # the staleness of a generated artifact is defined by the generator, and a second definition
 # in shell would be a second answer to the same question — and a weaker one, since it would
-# have to guess at what the generator hashes. It costs about 12 s against a hook that already
-# spends far longer in `doctor`.
+# have to guess at what the generator hashes. With the unoptimised build CI uses it costs about
+# 5 s (14 s until the changelog stopped asking git once per decision and release), against a
+# hook that already spends far longer in `doctor`; test/cases/56 bounds the whole gate.
 #
 # A repository without the built executable — an adopter's, or a clone before the first build
 # — skips it and says so. Skipping loudly is the point: silence here is what this gate is for.
