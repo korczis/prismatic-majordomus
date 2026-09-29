@@ -523,7 +523,10 @@ pub fn as_of(o: &crate::index::AnswerObservation, now: std::time::SystemTime) ->
     el("span")
         .class("mj-note")
         .attr("data-observed-at", &o.observed_at)
-        .attr("data-stale-after", o.stale_after.clone().unwrap_or_default())
+        .attr(
+            "data-stale-after",
+            o.stale_after.clone().unwrap_or_default(),
+        )
         .attr("data-stale", if stale { "true" } else { "false" })
         .text(format!("{} as of {}{}", o.source, o.observed_at, age))
         .when(stale, |e| e.text(" ").child(badge("warn", "stale")))
@@ -855,12 +858,18 @@ mod tests {
         let at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);
         let o = AnswerObservation::taken("git read", at, Some(Duration::from_secs(120)));
         let fresh = as_of(&o, at + Duration::from_secs(5)).render();
-        assert!(fresh.contains("git read as of 2026-08-29T10:40:00Z (5 s ago)"), "{fresh}");
+        assert!(
+            fresh.contains("git read as of 2026-08-29T10:40:00Z (5 s ago)"),
+            "{fresh}"
+        );
         assert!(fresh.contains(r#"data-stale="false""#), "{fresh}");
         assert!(!fresh.contains(">stale<"), "{fresh}");
         let old = as_of(&o, at + Duration::from_secs(600)).render();
         assert!(old.contains("(10 min ago)"), "{old}");
-        assert!(old.contains(r#"data-stale="true""#) && old.contains("stale"), "{old}");
+        assert!(
+            old.contains(r#"data-stale="true""#) && old.contains("stale"),
+            "{old}"
+        );
         // the parser is the inverse of the writer, across a leap day and a year boundary
         for t in [0u64, 951_782_400, 1_788_000_000, 1_893_455_999] {
             let text = crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(t));
@@ -874,7 +883,10 @@ mod tests {
     #[test]
     fn a_statistic_names_and_links_the_capability_it_was_asked_of() {
         let html = asked_statistic("12", "objects", "repository.info", "objects").render();
-        assert!(html.contains(r#"href="/cockpit/capabilities/repository.info""#), "{html}");
+        assert!(
+            html.contains(r#"href="/cockpit/capabilities/repository.info""#),
+            "{html}"
+        );
         assert!(html.contains("repository.info · objects"), "{html}");
     }
 }

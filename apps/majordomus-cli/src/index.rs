@@ -112,6 +112,22 @@ impl AnswerObservation {
 }
 
 /// The two pictures a process takes of the repository, each with when it was taken.
+///
+/// A picture without a window is never stale, and its window is not serialized.
+///
+/// ```
+/// use std::time::{Duration, UNIX_EPOCH};
+/// use majordomus_cli::index::{AnswerObservation, RepositoryObservations};
+/// let now = RepositoryObservations {
+///     index: AnswerObservation::taken("index build", UNIX_EPOCH, None),
+///     git: AnswerObservation::taken("git read", UNIX_EPOCH, Some(Duration::from_secs(120))),
+/// };
+/// let json = serde_json::to_value(&now).unwrap();
+/// assert_eq!(json["git"]["stale_after"], "1970-01-01T00:02:00Z");
+/// assert!(json["index"].get("stale_after").is_none());
+/// let back: RepositoryObservations = serde_json::from_value(json).unwrap();
+/// assert_eq!(back, now);
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct RepositoryObservations {
     /// When the index was built: the objects, the kinds, the diagnostics.

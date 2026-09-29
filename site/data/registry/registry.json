@@ -6,7 +6,7 @@
     "version": "0.10.0"
   },
   "registry": {
-    "fingerprint": "eb2c065b20731ea74b2893e045bb18748be1354d62dd9d8a3b21d16f49510cf5",
+    "fingerprint": "a4dc7ebaa417d751a8bb89c3c8897f8e6a102bdf00f523b229f375cd2829aa39",
     "summary": {
       "total": 1621,
       "builtin": 142,
@@ -41260,7 +41260,7 @@
                   "index",
                   "git"
                 ],
-                "description": "The two pictures a process takes of the repository, each with when it was taken."
+                "description": "The two pictures a process takes of the repository, each with when it was taken.\n\nA picture without a window is never stale, and its window is not serialized.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::{AnswerObservation, RepositoryObservations};\nlet now = RepositoryObservations {\n    index: AnswerObservation::taken(\"index build\", UNIX_EPOCH, None),\n    git: AnswerObservation::taken(\"git read\", UNIX_EPOCH, Some(Duration::from_secs(120))),\n};\nlet json = serde_json::to_value(&now).unwrap();\nassert_eq!(json[\"git\"][\"stale_after\"], \"1970-01-01T00:02:00Z\");\nassert!(json[\"index\"].get(\"stale_after\").is_none());\nlet back: RepositoryObservations = serde_json::from_value(json).unwrap();\nassert_eq!(back, now);\n```"
               },
               "AnswerObservation": {
                 "type": "object",
@@ -52140,7 +52140,7 @@
     ]
   },
   "index": {
-    "fingerprint": "f1ec06d8183cf82a5b202012eeb940341eb51e7b43385e0b1ceb17d1dc15fe5d",
+    "fingerprint": "9dc19e022b3de801122bdad94fbed354ece872b5bab5001f147e25eec0cb8ef8",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -67307,7 +67307,7 @@
         "identity": "test/cases/76_capabilities_projections.sh",
         "path": "test/cases/76_capabilities_projections.sh",
         "source_class": "case",
-        "bytes": 8737
+        "bytes": 8739
       },
       {
         "uri": "majordomus://test/test/cases/77_rust_evidence.sh",
@@ -67475,7 +67475,7 @@
         "identity": "test/cases/92_openapi_reference.sh",
         "path": "test/cases/92_openapi_reference.sh",
         "source_class": "case",
-        "bytes": 10892
+        "bytes": 10894
       },
       {
         "uri": "majordomus://test/test/cases/93_rust_provider_projections.sh",

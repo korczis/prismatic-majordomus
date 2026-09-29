@@ -41570,7 +41570,7 @@
                 "index",
                 "git"
               ],
-              "description": "The two pictures a process takes of the repository, each with when it was taken."
+              "description": "The two pictures a process takes of the repository, each with when it was taken.\n\nA picture without a window is never stale, and its window is not serialized.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::{AnswerObservation, RepositoryObservations};\nlet now = RepositoryObservations {\n    index: AnswerObservation::taken(\"index build\", UNIX_EPOCH, None),\n    git: AnswerObservation::taken(\"git read\", UNIX_EPOCH, Some(Duration::from_secs(120))),\n};\nlet json = serde_json::to_value(&now).unwrap();\nassert_eq!(json[\"git\"][\"stale_after\"], \"1970-01-01T00:02:00Z\");\nassert!(json[\"index\"].get(\"stale_after\").is_none());\nlet back: RepositoryObservations = serde_json::from_value(json).unwrap();\nassert_eq!(back, now);\n```"
             },
             "AnswerObservation": {
               "type": "object",

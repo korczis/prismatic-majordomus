@@ -3525,10 +3525,7 @@ pub fn health(ctx: &Context) -> Page {
         .map(|c| {
             // a check that judged a picture says when the picture was taken; one that
             // decided live, during this call, has nothing older than the page to show
-            let mut decided = vec![(
-                "Decided by",
-                Node::Element(el("span").text(&c.decided_by)),
-            )];
+            let mut decided = vec![("Decided by", Node::Element(el("span").text(&c.decided_by)))];
             if let Some(o) = health.observed.get(&c.id) {
                 decided.push(("Observed", Node::Element(super::view::as_of(o, now))));
             }
