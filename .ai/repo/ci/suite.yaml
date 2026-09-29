@@ -84,6 +84,28 @@ case_bound_seconds: 3600
 #   run 36033138251   27477 s over 224 cases   slowest 2354 s (95_executable_reference)
 #   seven more        18951 to 27300 s         slowest 1657 to 2294 s
 #
+# and re-measured on 2026-09-28, when the integration batch int/batch-b (#651) refused the
+# 33000 set from those ten. Against 36356512201 below, the batch runs 18 more cases and 398
+# more doctests (885 to 1283), and its registry carries 27 capabilities more than master's
+# (115 to 142):
+#
+#   run 36480899795   34503+ s over 252 cases  slowest 2817 s (95_executable_reference)
+#   run 36457755901   22201+ s over 252 cases  slowest 1938 s (95_executable_reference)
+#   run 36356512201   28342 s over 234 cases   slowest 2360 s (95_executable_reference)
+#   run 36254980060   27513 s over 226 cases   slowest 2322 s (95_executable_reference)
+#
+# The first two are the same 252 cases on two runners 1.55 times apart, the third is the
+# integration batch before this one, the last is master. Both batch runs are censored by
+# 430_economics and 431_economics_claims_gated, killed at their own 600 s bound (1206 s of the
+# 34503). That was a defect and not a cost — a context measurement tokenized every file again
+# for every seed it reached, 176 s in an unoptimised build where counting each file once takes
+# 12 s, and the two cases then cost 43 and 49 s in that build — and it is fixed beside this
+# number. Without the two, 36480899795 still costs 33297 s: the batch's 16 other new cases
+# (800 s, 629 s of them the rustdoc cases 486 and 489), 77_rust_evidence running the new
+# doctests (949 to 1696 s), and a runner on which the 234 cases both runs share cost 1.147
+# times what they cost in 36356512201. 38000 is about a tenth above the worst total measured,
+# 34503.
+#
 # A `+` marks a censored cost: the case was killed, so the number is a lower bound. The
 # budgets sit about a tenth above the worst of these, so a suite that grows by more than that
 # fails here — loudly, with the case named — while the bounds above hold the rest in reserve.
@@ -101,10 +123,18 @@ case_bound_seconds: 3600
 # re-derived from the uncensored costs of that run and the ones after it, citing them, and not
 # from a killed value. Until then a refusal of 95_executable_reference between 2700 and 3600 s
 # is that measurement arriving — read it before calling it a regression.
+#
+# It arrived in run 36480899795: 95_executable_reference finished uncut at 2817 s, 1.085
+# times 95_skills (2597 s) in the same run, past the 1.012-1.072 range above. The ratio moved
+# with the tree, not the runner — 1.077 in 36457755901 on the same tree and a runner 1.55
+# times faster, 1.015 in 36356512201 and 1.019 on master in 36254980060 — because the batch
+# grew the registry the case renders its reference from by 27 capabilities. 3100 is about a
+# tenth above 2817, re-derived from that uncensored cost, and stays below case_bound_seconds
+# as case 417 requires.
 budget:
-  # every case, summed
-  cases_seconds: 33000
+  # every case, summed; run 36480899795 (34503+ s) and the ones above
+  cases_seconds: 38000
   # the single slowest case; one case that runs away is invisible in the total until it is
   # most of it, and it is also what decides whether the parallel phase can still be packed.
-  # Provisional: see above.
-  slowest_case_seconds: 2700
+  # Re-derived from the uncensored 2817 s of run 36480899795: see above.
+  slowest_case_seconds: 3100
