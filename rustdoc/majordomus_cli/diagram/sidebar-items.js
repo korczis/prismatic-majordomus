@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DIAGRAM_SCHEMA"],"enum":["EdgeStyle","Kind","Orientation","Shape"],"fn":["lifecycle","outcomes"],"struct":["Diagram","Edge","Group","Node","Provenance"]};

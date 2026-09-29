@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PROJECTION_ADAPTER","RECONCILE_WITH"],"struct":["DevTask","DevTaskDeclaration","DevTaskDiagnostic","DevTaskExecution","DevTaskModel","DevTaskPosition","DevTaskSynchronisation","ReadinessVerdict","RecordRef","SessionRef"]};

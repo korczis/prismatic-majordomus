@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CapabilityError"],"fn":["handler"],"struct":["Context","Executable"],"trait":["Handler"]};

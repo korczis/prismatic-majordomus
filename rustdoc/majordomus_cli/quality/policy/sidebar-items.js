@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MIN_MODULE_PROSE_WORDS","MIN_PROSE_WORDS"],"enum":["ExampleRequirement","Verdict"],"fn":["asserts_something","names"]};

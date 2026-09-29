@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SERVER_URI"],"enum":["Checkouts","ServerStanding"],"fn":["local_half","module","standing_at","standing_of"],"struct":["Desired","LeaseView","ServerStatus","ServerStatusInput","ServerView"]};

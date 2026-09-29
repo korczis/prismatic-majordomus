@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="5513f7466963">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The crate&#39;s reference — Prismatic Majordomus</title>
+<meta name="description" content="the crate&#39;s rustdoc reference at `/rustdoc`: produced by the invocation its gate proves, declared as a web surface from the crate, served by `majordomus serve`, checked item by item against the crate&#39;s own inventory, composed into the site from the topology, deployed with it and verified at the public URL; local use, the gates and cases, and what to run when a page, a link, an asset or the source revision is wrong">
+<link rel="canonical" href="https://majordomus.dev/docs/rustdoc/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="The crate&#39;s reference — Prismatic Majordomus">
+<meta property="og:description" content="the crate&#39;s rustdoc reference at `/rustdoc`: produced by the invocation its gate proves, declared as a web surface from the crate, served by `majordomus serve`, checked item by item against the crate&#39;s own inventory, composed into the site from the topology, deployed with it and verified at the public URL; local use, the gates and cases, and what to run when a page, a link, an asset or the source revision is wrong">
+<meta property="og:url" content="https://majordomus.dev/docs/rustdoc/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=1a22cdbf2b3d4ab192fd">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.10.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.9.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">The crate&#39;s reference</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">The crate&#39;s reference</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">the crate&#39;s rustdoc reference at `/rustdoc`: produced by the invocation its gate proves, declared as a web surface from the crate, served by `majordomus serve`, checked item by item against the crate&#39;s own inventory, composed into the site from the topology, deployed with it and verified at the public URL; local use, the gates and cases, and what to run when a page, a link, an asset or the source revision is wrong</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  
+<div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
+  <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
+    <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/how-it-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">How Majordomus works</a></li><li><a href="https://majordomus.dev/docs/guide/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Guide</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/preflight/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The preflight</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Majordomus Mesh</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/rustdoc/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">The crate&#39;s reference</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Delivery</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Shell automation</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li><li><a href="https://majordomus.dev/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/docs/api/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: delivery</a></li><li><a href="https://majordomus.dev/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/docs/api/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: economics</a></li><li><a href="https://majordomus.dev/docs/api/entity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: entity</a></li><li><a href="https://majordomus.dev/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/docs/api/served/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: served</a></li><li><a href="https://majordomus.dev/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/docs/api/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shell</a></li><li><a href="https://majordomus.dev/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shared types</a></li></ul>
+  </nav>
+  <div class="min-w-0">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/910835dd0723ce26186225a6ca1909d54e766d53/docs/RUSTDOC.md" class="font-mono underline">docs/RUSTDOC.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>The Rust crate <code>apps/majordomus-cli</code> documents every item it exports in its own source, and
+rustdoc renders that documentation into a reference: one page per exported item, the source
+each page was built from, and a search over all of it. This document is how that reference
+is produced, served, checked, published and verified — and what to do when one of those
+stages fails.</p>
+<p>The decision is
+<a rel="external" href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0086-the-crates-rustdoc-is-a-published-surface-produced-by-its-gate-and-verified-live.md">ADR 86</a>;
+the rule is <code>project.the-crate-reference-is-published</code>. Behaviour as implemented and tested;
+where this document and the scripts disagree, the document is wrong and changes in the same
+commit.</p>
+<h2 id="purpose"><a class="zola-anchor" href="#purpose" aria-label="Anchor link for: purpose">Purpose</a></h2>
+<p>The reference is the crate's own account of itself, at a commit: what each public module,
+type, function and constant is for, the examples <code>cargo test --doc</code> runs, and the source
+beside every page. It is published at <code>https://majordomus.dev/rustdoc/</code> and served by any
+running <code>majordomus serve</code> at <code>/rustdoc/</code>, from the same bytes.</p>
+<p>It is generated reference documentation, and it is held to documentation closure: the
+source, the generation, the surface, the routes, the links, the tests, the deployment and the
+public URL are each decided by an executable check. A <code>cargo doc</code> that succeeded proves the
+first two and nothing after them — for as long as this repository had the crate, the gate
+rendered the reference on every run and threw it away, and every route a reader might have
+tried answered 404.</p>
+<p>What it is not:</p>
+<ul>
+<li><strong>Not a compatibility promise.</strong> The crate is <code>publish = false</code>. Its public contract is the
+capability registry, which ADR 51 measures; its Rust items may change in any release. The
+landing page at <code>/rustdoc/</code> says so.</li>
+<li><strong>Not a second inventory.</strong> Nothing here lists the crate's modules or items. The published
+tree is the inventory a reader browses, and <code>majordomus quality rustdoc</code> prints the one the
+check measured. A list of either written into this document would be stale the first time
+the crate gained a module.</li>
+</ul>
+<h2 id="architecture"><a class="zola-anchor" href="#architecture" aria-label="Anchor link for: architecture">Architecture</a></h2>
+<pre class="mermaid" tabindex="0">
+flowchart TD
+  src["crate source&lt;br&gt;module and item documentation&lt;br&gt;missing_docs with -D warnings"]
+  producer["scripts/rust-check --doc&lt;br&gt;the gate's own cargo doc line"]
+  tree["target/web/rustdoc/&lt;br&gt;rustdoc pages, surface.json, index.html"]
+  discover["web::discover&lt;br&gt;surface rustdoc at /rustdoc,&lt;br&gt;declared from the crate"]
+  webjson["docs/generated/web.json&lt;br&gt;the committed topology"]
+  serve["majordomus serve&lt;br&gt;answers /rustdoc/"]
+  check["majordomus quality rustdoc&lt;br&gt;the tree against the crate's inventory"]
+  build["scripts/site-build&lt;br&gt;composes every published static surface"]
+  public["site/public/rustdoc/&lt;br&gt;and /build.json surfaces"]
+  sitecheck["scripts/site-check&lt;br&gt;and scripts/ci/link-check"]
+  deploy["scripts/site-deploy&lt;br&gt;pushes gh-pages"]
+  live["the public site&lt;br&gt;/rustdoc/"]
+  verify["scripts/pages verify-rustdoc&lt;br&gt;pages.yml and the pages-live gate"]
+  src --&gt; producer --&gt; tree
+  discover --&gt; webjson
+  discover --&gt; serve
+  tree --&gt; serve
+  tree --&gt; check
+  webjson --&gt; build
+  tree --&gt; build
+  build --&gt; public --&gt; sitecheck
+  public --&gt; deploy --&gt; live --&gt; verify
+</pre>
+<p><strong>Source.</strong> The documentation is the <code>//!</code> and <code>///</code> comments of the crate. Coverage is the
+existing policy and nothing new: <code>#![warn(missing_docs)]</code> in <code>lib.rs</code> with <code>-D warnings</code> in the
+gate makes an undocumented export a build failure, and the <code>rust-quality</code> gate holds examples
+and thin documentation to <code>project.rust-public-api-quality</code> (<a href="https://majordomus.dev/docs/quality/"><code>QUALITY.md</code></a>).</p>
+<p><strong>Producer.</strong> <code>scripts/rust-check --doc</code> runs the <code>cargo doc -D warnings</code> step — the same line
+the full and CI modes of that script run, and the only <code>cargo doc</code> line in it, which case 77
+holds — and hands the output off. It asks cargo where its target directory is rather than
+guessing (a shared <code>CARGO_TARGET_DIR</code> or a <code>.cargo/config.toml</code> can move it), empties
+<code>target/web/rustdoc/</code> so that nothing of an earlier copy survives in it, copies the pages in,
+and writes two files of its own:</p>
+<ul>
+<li><code>surface.json</code>, the declaration (<code>web-surface/v1</code>): id <code>rustdoc</code>, mount <code>/rustdoc</code>, the
+producer, availability <code>both</code>, category <code>documentation</code>, visibility <code>public</code>, and
+<code>built_from</code>, the commit of the checkout that built it — the same commit the build is handed
+as <code>MAJORDOMUS_BUILD_COMMIT</code>, so that the crate's <code>COMMIT</code> constant page names it too;</li>
+<li><code>index.html</code>, the landing page, because rustdoc writes an index per crate and none at the
+root of its output. It names the version and the full commit it documents. Every link into
+the tree on it is relative, so the same bytes work on the published site and on a running
+server; the one link out of the tree is the site's public address, read from
+<code>site/config.toml</code>, because a relative <code>../</code> would leave the tree and <code>quality rustdoc</code>
+refuses that on any page of it.</li>
+</ul>
+<p>The library is documented through its public items, and the executable as cargo documents any
+binary target — its own items, since a binary exports nothing — with rustdoc's own source pages
+kept for both. There is no <code>--document-private-items</code> and no second invocation for
+publication: what is published is what the gate proved.</p>
+<p><strong>Surface.</strong> The surface is declared by discovery from the crate, the way the served
+documentation is declared from <code>site/config.toml</code>: it is in the topology whenever the crate is,
+whether or not the producer has run, so the home page, <code>majordomus web list</code> and the committed
+<code>docs/generated/web.json</code> never depend on the state of one checkout. <code>built_from</code> is read from
+the producer's <code>surface.json</code> and is omitted from the committed projection for that reason. The
+mount is its own top-level one; <a href="https://majordomus.dev/docs/web/"><code>WEB.md</code></a> explains why <code>/docs</code>, <code>/api</code> and
+<code>/reference</code> could not hold it.</p>
+<p><strong>Serving.</strong> <code>majordomus serve</code> answers <code>/rustdoc/</code> from <code>target/web/rustdoc/</code> through
+<code>web::files</code>, the same guarded static server <code>/docs/</code> uses. It never runs cargo: when the tree
+is absent, <code>/rustdoc/</code> answers <code>503</code> naming <code>scripts/rust-check --doc</code>, and the home page shows
+the surface as not built rather than offering a link that is certain to fail.</p>
+<p><strong>Integrity.</strong> <code>majordomus quality rustdoc</code> reads the rendered tree against
+<code>quality::source::Inventory</code>, the crate's syntax-tree measurement of its own exported items —
+the inventory the quality rule already uses, not a list kept for this check. Every exported
+item must have its page at the route derived from its path and kind; no item page may exist
+without its item; the tree must carry its <code>surface.json</code>, and its <code>built_from</code> must be <code>HEAD</code>;
+the library's index must carry its identity
+(<code>&lt;title&gt;majordomus_cli - Rust&lt;/title&gt;</code>); the index's assets must be present; every internal
+link must resolve; and no page may name a machine path or a secret. The executable's pages are
+judged by the same walk over the binary target's own inventory. It exits <code>0</code> clean, <code>10</code> with
+findings, and <code>12</code> when there is no tree to judge.</p>
+<p>Two kinds of unresolved reference are rustdoc's rather than the crate's. Each is a named class
+(<code>RustdocLinkClass</code>), decided by where the reference sits, counted under
+<code>counts.accepted_links</code> with its links, its pages and every distinct reference as written, and
+never a finding:</p>
+<ul>
+<li><strong><code>inherited-documentation</code></strong>: a relative link inside a docblock that rustdoc copied from
+another crate — the documentation of an implementation listed under <em>Auto Trait
+Implementations</em> or <em>Blanket Implementations</em> of a trait no page of this tree documents (the
+implementation's header links no trait page of the tree). The text is the other crate's,
+written relative to that crate's own pages — tracing's <code>dispatcher#setting-the-default-subscriber</code>,
+<code>super::Subscriber</code>, <code>crate::Span</code>, <code>super::Span::current()</code> — so it resolves nowhere under
+<code>/rustdoc</code>, and nothing in this crate can change it. The same link anywhere else on the page,
+in an implementation the crate writes itself, or under an implementation of one of this
+crate's traits, is a <code>link</code> finding. On the tree of 2026-09-24: 4705 links on 941 pages.</li>
+<li><strong><code>unwritten-implementors</code></strong>: the implementors script a trait's page loads —
+<code>trait.impl/&lt;crate&gt;/&lt;path&gt;/trait.&lt;Name&gt;.js</code>, for the very trait the page documents — when
+rustdoc wrote none. rustdoc references it from every trait page and writes it only when the
+documented crates have implementors to list; the page renders its own crate's implementors
+inline and is complete without it. Any other absent script, stylesheet or file is a finding.
+On the tree of 2026-09-24: one, <code>majordomus_cli/capability/handler/trait.Handler.html</code>.</li>
+</ul>
+<p>Both are visible on the public site, and are acknowledged here rather than hidden: following
+one of the inherited links answers <code>404</code>, and the trait page's request for its unwritten
+implementors script answers <code>404</code> in the browser's network log. Neither loses anything of this
+crate's documentation, and the counts in the report say how many there are, so a change in
+either is seen.</p>
+<p><strong>Composition.</strong> <code>scripts/site-build</code> copies every published static surface other than the site
+itself into its output at the surface's mount, after Zola and after the site's accessibility
+pass. The list is read from <code>docs/generated/web.json</code> (<code>mj_web_composed</code> in <code>lib/common.sh</code>),
+so no line names this surface. A published surface whose artifact is absent refuses the build
+with exit <code>12</code> and names its producer; a mount the site itself already fills is refused with
+exit <code>10</code>, because one path has one owner. The build also records every composed surface with
+the commit its producer declared under <code>surfaces</code> in <code>/build.json</code>, the one identity file the
+site serves.</p>
+<p><strong>Judgement of the composed tree.</strong> The site's page contract in <code>scripts/site-check</code> judges the
+pages Zola renders. Pages under a composed surface's mount — derived from the same topology —
+are pruned from it, because their markup is the toolchain's; <code>quality rustdoc</code> judges them. A
+link from a site page into <code>/rustdoc/</code> is decided by <code>scripts/ci/link-check</code> against the
+composed tree, as an internal file like any other.</p>
+<h2 id="local-usage"><a class="zola-anchor" href="#local-usage" aria-label="Anchor link for: local-usage">Local usage</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-doc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> produce target/web/rustdoc (or: just rustdoc)</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> quality</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the integrity check over that tree</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> quality</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-tree</span><span class="z-l-8 z-d-8"> DIR</span><span class="z-l-10 z-l-i z-d-4 z-d-i">    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the same check over another copy of it</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> web</span><span class="z-l-8 z-d-8"> explain</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the surface: mount, producer, built_from, provenance</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> serve</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> then open /rustdoc/ on the URL it logs</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/site-build</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the site, with the reference composed at /rustdoc</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/site-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the static checks over the composed site</span></span></code></pre>
+<p><code>scripts/site-build</code> refuses to run until the producer has, and says so with the command to
+run. That is deliberate: a site built without a surface the topology publishes is the silent
+loss this design exists to prevent.</p>
+<p>The tree is ignored and never committed. It embeds the commit it was built from, so it is
+stale after any commit, and the check says so.</p>
+<h2 id="validation"><a class="zola-anchor" href="#validation" aria-label="Anchor link for: validation">Validation</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>what</th><th>where it runs</th><th>what it refuses</th></tr></thead><tbody>
+<tr><td>the <code>rust-check</code> gate (<code>scripts/rust-check --ci</code>)</td><td>the <code>rust</code> job of the validation workflow</td><td>a documentation warning, at the <code>cargo doc -D warnings</code> step that also produces the tree</td></tr>
+<tr><td>the <code>rustdoc</code> gate (<code>majordomus quality rustdoc</code>), which requires <code>rust-check</code></td><td>the <code>rust</code> job</td><td>any integrity finding over the tree that run produced, and no tree at all</td></tr>
+<tr><td><code>web-topology</code> (<code>majordomus web validate</code>)</td><td>the <code>rust</code> job</td><td>the surface colliding with, or nesting inside, another</td></tr>
+<tr><td><code>site-build</code> gate: <code>scripts/site-build</code></td><td>the <code>site</code> job, and the publication</td><td>a published surface whose artifact is absent; a mount the site itself fills</td></tr>
+<tr><td><code>site-build</code> gate: <code>scripts/site-check</code>, section 13m</td><td>the <code>site</code> job, and the publication</td><td>a composed surface missing from the build, carrying no <code>surface.json</code>, declaring another id or mount than the topology, or built from another commit than the build; <code>/build.json</code> disagreeing with it</td></tr>
+<tr><td><code>scripts/ci/link-check</code></td><td>run by <code>site-check</code></td><td>a link from a site page into <code>/rustdoc/</code> that the composed tree does not hold</td></tr>
+<tr><td>cases 486–490</td><td>the shell suite</td><td>each stage broken on purpose, and its refusal observed</td></tr>
+<tr><td><code>quality::rustdoc</code> and <code>web::discover</code> tests, <code>tests/http_serve.rs</code></td><td><code>cargo test</code></td><td>one fixture per way of failing; the declaration present before the producer runs; the tree served whole over a real socket</td></tr>
+</tbody></table>
+</div>
+<p>The five cases, one stage each:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>case</th><th>stage</th><th>what it breaks</th></tr></thead><tbody>
+<tr><td><code>486</code></td><td>composition</td><td>the site build without the reference's artifact, and with it</td></tr>
+<tr><td><code>487</code></td><td>staleness</td><td>a tree built from another commit, at the check and at the public verification</td></tr>
+<tr><td><code>488</code></td><td>discoverable and reachable</td><td>the surface before the producer runs; <code>/rustdoc/</code> over a served socket</td></tr>
+<tr><td><code>489</code></td><td>deployment</td><td>the composed site deployed to a bare remote, and what the published branch carries</td></tr>
+<tr><td><code>490</code></td><td>completeness</td><td>a module added to a fixture crate, which becomes a required page with nothing listed</td></tr>
+</tbody></table>
+</div>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">bash</span><span class="z-l-8 z-d-8"> test/run.sh</span><span class="z-l-8 z-d-8"> 486_rustdoc_composition</span><span class="z-l-8 z-d-8"> 487_rustdoc_staleness</span><span class="z-l-8 z-d-8"> 488_rustdoc_discoverable</span><span class="z-l-3 z-d-7"> \</span></span>
+<span class="giallo-l"><span class="z-l-8 z-d-8">  489_rustdoc_deploy</span><span class="z-l-8 z-d-8"> 490_rustdoc_new_module</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span><span class="z-l-8 z-d-8"> quality::rustdoc</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span><span class="z-l-8 z-d-8"> web::discover</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> test</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-test</span><span class="z-l-8 z-d-8"> http_serve</span></span></code></pre><h2 id="deployment"><a class="zola-anchor" href="#deployment" aria-label="Anchor link for: deployment">Deployment</a></h2>
+<p>The tree is produced in CI and composed at build time; it is never committed, and the deploy
+job carries no Rust toolchain.</p>
+<p>A publication starts on a push whose paths can change the published bytes, and those paths are
+derived by <code>scripts/pages paths</code> from the gate model, never written into the workflow. For the
+reference they must include the crate's sources, manifest, lock file and build script, the
+toolchain pin, the producer and its action; <code>scripts/pages paths</code> is the command that says
+whether they do.</p>
+<ul>
+<li><strong>The <code>rustdoc</code> job of <code>.github/workflows/pages.yml</code></strong> is a job of its own, which the deploy
+job needs. It produces the tree through the composite action <code>.github/actions/rustdoc</code> — the
+same action the validation workflow's jobs that build the site use, so the two workflows
+cannot build it differently — from the commit being deployed, and hands it to the deploy job
+as an artifact of the same run. The two run one after the other: the site's build composes
+the tree and the site's checks judge the composed output, so neither can start before it
+exists. The job's wall time and the fetch of its tree are the <code>rustdoc</code> row of the phases the
+deploy job measures.</li>
+<li><strong>Composition.</strong> The deploy job fetches that tree into <code>target/web/rustdoc/</code> before
+<code>scripts/pages build</code>, whose <code>scripts/site-build</code> composes it at <code>/rustdoc</code> exactly as it does
+locally, and <code>scripts/pages check</code> runs every static check over the composed output.</li>
+<li><strong>Publication.</strong> <code>scripts/site-deploy</code> pushes the composed <code>site/public</code> to <code>gh-pages</code>, the
+same single deploy path as before. Nothing about the mechanism changed; the tree it pushes
+now carries the reference.</li>
+<li><strong>Public verification, enforced.</strong> Once the site serves the deployed commit,
+<code>scripts/pages verify-rustdoc --commit SHA</code> reads the public reference: <code>/build.json</code> and
+<code>/rustdoc/surface.json</code> must name that commit, the landing page must name it, the library's
+index must be rustdoc's with its stylesheets and scripts answering, a module page and the
+search index must answer, and the crate's own <code>COMMIT</code> constant page must name that commit.
+It is a hard step of the deploy job, run only once the site is known to serve the commit, so
+a deployment whose public reference is absent, broken or stale fails the run.</li>
+<li><strong>Afterwards.</strong> <code>scripts/ci/pages-check</code>, the <code>pages-live</code> gate, carries a section that asks
+the same question of the live site on every full validation and at <code>finish</code>, because a run
+that was cancelled before its verification step could not report anything.</li>
+</ul>
+<h2 id="troubleshooting"><a class="zola-anchor" href="#troubleshooting" aria-label="Anchor link for: troubleshooting">Troubleshooting</a></h2>
+<h3 id="an-item-has-no-page-or-a-page-has-no-item"><a class="zola-anchor" href="#an-item-has-no-page-or-a-page-has-no-item" aria-label="Anchor link for: an-item-has-no-page-or-a-page-has-no-item">An item has no page, or a page has no item</a></h3>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> quality</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> names the item, the route it expected, and why</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">jq</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">r</span><span class="z-l-8 z-d-8"> .built_from</span><span class="z-l-8 z-d-8"> target/web/rustdoc/surface.json</span><span class="z-l-6 z-d-9">;</span><span class="z-l-1 z-d-3"> git</span><span class="z-l-8 z-d-8"> rev-parse</span><span class="z-l-8 z-d-8"> HEAD</span></span></code></pre>
+<p>When the two commits differ, the tree predates the item: run <code>scripts/rust-check --doc</code>. When
+they match and the finding stands, the item is exported but rustdoc gives it no page at the
+derived route — usually <code>#[doc(hidden)]</code>, a re-export that renders inline, or a toolchain
+bump that moved rustdoc's route convention. Decide whether the item should be public
+(<code>majordomus quality report</code> shows what the policy sees). A route rule that is wrong for the
+pinned rustdoc is corrected in <code>quality::rustdoc</code>, in the same change as the pin in
+<code>rust-toolchain.toml</code> when a bump moved it — never excepted item by item.</p>
+<h3 id="a-link-is-broken"><a class="zola-anchor" href="#a-link-is-broken" aria-label="Anchor link for: a-link-is-broken">A link is broken</a></h3>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> quality</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> a link inside the reference that does not resolve</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/link-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> a link from a site page into /rustdoc/</span></span></code></pre>
+<p>Inside the reference, a broken intra-doc link in a <code>///</code> comment is already a warning that the
+<code>cargo doc -D warnings</code> step turns into an error. A link that survives it is usually a doc
+comment linking a repository file by a path relative to the source file: that resolves on a
+forge and nowhere under <code>/rustdoc</code>. Link the published page or the forge URL instead, at the
+source. From a site page, the finding names the page and the target; correct the link in the
+canonical document it was projected from, never in <code>site/content/</code>.</p>
+<h3 id="the-docs-are-stale"><a class="zola-anchor" href="#the-docs-are-stale" aria-label="Anchor link for: the-docs-are-stale">The docs are stale</a></h3>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> web</span><span class="z-l-8 z-d-8"> explain</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> built_from, beside the checkout&#39;s HEAD</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> quality</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> refuses a tree built from another commit or none</span></span></code></pre>
+<p>Run <code>scripts/rust-check --doc</code>. It empties <code>target/web/rustdoc/</code> before copying, and it empties
+cargo's own documentation directory before the build when cargo's target directory is this
+checkout's: rustdoc writes into that directory over whatever an earlier run left, and keeps the
+source page of a file the crate no longer has and every search-index shard it ever wrote —
+measured on 2026-09-24 with rustdoc 1.98.1, 489 shards in a reused directory against 430 in a
+fresh one. When the target directory is shared with other checkouts (<code>CARGO_TARGET_DIR</code>), it is
+not the producer's to empty, so <code>--doc</code> refuses with exit <code>12</code> and names the command that gives
+this checkout a directory of its own; the full modes of the script run their gates and say that
+nothing was handed off. An <code>orphan-page</code> finding from <code>quality rustdoc</code> after a local build
+from a shared directory is removed the same way, or by emptying it yourself when no other
+checkout is using it:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">cargo</span><span class="z-l-8 z-d-8"> clean</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-doc</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-manifest-path</span><span class="z-l-8 z-d-8"> apps/majordomus-cli/Cargo.toml</span><span class="z-l-6 z-d-9"> &amp;&amp;</span><span class="z-l-1 z-d-3"> scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-doc</span></span></code></pre><h3 id="assets-are-missing"><a class="zola-anchor" href="#assets-are-missing" aria-label="Anchor link for: assets-are-missing">Assets are missing</a></h3>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> quality</span><span class="z-l-8 z-d-8"> rustdoc</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> names every asset the index links and the tree lacks</span></span></code></pre>
+<p>The search index, the stylesheets, the scripts and the fonts are rustdoc's own files, beside
+the pages. A tree that lacks them was copied partially or taken from another directory than the
+one cargo wrote. Rebuild it from a clean documentation directory, with the same
+<code>cargo clean --doc</code> line as above; the producer asks cargo for its target directory rather than
+guessing, so it copies what cargo wrote.</p>
+<h3 id="the-source-revision-is-wrong"><a class="zola-anchor" href="#the-source-revision-is-wrong" aria-label="Anchor link for: the-source-revision-is-wrong">The source revision is wrong</a></h3>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">jq</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">r</span><span class="z-l-8 z-d-8"> .built_from</span><span class="z-l-8 z-d-8"> target/web/rustdoc/surface.json</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">grep</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">o</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">[0-9a-f]\{40\}</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-8 z-d-8"> target/web/rustdoc/majordomus_cli/constant.COMMIT.html</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> head</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">n</span><span class="z-l-9 z-d-11"> 1</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">curl</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">fsS</span><span class="z-l-8 z-d-8"> https://majordomus.dev/build.json</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> jq</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">{commit, surfaces}</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> verify-rustdoc</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-commit</span><span class="z-l-8 z-d-8"> &quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">git</span><span class="z-l-8 z-d-8"> rev-parse</span><span class="z-l-8 z-d-8"> HEAD</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-timeout</span><span class="z-l-9 z-d-11"> 0</span></span></code></pre>
+<p>Two values name the revision a tree was built from: <code>built_from</code>, which the producer writes, and
+the crate's <code>COMMIT</code> constant, which rustdoc renders on its page. The producer writes both from
+one value: it hands the build the commit it records, as <code>MAJORDOMUS_BUILD_COMMIT</code>, because
+<code>build.rs</code> reads the commit only when the crate's sources, manifest, lock file or that variable
+change, and after a commit that touches none of them a plain <code>cargo doc</code> keeps the earlier
+commit compiled in. So the two disagree only when a tree was assembled from two builds — a copy
+of another run's output, or pages copied by hand rather than by the producer. Rebuild it with
+the producer; a caller that must document another commit than <code>HEAD</code> sets the variable itself,
+and <code>built_from</code> then names that commit too:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-doc</span></span>
+<span class="giallo-l"><span>MAJORDOMUS_BUILD_COMMIT</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">&lt;sha&gt;</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-1 z-d-3"> scripts/rust-check</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-doc</span></span></code></pre>
+<p>On the public site, <code>commit</code> in <code>/build.json</code> is the commit the site was built from and
+<code>surfaces[].built_from</code> the commit each composed surface's producer declared. When they
+differ, the deploy composed a tree from another build — a restored cache or an artifact of
+another run. The <code>rustdoc</code> job must produce the tree from the commit it deploys; re-run the
+publication with a dispatch of the pages workflow once the cause is fixed.</p>
+<h3 id="public-verification-fails"><a class="zola-anchor" href="#public-verification-fails" aria-label="Anchor link for: public-verification-fails">Public verification fails</a></h3>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span>sha</span><span class="z-l-16 z-d-16">=</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-8 z-d-8">$(</span><span class="z-l-1 z-d-3">git</span><span class="z-l-8 z-d-8"> rev-parse</span><span class="z-l-8 z-d-8"> HEAD</span><span class="z-l-8 z-d-8">)</span><span class="z-l-8 z-d-8">&quot;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> verify</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-commit</span><span class="z-l-8 z-d-8"> &quot;</span><span>$</span><span>sha</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-timeout</span><span class="z-l-9 z-d-11"> 0</span><span class="z-l-10 z-l-i z-d-4 z-d-i">           #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> is the site serving it at all?</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/pages</span><span class="z-l-8 z-d-8"> verify-rustdoc</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-commit</span><span class="z-l-8 z-d-8"> &quot;</span><span>$</span><span>sha</span><span class="z-l-8 z-d-8">&quot;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-timeout</span><span class="z-l-9 z-d-11"> 0</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> and is its reference whole?</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">scripts/ci/pages-check</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                                     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> what the pages-live gate sees</span></span></code></pre>
+<p>Read them in that order. If <code>verify</code> fails, the site is not yet serving the commit — the Actions
+queue or GitHub's own Pages build, which <a href="https://majordomus.dev/docs/github-pages-performance/"><code>GITHUB_PAGES_PERFORMANCE.md</code></a>
+covers — and the reference is not the problem. If <code>verify</code> passes and <code>verify-rustdoc</code> fails,
+the finding names what is wrong: the reference absent at <code>/rustdoc/</code> (the deploy log has no
+<code>== compose rustdoc</code> line, so the tree was not obtained), an index or the constant page
+answering with another identity or another commit, or a page missing. Fix the cause and re-run
+the publication; a verification is never waived to make a run green.</p>
+</article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
+    <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
+    <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/rustdoc-discoverable/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">The crate&#39;s rustdoc is a web surface at /rustdoc declared by discovery from the crate, present in the topology, its committed projection and the home page whether or not its producer has run, and a running server answers /rustdoc/ from the tree its producer wrote</span></a></li><li><a href="https://majordomus.dev/guarantees/rustdoc-composed-from-the-topology/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">The site build composes every published static surface into its output at that surface&#39;s mount, read from the committed topology with no surface named by hand, and refuses, naming the producer, when a published surface&#39;s artifact is absent</span></a></li><li><a href="https://majordomus.dev/guarantees/rustdoc-published/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">The crate&#39;s rustdoc is published at /rustdoc with the site, built from the commit the site names, and is never committed</span></a></li><li><a href="https://majordomus.dev/guarantees/rustdoc-complete/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">Every item the crate exports has its rustdoc page at the route derived from its path and kind, no item page exists without its item, and a module added to the crate becomes a required page with no list edited</span></a></li><li><a href="https://majordomus.dev/guarantees/rustdoc-verified-live/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it</span></a></li></ul></div>
+</div>
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.10.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/910835dd0723ce26186225a6ca1909d54e766d53" class="font-mono underline">910835d</a> · inputs <span class="font-mono">52e090755116</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+<script src="https://majordomus.dev/js/mermaid.min.js"></script>
+<script src="https://majordomus.dev/js/diagrams.js"></script>
+
+</body>
+</html>

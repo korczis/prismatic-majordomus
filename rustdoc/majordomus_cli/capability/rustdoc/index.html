@@ -1,0 +1,38 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Rust doc comments, translated into the CommonMark every projection promises."><title>majordomus_cli::capability::rustdoc - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module rustdoc</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module rustdoc</a></h2><h3><a href="#functions">Module Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>capability</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">capability</a></div><h1>Module <span>rustdoc</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/capability/rustdoc.rs.html#1-355">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Rust doc comments, translated into the CommonMark every projection promises.</p>
+<p>A doc comment is the canonical declaration of what a type and its fields mean, and
+<a href="../schema/struct.CanonicalSchema.html#method.of" title="associated function majordomus_cli::capability::schema::CanonicalSchema::of"><code>CanonicalSchema::of</code></a> carries it into <code>description</code> —
+from there into <code>docs/generated/registry.json</code>, <code>docs/generated/openapi.json</code>, MCP’s
+<code>inputSchema</code>, Swagger UI and the published site. Every one of those consumers reads
+that field as CommonMark: OpenAPI says so in the specification, and the site hands it
+to a Markdown renderer.</p>
+<p>Rustdoc is <em>not</em> CommonMark. It adds two link forms that only rustdoc can resolve:</p>
+<ul>
+<li>the <strong>intra-doc link</strong>, <code>[`Type::Variant`]</code> — a shortcut reference link with no
+definition anywhere, which CommonMark renders as literal brackets around a code span;</li>
+<li>a <strong>reference definition pointing at a path relative to the source file</strong>, such as
+<code>[ADR 0040]: ../../../../.ai/repo/adrs/0040-….md</code>, which resolves from
+<code>apps/majordomus-cli/src/capability/</code> and from nowhere a reader will ever stand.</li>
+</ul>
+<p>Unresolved, both reach the reader as source: the site published
+<code>[`WaiverReason::ExternalDependency`]:</code> and an eighty-seven character <code>../../../../</code>
+path as body text. The prose is not wrong — it is right for rustdoc, which is the doc
+comment’s first reader — so the declaration stays as it is and the <em>projection</em>
+translates, once, here. That is the rule a repeated semantic would break: the doc
+comment says what a field means exactly once, and no projection restates it.</p>
+<p>What this does <strong>not</strong> touch is as important as what it does. Code blocks are left
+byte for byte alone: a doc comment’s fenced example is Rust, and <code>["capability"]</code> and
+<code>[a-z][a-z0-9_-]</code> are an array literal and a character class, not links. A link whose
+destination carries a URL scheme resolves for every reader and is kept.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::rustdoc::to_commonmark;
+
+<span class="comment">// an intra-doc link degrades to the code span it wrapped
+</span><span class="macro">assert_eq!</span>(to_commonmark(<span class="string">"see [`Waiver::Reason`] first"</span>), <span class="string">"see `Waiver::Reason` first"</span>);
+
+<span class="comment">// a definition only rustdoc can follow goes, and its label stays as text
+</span><span class="kw">let </span>doc = <span class="string">"As [ADR 0040] says.\n\n[ADR 0040]: ../../../.ai/repo/adrs/0040-x.md"</span>;
+<span class="macro">assert_eq!</span>(to_commonmark(doc), <span class="string">"As ADR 0040 says."</span>);
+
+<span class="comment">// a fenced example is untouched, brackets and all
+</span><span class="kw">let </span>code = <span class="string">"Text.\n\n```\nlet v = [\"capability\"];\n```"</span>;
+<span class="macro">assert_eq!</span>(to_commonmark(code), code);</code></pre></div></div></details><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.to_commonmark.html" title="fn majordomus_cli::capability::rustdoc::to_commonmark">to_<wbr>commonmark</a></dt><dd>Translate one Rust doc comment into CommonMark.</dd><dt><a class="fn" href="fn.translate_descriptions.html" title="fn majordomus_cli::capability::rustdoc::translate_descriptions">translate_<wbr>descriptions</a></dt><dd>Translate every <code>description</code> of a JSON Schema document, in place.</dd></dl></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["amount","interval_text","markdown","value","words"]};

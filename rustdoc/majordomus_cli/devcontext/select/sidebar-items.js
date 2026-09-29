@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EDGES","REFUSED"],"fn":["edge_policy","intent_terms","select","tier_for_kind","version_of"],"struct":["Candidate","EdgePolicy","Request","Selection"]};

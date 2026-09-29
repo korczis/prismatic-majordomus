@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EPISODES_URI","RECOVERY_URI"],"enum":["EpisodeStanding","PointerLayout"],"fn":["module"],"struct":["Balance","ClosedSession","ClosedSessions","Episode","Episodes","Orphan","Pointer","ProviderLifecycle","ProviderLifecycles","Recovery","RuntimeView","Stranded"]};

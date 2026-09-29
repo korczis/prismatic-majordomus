@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Deduplication, conflict, deterministic order, and what the budget could afford."><title>majordomus_cli::devcontext::budget - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module budget</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module budget</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#why-deduplication-is-two-rules-and-not-one" title="Why deduplication is two rules and not one">Why deduplication is two rules and not one</a></li><li><a href="#first-fit-not-truncation" title="First fit, not truncation">First fit, not truncation</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>devcontext</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">devcontext</a></div><h1>Module <span>budget</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/devcontext/budget.rs.html#1-682">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Deduplication, conflict, deterministic order, and what the budget could afford.</p>
+<p>The three happen in that order and none of them re-reads the repository. What arrives is
+the <a href="../select/struct.Selection.html" title="struct majordomus_cli::devcontext::select::Selection"><code>Selection</code></a> — one candidate per canonical identifier,
+already carrying every path that reached it — and what leaves is the answer, with an
+entry for everything kept and a reason for everything not.</p>
+<h2 id="why-deduplication-is-two-rules-and-not-one"><a class="doc-anchor" href="#why-deduplication-is-two-rules-and-not-one">§</a>Why deduplication is two rules and not one</h2>
+<p>Structural duplication is the same identifier reached several ways, and it is already
+folded by the time this module runs: the interesting output is the <em>record</em> that it
+happened, so that “why is this ADR listed once when four things point at it” is
+answerable. Semantic duplication is two different identifiers standing for one thing —
+one file indexed under two kinds, or one rule at two versions — and that has to be
+decided, because keeping both would spend the budget twice on one fact and would leave
+the session holding two answers.</p>
+<h2 id="first-fit-not-truncation"><a class="doc-anchor" href="#first-fit-not-truncation">§</a>First fit, not truncation</h2>
+<p>Entries are spent in one total order — tier, then relevance descending, then canonical
+identifier — and an entry that does not fit is excluded while the walk continues. A
+budget that stopped at the first thing too large would let one big file hide a hundred
+small relevant ones; first fit spends the ceiling and names everything it skipped, with
+what it would have cost, so raising the budget is an informed decision.</p>
+<p>That last paragraph is the one worth seeing run, because the difference between first
+fit and truncation is invisible in a report and total in effect. Below, the most
+relevant candidate costs twice the whole ceiling: a truncating budget would have
+stopped there and answered with nothing, and this one skips it, says what it would have
+cost, and carries on to spend the ceiling on what does fit.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::collections::{BTreeMap, BTreeSet};
+
+<span class="kw">use </span>majordomus_cli::devcontext::budget::spend;
+<span class="kw">use </span>majordomus_cli::devcontext::select::{Candidate, Selection};
+<span class="kw">use </span>majordomus_cli::devcontext::{Discovery, ExclusionReason, Selector, Tier};
+<span class="kw">use </span>majordomus_cli::synthetic::SyntheticRepository;
+
+<span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
+<span class="kw">let </span>index = repo.index().unwrap();
+
+<span class="comment">// `bytes` as a fact rather than a file: the cost is the one thing this example pins
+</span><span class="kw">let </span>candidate = |uri: <span class="kw-2">&amp;</span>str, relevance: f64, bytes: u64| Candidate {
+    uri: uri.into(),
+    kind: <span class="string">"knowledge"</span>.into(),
+    title: <span class="prelude-val">None</span>,
+    tier: Tier::Knowledge,
+    relevance,
+    depth: <span class="number">1</span>,
+    discovered_by: <span class="macro">vec!</span>[Discovery {
+        selector: Selector::Relation,
+        reason: <span class="string">"reached along a declared edge"</span>.into(),
+        via: <span class="prelude-val">None</span>,
+        edge: <span class="prelude-val">Some</span>(<span class="string">"depends_on"</span>.into()),
+        depth: <span class="number">1</span>,
+        confidence: <span class="number">1.0</span>,
+        weight: <span class="number">0.9</span>,
+    }],
+    object: <span class="prelude-val">None</span>,
+    path: <span class="prelude-val">None</span>,
+    status: <span class="prelude-val">None</span>,
+    facts: BTreeMap::from([(<span class="string">"bytes"</span>.to_string(), bytes.to_string())]),
+};
+
+<span class="kw">let </span><span class="kw-2">mut </span>candidates = BTreeMap::new();
+<span class="comment">// 8000 bytes is 2000 tokens: twice the ceiling, and the more relevant of the two
+</span>candidates.insert(<span class="string">"big"</span>.to_string(), candidate(<span class="string">"majordomus://knowledge/big"</span>, <span class="number">0.9</span>, <span class="number">8_000</span>));
+candidates.insert(<span class="string">"small"</span>.to_string(), candidate(<span class="string">"majordomus://knowledge/small"</span>, <span class="number">0.5</span>, <span class="number">400</span>));
+<span class="kw">let </span>selection = Selection { candidates, unresolved: Vec::new(), diagnostics: Vec::new() };
+
+<span class="kw">let </span>(s, <span class="kw">_</span>) = spend(<span class="kw-2">&amp;</span>index, selection, <span class="kw-2">&amp;</span>BTreeSet::new(), <span class="number">1_000</span>, <span class="kw-2">&amp;</span>BTreeMap::new());
+
+<span class="comment">// the walk did not stop at the thing that would not fit
+</span><span class="kw">let </span>kept: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = s.selected.iter().map(|e| e.uri.as_str()).collect();
+<span class="macro">assert_eq!</span>(kept, [<span class="string">"majordomus://knowledge/small"</span>]);
+
+<span class="comment">// and what it skipped is named, with what it would have cost
+</span><span class="macro">assert_eq!</span>(s.excluded.len(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(s.excluded[<span class="number">0</span>].uri, <span class="string">"majordomus://knowledge/big"</span>);
+<span class="macro">assert_eq!</span>(s.excluded[<span class="number">0</span>].reason, ExclusionReason::Budget);
+<span class="macro">assert_eq!</span>(s.excluded[<span class="number">0</span>].cost_tokens, <span class="number">2_000</span>, <span class="string">"so raising the ceiling is informed"</span>);
+
+<span class="comment">// the ceiling was respected, and `used` is the sum of what is in the answer
+</span><span class="macro">assert_eq!</span>(s.budget.used_tokens, <span class="number">100</span>);
+<span class="macro">assert_eq!</span>(s.budget.remaining_tokens, <span class="number">900</span>);
+<span class="macro">assert!</span>(!s.budget.over_budget);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Spend.html" title="struct majordomus_cli::devcontext::budget::Spend">Spend</a></dt><dd>Everything the budget decided, as four lists and the arithmetic behind them: what the
+session is given, what it is not and why, what collapsed into what, and what disagrees
+with what.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.spend.html" title="fn majordomus_cli::devcontext::budget::spend">spend</a></dt><dd>Compile the selection into the answer: fold, decide, order, spend.</dd></dl></section></div></main></body></html>

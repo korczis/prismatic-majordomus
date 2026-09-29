@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["check","check_claims","prose_quantities","scan_prose","unsupported_quantity"],"struct":["EconomicsCheckInput","EconomicsCheckReport","EconomicsFinding","ProseQuantity"]};

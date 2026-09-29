@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SEMANTICS","VALUE_BINDINGS","WORKFLOW_ALIASES"],"fn":["binding","of","secrecy","unused","unused_aliases"],"struct":["Semantics","ValueBinding","WorkflowAlias"]};

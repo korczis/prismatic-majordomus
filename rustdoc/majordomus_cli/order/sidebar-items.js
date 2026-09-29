@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["canonical","canonical_strings","is_canonical","natural_cmp","numeric","numeric_samples"],"struct":["OrderKey"],"trait":["Ordered"]};

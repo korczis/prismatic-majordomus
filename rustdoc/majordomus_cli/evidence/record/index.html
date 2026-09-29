@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The recorder: turning a run that happened into evidence that lasts."><title>majordomus_cli::evidence::record - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module record</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module record</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#it-records-it-does-not-decide" title="It records, it does not decide">It records, it does not decide</a></li><li><a href="#why-the-commit-is-taken-here-rather-than-by-the-runner" title="Why the commit is taken here rather than by the runner">Why the commit is taken here rather than by the runner</a></li><li><a href="#a-run-recorded" title="A run, recorded">A run, recorded</a></li><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>evidence</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">evidence</a></div><h1>Module <span>record</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/evidence/record.rs.html#1-816">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The recorder: turning a run that happened into evidence that lasts.</p>
+<p>The runs already write their results down. <code>test/run.sh</code> writes a TSV row per case when
+<code>MJ_TEST_REPORT</code> is set — name, result, seconds, phase — and CI already sets it.
+<code>cargo test</code> prints a <code>Running &lt;binary&gt;</code> line and a <code>test result:</code> line per test binary.
+Neither is durable, neither carries a commit, and neither is joined to anything.</p>
+<p>This module reads what those runs wrote, stamps each result with the provenance the run
+itself did not record (which commit, which tree, which digest, when, from where) and
+merges it into the ledger.</p>
+<h2 id="it-records-it-does-not-decide"><a class="doc-anchor" href="#it-records-it-does-not-decide">§</a>It records, it does not decide</h2>
+<p>A case that failed is a case the runner said failed. Nothing here re-judges a result,
+and nothing here can produce one: a test id that appears in no report is simply not
+recorded, and the report will say <code>not run</code> for it, which is true.</p>
+<h2 id="why-the-commit-is-taken-here-rather-than-by-the-runner"><a class="doc-anchor" href="#why-the-commit-is-taken-here-rather-than-by-the-runner">§</a>Why the commit is taken here rather than by the runner</h2>
+<p>Because the runner is a shell script that runs in a disposable temporary repository and
+genuinely does not know which checkout it was invoked from. Taking the commit at record
+time is taking it from the tree the run was made against, which is the same thing,
+provided the recording happens in that tree. A dirty tree is recorded as dirty for
+exactly this reason: it is the one case where the commit does not describe what ran.</p>
+<h2 id="a-run-recorded"><a class="doc-anchor" href="#a-run-recorded">§</a>A run, recorded</h2>
+<p>A repository with one case, a report the runner wrote, and the execution that comes out
+of joining the two:</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::{record, Ledger, Origin, Outcome, RecordRequest};
+<span class="kw">use </span>std::process::Command;
+
+<span class="kw">let </span>root = tempfile::tempdir().unwrap();
+<span class="kw">let </span>git = |args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    Command::new(<span class="string">"git"</span>).arg(<span class="string">"-C"</span>).arg(root.path()).args(args).output().unwrap()
+};
+git(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.email"</span>, <span class="string">"t@example.com"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.name"</span>, <span class="string">"t"</span>]);
+std::fs::create_dir_all(root.path().join(<span class="string">"test/cases"</span>)).unwrap();
+std::fs::write(root.path().join(<span class="string">"test/cases/07_scope.sh"</span>), <span class="string">"echo scope\n"</span>).unwrap();
+git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"init"</span>]);
+
+<span class="comment">// what `test/run.sh` already writes when `MJ_TEST_REPORT` is set; kept outside the
+// work tree, so the recorded tree state describes the run and not the report
+</span><span class="kw">let </span>reports = tempfile::tempdir().unwrap();
+<span class="kw">let </span>tsv = reports.path().join(<span class="string">"run.tsv"</span>);
+std::fs::write(<span class="kw-2">&amp;</span>tsv, <span class="string">"07_scope\tok\t12\tparallel\n"</span>).unwrap();
+
+<span class="kw">let </span>outcome = record(
+    root.path(),
+    <span class="kw-2">&amp;</span>RecordRequest { suite: <span class="prelude-val">Some</span>(tsv), crate_output: <span class="prelude-val">None</span>, origin: Origin::Ci, run: <span class="prelude-val">None </span>},
+)
+.unwrap();
+<span class="macro">assert_eq!</span>(outcome.recorded, <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(outcome.passed, <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(outcome.commit.len(), <span class="number">40</span>, <span class="string">"the provenance the run did not record itself"</span>);
+<span class="macro">assert_eq!</span>(outcome.working_tree, <span class="string">"clean"</span>);
+
+<span class="comment">// and it is in the ledger, stamped, with the command that produces it again
+</span><span class="kw">let </span>ledger = Ledger::load(root.path()).unwrap();
+<span class="kw">let </span>execution = ledger.latest(<span class="string">"suite:07_scope"</span>).unwrap();
+<span class="macro">assert_eq!</span>(execution.outcome, Outcome::Pass);
+<span class="macro">assert_eq!</span>(execution.seconds, <span class="number">12</span>);
+<span class="macro">assert_eq!</span>(execution.origin, Origin::Ci);
+<span class="macro">assert_eq!</span>(execution.command, <span class="string">"bash test/run.sh 07_scope"</span>);
+<span class="macro">assert_eq!</span>(execution.digest_matches(root.path()), <span class="prelude-val">Some</span>(<span class="bool-val">true</span>));</code></pre></div><h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>The recorder reads what a run already wrote and stamps it with the provenance the run
+did not carry. Parsing is separable from recording, which is what makes it testable.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::{parse_crate_binaries, Outcome};
+<span class="kw">let </span>got = parse_crate_binaries(<span class="string">"     Running tests/product.rs (target/debug/deps/product-1)\ntest result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.10s\n"</span>);
+<span class="macro">assert_eq!</span>(got.len(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(got[<span class="number">0</span>].<span class="number">1</span>, Outcome::Pass);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RecordOutcome.html" title="struct majordomus_cli::evidence::record::RecordOutcome">Record<wbr>Outcome</a></dt><dd>What a recording did: how much of the run reached the ledger, how much of it passed,
+the provenance every execution was stamped with, and what the run named that this
+repository does not have.</dd><dt><a class="struct" href="struct.RecordRequest.html" title="struct majordomus_cli::evidence::record::RecordRequest">Record<wbr>Request</a></dt><dd>What to record, and where from.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.parse_crate_binaries.html" title="fn majordomus_cli::evidence::record::parse_crate_binaries">parse_<wbr>crate_<wbr>binaries</a></dt><dd>One <code>Running tests/&lt;name&gt;.rs</code> / <code>test result:</code> pair per test binary, joined.</dd><dt><a class="fn" href="fn.record.html" title="fn majordomus_cli::evidence::record::record">record</a></dt><dd>Read the runs a request names, stamp each result with provenance, and merge into the
+ledger of <code>root</code>.</dd></dl></section></div></main></body></html>

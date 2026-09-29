@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DECLARATION","DISPATCH","REGISTRY"],"fn":["contribute"],"struct":["Contribution"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ModuleSource","RegistryError"],"struct":["Builder","CapabilityRegistry","Entry","ModuleInfo","Summary"]};

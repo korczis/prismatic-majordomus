@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CRATE"],"enum":["ItemKind"],"struct":["Example","InFileTests","Inventory","Item"]};

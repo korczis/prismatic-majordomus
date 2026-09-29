@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["RESULTS_SCHEMA","SECTION"],"fn":["parse","read","render"],"struct":["Element","Finding","Foreign","Run","Surface"]};

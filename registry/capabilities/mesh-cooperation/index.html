@@ -1,0 +1,1184 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="5513f7466963">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mesh.cooperation — Prismatic Majordomus</title>
+<meta name="description" content="Whether this runtime cooperates and why not when it does not: its runtime and stream, the repository identity links are matched on, the link protocol and features, the heartbeat and expiry, every linked peer with its link state, last exchange, round trip and failures, every refused candidate with the rule that refused it, and the counters of handshakes, syncs, reconnects, expiries, replicated and refused events.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/mesh-cooperation/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="mesh.cooperation — Prismatic Majordomus">
+<meta property="og:description" content="Whether this runtime cooperates and why not when it does not: its runtime and stream, the repository identity links are matched on, the link protocol and features, the heartbeat and expiry, every linked peer with its link state, last exchange, round trip and failures, every refused candidate with the rule that refused it, and the counters of handshakes, syncs, reconnects, expiries, replicated and refused events.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/mesh-cooperation/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=1a22cdbf2b3d4ab192fd">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.10.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.9.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">mesh.cooperation</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">mesh.cooperation</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">Whether this runtime cooperates and why not when it does not: its runtime and stream, the repository identity links are matched on, the link protocol and features, the heartbeat and expiry, every linked peer with its link state, last exchange, round trip and failures, every refused candidate with the rule that refused it, and the counters of handshakes, syncs, reconnects, expiries, replicated and refused events.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">Whether this runtime cooperates and why not when it does not: its runtime and stream, the repository identity links are matched on, the link protocol and features, the heartbeat and expiry, every linked peer with its link state, last exchange, round trip and failures, every refused candidate with the rule that refused it, and the counters of handshakes, syncs, reconnects, expiries, replicated and refused events.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">experimental</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/mesh/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module mesh</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#mesh</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#coordination</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#cooperation</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_mesh_cooperation</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/mesh/#op-mesh-cooperation" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/mesh/cooperation</a> <span class="text-xs text-body-subtle">operationId mesh.cooperation</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading"><span class="text-body-subtle">—</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · Empty</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">No input.</div><p class="mt-2 text-sm text-body-subtle">No properties: the capability takes no input.</p><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;No input.&quot;,
+  &quot;title&quot;: &quot;Empty&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · CooperationStatus</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The whole cooperation runtime, as every surface reports it: the command line, the HTTP
+surface and MCP all render this one value, so that a person and an agent asking the same
+question of the same runtime are never told different things.</p>
+<p>It answers in one reading the three questions a mesh raises — is this runtime
+cooperating at all, what does it speak, and who is it linked to — and it stays
+answerable when the answer is no: an inactive runtime still reports its protocol range
+and the reason, rather than an absence the caller has to interpret.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>#### use std::sync::Arc;</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::mesh::identity::NodeIdentity;</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::mesh::link::HttpTransport;</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::mesh::registry::MeshRegistry;</span></span>
+<span class="giallo-l"><span>#### use majordomus_cli::mesh::repository::of_root_commits;</span></span>
+<span class="giallo-l"><span>#### let cooperation = Cooperation::new(CooperationSetup {</span></span>
+<span class="giallo-l"><span>####     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: &quot;0000000000000001&quot;.into(),</span></span>
+<span class="giallo-l"><span>####     repository: of_root_commits(&amp;[&quot;root&quot;.into()]), endpoints: vec![&quot;127.0.0.1:9&quot;.into()],</span></span>
+<span class="giallo-l"><span>####     version: &quot;doc&quot;.into(), config: CooperationConfig::default(), trust: TrustConfig::default(),</span></span>
+<span class="giallo-l"><span>####     journal_path: None, registry: Arc::new(MeshRegistry::new()),</span></span>
+<span class="giallo-l"><span>####     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),</span></span>
+<span class="giallo-l"><span>#### }).unwrap();</span></span>
+<span class="giallo-l"><span>use majordomus_cli::mesh::cooperation::CooperationStatus;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let running: CooperationStatus = cooperation.status();</span></span>
+<span class="giallo-l"><span>assert_eq!(running.runtime.as_deref(), Some(cooperation.runtime_key()));</span></span>
+<span class="giallo-l"><span>assert!(running.peers.is_empty(), &quot;nothing is dialed until something dials&quot;);</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>// and where there is no runtime at all, the same shape says why</span></span>
+<span class="giallo-l"><span>let none = CooperationStatus::inactive(&quot;the mesh declaration is disabled&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(none.protocol, running.protocol, &quot;still answerable about what it speaks&quot;);</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">active</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">boolean</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Whether cooperation runs in this process.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">counters</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Counters.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">endpoints</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where this runtime answers.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">expiry_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Seconds of silence before expiry.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">features</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The link features carried.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">heartbeat_seconds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Seconds between heartbeats.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">journal</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The journal's tallies.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">peers</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Every linked peer, by runtime key.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">protocol</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The link protocol range spoken.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">reason</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Why not, when it does not.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">refused</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Candidates refused, by endpoint.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">repository</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The repository identity links are matched on.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">runtime</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">This runtime, <code>&lt;node&gt;-&lt;runtime&gt;</code>.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">seeds</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">array</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The declared seeds.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">started_at</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">When cooperation started, RFC 3339.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">stream</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">one of 2</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">This runtime's current stream.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;CooperationCounters&quot;: {
+      &quot;description&quot;: &quot;The link and replication counters since start: what this runtime did, not what it\nholds. They are monotonic and never reset, so two readings a minute apart are a rate —\nwhich is the only way to tell a mesh that is working from one that is retrying, since\nboth show the same peers in the same states.\n\nThe counts are split by direction throughout (`handshakes_out` against\n`handshakes_in`, `refused_in` against `refused_out`) because a runtime that refuses\neveryone and one that everyone refuses need opposite remedies.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\nlet key = a.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\na.sync_with(&amp;key).unwrap();\n\nlet dialer: CooperationCounters = a.status().counters;\nlet answerer = b.status().counters;\nassert_eq!((dialer.handshakes_out, dialer.syncs_out), (1, 1));\nassert_eq!((answerer.handshakes_in, answerer.syncs_in), (1, 1), \&quot;the other side of it\&quot;);\nassert_eq!(answerer.handshakes_out, 0, \&quot;B never dialed anybody\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;claims_refused&quot;: {
+          &quot;description&quot;: &quot;Claims refused for a conflict.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;dial_failures&quot;: {
+          &quot;description&quot;: &quot;Dials that reached no endpoint.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;events_sent&quot;: {
+          &quot;description&quot;: &quot;Events pushed in sync requests.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;events_served&quot;: {
+          &quot;description&quot;: &quot;Events served in sync answers.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;handshakes_in&quot;: {
+          &quot;description&quot;: &quot;Handshakes this runtime accepted.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;handshakes_out&quot;: {
+          &quot;description&quot;: &quot;Handshakes this runtime completed as the dialer.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;peers_expired&quot;: {
+          &quot;description&quot;: &quot;Links expired.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;reconnects&quot;: {
+          &quot;description&quot;: &quot;Re-handshakes after an expiry or a dropped link.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;refused_in&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint64&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;Hellos and syncs this runtime refused, by code.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;refused_out&quot;: {
+          &quot;additionalProperties&quot;: {
+            &quot;format&quot;: &quot;uint64&quot;,
+            &quot;minimum&quot;: 0,
+            &quot;type&quot;: &quot;integer&quot;
+          },
+          &quot;description&quot;: &quot;Refusals this runtime received or applied to a welcome, by code.&quot;,
+          &quot;type&quot;: &quot;object&quot;
+        },
+        &quot;restarts&quot;: {
+          &quot;description&quot;: &quot;Peer restarts observed.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;syncs_failed&quot;: {
+          &quot;description&quot;: &quot;Sync rounds that failed in transport.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;syncs_in&quot;: {
+          &quot;description&quot;: &quot;Sync rounds this runtime answered.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;syncs_out&quot;: {
+          &quot;description&quot;: &quot;Sync rounds this runtime completed as the dialer.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;threads&quot;: {
+          &quot;description&quot;: &quot;Cooperation threads alive now.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;handshakes_out&quot;,
+        &quot;handshakes_in&quot;,
+        &quot;dial_failures&quot;,
+        &quot;syncs_out&quot;,
+        &quot;syncs_failed&quot;,
+        &quot;syncs_in&quot;,
+        &quot;events_sent&quot;,
+        &quot;events_served&quot;,
+        &quot;reconnects&quot;,
+        &quot;restarts&quot;,
+        &quot;peers_expired&quot;,
+        &quot;claims_refused&quot;,
+        &quot;threads&quot;,
+        &quot;refused_in&quot;,
+        &quot;refused_out&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;JournalTallies&quot;: {
+      &quot;description&quot;: &quot;The journal&#39;s counters since start: how much it holds, how much it has written,\nreceived, absorbed, refused, held back and compacted away. They are what makes a\nreplication problem diagnosable from one machine — a runtime whose `received` never\nrises is not linked, one whose `rejected` rises is being sent something it will not\ntake, and one whose `pending` stays high is missing an event ahead of what it has.\n\n```\nuse std::sync::Arc;\nuse majordomus_cli::mesh::identity::NodeIdentity;\nuse majordomus_cli::mesh::journal::{EventBody, Journal, JournalTallies};\n\nlet j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), \&quot;0000000000000001\&quot;,\n    \&quot;repo\&quot;.into(), None).unwrap();\nlet before: JournalTallies = j.tallies();\nassert_eq!((before.written, before.events), (0, 0));\n\nj.append_own(EventBody::SessionClosed { session: \&quot;s1\&quot;.into() }).unwrap();\nlet after = j.tallies();\nassert_eq!((after.written, after.events, after.streams), (1, 1, 1));\nassert!(after.lamport &gt; before.lamport);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;compacted&quot;: {
+          &quot;description&quot;: &quot;Events dropped by compaction since start.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;duplicates&quot;: {
+          &quot;description&quot;: &quot;Duplicate deliveries absorbed.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;events&quot;: {
+          &quot;description&quot;: &quot;Events held.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;lamport&quot;: {
+          &quot;description&quot;: &quot;The highest Lamport stamp seen.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;opaque&quot;: {
+          &quot;description&quot;: &quot;Events of a kind this executable does not interpret, held and relayed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;pending&quot;: {
+          &quot;description&quot;: &quot;Events held for a gap right now.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;received&quot;: {
+          &quot;description&quot;: &quot;Events received and stored.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;rejected&quot;: {
+          &quot;description&quot;: &quot;Events refused.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;streams&quot;: {
+          &quot;description&quot;: &quot;Streams tracked.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;written&quot;: {
+          &quot;description&quot;: &quot;Events written by this runtime since start.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;streams&quot;,
+        &quot;events&quot;,
+        &quot;written&quot;,
+        &quot;received&quot;,
+        &quot;duplicates&quot;,
+        &quot;rejected&quot;,
+        &quot;pending&quot;,
+        &quot;compacted&quot;,
+        &quot;opaque&quot;,
+        &quot;lamport&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;LinkRefusal&quot;: {
+      &quot;description&quot;: &quot;A refusal: the code, the reason in words, and the protocol range of the refuser so a\nversion mismatch is diagnosable from either end.\n\nCarrying the refuser&#39;s protocol range in every refusal, not only in the one about\nprotocols, is what makes a version problem visible from the side that has the log: the\ndialer sees what the answerer speaks without anyone having to read the other machine.\n\n```\nuse majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};\n\nlet refusal = LinkRefusal::new(RefusalCode::Untrusted, \&quot;the key is not in the allowlist\&quot;);\nassert_eq!(refusal.code, RefusalCode::Untrusted);\nassert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);\nassert_eq!(refusal.to_string(), \&quot;untrusted: the key is not in the allowlist\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;code&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/RefusalCode&quot;,
+          &quot;description&quot;: &quot;The rule that refused.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;Why, in words.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;proto_max&quot;: {
+          &quot;description&quot;: &quot;The refuser&#39;s newest protocol.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;proto_min&quot;: {
+          &quot;description&quot;: &quot;The refuser&#39;s oldest protocol.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;code&quot;,
+        &quot;detail&quot;,
+        &quot;proto_min&quot;,
+        &quot;proto_max&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;LinkState&quot;: {
+      &quot;description&quot;: &quot;A link&#39;s standing, from this runtime&#39;s side. It is a statement about a connection and\nnever about the peer: a runtime reachable only through a third party is `Expired` here\nwhile its streams beat on everywhere, which is why claims follow streams and not this.\n\nThe variants are ordered by how far the link has fallen, so the worst link in a table\nis the maximum and a reader never has to rank them by hand.\n\n```\nuse majordomus_cli::mesh::cooperation::LinkState;\n\nlet table = [LinkState::Connected, LinkState::Unreachable, LinkState::Degraded];\nassert_eq!(table.iter().max(), Some(&amp;LinkState::Unreachable), \&quot;the worst link shows\&quot;);\nassert_eq!(serde_json::to_value(LinkState::Connected).unwrap(), \&quot;connected\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;connecting&quot;,
+          &quot;description&quot;: &quot;Handshaking, or never yet exchanged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;connected&quot;,
+          &quot;description&quot;: &quot;An exchange within two heartbeats.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;degraded&quot;,
+          &quot;description&quot;: &quot;Rounds are failing; the last exchange is under half the expiry old.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unreachable&quot;,
+          &quot;description&quot;: &quot;The last exchange is over half the expiry old; the link is about to expire.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;expired&quot;,
+          &quot;description&quot;: &quot;No exchange within the expiry: the link is dropped and will be re-dialed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshRepositoryBasis&quot;: {
+      &quot;description&quot;: &quot;What the repository identity was derived from, which a reader needs in order to judge\nit: an identity taken from the root commits is a fact about the history two clones\nshare, while a declared one is a decision somebody made, and only the second can be\nchanged by editing a file.\n\n```\nuse majordomus_cli::mesh::repository::{declared, of_root_commits, MeshRepositoryBasis};\n\nassert_eq!(declared(\&quot;majordomus\&quot;).unwrap().basis, MeshRepositoryBasis::Declared);\nassert_eq!(\n    of_root_commits(&amp;[\&quot;a\&quot;.repeat(40)]).basis,\n    MeshRepositoryBasis::RootCommits,\n);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;declared&quot;,
+          &quot;description&quot;: &quot;`cooperation.repository` in the mesh declaration.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;root_commits&quot;,
+          &quot;description&quot;: &quot;The repository&#39;s root commits.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;MeshRepositoryIdentity&quot;: {
+      &quot;description&quot;: &quot;A repository&#39;s mesh identity, carried by every advertisement, link and event, together\nwith the account of where it came from. The `detail` exists so that a person told two\ncheckouts are not the same repository can see what each one was derived from instead of\ncomparing two opaque digests.\n\n```\nuse majordomus_cli::mesh::repository::MeshRepositoryIdentity;\nuse majordomus_cli::mesh::repository::of_root_commits;\n\nlet identity: MeshRepositoryIdentity = of_root_commits(&amp;[\&quot;a\&quot;.repeat(40)]);\nassert_eq!(identity.id.len(), 32, \&quot;32 hex characters, on every machine\&quot;);\nassert_eq!(identity.detail, \&quot;aaaaaaaaaaaa\&quot;, \&quot;the evidence, short enough to read\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;basis&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/MeshRepositoryBasis&quot;,
+          &quot;description&quot;: &quot;What it was derived from.&quot;
+        },
+        &quot;detail&quot;: {
+          &quot;description&quot;: &quot;The evidence, human-readable: the declared value, or the root commits.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;32 hex: what advertisements, links and events carry.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;basis&quot;,
+        &quot;detail&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;PeerView&quot;: {
+      &quot;description&quot;: &quot;One peer as every surface shows it: who it is, how this runtime reaches it, and what\nthe link has been through. The counters are carried per peer rather than only in the\ntotals because the question a person asks of a flapping mesh is which peer is flapping,\nand `restarts` answers a different one from `reconnects` — a peer whose process keeps\ndying, against a link that keeps dropping under a process that never did.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str| { let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy: TrustPolicy::Tofu, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let (a, b) = (runtime(\&quot;a:1\&quot;), runtime(\&quot;b:1\&quot;));\na.dial(&amp;[\&quot;b:1\&quot;.into()]).unwrap();\n\nlet peer: &amp;PeerView = &amp;a.peers()[0];\nassert_eq!(peer.runtime, b.runtime_key(), \&quot;the durable identity, not the endpoint\&quot;);\nassert!(peer.outbound, \&quot;this runtime dials it\&quot;);\nassert_eq!(peer.handshakes, 1);\nassert_eq!(peer.restarts, 0, \&quot;the peer&#39;s process has not died under the link\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;endpoint&quot;: {
+          &quot;description&quot;: &quot;The endpoint this runtime dials, when it does.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;endpoints&quot;: {
+          &quot;description&quot;: &quot;Where the peer answers.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;failures&quot;: {
+          &quot;description&quot;: &quot;Consecutive failed rounds.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;features&quot;: {
+          &quot;description&quot;: &quot;The link features the peer carries.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;handshakes&quot;: {
+          &quot;description&quot;: &quot;Handshakes completed with this peer.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;inbound&quot;: {
+          &quot;description&quot;: &quot;Whether the peer dials this runtime.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;instance&quot;: {
+          &quot;description&quot;: &quot;The current instance.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;last_error&quot;: {
+          &quot;description&quot;: &quot;The last failure, in words.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;last_exchange_ms&quot;: {
+          &quot;description&quot;: &quot;Milliseconds since the last successful exchange in either direction.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;linked_at&quot;: {
+          &quot;description&quot;: &quot;When the current link was established, RFC 3339.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;local&quot;: {
+          &quot;description&quot;: &quot;Whether the peer runs on this machine (the same node key).&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;name&quot;: {
+          &quot;description&quot;: &quot;The node&#39;s display name.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;node&quot;: {
+          &quot;description&quot;: &quot;The node (machine key digest).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;outbound&quot;: {
+          &quot;description&quot;: &quot;Whether this runtime dials the peer.&quot;,
+          &quot;type&quot;: &quot;boolean&quot;
+        },
+        &quot;protocol&quot;: {
+          &quot;description&quot;: &quot;The negotiated link protocol.&quot;,
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;reconnects&quot;: {
+          &quot;description&quot;: &quot;Handshakes after an expiry or a dropped link.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;restarts&quot;: {
+          &quot;description&quot;: &quot;New instances of the peer seen (its process restarted).&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;rtt_ms&quot;: {
+          &quot;description&quot;: &quot;The last round trip, milliseconds.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: [
+            &quot;integer&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;`&lt;node&gt;-&lt;runtime&gt;`: the peer&#39;s durable identity.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;state&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/LinkState&quot;,
+          &quot;description&quot;: &quot;The link&#39;s standing.&quot;
+        },
+        &quot;trust&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/TrustState&quot;,
+          &quot;description&quot;: &quot;The trust verdict the link was admitted under.&quot;
+        },
+        &quot;version&quot;: {
+          &quot;description&quot;: &quot;The executable version.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;runtime&quot;,
+        &quot;node&quot;,
+        &quot;instance&quot;,
+        &quot;name&quot;,
+        &quot;version&quot;,
+        &quot;local&quot;,
+        &quot;trust&quot;,
+        &quot;protocol&quot;,
+        &quot;features&quot;,
+        &quot;endpoints&quot;,
+        &quot;state&quot;,
+        &quot;outbound&quot;,
+        &quot;inbound&quot;,
+        &quot;failures&quot;,
+        &quot;handshakes&quot;,
+        &quot;reconnects&quot;,
+        &quot;restarts&quot;,
+        &quot;linked_at&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;RefusalCode&quot;: {
+      &quot;description&quot;: &quot;Why a link message was turned down. Every refusal is typed, counted and shown: a mesh\nthat refuses a peer says which rule did, instead of dropping a socket.\n\nThe codes are the diagnosis a person needs when two runtimes will not link, and they\nare deliberately distinct where the remedies differ: `Untrusted` is a key to add,\n`RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that\ndials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to\nsay hello again.\n\n```\nuse majordomus_cli::mesh::link::RefusalCode;\n\n// the wire word is the code&#39;s identity across surfaces, and it is stable\nassert_eq!(RefusalCode::RepositoryMismatch.as_str(), \&quot;repository_mismatch\&quot;);\nassert_eq!(\n    serde_json::to_value(RefusalCode::Untrusted).unwrap(),\n    serde_json::json!(\&quot;untrusted\&quot;),\n);\nassert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;malformed&quot;,
+          &quot;description&quot;: &quot;Not the shape of the message.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;oversized&quot;,
+          &quot;description&quot;: &quot;Over `MAX_LINK_MESSAGE`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;protocol_unsupported&quot;,
+          &quot;description&quot;: &quot;The protocol ranges do not meet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;signature&quot;,
+          &quot;description&quot;: &quot;The signature does not verify.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;The timestamp is outside the skew window.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;replay&quot;,
+          &quot;description&quot;: &quot;A nonce or a counter already seen.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;repository_mismatch&quot;,
+          &quot;description&quot;: &quot;The peer serves another repository: the isolation rule.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;untrusted&quot;,
+          &quot;description&quot;: &quot;The peer&#39;s key is not trusted by this runtime&#39;s policy: discovery is not trust.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;self_link&quot;,
+          &quot;description&quot;: &quot;The peer is this very runtime.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_active&quot;,
+          &quot;description&quot;: &quot;This runtime&#39;s cooperation is not active.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unknown_link&quot;,
+          &quot;description&quot;: &quot;The link id is unknown here: the answerer restarted or expired the link; say hello.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;capacity&quot;,
+          &quot;description&quot;: &quot;A bound of this runtime is full.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;feature_unsupported&quot;,
+          &quot;description&quot;: &quot;The peer lacks a feature the operation needs.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;RefusedView&quot;: {
+      &quot;description&quot;: &quot;A candidate that was refused, with the rule that refused it. A refusal is kept and\nshown rather than logged and dropped, because the commonest mesh failure is a link that\nnever forms: a person who declared a seed and sees no peer needs the decision that was\nmade about it — the wrong repository, a key nobody allowed, a clock too far out — and\nthe direction says which side made it.\n\n```\n# use std::collections::BTreeMap;\n# use std::sync::{Arc, Mutex, Weak};\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::*;\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::{of_root_commits, runtime_id};\n# use majordomus_cli::mesh::trust::TrustPolicy;\n# #[derive(Default)] struct Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);\n# impl LinkTransport for Net {\n#   fn post(&amp;self, e: &amp;str, p: &amp;str, m: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {\n#     let peer = (self.0.lock().unwrap().get(e).and_then(Weak::upgrade))\n#         .ok_or_else(|| format!(\&quot;{e}: nobody there\&quot;))?;\n#     Ok(if p == HELLO_PATH { peer.accept_hello(m) } else { peer.accept_sync(m) }) } }\n# let net = Arc::new(Net::default());\n# let runtime = |endpoint: &amp;str, policy: TrustPolicy| {\n#   let c = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: runtime_id(endpoint),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![endpoint.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(),\n#     trust: TrustConfig { policy, allow: vec![] }, journal_path: None,\n#     registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::clone(&amp;net) as Arc&lt;dyn LinkTransport&gt;, board: None,\n#     checkout: CheckoutFacts::default() }).unwrap();\n#   net.0.lock().unwrap().insert(endpoint.into(), Arc::downgrade(&amp;c)); c };\n# let a = runtime(\&quot;a:1\&quot;, TrustPolicy::Tofu);\n# let strict = runtime(\&quot;s:1\&quot;, TrustPolicy::DenyUnknown);\na.dial(&amp;[\&quot;s:1\&quot;.into()]).expect_err(\&quot;reachable, and not trusted\&quot;);\n\nlet refused: &amp;RefusedView = &amp;strict.status().refused[0];\nassert_eq!(refused.refusal.code, RefusalCode::Untrusted);\nassert_eq!(refused.direction, \&quot;inbound\&quot;, \&quot;this runtime refused the hello\&quot;);\nassert_eq!(refused.runtime.as_deref(), Some(a.runtime_key()));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When, RFC 3339.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;direction&quot;: {
+          &quot;description&quot;: &quot;`outbound` (this runtime refused the peer&#39;s welcome, or the peer refused this\nhello) or `inbound` (this runtime refused the peer&#39;s hello).&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;endpoint&quot;: {
+          &quot;description&quot;: &quot;The endpoint dialed, or `inbound:&lt;runtime&gt;` for a refused hello.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;refusal&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/LinkRefusal&quot;,
+          &quot;description&quot;: &quot;The refusal.&quot;
+        },
+        &quot;runtime&quot;: {
+          &quot;description&quot;: &quot;The peer&#39;s runtime key, when its card said.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;endpoint&quot;,
+        &quot;direction&quot;,
+        &quot;refusal&quot;,
+        &quot;at&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;StreamId&quot;: {
+      &quot;description&quot;: &quot;One stream: a run of one runtime of one node. `&lt;node 32 hex&gt;-&lt;runtime 16 hex&gt;-&lt;instance\n16 hex&gt;`. The node is the machine&#39;s key, the runtime is one checkout&#39;s server on that\nmachine, the instance is one process run of that server — so two worktrees on one\nmachine are two streams, and a restart is a new stream of the same runtime.\n\nNumbering events within a stream rather than globally is what makes replication cheap\nand unambiguous: a gap in one stream is visible without coordinating with anyone, and\n`(stream, seq)` identifies an event on every machine that holds it.\n\n```\nuse majordomus_cli::mesh::journal::StreamId;\n\nlet id = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;c\&quot;.repeat(16)).unwrap();\nassert_eq!(id.node(), \&quot;a\&quot;.repeat(32));\nassert_eq!(id.runtime(), \&quot;b\&quot;.repeat(16));\n\n// a restart is a new stream, and the same runtime\nlet after = StreamId::new(&amp;\&quot;a\&quot;.repeat(32), &amp;\&quot;b\&quot;.repeat(16), &amp;\&quot;d\&quot;.repeat(16)).unwrap();\nassert_ne!(after, id);\nassert_eq!(after.runtime_key(), id.runtime_key());\n```&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;TrustState&quot;: {
+      &quot;description&quot;: &quot;What the policy decided about one node.&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;description&quot;: &quot;Valid, recorded, trusted for nothing. The resting state of an unknown node.&quot;,
+          &quot;properties&quot;: {
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;observed&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The policy trusts this key; `detail` says which rule did (`allowlist`, `tofu`).&quot;,
+          &quot;properties&quot;: {
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;trusted&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;detail&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        },
+        {
+          &quot;description&quot;: &quot;The policy rejected this node; `detail` says why (for instance a TOFU key\nchange). A rejected node stays listed — an operator debugging a mesh needs to\nsee what was refused, not wonder about silence.&quot;,
+          &quot;properties&quot;: {
+            &quot;detail&quot;: {
+              &quot;type&quot;: &quot;string&quot;
+            },
+            &quot;state&quot;: {
+              &quot;const&quot;: &quot;rejected&quot;,
+              &quot;type&quot;: &quot;string&quot;
+            }
+          },
+          &quot;required&quot;: [
+            &quot;state&quot;,
+            &quot;detail&quot;
+          ],
+          &quot;type&quot;: &quot;object&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;The whole cooperation runtime, as every surface reports it: the command line, the HTTP\nsurface and MCP all render this one value, so that a person and an agent asking the same\nquestion of the same runtime are never told different things.\n\nIt answers in one reading the three questions a mesh raises — is this runtime\ncooperating at all, what does it speak, and who is it linked to — and it stays\nanswerable when the answer is no: an inactive runtime still reports its protocol range\nand the reason, rather than an absence the caller has to interpret.\n\n```\n# use std::sync::Arc;\n# use majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};\n# use majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};\n# use majordomus_cli::mesh::identity::NodeIdentity;\n# use majordomus_cli::mesh::link::HttpTransport;\n# use majordomus_cli::mesh::registry::MeshRegistry;\n# use majordomus_cli::mesh::repository::of_root_commits;\n# let cooperation = Cooperation::new(CooperationSetup {\n#     identity: Arc::new(NodeIdentity::ephemeral().unwrap()), runtime: \&quot;0000000000000001\&quot;.into(),\n#     repository: of_root_commits(&amp;[\&quot;root\&quot;.into()]), endpoints: vec![\&quot;127.0.0.1:9\&quot;.into()],\n#     version: \&quot;doc\&quot;.into(), config: CooperationConfig::default(), trust: TrustConfig::default(),\n#     journal_path: None, registry: Arc::new(MeshRegistry::new()),\n#     transport: Arc::new(HttpTransport), board: None, checkout: CheckoutFacts::default(),\n# }).unwrap();\nuse majordomus_cli::mesh::cooperation::CooperationStatus;\n\nlet running: CooperationStatus = cooperation.status();\nassert_eq!(running.runtime.as_deref(), Some(cooperation.runtime_key()));\nassert!(running.peers.is_empty(), \&quot;nothing is dialed until something dials\&quot;);\n\n// and where there is no runtime at all, the same shape says why\nlet none = CooperationStatus::inactive(\&quot;the mesh declaration is disabled\&quot;);\nassert_eq!(none.protocol, running.protocol, \&quot;still answerable about what it speaks\&quot;);\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;active&quot;: {
+      &quot;description&quot;: &quot;Whether cooperation runs in this process.&quot;,
+      &quot;type&quot;: &quot;boolean&quot;
+    },
+    &quot;counters&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/CooperationCounters&quot;,
+      &quot;description&quot;: &quot;Counters.&quot;
+    },
+    &quot;endpoints&quot;: {
+      &quot;description&quot;: &quot;Where this runtime answers.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;expiry_seconds&quot;: {
+      &quot;description&quot;: &quot;Seconds of silence before expiry.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;features&quot;: {
+      &quot;description&quot;: &quot;The link features carried.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;heartbeat_seconds&quot;: {
+      &quot;description&quot;: &quot;Seconds between heartbeats.&quot;,
+      &quot;format&quot;: &quot;uint64&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;journal&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/JournalTallies&quot;,
+      &quot;description&quot;: &quot;The journal&#39;s tallies.&quot;
+    },
+    &quot;peers&quot;: {
+      &quot;description&quot;: &quot;Every linked peer, by runtime key.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/PeerView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;protocol&quot;: {
+      &quot;description&quot;: &quot;The link protocol range spoken.&quot;,
+      &quot;maxItems&quot;: 2,
+      &quot;minItems&quot;: 2,
+      &quot;prefixItems&quot;: [
+        {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        {
+          &quot;format&quot;: &quot;uint32&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      ],
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;reason&quot;: {
+      &quot;description&quot;: &quot;Why not, when it does not.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;refused&quot;: {
+      &quot;description&quot;: &quot;Candidates refused, by endpoint.&quot;,
+      &quot;items&quot;: {
+        &quot;$ref&quot;: &quot;#/$defs/RefusedView&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;repository&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/MeshRepositoryIdentity&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;The repository identity links are matched on.&quot;
+    },
+    &quot;runtime&quot;: {
+      &quot;description&quot;: &quot;This runtime, `&lt;node&gt;-&lt;runtime&gt;`.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;seeds&quot;: {
+      &quot;description&quot;: &quot;The declared seeds.&quot;,
+      &quot;items&quot;: {
+        &quot;type&quot;: &quot;string&quot;
+      },
+      &quot;type&quot;: &quot;array&quot;
+    },
+    &quot;started_at&quot;: {
+      &quot;description&quot;: &quot;When cooperation started, RFC 3339.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    },
+    &quot;stream&quot;: {
+      &quot;anyOf&quot;: [
+        {
+          &quot;$ref&quot;: &quot;#/$defs/StreamId&quot;
+        },
+        {
+          &quot;type&quot;: &quot;null&quot;
+        }
+      ],
+      &quot;description&quot;: &quot;This runtime&#39;s current stream.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;active&quot;,
+    &quot;protocol&quot;,
+    &quot;features&quot;,
+    &quot;heartbeat_seconds&quot;,
+    &quot;expiry_seconds&quot;,
+    &quot;endpoints&quot;,
+    &quot;seeds&quot;,
+    &quot;peers&quot;,
+    &quot;refused&quot;,
+    &quot;counters&quot;,
+    &quot;journal&quot;
+  ],
+  &quot;title&quot;: &quot;CooperationStatus&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-cooperation-direct-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-cooperation-mcp-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">1</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-mesh-cooperation-http-default" class="break-all text-fg-brand hover:underline inline-block py-1">default</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">mesh.cooperation</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/mesh.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/mesh.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::mesh</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">Empty</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">CooperationStatus</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/910835dd0723ce26186225a6ca1909d54e766d53/docs/generated/modules/mesh.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/mesh.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">052c7049f95ace1d8c20312e719c9efaf04d9e31584a21351b5da9e00241f6cb</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.10.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.10.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/910835dd0723ce26186225a6ca1909d54e766d53" class="font-mono underline">910835d</a> · inputs <span class="font-mono">52e090755116</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/capability/builtin/release.rs`."><title>release.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/capability/builtin/</div>release.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! The `release` module: the changelog, the version, and the compatibility analysis behind
+<a href=#2 id=2 data-nosnippet>2</a>//! it — all three derived.
+<a href=#3 id=3 data-nosnippet>3</a>//!
+<a href=#4 id=4 data-nosnippet>4</a>//! Three capabilities, all read-only, all answered by [`crate::release`] — the same code the
+<a href=#5 id=5 data-nosnippet>5</a>//! command line renders, the generated document is written from, and the site page shows.
+<a href=#6 id=6 data-nosnippet>6</a>//! Neither reads a file somebody maintains: the changelog composes the layer's own release
+<a href=#7 id=7 data-nosnippet>7</a>//! records, decisions and the repository's commits, and the version report reads the one
+<a href=#8 id=8 data-nosnippet>8</a>//! place the version is authored and says whether the projection the shell tool prints is
+<a href=#9 id=9 data-nosnippet>9</a>//! current.
+<a href=#10 id=10 data-nosnippet>10</a>//!
+<a href=#11 id=11 data-nosnippet>11</a>//! Raising the version is not here. It writes tracked files, which makes it a repository
+<a href=#12 id=12 data-nosnippet>12</a>//! mutation, and the exposure policy keeps repository mutations off every machine surface —
+<a href=#13 id=13 data-nosnippet>13</a>//! so `release bump` is a command and nothing more, and this module is the read half.
+<a href=#14 id=14 data-nosnippet>14</a>
+<a href=#15 id=15 data-nosnippet>15</a></span><span class="kw">use </span>schemars::JsonSchema;
+<a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#17 id=17 data-nosnippet>17</a>
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span><span class="kw">crate</span>::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
+<a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span><span class="kw">crate</span>::capability::handler::{CapabilityError, Context};
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span><span class="kw">crate</span>::capability::model::{
+<a href=#21 id=21 data-nosnippet>21</a>    BenchmarkPolicy, Exposure, McpExposure, McpResource, Stability, WaiverReason,
+<a href=#22 id=22 data-nosnippet>22</a>};
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">use </span><span class="kw">crate</span>::capability::module::ModuleDescriptor;
+<a href=#24 id=24 data-nosnippet>24</a><span class="kw">use </span><span class="kw">crate</span>::capability::registry::CapabilityRegistry;
+<a href=#25 id=25 data-nosnippet>25</a><span class="kw">use </span><span class="kw">crate</span>::release::compat::VersionPlan;
+<a href=#26 id=26 data-nosnippet>26</a><span class="kw">use </span><span class="kw">crate</span>::release::{<span class="self">self</span>, model::ProducedBy, model::VersionReport, Changelog};
+<a href=#27 id=27 data-nosnippet>27</a><span class="kw">use crate</span>::{capability, module};
+<a href=#28 id=28 data-nosnippet>28</a>
+<a href=#29 id=29 data-nosnippet>29</a><span class="kw">use super</span>::{get, Empty};
+<a href=#30 id=30 data-nosnippet>30</a>
+<a href=#31 id=31 data-nosnippet>31</a><span class="doccomment">/// The URI under which the changelog is read as an MCP resource.
+<a href=#32 id=32 data-nosnippet>32</a></span><span class="kw">pub const </span>CHANGELOG_URI: <span class="kw-2">&amp;</span>str = <span class="string">"majordomus://changelog"</span>;
+<a href=#33 id=33 data-nosnippet>33</a>
+<a href=#34 id=34 data-nosnippet>34</a><span class="doccomment">/// Which part of the changelog to answer with.
+<a href=#35 id=35 data-nosnippet>35</a></span><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+<a href=#36 id=36 data-nosnippet>36</a>#[serde(deny_unknown_fields)]
+<a href=#37 id=37 data-nosnippet>37</a>#[schemars(rename = <span class="string">"ReleaseChangelogInput"</span>)]
+<a href=#38 id=38 data-nosnippet>38</a></span><span class="kw">pub struct </span>ChangelogInput {
+<a href=#39 id=39 data-nosnippet>39</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#40 id=40 data-nosnippet>40</a>    </span><span class="doccomment">/// One version, or `unreleased`; every section when absent.
+<a href=#41 id=41 data-nosnippet>41</a>    </span><span class="kw">pub </span>version: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#42 id=42 data-nosnippet>42</a>}
+<a href=#43 id=43 data-nosnippet>43</a>
+<a href=#44 id=44 data-nosnippet>44</a><span class="kw">impl </span>BenchmarkCases <span class="kw">for </span>ChangelogInput {
+<a href=#45 id=45 data-nosnippet>45</a>    <span class="doccomment">/// One real version from the layer's own records, so the narrow case is timed against
+<a href=#46 id=46 data-nosnippet>46</a>    /// something that exists rather than against a filter that matches nothing. A
+<a href=#47 id=47 data-nosnippet>47</a>    /// repository with no records has a narrow case all the same — the coverage gate counts
+<a href=#48 id=48 data-nosnippet>48</a>    /// targets, not repositories, and the OpenAPI operation's example of `version` *is* this
+<a href=#49 id=49 data-nosnippet>49</a>    /// case, which case 92 refuses to see missing — so it falls back to `unreleased`, the
+<a href=#50 id=50 data-nosnippet>50</a>    /// one section a repository has whether it has released anything or not.
+<a href=#51 id=51 data-nosnippet>51</a>    </span><span class="kw">fn </span>benchmark_cases(ctx: <span class="kw-2">&amp;</span>CaseContext&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;NamedCase&lt;<span class="self">Self</span>&gt;&gt; {
+<a href=#52 id=52 data-nosnippet>52</a>        <span class="kw">let </span>version = ctx
+<a href=#53 id=53 data-nosnippet>53</a>            .index
+<a href=#54 id=54 data-nosnippet>54</a>            .objects
+<a href=#55 id=55 data-nosnippet>55</a>            .iter()
+<a href=#56 id=56 data-nosnippet>56</a>            .find(|o| o.kind == <span class="kw">crate</span>::release::changelog::RELEASE_KIND)
+<a href=#57 id=57 data-nosnippet>57</a>            .and_then(|o| o.metadata.get(<span class="string">"version"</span>))
+<a href=#58 id=58 data-nosnippet>58</a>            .and_then(|v| v.as_str())
+<a href=#59 id=59 data-nosnippet>59</a>            .map_or_else(|| <span class="string">"unreleased"</span>.to_string(), str::to_string);
+<a href=#60 id=60 data-nosnippet>60</a>        <span class="macro">vec!</span>[
+<a href=#61 id=61 data-nosnippet>61</a>            NamedCase::new(<span class="string">"all"</span>, ChangelogInput::default()),
+<a href=#62 id=62 data-nosnippet>62</a>            NamedCase::new(
+<a href=#63 id=63 data-nosnippet>63</a>                <span class="string">"one-version"</span>,
+<a href=#64 id=64 data-nosnippet>64</a>                ChangelogInput {
+<a href=#65 id=65 data-nosnippet>65</a>                    version: <span class="prelude-val">Some</span>(version),
+<a href=#66 id=66 data-nosnippet>66</a>                },
+<a href=#67 id=67 data-nosnippet>67</a>            ),
+<a href=#68 id=68 data-nosnippet>68</a>        ]
+<a href=#69 id=69 data-nosnippet>69</a>    }
+<a href=#70 id=70 data-nosnippet>70</a>}
+<a href=#71 id=71 data-nosnippet>71</a>
+<a href=#72 id=72 data-nosnippet>72</a><span class="doccomment">/// Which release to measure this tree against.
+<a href=#73 id=73 data-nosnippet>73</a>///
+<a href=#74 id=74 data-nosnippet>74</a>/// ```
+<a href=#75 id=75 data-nosnippet>75</a>/// use majordomus_cli::capability::builtin::release::AnalysisInput;
+<a href=#76 id=76 data-nosnippet>76</a>/// // Absent means the last release the layer records, which is the canonical baseline.
+<a href=#77 id=77 data-nosnippet>77</a>/// let input = AnalysisInput::default();
+<a href=#78 id=78 data-nosnippet>78</a>/// assert!(input.since.is_none());
+<a href=#79 id=79 data-nosnippet>79</a>/// let explicit = AnalysisInput { since: Some("v0.4.0".into()) };
+<a href=#80 id=80 data-nosnippet>80</a>/// assert_eq!(explicit.since.as_deref(), Some("v0.4.0"));
+<a href=#81 id=81 data-nosnippet>81</a>/// ```
+<a href=#82 id=82 data-nosnippet>82</a></span><span class="attr">#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
+<a href=#83 id=83 data-nosnippet>83</a>#[serde(deny_unknown_fields)]
+<a href=#84 id=84 data-nosnippet>84</a>#[schemars(rename = <span class="string">"ReleaseAnalysisInput"</span>)]
+<a href=#85 id=85 data-nosnippet>85</a></span><span class="kw">pub struct </span>AnalysisInput {
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#87 id=87 data-nosnippet>87</a>    </span><span class="doccomment">/// A ref to compare with instead of the last release: `v0.4.0`, or any commit that
+<a href=#88 id=88 data-nosnippet>88</a>    /// carries a committed registry.
+<a href=#89 id=89 data-nosnippet>89</a>    </span><span class="kw">pub </span>since: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#90 id=90 data-nosnippet>90</a>}
+<a href=#91 id=91 data-nosnippet>91</a>
+<a href=#92 id=92 data-nosnippet>92</a><span class="kw">impl </span>BenchmarkCases <span class="kw">for </span>AnalysisInput {
+<a href=#93 id=93 data-nosnippet>93</a>    <span class="doccomment">/// None. The capability is waived from the benchmark
+<a href=#94 id=94 data-nosnippet>94</a>    /// ([`WaiverReason::PublishedHistory`]) because its input is a release this repository
+<a href=#95 id=95 data-nosnippet>95</a>    /// has published, and a benchmark fixture has published nothing — so every case here
+<a href=#96 id=96 data-nosnippet>96</a>    /// would time a refusal and be counted as coverage. The trait is still implemented
+<a href=#97 id=97 data-nosnippet>97</a>    /// because the registry asks every input type for its cases; answering "none" is the
+<a href=#98 id=98 data-nosnippet>98</a>    /// honest answer rather than a case that measures an error path.
+<a href=#99 id=99 data-nosnippet>99</a>    </span><span class="kw">fn </span>benchmark_cases(<span class="kw">_</span>: <span class="kw-2">&amp;</span>CaseContext&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;NamedCase&lt;<span class="self">Self</span>&gt;&gt; {
+<a href=#100 id=100 data-nosnippet>100</a>        Vec::new()
+<a href=#101 id=101 data-nosnippet>101</a>    }
+<a href=#102 id=102 data-nosnippet>102</a>}
+<a href=#103 id=103 data-nosnippet>103</a>
+<a href=#104 id=104 data-nosnippet>104</a><span class="doccomment">/// The module.
+<a href=#105 id=105 data-nosnippet>105</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
+<a href=#106 id=106 data-nosnippet>106</a>    <span class="macro">module!</span> {
+<a href=#107 id=107 data-nosnippet>107</a>        id: <span class="string">"release"</span>,
+<a href=#108 id=108 data-nosnippet>108</a>        title: <span class="string">"Release"</span>,
+<a href=#109 id=109 data-nosnippet>109</a>        description: <span class="string">"What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become."</span>,
+<a href=#110 id=110 data-nosnippet>110</a>        stability: Stability::Implemented,
+<a href=#111 id=111 data-nosnippet>111</a>        capabilities: [
+<a href=#112 id=112 data-nosnippet>112</a>            <span class="macro">capability!</span> {
+<a href=#113 id=113 data-nosnippet>113</a>                id: CHANGELOG_ID,
+<a href=#114 id=114 data-nosnippet>114</a>                title: <span class="string">"The changelog"</span>,
+<a href=#115 id=115 data-nosnippet>115</a>                description: <span class="string">"Every release the layer records, newest first, with the work that has not been released leading. A section's decisions are the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing in it is authored, and a section that could not be read says so rather than appearing empty."</span>,
+<a href=#116 id=116 data-nosnippet>116</a>                input: ChangelogInput,
+<a href=#117 id=117 data-nosnippet>117</a>                output: Changelog,
+<a href=#118 id=118 data-nosnippet>118</a>                stability: Stability::Implemented,
+<a href=#119 id=119 data-nosnippet>119</a>                exposure: Exposure {
+<a href=#120 id=120 data-nosnippet>120</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#121 id=121 data-nosnippet>121</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_changelog"</span>.into()),
+<a href=#122 id=122 data-nosnippet>122</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: CHANGELOG_URI.into(), name: <span class="string">"changelog"</span>.into() }),
+<a href=#123 id=123 data-nosnippet>123</a>                    }),
+<a href=#124 id=124 data-nosnippet>124</a>                    http: get(<span class="string">"/api/v1/changelog"</span>),
+<a href=#125 id=125 data-nosnippet>125</a>                    <span class="comment">// Not a CLI projection: `majordomus release changelog` is a local
+<a href=#126 id=126 data-nosnippet>126</a>                    // command that *renders* this capability for a person at a terminal,
+<a href=#127 id=127 data-nosnippet>127</a>                    // and cli::LOCAL says so once (`RendersCapability`). Declaring the
+<a href=#128 id=128 data-nosnippet>128</a>                    // path here as well is the double accounting `tests/quality.rs`
+<a href=#129 id=129 data-nosnippet>129</a>                    // refuses (OPERATION_CLASSIFICATION_CONFLICT).
+<a href=#130 id=130 data-nosnippet>130</a>                    </span>cli: <span class="prelude-val">None</span>,
+<a href=#131 id=131 data-nosnippet>131</a>                },
+<a href=#132 id=132 data-nosnippet>132</a>                tags: [<span class="string">"release"</span>, <span class="string">"changelog"</span>],
+<a href=#133 id=133 data-nosnippet>133</a>                handler: changelog,
+<a href=#134 id=134 data-nosnippet>134</a>            },
+<a href=#135 id=135 data-nosnippet>135</a>            <span class="macro">capability!</span> {
+<a href=#136 id=136 data-nosnippet>136</a>                id: <span class="string">"release.version"</span>,
+<a href=#137 id=137 data-nosnippet>137</a>                title: <span class="string">"The version, and the one the commits imply"</span>,
+<a href=#138 id=138 data-nosnippet>138</a>                description: <span class="string">"The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it."</span>,
+<a href=#139 id=139 data-nosnippet>139</a>                input: Empty,
+<a href=#140 id=140 data-nosnippet>140</a>                output: VersionReport,
+<a href=#141 id=141 data-nosnippet>141</a>                stability: Stability::Implemented,
+<a href=#142 id=142 data-nosnippet>142</a>                exposure: Exposure {
+<a href=#143 id=143 data-nosnippet>143</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#144 id=144 data-nosnippet>144</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_release_version"</span>.into()),
+<a href=#145 id=145 data-nosnippet>145</a>                        resource: <span class="prelude-val">None</span>,
+<a href=#146 id=146 data-nosnippet>146</a>                    }),
+<a href=#147 id=147 data-nosnippet>147</a>                    http: get(<span class="string">"/api/v1/release/version"</span>),
+<a href=#148 id=148 data-nosnippet>148</a>                    cli: <span class="prelude-val">None</span>,
+<a href=#149 id=149 data-nosnippet>149</a>                },
+<a href=#150 id=150 data-nosnippet>150</a>                tags: [<span class="string">"release"</span>, <span class="string">"version"</span>],
+<a href=#151 id=151 data-nosnippet>151</a>                handler: version,
+<a href=#152 id=152 data-nosnippet>152</a>            },
+<a href=#153 id=153 data-nosnippet>153</a>            <span class="macro">capability!</span> {
+<a href=#154 id=154 data-nosnippet>154</a>                id: ANALYSIS_ID,
+<a href=#155 id=155 data-nosnippet>155</a>                title: <span class="string">"What the public contract did, and the smallest version it allows"</span>,
+<a href=#156 id=156 data-nosnippet>156</a>                description: <span class="string">"The public capability surface of this tree against the one the last release published, every movement of it named with the reason it counts for what it does, and the smallest version this tree may therefore declare. The compatibility level is measured from the contract rather than read off the commit subjects: a capability, route, MCP tool, command, or a required field of either schema that a caller could hold and cannot any more is breaking whatever the commit that removed it called itself. What the commits said about themselves is carried beside the verdict as evidence, and the answer says when the two disagree."</span>,
+<a href=#157 id=157 data-nosnippet>157</a>                input: AnalysisInput,
+<a href=#158 id=158 data-nosnippet>158</a>                output: VersionPlan,
+<a href=#159 id=159 data-nosnippet>159</a>                stability: Stability::Implemented,
+<a href=#160 id=160 data-nosnippet>160</a>                exposure: Exposure {
+<a href=#161 id=161 data-nosnippet>161</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#162 id=162 data-nosnippet>162</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_release_analysis"</span>.into()),
+<a href=#163 id=163 data-nosnippet>163</a>                        resource: <span class="prelude-val">None</span>,
+<a href=#164 id=164 data-nosnippet>164</a>                    }),
+<a href=#165 id=165 data-nosnippet>165</a>                    http: get(<span class="string">"/api/v1/release/analysis"</span>),
+<a href=#166 id=166 data-nosnippet>166</a>                    <span class="comment">// `majordomus release analyze` renders this capability for a person at a
+<a href=#167 id=167 data-nosnippet>167</a>                    // terminal; `cli::LOCAL` declares that once, and declaring the path here
+<a href=#168 id=168 data-nosnippet>168</a>                    // as well is the double accounting `tests/quality.rs` refuses.
+<a href=#169 id=169 data-nosnippet>169</a>                    </span>cli: <span class="prelude-val">None</span>,
+<a href=#170 id=170 data-nosnippet>170</a>                },
+<a href=#171 id=171 data-nosnippet>171</a>                tags: [<span class="string">"release"</span>, <span class="string">"version"</span>, <span class="string">"compatibility"</span>],
+<a href=#172 id=172 data-nosnippet>172</a>                <span class="comment">// Timed nowhere, because there is nothing honest to time. The analysis reads
+<a href=#173 id=173 data-nosnippet>173</a>                // what the last release published, and a benchmark fixture is a repository
+<a href=#174 id=174 data-nosnippet>174</a>                // that has published nothing: every case would measure the refusal rather
+<a href=#175 id=175 data-nosnippet>175</a>                // than the comparison. The behavioural case (112) is where it is exercised
+<a href=#176 id=176 data-nosnippet>176</a>                // against a repository with a real publication history.
+<a href=#177 id=177 data-nosnippet>177</a>                </span>benchmark: BenchmarkPolicy::Waived { reason: WaiverReason::PublishedHistory },
+<a href=#178 id=178 data-nosnippet>178</a>                handler: analysis,
+<a href=#179 id=179 data-nosnippet>179</a>            },
+<a href=#180 id=180 data-nosnippet>180</a>        ],
+<a href=#181 id=181 data-nosnippet>181</a>    }
+<a href=#182 id=182 data-nosnippet>182</a>}
+<a href=#183 id=183 data-nosnippet>183</a>
+<a href=#184 id=184 data-nosnippet>184</a><span class="doccomment">/// The compatibility analysis, named beside its declaration.
+<a href=#185 id=185 data-nosnippet>185</a></span><span class="kw">pub const </span>ANALYSIS_ID: <span class="kw-2">&amp;</span>str = <span class="string">"release.analysis"</span>;
+<a href=#186 id=186 data-nosnippet>186</a>
+<a href=#187 id=187 data-nosnippet>187</a><span class="doccomment">/// The capability's own id. Beside its declaration, so the two cannot drift apart without
+<a href=#188 id=188 data-nosnippet>188</a>/// the test below noticing; the document carries it so that no page has to enumerate where
+<a href=#189 id=189 data-nosnippet>189</a>/// this value is served.
+<a href=#190 id=190 data-nosnippet>190</a></span><span class="kw">pub const </span>CHANGELOG_ID: <span class="kw-2">&amp;</span>str = <span class="string">"release.changelog"</span>;
+<a href=#191 id=191 data-nosnippet>191</a>
+<a href=#192 id=192 data-nosnippet>192</a><span class="doccomment">/// Where else the changelog can be had, read off the declarations that already say so.
+<a href=#193 id=193 data-nosnippet>193</a>///
+<a href=#194 id=194 data-nosnippet>194</a>/// One answer for every writer of the document: the handler that serves it and the generator
+<a href=#195 id=195 data-nosnippet>195</a>/// that commits it both ask here, so the committed artifact and the live answer name the same
+<a href=#196 id=196 data-nosnippet>196</a>/// surfaces. The route, the tool and the resource are the capability's own declaration; the
+<a href=#197 id=197 data-nosnippet>197</a>/// command line is the local command that renders this capability, which `cli::LOCAL`
+<a href=#198 id=198 data-nosnippet>198</a>/// declares once beside the reason it is local. Nothing is spelled out a second time, and a
+<a href=#199 id=199 data-nosnippet>199</a>/// page that lists these resolves each against the datasets the registry generates rather
+<a href=#200 id=200 data-nosnippet>200</a>/// than typing a route of its own. `None` only when the registry does not carry the
+<a href=#201 id=201 data-nosnippet>201</a>/// capability at all, which the module's own test refuses.
+<a href=#202 id=202 data-nosnippet>202</a>///
+<a href=#203 id=203 data-nosnippet>203</a>/// ```
+<a href=#204 id=204 data-nosnippet>204</a>/// use majordomus_cli::capability::builtin::release::{module, produced_by};
+<a href=#205 id=205 data-nosnippet>205</a>/// use majordomus_cli::capability::registry::CapabilityRegistry;
+<a href=#206 id=206 data-nosnippet>206</a>///
+<a href=#207 id=207 data-nosnippet>207</a>/// let registry = CapabilityRegistry::builder()
+<a href=#208 id=208 data-nosnippet>208</a>///     .with_modules(vec![module()])
+<a href=#209 id=209 data-nosnippet>209</a>///     .build()
+<a href=#210 id=210 data-nosnippet>210</a>///     .expect("the release module composes on its own");
+<a href=#211 id=211 data-nosnippet>211</a>/// let by = produced_by(&amp;registry).expect("the registry carries release.changelog");
+<a href=#212 id=212 data-nosnippet>212</a>/// assert_eq!(by.capability, "release.changelog");
+<a href=#213 id=213 data-nosnippet>213</a>/// assert_eq!(by.cli.as_deref(), Some("majordomus release changelog"));
+<a href=#214 id=214 data-nosnippet>214</a>/// assert_eq!(by.http.as_deref(), Some("/api/v1/changelog"));
+<a href=#215 id=215 data-nosnippet>215</a>/// assert_eq!(by.mcp_tool.as_deref(), Some("majordomus_changelog"));
+<a href=#216 id=216 data-nosnippet>216</a>/// assert_eq!(by.mcp_resource.as_deref(), Some("majordomus://changelog"));
+<a href=#217 id=217 data-nosnippet>217</a>/// ```
+<a href=#218 id=218 data-nosnippet>218</a></span><span class="kw">pub fn </span>produced_by(registry: <span class="kw-2">&amp;</span>CapabilityRegistry) -&gt; <span class="prelude-ty">Option</span>&lt;ProducedBy&gt; {
+<a href=#219 id=219 data-nosnippet>219</a>    <span class="kw">let </span>c = registry.get(CHANGELOG_ID)<span class="question-mark">?</span>;
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="kw">let </span>cli = <span class="kw">crate</span>::cli::local::LOCAL
+<a href=#221 id=221 data-nosnippet>221</a>        .iter()
+<a href=#222 id=222 data-nosnippet>222</a>        .find(|l| l.reason.renders() == <span class="prelude-val">Some</span>(CHANGELOG_ID))
+<a href=#223 id=223 data-nosnippet>223</a>        .map(|l| <span class="macro">format!</span>(<span class="string">"majordomus {}"</span>, l.command));
+<a href=#224 id=224 data-nosnippet>224</a>    <span class="prelude-val">Some</span>(ProducedBy {
+<a href=#225 id=225 data-nosnippet>225</a>        capability: c.id.to_string(),
+<a href=#226 id=226 data-nosnippet>226</a>        cli,
+<a href=#227 id=227 data-nosnippet>227</a>        http: c.exposure.http.as_ref().map(|h| h.path.clone()),
+<a href=#228 id=228 data-nosnippet>228</a>        mcp_tool: c.exposure.mcp.as_ref().and_then(|m| m.tool.clone()),
+<a href=#229 id=229 data-nosnippet>229</a>        mcp_resource: c
+<a href=#230 id=230 data-nosnippet>230</a>            .exposure
+<a href=#231 id=231 data-nosnippet>231</a>            .mcp
+<a href=#232 id=232 data-nosnippet>232</a>            .as_ref()
+<a href=#233 id=233 data-nosnippet>233</a>            .and_then(|m| m.resource.as_ref().map(|r| r.uri.clone())),
+<a href=#234 id=234 data-nosnippet>234</a>    })
+<a href=#235 id=235 data-nosnippet>235</a>}
+<a href=#236 id=236 data-nosnippet>236</a>
+<a href=#237 id=237 data-nosnippet>237</a><span class="kw">fn </span>changelog(ctx: <span class="kw-2">&amp;</span>Context, input: ChangelogInput) -&gt; <span class="prelude-ty">Result</span>&lt;Changelog, CapabilityError&gt; {
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
+<a href=#239 id=239 data-nosnippet>239</a>    <span class="kw">let </span><span class="kw-2">mut </span>log = release::compose(root, <span class="kw-2">&amp;</span>ctx.index.objects);
+<a href=#240 id=240 data-nosnippet>240</a>    log.produced_by = produced_by(<span class="kw-2">&amp;</span>ctx.registry);
+<a href=#241 id=241 data-nosnippet>241</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(wanted) = input.version.as_deref() {
+<a href=#242 id=242 data-nosnippet>242</a>        log.sections.retain(|s| {
+<a href=#243 id=243 data-nosnippet>243</a>            s.version == wanted
+<a href=#244 id=244 data-nosnippet>244</a>                || s.tag.as_deref() == <span class="prelude-val">Some</span>(wanted)
+<a href=#245 id=245 data-nosnippet>245</a>                || (wanted == <span class="string">"unreleased" </span>&amp;&amp; s.unreleased)
+<a href=#246 id=246 data-nosnippet>246</a>        });
+<a href=#247 id=247 data-nosnippet>247</a>        <span class="kw">if </span>log.sections.is_empty() {
+<a href=#248 id=248 data-nosnippet>248</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(CapabilityError::NotFound(<span class="macro">format!</span>(
+<a href=#249 id=249 data-nosnippet>249</a>                <span class="string">"no release section carries the version '{wanted}'"
+<a href=#250 id=250 data-nosnippet>250</a>            </span>)));
+<a href=#251 id=251 data-nosnippet>251</a>        }
+<a href=#252 id=252 data-nosnippet>252</a>    }
+<a href=#253 id=253 data-nosnippet>253</a>    <span class="prelude-val">Ok</span>(log)
+<a href=#254 id=254 data-nosnippet>254</a>}
+<a href=#255 id=255 data-nosnippet>255</a>
+<a href=#256 id=256 data-nosnippet>256</a><span class="kw">fn </span>version(ctx: <span class="kw-2">&amp;</span>Context, <span class="kw">_</span>: Empty) -&gt; <span class="prelude-ty">Result</span>&lt;VersionReport, CapabilityError&gt; {
+<a href=#257 id=257 data-nosnippet>257</a>    <span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
+<a href=#258 id=258 data-nosnippet>258</a>    <span class="prelude-val">Ok</span>(release::version::report(root, <span class="kw-2">&amp;</span>ctx.index.objects))
+<a href=#259 id=259 data-nosnippet>259</a>}
+<a href=#260 id=260 data-nosnippet>260</a>
+<a href=#261 id=261 data-nosnippet>261</a><span class="doccomment">/// The one analysis, behind every surface that shows a version verdict.
+<a href=#262 id=262 data-nosnippet>262</a>///
+<a href=#263 id=263 data-nosnippet>263</a>/// A surface that cannot be read is a refusal and never an empty diff: an empty diff means
+<a href=#264 id=264 data-nosnippet>264</a>/// "nothing changed", and answering that when the truth is "the baseline could not be read"
+<a href=#265 id=265 data-nosnippet>265</a>/// is the false negative this whole subsystem exists to stop.
+<a href=#266 id=266 data-nosnippet>266</a></span><span class="kw">fn </span>analysis(ctx: <span class="kw-2">&amp;</span>Context, input: AnalysisInput) -&gt; <span class="prelude-ty">Result</span>&lt;VersionPlan, CapabilityError&gt; {
+<a href=#267 id=267 data-nosnippet>267</a>    <span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
+<a href=#268 id=268 data-nosnippet>268</a>    release::compat::analyze(
+<a href=#269 id=269 data-nosnippet>269</a>        root,
+<a href=#270 id=270 data-nosnippet>270</a>        <span class="kw-2">&amp;</span>ctx.registry,
+<a href=#271 id=271 data-nosnippet>271</a>        <span class="kw-2">&amp;</span>ctx.index.objects,
+<a href=#272 id=272 data-nosnippet>272</a>        input.since.as_deref(),
+<a href=#273 id=273 data-nosnippet>273</a>    )
+<a href=#274 id=274 data-nosnippet>274</a>    .map_err(|e| CapabilityError::NotFound(e.to_string()))
+<a href=#275 id=275 data-nosnippet>275</a>}
+<a href=#276 id=276 data-nosnippet>276</a>
+<a href=#277 id=277 data-nosnippet>277</a><span class="attr">#[cfg(test)]
+<a href=#278 id=278 data-nosnippet>278</a></span><span class="kw">mod </span>tests {
+<a href=#279 id=279 data-nosnippet>279</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#280 id=280 data-nosnippet>280</a>
+<a href=#281 id=281 data-nosnippet>281</a>    <span class="doccomment">/// Two capabilities, and every surface that carries them is derived from this
+<a href=#282 id=282 data-nosnippet>282</a>    /// declaration: the MCP tools, the changelog resource, the HTTP routes, the OpenAPI
+<a href=#283 id=283 data-nosnippet>283</a>    /// operations. A refactor that renamed a route, dropped the resource or added a third
+<a href=#284 id=284 data-nosnippet>284</a>    /// would still compile, and the suites that exercise the changelog behind it would
+<a href=#285 id=285 data-nosnippet>285</a>    /// still pass. This is the assertion that would not.
+<a href=#286 id=286 data-nosnippet>286</a>    </span><span class="attr">#[test]
+<a href=#287 id=287 data-nosnippet>287</a>    </span><span class="kw">fn </span>the_declaration_yields_the_projections_it_claims() {
+<a href=#288 id=288 data-nosnippet>288</a>        <span class="kw">let </span>m = module();
+<a href=#289 id=289 data-nosnippet>289</a>        <span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"release"</span>);
+<a href=#290 id=290 data-nosnippet>290</a>        <span class="macro">assert_eq!</span>(
+<a href=#291 id=291 data-nosnippet>291</a>            ANALYSIS_ID, <span class="string">"release.analysis"</span>,
+<a href=#292 id=292 data-nosnippet>292</a>            <span class="string">"the id beside the declaration is the declared one"
+<a href=#293 id=293 data-nosnippet>293</a>        </span>);
+<a href=#294 id=294 data-nosnippet>294</a>        <span class="kw">let </span>expected: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str)] = <span class="kw-2">&amp;</span>[
+<a href=#295 id=295 data-nosnippet>295</a>            (
+<a href=#296 id=296 data-nosnippet>296</a>                <span class="string">"release.changelog"</span>,
+<a href=#297 id=297 data-nosnippet>297</a>                <span class="string">"majordomus_changelog"</span>,
+<a href=#298 id=298 data-nosnippet>298</a>                <span class="string">"/api/v1/changelog"</span>,
+<a href=#299 id=299 data-nosnippet>299</a>            ),
+<a href=#300 id=300 data-nosnippet>300</a>            (
+<a href=#301 id=301 data-nosnippet>301</a>                <span class="string">"release.version"</span>,
+<a href=#302 id=302 data-nosnippet>302</a>                <span class="string">"majordomus_release_version"</span>,
+<a href=#303 id=303 data-nosnippet>303</a>                <span class="string">"/api/v1/release/version"</span>,
+<a href=#304 id=304 data-nosnippet>304</a>            ),
+<a href=#305 id=305 data-nosnippet>305</a>            (
+<a href=#306 id=306 data-nosnippet>306</a>                <span class="string">"release.analysis"</span>,
+<a href=#307 id=307 data-nosnippet>307</a>                <span class="string">"majordomus_release_analysis"</span>,
+<a href=#308 id=308 data-nosnippet>308</a>                <span class="string">"/api/v1/release/analysis"</span>,
+<a href=#309 id=309 data-nosnippet>309</a>            ),
+<a href=#310 id=310 data-nosnippet>310</a>        ];
+<a href=#311 id=311 data-nosnippet>311</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
+<a href=#312 id=312 data-nosnippet>312</a>            .capabilities
+<a href=#313 id=313 data-nosnippet>313</a>            .iter()
+<a href=#314 id=314 data-nosnippet>314</a>            .map(|e| e.capability.id.as_str())
+<a href=#315 id=315 data-nosnippet>315</a>            .collect();
+<a href=#316 id=316 data-nosnippet>316</a>        <span class="kw">let </span>want: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = expected.iter().map(|(id, <span class="kw">_</span>, <span class="kw">_</span>)| <span class="kw-2">*</span>id).collect();
+<a href=#317 id=317 data-nosnippet>317</a>        <span class="macro">assert_eq!</span>(
+<a href=#318 id=318 data-nosnippet>318</a>            ids, want,
+<a href=#319 id=319 data-nosnippet>319</a>            <span class="string">"the module declares a different set of capabilities"
+<a href=#320 id=320 data-nosnippet>320</a>        </span>);
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="kw">for </span>(executable, (id, tool, path)) <span class="kw">in </span>m.capabilities.iter().zip(expected) {
+<a href=#322 id=322 data-nosnippet>322</a>            <span class="kw">let </span>exposure = <span class="kw-2">&amp;</span>executable.capability.exposure;
+<a href=#323 id=323 data-nosnippet>323</a>            <span class="macro">assert_eq!</span>(
+<a href=#324 id=324 data-nosnippet>324</a>                exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()),
+<a href=#325 id=325 data-nosnippet>325</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>tool),
+<a href=#326 id=326 data-nosnippet>326</a>                <span class="string">"{id} lost or renamed its MCP tool"
+<a href=#327 id=327 data-nosnippet>327</a>            </span>);
+<a href=#328 id=328 data-nosnippet>328</a>            <span class="macro">assert_eq!</span>(
+<a href=#329 id=329 data-nosnippet>329</a>                exposure.http.as_ref().map(|h| h.path.as_str()),
+<a href=#330 id=330 data-nosnippet>330</a>                <span class="prelude-val">Some</span>(<span class="kw-2">*</span>path),
+<a href=#331 id=331 data-nosnippet>331</a>                <span class="string">"{id} lost or renamed its HTTP route"
+<a href=#332 id=332 data-nosnippet>332</a>            </span>);
+<a href=#333 id=333 data-nosnippet>333</a>        }
+<a href=#334 id=334 data-nosnippet>334</a>        <span class="comment">// the changelog is also a resource, so a client may read it without calling a tool
+<a href=#335 id=335 data-nosnippet>335</a>        </span><span class="kw">let </span>changelog = <span class="kw-2">&amp;</span>m.capabilities[<span class="number">0</span>].capability.exposure;
+<a href=#336 id=336 data-nosnippet>336</a>        <span class="macro">assert_eq!</span>(
+<a href=#337 id=337 data-nosnippet>337</a>            changelog
+<a href=#338 id=338 data-nosnippet>338</a>                .mcp
+<a href=#339 id=339 data-nosnippet>339</a>                .as_ref()
+<a href=#340 id=340 data-nosnippet>340</a>                .and_then(|m| m.resource.as_ref())
+<a href=#341 id=341 data-nosnippet>341</a>                .map(|r| r.uri.as_str()),
+<a href=#342 id=342 data-nosnippet>342</a>            <span class="prelude-val">Some</span>(CHANGELOG_URI),
+<a href=#343 id=343 data-nosnippet>343</a>            <span class="string">"the changelog stopped being an MCP resource"
+<a href=#344 id=344 data-nosnippet>344</a>        </span>);
+<a href=#345 id=345 data-nosnippet>345</a>    }
+<a href=#346 id=346 data-nosnippet>346</a>}
+</code></pre></div></section></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["capture","differences","tree_manifest"],"struct":["WorktreeFingerprint"]};

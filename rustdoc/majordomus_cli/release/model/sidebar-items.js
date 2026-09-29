@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CHANGELOG_SCHEMA"],"enum":["ChangeKind"],"struct":["Artifact","Change","ChangeGroup","Changelog","Decision","ProducedBy","Reference","ReleaseSection","VersionReport"]};

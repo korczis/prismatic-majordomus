@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GatePlanMode","GateStatus"],"struct":["Completion","DoneQuestion","Gate","GateClass","GateClassMatch","GateDecl","GatePlan","GateRun","ImpliedObligation","ObligationStanding"]};

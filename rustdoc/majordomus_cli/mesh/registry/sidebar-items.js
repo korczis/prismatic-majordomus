@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_NODES","PRESENCE_TTL","RETENTION"],"enum":["MeshSource","Presence"],"struct":["MeshRegistry","NodeRecord","Sighting","Tallies"]};

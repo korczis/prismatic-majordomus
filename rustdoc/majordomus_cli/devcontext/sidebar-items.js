@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_FLOOR"],"enum":["Standing"],"fn":["compile","explain","policy"],"mod":["budget","model","select"],"struct":["CompileInput","CompilerPolicy","EdgeRule","ExplainInput","Explanation","SelectorRule","TierRule"]};

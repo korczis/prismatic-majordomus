@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_BODY_BYTES","WORKERS"],"fn":["bind","bind_declared","bind_or_fallback","stdin_is_a_pipe"],"struct":["Bound","Running"]};

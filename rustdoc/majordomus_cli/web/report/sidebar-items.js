@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["declare","declare_if_absent","directory","write","write_json"],"mod":["tests","ui"],"struct":["Origin"]};

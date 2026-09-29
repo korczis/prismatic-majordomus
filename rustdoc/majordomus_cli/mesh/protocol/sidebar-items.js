@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_CLOCK_SKEW_SECONDS","MAX_DATAGRAM","MAX_ENDPOINTS","MIN_PROTOCOL_VERSION","PROTOCOL_VERSION"],"enum":["Refusal"],"fn":["advertise","advertise_as","encode","now","parse","parse_at"],"struct":["Advertisement","Envelope"]};

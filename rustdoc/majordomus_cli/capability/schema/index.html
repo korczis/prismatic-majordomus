@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="One schema per type, and every projection reads it."><title>majordomus_cli::capability::schema - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module schema</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module schema</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-two-dialects" title="The two dialects">The two dialects</a></li><li><a href="#one-shape-under-two-names" title="One shape under two names">One shape under two names</a></li><li><a href="#query-strings" title="Query strings">Query strings</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>capability</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">capability</a></div><h1>Module <span>schema</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/capability/schema.rs.html#1-525">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>One schema per type, and every projection reads it.</p>
+<p>A <a href="struct.CanonicalSchema.html" title="struct majordomus_cli::capability::schema::CanonicalSchema"><code>CanonicalSchema</code></a> is a JSON Schema (draft 2020-12, as schemars emits it) derived
+from the Rust type that the handler actually deserialises and serialises. That is the
+whole architectural point: MCP’s <code>inputSchema</code>, the OpenAPI operation’s parameters and
+its <code>components/schemas</code> entry, and the Cockpit runner’s form are four <em>renderings</em> of
+this value, produced by <a href="struct.CanonicalSchema.html#method.for_mcp" title="method majordomus_cli::capability::schema::CanonicalSchema::for_mcp"><code>CanonicalSchema::for_mcp</code></a> and
+<a href="struct.CanonicalSchema.html#method.for_openapi" title="method majordomus_cli::capability::schema::CanonicalSchema::for_openapi"><code>CanonicalSchema::for_openapi</code></a>. None of them describes a payload of its own, so none
+of them can describe it differently from the code that reads it.</p>
+<h2 id="the-two-dialects"><a class="doc-anchor" href="#the-two-dialects">§</a>The two dialects</h2>
+<p>MCP takes the schema inline. OpenAPI wants named components and <code>$ref</code>s, so
+<a href="struct.CanonicalSchema.html#method.for_openapi" title="method majordomus_cli::capability::schema::CanonicalSchema::for_openapi"><code>CanonicalSchema::for_openapi</code></a> hoists the type into a <code>components</code> map under the
+name schemars gave it and answers with the reference — which is why the component
+namespace is flat and why two types with one title are a build-time conflict rather
+than a document that silently describes one of them twice.</p>
+<h2 id="one-shape-under-two-names"><a class="doc-anchor" href="#one-shape-under-two-names">§</a>One shape under two names</h2>
+<p>A <code>#[serde(transparent)]</code> newtype — a module’s input named for its operation over a
+domain type named for the domain — has a schema whose root is a <code>$ref</code> into its own
+<code>$defs</code>. <a href="struct.CanonicalSchema.html#method.resolved" title="method majordomus_cli::capability::schema::CanonicalSchema::resolved"><code>CanonicalSchema::resolved</code></a> follows that reference, and every projection
+that binds properties reads it through <a href="struct.CanonicalSchema.html#method.properties" title="method majordomus_cli::capability::schema::CanonicalSchema::properties"><code>CanonicalSchema::properties</code></a>, so the wrapper
+names the component and the inner type supplies the shape.</p>
+<h2 id="query-strings"><a class="doc-anchor" href="#query-strings">§</a>Query strings</h2>
+<p>An HTTP <code>GET</code> binds each top-level property from the query string, where everything is
+a string. <a href="fn.coerce.html" title="fn majordomus_cli::capability::schema::coerce"><code>coerce</code></a> is the one place that turns <code>"12"</code> into a number and <code>"true"</code> into
+a boolean, guided by the property’s own schema, so a route cannot invent a coercion the
+schema does not describe.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::CanonicalSchema;
+<span class="kw">use </span>schemars::JsonSchema;
+
+<span class="doccomment">/// A search over the index.
+</span><span class="attr">#[derive(JsonSchema)]
+</span><span class="kw">struct </span>SearchInput {
+    <span class="doccomment">/// What to look for.
+    </span>query: String,
+    <span class="doccomment">/// How many hits at most.
+    </span>limit: u32,
+}
+
+<span class="kw">let </span>schema = CanonicalSchema::of::&lt;SearchInput&gt;();
+<span class="macro">assert_eq!</span>(schema.name.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"SearchInput"</span>));
+
+<span class="comment">// the properties every projection binds, derived once
+</span><span class="kw">let </span>(properties, required) = schema.properties();
+<span class="kw">let </span>names: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = properties.iter().map(|(n, <span class="kw">_</span>)| n.as_str()).collect();
+<span class="macro">assert!</span>(names.contains(<span class="kw-2">&amp;</span><span class="string">"query"</span>) &amp;&amp; names.contains(<span class="kw-2">&amp;</span><span class="string">"limit"</span>));
+<span class="macro">assert!</span>(required.contains(<span class="kw-2">&amp;</span><span class="string">"query"</span>.to_string()));
+
+<span class="comment">// MCP takes it inline; OpenAPI takes a reference and the component beside it
+</span><span class="macro">assert!</span>(schema.for_mcp()[<span class="string">"properties"</span>][<span class="string">"query"</span>].is_object());
+<span class="kw">let </span><span class="kw-2">mut </span>components = std::collections::BTreeMap::new();
+<span class="kw">let </span>reference = schema.openapi_ref(<span class="kw-2">&amp;mut </span>components).unwrap();
+<span class="macro">assert_eq!</span>(reference[<span class="string">"$ref"</span>], <span class="string">"#/components/schemas/SearchInput"</span>);
+<span class="macro">assert!</span>(components.contains_key(<span class="string">"SearchInput"</span>));</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.CanonicalSchema.html" title="struct majordomus_cli::capability::schema::CanonicalSchema">Canonical<wbr>Schema</a></dt><dd>A JSON Schema with, when the type has one, a stable component name (the type’s title).</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.coerce.html" title="fn majordomus_cli::capability::schema::coerce">coerce</a></dt><dd>Convert a query-string value to the JSON type a property schema names: integers and
+booleans are parsed, a structured parameter is read as the JSON text the binding sent,
+and everything else stays a string.</dd></dl></section></div></main></body></html>

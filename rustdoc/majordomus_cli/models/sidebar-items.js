@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MODELS_FILE"],"enum":["Inference","ModelStatus"],"fn":["route"],"struct":["ExcludedModel","ModelCatalogue","ModelEntry","Requirements","RoutingDecision","Vendor"]};

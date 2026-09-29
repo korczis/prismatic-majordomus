@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ARTIFACTS_URI"],"enum":["ArtifactState"],"fn":["module"],"struct":["ArtifactReport","ArtifactTallies","ArtifactView","ArtifactsInput","DocumentView"]};

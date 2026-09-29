@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A `git` invocation against `root` that only ever reads: the one constructor every read in this crate goes through."><title>read_only in majordomus_cli::git - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">read_only</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">read_<wbr>only</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#why-a-reader-needs-a-constructor-at-all" title="Why a reader needs a constructor at all">Why a reader needs a constructor at all</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>git</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a>::<wbr><a href="index.html">git</a></div><h1>Function <span class="fn">read_<wbr>only</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/git/mod.rs.html#248-255">Source</a> </span></div><pre class="rust item-decl"><code>pub fn read_only(root: &amp;<a class="struct" href="https://doc.rust-lang.org/1.98.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.98.1/std/process/struct.Command.html" title="struct std::process::Command">Command</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A <code>git</code> invocation against <code>root</code> that only ever reads: the one constructor every
+read in this crate goes through.</p>
+<h2 id="why-a-reader-needs-a-constructor-at-all"><a class="doc-anchor" href="#why-a-reader-needs-a-constructor-at-all">§</a>Why a reader needs a constructor at all</h2>
+<p><code>git status</code> refreshes the staging index as a side effect — when an entry’s recorded
+stat data no longer matches the file, or is <em>racily</em> close to the index’s own
+modification time, git rewrites <code>.git/index</code> with the refreshed data. Nothing about
+the repository changed; the reader changed the file it read.</p>
+<p>That file is one of the six <a href="../live/constant.WORKTREE_FILES.html" title="constant majordomus_cli::live::WORKTREE_FILES"><code>crate::live::WORKTREE_FILES</code></a> the shared server stamps to
+decide whether the repository has moved. So a served page that asked git for the state
+of the working tree moved the stamp, and the <em>next</em> request found a stamp it did not
+recognise and paid a whole <a href="../app/struct.App.html#method.load" title="associated function majordomus_cli::app::App::load"><code>crate::app::App::load</code></a> — discovery, every declared file
+read and validated, the registry, the Why catalogue, the product model, the web
+topology — to rebuild a picture that was already current. An observer that disturbs
+what it observes, and then charges the next caller for the disturbance.</p>
+<p><code>GIT_OPTIONAL_LOCKS=0</code> is git’s own name for this: complete the request without any
+optional sub-operation that would take a lock, which is exactly the index write-back.
+Locks a command genuinely requires — <code>commit</code>, <code>add</code> — are unaffected, so this is safe
+on any invocation and is not a reason to keep two constructors.</p>
+<p><code>GIT_DIR</code> and <code>GIT_WORK_TREE</code> are removed for a second reason: inherited from a hook’s
+environment they would silently redirect <code>-C root</code> at another repository.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::git::read_only;
+<span class="kw">use </span>std::process::Command;
+
+<span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>git = |args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]| {
+    Command::new(<span class="string">"git"</span>).arg(<span class="string">"-C"</span>).arg(dir.path()).args(args).output().unwrap()
+};
+git(<span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.email"</span>, <span class="string">"t@example.com"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"config"</span>, <span class="string">"user.name"</span>, <span class="string">"t"</span>]);
+std::fs::write(dir.path().join(<span class="string">"a"</span>), <span class="string">"a"</span>).unwrap();
+git(<span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+git(<span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"one"</span>]);
+
+<span class="comment">// the same answer a plain `git status` gives, with the staging index left alone —
+// which is the whole difference, since that file is what the server watches
+</span><span class="kw">let </span>index = dir.path().join(<span class="string">".git/index"</span>);
+<span class="kw">let </span>before = std::fs::metadata(<span class="kw-2">&amp;</span>index).unwrap().modified().unwrap();
+<span class="kw">let </span>out = read_only(dir.path()).args([<span class="string">"status"</span>, <span class="string">"--porcelain"</span>]).output().unwrap();
+<span class="macro">assert!</span>(out.status.success());
+<span class="macro">assert!</span>(out.stdout.is_empty(), <span class="string">"a committed tree is clean"</span>);
+<span class="macro">assert_eq!</span>(
+    std::fs::metadata(<span class="kw-2">&amp;</span>index).unwrap().modified().unwrap(),
+    before,
+    <span class="string">"reading the working tree must not rewrite the staging index"
+</span>);</code></pre></div></div></details></section></div></main></body></html>

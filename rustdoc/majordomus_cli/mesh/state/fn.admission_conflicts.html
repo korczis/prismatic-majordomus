@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The live exclusive claims of other sessions a new exclusive claim of `session` over `scope` would meet: empty means admissible. An advisory claim is always admissible."><title>admission_conflicts in majordomus_cli::mesh::state - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">admission_conflicts</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>mesh::<wbr>state</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">mesh</a>::<wbr><a href="index.html">state</a></div><h1>Function <span class="fn">admission_<wbr>conflicts</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/mesh/state.rs.html#815-834">Source</a> </span></div><pre class="rust item-decl"><code>pub fn admission_conflicts&lt;'a&gt;(
+    state: &amp;'a <a class="struct" href="struct.CooperationState.html" title="struct majordomus_cli::mesh::state::CooperationState">CooperationState</a>,
+    session: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.98.1/std/primitive.str.html">str</a>,
+    scope: &amp;[<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>],
+    mode: <a class="enum" href="../journal/enum.ClaimMode.html" title="enum majordomus_cli::mesh::journal::ClaimMode">ClaimMode</a>,
+) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;&amp;'a <a class="struct" href="struct.ClaimView.html" title="struct majordomus_cli::mesh::state::ClaimView">ClaimView</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The live exclusive claims of other sessions a new exclusive claim of <code>session</code> over
+<code>scope</code> would meet: empty means admissible. An advisory claim is always admissible.</p>
+<p>This is the difference between refusing a claim and reporting a conflict after the
+fact. Admission is checked against the folded state before anything is written, so a
+claim that could have been refused is refused; what is left — genuinely concurrent
+claims from two sides of a partition — is what the fold ranks afterwards, and both
+runtimes name the same winner.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>majordomus_cli::mesh::identity::NodeIdentity;
+<span class="kw">use </span>majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+<span class="kw">use </span>majordomus_cli::mesh::state::{admission_conflicts, fold};
+
+<span class="kw">let </span>j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), <span class="string">"0000000000000001"</span>,
+    <span class="string">"repo"</span>.into(), <span class="prelude-val">None</span>).unwrap();
+j.append_own(EventBody::ClaimAcquired { claim: <span class="string">"c1"</span>.into(), session: <span class="string">"s1"</span>.into(),
+    scope: <span class="macro">vec!</span>[<span class="string">"apps"</span>.into()], intent: <span class="prelude-val">None</span>, mode: ClaimMode::Exclusive, issue: <span class="prelude-val">None </span>})
+    .unwrap();
+<span class="kw">let </span>state = fold(<span class="kw-2">&amp;</span>j.events(), <span class="kw-2">&amp;</span>|<span class="kw">_</span>| StreamLiveness::Own);
+<span class="kw">let </span>held = <span class="kw-2">&amp;</span>state.claims[<span class="number">0</span>];
+
+<span class="comment">// another session cannot take a scope inside one already held exclusively
+</span><span class="kw">let </span>met = admission_conflicts(<span class="kw-2">&amp;</span>state, <span class="string">"s2"</span>, <span class="kw-2">&amp;</span>[<span class="string">"apps/majordomus-cli"</span>.into()],
+    ClaimMode::Exclusive);
+<span class="macro">assert_eq!</span>(met.len(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(met[<span class="number">0</span>].key, held.key, <span class="string">"the refusal names what it met"</span>);
+
+<span class="comment">// the holder is not in its own way, and an advisory claim is never refused
+</span><span class="macro">assert!</span>(admission_conflicts(<span class="kw-2">&amp;</span>state, <span class="kw-2">&amp;</span>held.session, <span class="kw-2">&amp;</span>[<span class="string">"apps"</span>.into()], ClaimMode::Exclusive)
+    .is_empty());
+<span class="macro">assert!</span>(admission_conflicts(<span class="kw-2">&amp;</span>state, <span class="string">"s2"</span>, <span class="kw-2">&amp;</span>[<span class="string">"apps"</span>.into()], ClaimMode::Advisory).is_empty());</code></pre></div></div></details></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LOCAL_DIR","RESULT_SCHEMA"],"enum":["CacheMode"],"fn":["host_fingerprint","write_atomic"],"struct":["BenchmarkResult","Provenance","ResultDocument"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Spelling"],"struct":["CheckoutId","EpisodeId","IdentityFacet","ProviderSessionId","RecordedSpelling","RepositoryId","TaskId","WorkerId"]};

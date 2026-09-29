@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Persistence: the open-episode store, the closed-record store, and closing exactly once."><title>majordomus_cli::session::store - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module store</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module store</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-incident-this-module-is-built-around" title="The incident this module is built around">The incident this module is built around</a></li><li><a href="#the-guarantee" title="The guarantee">The guarantee</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>session</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">session</a></div><h1>Module <span>store</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/session/store.rs.html#1-807">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Persistence: the open-episode store, the closed-record store, and closing exactly once.</p>
+<h2 id="the-incident-this-module-is-built-around"><a class="doc-anchor" href="#the-incident-this-module-is-built-around">§</a>The incident this module is built around</h2>
+<p>Episode <code>s-20260909152316-024f</code> has four immutable records in <code>.ai/repo/sessions/</code>: one
+at 21:41:35 with 3 changed files and 94 commits, and three the next morning at 10:39:02,
+10:39:18 and 10:39:31 with 120, 121 and 122 changed files and 296 commits. A provider’s
+end event can fire more than once — thirteen and fifteen seconds apart, in this case —
+and <code>mj_publish_record</code> is deliberately designed never to collide, so each close wrote a
+<em>new file</em> rather than failing. The record is immutable by contract; the store had four
+of them.</p>
+<p><code>lib/session.sh</code> was hardened after the incident: before publishing, it greps the store
+for a record already carrying the episode’s id and, finding one, keeps it. That removes
+the <em>repeat</em> and not the <em>race</em>. Between the grep and the publish sit a <code>git status</code>, a
+ledger walk over every line of the episode, and the composition of the record — hundreds
+of milliseconds on a loaded machine. Two processes that grep inside that window both see
+nothing and both publish. A check without an atomic claim is a time-of-check-to-
+time-of-use window with the expensive part inside it.</p>
+<h2 id="the-guarantee"><a class="doc-anchor" href="#the-guarantee">§</a>The guarantee</h2>
+<p><a href="struct.SessionStore.html#method.close" title="method majordomus_cli::session::store::SessionStore::close"><code>SessionStore::close</code></a> takes an atomic claim <strong>before</strong> the expensive part:
+<code>state/sessions-closing/&lt;episode id&gt;.claim</code>, created with <code>O_EXCL</code>. The filesystem
+decides, once, which caller created it; every other caller — another thread, another
+process, another provider window on the same machine — observes the claim and returns a
+diagnosable outcome instead of writing. The claim is the whole mechanism: it is not an
+in-process mutex, so the test below that spawns real child processes exercises the same
+primitive as the one that spawns threads.</p>
+<p>Three outcomes, and only one of them writes:</p>
+<ul>
+<li><a href="enum.CloseOutcome.html#variant.Closed" title="variant majordomus_cli::session::store::CloseOutcome::Closed"><code>CloseOutcome::Closed</code></a> — this caller took the claim and published the record.</li>
+<li><a href="enum.CloseOutcome.html#variant.AlreadyClosed" title="variant majordomus_cli::session::store::CloseOutcome::AlreadyClosed"><code>CloseOutcome::AlreadyClosed</code></a> — a record for this episode already stands. Not an
+error: a provider’s second end event is that provider’s normal behaviour. The existing
+record’s path is returned, because every reader downstream must name the record that
+exists rather than the file that was not written.</li>
+<li><a href="enum.CloseOutcome.html#variant.AlreadyClosing" title="variant majordomus_cli::session::store::CloseOutcome::AlreadyClosing"><code>CloseOutcome::AlreadyClosing</code></a> — another caller holds the claim right now. The
+caller is told which episode and that it may retry; nothing is written.</li>
+</ul>
+<p>And one diagnostic that is not an outcome of this close at all:
+<a href="struct.CloseReport.html#structfield.duplicates" title="field majordomus_cli::session::store::CloseReport::duplicates"><code>CloseReport::duplicates</code></a> names every <em>historical</em> record of the episode beyond the
+first. This repository already contains four records for one episode, and a closer that
+silently kept the first would leave a reader to discover the other three. Damage that
+already exists is reported, never added to.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::session::{CloseOutcome, Episode, EpisodeId, Outcome, SessionStore};
+<span class="kw">use </span>std::path::Path;
+
+<span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>store = SessionStore::writable(dir.path());
+<span class="kw">let </span>id = EpisodeId::parse(<span class="string">"s-20260909152316-024f"</span>).expect(<span class="string">"the id from the incident"</span>);
+<span class="kw">let </span>episode = Episode::opening(id.clone(), Path::new(<span class="string">"/r"</span>))
+    .opened_at(<span class="string">"2026-09-09T15:23:16Z"</span>, <span class="string">"master"</span>, <span class="string">"9f3a2a0"</span>, <span class="number">1_000</span>);
+<span class="kw">let </span>body = || <span class="macro">format!</span>(<span class="string">"---\nschema: session/v1\nsession_id: {}\n---\n"</span>, id);
+
+<span class="kw">let </span>first = store.close(<span class="kw-2">&amp;</span>episode, Outcome::Closed, body).unwrap();
+<span class="kw">let </span>second = store.close(<span class="kw-2">&amp;</span>episode, Outcome::Closed, body).unwrap();
+<span class="macro">assert_eq!</span>(first.outcome, CloseOutcome::Closed);
+<span class="macro">assert_eq!</span>(second.outcome, CloseOutcome::AlreadyClosed);
+<span class="macro">assert_eq!</span>(store.records_of(<span class="kw-2">&amp;</span>id).len(), <span class="number">1</span>, <span class="string">"the incident produced four"</span>);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.CloseReport.html" title="struct majordomus_cli::session::store::CloseReport">Close<wbr>Report</a></dt><dd>What a close said: the episode, the outcome, the canonical record, any historical
+duplicates of it, and a line a person can act on.</dd><dt><a class="struct" href="struct.SessionStore.html" title="struct majordomus_cli::session::store::SessionStore">Session<wbr>Store</a></dt><dd>The stores of one checkout.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.CloseOutcome.html" title="enum majordomus_cli::session::store::CloseOutcome">Close<wbr>Outcome</a></dt><dd>What a close did: wrote the record, found one already standing, found another caller
+inside the window, or was refused by the machine.</dd><dt><a class="enum" href="enum.StoreError.html" title="enum majordomus_cli::session::store::StoreError">Store<wbr>Error</a></dt><dd>What can go wrong closing an episode, as distinct from an outcome that is not <code>Closed</code>.
+An outcome is a fact about the episode; an error is a fact about the disk, or about a
+caller that reached the write path without saying it meant to.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.CLAIM_DIR.html" title="constant majordomus_cli::session::store::CLAIM_DIR">CLAIM_<wbr>DIR</a></dt><dd>Where a close takes its claim, relative to the repository root. A directory of its own
+rather than a lock beside the record, because the record store is the <em>shared</em> half of
+the layer and a claim is a fact about this machine (ADR 0014).</dd><dt><a class="constant" href="constant.OPEN_DIR.html" title="constant majordomus_cli::session::store::OPEN_DIR">OPEN_<wbr>DIR</a></dt><dd>Where the open episodes live, relative to the repository root.</dd><dt><a class="constant" href="constant.RECORD_DIR.html" title="constant majordomus_cli::session::store::RECORD_DIR">RECORD_<wbr>DIR</a></dt><dd>Where the immutable records live, relative to the repository root. Tracked: a closed
+episode is a shared object of the layer.</dd></dl></section></div></main></body></html>

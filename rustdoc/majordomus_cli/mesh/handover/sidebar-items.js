@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["directory","latest","materialize","read","to_body"]};

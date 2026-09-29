@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ISSUE","ISSUE_STATUSES","MILESTONE","MILESTONE_STATUSES","PROJECT"],"enum":["Transition","TransitionError"],"fn":["check","overlap","scalar","transition"],"struct":["Plan","PlanCounts","PlanEdge","PlanFinding","PlanIssue","PlanMilestone","PlanProject","PlanVocabulary","PlanWave"]};

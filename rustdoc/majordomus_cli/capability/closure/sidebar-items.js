@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Projection"],"fn":["findings","matrix","unbacked"],"struct":["Finding","Matrix","Row","Unbacked"]};

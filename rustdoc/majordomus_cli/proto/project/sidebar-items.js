@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DERIVED_EXTENSION","SCHEMA_EXTENSION","SECTIONS_EXTENSION"],"fn":["schema_path","section_lines","to_json_schema"]};

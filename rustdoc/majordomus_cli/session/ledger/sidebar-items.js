@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["EVENTS_FILE","LEDGER_PATH"],"enum":["LedgerError"],"struct":["Corruption","DeclaredEvent","Envelope","Ledger","LedgerEvent","LedgerRead","Vocabulary"]};

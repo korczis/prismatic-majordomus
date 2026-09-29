@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ChangeStage"],"fn":["derived_among","group","kind_of","messages_in","working_tree"],"struct":["CommitGroup","CommitPlan","PathChange","PlanFingerprint","WorkingTreeState"]};

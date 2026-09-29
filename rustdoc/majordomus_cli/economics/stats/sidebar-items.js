@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLUSTER_METHOD","INDEPENDENT_METHOD"],"fn":["bootstrap_median","bootstrap_median_clustered","distribution","level_text","percent_text","quantile","reduction"]};

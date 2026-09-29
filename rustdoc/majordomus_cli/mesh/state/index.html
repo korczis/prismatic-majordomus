@@ -1,0 +1,65 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The cooperation state: what the journal’s events mean, folded. Pure: the same set of events and the same liveness verdicts yield the same state on every runtime, whatever order the events arrived in and however often — events are applied in `(lamport, stream, seq)` order, and a set has no duplicates. That is the whole convergence argument, and a property test holds it."><title>majordomus_cli::mesh::state - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module state</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module state</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>mesh</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">mesh</a></div><h1>Module <span>state</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/mesh/state.rs.html#1-1147">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The cooperation state: what the journal’s events mean, folded. Pure: the same set of
+events and the same liveness verdicts yield the same state on every runtime, whatever
+order the events arrived in and however often — events are applied in <code>(lamport, stream, seq)</code> order, and a set has no duplicates. That is the whole convergence
+argument, and a property test holds it.</p>
+<p>Exclusivity is decided here, and decided the same way everywhere:</p>
+<ul>
+<li>A claim <strong>holds</strong> while it is not released, its session is not closed, and its
+stream is alive (its beat rose within the expiry on this runtime’s clock). A dead
+runtime’s claims therefore end on their own; nobody releases them for it.</li>
+<li>Two live <strong>exclusive</strong> claims of different sessions whose scopes meet are a
+<strong>conflict</strong>. The claim with the lower <code>(lamport, stream, seq)</code> of its acquisition
+wins; the other is <code>conflicted</code> and names the winner. Admission refuses such a claim
+up front, so a conflict can only arise from genuinely concurrent claims — two sides
+of a partition, or two runtimes in the same round — and then every runtime names the
+same winner. Never “last packet wins”.</li>
+<li>Scopes meet by <a href="../../peers/fn.claims_meet.html" title="fn majordomus_cli::peers::claims_meet"><code>crate::peers::claims_meet</code></a>, the peer board’s own predicate: one
+semantics for a claim on this machine and on another.</li>
+</ul>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::mesh::journal::{ClaimMode, EventBody, Journal, StreamLiveness};
+<span class="kw">use </span>majordomus_cli::mesh::identity::NodeIdentity;
+<span class="kw">use </span>majordomus_cli::mesh::state::{fold, ClaimState};
+<span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">let </span>j = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), <span class="string">"0000000000000001"</span>,
+    <span class="string">"repo"</span>.into(), <span class="prelude-val">None</span>).unwrap();
+j.append_own(EventBody::ClaimAcquired { claim: <span class="string">"c1"</span>.into(), session: <span class="string">"s1"</span>.into(),
+    scope: <span class="macro">vec!</span>[<span class="string">"apps"</span>.into()], intent: <span class="prelude-val">None</span>, mode: ClaimMode::Exclusive, issue: <span class="prelude-val">None </span>}).unwrap();
+<span class="kw">let </span>state = fold(<span class="kw-2">&amp;</span>j.events(), <span class="kw-2">&amp;</span>|<span class="kw">_</span>| StreamLiveness::Own);
+<span class="macro">assert_eq!</span>(state.claims[<span class="number">0</span>].state, ClaimState::Held);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.ClaimOverlap.html" title="struct majordomus_cli::mesh::state::ClaimOverlap">Claim<wbr>Overlap</a></dt><dd>Two live claims of different sessions whose scopes meet, at least one advisory:
+reported, never refused.</dd><dt><a class="struct" href="struct.ClaimView.html" title="struct majordomus_cli::mesh::state::ClaimView">Claim<wbr>View</a></dt><dd>One claim anywhere in the mesh: who took what, for what, and where it stands. The
+acquisition’s Lamport stamp and sequence are carried rather than derived on demand,
+because they are what exclusivity is decided by — every runtime ranks two competing
+claims by the same triple and so names the same winner, with no message passing and no
+“last packet wins”.</dd><dt><a class="struct" href="struct.CooperationState.html" title="struct majordomus_cli::mesh::state::CooperationState">Cooperation<wbr>State</a></dt><dd>The whole folded state, every collection in key order, and its digest: two runtimes
+that agree print the same digest.</dd><dt><a class="struct" href="struct.HandoverView.html" title="struct majordomus_cli::mesh::state::HandoverView">Handover<wbr>View</a></dt><dd>A handover anywhere in the mesh, with everyone who has taken it. The id is the digest
+of the body, so the same handover published twice — by a retry, or by two runtimes that
+both saw it — is one handover here; and <code>consumed_by</code> is what keeps two workers from
+silently picking up the same continuity, since the list is folded from events every
+runtime holds.</dd><dt><a class="struct" href="struct.ReviewAnswer.html" title="struct majordomus_cli::mesh::state::ReviewAnswer">Review<wbr>Answer</a></dt><dd>One answer to a review request: who answered, what they decided, and why. The verdict
+is one of the three declared words, so a requester can act on it without reading the
+note; the note is where the reasoning goes and is optional, because “approved” often
+needs none.</dd><dt><a class="struct" href="struct.ReviewView.html" title="struct majordomus_cli::mesh::state::ReviewView">Review<wbr>View</a></dt><dd>One review request anywhere in the mesh, with every answer it has drawn. A request with
+no <code>reviewer</code> is an offer to the whole mesh rather than to nobody, which is why the
+answers are a list: any linked runtime carrying the <code>reviews</code> feature may add one, and
+they are kept in Lamport order so that every runtime reads them in the same sequence.</dd><dt><a class="struct" href="struct.SessionView.html" title="struct majordomus_cli::mesh::state::SessionView">Session<wbr>View</a></dt><dd>One session anywhere in the mesh, as the fold sees it: what the session said about
+itself, where it is writing from, and whether it still counts. The key is
+<code>&lt;stream&gt;/&lt;session&gt;</code> rather than the session’s own id, because two runtimes may both
+call a session <code>s1</code> and the mesh has to hold them apart.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.ClaimState.html" title="enum majordomus_cli::mesh::state::ClaimState">Claim<wbr>State</a></dt><dd>A claim’s standing, and — where it ended or lost — what ended it. The two variants that
+carry a string exist because the bare verdict is not actionable: a worker told its claim
+expired needs to know whether its session closed or its runtime stopped beating, and one
+told its claim is conflicted needs the key of the claim that beat it, which is the same
+key on every runtime.</dd><dt><a class="enum" href="enum.ReviewState.html" title="enum majordomus_cli::mesh::state::ReviewState">Review<wbr>State</a></dt><dd>A review request’s standing: whether anybody has answered it yet. There is deliberately
+no <code>Approved</code> or <code>Rejected</code> here — a request may be answered by several runtimes and the
+verdicts are the answers’ own, so collapsing them into one state would throw away the
+disagreement that makes a second reviewer worth asking.</dd><dt><a class="enum" href="enum.SessionState.html" title="enum majordomus_cli::mesh::state::SessionState">Session<wbr>State</a></dt><dd>A session’s standing, as every runtime of the mesh reads it. The distinction that
+matters is between <code>Closed</code> and <code>Expired</code>: the first is a session that said it was
+finished, the second one whose runtime stopped beating and can no longer say anything.
+Both end the session’s claims, but only the second is a machine nobody should expect an
+answer from.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.admission_conflicts.html" title="fn majordomus_cli::mesh::state::admission_conflicts">admission_<wbr>conflicts</a></dt><dd>The live exclusive claims of other sessions a new exclusive claim of <code>session</code> over
+<code>scope</code> would meet: empty means admissible. An advisory claim is always admissible.</dd><dt><a class="fn" href="fn.fold.html" title="fn majordomus_cli::mesh::state::fold">fold</a></dt><dd>Fold events into state. <code>liveness</code> answers for each stream; the caller supplies the
+journal’s verdicts, a test supplies whatever it is testing.</dd><dt><a class="fn" href="fn.scopes_meet.html" title="fn majordomus_cli::mesh::state::scopes_meet">scopes_<wbr>meet</a></dt><dd>Whether any path of one scope meets any path of the other. Paths meet by
+<a href="../../peers/fn.claims_meet.html" title="fn majordomus_cli::peers::claims_meet"><code>crate::peers::claims_meet</code></a>, the peer board’s own predicate, so that a claim means the
+same thing on this machine and on another: a directory contains what is under it, and
+two claims that share no path do not meet however similar they look.</dd></dl></section></div></main></body></html>

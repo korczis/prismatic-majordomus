@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLOSURE_URI","OBLIGATIONS_URI"],"enum":["ObligationState"],"fn":["listing_hash","module"],"struct":["Closure","Evidence","Obligation","ObligationClosure","Vocabulary"]};

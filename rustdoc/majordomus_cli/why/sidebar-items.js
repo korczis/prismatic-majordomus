@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["AREA","AUDIENCE","MOMENT","RESERVED","ROUTE","STABLE"],"struct":["Area","Audience","Catalogue","Diagnosis","Example","FacetValue","Facets","Finding","Moment","Query","Recommendation","Signal"]};

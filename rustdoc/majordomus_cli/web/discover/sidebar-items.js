@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["APPLICATION","DECLARATION_FILE","DECLARATION_SCHEMA","DOCS","DOCS_ARTIFACT","DOCS_MOUNT","GENERATED_ROOT","HOME","RUSTDOC","RUSTDOC_ARTIFACT","RUSTDOC_MOUNT","RUSTDOC_PRODUCER","SITE_CONFIG","SITE_PUBLIC"],"fn":["application","discover","generated","native","native_all","reserved","rustdoc"],"struct":["Declaration","Reserved","Runtime"]};

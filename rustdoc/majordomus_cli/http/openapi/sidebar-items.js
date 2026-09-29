@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["OAS_DIALECT","OPENAPI_VERSION"],"fn":["document","infrastructure_routes","render"]};

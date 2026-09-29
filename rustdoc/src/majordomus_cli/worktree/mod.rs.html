@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/worktree/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/worktree/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! The branch-to-worktree topology: where every linked worktree of a repository belongs,
+<a href=#2 id=2 data-nosnippet>2</a>//! derived from git and from nothing else, and everything that follows from it.
+<a href=#3 id=3 data-nosnippet>3</a>//!
+<a href=#4 id=4 data-nosnippet>4</a>//! # The invariant
+<a href=#5 id=5 data-nosnippet>5</a>//!
+<a href=#6 id=6 data-nosnippet>6</a>//! ```text
+<a href=#7 id=7 data-nosnippet>7</a>//! &lt;parent&gt;/&lt;repo&gt;                       the primary checkout, which hosts the trunk
+<a href=#8 id=8 data-nosnippet>8</a>//! &lt;parent&gt;/&lt;repo&gt;-wt/                   the container, derived: parent + name + "-wt"
+<a href=#9 id=9 data-nosnippet>9</a>//! &lt;parent&gt;/&lt;repo&gt;-wt/&lt;branch name&gt;      the one worktree of every non-trunk branch
+<a href=#10 id=10 data-nosnippet>10</a>//! ```
+<a href=#11 id=11 data-nosnippet>11</a>//!
+<a href=#12 id=12 data-nosnippet>12</a>//! The branch name *is* the relative path: `feature/providers/openai-streaming` lives at
+<a href=#13 id=13 data-nosnippet>13</a>//! `&lt;repo&gt;-wt/feature/providers/openai-streaming`, hierarchy preserved, nothing flattened,
+<a href=#14 id=14 data-nosnippet>14</a>//! nothing hashed, nothing registered. Git is the registry: the identity comes from the
+<a href=#15 id=15 data-nosnippet>15</a>//! common git directory, the worktrees from `git worktree list --porcelain`, the branches
+<a href=#16 id=16 data-nosnippet>16</a>//! from `for-each-ref`, and this module interprets them into one typed
+<a href=#17 id=17 data-nosnippet>17</a>//! [`RepositoryTopology`] that every surface renders.
+<a href=#18 id=18 data-nosnippet>18</a>//!
+<a href=#19 id=19 data-nosnippet>19</a>//! # The architecture
+<a href=#20 id=20 data-nosnippet>20</a>//!
+<a href=#21 id=21 data-nosnippet>21</a>//! ```text
+<a href=#22 id=22 data-nosnippet>22</a>//!   git (common dir, worktree list, for-each-ref, status)
+<a href=#23 id=23 data-nosnippet>23</a>//!         ↓
+<a href=#24 id=24 data-nosnippet>24</a>//!   RepositoryIdentity            primary, current, container, trunk — from anywhere inside
+<a href=#25 id=25 data-nosnippet>25</a>//!         ↓
+<a href=#26 id=26 data-nosnippet>26</a>//!   path::expected_path()         container / branch name, proved to stay inside the container
+<a href=#27 id=27 data-nosnippet>27</a>//!         ↓
+<a href=#28 id=28 data-nosnippet>28</a>//!   WorktreeService               topology, status, guard, inspect, create, migrate, repair
+<a href=#29 id=29 data-nosnippet>29</a>//!      ↙      ↓       ↘
+<a href=#30 id=30 data-nosnippet>30</a>//!    CLI   capability   git hooks → MCP, HTTP, OpenAPI, Swagger, the Cockpit, docs
+<a href=#31 id=31 data-nosnippet>31</a>//! ```
+<a href=#32 id=32 data-nosnippet>32</a>//!
+<a href=#33 id=33 data-nosnippet>33</a>//! Every surface is an adapter. Nothing outside this module derives a path, decides a
+<a href=#34 id=34 data-nosnippet>34</a>//! standing, or judges whether a move is safe; a second implementation of any of those is
+<a href=#35 id=35 data-nosnippet>35</a>//! the defect this module exists to prevent.
+<a href=#36 id=36 data-nosnippet>36</a>//!
+<a href=#37 id=37 data-nosnippet>37</a>//! # Safety
+<a href=#38 id=38 data-nosnippet>38</a>//!
+<a href=#39 id=39 data-nosnippet>39</a>//! Nothing here deletes a directory because its name looks right, and nothing here resets,
+<a href=#40 id=40 data-nosnippet>40</a>//! stashes, cleans or checks out anything. A migration moves a worktree with `git worktree
+<a href=#41 id=41 data-nosnippet>41</a>//! move`, dirty state included, and proves with a [`fingerprint::WorktreeFingerprint`]
+<a href=#42 id=42 data-nosnippet>42</a>//! taken before and after that the branch, the commit, the index, the staged and unstaged
+<a href=#43 id=43 data-nosnippet>43</a>//! changes and the untracked files are the same on the other side. Every mutation holds one
+<a href=#44 id=44 data-nosnippet>44</a>//! repository-scoped [`lock::WorktreeLock`], so two agents cannot half-register one path.
+<a href=#45 id=45 data-nosnippet>45</a>
+<a href=#46 id=46 data-nosnippet>46</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>direnv;
+<a href=#47 id=47 data-nosnippet>47</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>error;
+<a href=#48 id=48 data-nosnippet>48</a><span class="kw">pub mod </span>fingerprint;
+<a href=#49 id=49 data-nosnippet>49</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>git;
+<a href=#50 id=50 data-nosnippet>50</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>identity;
+<a href=#51 id=51 data-nosnippet>51</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>lock;
+<a href=#52 id=52 data-nosnippet>52</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>migrate;
+<a href=#53 id=53 data-nosnippet>53</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>model;
+<a href=#54 id=54 data-nosnippet>54</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>path;
+<a href=#55 id=55 data-nosnippet>55</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>service;
+<a href=#56 id=56 data-nosnippet>56</a><span class="kw">pub mod </span>state;
+<a href=#57 id=57 data-nosnippet>57</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>topology;
+<a href=#58 id=58 data-nosnippet>58</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>trace;
+<a href=#59 id=59 data-nosnippet>59</a>
+<a href=#60 id=60 data-nosnippet>60</a><span class="kw">pub use </span>direnv::EnvrcApproval;
+<a href=#61 id=61 data-nosnippet>61</a><span class="kw">pub use </span>error::{<span class="prelude-ty">Result</span>, WorktreeError, EXIT_INTERNAL, EXIT_MISSING, EXIT_REFUSED};
+<a href=#62 id=62 data-nosnippet>62</a><span class="kw">pub use </span>fingerprint::WorktreeFingerprint;
+<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub use </span>identity::{RepositoryIdentity, ResolvedPath, Trunk, TrunkSource};
+<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub use </span>lock::WorktreeLock;
+<a href=#65 id=65 data-nosnippet>65</a><span class="kw">pub use </span>migrate::{MigrationAction, MigrationOptions, MigrationPlan, MigrationStep, StepOutcome};
+<a href=#66 id=66 data-nosnippet>66</a><span class="kw">pub use </span>model::{
+<a href=#67 id=67 data-nosnippet>67</a>    BranchState, ContainerView, DiagnosticCode, DirtyState, GuardVerdict, InspectReport,
+<a href=#68 id=68 data-nosnippet>68</a>    RepairReport, RepositoryTopology, RepositoryView, Severity, Standing, StatusReport,
+<a href=#69 id=69 data-nosnippet>69</a>    TopologyDiagnostic, TopologyTallies, TrunkView, UpstreamState, WorktreeKind, WorktreeState,
+<a href=#70 id=70 data-nosnippet>70</a>    SCHEMA,
+<a href=#71 id=71 data-nosnippet>71</a>};
+<a href=#72 id=72 data-nosnippet>72</a><span class="kw">pub use </span>path::{container_root, detached_label, expected_path, BranchName, CONTAINER_SUFFIX};
+<a href=#73 id=73 data-nosnippet>73</a><span class="kw">pub use </span>service::{CreateReport, CreateRequest, Detail, RemoveReport, WorktreeService};
+<a href=#74 id=74 data-nosnippet>74</a><span class="kw">pub use </span>topology::{parse_porcelain, parse_porcelain_nul, WorktreeRecord};
+<a href=#75 id=75 data-nosnippet>75</a><span class="kw">pub use </span>trace::{
+<a href=#76 id=76 data-nosnippet>76</a>    first_merge, parse_commit, parse_issue_refs, Attribution, BranchTrace, CommitAttribution,
+<a href=#77 id=77 data-nosnippet>77</a>    CommitRef, Integration, IssueTrace, TraceReport, TraceTallies, Tracer,
+<a href=#78 id=78 data-nosnippet>78</a>};
+</code></pre></div></section></main></body></html>

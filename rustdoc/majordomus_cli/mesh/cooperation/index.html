@@ -1,0 +1,123 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Cooperation: the runtime that turns discovered, trusted runtimes of one repository into linked peers and keeps their journal converged. It owns the one peer-link table, the one journal of this runtime, the link handlers the HTTP surface answers, the dialers, the heartbeat and the expiry — and the operations (sessions, claims, handovers, reviews) every surface performs through it."><title>majordomus_cli::mesh::cooperation - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module cooperation</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module cooperation</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>mesh</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">mesh</a></div><h1>Module <span>cooperation</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/mesh/cooperation.rs.html#1-4348">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Cooperation: the runtime that turns discovered, trusted runtimes of one repository into
+linked peers and keeps their journal converged. It owns the one peer-link table, the
+one journal of this runtime, the link handlers the HTTP surface answers, the dialers,
+the heartbeat and the expiry — and the operations (sessions, claims, handovers,
+reviews) every surface performs through it.</p>
+<p>The sequence one link goes through, and where each step is decided:</p>
+<div class="example-wrap"><pre class="language-text"><code>candidate  a trusted registry record of the same repository, or a declared seed
+   ↓
+dial       hello → welcome  (link::)  signature, freshness, nonce, protocol,
+                                       repository, self, trust — both directions
+   ↓
+connected  sync every heartbeat: marks + missing events, both ways, signed
+   ↓        a failed round: degraded → unreachable (backoff, capped at the expiry)
+expired    no exchange within the expiry: the link is dropped, the runtime&#39;s
+   ↓        streams stop beating everywhere, its claims stop excluding
+reconnect  the dialer says hello again; an unknown link id or a new instance is a
+            re-handshake, never a second peer — the table is keyed by runtime</code></pre></div>
+<p>StreamLiveness has two layers and they are deliberately separate. A <em>link</em> is this runtime’s
+connection to one peer (connected, degraded, unreachable, expired). A <em>stream</em> is
+alive while its beat keeps rising anywhere in the mesh — a runtime linked only through
+a relay is still alive, and a runtime that crashed stops beating for everyone at once.
+Claims follow streams, not links.</p>
+<p>The whole of it, two runtimes in one process. Only the socket is replaced: the
+handshake, the signatures, the admission and the fold are the ones a LAN takes.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::collections::BTreeMap;
+<span class="kw">use </span>std::sync::{Arc, Mutex, Weak};
+
+<span class="kw">use </span>majordomus_cli::mesh::config::{CooperationConfig, TrustConfig};
+<span class="kw">use </span>majordomus_cli::mesh::cooperation::{CheckoutFacts, Cooperation, CooperationSetup};
+<span class="kw">use </span>majordomus_cli::mesh::identity::NodeIdentity;
+<span class="kw">use </span>majordomus_cli::mesh::journal::{ClaimMode, SessionInfo};
+<span class="kw">use </span>majordomus_cli::mesh::link::{LinkReply, LinkTransport, Signed, HELLO_PATH};
+<span class="kw">use </span>majordomus_cli::mesh::registry::MeshRegistry;
+<span class="kw">use </span>majordomus_cli::mesh::repository::{of_root_commits, runtime_id};
+<span class="kw">use </span>majordomus_cli::mesh::trust::TrustPolicy;
+
+<span class="attr">#[derive(Default)]
+</span><span class="kw">struct </span>Net(Mutex&lt;BTreeMap&lt;String, Weak&lt;Cooperation&gt;&gt;&gt;);
+
+<span class="kw">impl </span>LinkTransport <span class="kw">for </span>Net {
+    <span class="kw">fn </span>post(<span class="kw-2">&amp;</span><span class="self">self</span>, endpoint: <span class="kw-2">&amp;</span>str, path: <span class="kw-2">&amp;</span>str, m: <span class="kw-2">&amp;</span>Signed) -&gt; <span class="prelude-ty">Result</span>&lt;LinkReply, String&gt; {
+        <span class="kw">let </span>peer = (<span class="self">self</span>.<span class="number">0</span>.lock().unwrap().get(endpoint).and_then(Weak::upgrade))
+            .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"{endpoint}: nobody there"</span>))<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(<span class="kw">if </span>path == HELLO_PATH { peer.accept_hello(m) } <span class="kw">else </span>{ peer.accept_sync(m) })
+    }
+}
+
+<span class="kw">let </span>net = Arc::new(Net::default());
+<span class="kw">let </span>runtime = |endpoint: <span class="kw-2">&amp;</span>str| {
+    <span class="kw">let </span>c = Cooperation::new(CooperationSetup {
+        identity: Arc::new(NodeIdentity::ephemeral().unwrap()),
+        runtime: runtime_id(endpoint),
+        repository: of_root_commits(<span class="kw-2">&amp;</span>[<span class="string">"root"</span>.into()]),
+        endpoints: <span class="macro">vec!</span>[endpoint.into()],
+        version: <span class="string">"doc"</span>.into(),
+        config: CooperationConfig::default(),
+        trust: TrustConfig { policy: TrustPolicy::Tofu, allow: <span class="macro">vec!</span>[] },
+        journal_path: <span class="prelude-val">None</span>,
+        registry: Arc::new(MeshRegistry::new()),
+        transport: Arc::clone(<span class="kw-2">&amp;</span>net) <span class="kw">as </span>Arc&lt;<span class="kw">dyn </span>LinkTransport&gt;,
+        board: <span class="prelude-val">None</span>,
+        checkout: CheckoutFacts::default(),
+    })
+    .unwrap();
+    net.<span class="number">0</span>.lock().unwrap().insert(endpoint.into(), Arc::downgrade(<span class="kw-2">&amp;</span>c));
+    c
+};
+
+<span class="kw">let </span>(a, b) = (runtime(<span class="string">"a:1"</span>), runtime(<span class="string">"b:1"</span>));
+<span class="kw">let </span>key = a.dial(<span class="kw-2">&amp;</span>[<span class="string">"b:1"</span>.into()]).expect(<span class="string">"B welcomes A"</span>);
+<span class="macro">assert_eq!</span>(key, b.runtime_key(), <span class="string">"the link is keyed by the peer's runtime"</span>);
+
+a.claim(<span class="kw-2">&amp;</span>SessionInfo::named(<span class="string">"s1"</span>, <span class="string">"cli"</span>), <span class="macro">vec!</span>[<span class="string">"apps"</span>.into()], <span class="prelude-val">None</span>,
+    ClaimMode::Exclusive, <span class="prelude-val">None</span>).unwrap();
+<span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2 </span>{
+    a.journal().beat_own();
+    a.sync_with(<span class="kw-2">&amp;</span>key).unwrap();
+}
+<span class="macro">assert_eq!</span>(b.state().claims.len(), <span class="number">1</span>, <span class="string">"the claim crossed the link"</span>);
+<span class="macro">assert_eq!</span>(a.state().digest, b.state().digest, <span class="string">"one state, two runtimes"</span>);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.CheckoutFacts.html" title="struct majordomus_cli::mesh::cooperation::CheckoutFacts">Checkout<wbr>Facts</a></dt><dd>What the projected sessions say about the checkout they work in. Computed once at
+start — branch and head are refreshed when a board session changes, never on a
+heartbeat, so liveness never rescans the repository.</dd><dt><a class="struct" href="struct.Cooperation.html" title="struct majordomus_cli::mesh::cooperation::Cooperation">Cooperation</a></dt><dd>One runtime’s whole part in the mesh, behind one handle. It holds the single journal
+this process writes to, the single table of links it has, and the admission lock that
+decides claims — and it is deliberately one object rather than a set of services,
+because every one of those is the other’s context: a claim is admitted against state
+folded from events that arrived over a link, and a link is admitted against trust the
+same object evaluates.</dd><dt><a class="struct" href="struct.CooperationCounters.html" title="struct majordomus_cli::mesh::cooperation::CooperationCounters">Cooperation<wbr>Counters</a></dt><dd>The link and replication counters since start: what this runtime did, not what it
+holds. They are monotonic and never reset, so two readings a minute apart are a rate —
+which is the only way to tell a mesh that is working from one that is retrying, since
+both show the same peers in the same states.</dd><dt><a class="struct" href="struct.CooperationSetup.html" title="struct majordomus_cli::mesh::cooperation::CooperationSetup">Cooperation<wbr>Setup</a></dt><dd>Everything one runtime needs before it can link to another, gathered in one place so
+that the runtime never reaches for it later. Each field is a decision somebody else
+already made — the declaration’s policy, the checkout’s identity, this process’s key,
+the socket to speak through — and passing them in is what lets a test replace any of
+them without a fixture: a fake transport, an ephemeral key, a journal that never
+touches the disk.</dd><dt><a class="struct" href="struct.CooperationStatus.html" title="struct majordomus_cli::mesh::cooperation::CooperationStatus">Cooperation<wbr>Status</a></dt><dd>The whole cooperation runtime, as every surface reports it: the command line, the HTTP
+surface and MCP all render this one value, so that a person and an agent asking the same
+question of the same runtime are never told different things.</dd><dt><a class="struct" href="struct.MeshVerifyCheck.html" title="struct majordomus_cli::mesh::cooperation::MeshVerifyCheck">Mesh<wbr>Verify<wbr>Check</a></dt><dd>One verification check: what was checked, whether it holds, the evidence, and — when
+something is wrong or limited — the impact and what to do about it.</dd><dt><a class="struct" href="struct.MeshVerifyReport.html" title="struct majordomus_cli::mesh::cooperation::MeshVerifyReport">Mesh<wbr>Verify<wbr>Report</a></dt><dd>What <code>mesh verify</code> found: the local checks, every peer’s round, and the state digest
+afterwards. The digest is what makes the report worth running on two machines — two
+runtimes that print the same digest have the same sessions, claims, handovers and
+reviews, and two that do not have something to reconcile, whatever their links say.</dd><dt><a class="struct" href="struct.PeerVerdict.html" title="struct majordomus_cli::mesh::cooperation::PeerVerdict">Peer<wbr>Verdict</a></dt><dd>What one sync round, run now rather than remembered, said about one peer. Verification
+does not report the link’s standing and stop there: it exchanges with the peer and says
+whether the exchange worked and whether both sides ended holding the same marks, which
+is the difference between a peer that answers and a peer that agrees.</dd><dt><a class="struct" href="struct.PeerView.html" title="struct majordomus_cli::mesh::cooperation::PeerView">Peer<wbr>View</a></dt><dd>One peer as every surface shows it: who it is, how this runtime reaches it, and what
+the link has been through. The counters are carried per peer rather than only in the
+totals because the question a person asks of a flapping mesh is which peer is flapping,
+and <code>restarts</code> answers a different one from <code>reconnects</code> — a peer whose process keeps
+dying, against a link that keeps dropping under a process that never did.</dd><dt><a class="struct" href="struct.RefusedView.html" title="struct majordomus_cli::mesh::cooperation::RefusedView">Refused<wbr>View</a></dt><dd>A candidate that was refused, with the rule that refused it. A refusal is kept and
+shown rather than logged and dropped, because the commonest mesh failure is a link that
+never forms: a person who declared a seed and sees no peer needs the decision that was
+made about it — the wrong repository, a key nobody allowed, a clock too far out — and
+the direction says which side made it.</dd><dt><a class="struct" href="struct.Written.html" title="struct majordomus_cli::mesh::cooperation::Written">Written</a></dt><dd>What an operation wrote, as its answer to the caller. Every mesh operation is an event
+appended to this runtime’s journal, and the caller is handed the three facts it cannot
+work out for itself: the mesh-wide key of the thing it created, the event that says so,
+and the Lamport stamp that places it against everyone else’s events.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.CooperationError.html" title="enum majordomus_cli::mesh::cooperation::CooperationError">Cooperation<wbr>Error</a></dt><dd>Why a cooperation operation did not happen. Every variant is a decision rather than a
+fault: nothing here is a transport failure or a bug, so a caller that sees one has been
+told something true about the mesh and should say it to its user rather than retry.</dd><dt><a class="enum" href="enum.LinkState.html" title="enum majordomus_cli::mesh::cooperation::LinkState">Link<wbr>State</a></dt><dd>A link’s standing, from this runtime’s side. It is a statement about a connection and
+never about the peer: a runtime reachable only through a third party is <code>Expired</code> here
+while its streams beat on everywhere, which is why claims follow streams and not this.</dd><dt><a class="enum" href="enum.RoundError.html" title="enum majordomus_cli::mesh::cooperation::RoundError">Round<wbr>Error</a></dt><dd>What a dial or a sync round did not do. The three are kept apart because they are acted
+on differently: an unreachable peer is retried with a backoff, a refusal is a decision
+that will be made the same way next time and is recorded rather than retried, and the
+absence of a link is this runtime’s own state and not the peer’s.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.MAX_PEERS.html" title="constant majordomus_cli::mesh::cooperation::MAX_PEERS">MAX_<wbr>PEERS</a></dt><dd>The most peers one runtime links to.</dd><dt><a class="constant" href="constant.MAX_TARGETS_PER_NODE.html" title="constant majordomus_cli::mesh::cooperation::MAX_TARGETS_PER_NODE">MAX_<wbr>TARGETS_<wbr>PER_<wbr>NODE</a></dt><dd>The most runtimes of one node this runtime dials.</dd><dt><a class="constant" href="constant.PEER_RETENTION.html" title="constant majordomus_cli::mesh::cooperation::PEER_RETENTION">PEER_<wbr>RETENTION</a></dt><dd>How long an expired peer stays listed before it leaves the table.</dd></dl></section></div></main></body></html>

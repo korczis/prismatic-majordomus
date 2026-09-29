@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["normalise_machine_paths","public_text","redact_secrets","shape_names"],"struct":["Redacted"]};

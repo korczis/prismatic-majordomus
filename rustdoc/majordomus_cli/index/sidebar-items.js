@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_FILE_BYTES"],"enum":["State"],"struct":["Index","RepositoryInfo"]};

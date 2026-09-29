@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["branches","dirty_state","issue_ids","issue_of","merged_into","operation_in_progress","parse_branches","parse_status_z"],"struct":["BranchRef"]};

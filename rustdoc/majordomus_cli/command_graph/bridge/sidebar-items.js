@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BRIDGE","DIRECTORY","MANIFEST","MANIFEST_SCHEMA","REQUIRED_SETTING"],"fn":["bridged","inputs","is_current","manifest","materialise","recipe_names","render","stamp"],"struct":["Manifest","Outcome"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SPEC_PATH","SWAGGER_PATH","SWAGGER_UI_VERSION"],"fn":["offered_by_a_publication","page"]};

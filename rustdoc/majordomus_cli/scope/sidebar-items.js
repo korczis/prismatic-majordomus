@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SCOPE_FILE","SCOPE_VERSION","SKELETON_SCOPE","SNIFF_BYTES"],"enum":["Origin","Reason","Verdict"],"fn":["is_text","is_text_bytes"],"struct":["Category","Classification","Declaration","Fixtures","Out","OutFile","Scope","Scoped","Tally"]};

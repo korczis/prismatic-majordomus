@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The repository as a long-lived process must see it: current, not as it was when the process started."><title>majordomus_cli::live - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module live</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module live</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-defect-this-exists-to-end" title="The defect this exists to end">The defect this exists to end</a></li><li><a href="#what-is-watched-and-why-it-is-these-files" title="What is watched, and why it is these files">What is watched, and why it is these files</a></li><li><a href="#the-obligation-that-comes-with-watching-this-process-must-not-write-them" title="The obligation that comes with watching: this process must not write them">The obligation that comes with watching: this process must not write them</a></li><li><a href="#what-a-new-generation-costs-and-who-pays-it" title="What a new generation costs, and who pays it">What a new generation costs, and who pays it</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate majordomus_<wbr>cli</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a></div><h1>Module <span>live</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/live.rs.html#1-755">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The repository as a long-lived process must see it: current, not as it was when the
+process started.</p>
+<h2 id="the-defect-this-exists-to-end"><a class="doc-anchor" href="#the-defect-this-exists-to-end">§</a>The defect this exists to end</h2>
+<p><a href="../app/struct.App.html#method.load" title="associated function majordomus_cli::app::App::load"><code>crate::app::App::load</code></a> builds one <a href="../index/struct.Index.html" title="struct majordomus_cli::index::Index"><code>Index</code></a> and one
+<a href="../capability/handler/struct.Context.html" title="struct majordomus_cli::capability::handler::Context"><code>Context</code></a> and hands them out as <code>Arc</code>s. For a command that answers a question and
+exits, that is exactly right: the picture cannot go stale inside a process that lives
+for 40 ms. The shared server lives for hours, and it held the same two values for its
+whole life. A session would commit, ask <code>GET /api/v1/repository</code> for the head it had
+just written, and be told the head the server had read when it started — the same
+answer from MCP, from the Cockpit and from every capability that reads the index, with
+nothing in any of them saying the picture was old. Measured on <code>origin/master</code> at
+<code>faba8fdef</code>: head <code>A</code> before a commit, head <code>A</code> after it, a rule committed while the
+server ran absent from <code>objects</code>, and a working tree reported <code>clean</code> while it was
+dirty. Only restarting the process fixed it.</p>
+<h2 id="what-is-watched-and-why-it-is-these-files"><a class="doc-anchor" href="#what-is-watched-and-why-it-is-these-files">§</a>What is watched, and why it is these files</h2>
+<p>Git announces every move of the repository by writing a small, fixed set of files:
+<code>HEAD</code>, the staging index, <code>packed-refs</code>, the reflog, and the in-progress markers a
+merge or a rebase leaves. A commit, a checkout, a reset, a merge, a rebase and a branch
+switch each write at least one of them. So the question “has the repository moved?”
+is <a href="struct.Stamp.html" title="struct majordomus_cli::live::Stamp"><code>Stamp</code></a>: the size and modification time of those files, hashed — one <code>stat</code> per
+watched file, taken on the request’s own thread before it is answered, which
+<code>the_stamp_is_cheap_enough_to_take_on_every_request</code> holds to well under the
+millisecond that would make it matter. No thread, no interval, no watcher to leak, and
+nothing over the network.</p>
+<p>The limit, named rather than hidden: an edit to a tracked file that is never staged
+changes no git control file, so this does not see it. Seeing it would mean a <code>stat</code> per
+declared object on every request — a number that grows with the layer, against an HTTP
+p50 the benchmark baselines record in the hundreds of microseconds — which is the
+per-request regression the performance doctrine refuses. What a long-lived session
+actually loses to the frozen picture is the commit it just made, and a commit always
+moves git. <code>git add</code> moves it too: the staging index is watched.</p>
+<h2 id="the-obligation-that-comes-with-watching-this-process-must-not-write-them"><a class="doc-anchor" href="#the-obligation-that-comes-with-watching-this-process-must-not-write-them">§</a>The obligation that comes with watching: this process must not write them</h2>
+<p><code>git status</code> and <code>git diff</code> refresh the staging index as a side effect, writing back
+stat data that has gone stale or is <em>racily</em> close to the index’s own modification
+time. So a served page that asked git about the working tree moved the stamp itself,
+and the <em>next</em> request paid a whole <a href="../app/struct.App.html#method.load" title="associated function majordomus_cli::app::App::load"><code>crate::app::App::load</code></a> for a repository that had
+not moved — an observer disturbing what it observes, and charging the following caller
+for it. Measured over the Cockpit page sweep against a committed fixture:
+<code>repository_scans</code> 1 → 2 → 4 across <code>/cockpit/continuity</code> and <code>/cockpit/health</code>, with
+<code>.git/index</code>’s modification time moving at exactly those two points and its size never
+changing. Every read this crate makes therefore goes through
+<a href="../git/fn.read_only.html" title="fn majordomus_cli::git::read_only"><code>crate::git::read_only</code></a>, which is that one rule made into a constructor;
+<code>a_page_costs_no_rebuild_of_anything_canonical</code> holds it, page by page.</p>
+<h2 id="what-a-new-generation-costs-and-who-pays-it"><a class="doc-anchor" href="#what-a-new-generation-costs-and-who-pays-it">§</a>What a new generation costs, and who pays it</h2>
+<p>Rebuilding is a whole <a href="../app/struct.App.html#method.load" title="associated function majordomus_cli::app::App::load"><code>crate::app::App::load</code></a>: discovery, every declared file read
+and validated, the registry, the Why catalogue, the product model, the web topology.
+It is paid once per repository move, by the one request that noticed, and never
+concurrently — a second request arriving mid-rebuild is served the previous generation
+rather than queued behind it. Everything a generation carries is a projection of the
+index and is therefore rebuilt with it. What is <em>not</em> a projection of the index is
+carried across: the peer board, the executions this process is running and the
+capability executor, because a reload is not a restart and an attached peer must not
+lose its place on the board because somebody committed.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::sync::Arc;
+<span class="kw">use </span>majordomus_cli::live::Live;
+
+<span class="comment">// A pinned view never asks the filesystem anything: what a one-shot command,
+// a benchmark and a test want, and what they cost.
+</span><span class="kw">let </span>live = Live::pinned(ctx);
+<span class="macro">assert_eq!</span>(live.generation(), <span class="number">0</span>, <span class="string">"a pinned view has one generation, forever"</span>);
+<span class="kw">let </span>a = live.current();
+<span class="kw">let </span>b = live.current();
+<span class="macro">assert!</span>(Arc::ptr_eq(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b), <span class="string">"and hands out the same context every time"</span>);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Live.html" title="struct majordomus_cli::live::Live">Live</a></dt><dd>The repository a process reads, kept current.</dd><dt><a class="struct" href="struct.Memo.html" title="struct majordomus_cli::live::Memo">Memo</a></dt><dd>A value derived from one generation of the repository, kept until that generation ends.</dd><dt><a class="struct" href="struct.Stamp.html" title="struct majordomus_cli::live::Stamp">Stamp</a></dt><dd>A picture of the git control files: what the repository looked like when a generation
+was built.</dd><dt><a class="struct" href="struct.View.html" title="struct majordomus_cli::live::View">View</a></dt><dd>One reading of the repository: which generation, and the context of it.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.COMMON_FILES.html" title="constant majordomus_cli::live::COMMON_FILES">COMMON_<wbr>FILES</a></dt><dd>The git control files shared by every worktree of one repository
+(<code>git rev-parse --git-common-dir</code>): where a ref that is not this worktree’s moves.</dd><dt><a class="constant" href="constant.SALT.html" title="constant majordomus_cli::live::SALT">SALT</a></dt><dd>The salt the stamp is taken under, so that it can never collide with another
+fingerprint computed over the same files for another purpose.</dd><dt><a class="constant" href="constant.WORKTREE_FILES.html" title="constant majordomus_cli::live::WORKTREE_FILES">WORKTREE_<wbr>FILES</a></dt><dd>The git control files whose size and modification time say the repository has moved.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.IntoLive.html" title="trait majordomus_cli::live::IntoLive">Into<wbr>Live</a></dt><dd>What a projection is built over: something that can hand out the current context.</dd></dl></section></div></main></body></html>

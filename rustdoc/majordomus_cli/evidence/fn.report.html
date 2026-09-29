@@ -1,0 +1,74 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Join the claims of the index with the executions of the ledger and decide, per claim, what the repository can honestly say."><title>report in majordomus_cli::evidence - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">report</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>evidence</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a>::<wbr><a href="index.html">evidence</a></div><h1>Function <span class="fn">report</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/evidence/mod.rs.html#1419-1557">Source</a> </span></div><pre class="rust item-decl"><code>pub fn report(index: &amp;<a class="struct" href="../index/struct.Index.html" title="struct majordomus_cli::index::Index">Index</a>, ledger: &amp;<a class="struct" href="ledger/struct.Ledger.html" title="struct majordomus_cli::evidence::ledger::Ledger">Ledger</a>) -&gt; <a class="struct" href="struct.EvidenceReport.html" title="struct majordomus_cli::evidence::EvidenceReport">EvidenceReport</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Join the claims of the index with the executions of the ledger and decide, per claim,
+what the repository can honestly say.</p>
+<p>The git comparison is done once per distinct recorded commit and shared by every claim
+that recorded against it.</p>
+<p>Claims come from the index and nothing else; executions come from the ledger and nothing
+else. A claim the ledger has never heard of is <a href="enum.ProofState.html#variant.NotRun" title="variant majordomus_cli::evidence::ProofState::NotRun"><code>ProofState::NotRun</code></a>, and if it declares
+a guarantee, that is a finding — the file existing was never the proof.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::{<span class="self">self</span>, Ledger, ProofState};
+<span class="kw">use </span>majordomus_cli::git::GitState;
+<span class="kw">use </span>majordomus_cli::index::{Index, RepositoryInfo, State};
+<span class="kw">use </span>majordomus_cli::{Object, Provenance};
+
+<span class="kw">let </span>repo = tempfile::tempdir().unwrap();
+<span class="kw">let </span>claim = Object {
+    kind: <span class="string">"claim"</span>.into(),
+    identity: <span class="string">"scope-integrity"</span>.into(),
+    uri: <span class="string">"majordomus://claim/scope-integrity"</span>.into(),
+    title: <span class="prelude-val">None</span>,
+    description: <span class="prelude-val">None</span>,
+    metadata: <span class="macro">serde_json::json!</span>({
+        <span class="string">"claim"</span>: <span class="string">"a commit outside the task's scope is refused"</span>,
+        <span class="string">"status"</span>: <span class="string">"guaranteed"</span>,
+        <span class="string">"source"</span>: <span class="string">"docs/SCOPE.md"</span>,
+        <span class="string">"test"</span>: <span class="string">"test/cases/07_scope.sh"</span>,
+    }),
+    body: String::new(),
+    content: String::new(),
+    media_type: <span class="string">"application/yaml"</span>,
+    provenance: Provenance {
+        path: <span class="string">"docs/CLAIMS.yaml"</span>.into(),
+        directory: <span class="string">"docs"</span>.into(),
+        source_class: <span class="string">"claim"</span>.into(),
+        section: <span class="prelude-val">None</span>,
+        bytes: <span class="number">0</span>,
+        member: <span class="prelude-val">Some</span>(<span class="string">"claims.0"</span>.into()),
+    },
+};
+<span class="kw">let </span>index = Index {
+    repository: RepositoryInfo {
+        root: repo.path().display().to_string(),
+        layer_schema: <span class="string">"ai-repository/v1"</span>.into(),
+        sections: Default::default(),
+        git: GitState::Unavailable { reason: <span class="string">"doc"</span>.into() },
+        discovery: <span class="string">"filesystem"</span>.into(),
+        source_classes: <span class="macro">vec!</span>[],
+        kind_sources: <span class="macro">vec!</span>[],
+        scope_origin: majordomus_cli::scope::Origin::Distribution,
+        scope_path: String::new(),
+    },
+    objects: <span class="macro">vec!</span>[claim],
+    diagnostics: <span class="macro">vec!</span>[],
+    state: State::Ok,
+    fingerprint: String::new(),
+    scoped: Default::default(),
+    distribution: <span class="prelude-val">None</span>,
+    providers: Default::default(),
+    share: <span class="prelude-val">None</span>,
+};
+
+<span class="kw">let </span>report = evidence::report(<span class="kw-2">&amp;</span>index, <span class="kw-2">&amp;</span>Ledger::empty());
+<span class="kw">let </span>proof = <span class="kw-2">&amp;</span>report.claims[<span class="number">0</span>];
+<span class="macro">assert_eq!</span>(proof.test.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"suite:07_scope"</span>), <span class="string">"the id came from the path"</span>);
+<span class="macro">assert_eq!</span>(proof.state, ProofState::NotRun);
+<span class="macro">assert_eq!</span>(report.totals.get(<span class="string">"not run"</span>), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">1</span>));
+
+<span class="comment">// a guarantee with nothing recorded behind it is a finding, and the reader is told
+// exactly what would settle it
+</span><span class="macro">assert!</span>(!report.satisfied());
+<span class="macro">assert_eq!</span>(report.findings[<span class="number">0</span>].claim, <span class="string">"scope-integrity"</span>);
+<span class="macro">assert_eq!</span>(
+    report.findings[<span class="number">0</span>].reproduce.as_deref(),
+    <span class="prelude-val">Some</span>(<span class="string">"bash test/run.sh 07_scope"</span>)
+);</code></pre></div></div></details></section></div></main></body></html>

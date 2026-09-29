@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_PEERS","MAX_TARGETS_PER_NODE","PEER_RETENTION"],"enum":["CooperationError","LinkState","RoundError"],"struct":["CheckoutFacts","Cooperation","CooperationCounters","CooperationSetup","CooperationStatus","MeshVerifyCheck","MeshVerifyReport","PeerVerdict","PeerView","RefusedView","Written"]};

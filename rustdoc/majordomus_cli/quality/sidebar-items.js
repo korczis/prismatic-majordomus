@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SCHEMA"],"enum":["Severity","ViolationCode"],"mod":["parity","policy","report","source"],"struct":["Exemption","ModuleQuality","OperationParity","PublicApiQuality","QualityReport","Violation"]};

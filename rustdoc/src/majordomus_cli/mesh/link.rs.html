@@ -1,0 +1,1041 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/mesh/link.rs`."><title>link.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/mesh/</div>link.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! The link protocol: what two runtimes say to become linked, and what they exchange once
+<a href=#2 id=2 data-nosnippet>2</a>//! they are. Discovery ([`super::protocol`]) proves that a key exists somewhere; a link
+<a href=#3 id=3 data-nosnippet>3</a>//! proves that the key is answering *now*, serves the *same repository*, speaks a
+<a href=#4 id=4 data-nosnippet>4</a>//! *compatible protocol*, and is *trusted* — and only then does anything cooperative
+<a href=#5 id=5 data-nosnippet>5</a>//! travel.
+<a href=#6 id=6 data-nosnippet>6</a>//!
+<a href=#7 id=7 data-nosnippet>7</a>//! Two exchanges, both request–answer, both signed end to end:
+<a href=#8 id=8 data-nosnippet>8</a>//!
+<a href=#9 id=9 data-nosnippet>9</a>//! 1. **Hello → Welcome.** The dialer presents its [`RuntimeCard`] (key, runtime,
+<a href=#10 id=10 data-nosnippet>10</a>//!    instance, repository, version, features, endpoints), a fresh nonce and its supported
+<a href=#11 id=11 data-nosnippet>11</a>//!    protocol range, signed. The answerer verifies the signature, freshness and nonce
+<a href=#12 id=12 data-nosnippet>12</a>//!    (a replayed hello is refused), negotiates the protocol, refuses another repository,
+<a href=#13 id=13 data-nosnippet>13</a>//!    itself, or an untrusted key — each with a typed [`RefusalCode`] — and otherwise
+<a href=#14 id=14 data-nosnippet>14</a>//!    answers with its own card, a link id, its marks, and the dialer's nonce, signed. The
+<a href=#15 id=15 data-nosnippet>15</a>//!    dialer verifies all of it and applies the same checks the other way. Mutual:
+<a href=#16 id=16 data-nosnippet>16</a>//!    neither side is linked on the other's word alone.
+<a href=#17 id=17 data-nosnippet>17</a>//! 2. **Sync ↔ Sync.** The dialer sends its marks and the events the answerer lacks,
+<a href=#18 id=18 data-nosnippet>18</a>//!    under the link id with a rising counter, signed; the answerer ingests, answers with
+<a href=#19 id=19 data-nosnippet>19</a>//!    its marks and the events the dialer lacks, signed. One round is one heartbeat and
+<a href=#20 id=20 data-nosnippet>20</a>//!    one full replication step in both directions, so a link works even when only one
+<a href=#21 id=21 data-nosnippet>21</a>//!    side can reach the other.
+<a href=#22 id=22 data-nosnippet>22</a>//!
+<a href=#23 id=23 data-nosnippet>23</a>//! Every message is a [`Signed`] body: canonical JSON under a per-message domain
+<a href=#24 id=24 data-nosnippet>24</a>//! separator, so a signature over one message kind can never be replayed as another.
+<a href=#25 id=25 data-nosnippet>25</a>//! Discovery never grants any of this: a refused hello is recorded, visible, and links
+<a href=#26 id=26 data-nosnippet>26</a>//! nothing (`project.mesh-cooperation-is-authenticated`).
+<a href=#27 id=27 data-nosnippet>27</a>//!
+<a href=#28 id=28 data-nosnippet>28</a>//! ```
+<a href=#29 id=29 data-nosnippet>29</a>//! use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#30 id=30 data-nosnippet>30</a>//! use majordomus_cli::mesh::link::{negotiate, sign, verify_signed, Domain};
+<a href=#31 id=31 data-nosnippet>31</a>//!
+<a href=#32 id=32 data-nosnippet>32</a>//! let node = NodeIdentity::ephemeral().unwrap();
+<a href=#33 id=33 data-nosnippet>33</a>//! let signed = sign(&amp;node, Domain::Hello, serde_json::json!({"hello": 1}));
+<a href=#34 id=34 data-nosnippet>34</a>//! assert!(verify_signed(&amp;node.public.public_key, Domain::Hello, &amp;signed));
+<a href=#35 id=35 data-nosnippet>35</a>//! assert!(!verify_signed(&amp;node.public.public_key, Domain::Welcome, &amp;signed), "domains do not cross");
+<a href=#36 id=36 data-nosnippet>36</a>//! assert_eq!(negotiate(1, 3), Some(1));
+<a href=#37 id=37 data-nosnippet>37</a>//! assert_eq!(negotiate(2, 3), None);
+<a href=#38 id=38 data-nosnippet>38</a>//! ```
+<a href=#39 id=39 data-nosnippet>39</a>
+<a href=#40 id=40 data-nosnippet>40</a></span><span class="kw">use </span>std::time::Duration;
+<a href=#41 id=41 data-nosnippet>41</a>
+<a href=#42 id=42 data-nosnippet>42</a><span class="kw">use </span>schemars::JsonSchema;
+<a href=#43 id=43 data-nosnippet>43</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#44 id=44 data-nosnippet>44</a><span class="kw">use </span>serde_json::Value;
+<a href=#45 id=45 data-nosnippet>45</a>
+<a href=#46 id=46 data-nosnippet>46</a><span class="kw">use </span><span class="kw">super</span>::identity::{node_id_of_key, verify, NodeIdentity};
+<a href=#47 id=47 data-nosnippet>47</a><span class="kw">use </span><span class="kw">super</span>::journal::{canonical_json, IngestReport, Marks, MeshEvent, StreamId};
+<a href=#48 id=48 data-nosnippet>48</a>
+<a href=#49 id=49 data-nosnippet>49</a><span class="doccomment">/// The oldest link protocol version this executable speaks.
+<a href=#50 id=50 data-nosnippet>50</a></span><span class="kw">pub const </span>LINK_PROTOCOL_MIN: u32 = <span class="number">1</span>;
+<a href=#51 id=51 data-nosnippet>51</a>
+<a href=#52 id=52 data-nosnippet>52</a><span class="doccomment">/// The newest link protocol version this executable speaks.
+<a href=#53 id=53 data-nosnippet>53</a></span><span class="kw">pub const </span>LINK_PROTOCOL_MAX: u32 = <span class="number">1</span>;
+<a href=#54 id=54 data-nosnippet>54</a>
+<a href=#55 id=55 data-nosnippet>55</a><span class="doccomment">/// The route a hello is posted to.
+<a href=#56 id=56 data-nosnippet>56</a></span><span class="kw">pub const </span>HELLO_PATH: <span class="kw-2">&amp;</span>str = <span class="string">"/api/v1/mesh/link/hello"</span>;
+<a href=#57 id=57 data-nosnippet>57</a>
+<a href=#58 id=58 data-nosnippet>58</a><span class="doccomment">/// The route a sync round is posted to.
+<a href=#59 id=59 data-nosnippet>59</a></span><span class="kw">pub const </span>SYNC_PATH: <span class="kw-2">&amp;</span>str = <span class="string">"/api/v1/mesh/link/sync"</span>;
+<a href=#60 id=60 data-nosnippet>60</a>
+<a href=#61 id=61 data-nosnippet>61</a><span class="doccomment">/// What this executable's links can carry. A peer lacking a feature is told so with
+<a href=#62 id=62 data-nosnippet>62</a>/// [`RefusalCode::FeatureUnsupported`] when an operation needs it of that peer.
+<a href=#63 id=63 data-nosnippet>63</a></span><span class="kw">pub const </span>FEATURES: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[<span class="string">"sessions"</span>, <span class="string">"claims"</span>, <span class="string">"handovers"</span>, <span class="string">"reviews"</span>];
+<a href=#64 id=64 data-nosnippet>64</a>
+<a href=#65 id=65 data-nosnippet>65</a><span class="doccomment">/// The largest link message, serialized, in bytes: under the HTTP server's one-megabyte
+<a href=#66 id=66 data-nosnippet>66</a>/// body bound, so the protocol refuses before the transport has to.
+<a href=#67 id=67 data-nosnippet>67</a></span><span class="kw">pub const </span>MAX_LINK_MESSAGE: usize = <span class="number">900 </span>* <span class="number">1024</span>;
+<a href=#68 id=68 data-nosnippet>68</a>
+<a href=#69 id=69 data-nosnippet>69</a><span class="doccomment">/// The bytes of events one sync message carries at most; the rest follow next round.
+<a href=#70 id=70 data-nosnippet>70</a></span><span class="kw">pub const </span>SYNC_EVENT_BUDGET: usize = <span class="number">600 </span>* <span class="number">1024</span>;
+<a href=#71 id=71 data-nosnippet>71</a>
+<a href=#72 id=72 data-nosnippet>72</a><span class="doccomment">/// How far a hello's or welcome's timestamp may sit from the reader's clock.
+<a href=#73 id=73 data-nosnippet>73</a></span><span class="kw">pub const </span>MAX_LINK_SKEW_SECONDS: u64 = <span class="kw">super</span>::protocol::MAX_CLOCK_SKEW_SECONDS;
+<a href=#74 id=74 data-nosnippet>74</a>
+<a href=#75 id=75 data-nosnippet>75</a><span class="doccomment">/// One request's bound.
+<a href=#76 id=76 data-nosnippet>76</a></span><span class="kw">pub const </span>REQUEST_TIMEOUT: Duration = Duration::from_secs(<span class="number">5</span>);
+<a href=#77 id=77 data-nosnippet>77</a>
+<a href=#78 id=78 data-nosnippet>78</a><span class="doccomment">/// The message kinds, each its own signing domain. The domain is mixed into the bytes a
+<a href=#79 id=79 data-nosnippet>79</a>/// signature covers, so a signature made over one kind of message cannot be presented as
+<a href=#80 id=80 data-nosnippet>80</a>/// another: a captured welcome cannot be replayed as a sync answer even though both are
+<a href=#81 id=81 data-nosnippet>81</a>/// signed by the same key.
+<a href=#82 id=82 data-nosnippet>82</a>///
+<a href=#83 id=83 data-nosnippet>83</a>/// ```
+<a href=#84 id=84 data-nosnippet>84</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#85 id=85 data-nosnippet>85</a>/// use majordomus_cli::mesh::link::{sign, verify_signed, Domain};
+<a href=#86 id=86 data-nosnippet>86</a>///
+<a href=#87 id=87 data-nosnippet>87</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#88 id=88 data-nosnippet>88</a>/// let hello = sign(&amp;node, Domain::Hello, serde_json::json!({ "proto_min": 1 }));
+<a href=#89 id=89 data-nosnippet>89</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::Hello, &amp;hello));
+<a href=#90 id=90 data-nosnippet>90</a>/// for other in [Domain::Welcome, Domain::SyncRequest, Domain::SyncAnswer] {
+<a href=#91 id=91 data-nosnippet>91</a>///     assert!(!verify_signed(&amp;node.public.public_key, other, &amp;hello), "domains do not cross");
+<a href=#92 id=92 data-nosnippet>92</a>/// }
+<a href=#93 id=93 data-nosnippet>93</a>/// ```
+<a href=#94 id=94 data-nosnippet>94</a></span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+<a href=#95 id=95 data-nosnippet>95</a></span><span class="kw">pub enum </span>Domain {
+<a href=#96 id=96 data-nosnippet>96</a>    <span class="doccomment">/// A dialer's hello.
+<a href=#97 id=97 data-nosnippet>97</a>    </span>Hello,
+<a href=#98 id=98 data-nosnippet>98</a>    <span class="doccomment">/// An answerer's welcome.
+<a href=#99 id=99 data-nosnippet>99</a>    </span>Welcome,
+<a href=#100 id=100 data-nosnippet>100</a>    <span class="doccomment">/// A dialer's sync round.
+<a href=#101 id=101 data-nosnippet>101</a>    </span>SyncRequest,
+<a href=#102 id=102 data-nosnippet>102</a>    <span class="doccomment">/// An answerer's sync answer.
+<a href=#103 id=103 data-nosnippet>103</a>    </span>SyncAnswer,
+<a href=#104 id=104 data-nosnippet>104</a>}
+<a href=#105 id=105 data-nosnippet>105</a>
+<a href=#106 id=106 data-nosnippet>106</a><span class="kw">impl </span>Domain {
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="kw">fn </span>prefix(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>[u8] {
+<a href=#108 id=108 data-nosnippet>108</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#109 id=109 data-nosnippet>109</a>            Domain::Hello =&gt; <span class="string">b"majordomus-mesh-link-hello/v1\n"</span>,
+<a href=#110 id=110 data-nosnippet>110</a>            Domain::Welcome =&gt; <span class="string">b"majordomus-mesh-link-welcome/v1\n"</span>,
+<a href=#111 id=111 data-nosnippet>111</a>            Domain::SyncRequest =&gt; <span class="string">b"majordomus-mesh-link-sync-request/v1\n"</span>,
+<a href=#112 id=112 data-nosnippet>112</a>            Domain::SyncAnswer =&gt; <span class="string">b"majordomus-mesh-link-sync-answer/v1\n"</span>,
+<a href=#113 id=113 data-nosnippet>113</a>        }
+<a href=#114 id=114 data-nosnippet>114</a>    }
+<a href=#115 id=115 data-nosnippet>115</a>}
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a><span class="doccomment">/// A signed message: a JSON body and the Ed25519 signature over its canonical bytes under
+<a href=#118 id=118 data-nosnippet>118</a>/// the message's domain. The body stays JSON so that fields a newer peer adds survive
+<a href=#119 id=119 data-nosnippet>119</a>/// verification here unchanged.
+<a href=#120 id=120 data-nosnippet>120</a>///
+<a href=#121 id=121 data-nosnippet>121</a>/// Keeping the body as JSON rather than as the bytes that were signed is what makes the
+<a href=#122 id=122 data-nosnippet>122</a>/// protocol extensible: a field a newer peer added is carried through verification
+<a href=#123 id=123 data-nosnippet>123</a>/// untouched, because the signature is checked over the canonical form of whatever is
+<a href=#124 id=124 data-nosnippet>124</a>/// there rather than over a shape this version knows.
+<a href=#125 id=125 data-nosnippet>125</a>///
+<a href=#126 id=126 data-nosnippet>126</a>/// ```
+<a href=#127 id=127 data-nosnippet>127</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#128 id=128 data-nosnippet>128</a>/// use majordomus_cli::mesh::link::{sign, verify_signed, Domain, Signed};
+<a href=#129 id=129 data-nosnippet>129</a>///
+<a href=#130 id=130 data-nosnippet>130</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#131 id=131 data-nosnippet>131</a>/// let signed: Signed = sign(&amp;node, Domain::SyncRequest, serde_json::json!({ "b": 2, "a": 1 }));
+<a href=#132 id=132 data-nosnippet>132</a>/// assert_eq!(signed.sig.len(), 128, "hex Ed25519");
+<a href=#133 id=133 data-nosnippet>133</a>///
+<a href=#134 id=134 data-nosnippet>134</a>/// // key order is not content, so a round trip through JSON still verifies
+<a href=#135 id=135 data-nosnippet>135</a>/// let wire = serde_json::to_string(&amp;signed).unwrap();
+<a href=#136 id=136 data-nosnippet>136</a>/// let back: Signed = serde_json::from_str(&amp;wire).unwrap();
+<a href=#137 id=137 data-nosnippet>137</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::SyncRequest, &amp;back));
+<a href=#138 id=138 data-nosnippet>138</a>/// ```
+<a href=#139 id=139 data-nosnippet>139</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+<a href=#140 id=140 data-nosnippet>140</a></span><span class="kw">pub struct </span>Signed {
+<a href=#141 id=141 data-nosnippet>141</a>    <span class="doccomment">/// The message.
+<a href=#142 id=142 data-nosnippet>142</a>    </span><span class="kw">pub </span>body: Value,
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="doccomment">/// Hex Ed25519 over the domain and the canonical JSON of `body`.
+<a href=#144 id=144 data-nosnippet>144</a>    </span><span class="kw">pub </span>sig: String,
+<a href=#145 id=145 data-nosnippet>145</a>}
+<a href=#146 id=146 data-nosnippet>146</a>
+<a href=#147 id=147 data-nosnippet>147</a><span class="doccomment">/// Sign `body` as a message of `domain`. The signature is taken over the domain separator
+<a href=#148 id=148 data-nosnippet>148</a>/// followed by the canonical JSON of the body, so two peers that serialize the same facts
+<a href=#149 id=149 data-nosnippet>149</a>/// in different key orders still agree about what was signed, and nothing signed for one
+<a href=#150 id=150 data-nosnippet>150</a>/// exchange verifies as part of another.
+<a href=#151 id=151 data-nosnippet>151</a>///
+<a href=#152 id=152 data-nosnippet>152</a>/// ```
+<a href=#153 id=153 data-nosnippet>153</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#154 id=154 data-nosnippet>154</a>/// use majordomus_cli::mesh::link::{sign, verify_signed, Domain};
+<a href=#155 id=155 data-nosnippet>155</a>///
+<a href=#156 id=156 data-nosnippet>156</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#157 id=157 data-nosnippet>157</a>/// let signed = sign(&amp;node, Domain::Welcome, serde_json::json!({ "link": "abc" }));
+<a href=#158 id=158 data-nosnippet>158</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::Welcome, &amp;signed));
+<a href=#159 id=159 data-nosnippet>159</a>///
+<a href=#160 id=160 data-nosnippet>160</a>/// // the body travels as given; the signature is what is derived
+<a href=#161 id=161 data-nosnippet>161</a>/// assert_eq!(signed.body["link"], "abc");
+<a href=#162 id=162 data-nosnippet>162</a>/// ```
+<a href=#163 id=163 data-nosnippet>163</a></span><span class="kw">pub fn </span>sign(identity: <span class="kw-2">&amp;</span>NodeIdentity, domain: Domain, body: Value) -&gt; Signed {
+<a href=#164 id=164 data-nosnippet>164</a>    <span class="kw">let </span><span class="kw-2">mut </span>bytes = domain.prefix().to_vec();
+<a href=#165 id=165 data-nosnippet>165</a>    bytes.extend(canonical_json(<span class="kw-2">&amp;</span>body));
+<a href=#166 id=166 data-nosnippet>166</a>    Signed {
+<a href=#167 id=167 data-nosnippet>167</a>        sig: identity.sign(<span class="kw-2">&amp;</span>bytes),
+<a href=#168 id=168 data-nosnippet>168</a>        body,
+<a href=#169 id=169 data-nosnippet>169</a>    }
+<a href=#170 id=170 data-nosnippet>170</a>}
+<a href=#171 id=171 data-nosnippet>171</a>
+<a href=#172 id=172 data-nosnippet>172</a><span class="doccomment">/// Whether `signed` is a message of `domain` signed by `public_key`. Three things have to
+<a href=#173 id=173 data-nosnippet>173</a>/// hold at once — the right key, the right domain, and an untouched body — and this
+<a href=#174 id=174 data-nosnippet>174</a>/// answers about all three with one boolean, because a link has no use for the difference:
+<a href=#175 id=175 data-nosnippet>175</a>/// any of them failing means the message does not come from the peer it claims to.
+<a href=#176 id=176 data-nosnippet>176</a>///
+<a href=#177 id=177 data-nosnippet>177</a>/// ```
+<a href=#178 id=178 data-nosnippet>178</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#179 id=179 data-nosnippet>179</a>/// use majordomus_cli::mesh::link::{sign, verify_signed, Domain};
+<a href=#180 id=180 data-nosnippet>180</a>///
+<a href=#181 id=181 data-nosnippet>181</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#182 id=182 data-nosnippet>182</a>/// let impostor = NodeIdentity::ephemeral().unwrap();
+<a href=#183 id=183 data-nosnippet>183</a>/// let mut signed = sign(&amp;node, Domain::Hello, serde_json::json!({ "a": 1, "b": 2 }));
+<a href=#184 id=184 data-nosnippet>184</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::Hello, &amp;signed));
+<a href=#185 id=185 data-nosnippet>185</a>///
+<a href=#186 id=186 data-nosnippet>186</a>/// // another key did not sign it, and a reordered body is the same body
+<a href=#187 id=187 data-nosnippet>187</a>/// assert!(!verify_signed(&amp;impostor.public.public_key, Domain::Hello, &amp;signed));
+<a href=#188 id=188 data-nosnippet>188</a>/// signed.body = serde_json::json!({ "b": 2, "a": 1 });
+<a href=#189 id=189 data-nosnippet>189</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::Hello, &amp;signed));
+<a href=#190 id=190 data-nosnippet>190</a>///
+<a href=#191 id=191 data-nosnippet>191</a>/// // an edited one is not
+<a href=#192 id=192 data-nosnippet>192</a>/// signed.body = serde_json::json!({ "b": 3, "a": 1 });
+<a href=#193 id=193 data-nosnippet>193</a>/// assert!(!verify_signed(&amp;node.public.public_key, Domain::Hello, &amp;signed));
+<a href=#194 id=194 data-nosnippet>194</a>/// ```
+<a href=#195 id=195 data-nosnippet>195</a></span><span class="kw">pub fn </span>verify_signed(public_key: <span class="kw-2">&amp;</span>str, domain: Domain, signed: <span class="kw-2">&amp;</span>Signed) -&gt; bool {
+<a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">let </span><span class="kw-2">mut </span>bytes = domain.prefix().to_vec();
+<a href=#197 id=197 data-nosnippet>197</a>    bytes.extend(canonical_json(<span class="kw-2">&amp;</span>signed.body));
+<a href=#198 id=198 data-nosnippet>198</a>    verify(public_key, <span class="kw-2">&amp;</span>bytes, <span class="kw-2">&amp;</span>signed.sig)
+<a href=#199 id=199 data-nosnippet>199</a>}
+<a href=#200 id=200 data-nosnippet>200</a>
+<a href=#201 id=201 data-nosnippet>201</a><span class="doccomment">/// The version both sides speak: the highest in the intersection of their ranges, or
+<a href=#202 id=202 data-nosnippet>202</a>/// `None` when the ranges do not meet.
+<a href=#203 id=203 data-nosnippet>203</a>///
+<a href=#204 id=204 data-nosnippet>204</a>/// Taking the highest common version is what lets two executables of different ages link
+<a href=#205 id=205 data-nosnippet>205</a>/// without either being told about the other: each states the range it speaks and the
+<a href=#206 id=206 data-nosnippet>206</a>/// newest both understand wins. An inverted range is no range, so a peer that states
+<a href=#207 id=207 data-nosnippet>207</a>/// nonsense is refused rather than accommodated.
+<a href=#208 id=208 data-nosnippet>208</a>///
+<a href=#209 id=209 data-nosnippet>209</a>/// ```
+<a href=#210 id=210 data-nosnippet>210</a>/// use majordomus_cli::mesh::link::{negotiate, LINK_PROTOCOL_MAX, LINK_PROTOCOL_MIN};
+<a href=#211 id=211 data-nosnippet>211</a>///
+<a href=#212 id=212 data-nosnippet>212</a>/// assert_eq!(negotiate(LINK_PROTOCOL_MIN, LINK_PROTOCOL_MAX), Some(LINK_PROTOCOL_MAX));
+<a href=#213 id=213 data-nosnippet>213</a>/// assert_eq!(negotiate(0, 99), Some(LINK_PROTOCOL_MAX), "the newest both speak");
+<a href=#214 id=214 data-nosnippet>214</a>/// assert_eq!(negotiate(LINK_PROTOCOL_MAX + 1, LINK_PROTOCOL_MAX + 3), None, "no overlap");
+<a href=#215 id=215 data-nosnippet>215</a>/// assert_eq!(negotiate(3, 2), None, "an inverted range is no range");
+<a href=#216 id=216 data-nosnippet>216</a>/// ```
+<a href=#217 id=217 data-nosnippet>217</a></span><span class="kw">pub fn </span>negotiate(theirs_min: u32, theirs_max: u32) -&gt; <span class="prelude-ty">Option</span>&lt;u32&gt; {
+<a href=#218 id=218 data-nosnippet>218</a>    <span class="kw">let </span>low = theirs_min.max(LINK_PROTOCOL_MIN);
+<a href=#219 id=219 data-nosnippet>219</a>    <span class="kw">let </span>high = theirs_max.min(LINK_PROTOCOL_MAX);
+<a href=#220 id=220 data-nosnippet>220</a>    (theirs_min &lt;= theirs_max &amp;&amp; low &lt;= high).then_some(high)
+<a href=#221 id=221 data-nosnippet>221</a>}
+<a href=#222 id=222 data-nosnippet>222</a>
+<a href=#223 id=223 data-nosnippet>223</a><span class="doccomment">/// What a runtime says about itself on a link: public facts only. The card carries no
+<a href=#224 id=224 data-nosnippet>224</a>/// claim a peer has to take on faith — the node id is derived from the key rather than
+<a href=#225 id=225 data-nosnippet>225</a>/// stated, so a card cannot name a node it cannot sign for, and everything else is either
+<a href=#226 id=226 data-nosnippet>226</a>/// checkable (the repository, the protocol) or advisory (the name, the endpoints).
+<a href=#227 id=227 data-nosnippet>227</a>///
+<a href=#228 id=228 data-nosnippet>228</a>/// ```
+<a href=#229 id=229 data-nosnippet>229</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#230 id=230 data-nosnippet>230</a>/// use majordomus_cli::mesh::link::{RuntimeCard, FEATURES};
+<a href=#231 id=231 data-nosnippet>231</a>///
+<a href=#232 id=232 data-nosnippet>232</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#233 id=233 data-nosnippet>233</a>/// let card = RuntimeCard {
+<a href=#234 id=234 data-nosnippet>234</a>///     pk: node.public.public_key.clone(),
+<a href=#235 id=235 data-nosnippet>235</a>///     runtime: "00000000000000aa".into(),
+<a href=#236 id=236 data-nosnippet>236</a>///     instance: node.public.instance_id.as_str().into(),
+<a href=#237 id=237 data-nosnippet>237</a>///     repo: "r".repeat(32),
+<a href=#238 id=238 data-nosnippet>238</a>///     name: "laptop".into(),
+<a href=#239 id=239 data-nosnippet>239</a>///     version: "0.7.0".into(),
+<a href=#240 id=240 data-nosnippet>240</a>///     features: FEATURES.iter().map(|f| f.to_string()).collect(),
+<a href=#241 id=241 data-nosnippet>241</a>///     endpoints: vec!["10.0.0.2:8742".into()],
+<a href=#242 id=242 data-nosnippet>242</a>/// };
+<a href=#243 id=243 data-nosnippet>243</a>/// assert!(card.check().is_ok());
+<a href=#244 id=244 data-nosnippet>244</a>/// assert_eq!(card.runtime_key().unwrap(), format!("{}-00000000000000aa", node.public.node_id));
+<a href=#245 id=245 data-nosnippet>245</a>/// ```
+<a href=#246 id=246 data-nosnippet>246</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#247 id=247 data-nosnippet>247</a></span><span class="kw">pub struct </span>RuntimeCard {
+<a href=#248 id=248 data-nosnippet>248</a>    <span class="doccomment">/// The node's Ed25519 public key, hex.
+<a href=#249 id=249 data-nosnippet>249</a>    </span><span class="kw">pub </span>pk: String,
+<a href=#250 id=250 data-nosnippet>250</a>    <span class="doccomment">/// The runtime slot, 16 hex.
+<a href=#251 id=251 data-nosnippet>251</a>    </span><span class="kw">pub </span>runtime: String,
+<a href=#252 id=252 data-nosnippet>252</a>    <span class="doccomment">/// This run of the runtime, 16 hex.
+<a href=#253 id=253 data-nosnippet>253</a>    </span><span class="kw">pub </span>instance: String,
+<a href=#254 id=254 data-nosnippet>254</a>    <span class="doccomment">/// The mesh repository id.
+<a href=#255 id=255 data-nosnippet>255</a>    </span><span class="kw">pub </span>repo: String,
+<a href=#256 id=256 data-nosnippet>256</a>    <span class="doccomment">/// The node's display name.
+<a href=#257 id=257 data-nosnippet>257</a>    </span><span class="attr">#[serde(default)]
+<a href=#258 id=258 data-nosnippet>258</a>    </span><span class="kw">pub </span>name: String,
+<a href=#259 id=259 data-nosnippet>259</a>    <span class="doccomment">/// The executable version.
+<a href=#260 id=260 data-nosnippet>260</a>    </span><span class="attr">#[serde(default)]
+<a href=#261 id=261 data-nosnippet>261</a>    </span><span class="kw">pub </span>version: String,
+<a href=#262 id=262 data-nosnippet>262</a>    <span class="doccomment">/// The link features this runtime carries.
+<a href=#263 id=263 data-nosnippet>263</a>    </span><span class="attr">#[serde(default)]
+<a href=#264 id=264 data-nosnippet>264</a>    </span><span class="kw">pub </span>features: Vec&lt;String&gt;,
+<a href=#265 id=265 data-nosnippet>265</a>    <span class="doccomment">/// Where this runtime answers, `host:port`.
+<a href=#266 id=266 data-nosnippet>266</a>    </span><span class="attr">#[serde(default)]
+<a href=#267 id=267 data-nosnippet>267</a>    </span><span class="kw">pub </span>endpoints: Vec&lt;String&gt;,
+<a href=#268 id=268 data-nosnippet>268</a>}
+<a href=#269 id=269 data-nosnippet>269</a>
+<a href=#270 id=270 data-nosnippet>270</a><span class="kw">impl </span>RuntimeCard {
+<a href=#271 id=271 data-nosnippet>271</a>    <span class="doccomment">/// The stream this card's runtime writes, when the card is well-formed. The node half
+<a href=#272 id=272 data-nosnippet>272</a>    /// is derived from the key the card carries rather than read from a field, which is
+<a href=#273 id=273 data-nosnippet>273</a>    /// what makes a stream id unforgeable: to write under a stream a runtime must hold the
+<a href=#274 id=274 data-nosnippet>274</a>    /// key that stream is derived from. `None` is the answer for a card whose key, runtime
+<a href=#275 id=275 data-nosnippet>275</a>    /// or instance is not of the right shape — there is no stream for such a card to write.
+<a href=#276 id=276 data-nosnippet>276</a>    ///
+<a href=#277 id=277 data-nosnippet>277</a>    /// ```
+<a href=#278 id=278 data-nosnippet>278</a>    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#279 id=279 data-nosnippet>279</a>    /// # use majordomus_cli::mesh::link::RuntimeCard;
+<a href=#280 id=280 data-nosnippet>280</a>    /// # let node = NodeIdentity::ephemeral().unwrap();
+<a href=#281 id=281 data-nosnippet>281</a>    /// # let card = RuntimeCard {
+<a href=#282 id=282 data-nosnippet>282</a>    /// #     pk: node.public.public_key.clone(),
+<a href=#283 id=283 data-nosnippet>283</a>    /// #     runtime: "00000000000000aa".into(),
+<a href=#284 id=284 data-nosnippet>284</a>    /// #     instance: node.public.instance_id.as_str().into(),
+<a href=#285 id=285 data-nosnippet>285</a>    /// #     repo: "r".repeat(32),
+<a href=#286 id=286 data-nosnippet>286</a>    /// #     name: String::new(),
+<a href=#287 id=287 data-nosnippet>287</a>    /// #     version: String::new(),
+<a href=#288 id=288 data-nosnippet>288</a>    /// #     features: vec![],
+<a href=#289 id=289 data-nosnippet>289</a>    /// #     endpoints: vec![],
+<a href=#290 id=290 data-nosnippet>290</a>    /// # };
+<a href=#291 id=291 data-nosnippet>291</a>    /// let stream = card.stream().unwrap();
+<a href=#292 id=292 data-nosnippet>292</a>    /// assert!(stream.as_str().starts_with(node.public.node_id.as_str()), "derived from the key");
+<a href=#293 id=293 data-nosnippet>293</a>    ///
+<a href=#294 id=294 data-nosnippet>294</a>    /// // a runtime slot that is not 16 hex is not a runtime slot
+<a href=#295 id=295 data-nosnippet>295</a>    /// let malformed = RuntimeCard { runtime: "zz".into(), ..card };
+<a href=#296 id=296 data-nosnippet>296</a>    /// assert!(malformed.stream().is_none());
+<a href=#297 id=297 data-nosnippet>297</a>    /// ```
+<a href=#298 id=298 data-nosnippet>298</a>    </span><span class="kw">pub fn </span>stream(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;StreamId&gt; {
+<a href=#299 id=299 data-nosnippet>299</a>        <span class="kw">let </span>node = node_id_of_key(<span class="kw-2">&amp;</span><span class="self">self</span>.pk)<span class="question-mark">?</span>;
+<a href=#300 id=300 data-nosnippet>300</a>        StreamId::new(node.as_str(), <span class="kw-2">&amp;</span><span class="self">self</span>.runtime, <span class="kw-2">&amp;</span><span class="self">self</span>.instance)
+<a href=#301 id=301 data-nosnippet>301</a>    }
+<a href=#302 id=302 data-nosnippet>302</a>
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="doccomment">/// `&lt;node&gt;-&lt;runtime&gt;`, when the card is well-formed: the key the peer table is kept
+<a href=#304 id=304 data-nosnippet>304</a>    /// under. It deliberately drops the instance the stream carries, so that a runtime
+<a href=#305 id=305 data-nosnippet>305</a>    /// which restarts is recognised as the same peer rather than accumulating an entry per
+<a href=#306 id=306 data-nosnippet>306</a>    /// run — the instance is how a restart is noticed, not who the peer is.
+<a href=#307 id=307 data-nosnippet>307</a>    ///
+<a href=#308 id=308 data-nosnippet>308</a>    /// ```
+<a href=#309 id=309 data-nosnippet>309</a>    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#310 id=310 data-nosnippet>310</a>    /// # use majordomus_cli::mesh::link::RuntimeCard;
+<a href=#311 id=311 data-nosnippet>311</a>    /// # let node = NodeIdentity::ephemeral().unwrap();
+<a href=#312 id=312 data-nosnippet>312</a>    /// # let card = RuntimeCard {
+<a href=#313 id=313 data-nosnippet>313</a>    /// #     pk: node.public.public_key.clone(),
+<a href=#314 id=314 data-nosnippet>314</a>    /// #     runtime: "00000000000000aa".into(),
+<a href=#315 id=315 data-nosnippet>315</a>    /// #     instance: node.public.instance_id.as_str().into(),
+<a href=#316 id=316 data-nosnippet>316</a>    /// #     repo: "r".repeat(32),
+<a href=#317 id=317 data-nosnippet>317</a>    /// #     name: String::new(),
+<a href=#318 id=318 data-nosnippet>318</a>    /// #     version: String::new(),
+<a href=#319 id=319 data-nosnippet>319</a>    /// #     features: vec![],
+<a href=#320 id=320 data-nosnippet>320</a>    /// #     endpoints: vec![],
+<a href=#321 id=321 data-nosnippet>321</a>    /// # };
+<a href=#322 id=322 data-nosnippet>322</a>    /// let restarted = RuntimeCard { instance: "0123456789abcdef".into(), ..card.clone() };
+<a href=#323 id=323 data-nosnippet>323</a>    /// assert_eq!(card.runtime_key(), restarted.runtime_key(), "a restart is the same peer");
+<a href=#324 id=324 data-nosnippet>324</a>    /// assert_ne!(card.stream(), restarted.stream(), "and a different run of it");
+<a href=#325 id=325 data-nosnippet>325</a>    /// ```
+<a href=#326 id=326 data-nosnippet>326</a>    </span><span class="kw">pub fn </span>runtime_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<a href=#327 id=327 data-nosnippet>327</a>        <span class="self">self</span>.stream().map(|s| s.runtime_key())
+<a href=#328 id=328 data-nosnippet>328</a>    }
+<a href=#329 id=329 data-nosnippet>329</a>
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="doccomment">/// Whether the card's runtime carries `feature`. Features are how two executables of
+<a href=#331 id=331 data-nosnippet>331</a>    /// different ages tell each other what they can do after the protocol version has been
+<a href=#332 id=332 data-nosnippet>332</a>    /// agreed: an operation that needs something the peer does not carry is refused with
+<a href=#333 id=333 data-nosnippet>333</a>    /// [`RefusalCode::FeatureUnsupported`], naming the feature, instead of failing
+<a href=#334 id=334 data-nosnippet>334</a>    /// somewhere further in.
+<a href=#335 id=335 data-nosnippet>335</a>    ///
+<a href=#336 id=336 data-nosnippet>336</a>    /// ```
+<a href=#337 id=337 data-nosnippet>337</a>    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#338 id=338 data-nosnippet>338</a>    /// # use majordomus_cli::mesh::link::{RuntimeCard, FEATURES};
+<a href=#339 id=339 data-nosnippet>339</a>    /// # let node = NodeIdentity::ephemeral().unwrap();
+<a href=#340 id=340 data-nosnippet>340</a>    /// # let card = RuntimeCard {
+<a href=#341 id=341 data-nosnippet>341</a>    /// #     pk: node.public.public_key.clone(),
+<a href=#342 id=342 data-nosnippet>342</a>    /// #     runtime: "00000000000000aa".into(),
+<a href=#343 id=343 data-nosnippet>343</a>    /// #     instance: node.public.instance_id.as_str().into(),
+<a href=#344 id=344 data-nosnippet>344</a>    /// #     repo: "r".repeat(32),
+<a href=#345 id=345 data-nosnippet>345</a>    /// #     name: String::new(),
+<a href=#346 id=346 data-nosnippet>346</a>    /// #     version: String::new(),
+<a href=#347 id=347 data-nosnippet>347</a>    /// #     features: FEATURES.iter().map(|f| f.to_string()).collect(),
+<a href=#348 id=348 data-nosnippet>348</a>    /// #     endpoints: vec![],
+<a href=#349 id=349 data-nosnippet>349</a>    /// # };
+<a href=#350 id=350 data-nosnippet>350</a>    /// assert!(card.supports("reviews"));
+<a href=#351 id=351 data-nosnippet>351</a>    /// assert!(!card.supports("teleport"), "an unknown word is not a capability");
+<a href=#352 id=352 data-nosnippet>352</a>    /// ```
+<a href=#353 id=353 data-nosnippet>353</a>    </span><span class="kw">pub fn </span>supports(<span class="kw-2">&amp;</span><span class="self">self</span>, feature: <span class="kw-2">&amp;</span>str) -&gt; bool {
+<a href=#354 id=354 data-nosnippet>354</a>        <span class="self">self</span>.features.iter().any(|f| f == feature)
+<a href=#355 id=355 data-nosnippet>355</a>    }
+<a href=#356 id=356 data-nosnippet>356</a>
+<a href=#357 id=357 data-nosnippet>357</a>    <span class="doccomment">/// Refuse an out-of-bounds card: a key that does not parse, ids of the wrong shape,
+<a href=#358 id=358 data-nosnippet>358</a>    /// oversized text.
+<a href=#359 id=359 data-nosnippet>359</a>    ///
+<a href=#360 id=360 data-nosnippet>360</a>    /// Every field of a card was written by somebody else, so each is bounded before any
+<a href=#361 id=361 data-nosnippet>361</a>    /// of it is stored or shown. The bounds are small on purpose — a name, a version, a
+<a href=#362 id=362 data-nosnippet>362</a>    /// handful of features and endpoints — because nothing legitimate needs more, and a
+<a href=#363 id=363 data-nosnippet>363</a>    /// card is the first thing a stranger gets to put into this process.
+<a href=#364 id=364 data-nosnippet>364</a>    ///
+<a href=#365 id=365 data-nosnippet>365</a>    /// ```
+<a href=#366 id=366 data-nosnippet>366</a>    /// # use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#367 id=367 data-nosnippet>367</a>    /// # use majordomus_cli::mesh::link::RuntimeCard;
+<a href=#368 id=368 data-nosnippet>368</a>    /// # let node = NodeIdentity::ephemeral().unwrap();
+<a href=#369 id=369 data-nosnippet>369</a>    /// # let card = RuntimeCard {
+<a href=#370 id=370 data-nosnippet>370</a>    /// #     pk: node.public.public_key.clone(),
+<a href=#371 id=371 data-nosnippet>371</a>    /// #     runtime: "00000000000000aa".into(),
+<a href=#372 id=372 data-nosnippet>372</a>    /// #     instance: node.public.instance_id.as_str().into(),
+<a href=#373 id=373 data-nosnippet>373</a>    /// #     repo: "r".repeat(32),
+<a href=#374 id=374 data-nosnippet>374</a>    /// #     name: String::new(),
+<a href=#375 id=375 data-nosnippet>375</a>    /// #     version: String::new(),
+<a href=#376 id=376 data-nosnippet>376</a>    /// #     features: vec![],
+<a href=#377 id=377 data-nosnippet>377</a>    /// #     endpoints: vec!["10.0.0.2:8742".into()],
+<a href=#378 id=378 data-nosnippet>378</a>    /// # };
+<a href=#379 id=379 data-nosnippet>379</a>    /// assert!(card.check().is_ok());
+<a href=#380 id=380 data-nosnippet>380</a>    /// assert!(RuntimeCard { repo: String::new(), ..card.clone() }.check().is_err());
+<a href=#381 id=381 data-nosnippet>381</a>    /// assert!(RuntimeCard { name: "n".repeat(500), ..card.clone() }.check().is_err());
+<a href=#382 id=382 data-nosnippet>382</a>    /// assert!(
+<a href=#383 id=383 data-nosnippet>383</a>    ///     RuntimeCard { endpoints: vec!["no-port".into()], ..card }.check().is_err(),
+<a href=#384 id=384 data-nosnippet>384</a>    ///     "an endpoint without a port is not somewhere to dial",
+<a href=#385 id=385 data-nosnippet>385</a>    /// );
+<a href=#386 id=386 data-nosnippet>386</a>    /// ```
+<a href=#387 id=387 data-nosnippet>387</a>    </span><span class="kw">pub fn </span>check(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<a href=#388 id=388 data-nosnippet>388</a>        <span class="kw">if </span><span class="self">self</span>.stream().is_none() {
+<a href=#389 id=389 data-nosnippet>389</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"the key, runtime or instance is not well-formed"</span>.into());
+<a href=#390 id=390 data-nosnippet>390</a>        }
+<a href=#391 id=391 data-nosnippet>391</a>        <span class="kw">if </span><span class="self">self</span>.repo.is_empty() || <span class="self">self</span>.repo.len() &gt; <span class="number">64 </span>{
+<a href=#392 id=392 data-nosnippet>392</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"the repository id is empty or oversized"</span>.into());
+<a href=#393 id=393 data-nosnippet>393</a>        }
+<a href=#394 id=394 data-nosnippet>394</a>        <span class="kw">if </span><span class="self">self</span>.name.len() &gt; <span class="number">64
+<a href=#395 id=395 data-nosnippet>395</a>            </span>|| <span class="self">self</span>.version.len() &gt; <span class="number">32
+<a href=#396 id=396 data-nosnippet>396</a>            </span>|| <span class="self">self</span>.features.len() &gt; <span class="number">16
+<a href=#397 id=397 data-nosnippet>397</a>            </span>|| <span class="self">self</span>.features.iter().any(|f| f.len() &gt; <span class="number">32</span>)
+<a href=#398 id=398 data-nosnippet>398</a>            || <span class="self">self</span>.endpoints.len() &gt; <span class="kw">super</span>::protocol::MAX_ENDPOINTS
+<a href=#399 id=399 data-nosnippet>399</a>            || <span class="self">self
+<a href=#400 id=400 data-nosnippet>400</a>                </span>.endpoints
+<a href=#401 id=401 data-nosnippet>401</a>                .iter()
+<a href=#402 id=402 data-nosnippet>402</a>                .any(|e| e.len() &gt; <span class="number">64 </span>|| !e.contains(<span class="string">':'</span>))
+<a href=#403 id=403 data-nosnippet>403</a>        {
+<a href=#404 id=404 data-nosnippet>404</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="string">"a field of the card is out of bounds"</span>.into());
+<a href=#405 id=405 data-nosnippet>405</a>        }
+<a href=#406 id=406 data-nosnippet>406</a>        <span class="prelude-val">Ok</span>(())
+<a href=#407 id=407 data-nosnippet>407</a>    }
+<a href=#408 id=408 data-nosnippet>408</a>}
+<a href=#409 id=409 data-nosnippet>409</a>
+<a href=#410 id=410 data-nosnippet>410</a><span class="doccomment">/// A dialer's hello: everything the answerer needs to decide whether to link, in one
+<a href=#411 id=411 data-nosnippet>411</a>/// signed message. The nonce makes the exchange unrepeatable — the welcome must echo it,
+<a href=#412 id=412 data-nosnippet>412</a>/// and a nonce is never accepted twice — and the timestamp makes it unstorable, since a
+<a href=#413 id=413 data-nosnippet>413</a>/// hello captured today cannot be presented tomorrow. The protocol range is stated rather
+<a href=#414 id=414 data-nosnippet>414</a>/// than assumed, so two executables of different ages find their common version here and
+<a href=#415 id=415 data-nosnippet>415</a>/// nowhere else.
+<a href=#416 id=416 data-nosnippet>416</a>///
+<a href=#417 id=417 data-nosnippet>417</a>/// ```
+<a href=#418 id=418 data-nosnippet>418</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#419 id=419 data-nosnippet>419</a>/// use majordomus_cli::mesh::link::{fresh_token, sign, verify_signed, Domain, Hello,
+<a href=#420 id=420 data-nosnippet>420</a>///     RuntimeCard, LINK_PROTOCOL_MAX, LINK_PROTOCOL_MIN};
+<a href=#421 id=421 data-nosnippet>421</a>///
+<a href=#422 id=422 data-nosnippet>422</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#423 id=423 data-nosnippet>423</a>/// let hello = Hello {
+<a href=#424 id=424 data-nosnippet>424</a>///     proto_min: LINK_PROTOCOL_MIN,
+<a href=#425 id=425 data-nosnippet>425</a>///     proto_max: LINK_PROTOCOL_MAX,
+<a href=#426 id=426 data-nosnippet>426</a>///     card: RuntimeCard {
+<a href=#427 id=427 data-nosnippet>427</a>///         pk: node.public.public_key.clone(),
+<a href=#428 id=428 data-nosnippet>428</a>///         runtime: "00000000000000aa".into(),
+<a href=#429 id=429 data-nosnippet>429</a>///         instance: node.public.instance_id.as_str().into(),
+<a href=#430 id=430 data-nosnippet>430</a>///         repo: "r".repeat(32),
+<a href=#431 id=431 data-nosnippet>431</a>///         name: String::new(),
+<a href=#432 id=432 data-nosnippet>432</a>///         version: String::new(),
+<a href=#433 id=433 data-nosnippet>433</a>///         features: vec![],
+<a href=#434 id=434 data-nosnippet>434</a>///         endpoints: vec![],
+<a href=#435 id=435 data-nosnippet>435</a>///     },
+<a href=#436 id=436 data-nosnippet>436</a>///     nonce: fresh_token(),
+<a href=#437 id=437 data-nosnippet>437</a>///     ts: 1_700_000_000,
+<a href=#438 id=438 data-nosnippet>438</a>/// };
+<a href=#439 id=439 data-nosnippet>439</a>/// assert_eq!(hello.nonce.len(), 32, "32 hex of fresh entropy, echoed by the welcome");
+<a href=#440 id=440 data-nosnippet>440</a>///
+<a href=#441 id=441 data-nosnippet>441</a>/// let signed = sign(&amp;node, Domain::Hello, serde_json::to_value(&amp;hello).unwrap());
+<a href=#442 id=442 data-nosnippet>442</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::Hello, &amp;signed));
+<a href=#443 id=443 data-nosnippet>443</a>/// ```
+<a href=#444 id=444 data-nosnippet>444</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#445 id=445 data-nosnippet>445</a></span><span class="kw">pub struct </span>Hello {
+<a href=#446 id=446 data-nosnippet>446</a>    <span class="doccomment">/// The oldest link protocol the dialer speaks.
+<a href=#447 id=447 data-nosnippet>447</a>    </span><span class="kw">pub </span>proto_min: u32,
+<a href=#448 id=448 data-nosnippet>448</a>    <span class="doccomment">/// The newest link protocol the dialer speaks.
+<a href=#449 id=449 data-nosnippet>449</a>    </span><span class="kw">pub </span>proto_max: u32,
+<a href=#450 id=450 data-nosnippet>450</a>    <span class="doccomment">/// The dialer.
+<a href=#451 id=451 data-nosnippet>451</a>    </span><span class="kw">pub </span>card: RuntimeCard,
+<a href=#452 id=452 data-nosnippet>452</a>    <span class="doccomment">/// 32 hex of fresh entropy: the welcome must echo it, and it is never accepted twice.
+<a href=#453 id=453 data-nosnippet>453</a>    </span><span class="kw">pub </span>nonce: String,
+<a href=#454 id=454 data-nosnippet>454</a>    <span class="doccomment">/// The dialer's clock, seconds since the Unix epoch.
+<a href=#455 id=455 data-nosnippet>455</a>    </span><span class="kw">pub </span>ts: u64,
+<a href=#456 id=456 data-nosnippet>456</a>}
+<a href=#457 id=457 data-nosnippet>457</a>
+<a href=#458 id=458 data-nosnippet>458</a><span class="doccomment">/// An answerer's welcome: the mirror of the hello, plus the two things that make the link
+<a href=#459 id=459 data-nosnippet>459</a>/// usable. The link id is what the dialer syncs under afterwards, and the marks let the
+<a href=#460 id=460 data-nosnippet>460</a>/// very first sync carry exactly the events the answerer lacks instead of a round spent
+<a href=#461 id=461 data-nosnippet>461</a>/// discovering that. The echoed nonce is what binds this welcome to that hello: without
+<a href=#462 id=462 data-nosnippet>462</a>/// it, a welcome kept from an earlier exchange would answer a hello it never saw.
+<a href=#463 id=463 data-nosnippet>463</a>///
+<a href=#464 id=464 data-nosnippet>464</a>/// ```
+<a href=#465 id=465 data-nosnippet>465</a>/// use std::collections::BTreeMap;
+<a href=#466 id=466 data-nosnippet>466</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#467 id=467 data-nosnippet>467</a>/// use majordomus_cli::mesh::link::{fresh_token, sign, verify_signed, Domain, RuntimeCard,
+<a href=#468 id=468 data-nosnippet>468</a>///     Welcome, LINK_PROTOCOL_MAX};
+<a href=#469 id=469 data-nosnippet>469</a>///
+<a href=#470 id=470 data-nosnippet>470</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#471 id=471 data-nosnippet>471</a>/// let nonce = fresh_token();
+<a href=#472 id=472 data-nosnippet>472</a>/// let welcome = Welcome {
+<a href=#473 id=473 data-nosnippet>473</a>///     proto: LINK_PROTOCOL_MAX,
+<a href=#474 id=474 data-nosnippet>474</a>///     link: fresh_token(),
+<a href=#475 id=475 data-nosnippet>475</a>///     card: RuntimeCard {
+<a href=#476 id=476 data-nosnippet>476</a>///         pk: node.public.public_key.clone(),
+<a href=#477 id=477 data-nosnippet>477</a>///         runtime: "00000000000000aa".into(),
+<a href=#478 id=478 data-nosnippet>478</a>///         instance: node.public.instance_id.as_str().into(),
+<a href=#479 id=479 data-nosnippet>479</a>///         repo: "r".repeat(32),
+<a href=#480 id=480 data-nosnippet>480</a>///         name: String::new(),
+<a href=#481 id=481 data-nosnippet>481</a>///         version: String::new(),
+<a href=#482 id=482 data-nosnippet>482</a>///         features: vec![],
+<a href=#483 id=483 data-nosnippet>483</a>///         endpoints: vec![],
+<a href=#484 id=484 data-nosnippet>484</a>///     },
+<a href=#485 id=485 data-nosnippet>485</a>///     nonce: nonce.clone(),
+<a href=#486 id=486 data-nosnippet>486</a>///     ts: 1_700_000_000,
+<a href=#487 id=487 data-nosnippet>487</a>///     marks: BTreeMap::new(),
+<a href=#488 id=488 data-nosnippet>488</a>///     heartbeat_seconds: 5,
+<a href=#489 id=489 data-nosnippet>489</a>///     expiry_seconds: 30,
+<a href=#490 id=490 data-nosnippet>490</a>/// };
+<a href=#491 id=491 data-nosnippet>491</a>/// assert_eq!(welcome.nonce, nonce, "this welcome answers that hello and no other");
+<a href=#492 id=492 data-nosnippet>492</a>/// assert!(welcome.marks.is_empty(), "a runtime that has written nothing has nothing to mark");
+<a href=#493 id=493 data-nosnippet>493</a>///
+<a href=#494 id=494 data-nosnippet>494</a>/// let signed = sign(&amp;node, Domain::Welcome, serde_json::to_value(&amp;welcome).unwrap());
+<a href=#495 id=495 data-nosnippet>495</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::Welcome, &amp;signed));
+<a href=#496 id=496 data-nosnippet>496</a>/// ```
+<a href=#497 id=497 data-nosnippet>497</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+<a href=#498 id=498 data-nosnippet>498</a></span><span class="kw">pub struct </span>Welcome {
+<a href=#499 id=499 data-nosnippet>499</a>    <span class="doccomment">/// The negotiated protocol version.
+<a href=#500 id=500 data-nosnippet>500</a>    </span><span class="kw">pub </span>proto: u32,
+<a href=#501 id=501 data-nosnippet>501</a>    <span class="doccomment">/// The link id the dialer syncs under.
+<a href=#502 id=502 data-nosnippet>502</a>    </span><span class="kw">pub </span>link: String,
+<a href=#503 id=503 data-nosnippet>503</a>    <span class="doccomment">/// The answerer.
+<a href=#504 id=504 data-nosnippet>504</a>    </span><span class="kw">pub </span>card: RuntimeCard,
+<a href=#505 id=505 data-nosnippet>505</a>    <span class="doccomment">/// The hello's nonce, echoed: this welcome answers that hello and no other.
+<a href=#506 id=506 data-nosnippet>506</a>    </span><span class="kw">pub </span>nonce: String,
+<a href=#507 id=507 data-nosnippet>507</a>    <span class="doccomment">/// The answerer's clock.
+<a href=#508 id=508 data-nosnippet>508</a>    </span><span class="kw">pub </span>ts: u64,
+<a href=#509 id=509 data-nosnippet>509</a>    <span class="doccomment">/// The answerer's marks, so the first sync carries exactly what it lacks.
+<a href=#510 id=510 data-nosnippet>510</a>    </span><span class="kw">pub </span>marks: Marks,
+<a href=#511 id=511 data-nosnippet>511</a>    <span class="doccomment">/// The answerer's heartbeat, informational.
+<a href=#512 id=512 data-nosnippet>512</a>    </span><span class="kw">pub </span>heartbeat_seconds: u64,
+<a href=#513 id=513 data-nosnippet>513</a>    <span class="doccomment">/// The answerer's expiry, informational.
+<a href=#514 id=514 data-nosnippet>514</a>    </span><span class="kw">pub </span>expiry_seconds: u64,
+<a href=#515 id=515 data-nosnippet>515</a>}
+<a href=#516 id=516 data-nosnippet>516</a>
+<a href=#517 id=517 data-nosnippet>517</a><span class="doccomment">/// A dialer's sync round: what this runtime holds, and what it believes the answerer
+<a href=#518 id=518 data-nosnippet>518</a>/// lacks. Sending the events rather than asking for them is what makes one heartbeat a
+<a href=#519 id=519 data-nosnippet>519</a>/// full replication step in both directions, so replication keeps working when only one
+<a href=#520 id=520 data-nosnippet>520</a>/// side can open a connection. The counter refuses a replayed round and the instance
+<a href=#521 id=521 data-nosnippet>521</a>/// refuses a stale one: a restarted dialer carries a new instance and must say hello
+<a href=#522 id=522 data-nosnippet>522</a>/// again rather than resume a link the answerer no longer has.
+<a href=#523 id=523 data-nosnippet>523</a>///
+<a href=#524 id=524 data-nosnippet>524</a>/// ```
+<a href=#525 id=525 data-nosnippet>525</a>/// use std::collections::BTreeMap;
+<a href=#526 id=526 data-nosnippet>526</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#527 id=527 data-nosnippet>527</a>/// use majordomus_cli::mesh::link::{fresh_token, sign, verify_signed, Domain, SyncRequest};
+<a href=#528 id=528 data-nosnippet>528</a>///
+<a href=#529 id=529 data-nosnippet>529</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#530 id=530 data-nosnippet>530</a>/// let link = fresh_token();
+<a href=#531 id=531 data-nosnippet>531</a>/// let round = SyncRequest {
+<a href=#532 id=532 data-nosnippet>532</a>///     link: link.clone(),
+<a href=#533 id=533 data-nosnippet>533</a>///     counter: 1,
+<a href=#534 id=534 data-nosnippet>534</a>///     instance: node.public.instance_id.as_str().into(),
+<a href=#535 id=535 data-nosnippet>535</a>///     marks: BTreeMap::new(),
+<a href=#536 id=536 data-nosnippet>536</a>///     events: vec![],
+<a href=#537 id=537 data-nosnippet>537</a>/// };
+<a href=#538 id=538 data-nosnippet>538</a>/// let next = SyncRequest { counter: round.counter + 1, ..round.clone() };
+<a href=#539 id=539 data-nosnippet>539</a>/// assert!(next.counter &gt; round.counter, "a round at or below the last accepted is a replay");
+<a href=#540 id=540 data-nosnippet>540</a>/// assert_eq!(next.link, link, "every round of one link travels under its id");
+<a href=#541 id=541 data-nosnippet>541</a>///
+<a href=#542 id=542 data-nosnippet>542</a>/// let signed = sign(&amp;node, Domain::SyncRequest, serde_json::to_value(&amp;next).unwrap());
+<a href=#543 id=543 data-nosnippet>543</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::SyncRequest, &amp;signed));
+<a href=#544 id=544 data-nosnippet>544</a>/// ```
+<a href=#545 id=545 data-nosnippet>545</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+<a href=#546 id=546 data-nosnippet>546</a></span><span class="kw">pub struct </span>SyncRequest {
+<a href=#547 id=547 data-nosnippet>547</a>    <span class="doccomment">/// The link id the welcome gave.
+<a href=#548 id=548 data-nosnippet>548</a>    </span><span class="kw">pub </span>link: String,
+<a href=#549 id=549 data-nosnippet>549</a>    <span class="doccomment">/// Rising per link: a request at or below the last accepted counter is a replay.
+<a href=#550 id=550 data-nosnippet>550</a>    </span><span class="kw">pub </span>counter: u64,
+<a href=#551 id=551 data-nosnippet>551</a>    <span class="doccomment">/// The dialer's instance: a different one is a restarted runtime that must say hello.
+<a href=#552 id=552 data-nosnippet>552</a>    </span><span class="kw">pub </span>instance: String,
+<a href=#553 id=553 data-nosnippet>553</a>    <span class="doccomment">/// The dialer's marks.
+<a href=#554 id=554 data-nosnippet>554</a>    </span><span class="kw">pub </span>marks: Marks,
+<a href=#555 id=555 data-nosnippet>555</a>    <span class="doccomment">/// The events the answerer lacks, by the answerer's last marks.
+<a href=#556 id=556 data-nosnippet>556</a>    </span><span class="kw">pub </span>events: Vec&lt;MeshEvent&gt;,
+<a href=#557 id=557 data-nosnippet>557</a>}
+<a href=#558 id=558 data-nosnippet>558</a>
+<a href=#559 id=559 data-nosnippet>559</a><span class="doccomment">/// An answerer's sync answer: the other half of the round. Its marks are taken *after*
+<a href=#560 id=560 data-nosnippet>560</a>/// ingesting the request's events, so the dialer learns in one exchange both what arrived
+<a href=#561 id=561 data-nosnippet>561</a>/// and what it is still missing. The report travels with it because a silently dropped
+<a href=#562 id=562 data-nosnippet>562</a>/// event is the failure mode this protocol most needs to make visible: a peer that refuses
+<a href=#563 id=563 data-nosnippet>563</a>/// what it is sent says so, with reasons and numbers, rather than staying quietly behind.
+<a href=#564 id=564 data-nosnippet>564</a>///
+<a href=#565 id=565 data-nosnippet>565</a>/// ```
+<a href=#566 id=566 data-nosnippet>566</a>/// use std::collections::BTreeMap;
+<a href=#567 id=567 data-nosnippet>567</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#568 id=568 data-nosnippet>568</a>/// use majordomus_cli::mesh::journal::IngestReport;
+<a href=#569 id=569 data-nosnippet>569</a>/// use majordomus_cli::mesh::link::{fresh_token, sign, verify_signed, Domain, SyncAnswer};
+<a href=#570 id=570 data-nosnippet>570</a>///
+<a href=#571 id=571 data-nosnippet>571</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#572 id=572 data-nosnippet>572</a>/// let answer = SyncAnswer {
+<a href=#573 id=573 data-nosnippet>573</a>///     link: fresh_token(),
+<a href=#574 id=574 data-nosnippet>574</a>///     counter: 7,
+<a href=#575 id=575 data-nosnippet>575</a>///     marks: BTreeMap::new(),
+<a href=#576 id=576 data-nosnippet>576</a>///     events: vec![],
+<a href=#577 id=577 data-nosnippet>577</a>///     report: IngestReport::default(),
+<a href=#578 id=578 data-nosnippet>578</a>/// };
+<a href=#579 id=579 data-nosnippet>579</a>/// assert_eq!(answer.counter, 7, "the request's counter, echoed");
+<a href=#580 id=580 data-nosnippet>580</a>/// assert_eq!(answer.report.rejected_total(), 0, "nothing was refused this round");
+<a href=#581 id=581 data-nosnippet>581</a>///
+<a href=#582 id=582 data-nosnippet>582</a>/// let signed = sign(&amp;node, Domain::SyncAnswer, serde_json::to_value(&amp;answer).unwrap());
+<a href=#583 id=583 data-nosnippet>583</a>/// assert!(verify_signed(&amp;node.public.public_key, Domain::SyncAnswer, &amp;signed));
+<a href=#584 id=584 data-nosnippet>584</a>/// ```
+<a href=#585 id=585 data-nosnippet>585</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+<a href=#586 id=586 data-nosnippet>586</a></span><span class="kw">pub struct </span>SyncAnswer {
+<a href=#587 id=587 data-nosnippet>587</a>    <span class="doccomment">/// The link id.
+<a href=#588 id=588 data-nosnippet>588</a>    </span><span class="kw">pub </span>link: String,
+<a href=#589 id=589 data-nosnippet>589</a>    <span class="doccomment">/// The request's counter, echoed.
+<a href=#590 id=590 data-nosnippet>590</a>    </span><span class="kw">pub </span>counter: u64,
+<a href=#591 id=591 data-nosnippet>591</a>    <span class="doccomment">/// The answerer's marks, after ingesting the request's events.
+<a href=#592 id=592 data-nosnippet>592</a>    </span><span class="kw">pub </span>marks: Marks,
+<a href=#593 id=593 data-nosnippet>593</a>    <span class="doccomment">/// The events the dialer lacks, by the request's marks.
+<a href=#594 id=594 data-nosnippet>594</a>    </span><span class="kw">pub </span>events: Vec&lt;MeshEvent&gt;,
+<a href=#595 id=595 data-nosnippet>595</a>    <span class="doccomment">/// What ingesting the request's events did.
+<a href=#596 id=596 data-nosnippet>596</a>    </span><span class="kw">pub </span>report: IngestReport,
+<a href=#597 id=597 data-nosnippet>597</a>}
+<a href=#598 id=598 data-nosnippet>598</a>
+<a href=#599 id=599 data-nosnippet>599</a><span class="doccomment">/// Why a link message was turned down. Every refusal is typed, counted and shown: a mesh
+<a href=#600 id=600 data-nosnippet>600</a>/// that refuses a peer says which rule did, instead of dropping a socket.
+<a href=#601 id=601 data-nosnippet>601</a>///
+<a href=#602 id=602 data-nosnippet>602</a>/// The codes are the diagnosis a person needs when two runtimes will not link, and they
+<a href=#603 id=603 data-nosnippet>603</a>/// are deliberately distinct where the remedies differ: `Untrusted` is a key to add,
+<a href=#604 id=604 data-nosnippet>604</a>/// `RepositoryMismatch` is two different repositories, `SelfLink` is a configuration that
+<a href=#605 id=605 data-nosnippet>605</a>/// dials its own endpoint, and `UnknownLink` is not a failure at all but an instruction to
+<a href=#606 id=606 data-nosnippet>606</a>/// say hello again.
+<a href=#607 id=607 data-nosnippet>607</a>///
+<a href=#608 id=608 data-nosnippet>608</a>/// ```
+<a href=#609 id=609 data-nosnippet>609</a>/// use majordomus_cli::mesh::link::RefusalCode;
+<a href=#610 id=610 data-nosnippet>610</a>///
+<a href=#611 id=611 data-nosnippet>611</a>/// // the wire word is the code's identity across surfaces, and it is stable
+<a href=#612 id=612 data-nosnippet>612</a>/// assert_eq!(RefusalCode::RepositoryMismatch.as_str(), "repository_mismatch");
+<a href=#613 id=613 data-nosnippet>613</a>/// assert_eq!(
+<a href=#614 id=614 data-nosnippet>614</a>///     serde_json::to_value(RefusalCode::Untrusted).unwrap(),
+<a href=#615 id=615 data-nosnippet>615</a>///     serde_json::json!("untrusted"),
+<a href=#616 id=616 data-nosnippet>616</a>/// );
+<a href=#617 id=617 data-nosnippet>617</a>/// assert_ne!(RefusalCode::Untrusted, RefusalCode::RepositoryMismatch);
+<a href=#618 id=618 data-nosnippet>618</a>/// ```
+<a href=#619 id=619 data-nosnippet>619</a></span><span class="attr">#[derive(
+<a href=#620 id=620 data-nosnippet>620</a>    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+<a href=#621 id=621 data-nosnippet>621</a>)]
+<a href=#622 id=622 data-nosnippet>622</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#623 id=623 data-nosnippet>623</a></span><span class="kw">pub enum </span>RefusalCode {
+<a href=#624 id=624 data-nosnippet>624</a>    <span class="doccomment">/// Not the shape of the message.
+<a href=#625 id=625 data-nosnippet>625</a>    </span>Malformed,
+<a href=#626 id=626 data-nosnippet>626</a>    <span class="doccomment">/// Over [`MAX_LINK_MESSAGE`].
+<a href=#627 id=627 data-nosnippet>627</a>    </span>Oversized,
+<a href=#628 id=628 data-nosnippet>628</a>    <span class="doccomment">/// The protocol ranges do not meet.
+<a href=#629 id=629 data-nosnippet>629</a>    </span>ProtocolUnsupported,
+<a href=#630 id=630 data-nosnippet>630</a>    <span class="doccomment">/// The signature does not verify.
+<a href=#631 id=631 data-nosnippet>631</a>    </span>Signature,
+<a href=#632 id=632 data-nosnippet>632</a>    <span class="doccomment">/// The timestamp is outside the skew window.
+<a href=#633 id=633 data-nosnippet>633</a>    </span>Stale,
+<a href=#634 id=634 data-nosnippet>634</a>    <span class="doccomment">/// A nonce or a counter already seen.
+<a href=#635 id=635 data-nosnippet>635</a>    </span>Replay,
+<a href=#636 id=636 data-nosnippet>636</a>    <span class="doccomment">/// The peer serves another repository: the isolation rule.
+<a href=#637 id=637 data-nosnippet>637</a>    </span>RepositoryMismatch,
+<a href=#638 id=638 data-nosnippet>638</a>    <span class="doccomment">/// The peer's key is not trusted by this runtime's policy: discovery is not trust.
+<a href=#639 id=639 data-nosnippet>639</a>    </span>Untrusted,
+<a href=#640 id=640 data-nosnippet>640</a>    <span class="doccomment">/// The peer is this very runtime.
+<a href=#641 id=641 data-nosnippet>641</a>    </span>SelfLink,
+<a href=#642 id=642 data-nosnippet>642</a>    <span class="doccomment">/// This runtime's cooperation is not active.
+<a href=#643 id=643 data-nosnippet>643</a>    </span>NotActive,
+<a href=#644 id=644 data-nosnippet>644</a>    <span class="doccomment">/// The link id is unknown here: the answerer restarted or expired the link; say hello.
+<a href=#645 id=645 data-nosnippet>645</a>    </span>UnknownLink,
+<a href=#646 id=646 data-nosnippet>646</a>    <span class="doccomment">/// A bound of this runtime is full.
+<a href=#647 id=647 data-nosnippet>647</a>    </span>Capacity,
+<a href=#648 id=648 data-nosnippet>648</a>    <span class="doccomment">/// The peer lacks a feature the operation needs.
+<a href=#649 id=649 data-nosnippet>649</a>    </span>FeatureUnsupported,
+<a href=#650 id=650 data-nosnippet>650</a>}
+<a href=#651 id=651 data-nosnippet>651</a>
+<a href=#652 id=652 data-nosnippet>652</a><span class="kw">impl </span>RefusalCode {
+<a href=#653 id=653 data-nosnippet>653</a>    <span class="doccomment">/// The code's wire word: the snake-case spelling every surface uses, so a refusal
+<a href=#654 id=654 data-nosnippet>654</a>    /// reads the same in a log line, a JSON answer and a peer's counters. It is written
+<a href=#655 id=655 data-nosnippet>655</a>    /// out here rather than derived from the variant name, because the word is protocol
+<a href=#656 id=656 data-nosnippet>656</a>    /// and renaming a variant must not silently change what another runtime reads.
+<a href=#657 id=657 data-nosnippet>657</a>    ///
+<a href=#658 id=658 data-nosnippet>658</a>    /// ```
+<a href=#659 id=659 data-nosnippet>659</a>    /// use majordomus_cli::mesh::link::RefusalCode;
+<a href=#660 id=660 data-nosnippet>660</a>    ///
+<a href=#661 id=661 data-nosnippet>661</a>    /// assert_eq!(RefusalCode::ProtocolUnsupported.as_str(), "protocol_unsupported");
+<a href=#662 id=662 data-nosnippet>662</a>    /// assert_eq!(RefusalCode::SelfLink.as_str(), "self_link");
+<a href=#663 id=663 data-nosnippet>663</a>    /// assert_eq!(
+<a href=#664 id=664 data-nosnippet>664</a>    ///     serde_json::to_value(RefusalCode::SelfLink).unwrap(),
+<a href=#665 id=665 data-nosnippet>665</a>    ///     serde_json::json!(RefusalCode::SelfLink.as_str()),
+<a href=#666 id=666 data-nosnippet>666</a>    ///     "one spelling, whichever surface prints it",
+<a href=#667 id=667 data-nosnippet>667</a>    /// );
+<a href=#668 id=668 data-nosnippet>668</a>    /// ```
+<a href=#669 id=669 data-nosnippet>669</a>    </span><span class="kw">pub fn </span>as_str(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#670 id=670 data-nosnippet>670</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#671 id=671 data-nosnippet>671</a>            RefusalCode::Malformed =&gt; <span class="string">"malformed"</span>,
+<a href=#672 id=672 data-nosnippet>672</a>            RefusalCode::Oversized =&gt; <span class="string">"oversized"</span>,
+<a href=#673 id=673 data-nosnippet>673</a>            RefusalCode::ProtocolUnsupported =&gt; <span class="string">"protocol_unsupported"</span>,
+<a href=#674 id=674 data-nosnippet>674</a>            RefusalCode::Signature =&gt; <span class="string">"signature"</span>,
+<a href=#675 id=675 data-nosnippet>675</a>            RefusalCode::Stale =&gt; <span class="string">"stale"</span>,
+<a href=#676 id=676 data-nosnippet>676</a>            RefusalCode::Replay =&gt; <span class="string">"replay"</span>,
+<a href=#677 id=677 data-nosnippet>677</a>            RefusalCode::RepositoryMismatch =&gt; <span class="string">"repository_mismatch"</span>,
+<a href=#678 id=678 data-nosnippet>678</a>            RefusalCode::Untrusted =&gt; <span class="string">"untrusted"</span>,
+<a href=#679 id=679 data-nosnippet>679</a>            RefusalCode::SelfLink =&gt; <span class="string">"self_link"</span>,
+<a href=#680 id=680 data-nosnippet>680</a>            RefusalCode::NotActive =&gt; <span class="string">"not_active"</span>,
+<a href=#681 id=681 data-nosnippet>681</a>            RefusalCode::UnknownLink =&gt; <span class="string">"unknown_link"</span>,
+<a href=#682 id=682 data-nosnippet>682</a>            RefusalCode::Capacity =&gt; <span class="string">"capacity"</span>,
+<a href=#683 id=683 data-nosnippet>683</a>            RefusalCode::FeatureUnsupported =&gt; <span class="string">"feature_unsupported"</span>,
+<a href=#684 id=684 data-nosnippet>684</a>        }
+<a href=#685 id=685 data-nosnippet>685</a>    }
+<a href=#686 id=686 data-nosnippet>686</a>}
+<a href=#687 id=687 data-nosnippet>687</a>
+<a href=#688 id=688 data-nosnippet>688</a><span class="doccomment">/// A refusal: the code, the reason in words, and the protocol range of the refuser so a
+<a href=#689 id=689 data-nosnippet>689</a>/// version mismatch is diagnosable from either end.
+<a href=#690 id=690 data-nosnippet>690</a>///
+<a href=#691 id=691 data-nosnippet>691</a>/// Carrying the refuser's protocol range in every refusal, not only in the one about
+<a href=#692 id=692 data-nosnippet>692</a>/// protocols, is what makes a version problem visible from the side that has the log: the
+<a href=#693 id=693 data-nosnippet>693</a>/// dialer sees what the answerer speaks without anyone having to read the other machine.
+<a href=#694 id=694 data-nosnippet>694</a>///
+<a href=#695 id=695 data-nosnippet>695</a>/// ```
+<a href=#696 id=696 data-nosnippet>696</a>/// use majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX};
+<a href=#697 id=697 data-nosnippet>697</a>///
+<a href=#698 id=698 data-nosnippet>698</a>/// let refusal = LinkRefusal::new(RefusalCode::Untrusted, "the key is not in the allowlist");
+<a href=#699 id=699 data-nosnippet>699</a>/// assert_eq!(refusal.code, RefusalCode::Untrusted);
+<a href=#700 id=700 data-nosnippet>700</a>/// assert_eq!(refusal.proto_max, LINK_PROTOCOL_MAX);
+<a href=#701 id=701 data-nosnippet>701</a>/// assert_eq!(refusal.to_string(), "untrusted: the key is not in the allowlist");
+<a href=#702 id=702 data-nosnippet>702</a>/// ```
+<a href=#703 id=703 data-nosnippet>703</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#704 id=704 data-nosnippet>704</a></span><span class="kw">pub struct </span>LinkRefusal {
+<a href=#705 id=705 data-nosnippet>705</a>    <span class="doccomment">/// The rule that refused.
+<a href=#706 id=706 data-nosnippet>706</a>    </span><span class="kw">pub </span>code: RefusalCode,
+<a href=#707 id=707 data-nosnippet>707</a>    <span class="doccomment">/// Why, in words.
+<a href=#708 id=708 data-nosnippet>708</a>    </span><span class="kw">pub </span>detail: String,
+<a href=#709 id=709 data-nosnippet>709</a>    <span class="doccomment">/// The refuser's oldest protocol.
+<a href=#710 id=710 data-nosnippet>710</a>    </span><span class="kw">pub </span>proto_min: u32,
+<a href=#711 id=711 data-nosnippet>711</a>    <span class="doccomment">/// The refuser's newest protocol.
+<a href=#712 id=712 data-nosnippet>712</a>    </span><span class="kw">pub </span>proto_max: u32,
+<a href=#713 id=713 data-nosnippet>713</a>}
+<a href=#714 id=714 data-nosnippet>714</a>
+<a href=#715 id=715 data-nosnippet>715</a><span class="kw">impl </span>LinkRefusal {
+<a href=#716 id=716 data-nosnippet>716</a>    <span class="doccomment">/// A refusal with this executable's protocol range. Every refusal is built here rather
+<a href=#717 id=717 data-nosnippet>717</a>    /// than by hand, so that no call site can forget the range and leave the other end
+<a href=#718 id=718 data-nosnippet>718</a>    /// guessing whether it was turned down over a version or over a rule.
+<a href=#719 id=719 data-nosnippet>719</a>    ///
+<a href=#720 id=720 data-nosnippet>720</a>    /// ```
+<a href=#721 id=721 data-nosnippet>721</a>    /// use majordomus_cli::mesh::link::{LinkRefusal, RefusalCode, LINK_PROTOCOL_MAX,
+<a href=#722 id=722 data-nosnippet>722</a>    ///     LINK_PROTOCOL_MIN};
+<a href=#723 id=723 data-nosnippet>723</a>    ///
+<a href=#724 id=724 data-nosnippet>724</a>    /// let refusal = LinkRefusal::new(RefusalCode::Capacity, "256 peers already linked");
+<a href=#725 id=725 data-nosnippet>725</a>    /// assert_eq!((refusal.proto_min, refusal.proto_max), (LINK_PROTOCOL_MIN, LINK_PROTOCOL_MAX));
+<a href=#726 id=726 data-nosnippet>726</a>    /// assert_eq!(refusal.detail, "256 peers already linked");
+<a href=#727 id=727 data-nosnippet>727</a>    /// ```
+<a href=#728 id=728 data-nosnippet>728</a>    </span><span class="kw">pub fn </span>new(code: RefusalCode, detail: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; <span class="self">Self </span>{
+<a href=#729 id=729 data-nosnippet>729</a>        LinkRefusal {
+<a href=#730 id=730 data-nosnippet>730</a>            code,
+<a href=#731 id=731 data-nosnippet>731</a>            detail: detail.into(),
+<a href=#732 id=732 data-nosnippet>732</a>            proto_min: LINK_PROTOCOL_MIN,
+<a href=#733 id=733 data-nosnippet>733</a>            proto_max: LINK_PROTOCOL_MAX,
+<a href=#734 id=734 data-nosnippet>734</a>        }
+<a href=#735 id=735 data-nosnippet>735</a>    }
+<a href=#736 id=736 data-nosnippet>736</a>}
+<a href=#737 id=737 data-nosnippet>737</a>
+<a href=#738 id=738 data-nosnippet>738</a><span class="kw">impl </span>std::fmt::Display <span class="kw">for </span>LinkRefusal {
+<a href=#739 id=739 data-nosnippet>739</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+<a href=#740 id=740 data-nosnippet>740</a>        <span class="macro">write!</span>(f, <span class="string">"{}: {}"</span>, <span class="self">self</span>.code.as_str(), <span class="self">self</span>.detail)
+<a href=#741 id=741 data-nosnippet>741</a>    }
+<a href=#742 id=742 data-nosnippet>742</a>}
+<a href=#743 id=743 data-nosnippet>743</a>
+<a href=#744 id=744 data-nosnippet>744</a><span class="doccomment">/// What a hello or a sync answers over the wire: a signed message or a refusal. Both are
+<a href=#745 id=745 data-nosnippet>745</a>/// successful replies — the transport carries them the same way and neither is an error —
+<a href=#746 id=746 data-nosnippet>746</a>/// because a refusal is a decision this protocol wants recorded and shown, and an answer
+<a href=#747 id=747 data-nosnippet>747</a>/// that arrived as an HTTP failure would be indistinguishable from a peer that is down.
+<a href=#748 id=748 data-nosnippet>748</a>///
+<a href=#749 id=749 data-nosnippet>749</a>/// ```
+<a href=#750 id=750 data-nosnippet>750</a>/// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#751 id=751 data-nosnippet>751</a>/// use majordomus_cli::mesh::link::{sign, Domain, LinkReply, RefusalCode};
+<a href=#752 id=752 data-nosnippet>752</a>///
+<a href=#753 id=753 data-nosnippet>753</a>/// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#754 id=754 data-nosnippet>754</a>/// let accepted = LinkReply::accepted(sign(&amp;node, Domain::Welcome, serde_json::json!({})));
+<a href=#755 id=755 data-nosnippet>755</a>/// assert!(accepted.signed.is_some() &amp;&amp; accepted.refusal.is_none());
+<a href=#756 id=756 data-nosnippet>756</a>///
+<a href=#757 id=757 data-nosnippet>757</a>/// let refused = LinkReply::refused(RefusalCode::SelfLink, "this runtime dialled itself");
+<a href=#758 id=758 data-nosnippet>758</a>/// assert!(refused.signed.is_none());
+<a href=#759 id=759 data-nosnippet>759</a>/// assert_eq!(refused.refusal.unwrap().code, RefusalCode::SelfLink);
+<a href=#760 id=760 data-nosnippet>760</a>/// ```
+<a href=#761 id=761 data-nosnippet>761</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+<a href=#762 id=762 data-nosnippet>762</a></span><span class="kw">pub struct </span>LinkReply {
+<a href=#763 id=763 data-nosnippet>763</a>    <span class="doccomment">/// The signed welcome or sync answer, when accepted.
+<a href=#764 id=764 data-nosnippet>764</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#765 id=765 data-nosnippet>765</a>    </span><span class="kw">pub </span>signed: <span class="prelude-ty">Option</span>&lt;Signed&gt;,
+<a href=#766 id=766 data-nosnippet>766</a>    <span class="doccomment">/// The refusal, when not.
+<a href=#767 id=767 data-nosnippet>767</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#768 id=768 data-nosnippet>768</a>    </span><span class="kw">pub </span>refusal: <span class="prelude-ty">Option</span>&lt;LinkRefusal&gt;,
+<a href=#769 id=769 data-nosnippet>769</a>}
+<a href=#770 id=770 data-nosnippet>770</a>
+<a href=#771 id=771 data-nosnippet>771</a><span class="kw">impl </span>LinkReply {
+<a href=#772 id=772 data-nosnippet>772</a>    <span class="doccomment">/// An accepted reply: the signed welcome or sync answer, and no refusal. The two
+<a href=#773 id=773 data-nosnippet>773</a>    /// halves are built through these constructors rather than by filling the struct in,
+<a href=#774 id=774 data-nosnippet>774</a>    /// so a reply can never be both at once or neither, which is the one shape a reader
+<a href=#775 id=775 data-nosnippet>775</a>    /// would have no sensible way to act on.
+<a href=#776 id=776 data-nosnippet>776</a>    ///
+<a href=#777 id=777 data-nosnippet>777</a>    /// ```
+<a href=#778 id=778 data-nosnippet>778</a>    /// use majordomus_cli::mesh::identity::NodeIdentity;
+<a href=#779 id=779 data-nosnippet>779</a>    /// use majordomus_cli::mesh::link::{sign, Domain, LinkReply};
+<a href=#780 id=780 data-nosnippet>780</a>    ///
+<a href=#781 id=781 data-nosnippet>781</a>    /// let node = NodeIdentity::ephemeral().unwrap();
+<a href=#782 id=782 data-nosnippet>782</a>    /// let reply = LinkReply::accepted(sign(&amp;node, Domain::SyncAnswer, serde_json::json!({})));
+<a href=#783 id=783 data-nosnippet>783</a>    /// assert!(reply.refusal.is_none(), "an acceptance refuses nothing");
+<a href=#784 id=784 data-nosnippet>784</a>    /// assert!(reply.signed.unwrap().sig.len() == 128);
+<a href=#785 id=785 data-nosnippet>785</a>    /// ```
+<a href=#786 id=786 data-nosnippet>786</a>    </span><span class="kw">pub fn </span>accepted(signed: Signed) -&gt; <span class="self">Self </span>{
+<a href=#787 id=787 data-nosnippet>787</a>        LinkReply {
+<a href=#788 id=788 data-nosnippet>788</a>            signed: <span class="prelude-val">Some</span>(signed),
+<a href=#789 id=789 data-nosnippet>789</a>            refusal: <span class="prelude-val">None</span>,
+<a href=#790 id=790 data-nosnippet>790</a>        }
+<a href=#791 id=791 data-nosnippet>791</a>    }
+<a href=#792 id=792 data-nosnippet>792</a>
+<a href=#793 id=793 data-nosnippet>793</a>    <span class="doccomment">/// A refused reply: the typed code that turned the message down, the reason in words,
+<a href=#794 id=794 data-nosnippet>794</a>    /// and nothing signed. The detail is for the person reading a log and the code is for
+<a href=#795 id=795 data-nosnippet>795</a>    /// the peer deciding what to do next — retry, say hello again, or stop dialling.
+<a href=#796 id=796 data-nosnippet>796</a>    ///
+<a href=#797 id=797 data-nosnippet>797</a>    /// ```
+<a href=#798 id=798 data-nosnippet>798</a>    /// use majordomus_cli::mesh::link::{LinkReply, RefusalCode};
+<a href=#799 id=799 data-nosnippet>799</a>    ///
+<a href=#800 id=800 data-nosnippet>800</a>    /// let reply = LinkReply::refused(RefusalCode::UnknownLink, "say hello again");
+<a href=#801 id=801 data-nosnippet>801</a>    /// assert!(reply.signed.is_none(), "a refusal signs nothing");
+<a href=#802 id=802 data-nosnippet>802</a>    /// let refusal = reply.refusal.unwrap();
+<a href=#803 id=803 data-nosnippet>803</a>    /// assert_eq!(refusal.code, RefusalCode::UnknownLink);
+<a href=#804 id=804 data-nosnippet>804</a>    /// assert_eq!(refusal.detail, "say hello again");
+<a href=#805 id=805 data-nosnippet>805</a>    /// ```
+<a href=#806 id=806 data-nosnippet>806</a>    </span><span class="kw">pub fn </span>refused(code: RefusalCode, detail: <span class="kw">impl </span>Into&lt;String&gt;) -&gt; <span class="self">Self </span>{
+<a href=#807 id=807 data-nosnippet>807</a>        LinkReply {
+<a href=#808 id=808 data-nosnippet>808</a>            signed: <span class="prelude-val">None</span>,
+<a href=#809 id=809 data-nosnippet>809</a>            refusal: <span class="prelude-val">Some</span>(LinkRefusal::new(code, detail)),
+<a href=#810 id=810 data-nosnippet>810</a>        }
+<a href=#811 id=811 data-nosnippet>811</a>    }
+<a href=#812 id=812 data-nosnippet>812</a>}
+<a href=#813 id=813 data-nosnippet>813</a>
+<a href=#814 id=814 data-nosnippet>814</a><span class="doccomment">/// How a link message reaches a peer. The domain above never names a socket: the HTTP
+<a href=#815 id=815 data-nosnippet>815</a>/// adapter is the one the shared server answers, and a test can put two runtimes in one
+<a href=#816 id=816 data-nosnippet>816</a>/// process behind another adapter without changing a line of protocol.
+<a href=#817 id=817 data-nosnippet>817</a>///
+<a href=#818 id=818 data-nosnippet>818</a>/// One method is the whole contract, which is what keeps the protocol testable: the
+<a href=#819 id=819 data-nosnippet>819</a>/// authenticity of a link comes from the signatures inside the messages, never from the
+<a href=#820 id=820 data-nosnippet>820</a>/// channel, so an implementation owes nothing but delivery.
+<a href=#821 id=821 data-nosnippet>821</a>///
+<a href=#822 id=822 data-nosnippet>822</a>/// ```
+<a href=#823 id=823 data-nosnippet>823</a>/// use majordomus_cli::mesh::link::{LinkReply, LinkTransport, RefusalCode, Signed, HELLO_PATH};
+<a href=#824 id=824 data-nosnippet>824</a>///
+<a href=#825 id=825 data-nosnippet>825</a>/// // an adapter that reaches nobody is still a transport; it refuses nothing, it fails
+<a href=#826 id=826 data-nosnippet>826</a>/// struct Unplugged;
+<a href=#827 id=827 data-nosnippet>827</a>/// impl LinkTransport for Unplugged {
+<a href=#828 id=828 data-nosnippet>828</a>///     fn post(&amp;self, endpoint: &amp;str, _path: &amp;str, _message: &amp;Signed) -&gt; Result&lt;LinkReply, String&gt; {
+<a href=#829 id=829 data-nosnippet>829</a>///         Err(format!("{endpoint}: no network here"))
+<a href=#830 id=830 data-nosnippet>830</a>///     }
+<a href=#831 id=831 data-nosnippet>831</a>/// }
+<a href=#832 id=832 data-nosnippet>832</a>///
+<a href=#833 id=833 data-nosnippet>833</a>/// let signed = Signed { body: serde_json::json!({}), sig: String::new() };
+<a href=#834 id=834 data-nosnippet>834</a>/// let error = Unplugged.post("10.0.0.2:8742", HELLO_PATH, &amp;signed).unwrap_err();
+<a href=#835 id=835 data-nosnippet>835</a>/// assert!(error.contains("10.0.0.2:8742"), "a failure names where it was going");
+<a href=#836 id=836 data-nosnippet>836</a>///
+<a href=#837 id=837 data-nosnippet>837</a>/// // a refusal, by contrast, is a reply that arrived
+<a href=#838 id=838 data-nosnippet>838</a>/// let refusal = LinkReply::refused(RefusalCode::Untrusted, "not in the allowlist");
+<a href=#839 id=839 data-nosnippet>839</a>/// assert!(refusal.refusal.is_some());
+<a href=#840 id=840 data-nosnippet>840</a>/// ```
+<a href=#841 id=841 data-nosnippet>841</a></span><span class="kw">pub trait </span>LinkTransport: Send + Sync {
+<a href=#842 id=842 data-nosnippet>842</a>    <span class="doccomment">/// Post `message` to `path` at `endpoint` (`host:port`) and return the peer's reply.
+<a href=#843 id=843 data-nosnippet>843</a>    /// `Err` is a transport failure — unreachable, timed out, not a reply — never a
+<a href=#844 id=844 data-nosnippet>844</a>    /// refusal; a refusal is an `Ok` reply that says so.
+<a href=#845 id=845 data-nosnippet>845</a>    ///
+<a href=#846 id=846 data-nosnippet>846</a>    /// The distinction is what the caller acts on: a transport failure is a peer to back
+<a href=#847 id=847 data-nosnippet>847</a>    /// off from and try again later, while a refusal is a decision that will be made the
+<a href=#848 id=848 data-nosnippet>848</a>    /// same way next time and is recorded instead of retried.
+<a href=#849 id=849 data-nosnippet>849</a>    ///
+<a href=#850 id=850 data-nosnippet>850</a>    /// ```
+<a href=#851 id=851 data-nosnippet>851</a>    /// use majordomus_cli::mesh::link::{HttpTransport, LinkTransport, Signed, HELLO_PATH};
+<a href=#852 id=852 data-nosnippet>852</a>    ///
+<a href=#853 id=853 data-nosnippet>853</a>    /// let signed = Signed { body: serde_json::json!({}), sig: String::new() };
+<a href=#854 id=854 data-nosnippet>854</a>    /// // port 9 discards: unreachable is a transport failure, not a refusal
+<a href=#855 id=855 data-nosnippet>855</a>    /// let error = HttpTransport.post("127.0.0.1:9", HELLO_PATH, &amp;signed).unwrap_err();
+<a href=#856 id=856 data-nosnippet>856</a>    /// assert!(error.contains("127.0.0.1:9"), "{error}");
+<a href=#857 id=857 data-nosnippet>857</a>    /// ```
+<a href=#858 id=858 data-nosnippet>858</a>    </span><span class="kw">fn </span>post(<span class="kw-2">&amp;</span><span class="self">self</span>, endpoint: <span class="kw-2">&amp;</span>str, path: <span class="kw-2">&amp;</span>str, message: <span class="kw-2">&amp;</span>Signed) -&gt; <span class="prelude-ty">Result</span>&lt;LinkReply, String&gt;;
+<a href=#859 id=859 data-nosnippet>859</a>}
+<a href=#860 id=860 data-nosnippet>860</a>
+<a href=#861 id=861 data-nosnippet>861</a><span class="doccomment">/// The transport the shared server answers: plain HTTP/1.1 through the crate's one
+<a href=#862 id=862 data-nosnippet>862</a>/// minimal client (ADR 0032: no HTTP client dependency, no TLS). A private network or an
+<a href=#863 id=863 data-nosnippet>863</a>/// overlay provides confidentiality; the protocol provides authenticity.
+<a href=#864 id=864 data-nosnippet>864</a>///
+<a href=#865 id=865 data-nosnippet>865</a>/// It refuses an oversized message before opening a socket, so the bound the protocol
+<a href=#866 id=866 data-nosnippet>866</a>/// states is enforced by the sender too and a peer is never asked to read something it
+<a href=#867 id=867 data-nosnippet>867</a>/// would have to refuse. An endpoint may be written with or without a scheme, because a
+<a href=#868 id=868 data-nosnippet>868</a>/// person writing a seed should not have to know which.
+<a href=#869 id=869 data-nosnippet>869</a>///
+<a href=#870 id=870 data-nosnippet>870</a>/// ```
+<a href=#871 id=871 data-nosnippet>871</a>/// use majordomus_cli::mesh::link::{HttpTransport, LinkTransport, Signed, MAX_LINK_MESSAGE,
+<a href=#872 id=872 data-nosnippet>872</a>///     SYNC_PATH};
+<a href=#873 id=873 data-nosnippet>873</a>///
+<a href=#874 id=874 data-nosnippet>874</a>/// let oversized = Signed { body: serde_json::json!("x".repeat(MAX_LINK_MESSAGE)), sig: String::new() };
+<a href=#875 id=875 data-nosnippet>875</a>/// let error = HttpTransport.post("127.0.0.1:9", SYNC_PATH, &amp;oversized).unwrap_err();
+<a href=#876 id=876 data-nosnippet>876</a>/// assert!(error.contains("exceeds"), "refused before the socket: {error}");
+<a href=#877 id=877 data-nosnippet>877</a>/// ```
+<a href=#878 id=878 data-nosnippet>878</a></span><span class="kw">pub struct </span>HttpTransport;
+<a href=#879 id=879 data-nosnippet>879</a>
+<a href=#880 id=880 data-nosnippet>880</a><span class="kw">impl </span>LinkTransport <span class="kw">for </span>HttpTransport {
+<a href=#881 id=881 data-nosnippet>881</a>    <span class="kw">fn </span>post(<span class="kw-2">&amp;</span><span class="self">self</span>, endpoint: <span class="kw-2">&amp;</span>str, path: <span class="kw-2">&amp;</span>str, message: <span class="kw-2">&amp;</span>Signed) -&gt; <span class="prelude-ty">Result</span>&lt;LinkReply, String&gt; {
+<a href=#882 id=882 data-nosnippet>882</a>        <span class="kw">let </span>body = serde_json::to_string(message).map_err(|e| e.to_string())<span class="question-mark">?</span>;
+<a href=#883 id=883 data-nosnippet>883</a>        <span class="kw">if </span>body.len() &gt; MAX_LINK_MESSAGE {
+<a href=#884 id=884 data-nosnippet>884</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+<a href=#885 id=885 data-nosnippet>885</a>                <span class="string">"a link message of {} bytes exceeds {MAX_LINK_MESSAGE}"</span>,
+<a href=#886 id=886 data-nosnippet>886</a>                body.len()
+<a href=#887 id=887 data-nosnippet>887</a>            ));
+<a href=#888 id=888 data-nosnippet>888</a>        }
+<a href=#889 id=889 data-nosnippet>889</a>        <span class="kw">let </span>base = <span class="kw">if </span>endpoint.starts_with(<span class="string">"http://"</span>) {
+<a href=#890 id=890 data-nosnippet>890</a>            endpoint.to_string()
+<a href=#891 id=891 data-nosnippet>891</a>        } <span class="kw">else </span>{
+<a href=#892 id=892 data-nosnippet>892</a>            <span class="macro">format!</span>(<span class="string">"http://{endpoint}"</span>)
+<a href=#893 id=893 data-nosnippet>893</a>        };
+<a href=#894 id=894 data-nosnippet>894</a>        <span class="kw">let </span>reply = <span class="kw">crate</span>::mcp::bridge::request(
+<a href=#895 id=895 data-nosnippet>895</a>            <span class="kw-2">&amp;</span>base,
+<a href=#896 id=896 data-nosnippet>896</a>            <span class="string">"POST"</span>,
+<a href=#897 id=897 data-nosnippet>897</a>            path,
+<a href=#898 id=898 data-nosnippet>898</a>            <span class="kw-2">&amp;</span>[(<span class="string">"Content-Type"</span>, <span class="string">"application/json"</span>)],
+<a href=#899 id=899 data-nosnippet>899</a>            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>body),
+<a href=#900 id=900 data-nosnippet>900</a>            REQUEST_TIMEOUT,
+<a href=#901 id=901 data-nosnippet>901</a>        )
+<a href=#902 id=902 data-nosnippet>902</a>        .map_err(|e| <span class="macro">format!</span>(<span class="string">"{base}{path}: {e}"</span>))<span class="question-mark">?</span>;
+<a href=#903 id=903 data-nosnippet>903</a>        <span class="kw">if </span>reply.status != <span class="number">200 </span>{
+<a href=#904 id=904 data-nosnippet>904</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{base}{path}: status {}"</span>, reply.status));
+<a href=#905 id=905 data-nosnippet>905</a>        }
+<a href=#906 id=906 data-nosnippet>906</a>        serde_json::from_str(<span class="kw-2">&amp;</span>reply.body)
+<a href=#907 id=907 data-nosnippet>907</a>            .map_err(|e| <span class="macro">format!</span>(<span class="string">"{base}{path}: not a link reply: {e}"</span>))
+<a href=#908 id=908 data-nosnippet>908</a>    }
+<a href=#909 id=909 data-nosnippet>909</a>}
+<a href=#910 id=910 data-nosnippet>910</a>
+<a href=#911 id=911 data-nosnippet>911</a><span class="doccomment">/// 32 hex characters of OS entropy: nonces and link ids. Both uses need unpredictability
+<a href=#912 id=912 data-nosnippet>912</a>/// rather than uniqueness alone — a guessable nonce would let a captured hello be answered
+<a href=#913 id=913 data-nosnippet>913</a>/// in advance, and a guessable link id would let a stranger sync under somebody else's
+<a href=#914 id=914 data-nosnippet>914</a>/// link. When the OS has no entropy to give, a clock-derived value keeps the link working
+<a href=#915 id=915 data-nosnippet>915</a>/// and the replay caches still refuse exact repeats.
+<a href=#916 id=916 data-nosnippet>916</a>///
+<a href=#917 id=917 data-nosnippet>917</a>/// ```
+<a href=#918 id=918 data-nosnippet>918</a>/// use majordomus_cli::mesh::link::fresh_token;
+<a href=#919 id=919 data-nosnippet>919</a>///
+<a href=#920 id=920 data-nosnippet>920</a>/// let (a, b) = (fresh_token(), fresh_token());
+<a href=#921 id=921 data-nosnippet>921</a>/// assert_eq!(a.len(), 32);
+<a href=#922 id=922 data-nosnippet>922</a>/// assert!(a.bytes().all(|c| c.is_ascii_hexdigit()));
+<a href=#923 id=923 data-nosnippet>923</a>/// assert_ne!(a, b, "a token is fresh, not a counter");
+<a href=#924 id=924 data-nosnippet>924</a>/// ```
+<a href=#925 id=925 data-nosnippet>925</a></span><span class="kw">pub fn </span>fresh_token() -&gt; String {
+<a href=#926 id=926 data-nosnippet>926</a>    <span class="kw">let </span><span class="kw-2">mut </span>bytes = [<span class="number">0u8</span>; <span class="number">16</span>];
+<a href=#927 id=927 data-nosnippet>927</a>    <span class="kw">if </span>getrandom::getrandom(<span class="kw-2">&amp;mut </span>bytes).is_err() {
+<a href=#928 id=928 data-nosnippet>928</a>        <span class="comment">// Without entropy a nonce is guessable; a clock-derived fallback keeps the link
+<a href=#929 id=929 data-nosnippet>929</a>        // working and the replay cache still refuses exact repeats.
+<a href=#930 id=930 data-nosnippet>930</a>        </span><span class="kw">let </span>nanos = std::time::SystemTime::now()
+<a href=#931 id=931 data-nosnippet>931</a>            .duration_since(std::time::UNIX_EPOCH)
+<a href=#932 id=932 data-nosnippet>932</a>            .map(|d| d.as_nanos())
+<a href=#933 id=933 data-nosnippet>933</a>            .unwrap_or(<span class="number">0</span>);
+<a href=#934 id=934 data-nosnippet>934</a>        bytes = nanos.to_le_bytes();
+<a href=#935 id=935 data-nosnippet>935</a>    }
+<a href=#936 id=936 data-nosnippet>936</a>    bytes.iter().map(|b| <span class="macro">format!</span>(<span class="string">"{b:02x}"</span>)).collect()
+<a href=#937 id=937 data-nosnippet>937</a>}
+<a href=#938 id=938 data-nosnippet>938</a>
+<a href=#939 id=939 data-nosnippet>939</a><span class="attr">#[cfg(test)]
+<a href=#940 id=940 data-nosnippet>940</a></span><span class="kw">mod </span>tests {
+<a href=#941 id=941 data-nosnippet>941</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#942 id=942 data-nosnippet>942</a>
+<a href=#943 id=943 data-nosnippet>943</a>    <span class="attr">#[test]
+<a href=#944 id=944 data-nosnippet>944</a>    </span><span class="kw">fn </span>negotiation_takes_the_highest_common_version_or_refuses() {
+<a href=#945 id=945 data-nosnippet>945</a>        <span class="macro">assert_eq!</span>(negotiate(<span class="number">1</span>, <span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+<a href=#946 id=946 data-nosnippet>946</a>        <span class="macro">assert_eq!</span>(negotiate(<span class="number">0</span>, <span class="number">9</span>), <span class="prelude-val">Some</span>(LINK_PROTOCOL_MAX));
+<a href=#947 id=947 data-nosnippet>947</a>        <span class="macro">assert_eq!</span>(
+<a href=#948 id=948 data-nosnippet>948</a>            negotiate(LINK_PROTOCOL_MAX + <span class="number">1</span>, LINK_PROTOCOL_MAX + <span class="number">3</span>),
+<a href=#949 id=949 data-nosnippet>949</a>            <span class="prelude-val">None
+<a href=#950 id=950 data-nosnippet>950</a>        </span>);
+<a href=#951 id=951 data-nosnippet>951</a>        <span class="macro">assert_eq!</span>(negotiate(<span class="number">3</span>, <span class="number">2</span>), <span class="prelude-val">None</span>, <span class="string">"an inverted range is no range"</span>);
+<a href=#952 id=952 data-nosnippet>952</a>    }
+<a href=#953 id=953 data-nosnippet>953</a>
+<a href=#954 id=954 data-nosnippet>954</a>    <span class="attr">#[test]
+<a href=#955 id=955 data-nosnippet>955</a>    </span><span class="kw">fn </span>a_signature_covers_the_body_and_its_domain() {
+<a href=#956 id=956 data-nosnippet>956</a>        <span class="kw">let </span>node = NodeIdentity::ephemeral().unwrap();
+<a href=#957 id=957 data-nosnippet>957</a>        <span class="kw">let </span>other = NodeIdentity::ephemeral().unwrap();
+<a href=#958 id=958 data-nosnippet>958</a>        <span class="kw">let </span><span class="kw-2">mut </span>signed = sign(
+<a href=#959 id=959 data-nosnippet>959</a>            <span class="kw-2">&amp;</span>node,
+<a href=#960 id=960 data-nosnippet>960</a>            Domain::SyncRequest,
+<a href=#961 id=961 data-nosnippet>961</a>            <span class="macro">serde_json::json!</span>({<span class="string">"b"</span>: <span class="number">2</span>, <span class="string">"a"</span>: <span class="number">1</span>}),
+<a href=#962 id=962 data-nosnippet>962</a>        );
+<a href=#963 id=963 data-nosnippet>963</a>        <span class="macro">assert!</span>(verify_signed(
+<a href=#964 id=964 data-nosnippet>964</a>            <span class="kw-2">&amp;</span>node.public.public_key,
+<a href=#965 id=965 data-nosnippet>965</a>            Domain::SyncRequest,
+<a href=#966 id=966 data-nosnippet>966</a>            <span class="kw-2">&amp;</span>signed
+<a href=#967 id=967 data-nosnippet>967</a>        ));
+<a href=#968 id=968 data-nosnippet>968</a>        <span class="macro">assert!</span>(!verify_signed(
+<a href=#969 id=969 data-nosnippet>969</a>            <span class="kw-2">&amp;</span>other.public.public_key,
+<a href=#970 id=970 data-nosnippet>970</a>            Domain::SyncRequest,
+<a href=#971 id=971 data-nosnippet>971</a>            <span class="kw-2">&amp;</span>signed
+<a href=#972 id=972 data-nosnippet>972</a>        ));
+<a href=#973 id=973 data-nosnippet>973</a>        <span class="macro">assert!</span>(!verify_signed(
+<a href=#974 id=974 data-nosnippet>974</a>            <span class="kw-2">&amp;</span>node.public.public_key,
+<a href=#975 id=975 data-nosnippet>975</a>            Domain::SyncAnswer,
+<a href=#976 id=976 data-nosnippet>976</a>            <span class="kw-2">&amp;</span>signed
+<a href=#977 id=977 data-nosnippet>977</a>        ));
+<a href=#978 id=978 data-nosnippet>978</a>        <span class="comment">// Key order is not content: a reordered body still verifies.
+<a href=#979 id=979 data-nosnippet>979</a>        </span>signed.body = <span class="macro">serde_json::json!</span>({<span class="string">"a"</span>: <span class="number">1</span>, <span class="string">"b"</span>: <span class="number">2</span>});
+<a href=#980 id=980 data-nosnippet>980</a>        <span class="macro">assert!</span>(verify_signed(
+<a href=#981 id=981 data-nosnippet>981</a>            <span class="kw-2">&amp;</span>node.public.public_key,
+<a href=#982 id=982 data-nosnippet>982</a>            Domain::SyncRequest,
+<a href=#983 id=983 data-nosnippet>983</a>            <span class="kw-2">&amp;</span>signed
+<a href=#984 id=984 data-nosnippet>984</a>        ));
+<a href=#985 id=985 data-nosnippet>985</a>        signed.body = <span class="macro">serde_json::json!</span>({<span class="string">"a"</span>: <span class="number">1</span>, <span class="string">"b"</span>: <span class="number">3</span>});
+<a href=#986 id=986 data-nosnippet>986</a>        <span class="macro">assert!</span>(!verify_signed(
+<a href=#987 id=987 data-nosnippet>987</a>            <span class="kw-2">&amp;</span>node.public.public_key,
+<a href=#988 id=988 data-nosnippet>988</a>            Domain::SyncRequest,
+<a href=#989 id=989 data-nosnippet>989</a>            <span class="kw-2">&amp;</span>signed
+<a href=#990 id=990 data-nosnippet>990</a>        ));
+<a href=#991 id=991 data-nosnippet>991</a>    }
+<a href=#992 id=992 data-nosnippet>992</a>
+<a href=#993 id=993 data-nosnippet>993</a>    <span class="attr">#[test]
+<a href=#994 id=994 data-nosnippet>994</a>    </span><span class="kw">fn </span>a_card_is_bounded_and_names_its_runtime() {
+<a href=#995 id=995 data-nosnippet>995</a>        <span class="kw">let </span>node = NodeIdentity::ephemeral().unwrap();
+<a href=#996 id=996 data-nosnippet>996</a>        <span class="kw">let </span>card = RuntimeCard {
+<a href=#997 id=997 data-nosnippet>997</a>            pk: node.public.public_key.clone(),
+<a href=#998 id=998 data-nosnippet>998</a>            runtime: <span class="string">"00000000000000aa"</span>.into(),
+<a href=#999 id=999 data-nosnippet>999</a>            instance: node.public.instance_id.as_str().into(),
+<a href=#1000 id=1000 data-nosnippet>1000</a>            repo: <span class="string">"r"</span>.repeat(<span class="number">32</span>),
+<a href=#1001 id=1001 data-nosnippet>1001</a>            name: <span class="string">"n"</span>.into(),
+<a href=#1002 id=1002 data-nosnippet>1002</a>            version: <span class="string">"0.7.0"</span>.into(),
+<a href=#1003 id=1003 data-nosnippet>1003</a>            features: FEATURES.iter().map(|f| f.to_string()).collect(),
+<a href=#1004 id=1004 data-nosnippet>1004</a>            endpoints: <span class="macro">vec!</span>[<span class="string">"127.0.0.1:1"</span>.into()],
+<a href=#1005 id=1005 data-nosnippet>1005</a>        };
+<a href=#1006 id=1006 data-nosnippet>1006</a>        <span class="macro">assert!</span>(card.check().is_ok());
+<a href=#1007 id=1007 data-nosnippet>1007</a>        <span class="macro">assert_eq!</span>(
+<a href=#1008 id=1008 data-nosnippet>1008</a>            card.runtime_key().unwrap(),
+<a href=#1009 id=1009 data-nosnippet>1009</a>            <span class="macro">format!</span>(<span class="string">"{}-00000000000000aa"</span>, node.public.node_id)
+<a href=#1010 id=1010 data-nosnippet>1010</a>        );
+<a href=#1011 id=1011 data-nosnippet>1011</a>        <span class="macro">assert!</span>(card.supports(<span class="string">"claims"</span>) &amp;&amp; !card.supports(<span class="string">"teleport"</span>));
+<a href=#1012 id=1012 data-nosnippet>1012</a>        <span class="kw">let </span>broken = RuntimeCard {
+<a href=#1013 id=1013 data-nosnippet>1013</a>            runtime: <span class="string">"zz"</span>.into(),
+<a href=#1014 id=1014 data-nosnippet>1014</a>            ..card.clone()
+<a href=#1015 id=1015 data-nosnippet>1015</a>        };
+<a href=#1016 id=1016 data-nosnippet>1016</a>        <span class="macro">assert!</span>(broken.check().is_err());
+<a href=#1017 id=1017 data-nosnippet>1017</a>        <span class="kw">let </span>spoofed = RuntimeCard {
+<a href=#1018 id=1018 data-nosnippet>1018</a>            pk: <span class="string">"00"</span>.repeat(<span class="number">32</span>),
+<a href=#1019 id=1019 data-nosnippet>1019</a>            ..card
+<a href=#1020 id=1020 data-nosnippet>1020</a>        };
+<a href=#1021 id=1021 data-nosnippet>1021</a>        <span class="macro">assert_ne!</span>(spoofed.runtime_key(), broken.runtime_key());
+<a href=#1022 id=1022 data-nosnippet>1022</a>    }
+<a href=#1023 id=1023 data-nosnippet>1023</a>
+<a href=#1024 id=1024 data-nosnippet>1024</a>    <span class="attr">#[test]
+<a href=#1025 id=1025 data-nosnippet>1025</a>    </span><span class="kw">fn </span>tokens_are_fresh_hex() {
+<a href=#1026 id=1026 data-nosnippet>1026</a>        <span class="kw">let </span>(a, b) = (fresh_token(), fresh_token());
+<a href=#1027 id=1027 data-nosnippet>1027</a>        <span class="macro">assert_eq!</span>(a.len(), <span class="number">32</span>);
+<a href=#1028 id=1028 data-nosnippet>1028</a>        <span class="macro">assert_ne!</span>(a, b);
+<a href=#1029 id=1029 data-nosnippet>1029</a>    }
+<a href=#1030 id=1030 data-nosnippet>1030</a>
+<a href=#1031 id=1031 data-nosnippet>1031</a>    <span class="attr">#[test]
+<a href=#1032 id=1032 data-nosnippet>1032</a>    </span><span class="kw">fn </span>an_unreachable_endpoint_is_a_transport_error_not_a_refusal() {
+<a href=#1033 id=1033 data-nosnippet>1033</a>        <span class="kw">let </span>node = NodeIdentity::ephemeral().unwrap();
+<a href=#1034 id=1034 data-nosnippet>1034</a>        <span class="kw">let </span>signed = sign(<span class="kw-2">&amp;</span>node, Domain::Hello, <span class="macro">serde_json::json!</span>({}));
+<a href=#1035 id=1035 data-nosnippet>1035</a>        <span class="kw">let </span>error = HttpTransport
+<a href=#1036 id=1036 data-nosnippet>1036</a>            .post(<span class="string">"127.0.0.1:9"</span>, HELLO_PATH, <span class="kw-2">&amp;</span>signed)
+<a href=#1037 id=1037 data-nosnippet>1037</a>            .unwrap_err();
+<a href=#1038 id=1038 data-nosnippet>1038</a>        <span class="macro">assert!</span>(error.contains(<span class="string">"127.0.0.1:9"</span>), <span class="string">"{error}"</span>);
+<a href=#1039 id=1039 data-nosnippet>1039</a>    }
+<a href=#1040 id=1040 data-nosnippet>1040</a>}
+</code></pre></div></section></main></body></html>

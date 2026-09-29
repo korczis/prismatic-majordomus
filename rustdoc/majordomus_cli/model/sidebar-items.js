@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Severity"],"fn":["uri_for"],"struct":["Diagnostic","Object","Provenance"]};

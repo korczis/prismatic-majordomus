@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_FRONT_MATTER_BYTES"],"enum":["SplitError"],"fn":["parse","split"],"struct":["Split"]};

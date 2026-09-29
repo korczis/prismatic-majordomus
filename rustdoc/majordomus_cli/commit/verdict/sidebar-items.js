@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CommitExemption","CommitRule"],"fn":["judge","without_code_spans"],"struct":["CommitSubject","CommitVerdict","HistoryReport","JudgedCommit"]};

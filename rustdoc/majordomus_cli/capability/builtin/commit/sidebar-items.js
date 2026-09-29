@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PLAN_URI","SCOPES_URI"],"fn":["module"],"struct":["HistoryInput","ScopesReport","ValidateInput"]};

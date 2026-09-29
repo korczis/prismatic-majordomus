@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SurfaceError","ToolOutcome"],"struct":["Resource","ResourceContent","Surface","Tool"]};

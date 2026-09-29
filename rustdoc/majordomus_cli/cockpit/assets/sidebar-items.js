@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DIR","IMMUTABLE","PREFIX"],"fn":["media_type","safe_name","shared"],"struct":["Assets"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REGISTRY","SURFACE_SCHEMA"],"enum":["Origin","SurfaceError"],"fn":["normalise","public_capabilities"],"struct":["HttpBinding","PublicCapability","Surface"]};

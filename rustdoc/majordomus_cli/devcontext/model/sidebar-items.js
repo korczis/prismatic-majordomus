@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BYTES_PER_TOKEN","DEFAULT_BUDGET_TOKENS","DEFAULT_MAX_DEPTH"],"enum":["ExclusionReason","Selector","Tier"],"fn":["tokens_for"],"struct":["Budget","CommitReference","CompiledContext","Conflict","ContextEntry","Deduplicated","Discovery","EntryProvenance","Excluded","GitContext","Seed","TierSpend"]};

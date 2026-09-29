@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_DEPLOYMENT","SERVED_URI"],"fn":["module","standing"],"struct":["DeploymentStanding","ObserveInput","Observed","ServedStanding","ShowInput"]};

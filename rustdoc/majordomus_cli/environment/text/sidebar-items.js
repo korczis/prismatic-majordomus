@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["char_width","pad","pad_with","sanitise","truncate","truncate_with","width"]};

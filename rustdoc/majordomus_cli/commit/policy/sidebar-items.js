@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GIT_AUTHORED_PREFIXES"],"enum":["FindingLevel"],"fn":["git_authored"],"struct":["CommitPolicy"]};

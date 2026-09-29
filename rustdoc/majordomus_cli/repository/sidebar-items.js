@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LAYER_SCHEMA","MANIFEST"],"fn":["branch_at","git_identity","identity"],"struct":["ContextConventions","GitIdentity","LocalHalf","Manifest","RepoHalf","Repository"]};

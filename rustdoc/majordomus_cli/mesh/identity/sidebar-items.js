@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["default_identity_path","node_id_of_key","verify"],"struct":["InstanceId","NodeId","NodeIdentity","PublicIdentity"]};

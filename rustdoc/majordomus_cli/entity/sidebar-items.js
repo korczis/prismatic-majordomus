@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["COCKPIT_PREFIX","PUBLICATION"],"enum":["Direction"],"fn":["collisions","edges","find","kind_route","object_route","route","slug","surfaces"],"struct":["Collision","Documentation","Edge","Publication","PublishedKind","Surface"]};

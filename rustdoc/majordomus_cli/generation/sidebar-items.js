@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["GENERATION_INPUTS"],"fn":["crate_generation"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_WIDTH","MIN_BOX_WIDTH"],"enum":["BannerMode"],"fn":["banner"],"struct":["Presentation"]};

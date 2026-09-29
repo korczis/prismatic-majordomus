@@ -1,0 +1,45 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The live runner: a task, run by a real coding harness, once without Majordomus and once with it, from the same fixture, with the same model, judged by the same hidden tests."><title>majordomus_cli::economics::runner - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module runner</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module runner</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>economics</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">economics</a></div><h1>Module <span>runner</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/economics/runner.rs.html#1-2319">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The live runner: a task, run by a real coding harness, once without Majordomus and once
+with it, from the same fixture, with the same model, judged by the same hidden tests.</p>
+<p>For each run the runner:</p>
+<ol>
+<li>takes the provenance the record will carry — the repository’s revision, the digest of
+the suite’s freshness inputs, the harness’s version — before anything else happens;</li>
+<li>copies the task’s fixture into a fresh workspace, applies the task’s setup patch, and
+commits it — the control’s starting state. The workspace is <code>repo/</code> inside a new
+directory of the system temporary directory named by a digest: nothing in its path
+says which task, which arm or which benchmark it belongs to, and nothing beside it
+holds a hidden test, a transcript or another run’s workspace;</li>
+<li>for the treatment only, installs Majordomus the way a user does (<code>init</code>, <code>update</code>,
+<code>capture install --provider claude-code</code>) and commits that too;</li>
+<li>runs every session of the task in the harness (Claude Code, headless, <code>stream-json</code>),
+with the user’s own settings, MCP servers and skills shut out for both arms alike, each
+session under a wall-clock limit;</li>
+<li>runs the task’s verify command, copies the hidden acceptance tests in, runs it again,
+and checks no test file the fixture started with was deleted;</li>
+<li>refuses the run if the freshness inputs or the harness changed while it was in flight,
+deletes the workspace, and writes one <a href="../model/struct.EconomicsRun.html" title="struct majordomus_cli::economics::model::EconomicsRun"><code>EconomicsRun</code></a> with the provider’s usage as
+reported, and nothing a session said. A record, once written, is never written over.</li>
+</ol>
+<p>The harness is a parameter: a test passes a replaying stand-in and exercises the whole
+pipeline — workspace, sessions, gates, record — without a provider, a credential or a cent.
+The transcripts stay in the work directory, <code>&lt;work dir&gt;/&lt;suite&gt;/&lt;run id&gt;/</code>, outside the
+repository and outside every workspace.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::economics::runner::run_id;
+<span class="macro">assert_eq!</span>(run_id(<span class="string">"vat-rounding"</span>, <span class="string">"baseline"</span>, <span class="number">2</span>), <span class="string">"vat-rounding--baseline--r2"</span>);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RunOptions.html" title="struct majordomus_cli::economics::runner::RunOptions">RunOptions</a></dt><dd>Everything a live suite run is told. The work directory must lie outside <code>root</code>, and
+<a href="fn.run.html" title="fn majordomus_cli::economics::runner::run"><code>run</code></a> refuses the options otherwise, because the transcripts it collects there quote
+prompts and code that never belong in the repository’s history.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.check_references.html" title="fn majordomus_cli::economics::runner::check_references">check_<wbr>references</a></dt><dd>The reference solution of every task applied to its fixture: the hidden tests must fail
+on the starting state and pass on the reference, or a failing run would say nothing about
+the agent. Returns one line per task, and <code>Err</code> listing every task that breaks the rule.
+Each task is prepared under <code>&lt;work_dir&gt;/references/&lt;task&gt;</code> with the control’s starting
+state and removed once checked; no harness and no provider is involved, so the check
+costs nothing to repeat.</dd><dt><a class="fn" href="fn.record_path.html" title="fn majordomus_cli::economics::runner::record_path">record_<wbr>path</a></dt><dd>Where a run’s record is written: one JSON file per run id under the suite’s directory of
+the evidence tree. <a href="fn.run.html" title="fn majordomus_cli::economics::runner::run"><code>run</code></a> skips a job whose record already exists here, which is what
+makes an interrupted suite resumable, and never writes over one.</dd><dt><a class="fn" href="fn.run.html" title="fn majordomus_cli::economics::runner::run">run</a></dt><dd>Run a live suite: every job not yet recorded, <code>parallel</code> at a time, control and
+treatment of one task and repetition side by side so that both meet the provider under
+the same conditions. Returns the records written and the jobs that failed to produce
+one. Refuses, before any workspace exists, <code>force</code> (a recorded run is never written
+over), an unknown suite, a suite that is not <code>live</code>, a task the suite names but nobody
+declared, and a work directory — or a system temporary directory — inside the
+repository.</dd><dt><a class="fn" href="fn.run_id.html" title="fn majordomus_cli::economics::runner::run_id">run_id</a></dt><dd>The id of a run: task, variant, repetition. One file per id; a recorded run is never
+overwritten.</dd></dl></section></div></main></body></html>

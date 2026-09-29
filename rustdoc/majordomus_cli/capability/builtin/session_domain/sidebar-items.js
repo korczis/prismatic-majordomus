@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IDENTITY_URI","MACHINE_URI"],"fn":["module"],"struct":["IdentityReport","MachineReport"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REPOSITORY_URI","SCOPE_CLASSIFY"],"fn":["module"],"struct":["RepositoryReport"]};

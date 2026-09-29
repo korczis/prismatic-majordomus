@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ENVIRONMENT_URI","PREFLIGHT_URI"],"fn":["module"],"struct":["EnvironmentInput","EnvironmentProvenance","ExplainInput","PreflightInput"]};

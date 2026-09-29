@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SCHEMA"],"enum":["Effect","Interactivity","Origin","Requirement","Secrecy","Severity","Surface","ValueSource"],"struct":["ArgumentSpec","Availability","CommandGraph","CommandId","CommandNode","Deprecation","Diagnostic","Execution","Projections","Provenance","ValueChoice"]};

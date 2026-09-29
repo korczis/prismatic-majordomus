@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Body"],"fn":["percent_decode","percent_encode","prefers_html"],"struct":["ErrorBody","ErrorDetail","Request","Response","Router","ServedRef"]};

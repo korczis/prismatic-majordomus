@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CACHE"],"fn":["cache_path","fast","fast_at","full","full_at","missing_repository","read_cache","registry","root","write_cache"],"struct":["Loaded"]};

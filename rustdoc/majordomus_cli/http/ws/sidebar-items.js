@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_FRAME_BYTES"],"enum":["Handshake","Opcode"],"fn":["accept_for","frame","handshake","is_upgrade","sha1","write_close","write_ping","write_text"]};

@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The typed event substrate: the existing append-only ledger, read and written with types."><title>majordomus_cli::session::ledger - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module ledger</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module ledger</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#why-this-is-not-a-new-store" title="Why this is not a new store">Why this is not a new store</a></li><li><a href="#why-jsonl-and-not-a-database" title="Why JSONL and not a database">Why JSONL and not a database</a></li><li><a href="#the-vocabulary-is-not-this-modules" title="The vocabulary is not this module’s">The vocabulary is not this module’s</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>session</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">session</a></div><h1>Module <span>ledger</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/session/ledger.rs.html#1-876">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The typed event substrate: the existing append-only ledger, read and written with types.</p>
+<h2 id="why-this-is-not-a-new-store"><a class="doc-anchor" href="#why-this-is-not-a-new-store">§</a>Why this is not a new store</h2>
+<p>ADR 0052 says it in as many words and this module keeps the promise: the append-only
+ledger at <code>.ai/local/state/ledger.jsonl</code> and the record directories beside it are the
+substrate, and the write path moves <em>under</em> the domain rather than being duplicated
+beside it. Every defect this subsystem has produced has the same shape — two accounts of
+one fact — and a second store would be the largest instance of it yet.</p>
+<h2 id="why-jsonl-and-not-a-database"><a class="doc-anchor" href="#why-jsonl-and-not-a-database">§</a>Why JSONL and not a database</h2>
+<p>The requirement was stated as concurrency-safe append, corruption detection and
+recovery. It was <em>not</em> stated as query, transactions across records, or indexes, and
+measuring what the ledger is actually asked for bears that out: every reader in the tree
+walks the file once and filters. So the question is whether a locked append-only text
+file meets the three requirements, and it does:</p>
+<ul>
+<li><strong>Concurrent append.</strong> A write opened <code>O_APPEND</code> is positioned and written in one
+operation by the kernel, so two processes cannot interleave at the offset; below
+<code>PIPE_BUF</code> the write itself is atomic as well. <a href="struct.Ledger.html#method.append" title="method majordomus_cli::session::ledger::Ledger::append"><code>Ledger::append</code></a> additionally takes an
+exclusive <code>flock</code> for the duration, which covers a long line and a filesystem with
+weaker guarantees. A ledger line is one line, so there is no cross-line transaction to
+want.</li>
+<li><strong>Corruption detection.</strong> The unit of corruption is a line, because the format has no
+cross-line state. <a href="struct.Ledger.html#method.read" title="method majordomus_cli::session::ledger::Ledger::read"><code>Ledger::read</code></a> parses line by line and reports each unparseable one
+with its number and what was wrong with it.</li>
+<li><strong>Recovery.</strong> A file whose last line was truncated by a machine losing power is still
+the complete record of everything before it. Reading skips the bad line, counts it, and
+names it; nothing fails, because a ledger with one truncated line that refuses to be
+read is worse than one that reports the truncation.</li>
+</ul>
+<p>A database would add a binary file to a store whose value is partly that a person can
+<code>tail -f</code> it, a second thing to migrate at cutover, a locking model that behaves no
+better than <code>flock</code> over a network filesystem, and a schema that would immediately
+become a second account of <code>share/events.yaml</code>. It is refused, and ADR 0047 records the
+refusal so that it is a decision rather than an omission.</p>
+<h2 id="the-vocabulary-is-not-this-modules"><a class="doc-anchor" href="#the-vocabulary-is-not-this-modules">§</a>The vocabulary is not this module’s</h2>
+<p><code>share/events.yaml</code> declares every event name the ledger accepts and what each one must
+carry, and <code>mj_ledger_append</code> already refuses an unregistered name. <a href="struct.Vocabulary.html" title="struct majordomus_cli::session::ledger::Vocabulary"><code>Vocabulary</code></a> reads
+that file. It does not contain a list of event names, and a test below asserts that the
+names this domain writes are ones the shipped file declares — which is the assertion
+that fails if somebody adds an event here and forgets the vocabulary, rather than a
+durable line every reader silently ignores.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::session::{Envelope, Ledger, LedgerEvent, Vocabulary};
+
+<span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>ledger = Ledger::at(dir.path().join(<span class="string">"ledger.jsonl"</span>));
+<span class="kw">let </span>vocabulary = Vocabulary::parse(
+    <span class="string">"version: 1\nevents:\n  - id: session.started\n    requires: [owner]\n    public: true\n"</span>,
+).expect(<span class="string">"a vocabulary"</span>);
+<span class="kw">let </span>envelope = Envelope {
+    ts: <span class="string">"2026-09-11T11:02:35Z"</span>.into(), head: <span class="string">"1a651e64"</span>.into(),
+    branch: <span class="string">"master"</span>.into(), by: <span class="string">"majordomus/0.5.0"</span>.into(), session: <span class="prelude-val">None</span>,
+};
+
+ledger.append(<span class="kw-2">&amp;</span>LedgerEvent::new(<span class="string">"session.started"</span>).with(<span class="string">"owner"</span>, <span class="string">"korczis"</span>), <span class="kw-2">&amp;</span>vocabulary, <span class="kw-2">&amp;</span>envelope).unwrap();
+<span class="macro">assert_eq!</span>(ledger.read().events.len(), <span class="number">1</span>);
+
+<span class="comment">// and a name nothing declares never becomes a durable line
+</span><span class="macro">assert!</span>(ledger.append(<span class="kw-2">&amp;</span>LedgerEvent::new(<span class="string">"session.invented"</span>), <span class="kw-2">&amp;</span>vocabulary, <span class="kw-2">&amp;</span>envelope).is_err());</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Corruption.html" title="struct majordomus_cli::session::ledger::Corruption">Corruption</a></dt><dd>One line that could not be read as an event: which line it was, and what was wrong with
+it.</dd><dt><a class="struct" href="struct.DeclaredEvent.html" title="struct majordomus_cli::session::ledger::DeclaredEvent">Declared<wbr>Event</a></dt><dd>One declared event: what it is called, what writes it, what it must carry, and whether
+it is part of the documented record a user reads back.</dd><dt><a class="struct" href="struct.Envelope.html" title="struct majordomus_cli::session::ledger::Envelope">Envelope</a></dt><dd>The computed half of a ledger line: what the writer knows and the event does not.</dd><dt><a class="struct" href="struct.Ledger.html" title="struct majordomus_cli::session::ledger::Ledger">Ledger</a></dt><dd>The append-only ledger of one checkout: the canonical record of what happened, written
+only by Majordomus and in the order the commands ran.</dd><dt><a class="struct" href="struct.LedgerEvent.html" title="struct majordomus_cli::session::ledger::LedgerEvent">Ledger<wbr>Event</a></dt><dd>One event on its way into the ledger: the name, the payload, and the envelope the
+writer computes.</dd><dt><a class="struct" href="struct.LedgerRead.html" title="struct majordomus_cli::session::ledger::LedgerRead">Ledger<wbr>Read</a></dt><dd>What a read of the ledger found: the lines that parsed, in ledger order, and the lines
+that did not, named rather than dropped.</dd><dt><a class="struct" href="struct.Vocabulary.html" title="struct majordomus_cli::session::ledger::Vocabulary">Vocabulary</a></dt><dd>The event vocabulary, read from <code>share/events.yaml</code>.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.LedgerError.html" title="enum majordomus_cli::session::ledger::LedgerError">Ledger<wbr>Error</a></dt><dd>What can go wrong writing or reading the ledger. The first two are refusals of a
+malformed event and happen before anything is written; the last two are the disk.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.EVENTS_FILE.html" title="constant majordomus_cli::session::ledger::EVENTS_FILE">EVENTS_<wbr>FILE</a></dt><dd><code>share/events.yaml</code>, relative to the share directory.</dd><dt><a class="constant" href="constant.LEDGER_PATH.html" title="constant majordomus_cli::session::ledger::LEDGER_PATH">LEDGER_<wbr>PATH</a></dt><dd>The ledger, relative to the repository root.</dd></dl></section></div></main></body></html>

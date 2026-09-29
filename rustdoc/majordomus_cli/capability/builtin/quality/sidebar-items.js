@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BASELINE","CRATE_DIR","QUALITY_URI","RUSTDOC_URI"],"fn":["baseline_key","baseline_keys","crate_dir","module"],"struct":["QualityAnswer","QualityInput"]};

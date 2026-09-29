@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ShellEffect"],"fn":["add","anthropic_request","first_request_input","openai_request","read_stream","session_totals","shell_effect","totals"],"struct":["StreamFacts"]};

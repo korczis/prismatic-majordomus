@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SEARCH_DEFAULT_LIMIT","SEARCH_MAX_LIMIT"],"enum":["Comparison","ObjectStanding","Resolved","ResourceView"],"fn":["module","resolve"],"struct":["AnswerView","DriftedObject","GetInput","ListInput","ObjectList","SearchHit","SearchInput","SearchResult","VerifyInput","VerifyReport"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["REGION_BEGIN","REGION_END"],"enum":["TargetState"],"fn":["artifacts","render","splice_region","stamp_line","state_of","template_path"]};

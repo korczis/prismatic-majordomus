@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PLAN_URI"],"enum":["PlanRecord"],"fn":["module"],"struct":["PlanIssueFilter","PlanIssueList","PlanMilestoneFilter","PlanMilestoneProgress","PlanNextIssue","PlanRecordInput","PlanRoadmap","PlanStatusReport","PlanTransitionInput","PlanTransitionResult","PlanValidation","PlanWaveReport","PlanWaveView"]};

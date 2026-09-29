@@ -1,0 +1,61 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Compile a context. The one entry point; every projection calls this."><title>compile in majordomus_cli::devcontext - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">compile</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>devcontext</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a>::<wbr><a href="index.html">devcontext</a></div><h1>Function <span class="fn">compile</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/devcontext/mod.rs.html#762-927">Source</a> </span></div><pre class="rust item-decl"><code>pub fn compile(
+    ctx: &amp;<a class="struct" href="../capability/handler/struct.Context.html" title="struct majordomus_cli::capability::handler::Context">Context</a>,
+    input: <a class="struct" href="struct.CompileInput.html" title="struct majordomus_cli::devcontext::CompileInput">CompileInput</a>,
+) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.98.1/core/result/enum.Result.html" title="enum core::result::Result">Result</a>&lt;<a class="struct" href="model/struct.CompiledContext.html" title="struct majordomus_cli::devcontext::model::CompiledContext">CompiledContext</a>, <a class="enum" href="../capability/handler/enum.CapabilityError.html" title="enum majordomus_cli::capability::handler::CapabilityError">CapabilityError</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Compile a context. The one entry point; every projection calls this.</p>
+<p>The whole call runs over values the process already holds — the index and the composed
+graph derived from it — so it reads no file and walks no tree, which is what lets it sit
+inside a handler rather than at load time.</p>
+<p>It fails only on a request that cannot mean anything: a budget of zero, a relevance floor
+outside 0..=1, a path that is not repository-relative, or a named seed this repository
+does not hold. Everything else is an answer. In particular a request that names nothing
+is valid and does not produce an empty context — the governance applies to every session
+whether or not it was asked for.</p>
+<p>The budget is a ceiling on what the compiler <em>chooses</em>, not on what it must keep: seeds,
+the policy and the scope are never dropped, so an answer can come back over budget and
+says so rather than omitting the thing it was compiled about.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::CapabilityError;
+<span class="kw">use </span>majordomus_cli::devcontext::{compile, CompileInput, Tier};
+<span class="kw">use </span>majordomus_cli::synthetic::SyntheticRepository;
+
+<span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
+<span class="kw">let </span>ctx = repo.context().unwrap();
+
+<span class="comment">// the governance arrives without being asked for, and cannot be dropped
+</span><span class="kw">let </span>c = compile(<span class="kw-2">&amp;</span>ctx, CompileInput::default()).unwrap();
+<span class="kw">let </span>required: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = c
+    .selected
+    .iter()
+    .filter(|e| e.required)
+    .map(|e| e.kind.as_str())
+    .collect();
+<span class="macro">assert!</span>(required.contains(<span class="kw-2">&amp;</span><span class="string">"policy"</span>), <span class="string">"what every session is held to: {required:?}"</span>);
+<span class="macro">assert!</span>(c.selected.iter().all(|e| e.tier &gt;= Tier::Task));
+
+<span class="comment">// a tiny ceiling still keeps what may not be dropped, and says it went over
+</span><span class="kw">let </span>squeezed = compile(
+    <span class="kw-2">&amp;</span>ctx,
+    CompileInput { budget_tokens: <span class="prelude-val">Some</span>(<span class="number">1</span>), ..Default::default() },
+)
+.unwrap();
+<span class="macro">assert!</span>(squeezed.selected.iter().any(|e| e.required));
+<span class="macro">assert!</span>(squeezed.budget.over_budget);
+<span class="macro">assert_eq!</span>(squeezed.budget.limit_tokens, <span class="number">1</span>);
+
+<span class="comment">// and the refusals are requests that could not mean anything
+</span><span class="macro">assert!</span>(<span class="macro">matches!</span>(
+    compile(<span class="kw-2">&amp;</span>ctx, CompileInput { budget_tokens: <span class="prelude-val">Some</span>(<span class="number">0</span>), ..Default::default() }),
+    <span class="prelude-val">Err</span>(CapabilityError::InvalidInput(<span class="kw">_</span>)),
+));
+<span class="macro">assert!</span>(<span class="macro">matches!</span>(
+    compile(<span class="kw-2">&amp;</span>ctx, CompileInput { floor: <span class="prelude-val">Some</span>(<span class="number">1.5</span>), ..Default::default() }),
+    <span class="prelude-val">Err</span>(CapabilityError::InvalidInput(<span class="kw">_</span>)),
+));
+<span class="macro">assert!</span>(<span class="macro">matches!</span>(
+    compile(<span class="kw-2">&amp;</span>ctx, CompileInput { paths: <span class="macro">vec!</span>[<span class="string">"/etc"</span>.into()], ..Default::default() }),
+    <span class="prelude-val">Err</span>(CapabilityError::InvalidInput(<span class="kw">_</span>)),
+));
+<span class="macro">assert!</span>(<span class="macro">matches!</span>(
+    compile(<span class="kw-2">&amp;</span>ctx, CompileInput { issue: <span class="prelude-val">Some</span>(<span class="string">"I9999"</span>.into()), ..Default::default() }),
+    <span class="prelude-val">Err</span>(CapabilityError::NotFound(<span class="kw">_</span>)),
+));</code></pre></div></div></details></section></div></main></body></html>

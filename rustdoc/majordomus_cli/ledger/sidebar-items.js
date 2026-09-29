@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LedgerError"],"fn":["append","now","read"],"struct":["Entry","Vocabulary"],"type":["Field"]};

@@ -1,0 +1,67 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The `recover` module: the stray files of the record stores, classified by evidence and swept exactly once."><title>majordomus_cli::capability::builtin::recover - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module recover</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module recover</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#what-moved-and-what-deliberately-did-not" title="What moved, and what deliberately did not">What moved, and what deliberately did not</a></li><li><a href="#why-this-is-not-superlifecycles-job" title="Why this is not `super::lifecycle`’s job">Why this is not <code>super::lifecycle</code>’s job</a></li><li><a href="#the-two-guards-and-why-they-are-here-rather-than-at-the-call-site" title="The two guards, and why they are here rather than at the call site">The two guards, and why they are here rather than at the call site</a></li><li><a href="#the-one-capability-as-the-registry-states-it" title="The one capability, as the registry states it">The one capability, as the registry states it</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>capability::<wbr>builtin</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../../index.html">majordomus_cli</a>::<wbr><a href="../../index.html">capability</a>::<wbr><a href="../index.html">builtin</a></div><h1>Module <span>recover</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../../src/majordomus_cli/capability/builtin/recover.rs.html#1-1034">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The <code>recover</code> module: the stray files of the record stores, classified by evidence and
+swept exactly once.</p>
+<p><code>majordomus recover</code> is a mutating development command — it writes <code>.ai/repo/sessions/</code>
+and <code>.ai/local/state/</code> — and until this module it was backed by nothing in the registry.
+<a href="https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md">ADR 0040</a> says a development operation exists as a <code>capability!</code> declaration and that
+every surface is a consumer of it; <code>scripts/development-semantics-check</code> measures exactly
+that and reported <code>backing:recover</code>. This module is the first capability that backs it.</p>
+<h2 id="what-moved-and-what-deliberately-did-not"><a class="doc-anchor" href="#what-moved-and-what-deliberately-did-not">§</a>What moved, and what deliberately did not</h2>
+<p>One capability, <code>recover.orphans</code>, and it owns the <strong>decision and the destruction</strong>: for
+every stray file of the record stores it reads the clock and the content, returns a
+verdict with the evidence that produced it, and — unless the call is a check — removes
+the ones the verdict says are removable. <code>lib/recover.sh</code> no longer decides any of that;
+it asks, renders the answer in the words a person reads, and counts.</p>
+<p>What stayed in shell is the <strong>constructive</strong> half. A publish temp that holds the only
+copy of an episode is published rather than deleted, and publishing a record is
+<code>mj_publish_record</code>’s semantic — the same one <code>session close</code> uses, and the one
+<code>recover episodes</code> composes a synthesised record with. Moving one caller of it without
+moving the writer would put a second record writer in a second program, which is the
+defect ADR 0040 exists to prevent rather than a step towards fixing it. So this
+capability names an <code>Incomplete</code> stray and removes nothing; the shell publishes it. The
+record writer is the next thing to converge, and when it does, <code>recover.orphans</code> gains
+the publish and loses the <code>Incomplete</code> verdict’s “the caller acts” note.</p>
+<p>The same argument keeps <code>recover episodes</code> and <code>recover records</code> in shell for now: both
+<em>write records</em>, and neither can converge before the record writer does.</p>
+<h2 id="why-this-is-not-superlifecycles-job"><a class="doc-anchor" href="#why-this-is-not-superlifecycles-job">§</a>Why this is not <a href="../lifecycle/index.html" title="mod majordomus_cli::capability::builtin::lifecycle"><code>super::lifecycle</code></a>’s job</h2>
+<p><code>lifecycle.recovery</code> already lists the <code>.tmp.*</code> files of the sessions section, and a
+second definition of the same thing would be this repository’s favourite defect. It is
+not one. That module states its own constraint — <em>“no thresholds and no clock … what this
+module reports is what it can observe without an opinion”</em> — so it reports a path and a
+byte count and nothing else. This module is the opinion: it reads the clock, applies the
+threshold, and acts. An observation and a decision over the same files are two different
+things to depend on; what would be a duplicate is a second <em>verdict</em>, and there is one.</p>
+<h2 id="the-two-guards-and-why-they-are-here-rather-than-at-the-call-site"><a class="doc-anchor" href="#the-two-guards-and-why-they-are-here-rather-than-at-the-call-site">§</a>The two guards, and why they are here rather than at the call site</h2>
+<p><strong>The threshold has no default.</strong> <code>older_than_seconds</code> is a required field with no serde
+default, and zero is refused. <code>session.stranded_after</code> is a policy value, and a reader
+that carries its own default is a second place the number lives — <code>majordomus doctor</code>
+refused exactly that when <code>lib/recover.sh</code> was first written. A sweep that ran against an
+absent threshold would find every file stale, which is the one failure this command must
+not have (<code>project.destructive-sweeps-fail-closed</code>).</p>
+<p><strong>Nothing is removed that is not a temp file this tool writes.</strong> <code>removable</code> is decided
+from the verdict, and <code>remove_stray</code> refuses any path that is not a regular file whose
+name matches the two patterns this tool creates — <code>.tmp.*</code> inside a record store, or
+<code>&lt;target&gt;.mj-tmp</code>. A directory is never removed, whatever its verdict: <code>SECURITY.md</code>
+states “no recursive deletion”, and a stale <code>.mj-stage.*</code> staging directory is therefore
+reported and left in place. <code>check</code> is a true dry run: it is consulted before the single
+call site of <code>remove_stray</code>, and nothing else in this file touches the filesystem for
+writing.</p>
+<h2 id="the-one-capability-as-the-registry-states-it"><a class="doc-anchor" href="#the-one-capability-as-the-registry-states-it">§</a>The one capability, as the registry states it</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::builtin::recover;
+<span class="kw">use </span>majordomus_cli::capability::{CapabilityKind, Effect};
+
+<span class="kw">let </span>m = recover::module();
+<span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"recover"</span>);
+<span class="macro">assert_eq!</span>(m.capabilities.len(), <span class="number">1</span>);
+<span class="kw">let </span>c = <span class="kw-2">&amp;</span>m.capabilities[<span class="number">0</span>].capability;
+<span class="macro">assert_eq!</span>(c.id.as_str(), <span class="string">"recover.orphans"</span>);
+
+<span class="comment">// it owns the decision and the destruction: a command whose effect is on the repository
+</span><span class="macro">assert!</span>(<span class="macro">matches!</span>(c.kind, CapabilityKind::Command));
+<span class="macro">assert_eq!</span>(c.execution.effect, Effect::RepositoryMutation);
+
+<span class="comment">// and it is asked rather than typed: `majordomus recover` stays the shell command that
+// asks it, so the capability has no command-line projection of its own
+</span><span class="macro">assert!</span>(c.exposure.cli.is_none());
+<span class="macro">assert!</span>(c.exposure.mcp.is_some() &amp;&amp; c.exposure.http.is_some());</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RecoverOrphansInput.html" title="struct majordomus_cli::capability::builtin::recover::RecoverOrphansInput">Recover<wbr>Orphans<wbr>Input</a></dt><dd>The input of <code>recover.orphans</code>: how old a stray must be, and whether to act.</dd><dt><a class="struct" href="struct.RecoverOrphansResult.html" title="struct majordomus_cli::capability::builtin::recover::RecoverOrphansResult">Recover<wbr>Orphans<wbr>Result</a></dt><dd>What one sweep found and what it did about it.</dd><dt><a class="struct" href="struct.Stray.html" title="struct majordomus_cli::capability::builtin::recover::Stray">Stray</a></dt><dd>One stray file, its verdict, and the evidence that produced it.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.StrayKind.html" title="enum majordomus_cli::capability::builtin::recover::StrayKind">Stray<wbr>Kind</a></dt><dd>What kind of stray a path is, decided by where it is and how it is named rather than by
+what is in it. The content decides the <em>verdict</em>; this decides which question to ask.</dd><dt><a class="enum" href="enum.StrayVerdict.html" title="enum majordomus_cli::capability::builtin::recover::StrayVerdict">Stray<wbr>Verdict</a></dt><dd>What this stray is, decided by reading it.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.front_matter_value.html" title="fn majordomus_cli::capability::builtin::recover::front_matter_value">front_<wbr>matter_<wbr>value</a></dt><dd>One scalar of a record’s front matter, read the way <code>lib/recover.sh</code> reads it: the first
+line that begins <code>&lt;key&gt;: </code>, anywhere in the file.</dd><dt><a class="fn" href="fn.module.html" title="fn majordomus_cli::capability::builtin::recover::module">module</a></dt><dd>The module descriptor: one capability, and it writes.</dd></dl></section></div></main></body></html>

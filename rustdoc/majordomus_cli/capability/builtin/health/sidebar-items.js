@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["HEALTH_URI"],"enum":["HealthStatus"],"fn":["module"],"struct":["Health","HealthCheck","Liveness","Readiness"]};

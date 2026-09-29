@@ -1,0 +1,53 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Canonical presentation order."><title>majordomus_cli::order - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module order</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module order</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate majordomus_<wbr>cli</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">majordomus_cli</a></div><h1>Module <span>order</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/majordomus_cli/order.rs.html#1-550">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Canonical presentation order.</p>
+<p>One collection has one order, and every interface that shows it shows that order. A
+sort written beside a renderer is a second opinion about the same collection, and two
+opinions drift: the command line alphabetises, the Cockpit groups, the generated index
+keeps whatever the walk produced, and a reader who compares them concludes that the
+surfaces disagree about the repository rather than about sorting.</p>
+<p>The order is a total order over four parts, most significant first:</p>
+<ol>
+<li><strong>group</strong> — the semantic bucket the item is filed under, itself compared naturally;
+an item with no group sorts after every grouped item, because an ungrouped tail is
+legible and an ungrouped head hides the groups.</li>
+<li><strong>rank</strong> — an explicit position inside the group, ascending, for the collections
+whose domain genuinely has one (a lifecycle runs setup before conclude, whatever
+those words sort as). It defaults to <a href="struct.OrderKey.html#associatedconstant.UNRANKED" title="associated constant majordomus_cli::order::OrderKey::UNRANKED"><code>OrderKey::UNRANKED</code></a>, so a collection that
+has no such semantics never mentions it.</li>
+<li><strong>label</strong> — what a person reads, compared naturally: digit runs by value, so
+<code>item-2</code> precedes <code>item-10</code>, and letters case-insensitively, so <code>Alpha</code> and <code>alpha</code>
+stay adjacent.</li>
+<li><strong>identity</strong> — the canonical id, compared naturally, as the final tie-breaker.</li>
+</ol>
+<p>The fourth part is what makes the order total rather than merely tidy. Two items with
+the same label must not exchange places because an unrelated item was added, because a
+different iterator was used, or because one machine’s filesystem enumerates differently
+from another’s; identities are unique, so the comparison always ends there.</p>
+<p>A numeric sample is ordered here too, by <a href="fn.numeric.html" title="fn majordomus_cli::order::numeric"><code>numeric</code></a>: nobody reads it item by item, but a
+median read off it depends on its order, and a float has exactly one order worth having.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::order::{canonical, OrderKey, Ordered};
+
+<span class="kw">struct </span>Recipe {
+    group: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+    name: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str,
+}
+
+<span class="kw">impl </span>Ordered <span class="kw">for </span>Recipe {
+    <span class="kw">fn </span>order_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; OrderKey&lt;<span class="lifetime">'_</span>&gt; {
+        OrderKey::grouped(<span class="self">self</span>.group, <span class="self">self</span>.name, <span class="self">self</span>.name)
+    }
+}
+
+<span class="kw">let </span><span class="kw-2">mut </span>recipes = <span class="macro">vec!</span>[
+    Recipe { group: <span class="string">"quality"</span>, name: <span class="string">"test-10" </span>},
+    Recipe { group: <span class="string">"development"</span>, name: <span class="string">"serve" </span>},
+    Recipe { group: <span class="string">"quality"</span>, name: <span class="string">"test-2" </span>},
+];
+canonical(<span class="kw-2">&amp;mut </span>recipes);
+<span class="kw">let </span>order: Vec&lt;<span class="kw">_</span>&gt; = recipes.iter().map(|r| r.name).collect();
+<span class="macro">assert_eq!</span>(order, [<span class="string">"serve"</span>, <span class="string">"test-2"</span>, <span class="string">"test-10"</span>]);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.OrderKey.html" title="struct majordomus_cli::order::OrderKey">Order<wbr>Key</a></dt><dd>The four parts of the canonical order, most significant first. See the module
+documentation for what each part means and why the last one is not optional.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Ordered.html" title="trait majordomus_cli::order::Ordered">Ordered</a></dt><dd>What a collection’s items answer so that the collection can be put in canonical order.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.canonical.html" title="fn majordomus_cli::order::canonical">canonical</a></dt><dd>Put a collection in canonical order, in place.</dd><dt><a class="fn" href="fn.canonical_strings.html" title="fn majordomus_cli::order::canonical_strings">canonical_<wbr>strings</a></dt><dd>Put a collection of plain strings in canonical order, in place.</dd><dt><a class="fn" href="fn.is_canonical.html" title="fn majordomus_cli::order::is_canonical">is_<wbr>canonical</a></dt><dd>Is this collection already in canonical order? What a validator asks of a projection it
+did not build, and what a test asks of an interface’s output.</dd><dt><a class="fn" href="fn.natural_cmp.html" title="fn majordomus_cli::order::natural_cmp">natural_<wbr>cmp</a></dt><dd>Compare two human-facing strings the way a person reads them.</dd><dt><a class="fn" href="fn.numeric.html" title="fn majordomus_cli::order::numeric">numeric</a></dt><dd>Put a numeric sample in ascending order, in place.</dd><dt><a class="fn" href="fn.numeric_samples.html" title="fn majordomus_cli::order::numeric_samples">numeric_<wbr>samples</a></dt><dd>Put a set of numeric samples in ascending order, in place: value by value in
+<a href="fn.numeric.html" title="fn majordomus_cli::order::numeric"><code>numeric</code></a>’s order, and a sample that is a prefix of another before it. Once each sample
+is itself in <a href="fn.numeric.html" title="fn majordomus_cli::order::numeric"><code>numeric</code></a> order, this is what makes a computation that draws among the
+samples independent of the order they were listed in.</dd></dl></section></div></main></body></html>

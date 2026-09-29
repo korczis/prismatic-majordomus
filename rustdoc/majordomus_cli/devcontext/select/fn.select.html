@@ -1,0 +1,49 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Reach every candidate the request implies: the seeds, the graph around them, the paths they declare, the governance the layer applies, the session that ran before, and — when the request gave an intent — what its words match."><title>select in majordomus_cli::devcontext::select - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">select</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>devcontext::<wbr>select</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">devcontext</a>::<wbr><a href="index.html">select</a></div><h1>Function <span class="fn">select</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/devcontext/select.rs.html#758-857">Source</a> </span></div><pre class="rust item-decl"><code>pub fn select(ctx: &amp;<a class="struct" href="../../capability/handler/struct.Context.html" title="struct majordomus_cli::capability::handler::Context">Context</a>, graph: &amp;<a class="struct" href="../../graph/struct.Graph.html" title="struct majordomus_cli::graph::Graph">Graph</a>, req: &amp;<a class="struct" href="struct.Request.html" title="struct majordomus_cli::devcontext::select::Request">Request</a>&lt;'_&gt;) -&gt; <a class="struct" href="struct.Selection.html" title="struct majordomus_cli::devcontext::select::Selection">Selection</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Reach every candidate the request implies: the seeds, the graph around them, the paths
+they declare, the governance the layer applies, the session that ran before, and — when
+the request gave an intent — what its words match.</p>
+<p>Nothing is read here. <code>graph</code> is <a href="../../graph/constant.COMPOSED.html" title="constant majordomus_cli::graph::COMPOSED"><code>crate::graph::COMPOSED</code></a> already derived over the
+index, so every typed reference the layer declares is an edge before this function
+starts, and the walk is over two values the process is holding. That is what lets a
+request be answered inside a handler rather than at load time.</p>
+<p>It returns a <a href="struct.Selection.html" title="struct majordomus_cli::devcontext::select::Selection"><code>Selection</code></a> and never an error: an intent that matches nothing, a seed
+whose scope is empty, a reference the layer declares and nothing answers — each of those
+is a fact about the repository, carried in <code>unresolved</code> or <code>diagnostics</code>, and not a
+failure of the call.</p>
+<p>The governance selector is why a request that names nothing still gets an answer: the
+policy and the scope apply to everything, so they are reached without a seed.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::collections::BTreeSet;
+
+<span class="kw">use </span>majordomus_cli::devcontext::select::{select, Request};
+<span class="kw">use </span>majordomus_cli::devcontext::{DEFAULT_FLOOR, DEFAULT_MAX_DEPTH};
+<span class="kw">use </span>majordomus_cli::graph;
+<span class="kw">use </span>majordomus_cli::synthetic::SyntheticRepository;
+
+<span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
+<span class="kw">let </span>ctx = repo.context().unwrap();
+<span class="kw">let </span>composed = graph::derive(graph::COMPOSED, <span class="kw-2">&amp;</span>ctx.registry, ctx.index.as_ref()).unwrap();
+
+<span class="comment">// a request that names nothing at all
+</span><span class="kw">let </span>empty = Request {
+    seeds: Vec::new(),
+    paths: BTreeSet::new(),
+    terms: BTreeSet::new(),
+    max_depth: DEFAULT_MAX_DEPTH,
+    floor: DEFAULT_FLOOR,
+    all_blocking_rules: <span class="bool-val">false</span>,
+    branch: <span class="prelude-val">None</span>,
+};
+<span class="kw">let </span>selection = select(<span class="kw-2">&amp;</span>ctx, <span class="kw-2">&amp;</span>composed, <span class="kw-2">&amp;</span>empty);
+
+<span class="comment">// it still reaches the governance, because the governance applies without being asked for
+</span><span class="macro">assert!</span>(
+    selection.candidates.values().any(|c| c.kind == <span class="string">"policy"</span>),
+    <span class="string">"a request that names nothing still gets what every session is held to"</span>,
+);
+
+<span class="comment">// and every candidate carries at least one recorded way in: nothing is in the
+// selection without something that says how it got there
+</span><span class="kw">for </span>c <span class="kw">in </span>selection.candidates.values() {
+    <span class="macro">assert!</span>(!c.discovered_by.is_empty(), <span class="string">"{} arrived unexplained"</span>, c.uri);
+    <span class="macro">assert!</span>(c.confidence() &gt; <span class="number">0.0</span>, <span class="string">"{} is vouched for by nothing"</span>, c.uri);
+}</code></pre></div></div></details></section></div></main></body></html>

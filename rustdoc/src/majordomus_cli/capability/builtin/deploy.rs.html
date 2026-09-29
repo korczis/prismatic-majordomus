@@ -1,0 +1,288 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/capability/builtin/deploy.rs`."><title>deploy.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/capability/builtin/</div>deploy.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! The `deploy` module: what this repository's deployments are, and whether they would
+<a href=#2 id=2 data-nosnippet>2</a>//! work — read-only, from the canonical objects the index already holds.
+<a href=#3 id=3 data-nosnippet>3</a>//!
+<a href=#4 id=4 data-nosnippet>4</a>//! Every operation here is a read. A deployment is mutated by the trusted command line and
+<a href=#5 id=5 data-nosnippet>5</a>//! by CI, never by an HTTP request and never by an MCP client: an operation that could
+<a href=#6 id=6 data-nosnippet>6</a>//! start or stop a machine has no business behind a surface a browser can reach.
+<a href=#7 id=7 data-nosnippet>7</a>//!
+<a href=#8 id=8 data-nosnippet>8</a>//! No capability here contacts the provider. Live provider state costs a network call, and
+<a href=#9 id=9 data-nosnippet>9</a>//! a network call on a read that a client may poll is not an ordinary read; it belongs to
+<a href=#10 id=10 data-nosnippet>10</a>//! an explicit operation with its own cost, not behind `deploy.list`.
+<a href=#11 id=11 data-nosnippet>11</a>
+<a href=#12 id=12 data-nosnippet>12</a></span><span class="kw">use </span>schemars::JsonSchema;
+<a href=#13 id=13 data-nosnippet>13</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#14 id=14 data-nosnippet>14</a>
+<a href=#15 id=15 data-nosnippet>15</a><span class="kw">use </span><span class="kw">crate</span>::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
+<a href=#16 id=16 data-nosnippet>16</a><span class="kw">use </span><span class="kw">crate</span>::capability::handler::{CapabilityError, Context};
+<a href=#17 id=17 data-nosnippet>17</a><span class="kw">use </span><span class="kw">crate</span>::capability::model::{Exposure, McpExposure, McpResource, Stability};
+<a href=#18 id=18 data-nosnippet>18</a><span class="kw">use </span><span class="kw">crate</span>::capability::module::ModuleDescriptor;
+<a href=#19 id=19 data-nosnippet>19</a><span class="kw">use </span><span class="kw">crate</span>::capability::CachePolicy;
+<a href=#20 id=20 data-nosnippet>20</a><span class="kw">use </span><span class="kw">crate</span>::deploy::{Deployment, Refusal, Workspace, KIND};
+<a href=#21 id=21 data-nosnippet>21</a><span class="kw">use crate</span>::{capability, module};
+<a href=#22 id=22 data-nosnippet>22</a>
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">use super</span>::{get, mcp, Empty};
+<a href=#24 id=24 data-nosnippet>24</a>
+<a href=#25 id=25 data-nosnippet>25</a><span class="doccomment">/// The URI under which the deployments are read as one MCP resource.
+<a href=#26 id=26 data-nosnippet>26</a></span><span class="kw">pub const </span>DEPLOYMENTS_URI: <span class="kw-2">&amp;</span>str = <span class="string">"majordomus://deployments"</span>;
+<a href=#27 id=27 data-nosnippet>27</a>
+<a href=#28 id=28 data-nosnippet>28</a><span class="doccomment">/// One deployment as this process reads it, with where it came from.
+<a href=#29 id=29 data-nosnippet>29</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#30 id=30 data-nosnippet>30</a></span><span class="kw">pub struct </span>DeploymentView {
+<a href=#31 id=31 data-nosnippet>31</a>    <span class="doccomment">/// The repository-relative file the object lives in.
+<a href=#32 id=32 data-nosnippet>32</a>    </span><span class="kw">pub </span>file: String,
+<a href=#33 id=33 data-nosnippet>33</a>    <span class="doccomment">/// The object, typed.
+<a href=#34 id=34 data-nosnippet>34</a>    </span><span class="attr">#[serde(flatten)]
+<a href=#35 id=35 data-nosnippet>35</a>    </span><span class="kw">pub </span>deployment: Deployment,
+<a href=#36 id=36 data-nosnippet>36</a>}
+<a href=#37 id=37 data-nosnippet>37</a>
+<a href=#38 id=38 data-nosnippet>38</a><span class="doccomment">/// Every deployment the layer declares.
+<a href=#39 id=39 data-nosnippet>39</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#40 id=40 data-nosnippet>40</a></span><span class="kw">pub struct </span>DeploymentList {
+<a href=#41 id=41 data-nosnippet>41</a>    <span class="doccomment">/// How many.
+<a href=#42 id=42 data-nosnippet>42</a>    </span><span class="kw">pub </span>count: usize,
+<a href=#43 id=43 data-nosnippet>43</a>    <span class="doccomment">/// Each, in identity order.
+<a href=#44 id=44 data-nosnippet>44</a>    </span><span class="kw">pub </span>deployments: Vec&lt;DeploymentView&gt;,
+<a href=#45 id=45 data-nosnippet>45</a>    <span class="doccomment">/// Objects of the deployment kind this executable could not read, with why. A
+<a href=#46 id=46 data-nosnippet>46</a>    /// malformed object is reported here rather than hidden by being skipped.
+<a href=#47 id=47 data-nosnippet>47</a>    </span><span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Vec::is_empty"</span>)]
+<a href=#48 id=48 data-nosnippet>48</a>    </span><span class="kw">pub </span>unreadable: Vec&lt;Refusal&gt;,
+<a href=#49 id=49 data-nosnippet>49</a>}
+<a href=#50 id=50 data-nosnippet>50</a>
+<a href=#51 id=51 data-nosnippet>51</a><span class="doccomment">/// The input of `deploy.get`: which deployment.
+<a href=#52 id=52 data-nosnippet>52</a></span><span class="attr">#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+<a href=#53 id=53 data-nosnippet>53</a>#[serde(deny_unknown_fields)]
+<a href=#54 id=54 data-nosnippet>54</a></span><span class="kw">pub struct </span>GetDeploymentInput {
+<a href=#55 id=55 data-nosnippet>55</a>    <span class="doccomment">/// The deployment's `id`.
+<a href=#56 id=56 data-nosnippet>56</a>    </span><span class="kw">pub </span>id: String,
+<a href=#57 id=57 data-nosnippet>57</a>}
+<a href=#58 id=58 data-nosnippet>58</a>
+<a href=#59 id=59 data-nosnippet>59</a><span class="doccomment">/// Whether the deployments this repository declares would work, decided locally: against
+<a href=#60 id=60 data-nosnippet>60</a>/// the capability registry this process built and the workspace it sits in.
+<a href=#61 id=61 data-nosnippet>61</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#62 id=62 data-nosnippet>62</a></span><span class="kw">pub struct </span>DeploymentCheck {
+<a href=#63 id=63 data-nosnippet>63</a>    <span class="doccomment">/// True when no deployment earned a refusal.
+<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">pub </span>ok: bool,
+<a href=#65 id=65 data-nosnippet>65</a>    <span class="doccomment">/// How many deployments were decided.
+<a href=#66 id=66 data-nosnippet>66</a>    </span><span class="kw">pub </span>decided: usize,
+<a href=#67 id=67 data-nosnippet>67</a>    <span class="doccomment">/// Every refusal, in the order the objects and their keys appear.
+<a href=#68 id=68 data-nosnippet>68</a>    </span><span class="kw">pub </span>refusals: Vec&lt;Refusal&gt;,
+<a href=#69 id=69 data-nosnippet>69</a>}
+<a href=#70 id=70 data-nosnippet>70</a>
+<a href=#71 id=71 data-nosnippet>71</a><span class="doccomment">/// The view orders as the deployment it wraps: the file path it adds is provenance, not a
+<a href=#72 id=72 data-nosnippet>72</a>/// second opinion about the sequence.
+<a href=#73 id=73 data-nosnippet>73</a></span><span class="kw">impl </span><span class="kw">crate</span>::order::Ordered <span class="kw">for </span>DeploymentView {
+<a href=#74 id=74 data-nosnippet>74</a>    <span class="kw">fn </span>order_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">crate</span>::order::OrderKey&lt;<span class="lifetime">'_</span>&gt; {
+<a href=#75 id=75 data-nosnippet>75</a>        <span class="self">self</span>.deployment.order_key()
+<a href=#76 id=76 data-nosnippet>76</a>    }
+<a href=#77 id=77 data-nosnippet>77</a>}
+<a href=#78 id=78 data-nosnippet>78</a>
+<a href=#79 id=79 data-nosnippet>79</a><span class="kw">fn </span>views(ctx: <span class="kw-2">&amp;</span>Context) -&gt; (Vec&lt;DeploymentView&gt;, Vec&lt;Refusal&gt;) {
+<a href=#80 id=80 data-nosnippet>80</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#81 id=81 data-nosnippet>81</a>    <span class="kw">let </span><span class="kw-2">mut </span>bad = Vec::new();
+<a href=#82 id=82 data-nosnippet>82</a>    <span class="kw">for </span>object <span class="kw">in </span>ctx.index.objects.iter().filter(|o| o.kind == KIND) {
+<a href=#83 id=83 data-nosnippet>83</a>        <span class="kw">match </span>Deployment::parse(object) {
+<a href=#84 id=84 data-nosnippet>84</a>            <span class="prelude-val">Ok</span>(deployment) =&gt; out.push(DeploymentView {
+<a href=#85 id=85 data-nosnippet>85</a>                file: object.provenance.path.clone(),
+<a href=#86 id=86 data-nosnippet>86</a>                deployment,
+<a href=#87 id=87 data-nosnippet>87</a>            }),
+<a href=#88 id=88 data-nosnippet>88</a>            <span class="prelude-val">Err</span>(refusal) =&gt; bad.push(refusal),
+<a href=#89 id=89 data-nosnippet>89</a>        }
+<a href=#90 id=90 data-nosnippet>90</a>    }
+<a href=#91 id=91 data-nosnippet>91</a>    <span class="kw">crate</span>::order::canonical(<span class="kw-2">&amp;mut </span>out);
+<a href=#92 id=92 data-nosnippet>92</a>    (out, bad)
+<a href=#93 id=93 data-nosnippet>93</a>}
+<a href=#94 id=94 data-nosnippet>94</a>
+<a href=#95 id=95 data-nosnippet>95</a><span class="kw">fn </span>deploy_list(ctx: <span class="kw-2">&amp;</span>Context, <span class="kw">_</span>: Empty) -&gt; <span class="prelude-ty">Result</span>&lt;DeploymentList, CapabilityError&gt; {
+<a href=#96 id=96 data-nosnippet>96</a>    <span class="kw">let </span>(deployments, unreadable) = views(ctx);
+<a href=#97 id=97 data-nosnippet>97</a>    <span class="prelude-val">Ok</span>(DeploymentList {
+<a href=#98 id=98 data-nosnippet>98</a>        count: deployments.len(),
+<a href=#99 id=99 data-nosnippet>99</a>        deployments,
+<a href=#100 id=100 data-nosnippet>100</a>        unreadable,
+<a href=#101 id=101 data-nosnippet>101</a>    })
+<a href=#102 id=102 data-nosnippet>102</a>}
+<a href=#103 id=103 data-nosnippet>103</a>
+<a href=#104 id=104 data-nosnippet>104</a><span class="kw">fn </span>deploy_get(ctx: <span class="kw-2">&amp;</span>Context, input: GetDeploymentInput) -&gt; <span class="prelude-ty">Result</span>&lt;DeploymentView, CapabilityError&gt; {
+<a href=#105 id=105 data-nosnippet>105</a>    <span class="kw">let </span>(deployments, <span class="kw">_</span>) = views(ctx);
+<a href=#106 id=106 data-nosnippet>106</a>    deployments
+<a href=#107 id=107 data-nosnippet>107</a>        .into_iter()
+<a href=#108 id=108 data-nosnippet>108</a>        .find(|d| d.deployment.id == input.id)
+<a href=#109 id=109 data-nosnippet>109</a>        .ok_or_else(|| {
+<a href=#110 id=110 data-nosnippet>110</a>            CapabilityError::NotFound(<span class="macro">format!</span>(
+<a href=#111 id=111 data-nosnippet>111</a>                <span class="string">"no deployment '{}' (the deployments are read from the layer's deployments section)"</span>,
+<a href=#112 id=112 data-nosnippet>112</a>                input.id
+<a href=#113 id=113 data-nosnippet>113</a>            ))
+<a href=#114 id=114 data-nosnippet>114</a>        })
+<a href=#115 id=115 data-nosnippet>115</a>}
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a><span class="kw">fn </span>deploy_check(ctx: <span class="kw-2">&amp;</span>Context, <span class="kw">_</span>: Empty) -&gt; <span class="prelude-ty">Result</span>&lt;DeploymentCheck, CapabilityError&gt; {
+<a href=#118 id=118 data-nosnippet>118</a>    <span class="kw">let </span>(deployments, unreadable) = views(ctx);
+<a href=#119 id=119 data-nosnippet>119</a>    <span class="kw">let </span>routes = ctx
+<a href=#120 id=120 data-nosnippet>120</a>        .registry
+<a href=#121 id=121 data-nosnippet>121</a>        .iter()
+<a href=#122 id=122 data-nosnippet>122</a>        .filter_map(|c| c.exposure.http.as_ref().map(|h| h.path.clone()))
+<a href=#123 id=123 data-nosnippet>123</a>        .collect();
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">let </span>ws = Workspace::read(std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root), routes);
+<a href=#125 id=125 data-nosnippet>125</a>    <span class="kw">let </span><span class="kw-2">mut </span>refusals = unreadable;
+<a href=#126 id=126 data-nosnippet>126</a>    <span class="kw">for </span>view <span class="kw">in </span><span class="kw-2">&amp;</span>deployments {
+<a href=#127 id=127 data-nosnippet>127</a>        refusals.extend(view.deployment.check(<span class="kw-2">&amp;</span>view.file, <span class="kw-2">&amp;</span>ws));
+<a href=#128 id=128 data-nosnippet>128</a>    }
+<a href=#129 id=129 data-nosnippet>129</a>    <span class="prelude-val">Ok</span>(DeploymentCheck {
+<a href=#130 id=130 data-nosnippet>130</a>        ok: refusals.is_empty(),
+<a href=#131 id=131 data-nosnippet>131</a>        decided: deployments.len(),
+<a href=#132 id=132 data-nosnippet>132</a>        refusals,
+<a href=#133 id=133 data-nosnippet>133</a>    })
+<a href=#134 id=134 data-nosnippet>134</a>}
+<a href=#135 id=135 data-nosnippet>135</a>
+<a href=#136 id=136 data-nosnippet>136</a><span class="kw">impl </span>BenchmarkCases <span class="kw">for </span>GetDeploymentInput {
+<a href=#137 id=137 data-nosnippet>137</a>    <span class="kw">fn </span>benchmark_cases(ctx: <span class="kw-2">&amp;</span>CaseContext&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;NamedCase&lt;<span class="self">Self</span>&gt;&gt; {
+<a href=#138 id=138 data-nosnippet>138</a>        ctx.index
+<a href=#139 id=139 data-nosnippet>139</a>            .objects
+<a href=#140 id=140 data-nosnippet>140</a>            .iter()
+<a href=#141 id=141 data-nosnippet>141</a>            .find(|o| o.kind == KIND)
+<a href=#142 id=142 data-nosnippet>142</a>            .map(|o| {
+<a href=#143 id=143 data-nosnippet>143</a>                <span class="macro">vec!</span>[NamedCase::new(
+<a href=#144 id=144 data-nosnippet>144</a>                    <span class="string">"first-deployment"</span>,
+<a href=#145 id=145 data-nosnippet>145</a>                    GetDeploymentInput {
+<a href=#146 id=146 data-nosnippet>146</a>                        id: o.identity.clone(),
+<a href=#147 id=147 data-nosnippet>147</a>                    },
+<a href=#148 id=148 data-nosnippet>148</a>                )]
+<a href=#149 id=149 data-nosnippet>149</a>            })
+<a href=#150 id=150 data-nosnippet>150</a>            .unwrap_or_else(|| {
+<a href=#151 id=151 data-nosnippet>151</a>                <span class="macro">vec!</span>[NamedCase::new(
+<a href=#152 id=152 data-nosnippet>152</a>                    <span class="string">"absent"</span>,
+<a href=#153 id=153 data-nosnippet>153</a>                    GetDeploymentInput {
+<a href=#154 id=154 data-nosnippet>154</a>                        id: <span class="string">"absent"</span>.into(),
+<a href=#155 id=155 data-nosnippet>155</a>                    },
+<a href=#156 id=156 data-nosnippet>156</a>                )]
+<a href=#157 id=157 data-nosnippet>157</a>            })
+<a href=#158 id=158 data-nosnippet>158</a>    }
+<a href=#159 id=159 data-nosnippet>159</a>}
+<a href=#160 id=160 data-nosnippet>160</a>
+<a href=#161 id=161 data-nosnippet>161</a><span class="doccomment">/// The module.
+<a href=#162 id=162 data-nosnippet>162</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
+<a href=#163 id=163 data-nosnippet>163</a>    <span class="macro">module!</span> {
+<a href=#164 id=164 data-nosnippet>164</a>        id: <span class="string">"deploy"</span>,
+<a href=#165 id=165 data-nosnippet>165</a>        title: <span class="string">"Deployment"</span>,
+<a href=#166 id=166 data-nosnippet>166</a>        description: <span class="string">"The deployments this repository declares, read from the canonical objects the index holds, and whether they would work — decided against the capability registry this process built and the workspace it sits in. Every operation is a read: a deployment is changed by the trusted command line and by CI, never over HTTP and never by an MCP client."</span>,
+<a href=#167 id=167 data-nosnippet>167</a>        stability: Stability::BehaviorallyVerified,
+<a href=#168 id=168 data-nosnippet>168</a>        capabilities: [
+<a href=#169 id=169 data-nosnippet>169</a>            <span class="macro">capability!</span> {
+<a href=#170 id=170 data-nosnippet>170</a>                id: <span class="string">"deploy.list"</span>,
+<a href=#171 id=171 data-nosnippet>171</a>                title: <span class="string">"Deployments"</span>,
+<a href=#172 id=172 data-nosnippet>172</a>                description: <span class="string">"Every deployment the layer declares, typed: the application, the package and binary shipped, the address the process listens on, the routes a platform polls, the resources, the machine count, the region, the build inputs, the measured budgets and the provider's own facts. An object of the kind this executable cannot read is reported with the reason rather than skipped."</span>,
+<a href=#173 id=173 data-nosnippet>173</a>                input: Empty,
+<a href=#174 id=174 data-nosnippet>174</a>                output: DeploymentList,
+<a href=#175 id=175 data-nosnippet>175</a>                stability: Stability::BehaviorallyVerified,
+<a href=#176 id=176 data-nosnippet>176</a>                exposure: Exposure {
+<a href=#177 id=177 data-nosnippet>177</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#178 id=178 data-nosnippet>178</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_deployments"</span>.into()),
+<a href=#179 id=179 data-nosnippet>179</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: DEPLOYMENTS_URI.into(), name: <span class="string">"deployments"</span>.into() }),
+<a href=#180 id=180 data-nosnippet>180</a>                    }),
+<a href=#181 id=181 data-nosnippet>181</a>                    http: get(<span class="string">"/api/v1/deployments"</span>),
+<a href=#182 id=182 data-nosnippet>182</a>                    cli: <span class="prelude-val">None</span>,
+<a href=#183 id=183 data-nosnippet>183</a>                },
+<a href=#184 id=184 data-nosnippet>184</a>                tags: [<span class="string">"deployment"</span>],
+<a href=#185 id=185 data-nosnippet>185</a>                handler: deploy_list,
+<a href=#186 id=186 data-nosnippet>186</a>            },
+<a href=#187 id=187 data-nosnippet>187</a>            <span class="macro">capability!</span> {
+<a href=#188 id=188 data-nosnippet>188</a>                id: <span class="string">"deploy.get"</span>,
+<a href=#189 id=189 data-nosnippet>189</a>                title: <span class="string">"One deployment"</span>,
+<a href=#190 id=190 data-nosnippet>190</a>                description: <span class="string">"One deployment by its identity, typed, with the repository-relative file it was read from."</span>,
+<a href=#191 id=191 data-nosnippet>191</a>                input: GetDeploymentInput,
+<a href=#192 id=192 data-nosnippet>192</a>                output: DeploymentView,
+<a href=#193 id=193 data-nosnippet>193</a>                stability: Stability::BehaviorallyVerified,
+<a href=#194 id=194 data-nosnippet>194</a>                exposure: Exposure { mcp: mcp(<span class="string">"majordomus_deployment"</span>), http: get(<span class="string">"/api/v1/deployment"</span>), cli: <span class="prelude-val">None </span>},
+<a href=#195 id=195 data-nosnippet>195</a>                tags: [<span class="string">"deployment"</span>],
+<a href=#196 id=196 data-nosnippet>196</a>                handler: deploy_get,
+<a href=#197 id=197 data-nosnippet>197</a>            },
+<a href=#198 id=198 data-nosnippet>198</a>            <span class="macro">capability!</span> {
+<a href=#199 id=199 data-nosnippet>199</a>                id: <span class="string">"deploy.check"</span>,
+<a href=#200 id=200 data-nosnippet>200</a>                title: <span class="string">"Would these deployments work"</span>,
+<a href=#201 id=201 data-nosnippet>201</a>                description: <span class="string">"Every refusal the declared deployments earn locally: a health route no capability registers, a package or binary the workspace does not produce, a build input that does not resolve, more machines running than exist, a hosted process that would bind loopback. Each names the file, the key, the value observed and the correction. Nothing here contacts the provider."</span>,
+<a href=#202 id=202 data-nosnippet>202</a>                input: Empty,
+<a href=#203 id=203 data-nosnippet>203</a>                output: DeploymentCheck,
+<a href=#204 id=204 data-nosnippet>204</a>                stability: Stability::BehaviorallyVerified,
+<a href=#205 id=205 data-nosnippet>205</a>                exposure: Exposure { mcp: mcp(<span class="string">"majordomus_deploy_check"</span>), http: get(<span class="string">"/api/v1/deployments/check"</span>), cli: <span class="prelude-val">None </span>},
+<a href=#206 id=206 data-nosnippet>206</a>                tags: [<span class="string">"deployment"</span>, <span class="string">"diagnostics"</span>],
+<a href=#207 id=207 data-nosnippet>207</a>                cache: CachePolicy::Process { max_entries: <span class="number">2</span>, ttl_seconds: <span class="prelude-val">Some</span>(<span class="number">5</span>) },
+<a href=#208 id=208 data-nosnippet>208</a>                handler: deploy_check,
+<a href=#209 id=209 data-nosnippet>209</a>            },
+<a href=#210 id=210 data-nosnippet>210</a>        ],
+<a href=#211 id=211 data-nosnippet>211</a>    }
+<a href=#212 id=212 data-nosnippet>212</a>}
+<a href=#213 id=213 data-nosnippet>213</a>
+<a href=#214 id=214 data-nosnippet>214</a><span class="attr">#[cfg(test)]
+<a href=#215 id=215 data-nosnippet>215</a></span><span class="kw">mod </span>tests {
+<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#217 id=217 data-nosnippet>217</a>    <span class="kw">use </span><span class="kw">crate</span>::capability::model::{CapabilityKind, HttpMethod};
+<a href=#218 id=218 data-nosnippet>218</a>
+<a href=#219 id=219 data-nosnippet>219</a>    <span class="doccomment">/// Nothing here mutates. A deployment is changed by the trusted command line and by
+<a href=#220 id=220 data-nosnippet>220</a>    /// CI; an operation that could start, stop or replace a machine must not be reachable
+<a href=#221 id=221 data-nosnippet>221</a>    /// from a browser or from an MCP client, and `Query` is what says so to every
+<a href=#222 id=222 data-nosnippet>222</a>    /// projection at once — read-only in MCP, `GET` in HTTP and OpenAPI.
+<a href=#223 id=223 data-nosnippet>223</a>    </span><span class="attr">#[test]
+<a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">fn </span>every_deployment_operation_is_a_read() {
+<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">for </span>c <span class="kw">in </span>module().capabilities {
+<a href=#226 id=226 data-nosnippet>226</a>            <span class="macro">assert_eq!</span>(
+<a href=#227 id=227 data-nosnippet>227</a>                c.capability.kind,
+<a href=#228 id=228 data-nosnippet>228</a>                CapabilityKind::Query,
+<a href=#229 id=229 data-nosnippet>229</a>                <span class="string">"{} is not a read"</span>,
+<a href=#230 id=230 data-nosnippet>230</a>                c.capability.id
+<a href=#231 id=231 data-nosnippet>231</a>            );
+<a href=#232 id=232 data-nosnippet>232</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(http) = <span class="kw-2">&amp;</span>c.capability.exposure.http {
+<a href=#233 id=233 data-nosnippet>233</a>                <span class="macro">assert_eq!</span>(
+<a href=#234 id=234 data-nosnippet>234</a>                    http.method,
+<a href=#235 id=235 data-nosnippet>235</a>                    HttpMethod::Get,
+<a href=#236 id=236 data-nosnippet>236</a>                    <span class="string">"{} is not a GET"</span>,
+<a href=#237 id=237 data-nosnippet>237</a>                    c.capability.id
+<a href=#238 id=238 data-nosnippet>238</a>                );
+<a href=#239 id=239 data-nosnippet>239</a>            }
+<a href=#240 id=240 data-nosnippet>240</a>        }
+<a href=#241 id=241 data-nosnippet>241</a>    }
+<a href=#242 id=242 data-nosnippet>242</a>
+<a href=#243 id=243 data-nosnippet>243</a>    <span class="doccomment">/// The declaration is the whole registration: the ids, the routes and the MCP names
+<a href=#244 id=244 data-nosnippet>244</a>    /// exist once, here, and every projection is derived from them. A test that pinned a
+<a href=#245 id=245 data-nosnippet>245</a>    /// second list would be the defect; this one pins that the module composes what it
+<a href=#246 id=246 data-nosnippet>246</a>    /// says it does.
+<a href=#247 id=247 data-nosnippet>247</a>    </span><span class="attr">#[test]
+<a href=#248 id=248 data-nosnippet>248</a>    </span><span class="kw">fn </span>the_module_declares_the_reads_and_nothing_else() {
+<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">let </span>ids: Vec&lt;String&gt; = module()
+<a href=#250 id=250 data-nosnippet>250</a>            .capabilities
+<a href=#251 id=251 data-nosnippet>251</a>            .iter()
+<a href=#252 id=252 data-nosnippet>252</a>            .map(|c| c.capability.id.to_string())
+<a href=#253 id=253 data-nosnippet>253</a>            .collect();
+<a href=#254 id=254 data-nosnippet>254</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"deploy.list"</span>, <span class="string">"deploy.get"</span>, <span class="string">"deploy.check"</span>]);
+<a href=#255 id=255 data-nosnippet>255</a>    }
+<a href=#256 id=256 data-nosnippet>256</a>
+<a href=#257 id=257 data-nosnippet>257</a>    <span class="doccomment">/// A deployment id the layer does not have is refused by name rather than answered
+<a href=#258 id=258 data-nosnippet>258</a>    /// with an empty result: an absent deployment and a deployment with nothing in it are
+<a href=#259 id=259 data-nosnippet>259</a>    /// different facts.
+<a href=#260 id=260 data-nosnippet>260</a>    </span><span class="attr">#[test]
+<a href=#261 id=261 data-nosnippet>261</a>    </span><span class="kw">fn </span>an_absent_deployment_is_not_found() {
+<a href=#262 id=262 data-nosnippet>262</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::new(<span class="kw">crate</span>::synthetic::Shape::default())
+<a href=#263 id=263 data-nosnippet>263</a>            .expect(<span class="string">"a synthetic repository"</span>);
+<a href=#264 id=264 data-nosnippet>264</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#265 id=265 data-nosnippet>265</a>        <span class="kw">let </span>e = deploy_get(
+<a href=#266 id=266 data-nosnippet>266</a>            <span class="kw-2">&amp;</span>ctx,
+<a href=#267 id=267 data-nosnippet>267</a>            GetDeploymentInput {
+<a href=#268 id=268 data-nosnippet>268</a>                id: <span class="string">"absent"</span>.into(),
+<a href=#269 id=269 data-nosnippet>269</a>            },
+<a href=#270 id=270 data-nosnippet>270</a>        )
+<a href=#271 id=271 data-nosnippet>271</a>        .expect_err(<span class="string">"refused"</span>);
+<a href=#272 id=272 data-nosnippet>272</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(e, CapabilityError::NotFound(<span class="kw">_</span>)), <span class="string">"{e}"</span>);
+<a href=#273 id=273 data-nosnippet>273</a>    }
+<a href=#274 id=274 data-nosnippet>274</a>
+<a href=#275 id=275 data-nosnippet>275</a>    <span class="doccomment">/// A layer that declares no deployment is not a failure: the list is empty and the
+<a href=#276 id=276 data-nosnippet>276</a>    /// check is satisfied, because there is nothing that could be wrong.
+<a href=#277 id=277 data-nosnippet>277</a>    </span><span class="attr">#[test]
+<a href=#278 id=278 data-nosnippet>278</a>    </span><span class="kw">fn </span>a_layer_with_no_deployments_lists_none_and_checks_clean() {
+<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span>repo = <span class="kw">crate</span>::synthetic::SyntheticRepository::new(<span class="kw">crate</span>::synthetic::Shape::default())
+<a href=#280 id=280 data-nosnippet>280</a>            .expect(<span class="string">"a synthetic repository"</span>);
+<a href=#281 id=281 data-nosnippet>281</a>        <span class="kw">let </span>ctx = repo.context().expect(<span class="string">"a context"</span>);
+<a href=#282 id=282 data-nosnippet>282</a>        <span class="macro">assert_eq!</span>(deploy_list(<span class="kw-2">&amp;</span>ctx, Empty {}).expect(<span class="string">"listed"</span>).count, <span class="number">0</span>);
+<a href=#283 id=283 data-nosnippet>283</a>        <span class="kw">let </span>check = deploy_check(<span class="kw-2">&amp;</span>ctx, Empty {}).expect(<span class="string">"checked"</span>);
+<a href=#284 id=284 data-nosnippet>284</a>        <span class="macro">assert!</span>(check.ok);
+<a href=#285 id=285 data-nosnippet>285</a>        <span class="macro">assert_eq!</span>(check.decided, <span class="number">0</span>);
+<a href=#286 id=286 data-nosnippet>286</a>    }
+<a href=#287 id=287 data-nosnippet>287</a>}
+</code></pre></div></section></main></body></html>

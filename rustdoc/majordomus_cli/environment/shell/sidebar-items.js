@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Dialect"],"fn":["export","is_identifier","quote_fish","quote_posix","variables"],"struct":["Variable"]};

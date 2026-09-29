@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["KINDS_SCHEMA","REPO_KINDS_FILE","REPO_SCHEMAS_DIR"],"enum":["Format","FrontMatterRule"],"mod":["frontmatter","yaml"],"struct":["KindSchema","KindSpec","Schema","SchemaSet","SchemaVersion","Violation"]};

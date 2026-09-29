@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_EXPIRY","DEFAULT_GROUP","DEFAULT_HEARTBEAT","DEFAULT_INTERVAL","DEFAULT_PORT","KIND","SCHEMA_VERSION"],"enum":["BroadcastMode"],"struct":["BroadcastConfig","CooperationConfig","MeshConfig","MulticastConfig","RendezvousConfig","TrustConfig"]};

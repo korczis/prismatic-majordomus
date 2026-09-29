@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ClaimState","ReviewState","SessionState"],"fn":["admission_conflicts","fold","scopes_meet"],"struct":["ClaimOverlap","ClaimView","CooperationState","HandoverView","ReviewAnswer","ReviewView","SessionView"]};

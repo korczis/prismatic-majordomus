@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DOCS_PREFIX","MACHINE_CEILING","RESERVED_WORKFLOW_NAMES"],"fn":["declared_in","docs_route","machine_verdict","offered_on","project","workflow_name"]};

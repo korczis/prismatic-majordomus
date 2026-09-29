@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CoverageState","SystemTarget","TargetKind","Transport"],"mod":["baseline","results"],"struct":["BenchmarkProjection","BenchmarkTarget","Coverage","CoverageLine","Profile","Runner","Statistics"]};

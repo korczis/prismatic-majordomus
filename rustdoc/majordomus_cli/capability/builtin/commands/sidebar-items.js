@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["COMMANDS_URI"],"fn":["module"],"struct":["CommandFilter","CommandGraphReport","CommandIndex","CommandRequest","CommandSummary"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["GitState"],"fn":["inspect","is_ancestor","ls_files","ls_files_all","ls_files_any","read_only","working_tree_ignoring"],"struct":["GitInfo"]};

@@ -1,0 +1,433 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/repository.rs`."><title>repository.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../static.files/storage-41dd4d93.js"></script><script defer src="../../static.files/src-script-813739b1.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/</div>repository.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Repository discovery: the nearest ancestor of the start directory that carries
+<a href=#2 id=2 data-nosnippet>2</a>//! `.ai/manifest.yaml` is the root, and the manifest is the only thing read to find it.
+<a href=#3 id=3 data-nosnippet>3</a>//!
+<a href=#4 id=4 data-nosnippet>4</a>//! `.git` is not a marker: an arbitrary git repository is not a Majordomus repository. A
+<a href=#5 id=5 data-nosnippet>5</a>//! `.majordomus/` directory is not a marker either; it is an optional installation of the
+<a href=#6 id=6 data-nosnippet>6</a>//! tool, or the pre-`.ai` layout, which is refused by name.
+<a href=#7 id=7 data-nosnippet>7</a>//!
+<a href=#8 id=8 data-nosnippet>8</a>//! # Why the marker is the manifest
+<a href=#9 id=9 data-nosnippet>9</a>//!
+<a href=#10 id=10 data-nosnippet>10</a>//! Every other candidate marker is ambiguous. `.git` says a directory is version
+<a href=#11 id=11 data-nosnippet>11</a>//! controlled, which almost every directory a person runs this in will be; a `.ai`
+<a href=#12 id=12 data-nosnippet>12</a>//! directory alone says nothing about whether it is *this* layer. The manifest declares its
+<a href=#13 id=13 data-nosnippet>13</a>//! own schema, so discovery either finds a layer this executable can read or it says which
+<a href=#14 id=14 data-nosnippet>14</a>//! schema it found and which it reads — never a half-open repository.
+<a href=#15 id=15 data-nosnippet>15</a>//!
+<a href=#16 id=16 data-nosnippet>16</a>//! # Errors
+<a href=#17 id=17 data-nosnippet>17</a>//!
+<a href=#18 id=18 data-nosnippet>18</a>//! [`crate::Error::RepositoryNotFound`] when no ancestor carries the manifest, naming where
+<a href=#19 id=19 data-nosnippet>19</a>//! the search began; [`crate::Error::LegacyLayout`] when it finds the pre-`.ai` layout,
+<a href=#20 id=20 data-nosnippet>20</a>//! naming the migration; and the manifest's own parse and schema errors, each naming the
+<a href=#21 id=21 data-nosnippet>21</a>//! file. None of them is a diagnostic: without a manifest nothing can be discovered at all.
+<a href=#22 id=22 data-nosnippet>22</a>//!
+<a href=#23 id=23 data-nosnippet>23</a>//! ```
+<a href=#24 id=24 data-nosnippet>24</a>//! use majordomus_cli::Repository;
+<a href=#25 id=25 data-nosnippet>25</a>//!
+<a href=#26 id=26 data-nosnippet>26</a>//! // a directory that is not a repository is an error that says where it looked
+<a href=#27 id=27 data-nosnippet>27</a>//! let empty = tempfile::tempdir().unwrap();
+<a href=#28 id=28 data-nosnippet>28</a>//! let err = Repository::discover(empty.path()).unwrap_err();
+<a href=#29 id=29 data-nosnippet>29</a>//! assert!(matches!(err, majordomus_cli::Error::RepositoryNotFound { .. }));
+<a href=#30 id=30 data-nosnippet>30</a>//! assert_eq!(err.exit_code(), 12, "the code for something that is not there");
+<a href=#31 id=31 data-nosnippet>31</a>//!
+<a href=#32 id=32 data-nosnippet>32</a>//! // and a git repository is not one either: the marker is the manifest and nothing else
+<a href=#33 id=33 data-nosnippet>33</a>//! std::fs::create_dir(empty.path().join(".git")).unwrap();
+<a href=#34 id=34 data-nosnippet>34</a>//! assert!(Repository::discover(empty.path()).is_err());
+<a href=#35 id=35 data-nosnippet>35</a>//! ```
+<a href=#36 id=36 data-nosnippet>36</a>
+<a href=#37 id=37 data-nosnippet>37</a></span><span class="kw">use </span>std::collections::BTreeMap;
+<a href=#38 id=38 data-nosnippet>38</a><span class="kw">use </span>std::path::{Path, PathBuf};
+<a href=#39 id=39 data-nosnippet>39</a>
+<a href=#40 id=40 data-nosnippet>40</a><span class="kw">use </span>serde::Deserialize;
+<a href=#41 id=41 data-nosnippet>41</a>
+<a href=#42 id=42 data-nosnippet>42</a><span class="kw">use </span><span class="kw">crate</span>::error::{Error, <span class="prelude-ty">Result</span>};
+<a href=#43 id=43 data-nosnippet>43</a><span class="kw">use </span><span class="kw">crate</span>::metadata::yaml;
+<a href=#44 id=44 data-nosnippet>44</a>
+<a href=#45 id=45 data-nosnippet>45</a><span class="doccomment">/// The file whose presence makes a directory the root of a Majordomus repository.
+<a href=#46 id=46 data-nosnippet>46</a></span><span class="kw">pub const </span>MANIFEST: <span class="kw-2">&amp;</span>str = <span class="string">".ai/manifest.yaml"</span>;
+<a href=#47 id=47 data-nosnippet>47</a>
+<a href=#48 id=48 data-nosnippet>48</a><span class="doccomment">/// The layer schema this executable reads.
+<a href=#49 id=49 data-nosnippet>49</a></span><span class="kw">pub const </span>LAYER_SCHEMA: <span class="kw-2">&amp;</span>str = <span class="string">"ai-repository/v1"</span>;
+<a href=#50 id=50 data-nosnippet>50</a>
+<a href=#51 id=51 data-nosnippet>51</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+<a href=#52 id=52 data-nosnippet>52</a>#[serde(deny_unknown_fields)]
+<a href=#53 id=53 data-nosnippet>53</a></span><span class="doccomment">/// The tracked half of the layer.
+<a href=#54 id=54 data-nosnippet>54</a></span><span class="kw">pub struct </span>RepoHalf {
+<a href=#55 id=55 data-nosnippet>55</a>    <span class="doccomment">/// Relative to `.ai/`.
+<a href=#56 id=56 data-nosnippet>56</a>    </span><span class="kw">pub </span>path: String,
+<a href=#57 id=57 data-nosnippet>57</a>}
+<a href=#58 id=58 data-nosnippet>58</a>
+<a href=#59 id=59 data-nosnippet>59</a><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+<a href=#60 id=60 data-nosnippet>60</a>#[serde(deny_unknown_fields)]
+<a href=#61 id=61 data-nosnippet>61</a></span><span class="doccomment">/// The checkout-local half of the layer, never a source.
+<a href=#62 id=62 data-nosnippet>62</a></span><span class="kw">pub struct </span>LocalHalf {
+<a href=#63 id=63 data-nosnippet>63</a>    <span class="doccomment">/// Relative to `.ai/`.
+<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">pub </span>path: String,
+<a href=#65 id=65 data-nosnippet>65</a>    <span class="doccomment">/// Tracked in git? The contract says `false`.
+<a href=#66 id=66 data-nosnippet>66</a>    </span><span class="kw">pub </span>tracked: bool,
+<a href=#67 id=67 data-nosnippet>67</a>    <span class="doccomment">/// Loaded into a worker's context implicitly? The contract says `false`.
+<a href=#68 id=68 data-nosnippet>68</a>    </span><span class="kw">pub </span>implicit_context: bool,
+<a href=#69 id=69 data-nosnippet>69</a>}
+<a href=#70 id=70 data-nosnippet>70</a>
+<a href=#71 id=71 data-nosnippet>71</a><span class="doccomment">/// The scoped context documents: file names that must carry the context contract
+<a href=#72 id=72 data-nosnippet>72</a>/// (`schema: context/v1`) wherever they appear under the layer.
+<a href=#73 id=73 data-nosnippet>73</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Default)]
+<a href=#74 id=74 data-nosnippet>74</a>#[serde(deny_unknown_fields)]
+<a href=#75 id=75 data-nosnippet>75</a></span><span class="kw">pub struct </span>ContextConventions {
+<a href=#76 id=76 data-nosnippet>76</a>    <span class="attr">#[serde(default)]
+<a href=#77 id=77 data-nosnippet>77</a>    </span><span class="doccomment">/// File names, e.g. `README.md`.
+<a href=#78 id=78 data-nosnippet>78</a>    </span><span class="kw">pub </span>documents: Vec&lt;String&gt;,
+<a href=#79 id=79 data-nosnippet>79</a>}
+<a href=#80 id=80 data-nosnippet>80</a>
+<a href=#81 id=81 data-nosnippet>81</a><span class="doccomment">/// `.ai/manifest.yaml`, typed. Unknown keys are refused through `share/allow/manifest.txt`.
+<a href=#82 id=82 data-nosnippet>82</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+<a href=#83 id=83 data-nosnippet>83</a>#[serde(deny_unknown_fields)]
+<a href=#84 id=84 data-nosnippet>84</a></span><span class="kw">pub struct </span>Manifest {
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="doccomment">/// The layer schema, [`LAYER_SCHEMA`].
+<a href=#86 id=86 data-nosnippet>86</a>    </span><span class="kw">pub </span>schema: String,
+<a href=#87 id=87 data-nosnippet>87</a>    <span class="doccomment">/// Where the tracked half is.
+<a href=#88 id=88 data-nosnippet>88</a>    </span><span class="kw">pub </span>repo: RepoHalf,
+<a href=#89 id=89 data-nosnippet>89</a>    <span class="doccomment">/// Where the checkout-local half is.
+<a href=#90 id=90 data-nosnippet>90</a>    </span><span class="kw">pub </span>local: LocalHalf,
+<a href=#91 id=91 data-nosnippet>91</a>    <span class="doccomment">/// Section name to path, relative to `.ai/`. Sorted by name.
+<a href=#92 id=92 data-nosnippet>92</a>    </span><span class="kw">pub </span>sections: BTreeMap&lt;String, String&gt;,
+<a href=#93 id=93 data-nosnippet>93</a>    <span class="doccomment">/// Optional: absent in a layer written before context documents existed.
+<a href=#94 id=94 data-nosnippet>94</a>    </span><span class="attr">#[serde(default)]
+<a href=#95 id=95 data-nosnippet>95</a>    </span><span class="kw">pub </span>context: <span class="prelude-ty">Option</span>&lt;ContextConventions&gt;,
+<a href=#96 id=96 data-nosnippet>96</a>}
+<a href=#97 id=97 data-nosnippet>97</a>
+<a href=#98 id=98 data-nosnippet>98</a><span class="kw">impl </span>Manifest {
+<a href=#99 id=99 data-nosnippet>99</a>    <span class="doccomment">/// Parse the manifest. The typed struct refuses a key it does not read and names it;
+<a href=#100 id=100 data-nosnippet>100</a>    /// the distribution's `manifest` schema is applied by the application once the share
+<a href=#101 id=101 data-nosnippet>101</a>    /// directory is located, for the constraints a type cannot express.
+<a href=#102 id=102 data-nosnippet>102</a>    </span><span class="kw">pub fn </span>parse(path: <span class="kw-2">&amp;</span>Path, text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#103 id=103 data-nosnippet>103</a>        <span class="kw">let </span>map = yaml::parse_mapping(text).map_err(|reason| Error::InvalidManifest {
+<a href=#104 id=104 data-nosnippet>104</a>            path: path.to_path_buf(),
+<a href=#105 id=105 data-nosnippet>105</a>            reason,
+<a href=#106 id=106 data-nosnippet>106</a>        })<span class="question-mark">?</span>;
+<a href=#107 id=107 data-nosnippet>107</a>        <span class="kw">let </span>schema = map
+<a href=#108 id=108 data-nosnippet>108</a>            .get(<span class="string">"schema"</span>)
+<a href=#109 id=109 data-nosnippet>109</a>            .and_then(|v| v.as_str())
+<a href=#110 id=110 data-nosnippet>110</a>            .unwrap_or_default()
+<a href=#111 id=111 data-nosnippet>111</a>            .to_string();
+<a href=#112 id=112 data-nosnippet>112</a>        <span class="kw">if </span>schema != LAYER_SCHEMA {
+<a href=#113 id=113 data-nosnippet>113</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::UnsupportedSchema {
+<a href=#114 id=114 data-nosnippet>114</a>                path: path.to_path_buf(),
+<a href=#115 id=115 data-nosnippet>115</a>                found: schema,
+<a href=#116 id=116 data-nosnippet>116</a>                supported: LAYER_SCHEMA.to_string(),
+<a href=#117 id=117 data-nosnippet>117</a>            });
+<a href=#118 id=118 data-nosnippet>118</a>        }
+<a href=#119 id=119 data-nosnippet>119</a>        serde_json::from_value(serde_json::Value::Object(map)).map_err(|e| {
+<a href=#120 id=120 data-nosnippet>120</a>            <span class="kw">let </span>reason = e.to_string();
+<a href=#121 id=121 data-nosnippet>121</a>            <span class="kw">match </span>reason.strip_prefix(<span class="string">"unknown field `"</span>) {
+<a href=#122 id=122 data-nosnippet>122</a>                <span class="prelude-val">Some</span>(rest) =&gt; Error::UnknownKeys {
+<a href=#123 id=123 data-nosnippet>123</a>                    path: path.to_path_buf(),
+<a href=#124 id=124 data-nosnippet>124</a>                    keys: <span class="macro">vec!</span>[rest.split(<span class="string">'`'</span>).next().unwrap_or(rest).to_string()],
+<a href=#125 id=125 data-nosnippet>125</a>                },
+<a href=#126 id=126 data-nosnippet>126</a>                <span class="prelude-val">None </span>=&gt; Error::InvalidManifest {
+<a href=#127 id=127 data-nosnippet>127</a>                    path: path.to_path_buf(),
+<a href=#128 id=128 data-nosnippet>128</a>                    reason,
+<a href=#129 id=129 data-nosnippet>129</a>                },
+<a href=#130 id=130 data-nosnippet>130</a>            }
+<a href=#131 id=131 data-nosnippet>131</a>        })
+<a href=#132 id=132 data-nosnippet>132</a>    }
+<a href=#133 id=133 data-nosnippet>133</a>}
+<a href=#134 id=134 data-nosnippet>134</a>
+<a href=#135 id=135 data-nosnippet>135</a><span class="doccomment">/// A located repository with its manifest read.
+<a href=#136 id=136 data-nosnippet>136</a></span><span class="attr">#[derive(Debug, Clone)]
+<a href=#137 id=137 data-nosnippet>137</a></span><span class="kw">pub struct </span>Repository {
+<a href=#138 id=138 data-nosnippet>138</a>    root: PathBuf,
+<a href=#139 id=139 data-nosnippet>139</a>    manifest: Manifest,
+<a href=#140 id=140 data-nosnippet>140</a>}
+<a href=#141 id=141 data-nosnippet>141</a>
+<a href=#142 id=142 data-nosnippet>142</a><span class="kw">impl </span>Repository {
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="doccomment">/// Walk from `start` upward to the nearest directory carrying [`MANIFEST`]. A manifest
+<a href=#144 id=144 data-nosnippet>144</a>    /// that does not parse stops the search with its error: a nearer broken layer is never
+<a href=#145 id=145 data-nosnippet>145</a>    /// skipped in favour of a farther working one.
+<a href=#146 id=146 data-nosnippet>146</a>    </span><span class="kw">pub fn </span>discover(start: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#147 id=147 data-nosnippet>147</a>        <span class="kw">let </span>start = start.canonicalize().map_err(|e| Error::io(start, e))<span class="question-mark">?</span>;
+<a href=#148 id=148 data-nosnippet>148</a>        <span class="kw">for </span>dir <span class="kw">in </span>start.ancestors() {
+<a href=#149 id=149 data-nosnippet>149</a>            <span class="kw">let </span>manifest = dir.join(MANIFEST);
+<a href=#150 id=150 data-nosnippet>150</a>            <span class="kw">if </span>manifest.is_file() {
+<a href=#151 id=151 data-nosnippet>151</a>                <span class="kw">return </span><span class="self">Self</span>::open(dir);
+<a href=#152 id=152 data-nosnippet>152</a>            }
+<a href=#153 id=153 data-nosnippet>153</a>            <span class="kw">if </span>is_legacy_layout(dir) {
+<a href=#154 id=154 data-nosnippet>154</a>                <span class="kw">return </span><span class="prelude-val">Err</span>(Error::LegacyLayout {
+<a href=#155 id=155 data-nosnippet>155</a>                    root: dir.to_path_buf(),
+<a href=#156 id=156 data-nosnippet>156</a>                });
+<a href=#157 id=157 data-nosnippet>157</a>            }
+<a href=#158 id=158 data-nosnippet>158</a>        }
+<a href=#159 id=159 data-nosnippet>159</a>        <span class="prelude-val">Err</span>(Error::RepositoryNotFound { start })
+<a href=#160 id=160 data-nosnippet>160</a>    }
+<a href=#161 id=161 data-nosnippet>161</a>
+<a href=#162 id=162 data-nosnippet>162</a>    <span class="doccomment">/// Open a directory known to be a root.
+<a href=#163 id=163 data-nosnippet>163</a>    </span><span class="kw">pub fn </span>open(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">let </span>manifest_path = root.join(MANIFEST);
+<a href=#165 id=165 data-nosnippet>165</a>        <span class="kw">let </span>text =
+<a href=#166 id=166 data-nosnippet>166</a>            std::fs::read_to_string(<span class="kw-2">&amp;</span>manifest_path).map_err(|e| Error::io(<span class="kw-2">&amp;</span>manifest_path, e))<span class="question-mark">?</span>;
+<a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">let </span>manifest = Manifest::parse(<span class="kw-2">&amp;</span>manifest_path, <span class="kw-2">&amp;</span>text)<span class="question-mark">?</span>;
+<a href=#168 id=168 data-nosnippet>168</a>        <span class="prelude-val">Ok</span>(Repository {
+<a href=#169 id=169 data-nosnippet>169</a>            root: root.to_path_buf(),
+<a href=#170 id=170 data-nosnippet>170</a>            manifest,
+<a href=#171 id=171 data-nosnippet>171</a>        })
+<a href=#172 id=172 data-nosnippet>172</a>    }
+<a href=#173 id=173 data-nosnippet>173</a>
+<a href=#174 id=174 data-nosnippet>174</a>    <span class="doccomment">/// The root, absolute and canonical.
+<a href=#175 id=175 data-nosnippet>175</a>    </span><span class="kw">pub fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Path {
+<a href=#176 id=176 data-nosnippet>176</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.root
+<a href=#177 id=177 data-nosnippet>177</a>    }
+<a href=#178 id=178 data-nosnippet>178</a>
+<a href=#179 id=179 data-nosnippet>179</a>    <span class="doccomment">/// The manifest, typed.
+<a href=#180 id=180 data-nosnippet>180</a>    </span><span class="kw">pub fn </span>manifest(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Manifest {
+<a href=#181 id=181 data-nosnippet>181</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.manifest
+<a href=#182 id=182 data-nosnippet>182</a>    }
+<a href=#183 id=183 data-nosnippet>183</a>
+<a href=#184 id=184 data-nosnippet>184</a>    <span class="doccomment">/// The manifest as a JSON value, for schema validation.
+<a href=#185 id=185 data-nosnippet>185</a>    </span><span class="kw">pub fn </span>manifest_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span>&lt;serde_json::Value&gt; {
+<a href=#186 id=186 data-nosnippet>186</a>        <span class="kw">let </span>path = <span class="self">self</span>.root.join(MANIFEST);
+<a href=#187 id=187 data-nosnippet>187</a>        <span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>path).map_err(|e| Error::io(<span class="kw-2">&amp;</span>path, e))<span class="question-mark">?</span>;
+<a href=#188 id=188 data-nosnippet>188</a>        <span class="kw">let </span>map =
+<a href=#189 id=189 data-nosnippet>189</a>            yaml::parse_mapping(<span class="kw-2">&amp;</span>text).map_err(|reason| Error::InvalidManifest { path, reason })<span class="question-mark">?</span>;
+<a href=#190 id=190 data-nosnippet>190</a>        <span class="prelude-val">Ok</span>(serde_json::Value::Object(map))
+<a href=#191 id=191 data-nosnippet>191</a>    }
+<a href=#192 id=192 data-nosnippet>192</a>
+<a href=#193 id=193 data-nosnippet>193</a>    <span class="doccomment">/// `.ai/`, absolute.
+<a href=#194 id=194 data-nosnippet>194</a>    </span><span class="kw">pub fn </span>ai_dir(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; PathBuf {
+<a href=#195 id=195 data-nosnippet>195</a>        <span class="self">self</span>.root.join(<span class="string">".ai"</span>)
+<a href=#196 id=196 data-nosnippet>196</a>    }
+<a href=#197 id=197 data-nosnippet>197</a>
+<a href=#198 id=198 data-nosnippet>198</a>    <span class="doccomment">/// The repository-relative path of a section, e.g. `.ai/repo/rules`, or `None` when
+<a href=#199 id=199 data-nosnippet>199</a>    /// the manifest does not name it.
+<a href=#200 id=200 data-nosnippet>200</a>    </span><span class="kw">pub fn </span>section_path(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<a href=#201 id=201 data-nosnippet>201</a>        <span class="self">self</span>.manifest.sections.get(name).map(|p| <span class="macro">format!</span>(<span class="string">".ai/{p}"</span>))
+<a href=#202 id=202 data-nosnippet>202</a>    }
+<a href=#203 id=203 data-nosnippet>203</a>
+<a href=#204 id=204 data-nosnippet>204</a>    <span class="doccomment">/// The repository-relative path of the checkout-local half, never a source.
+<a href=#205 id=205 data-nosnippet>205</a>    </span><span class="kw">pub fn </span>local_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+<a href=#206 id=206 data-nosnippet>206</a>        <span class="macro">format!</span>(<span class="string">".ai/{}"</span>, <span class="self">self</span>.manifest.local.path)
+<a href=#207 id=207 data-nosnippet>207</a>    }
+<a href=#208 id=208 data-nosnippet>208</a>
+<a href=#209 id=209 data-nosnippet>209</a>    <span class="doccomment">/// The repository-relative path of the tracked half.
+<a href=#210 id=210 data-nosnippet>210</a>    </span><span class="kw">pub fn </span>repo_path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
+<a href=#211 id=211 data-nosnippet>211</a>        <span class="macro">format!</span>(<span class="string">".ai/{}"</span>, <span class="self">self</span>.manifest.repo.path)
+<a href=#212 id=212 data-nosnippet>212</a>    }
+<a href=#213 id=213 data-nosnippet>213</a>
+<a href=#214 id=214 data-nosnippet>214</a>    <span class="doccomment">/// The manifest section a repository-relative path falls under, by longest prefix.
+<a href=#215 id=215 data-nosnippet>215</a>    </span><span class="kw">pub fn </span>section_of(<span class="kw-2">&amp;</span><span class="self">self</span>, rel_path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt; {
+<a href=#216 id=216 data-nosnippet>216</a>        <span class="kw">let </span><span class="kw-2">mut </span>best: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>str, usize)&gt; = <span class="prelude-val">None</span>;
+<a href=#217 id=217 data-nosnippet>217</a>        <span class="kw">for </span>(name, p) <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.manifest.sections {
+<a href=#218 id=218 data-nosnippet>218</a>            <span class="kw">let </span>full = <span class="macro">format!</span>(<span class="string">".ai/{p}"</span>);
+<a href=#219 id=219 data-nosnippet>219</a>            <span class="kw">let </span>matches = rel_path == full || rel_path.starts_with(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{full}/"</span>));
+<a href=#220 id=220 data-nosnippet>220</a>            <span class="kw">if </span>matches &amp;&amp; best.is_none_or(|(<span class="kw">_</span>, len)| full.len() &gt; len) {
+<a href=#221 id=221 data-nosnippet>221</a>                best = <span class="prelude-val">Some</span>((name.as_str(), full.len()));
+<a href=#222 id=222 data-nosnippet>222</a>            }
+<a href=#223 id=223 data-nosnippet>223</a>        }
+<a href=#224 id=224 data-nosnippet>224</a>        best.map(|(n, <span class="kw">_</span>)| n)
+<a href=#225 id=225 data-nosnippet>225</a>    }
+<a href=#226 id=226 data-nosnippet>226</a>}
+<a href=#227 id=227 data-nosnippet>227</a>
+<a href=#228 id=228 data-nosnippet>228</a><span class="doccomment">/// Project data under `.majordomus/` with no `.ai/manifest.yaml` is the pre-`.ai` layout.
+<a href=#229 id=229 data-nosnippet>229</a>/// A `.majordomus/` that holds a tool distribution (`bin/majordomus`) is an installation.
+<a href=#230 id=230 data-nosnippet>230</a></span><span class="kw">fn </span>is_legacy_layout(dir: <span class="kw-2">&amp;</span>Path) -&gt; bool {
+<a href=#231 id=231 data-nosnippet>231</a>    <span class="kw">let </span>mj = dir.join(<span class="string">".majordomus"</span>);
+<a href=#232 id=232 data-nosnippet>232</a>    mj.is_dir() &amp;&amp; !mj.join(<span class="string">"bin/majordomus"</span>).is_file()
+<a href=#233 id=233 data-nosnippet>233</a>}
+<a href=#234 id=234 data-nosnippet>234</a>
+<a href=#235 id=235 data-nosnippet>235</a><span class="doccomment">/// A repository's identity over the wire: a digest of its absolute root.
+<a href=#236 id=236 data-nosnippet>236</a>///
+<a href=#237 id=237 data-nosnippet>237</a>/// A server on a loopback socket has to be able to say *which* repository it serves, so
+<a href=#238 id=238 data-nosnippet>238</a>/// that a second process can tell a live server for this repository from one for another.
+<a href=#239 id=239 data-nosnippet>239</a>/// The root itself would answer that and would also tell whoever reached the socket where
+<a href=#240 id=240 data-nosnippet>240</a>/// the checkout sits on the host, which is of no use to them and of some use to somebody
+<a href=#241 id=241 data-nosnippet>241</a>/// else. A digest answers the question and discloses nothing: a process that already knows
+<a href=#242 id=242 data-nosnippet>242</a>/// the root can compute it and compare, and a process that does not cannot invert it.
+<a href=#243 id=243 data-nosnippet>243</a>///
+<a href=#244 id=244 data-nosnippet>244</a>/// Two repositories at one path are one repository, which is exactly the identity a lease
+<a href=#245 id=245 data-nosnippet>245</a>/// needs. A repository that moves is a different one, which is also right: the lease of the
+<a href=#246 id=246 data-nosnippet>246</a>/// old path names a server that is no longer serving that path.
+<a href=#247 id=247 data-nosnippet>247</a>///
+<a href=#248 id=248 data-nosnippet>248</a>/// ```
+<a href=#249 id=249 data-nosnippet>249</a>/// use majordomus_cli::repository::identity;
+<a href=#250 id=250 data-nosnippet>250</a>/// use std::path::Path;
+<a href=#251 id=251 data-nosnippet>251</a>/// assert_eq!(identity(Path::new("/a/b")), identity(Path::new("/a/b")));
+<a href=#252 id=252 data-nosnippet>252</a>/// assert_ne!(identity(Path::new("/a/b")), identity(Path::new("/a/c")));
+<a href=#253 id=253 data-nosnippet>253</a>/// assert_eq!(identity(Path::new("/a/b")).len(), 32);
+<a href=#254 id=254 data-nosnippet>254</a>/// assert!(!identity(Path::new("/a/b")).contains('/'));
+<a href=#255 id=255 data-nosnippet>255</a>/// ```
+<a href=#256 id=256 data-nosnippet>256</a></span><span class="kw">pub fn </span>identity(root: <span class="kw-2">&amp;</span>Path) -&gt; String {
+<a href=#257 id=257 data-nosnippet>257</a>    digest(root)
+<a href=#258 id=258 data-nosnippet>258</a>}
+<a href=#259 id=259 data-nosnippet>259</a>
+<a href=#260 id=260 data-nosnippet>260</a><span class="kw">fn </span>digest(path: <span class="kw-2">&amp;</span>Path) -&gt; String {
+<a href=#261 id=261 data-nosnippet>261</a>    <span class="kw">use </span>sha2::{Digest, Sha256};
+<a href=#262 id=262 data-nosnippet>262</a>    <span class="kw">let </span><span class="kw-2">mut </span>hasher = Sha256::new();
+<a href=#263 id=263 data-nosnippet>263</a>    hasher.update(path.as_os_str().as_encoded_bytes());
+<a href=#264 id=264 data-nosnippet>264</a>    <span class="macro">format!</span>(<span class="string">"{:x}"</span>, hasher.finalize())[..<span class="number">32</span>].to_string()
+<a href=#265 id=265 data-nosnippet>265</a>}
+<a href=#266 id=266 data-nosnippet>266</a>
+<a href=#267 id=267 data-nosnippet>267</a><span class="doccomment">/// The git repository a checkout belongs to, as distinct from the checkout itself.
+<a href=#268 id=268 data-nosnippet>268</a>///
+<a href=#269 id=269 data-nosnippet>269</a>/// [`identity`] names a checkout: one server, one lease, one index per checkout root. Every
+<a href=#270 id=270 data-nosnippet>270</a>/// linked worktree of one git repository is a checkout of its own by that measure, and
+<a href=#271 id=271 data-nosnippet>271</a>/// nothing in it said that they belong together. This does: the git directory every work
+<a href=#272 id=272 data-nosnippet>272</a>/// tree shares (`git rev-parse --git-common-dir`) is the repository's identity, its digest
+<a href=#273 id=273 data-nosnippet>273</a>/// is one value for every checkout of that repository, and `linked` says whether this
+<a href=#274 id=274 data-nosnippet>274</a>/// checkout is the primary one or a work tree hanging off it. `None` where git cannot be
+<a href=#275 id=275 data-nosnippet>275</a>/// asked: a repository of the layer does not have to be version controlled.
+<a href=#276 id=276 data-nosnippet>276</a>///
+<a href=#277 id=277 data-nosnippet>277</a>/// ```
+<a href=#278 id=278 data-nosnippet>278</a>/// use majordomus_cli::repository::{git_identity, identity, GitIdentity};
+<a href=#279 id=279 data-nosnippet>279</a>/// use std::process::Command;
+<a href=#280 id=280 data-nosnippet>280</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#281 id=281 data-nosnippet>281</a>/// let root = dir.path().join("repo");
+<a href=#282 id=282 data-nosnippet>282</a>/// std::fs::create_dir_all(&amp;root).unwrap();
+<a href=#283 id=283 data-nosnippet>283</a>/// let git = |args: &amp;[&amp;str]| assert!(Command::new("git").arg("-C").arg(&amp;root).args(args).status().unwrap().success());
+<a href=#284 id=284 data-nosnippet>284</a>/// git(&amp;["init", "-q", "."]);
+<a href=#285 id=285 data-nosnippet>285</a>/// git(&amp;["-c", "user.email=t@example.com", "-c", "user.name=t", "commit", "-q", "--allow-empty", "-m", "init"]);
+<a href=#286 id=286 data-nosnippet>286</a>/// let wt = dir.path().join("repo-wt");
+<a href=#287 id=287 data-nosnippet>287</a>/// git(&amp;["worktree", "add", "-q", "-b", "feature/x", wt.to_str().unwrap()]);
+<a href=#288 id=288 data-nosnippet>288</a>///
+<a href=#289 id=289 data-nosnippet>289</a>/// let primary: GitIdentity = git_identity(&amp;root).expect("a work tree");
+<a href=#290 id=290 data-nosnippet>290</a>/// let linked: GitIdentity = git_identity(&amp;wt).expect("a linked work tree");
+<a href=#291 id=291 data-nosnippet>291</a>/// assert_eq!(primary.id, linked.id, "one repository");
+<a href=#292 id=292 data-nosnippet>292</a>/// assert_ne!(identity(&amp;root), identity(&amp;wt), "two checkouts");
+<a href=#293 id=293 data-nosnippet>293</a>/// assert!(!primary.linked &amp;&amp; linked.linked);
+<a href=#294 id=294 data-nosnippet>294</a>/// assert!(!primary.id.contains('/'), "a digest, never a path");
+<a href=#295 id=295 data-nosnippet>295</a>/// ```
+<a href=#296 id=296 data-nosnippet>296</a></span><span class="attr">#[derive(
+<a href=#297 id=297 data-nosnippet>297</a>    Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize, schemars::JsonSchema,
+<a href=#298 id=298 data-nosnippet>298</a>)]
+<a href=#299 id=299 data-nosnippet>299</a></span><span class="kw">pub struct </span>GitIdentity {
+<a href=#300 id=300 data-nosnippet>300</a>    <span class="doccomment">/// The git directory every work tree of the repository shares, canonical.
+<a href=#301 id=301 data-nosnippet>301</a>    </span><span class="kw">pub </span>common_dir: PathBuf,
+<a href=#302 id=302 data-nosnippet>302</a>    <span class="doccomment">/// Its digest: the same for every checkout of one repository, different across
+<a href=#303 id=303 data-nosnippet>303</a>    /// repositories, and never a path.
+<a href=#304 id=304 data-nosnippet>304</a>    </span><span class="kw">pub </span>id: String,
+<a href=#305 id=305 data-nosnippet>305</a>    <span class="doccomment">/// Whether this checkout is a linked work tree rather than the primary one.
+<a href=#306 id=306 data-nosnippet>306</a>    </span><span class="kw">pub </span>linked: bool,
+<a href=#307 id=307 data-nosnippet>307</a>}
+<a href=#308 id=308 data-nosnippet>308</a>
+<a href=#309 id=309 data-nosnippet>309</a><span class="doccomment">/// Ask git which repository the checkout at `root` belongs to. One subprocess; `None`
+<a href=#310 id=310 data-nosnippet>310</a>/// when git is absent or the root is not a work tree.
+<a href=#311 id=311 data-nosnippet>311</a>///
+<a href=#312 id=312 data-nosnippet>312</a>/// ```
+<a href=#313 id=313 data-nosnippet>313</a>/// use majordomus_cli::repository::git_identity;
+<a href=#314 id=314 data-nosnippet>314</a>/// let plain = tempfile::tempdir().unwrap();
+<a href=#315 id=315 data-nosnippet>315</a>/// assert!(git_identity(plain.path()).is_none(), "a plain directory belongs to no repository");
+<a href=#316 id=316 data-nosnippet>316</a>/// ```
+<a href=#317 id=317 data-nosnippet>317</a></span><span class="kw">pub fn </span>git_identity(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;GitIdentity&gt; {
+<a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">let </span>out = std::process::Command::new(<span class="string">"git"</span>)
+<a href=#319 id=319 data-nosnippet>319</a>        .arg(<span class="string">"-C"</span>)
+<a href=#320 id=320 data-nosnippet>320</a>        .arg(root)
+<a href=#321 id=321 data-nosnippet>321</a>        .args([<span class="string">"rev-parse"</span>, <span class="string">"--git-common-dir"</span>])
+<a href=#322 id=322 data-nosnippet>322</a>        .output()
+<a href=#323 id=323 data-nosnippet>323</a>        .ok()<span class="question-mark">?</span>;
+<a href=#324 id=324 data-nosnippet>324</a>    <span class="kw">if </span>!out.status.success() {
+<a href=#325 id=325 data-nosnippet>325</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#326 id=326 data-nosnippet>326</a>    }
+<a href=#327 id=327 data-nosnippet>327</a>    <span class="kw">let </span>raw = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).trim().to_string();
+<a href=#328 id=328 data-nosnippet>328</a>    <span class="kw">if </span>raw.is_empty() {
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw">return </span><span class="prelude-val">None</span>;
+<a href=#330 id=330 data-nosnippet>330</a>    }
+<a href=#331 id=331 data-nosnippet>331</a>    <span class="comment">// relative to the current directory when the current directory is inside the work
+<a href=#332 id=332 data-nosnippet>332</a>    // tree, absolute otherwise; both forms are answers
+<a href=#333 id=333 data-nosnippet>333</a>    </span><span class="kw">let </span>common = PathBuf::from(<span class="kw-2">&amp;</span>raw);
+<a href=#334 id=334 data-nosnippet>334</a>    <span class="kw">let </span>common = <span class="kw">if </span>common.is_absolute() {
+<a href=#335 id=335 data-nosnippet>335</a>        common
+<a href=#336 id=336 data-nosnippet>336</a>    } <span class="kw">else </span>{
+<a href=#337 id=337 data-nosnippet>337</a>        root.join(common)
+<a href=#338 id=338 data-nosnippet>338</a>    };
+<a href=#339 id=339 data-nosnippet>339</a>    <span class="kw">let </span>common = common.canonicalize().ok()<span class="question-mark">?</span>;
+<a href=#340 id=340 data-nosnippet>340</a>    <span class="prelude-val">Some</span>(GitIdentity {
+<a href=#341 id=341 data-nosnippet>341</a>        id: digest(<span class="kw-2">&amp;</span>common),
+<a href=#342 id=342 data-nosnippet>342</a>        linked: root.join(<span class="string">".git"</span>).is_file(),
+<a href=#343 id=343 data-nosnippet>343</a>        common_dir: common,
+<a href=#344 id=344 data-nosnippet>344</a>    })
+<a href=#345 id=345 data-nosnippet>345</a>}
+<a href=#346 id=346 data-nosnippet>346</a>
+<a href=#347 id=347 data-nosnippet>347</a><span class="doccomment">/// The branch the checkout at `root` has checked out, read from its `HEAD` file instead of
+<a href=#348 id=348 data-nosnippet>348</a>/// asked of a subprocess. `None` when HEAD is detached, when the file cannot be read, or
+<a href=#349 id=349 data-nosnippet>349</a>/// when `root` is not a checkout at all — the same three silences `git symbolic-ref -q
+<a href=#350 id=350 data-nosnippet>350</a>/// --short HEAD` answers with, at the cost of at most two small reads.
+<a href=#351 id=351 data-nosnippet>351</a>///
+<a href=#352 id=352 data-nosnippet>352</a>/// It exists because a `git` subprocess is not free: on a loaded machine one costs tens of
+<a href=#353 id=353 data-nosnippet>353</a>/// milliseconds, which is more than the whole rest of a narrow `server.status` reading.
+<a href=#354 id=354 data-nosnippet>354</a>/// The linked-work-tree case is why it is not a single read — a linked checkout's `.git` is
+<a href=#355 id=355 data-nosnippet>355</a>/// a file naming the per-work-tree git directory, and HEAD lives there.
+<a href=#356 id=356 data-nosnippet>356</a>///
+<a href=#357 id=357 data-nosnippet>357</a>/// ```
+<a href=#358 id=358 data-nosnippet>358</a>/// use majordomus_cli::repository::branch_at;
+<a href=#359 id=359 data-nosnippet>359</a>/// use std::process::Command;
+<a href=#360 id=360 data-nosnippet>360</a>///
+<a href=#361 id=361 data-nosnippet>361</a>/// let dir = tempfile::tempdir().unwrap();
+<a href=#362 id=362 data-nosnippet>362</a>/// let root = dir.path().join("repo");
+<a href=#363 id=363 data-nosnippet>363</a>/// std::fs::create_dir_all(&amp;root).unwrap();
+<a href=#364 id=364 data-nosnippet>364</a>/// let git = |args: &amp;[&amp;str]| assert!(
+<a href=#365 id=365 data-nosnippet>365</a>///     Command::new("git").arg("-C").arg(&amp;root).args(args).status().unwrap().success()
+<a href=#366 id=366 data-nosnippet>366</a>/// );
+<a href=#367 id=367 data-nosnippet>367</a>/// git(&amp;["init", "-q", "-b", "trunk", "."]);
+<a href=#368 id=368 data-nosnippet>368</a>/// assert_eq!(branch_at(&amp;root).as_deref(), Some("trunk"), "the same name git would print");
+<a href=#369 id=369 data-nosnippet>369</a>/// assert!(branch_at(dir.path()).is_none(), "a plain directory has no branch");
+<a href=#370 id=370 data-nosnippet>370</a>/// ```
+<a href=#371 id=371 data-nosnippet>371</a></span><span class="kw">pub fn </span>branch_at(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="kw">let </span>dot_git = root.join(<span class="string">".git"</span>);
+<a href=#373 id=373 data-nosnippet>373</a>    <span class="kw">let </span>git_dir = <span class="kw">if </span>dot_git.is_dir() {
+<a href=#374 id=374 data-nosnippet>374</a>        dot_git
+<a href=#375 id=375 data-nosnippet>375</a>    } <span class="kw">else </span>{
+<a href=#376 id=376 data-nosnippet>376</a>        <span class="comment">// a linked work tree: `.git` is a file naming the git directory git keeps for it
+<a href=#377 id=377 data-nosnippet>377</a>        </span><span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>dot_git).ok()<span class="question-mark">?</span>;
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="kw">let </span>named = PathBuf::from(text.trim().strip_prefix(<span class="string">"gitdir:"</span>)<span class="question-mark">?</span>.trim());
+<a href=#379 id=379 data-nosnippet>379</a>        <span class="kw">if </span>named.is_absolute() {
+<a href=#380 id=380 data-nosnippet>380</a>            named
+<a href=#381 id=381 data-nosnippet>381</a>        } <span class="kw">else </span>{
+<a href=#382 id=382 data-nosnippet>382</a>            root.join(named)
+<a href=#383 id=383 data-nosnippet>383</a>        }
+<a href=#384 id=384 data-nosnippet>384</a>    };
+<a href=#385 id=385 data-nosnippet>385</a>    <span class="kw">let </span>head = std::fs::read_to_string(git_dir.join(<span class="string">"HEAD"</span>)).ok()<span class="question-mark">?</span>;
+<a href=#386 id=386 data-nosnippet>386</a>    <span class="kw">let </span>name = head.trim().strip_prefix(<span class="string">"ref:"</span>)<span class="question-mark">?</span>.trim();
+<a href=#387 id=387 data-nosnippet>387</a>    <span class="prelude-val">Some</span>(name.strip_prefix(<span class="string">"refs/heads/"</span>).unwrap_or(name).to_string())
+<a href=#388 id=388 data-nosnippet>388</a>}
+<a href=#389 id=389 data-nosnippet>389</a>
+<a href=#390 id=390 data-nosnippet>390</a><span class="attr">#[cfg(test)]
+<a href=#391 id=391 data-nosnippet>391</a></span><span class="kw">mod </span>tests {
+<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#393 id=393 data-nosnippet>393</a>
+<a href=#394 id=394 data-nosnippet>394</a>    <span class="kw">const </span>MANIFEST_TEXT: <span class="kw-2">&amp;</span>str = <span class="string">"schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n  rules: repo/rules\n"</span>;
+<a href=#395 id=395 data-nosnippet>395</a>
+<a href=#396 id=396 data-nosnippet>396</a>    <span class="attr">#[test]
+<a href=#397 id=397 data-nosnippet>397</a>    </span><span class="kw">fn </span>manifest_parses_and_sections_resolve() {
+<a href=#398 id=398 data-nosnippet>398</a>        <span class="kw">let </span>m = Manifest::parse(Path::new(<span class="string">"m"</span>), MANIFEST_TEXT).unwrap();
+<a href=#399 id=399 data-nosnippet>399</a>        <span class="macro">assert_eq!</span>(m.schema, LAYER_SCHEMA);
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="macro">assert_eq!</span>(m.sections[<span class="string">"rules"</span>], <span class="string">"repo/rules"</span>);
+<a href=#401 id=401 data-nosnippet>401</a>        <span class="macro">assert_eq!</span>(m.context, <span class="prelude-val">None</span>);
+<a href=#402 id=402 data-nosnippet>402</a>        <span class="kw">let </span>with_context = <span class="macro">format!</span>(<span class="string">"{MANIFEST_TEXT}context:\n  documents: [README.md]\n"</span>);
+<a href=#403 id=403 data-nosnippet>403</a>        <span class="kw">let </span>m = Manifest::parse(Path::new(<span class="string">"m"</span>), <span class="kw-2">&amp;</span>with_context).unwrap();
+<a href=#404 id=404 data-nosnippet>404</a>        <span class="macro">assert_eq!</span>(m.context.unwrap().documents, <span class="macro">vec!</span>[<span class="string">"README.md"</span>]);
+<a href=#405 id=405 data-nosnippet>405</a>    }
+<a href=#406 id=406 data-nosnippet>406</a>
+<a href=#407 id=407 data-nosnippet>407</a>    <span class="attr">#[test]
+<a href=#408 id=408 data-nosnippet>408</a>    </span><span class="kw">fn </span>manifest_unknown_key_is_named() {
+<a href=#409 id=409 data-nosnippet>409</a>        <span class="kw">let </span>bad = <span class="macro">format!</span>(<span class="string">"{MANIFEST_TEXT}extra: 1\n"</span>);
+<a href=#410 id=410 data-nosnippet>410</a>        <span class="kw">match </span>Manifest::parse(Path::new(<span class="string">"m"</span>), <span class="kw-2">&amp;</span>bad) {
+<a href=#411 id=411 data-nosnippet>411</a>            <span class="prelude-val">Err</span>(Error::UnknownKeys { keys, .. }) =&gt; <span class="macro">assert_eq!</span>(keys, <span class="macro">vec!</span>[<span class="string">"extra"</span>]),
+<a href=#412 id=412 data-nosnippet>412</a>            other =&gt; <span class="macro">panic!</span>(<span class="string">"{other:?}"</span>),
+<a href=#413 id=413 data-nosnippet>413</a>        }
+<a href=#414 id=414 data-nosnippet>414</a>    }
+<a href=#415 id=415 data-nosnippet>415</a>
+<a href=#416 id=416 data-nosnippet>416</a>    <span class="attr">#[test]
+<a href=#417 id=417 data-nosnippet>417</a>    </span><span class="kw">fn </span>manifest_wrong_schema_is_unsupported() {
+<a href=#418 id=418 data-nosnippet>418</a>        <span class="kw">let </span>bad = MANIFEST_TEXT.replace(<span class="string">"v1"</span>, <span class="string">"v2"</span>);
+<a href=#419 id=419 data-nosnippet>419</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#420 id=420 data-nosnippet>420</a>            Manifest::parse(Path::new(<span class="string">"m"</span>), <span class="kw-2">&amp;</span>bad),
+<a href=#421 id=421 data-nosnippet>421</a>            <span class="prelude-val">Err</span>(Error::UnsupportedSchema { .. })
+<a href=#422 id=422 data-nosnippet>422</a>        ));
+<a href=#423 id=423 data-nosnippet>423</a>    }
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a>    <span class="attr">#[test]
+<a href=#426 id=426 data-nosnippet>426</a>    </span><span class="kw">fn </span>manifest_malformed_yaml_is_invalid() {
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="macro">assert!</span>(<span class="macro">matches!</span>(
+<a href=#428 id=428 data-nosnippet>428</a>            Manifest::parse(Path::new(<span class="string">"m"</span>), <span class="string">"schema:\tai-repository/v1\n"</span>),
+<a href=#429 id=429 data-nosnippet>429</a>            <span class="prelude-val">Err</span>(Error::InvalidManifest { .. })
+<a href=#430 id=430 data-nosnippet>430</a>        ));
+<a href=#431 id=431 data-nosnippet>431</a>    }
+<a href=#432 id=432 data-nosnippet>432</a>}
+</code></pre></div></section></main></body></html>

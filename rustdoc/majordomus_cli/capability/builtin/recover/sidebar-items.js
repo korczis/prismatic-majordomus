@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["StrayKind","StrayVerdict"],"fn":["front_matter_value","module"],"struct":["RecoverOrphansInput","RecoverOrphansResult","Stray"]};

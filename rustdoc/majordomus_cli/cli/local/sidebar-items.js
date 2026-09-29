@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LOCAL"],"enum":["LocalReason"],"fn":["find"],"struct":["LocalCommand"]};

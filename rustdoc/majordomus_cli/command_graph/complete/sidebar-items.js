@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CandidateKind"],"fn":["complete"],"struct":["Candidate","NoValues","Request","Response"],"trait":["ValueResolver"]};

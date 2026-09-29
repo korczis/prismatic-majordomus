@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["inspect","rust_only"]};

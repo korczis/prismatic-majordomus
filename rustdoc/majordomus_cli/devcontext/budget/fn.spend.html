@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Compile the selection into the answer: fold, decide, order, spend."><title>spend in majordomus_cli::devcontext::budget - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">spend</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>devcontext::<wbr>budget</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">devcontext</a>::<wbr><a href="index.html">budget</a></div><h1>Function <span class="fn">spend</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/devcontext/budget.rs.html#277-643">Source</a> </span></div><pre class="rust item-decl"><code>pub fn spend(
+    index: &amp;<a class="struct" href="../../index/struct.Index.html" title="struct majordomus_cli::index::Index">Index</a>,
+    sel: <a class="struct" href="../select/struct.Selection.html" title="struct majordomus_cli::devcontext::select::Selection">Selection</a>,
+    seeds: &amp;<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/collections/btree/set/struct.BTreeSet.html" title="struct alloc::collections::btree::set::BTreeSet">BTreeSet</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;,
+    limit: <a class="primitive" href="https://doc.rust-lang.org/1.98.1/std/primitive.u64.html">u64</a>,
+    supersedes: &amp;<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/collections/btree/map/struct.BTreeMap.html" title="struct alloc::collections::btree::map::BTreeMap">BTreeMap</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>, <a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;,
+) -&gt; (<a class="struct" href="struct.Spend.html" title="struct majordomus_cli::devcontext::budget::Spend">Spend</a>, <a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="../../model/struct.Diagnostic.html" title="struct majordomus_cli::model::Diagnostic">Diagnostic</a>&gt;)</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Compile the selection into the answer: fold, decide, order, spend.</p>
+<p>The four stages run in that order and none of them re-reads the repository. <code>seeds</code> is
+what the request asked about, and it is the one input that can push the answer over its
+ceiling: a seed is never dropped for budget, and neither is the policy or the scope, so
+<code>limit</code> bounds what the budget <em>chooses</em> and not what it must keep. When the entries it
+may not drop cost more than the limit, the answer says <code>over_budget</code> rather than
+returning a context missing the thing it was compiled about.</p>
+<p><code>supersedes</code> maps an identifier to the identifiers it declares it supersedes, and is
+what turns two versions of one thing in the answer into one entry and a recorded
+conflict. The diagnostics that come back alongside are what could not be read — never an
+error, because an absent source is an answer.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::collections::{BTreeMap, BTreeSet};
+
+<span class="kw">use </span>majordomus_cli::devcontext::budget::spend;
+<span class="kw">use </span>majordomus_cli::devcontext::select::{Candidate, Selection};
+<span class="kw">use </span>majordomus_cli::devcontext::{Discovery, Selector, Tier};
+<span class="kw">use </span>majordomus_cli::synthetic::SyntheticRepository;
+
+<span class="kw">let </span>repo = SyntheticRepository::small().unwrap();
+<span class="kw">let </span>index = repo.index().unwrap();
+
+<span class="kw">let </span>seed_uri = <span class="string">"majordomus://issue/I0301"</span>;
+<span class="kw">let </span>candidate = Candidate {
+    uri: seed_uri.into(),
+    kind: <span class="string">"issue"</span>.into(),
+    title: <span class="prelude-val">Some</span>(<span class="string">"the thing being worked on"</span>.into()),
+    tier: Tier::Task,
+    relevance: <span class="number">1.0</span>,
+    depth: <span class="number">0</span>,
+    discovered_by: <span class="macro">vec!</span>[Discovery {
+        selector: Selector::Seed,
+        reason: <span class="string">"named in the request"</span>.into(),
+        via: <span class="prelude-val">None</span>,
+        edge: <span class="prelude-val">None</span>,
+        depth: <span class="number">0</span>,
+        confidence: <span class="number">1.0</span>,
+        weight: <span class="number">1.0</span>,
+    }],
+    object: <span class="prelude-val">None</span>,
+    path: <span class="prelude-val">None</span>,
+    status: <span class="prelude-val">None</span>,
+    <span class="comment">// 40_000 bytes is 10_000 tokens, against a ceiling of 10
+    </span>facts: BTreeMap::from([(<span class="string">"bytes"</span>.to_string(), <span class="string">"40000"</span>.to_string())]),
+};
+<span class="kw">let </span>selection = Selection {
+    candidates: BTreeMap::from([(seed_uri.to_string(), candidate)]),
+    unresolved: Vec::new(),
+    diagnostics: Vec::new(),
+};
+<span class="kw">let </span>seeds = BTreeSet::from([seed_uri.to_string()]);
+
+<span class="kw">let </span>(s, <span class="kw">_</span>) = spend(<span class="kw-2">&amp;</span>index, selection, <span class="kw-2">&amp;</span>seeds, <span class="number">10</span>, <span class="kw-2">&amp;</span>BTreeMap::new());
+
+<span class="comment">// the seed survives a ceiling it does not fit in: a context that lost the thing it was
+// compiled about is not a smaller answer, it is the wrong one
+</span><span class="macro">assert_eq!</span>(s.selected.len(), <span class="number">1</span>);
+<span class="macro">assert!</span>(s.selected[<span class="number">0</span>].required);
+<span class="macro">assert!</span>(s.excluded.is_empty());
+
+<span class="comment">// and the answer says so rather than pretending it stayed inside the budget
+</span><span class="macro">assert!</span>(s.budget.over_budget);
+<span class="macro">assert_eq!</span>(s.budget.used_tokens, <span class="number">10_000</span>);
+<span class="macro">assert_eq!</span>(s.budget.required_tokens, <span class="number">10_000</span>, <span class="string">"all of it is undroppable"</span>);
+<span class="macro">assert_eq!</span>(s.budget.remaining_tokens, <span class="number">0</span>, <span class="string">"floored, never negative"</span>);</code></pre></div></div></details></section></div></main></body></html>

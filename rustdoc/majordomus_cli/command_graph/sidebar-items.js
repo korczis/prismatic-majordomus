@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["build","entrypoints"],"mod":["bridge","complete","load","model","native","policy","semantics","shell","tool","workflow"],"struct":["Inputs"]};

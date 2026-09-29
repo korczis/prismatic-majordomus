@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ALL","BASH","BIN_ENV","FISH","ZSH"]};

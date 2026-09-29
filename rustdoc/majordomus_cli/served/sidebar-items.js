@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_IDENTITY","DEFAULT_PROBE_SECONDS","OBSERVATIONS_PATH","OBSERVATION_SCHEMA"],"enum":["Fetched","ServedVerdict"],"fn":["append","check_base","identity_url","judge","latest","observe","read_all"],"struct":["BuildIdentity","Curl","GitAncestry","Judgement","Malformed","Observation"],"trait":["Ancestry","Fetch"]};

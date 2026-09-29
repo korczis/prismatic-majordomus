@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ECONOMICS_URI"],"fn":["module"]};

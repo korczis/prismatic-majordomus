@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MeshRepositoryBasis"],"fn":["declared","of_root_commits","resolve","runtime_id"],"struct":["MeshRepositoryIdentity"]};

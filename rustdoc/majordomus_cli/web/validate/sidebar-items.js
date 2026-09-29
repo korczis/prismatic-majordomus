@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Artifacts","Severity"],"fn":["blocking","validate"],"struct":["Finding"]};

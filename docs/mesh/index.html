@@ -1,21 +1,21 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="e6bf12153d9f">
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="5513f7466963">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The mesh: discovery of running Majordomus instances — Prismatic Majordomus</title>
+<title>Majordomus Mesh — Prismatic Majordomus</title>
 <meta name="description" content="the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it">
 <link rel="canonical" href="https://majordomus.dev/docs/mesh/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Prismatic Majordomus">
-<meta property="og:title" content="The mesh: discovery of running Majordomus instances — Prismatic Majordomus">
+<meta property="og:title" content="Majordomus Mesh — Prismatic Majordomus">
 <meta property="og:description" content="the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it">
 <meta property="og:url" content="https://majordomus.dev/docs/mesh/">
 <meta property="og:image" content="https://majordomus.dev/images/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=658d8eb7f315b4a92fb5">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=1a22cdbf2b3d4ab192fd">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.9.0 -->
+     Generator: majordomus-cli 0.10.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -115,11 +115,11 @@
           <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
           <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
             <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
-              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
             </ul>
           </div>
           <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
-          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
         </li>
         
         
@@ -131,11 +131,11 @@
           <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
           <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
             <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
-              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
             </ul>
           </div>
           <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
-          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
         </li>
         
         
@@ -153,11 +153,11 @@
     <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
     <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/docs/" class="font-medium text-body hover:text-fg-brand">Documentation</a></li>
     <li aria-hidden="true">/</li>
-    <li aria-current="page" class="font-medium text-heading">The mesh: discovery of running Majordomus instances</li>
+    <li aria-current="page" class="font-medium text-heading">Majordomus Mesh</li>
   </ol>
 </nav>
 
-    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">The mesh: discovery of running Majordomus instances</h1>
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">Majordomus Mesh</h1>
     <p class="mt-3 max-w-3xl break-words text-lg text-body">the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it</p>
   </div>
 </div>
@@ -166,166 +166,466 @@
 <div class="grid gap-10 lg:grid-cols-[16rem_minmax(0,1fr)]">
   <nav class="lg:sticky lg:top-24 lg:self-start" aria-label="Documents">
     <p class="mb-2 font-mono text-xs uppercase tracking-wide text-body-subtle">documents</p>
-    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/how-it-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">How Majordomus works</a></li><li><a href="https://majordomus.dev/docs/guide/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Guide</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">The mesh: discovery of running Majordomus instances</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li><li><a href="https://majordomus.dev/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/docs/api/entity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: entity</a></li><li><a href="https://majordomus.dev/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shared types</a></li></ul>
+    <ul class="flex flex-wrap gap-2 text-sm lg:flex-col lg:gap-1"><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Prismatic Majordomus</a></li><li><a href="https://majordomus.dev/docs/how-it-works/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">How Majordomus works</a></li><li><a href="https://majordomus.dev/docs/guide/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Guide</a></li><li><a href="https://majordomus.dev/docs/two-folder-consolidation/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Two-folder consolidation</a></li><li><a href="https://majordomus.dev/docs/cli-specification/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">CLI specification</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Concepts</a></li><li><a href="https://majordomus.dev/docs/context/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Scoped context</a></li><li><a href="https://majordomus.dev/docs/doctrine/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/docs/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuity</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Planning</a></li><li><a href="https://majordomus.dev/docs/performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Performance truth</a></li><li><a href="https://majordomus.dev/docs/roadmap/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The roadmap</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Dogfooding</a></li><li><a href="https://majordomus.dev/docs/archive/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Archiving the repository</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Installing Majordomus</a></li><li><a href="https://majordomus.dev/docs/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Distribution</a></li><li><a href="https://majordomus.dev/docs/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The commit</a></li><li><a href="https://majordomus.dev/docs/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The release</a></li><li><a href="https://majordomus.dev/docs/catalogue/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The catalogue</a></li><li><a href="https://majordomus.dev/docs/adoption/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Adoption</a></li><li><a href="https://majordomus.dev/docs/adoption-first-run/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">First run in a foreign repository</a></li><li><a href="https://majordomus.dev/docs/entry/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Entering the repository</a></li><li><a href="https://majordomus.dev/docs/entry-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository entry: what is automatic, what is decorative, and where it breaks</a></li><li><a href="https://majordomus.dev/docs/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Economics</a></li><li><a href="https://majordomus.dev/docs/extraction-report/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Extraction Report</a></li><li><a href="https://majordomus.dev/docs/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The command graph</a></li><li><a href="https://majordomus.dev/docs/dynamicity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Canonical ownership and derivation</a></li><li><a href="https://majordomus.dev/docs/cockpit-ide-audit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit as a development surface: baseline, archaeology and gap matrix</a></li><li><a href="https://majordomus.dev/docs/development-runtime/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The development runtime</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/docs/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Capabilities</a></li><li><a href="https://majordomus.dev/docs/use-cases/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executable use cases</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Product</a></li><li><a href="https://majordomus.dev/docs/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Why</a></li><li><a href="https://majordomus.dev/docs/scope/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository scope</a></li><li><a href="https://majordomus.dev/docs/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Executions</a></li><li><a href="https://majordomus.dev/docs/cockpit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The Cockpit</a></li><li><a href="https://majordomus.dev/docs/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The web surface</a></li><li><a href="https://majordomus.dev/docs/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The repository environment</a></li><li><a href="https://majordomus.dev/docs/preflight/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The preflight</a></li><li><a href="https://majordomus.dev/docs/backlog/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Backlog</a></li><li><a href="https://majordomus.dev/docs/worktrees/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Worktrees</a></li><li><a href="https://majordomus.dev/docs/mcp/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/mesh/" class="block rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Majordomus Mesh</a></li><li><a href="https://majordomus.dev/docs/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The model catalogue</a></li><li><a href="https://majordomus.dev/docs/coverage/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Coverage: one measurement, two questions</a></li><li><a href="https://majordomus.dev/docs/design-system/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The design system</a></li><li><a href="https://majordomus.dev/docs/ui/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">UI conformance</a></li><li><a href="https://majordomus.dev/docs/github-pages-architecture/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages architecture</a></li><li><a href="https://majordomus.dev/docs/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Public API quality</a></li><li><a href="https://majordomus.dev/docs/rustdoc/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The crate&#39;s reference</a></li><li><a href="https://majordomus.dev/docs/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Evidence</a></li><li><a href="https://majordomus.dev/docs/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Delivery</a></li><li><a href="https://majordomus.dev/docs/ci/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Continuous integration</a></li><li><a href="https://majordomus.dev/docs/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Shell automation</a></li><li><a href="https://majordomus.dev/docs/github-pages-performance/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance</a></li><li><a href="https://majordomus.dev/docs/pages-status/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">GitHub Pages performance status</a></li><li><a href="https://majordomus.dev/docs/site-review/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Site review</a></li><li><a href="https://majordomus.dev/docs/contract/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Repository contract</a></li><li><a href="https://majordomus.dev/docs/web-surface/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Web surface</a></li><li><a href="https://majordomus.dev/docs/api/artifacts/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: artifacts</a></li><li><a href="https://majordomus.dev/docs/api/capabilities/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: capabilities</a></li><li><a href="https://majordomus.dev/docs/api/commands/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commands</a></li><li><a href="https://majordomus.dev/docs/api/commit/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: commit</a></li><li><a href="https://majordomus.dev/docs/api/continuity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: continuity</a></li><li><a href="https://majordomus.dev/docs/api/delivery/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: delivery</a></li><li><a href="https://majordomus.dev/docs/api/deploy/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: deploy</a></li><li><a href="https://majordomus.dev/docs/api/design/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: design</a></li><li><a href="https://majordomus.dev/docs/api/devcontext/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devcontext</a></li><li><a href="https://majordomus.dev/docs/api/devtask/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: devtask</a></li><li><a href="https://majordomus.dev/docs/api/directories/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: directories</a></li><li><a href="https://majordomus.dev/docs/api/distribution/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: distribution</a></li><li><a href="https://majordomus.dev/docs/api/economics/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: economics</a></li><li><a href="https://majordomus.dev/docs/api/entity/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: entity</a></li><li><a href="https://majordomus.dev/docs/api/environment/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: environment</a></li><li><a href="https://majordomus.dev/docs/api/evidence/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: evidence</a></li><li><a href="https://majordomus.dev/docs/api/executions/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: executions</a></li><li><a href="https://majordomus.dev/docs/api/gates/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: gates</a></li><li><a href="https://majordomus.dev/docs/api/graph/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: graph</a></li><li><a href="https://majordomus.dev/docs/api/health/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: health</a></li><li><a href="https://majordomus.dev/docs/api/lifecycle/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: lifecycle</a></li><li><a href="https://majordomus.dev/docs/api/mesh/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: mesh</a></li><li><a href="https://majordomus.dev/docs/api/models/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: models</a></li><li><a href="https://majordomus.dev/docs/api/objects/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: objects</a></li><li><a href="https://majordomus.dev/docs/api/obligations/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: obligations</a></li><li><a href="https://majordomus.dev/docs/api/peers/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: peers</a></li><li><a href="https://majordomus.dev/docs/api/perf/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: perf</a></li><li><a href="https://majordomus.dev/docs/api/plan/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: plan</a></li><li><a href="https://majordomus.dev/docs/api/product/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: product</a></li><li><a href="https://majordomus.dev/docs/api/quality/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: quality</a></li><li><a href="https://majordomus.dev/docs/api/recover/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: recover</a></li><li><a href="https://majordomus.dev/docs/api/release/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: release</a></li><li><a href="https://majordomus.dev/docs/api/repository/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: repository</a></li><li><a href="https://majordomus.dev/docs/api/rules/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: rules</a></li><li><a href="https://majordomus.dev/docs/api/served/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: served</a></li><li><a href="https://majordomus.dev/docs/api/server/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: server</a></li><li><a href="https://majordomus.dev/docs/api/session-domain/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: session_domain</a></li><li><a href="https://majordomus.dev/docs/api/shell/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shell</a></li><li><a href="https://majordomus.dev/docs/api/trace/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: trace</a></li><li><a href="https://majordomus.dev/docs/api/web/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: web</a></li><li><a href="https://majordomus.dev/docs/api/why/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: why</a></li><li><a href="https://majordomus.dev/docs/api/worktree/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: worktree</a></li><li><a href="https://majordomus.dev/docs/api/shared/" class="block rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API: shared types</a></li></ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/master/docs/MESH.md" class="font-mono underline">docs/MESH.md</a> — the same Markdown GitHub shows.</p>
-    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>How one running Majordomus learns that others exist, and proves which one it is. The
-decision is ADR 0050; the invariants are <code>project.mesh-is-observation-not-authority</code>;
-the implementation is <code>apps/majordomus-cli/src/mesh/</code>. This document is the operator's
-and contributor's view: what runs, what travels, what is trusted, and what can go wrong.</p>
-<p>The one sentence that governs everything here:</p>
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/910835dd0723ce26186225a6ca1909d54e766d53/docs/MESH.md" class="font-mono underline">docs/MESH.md</a> — the same Markdown GitHub shows.</p>
+    <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0"><p>How Majordomus runtimes of one repository — on one machine or several — find each other,
+decide whether to cooperate, and share the state of their work. The decisions are ADR 0050
+(discovery) and ADR 0067 (cooperation); the invariants are the rules
+<code>project.mesh-is-observation-not-authority</code> and <code>project.mesh-cooperation-is-authenticated</code>;
+the implementation is <code>apps/majordomus-cli/src/mesh/</code>. This document is the operator's and
+contributor's view: what runs, what travels, what is guaranteed and what is not, how to
+operate it, and how it is tested.</p>
+<p>Two sentences govern everything here:</p>
 <blockquote>
 <p>Discovery creates awareness, not authority.</p>
+<p>A link is admitted by a handshake, and everything cooperative is a signed event of one
+journal that every runtime folds the same way.</p>
 </blockquote>
+<h2 id="what-it-is-and-what-it-is-not"><a class="zola-anchor" href="#what-it-is-and-what-it-is-not" aria-label="Anchor link for: what-it-is-and-what-it-is-not">What it is, and what it is not</a></h2>
+<p><strong>It is</strong> how several AI coding sessions — in several terminals, worktrees and machines —
+work one repository without colliding: each runtime sees the others' sessions, an exclusive
+claim made anywhere refuses an overlapping claim everywhere, a handover written on one
+machine is consumed on another, a review asked on one is answered on another, and a runtime
+that disappears stops holding anything, everywhere, on its own.</p>
+<p><strong>It is not</strong> a lock service with strong consistency (a partition lets both sides claim; the
+conflict is named after healing), a file synchroniser (git owns source), a remote execution
+facility (nothing a peer sends runs anything), an encrypted transport (there is no TLS in the
+executable), or a WAN federation (no NAT traversal; rendezvous and seeds need reachable
+addresses).</p>
 <h2 id="the-shape"><a class="zola-anchor" href="#the-shape" aria-label="Anchor link for: the-shape">The shape</a></h2>
 <pre class="mermaid" tabindex="0">
 flowchart TD
-  decl["mesh declaration&lt;br&gt;.ai/repo/mesh/&amp;lt;id&amp;gt;.yaml&lt;br&gt;kind mesh, schema mesh/v1"]
-  runtime["MeshRuntime&lt;br&gt;(on the capability Context of the process)"]
-  identity["NodeIdentity&lt;br&gt;~/.local/state/majordomus/node.json — an&lt;br&gt;Ed25519 keypair, created once per user and&lt;br&gt;machine; node id = digest(key)"]
-  beacon["Beacon&lt;br&gt;this node's signed advertisement,&lt;br&gt;one rising sequence"]
-  subgraph providers["providers — each an implementation of mesh::provider::MeshProvider&lt;br&gt;providers hear bytes and hand them up; nothing more"]
-    multicast["udp_multicast&lt;br&gt;the preferred LAN mechanism&lt;br&gt;(group, port, TTL declared)"]
-    broadcast["udp_broadcast&lt;br&gt;a declared fallback:&lt;br&gt;disabled | auto | explicit networks"]
-    rendezvous["rendezvous&lt;br&gt;registers with declared&lt;br&gt;endpoints over plain HTTP"]
+  decl["mesh declaration&lt;br&gt;.ai/repo/mesh/&amp;lt;id&amp;gt;.yaml&lt;br&gt;(enabled, trust, cooperation)"]
+  identity["NodeIdentity&lt;br&gt;Ed25519 key per user and machine&lt;br&gt;node id = digest(key)"]
+  subgraph discoveryLayer["discovery (ADR 0050) — candidates, never authority"]
+    providers["providers: udp_multicast · udp_broadcast · rendezvous"]
+    registry["MeshRegistry&lt;br&gt;one record per node × runtime"]
   end
-  manager["manager (one thread)&lt;br&gt;the single verification path, in order:&lt;br&gt;size → shape → version → bounds → staleness →&lt;br&gt;signature → own-datagram skip → trust policy → registry"]
-  registry["MeshRegistry&lt;br&gt;the one store: deduplicated by node id, replay-protected&lt;br&gt;per instance, presence decays (60 s), records expire&lt;br&gt;(15 min), bounded (256; trusted never evicted for space)"]
-  projections["projections&lt;br&gt;mesh.status · mesh.nodes · mesh.identity · mesh.doctor ·&lt;br&gt;mesh.register — one declaration each, so the CLI, HTTP,&lt;br&gt;OpenAPI, MCP and the Cockpit cannot disagree"]
-  decl --&gt;|"read once at shared-server startup;&lt;br&gt;absent or disabled ⇒ nothing opens"| runtime
-  runtime --&gt; identity
-  runtime --&gt; beacon
-  runtime --&gt; providers
-  runtime --&gt; manager
-  manager --&gt; registry
-  registry --&gt; projections
+  subgraph cooperationLayer["cooperation (ADR 0067)"]
+    link["link handshake (link.rs)&lt;br&gt;signature · freshness · nonce · protocol ·&lt;br&gt;self · repository · trust"]
+    table["peer-link table (cooperation.rs)&lt;br&gt;connecting · connected · degraded ·&lt;br&gt;unreachable · expired"]
+    journal["Journal (journal.rs)&lt;br&gt;signed events (stream, seq), Lamport,&lt;br&gt;beats, marks"]
+    fold["fold (state.rs)&lt;br&gt;sessions · claims · conflicts ·&lt;br&gt;handovers · reviews · digest"]
+  end
+  surfaces["mesh capability module&lt;br&gt;CLI · HTTP · OpenAPI · MCP · Cockpit"]
+  board["peer board (peers.rs)"]
+  decl --&gt; discoveryLayer
+  decl --&gt; cooperationLayer
+  identity --&gt; discoveryLayer
+  identity --&gt; link
+  providers --&gt; registry
+  registry --&gt;|"trusted, same repository"| link
+  decl --&gt;|"seeds"| link
+  link --&gt; table
+  table --&gt;|"sync every heartbeat"| journal
+  board --&gt;|"projected each heartbeat"| journal
+  journal --&gt; fold
+  registry --&gt; surfaces
+  table --&gt; surfaces
+  fold --&gt; surfaces
 </pre>
 <h2 id="identity"><a class="zola-anchor" href="#identity" aria-label="Anchor link for: identity">Identity</a></h2>
-<p>A node is a key, not an address. The keypair lives in the user's state directory
-(<code>$XDG_STATE_HOME/majordomus/node.json</code>, else <code>~/.local/state/majordomus/node.json</code>),
-mode 0600, created the first time a mesh activates on the machine; <code>majordomus mesh identity</code> prints the public half and the path. The node id is a digest of the public
-key, so carrying somebody else's id is impossible — the id is never carried at all,
-only derived by the verifier. A process run is an <em>instance</em>: a machine that restarts
-keeps its node id and changes its instance, which is how the registry tells "the same
-node came back" (one record, <code>restarts</code> incremented) from a duplicate.</p>
-<p>Losing the file is losing the identity: a new key is a new node, and allowlists that
-named the old key must be updated. Nothing else is stored; the registry itself is
-process memory.</p>
-<h2 id="the-envelope"><a class="zola-anchor" href="#the-envelope" aria-label="Anchor link for: the-envelope">The envelope</a></h2>
-<p>One protocol over every transport (<code>mesh/protocol.rs</code>): a JSON envelope of at most
-1200 bytes, versioned (<code>v: 1</code>), carrying the public key, instance, display name,
-sequence, timestamp, up to four <code>host:port</code> endpoints, transport names, repository
-digests and the executable version — signed with Ed25519 over the advertisement's
-canonical bytes. Parsing is written for hostile input: bounded before it is read,
-refused before it is trusted, and no input of any shape panics (a property test feeds
-it arbitrary bytes). Every refusal is counted by reason — oversized, malformed,
-version, bounds, stale, signature — and <code>mesh.status</code> shows the counters, because a
-mesh that hears garbage should say so instead of being quietly empty.</p>
-<p>What an advertisement never carries: secrets, credentials, tokens, environment values,
-paths, repository content. Repositories appear as the same 32-hex digests
-<code>server.status</code> already serves; a digest can be recognised by someone who serves the
-same repository and inverted by no one.</p>
-<h2 id="trust"><a class="zola-anchor" href="#trust" aria-label="Anchor link for: trust">Trust</a></h2>
-<p>Trust is decided above the protocol, by declared policy, and the default is that no
-one is trusted:</p>
 <div class="overflow-x-auto" tabindex="0">
-<table tabindex="0"><thead><tr><th>policy</th><th>a valid unknown node is</th><th>notes</th></tr></thead><tbody>
-<tr><td><code>deny_unknown</code> (default)</td><td>observed, listed, trusted for nothing</td><td>the safe resting state</td></tr>
-<tr><td><code>allowlist</code></td><td>observed; listed keys are trusted</td><td><code>trust.allow</code> holds Ed25519 public keys (hex)</td></tr>
-<tr><td><code>tofu</code></td><td>trusted on first use</td><td>a development convenience; every listing names <code>tofu</code> as the reason</td></tr>
+<table tabindex="0"><thead><tr><th>identity</th><th>what it names</th><th>derived from</th><th>survives</th></tr></thead><tbody>
+<tr><td>node</td><td>a machine's Majordomus key</td><td>digest of the Ed25519 public key in <code>$XDG_STATE_HOME/majordomus/node.json</code></td><td>restarts, re-addressing; lost with the file</td></tr>
+<tr><td>runtime</td><td>one checkout's server on a node</td><td>digest of the checkout id</td><td>server restarts; two worktrees are two runtimes</td></tr>
+<tr><td>instance</td><td>one process run of a runtime</td><td>OS entropy at start</td><td>nothing — a restart is a new instance</td></tr>
+<tr><td>stream</td><td>what writes events: <code>node-runtime-instance</code></td><td>the three above</td><td>nothing — a restart is a new stream of the same runtime</td></tr>
+<tr><td>session</td><td>one worker's session within a stream</td><td>named by the caller (<code>board-p2</code> for an MCP session, anything for the CLI)</td><td>the stream</td></tr>
+<tr><td>repository</td><td>the repository being cooperated on</td><td>digest of its root commits, or <code>cooperation.repository</code></td><td>clones, paths, machines</td></tr>
 </tbody></table>
 </div>
-<p>Under every policy, a node id that reappears under a different key is rejected and
-stays listed as rejected — an operator debugging a mesh needs to see what was refused.
-And under every policy, trust changes <em>labels and candidate-sharing only</em>. There is no
-remote execution in this executable for a trusted node to gain; the HTTP surface a
-node advertises is the same read-only projection it always served. Whoever builds
-remote operations later must bring their own authorization decision (ADR 0050
-forecloses inheriting one from discovery).</p>
-<h2 id="transports"><a class="zola-anchor" href="#transports" aria-label="Anchor link for: transports">Transports</a></h2>
-<p><strong>Multicast</strong> is the preferred LAN mechanism: one socket joined to the declared group
-(default <code>239.255.77.77:7741</code>, TTL 1 — the local segment and no further), a listener
-thread and a jittered announcer. Multicast does not work on every network, and the
-provider assumes nothing: a socket that cannot bind (typically another local server
-already listening) or a group that cannot be joined is a <code>Failed</code> provider status with
-the reason, and every other provider runs on.</p>
-<p><strong>Broadcast</strong> is a declared fallback, never on by default: <code>disabled</code> | <code>auto</code> (the
-limited broadcast address) | <code>explicit</code> (the directed broadcast addresses listed). The
-same envelope, the same port; it transmits, and listens only when it is the sole UDP
-provider (two sockets cannot share the port).</p>
-<p><strong>Rendezvous</strong> crosses the segments multicast cannot. Every Majordomus server <em>is</em> a
-rendezvous: <code>POST /api/v1/mesh/register</code> verifies a presented envelope exactly as a
-datagram, records it as a rendezvous observation, and answers with its own envelope
-and up to 32 candidates — each carried verbatim as signed, so a candidate verifies
-end-to-end at the consumer and a poisoned rendezvous can withhold nodes but cannot
-invent one. The client registers with each declared endpoint on its interval, backs
-off exponentially (up to ×8) when one is unreachable, and never hammers. The transport
-is plain HTTP through the same sixty-line client the MCP bridge uses: there is
-deliberately no TLS in this executable, so rendezvous endpoints belong on a private
-network or an overlay (a tailnet, a WireGuard mesh) that provides the transport
-security itself.</p>
-<h2 id="lifecycle"><a class="zola-anchor" href="#lifecycle" aria-label="Anchor link for: lifecycle">Lifecycle</a></h2>
-<p>The mesh runs inside the shared server (ADR 0003) and nowhere else: it starts after
-the lease and the router — discovery never delays serving — and dies with the process.
-Startup is idempotent (a second activation is a no-op), never blocks on the network,
-and a disabled or malformed declaration leaves the runtime inactive with the reason on
-<code>mesh.status</code>. Multiple shells attaching to the repository share the one server and
-therefore the one mesh; no daemon exists, no per-terminal socket is ever opened.</p>
-<p>A record's life: observed → (trust verdict) → present while advertisements arrive →
-absent after 60 s of silence → expired out of the registry after 15 min. Sequence
-numbers are per instance; a replayed datagram is dropped and counted.</p>
-<h2 id="operating-it"><a class="zola-anchor" href="#operating-it" aria-label="Anchor link for: operating-it">Operating it</a></h2>
-<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>majordomus mesh doctor        # every prerequisite, proved on this machine alone</span></span>
-<span class="giallo-l"><span>majordomus mesh identity      # this machine&#39;s node id and public key (for allowlists)</span></span>
-<span class="giallo-l"><span>majordomus mesh status        # the running server&#39;s mesh: providers, tallies, refusals</span></span>
-<span class="giallo-l"><span>majordomus mesh nodes         # the observed nodes, one row each</span></span></code></pre>
-<p>Enable it by editing the repository's declaration (<code>.ai/repo/mesh/majordomus.yaml</code>):
-set <code>enabled: true</code>, choose the trust policy — <code>deny_unknown</code> plus <code>allow:</code> keys from
-<code>mesh identity</code> on each of your machines is the recommended shape — commit, and
-restart the server (<code>majordomus serve stop &amp;&amp; majordomus serve ensure</code>). The committed
-default is <code>enabled: false</code>: the repository's "nothing leaves the machine" posture
-holds until a person decides otherwise, and that decision is a reviewed commit, not an
-environment variable.</p>
-<p>Troubleshooting is <code>mesh doctor</code> first (it names the broken prerequisite), then
-<code>mesh status</code> on each machine: a provider's <code>Failed</code> detail says what its socket could
-not do; the refusal counters say what arrived and why it was dropped (a rising
-<code>signature</code> count is somebody malformed or hostile; <code>stale</code> is clock skew beyond
-300 s; <code>self_heard</code> is normal — a node hears its own multicast); <code>trust</code> on a node
-row says what the policy decided and why.</p>
-<h2 id="threat-model"><a class="zola-anchor" href="#threat-model" aria-label="Anchor link for: threat-model">Threat model</a></h2>
+<p>An address, a port, a host name or a PID is never identity. Two worktrees of one machine
+share the node key and are two runtimes; a restarted server keeps its runtime and changes
+its instance, so its peers list it once with <code>restarts</code> counted.</p>
+<p>The repository identity is what isolation rests on. The git directory's path — what
+<code>server.status</code> digests to tell checkouts of one machine apart — differs between machines and
+cannot be it. Root commits are shared by every full clone and by no unrelated repository. A
+shallow clone's "root" is where its history was cut, so a shallow clone must declare
+<code>cooperation.repository</code>, and so must a fork that should not cooperate with its origin; the
+doctor says which applies.</p>
+<h2 id="discovery"><a class="zola-anchor" href="#discovery" aria-label="Anchor link for: discovery">Discovery</a></h2>
+<p>Discovery finds candidates. Every datagram heard — multicast (preferred; group, port and TTL
+declared), broadcast (a declared fallback), or a rendezvous answer — passes one verification
+path in <code>mesh::manager</code> (size → shape → version → bounds → staleness → signature → own-runtime
+skip → trust policy) into one registry keyed by node and runtime. Envelopes are at most 1200
+bytes, signed, and carry the key, runtime, instance, endpoints, transports, repository
+identities and version; never a secret, a path or repository content.</p>
+<p>Discovery protocol <strong>2</strong> added the runtime slot. A version-2 reader reads version 1 (as the
+node's unnamed runtime); a version-1 reader refuses version 2 and counts it as <code>version</code>, so
+a mixed fleet shows the mismatch instead of going quiet.</p>
+<p>Multicast sockets are bound with <code>SO_REUSEADDR</code> and <code>SO_REUSEPORT</code>, so every runtime of a
+machine hears the group. A server bound to <code>0.0.0.0</code> advertises its interfaces' addresses,
+physical and overlay interfaces before container bridges; a server bound to loopback
+advertises loopback, which only its own machine can dial.</p>
+<h2 id="trust"><a class="zola-anchor" href="#trust" aria-label="Anchor link for: trust">Trust</a></h2>
+<p>Trust is decided by the declared policy, and the default is that no one is trusted:</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>policy</th><th>a valid unknown key is</th><th>notes</th></tr></thead><tbody>
+<tr><td><code>deny_unknown</code> (default)</td><td>observed, listed, trusted for nothing</td><td>with <code>trust.allow</code>, the recommended shape for a fleet</td></tr>
+<tr><td><code>allowlist</code></td><td>observed; listed keys are trusted</td><td>the same as <code>deny_unknown</code> plus <code>allow</code></td></tr>
+<tr><td><code>tofu</code></td><td>trusted on first use</td><td>a development convenience for a network you control: under TOFU <strong>every</strong> key on the segment that knows the repository identity is trusted and can link, claim and publish; every listing says <code>tofu</code>, and TOFU-trusted records are evictable</td></tr>
+</tbody></table>
+</div>
+<p>This machine's own key is trusted as itself, which is what lets two worktrees link. A node id
+reappearing under a different key is rejected under every policy. Trust is a precondition of
+a link, not a link: discovery never admits one.</p>
+<h2 id="the-handshake"><a class="zola-anchor" href="#the-handshake" aria-label="Anchor link for: the-handshake">The handshake</a></h2>
+<p>A dialer — the runtime with the lower runtime key, or either one when only one can reach the
+other, or any runtime with a declared seed — posts a signed <strong>hello</strong> to
+<code>POST /api/v1/mesh/link/hello</code>: its runtime card (key, runtime, instance, repository, name,
+version, features, endpoints), a 32-hex nonce, a timestamp and its link protocol range. The
+answerer admits it only if, in order:</p>
+<ol>
+<li>the message is within 900 KiB and has the shape of a hello;</li>
+<li>the Ed25519 signature verifies under the hello domain (a signature over another message
+kind can never be replayed as a hello);</li>
+<li>the timestamp is within ±300 s of its clock;</li>
+<li>the nonce has not been answered before;</li>
+<li>the protocol ranges meet (link protocol 1..1 today; the highest common version is chosen);</li>
+<li>the peer is not this runtime;</li>
+<li>the peer's repository identity equals its own;</li>
+<li>the peer's key is trusted by its policy.</li>
+</ol>
+<p>It then answers with a signed <strong>welcome</strong> — its own card, a link id, its marks, the echoed
+nonce — and the dialer applies the same checks to the welcome (signature, echoed nonce,
+timestamp, protocol, self, repository, trust). Every failure on either side is a typed
+refusal (<code>malformed</code>, <code>oversized</code>, <code>signature</code>, <code>stale</code>, <code>replay</code>, <code>protocol_unsupported</code>,
+<code>self_link</code>, <code>repository_mismatch</code>, <code>untrusted</code>, <code>capacity</code>; a sync can also be refused
+<code>not_active</code> or <code>unknown_link</code>, and an operation <code>feature_unsupported</code>),
+counted in <code>refused_in</code>/<code>refused_out</code> and listed with its detail on <code>mesh.cooperation</code>.</p>
+<h2 id="transport"><a class="zola-anchor" href="#transport" aria-label="Anchor link for: transport">Transport</a></h2>
+<p>The link protocol posts <code>Signed</code> messages through <code>LinkTransport</code>. The shared server's
+transport is plain HTTP/1.1 through the crate's one minimal client (ADR 0032: no HTTP client
+dependency, no TLS, no async runtime); unit tests put runtimes behind an in-process transport
+that runs the same protocol. Authenticity is the protocol's; confidentiality is the network's
+— run links on a private network or an overlay (a tailnet, WireGuard).</p>
+<h2 id="presence-heartbeats-and-expiry"><a class="zola-anchor" href="#presence-heartbeats-and-expiry" aria-label="Anchor link for: presence-heartbeats-and-expiry">Presence, heartbeats and expiry</a></h2>
+<p>Two layers, deliberately separate:</p>
+<ul>
+<li><strong>Links</strong> are this runtime's connections. Every heartbeat (<code>cooperation.heartbeat_seconds</code>,
+default 5) the dialer runs one sync round. A link is <code>connected</code> with an exchange within
+two heartbeats plus one second, <code>degraded</code> beyond that, <code>unreachable</code> beyond half the expiry, and <code>expired</code>
+— dropped — beyond <code>cooperation.expiry_seconds</code> (default 30, at least three heartbeats).
+A failed round backs off exponentially, capped at the expiry, so a returning peer is dialed
+again within one expiry; an unknown link id (the peer restarted) re-handshakes at once, into
+the same table row.</li>
+<li><strong>Streams</strong> are alive while their beat rises. Each runtime raises its own beat every
+heartbeat; sync rounds carry every stream's beat with how long ago the sender saw it rise,
+so a runtime reached only through a relay is alive, and a crashed runtime stops beating for
+everyone at once. A beat is signed by its origin's key, so a relay can carry a beat but
+never mint one, and the age it reports is clamped to the expiry. Freshness is computed on each runtime's own monotonic clock — no two
+machines' wall clocks are compared. A reloaded journal restores events but no freshness,
+so a restart resurrects nobody's ownership.</li>
+</ul>
+<h2 id="events-ordering-and-deduplication"><a class="zola-anchor" href="#events-ordering-and-deduplication" aria-label="Anchor link for: events-ordering-and-deduplication">Events, ordering and deduplication</a></h2>
+<p>Everything cooperative is an event of the journal: <code>session_opened</code>, <code>session_closed</code>,
+<code>claim_acquired</code>, <code>claim_released</code>, <code>handover_published</code>, <code>handover_consumed</code>,
+<code>review_requested</code>, <code>review_answered</code>. An event carries its stream, a dense sequence, a
+Lamport stamp, its origin's wall clock (informational), the repository identity, the origin
+key, a body and an Ed25519 signature over the canonical JSON of all of it.</p>
+<p>The guarantees, exactly:</p>
+<ul>
+<li><strong>Identity:</strong> <code>(stream, seq)</code>.</li>
+<li><strong>Authenticity end to end:</strong> a relay forwards bytes; a consumer verifies the origin's key
+and the key-to-stream binding. A relay can withhold an event; it cannot forge or alter one.</li>
+<li><strong>Delivery:</strong> at-least-once. <strong>Application:</strong> idempotent — a duplicate is counted and changes
+nothing. Not exactly-once.</li>
+<li><strong>Order:</strong> within a stream, sequence order; an early arrival waits (up to 256 per stream) for
+its gap. Across streams the fold orders by <code>(lamport, stream, seq)</code>. Arrival order never
+changes state (a property test permutes and duplicates deliveries).</li>
+<li><strong>Forward compatibility:</strong> an event of a kind this executable does not know is stored and
+relayed, not interpreted. An event of a known kind out of bounds is refused.</li>
+<li><strong>Bounds:</strong> 48 KiB per event, 32 KiB per handover body, 64 paths per claim, 64 streams per
+node. Streams expired longer than 15 minutes (and holding no handover) are compacted away
+when the journal passes 20 000 events or 768 streams, and a node's own such streams when
+it holds 48 — every worktree of a machine signs with the machine's key and every server
+restart is a new stream, so a machine would otherwise fill its quota by running and its
+later runs would be refused. A stream never heard beating counts as silent from when the
+journal learned of it, so the streams a restart reloads are not taken for dead at once;
+compaction forgets the ended sessions and claims of what it drops, never a live one.</li>
+</ul>
+<h2 id="state-synchronisation"><a class="zola-anchor" href="#state-synchronisation" aria-label="Anchor link for: state-synchronisation">State synchronisation</a></h2>
+<p>Replication is a comparison of marks, not a flood. A sync request carries the dialer's marks
+(per stream: high-water sequence, beat, beat age) and the events the answerer's last marks
+lack; the answer carries the answerer's marks and the events the request's marks lack. One
+round replicates both ways. A runtime joining late — or rejoining after a partition — gets
+exactly what its marks lack in its first rounds (600 KiB per round), which after compaction is
+the live state plus retained handovers, not an unbounded history. Once marks agree, rounds
+carry no events: replication stops rather than loops.</p>
+<p><code>mesh.state</code> folds the journal: every runtime with the same events and the same liveness
+verdicts computes the same state and the same <code>digest</code>.</p>
+<h2 id="claims-and-leases"><a class="zola-anchor" href="#claims-and-leases" aria-label="Anchor link for: claims-and-leases">Claims and leases</a></h2>
+<p>A claim is a scope — repository-relative paths — held by a session, <code>exclusive</code> (the default)
+or <code>advisory</code>. Paths meet by <code>peers::claims_meet</code>, the peer board's own predicate: <code>apps</code>
+meets <code>apps/majordomus-cli</code>; <code>app</code> does not.</p>
+<ul>
+<li>A claim <strong>holds</strong> while it is unreleased, its session is open, and its stream's beat rose
+within the expiry. That is the lease: it is renewed by the holder's heartbeat and expires on
+every runtime on its own when the holder stops beating. There is no separate lease table.</li>
+<li><strong>Admission:</strong> <code>mesh.claim</code> refuses an exclusive claim that meets a live exclusive claim of
+another session known to this runtime — <code>claim_conflict</code>, naming the claims it meets.</li>
+<li><strong>Concurrency:</strong> two exclusive claims made where neither runtime could see the other (a
+partition, or the same heartbeat) both enter the journal. The fold names one winner — the
+lowest <code>(lamport, stream, seq)</code> of acquisition — on every runtime, and lists the other as
+<code>conflicted</code> with the winner's key. Never "last packet wins".</li>
+<li><strong>Release:</strong> only the holder's current run releases a claim (<code>not_own</code> otherwise); a dead
+holder's claim expires instead.</li>
+<li><strong>Advisory</strong> claims report overlaps and refuse nothing. The peer board's announcements are
+projected as advisory claims of the announcing MCP session.</li>
+</ul>
+<h2 id="handovers"><a class="zola-anchor" href="#handovers" aria-label="Anchor link for: handovers">Handovers</a></h2>
+<p><code>majordomus handover</code> writes a record under the checkout's <code>.ai/local/state/handovers/</code>.
+<code>mesh handover publish</code> (newest record, or <code>--path</code> under that directory — nothing else is
+ever read) turns it into a journal event: task, branch, head and time from its front matter,
+the <code>--issue</code>/<code>--milestone</code> given, and the Markdown body, identified by the body's digest. No
+path of the publishing machine travels. On another runtime, <code>mesh handover consume &lt;id&gt; --session &lt;s&gt;</code> records the consumption and writes the handover as a record of the same schema
+into that checkout's handovers directory — once, however often consumed — naming the local
+repository and <code>mesh:&lt;origin runtime&gt;</code> as its worktree, so <code>majordomus handover --resolve</code> on
+the same branch finds it as another checkout's handover.</p>
+<h2 id="sessions-and-the-peer-board"><a class="zola-anchor" href="#sessions-and-the-peer-board" aria-label="Anchor link for: sessions-and-the-peer-board">Sessions and the peer board</a></h2>
+<p>The peer board stays the machine-local view (ADR 0003, ADR 0044). Every heartbeat,
+cooperation projects it: an attached MCP session becomes the mesh session <code>board-&lt;peer&gt;</code> with
+its client, intent, checkout, branch and head; each announcement becomes an advisory claim;
+a changed announcement releases and re-claims; a detached session is closed. An MCP call to
+<code>majordomus_mesh_claim</code> without a <code>session</code> acts for the caller's own <code>board-&lt;peer&gt;</code> session.
+Branch and head are read when a session changes, never on a heartbeat.</p>
+<p>What a session shares is metadata — intent, issue, task, milestone, branch, head, dirtiness,
+a context revision identifier. Context bodies are not replicated; a handover is the
+referenced artifact a peer materialises.</p>
+<h2 id="failure-and-recovery"><a class="zola-anchor" href="#failure-and-recovery" aria-label="Anchor link for: failure-and-recovery">Failure and recovery</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>event</th><th>what each runtime does</th><th>what converges</th></tr></thead><tbody>
+<tr><td>a peer's process is killed</td><td>its links go degraded → unreachable → expired; its stream stops beating; its sessions and claims expire</td><td>on restart it is the same runtime, new instance; it re-handshakes into one table row and syncs; its previous run's claims stay expired</td></tr>
+<tr><td>the network partitions</td><td>each side expires the other's streams and may claim what the other held</td><td>on healing, one round each way; concurrent exclusive claims resolve to one named winner; digests agree</td></tr>
+<tr><td>a peer restarts while linked</td><td>the answerer refuses the old link id as <code>unknown_link</code>; the dialer says hello again</td><td>the table row is kept, <code>restarts</code> counts</td></tr>
+<tr><td>a relay dies in a line A–B–C</td><td>A and C expire each other's streams through lost beats</td><td>when B returns, marks re-align and nothing is duplicated</td></tr>
+<tr><td>hostile or broken input</td><td>typed refusal, counted, listed; the runtime keeps serving</td><td>nothing enters the journal</td></tr>
+</tbody></table>
+</div>
+<h2 id="security-model"><a class="zola-anchor" href="#security-model" aria-label="Anchor link for: security-model">Security model</a></h2>
+<p>What the mesh defends against, and how:</p>
 <div class="overflow-x-auto" tabindex="0">
 <table tabindex="0"><thead><tr><th>threat</th><th>answer</th></tr></thead><tbody>
-<tr><td>forged advertisement</td><td>Ed25519 signature over the advertisement; an unsigned or mis-signed packet is a counted refusal</td></tr>
-<tr><td>spoofing a known node id</td><td>the id is derived from the key by the verifier, never carried; a different key is a different id, and a registry that somehow held the id already rejects the key change</td></tr>
-<tr><td>replay</td><td>per-instance sequence numbers; at-or-below the highest seen is dropped and counted</td></tr>
-<tr><td>stale/future packets</td><td>a ±300 s timestamp window</td></tr>
-<tr><td>oversized / malformed / wrong-version packets</td><td>bounded before parsing; refused by shape and version; the parser never panics (property-tested)</td></tr>
-<tr><td>flooding the registry</td><td>bounded table (256), longest-unseen untrusted evicted first, trusted records never evicted for space — a flood cannot flush your fleet</td></tr>
-<tr><td>poisoned rendezvous</td><td>candidates travel as signed envelopes and verify at the consumer; a rendezvous can withhold, not invent; its failure backs off and stops nothing else</td></tr>
-<tr><td>a LAN attacker advertising MCP/HTTP endpoints</td><td>endpoints are advisory hints, identity is the key, and no endpoint is ever contacted with credentials — there are none to send; connecting to an advertised endpoint yields the same unauthenticated read-only surface as any loopback probe</td></tr>
-<tr><td>discovery as a foothold</td><td>discovery grants nothing: no execution, no authorization, no write surface exists behind it (<code>project.mesh-is-observation-not-authority</code>, held by <code>scripts/ci/mesh-check</code> and the tests it names)</td></tr>
-<tr><td>exfiltration via advertisements</td><td>the envelope's fields are enumerated and bounded; no secret, path, environment or content field exists; repositories are digests</td></tr>
+<tr><td>forged advertisement, hello, welcome, sync or event</td><td>Ed25519 over canonical bytes under per-message domains; the node id is derived from the key, never carried</td></tr>
+<tr><td>replayed hello or sync round</td><td>nonce cache; per-link rising counter; per-instance sequence for advertisements and events</td></tr>
+<tr><td>a runtime of another repository</td><td><code>repository_mismatch</code> at the handshake, <code>repository</code> rejection at ingest</td></tr>
+<tr><td>an unknown or untrusted key on the network</td><td>observed by discovery, refused <code>untrusted</code> at the handshake; its relayed events refused <code>untrusted</code> at ingest</td></tr>
+<tr><td>a relay that alters or invents events</td><td>the origin's signature fails at every consumer</td></tr>
+<tr><td>flooding</td><td>bounded datagrams, messages (900 KiB), events, streams (1024, at most 64 per node), events per node (20 000), pending events (256 per stream, 4096 in all), peers (256), dial targets (8 per node, the present runtimes before the stopped ones), listed refusals (128), registry (256; only allowlisted records are never evicted)</td></tr>
+<tr><td>a forged or replayed liveness report</td><td>beats are signed by their origin and only a higher signed beat counts; a relayed age is clamped to the expiry; a stream is created from a mark only when the mark verifies, its origin is trusted and its beat is fresh</td></tr>
+<tr><td>a hostile handover consumed here</td><td>every front-matter field is single-line at ingest; the record's file name keeps only timestamp digits, hex and <code>[A-Za-z0-9_-]</code>, and a path outside the handovers directory is refused</td></tr>
+<tr><td>a web page driving the server (DNS rebinding)</td><td>a state-changing request from a browser is accepted only from the server's own origin and only when addressed by an IP literal or <code>localhost</code></td></tr>
+<tr><td>a stranger's hellos</td><td>the replay cache and the refusal list hold only what a trusted key of this repository sent, or are capped</td></tr>
+<tr><td>a stale peer holding a scope forever</td><td>claims live only while the holder's beat rises</td></tr>
+<tr><td>publishing arbitrary files</td><td>handover publication reads only <code>.ai/local/state/handovers/</code></td></tr>
+<tr><td>a future protocol</td><td><code>protocol_unsupported</code> with both ranges, not a dropped connection</td></tr>
 </tbody></table>
 </div>
-<p>What the mesh does <strong>not</strong> defend against: an attacker on the same segment can see
-that a Majordomus exists, its display name, its advertised endpoints and its
-repository digests (presence disclosure is inherent to discovery — the off-by-default
-declaration exists exactly for environments where that is unacceptable); and it does
-not encrypt traffic (there is no TLS in the executable; run rendezvous over an
-overlay that encrypts, or stay on multicast within a trusted segment).</p>
+<p>What it does not defend against: an observer on the network sees that a Majordomus runs, its
+advertisements and — for linked peers — session intents, claim scopes, review subjects and
+published handover bodies, because nothing is encrypted; run it on a private network or an
+overlay. A holder of an allowed node key is that node. A compromised trusted peer can publish
+misleading claims and handovers under its own identity — they are attributed to it and expire
+with it, but they are believed until then. The default — no declaration, or <code>enabled: false</code> —
+exists for environments where presence disclosure is unacceptable.</p>
+<h2 id="configuration"><a class="zola-anchor" href="#configuration" aria-label="Anchor link for: configuration">Configuration</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="yaml"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> .ai/repo/mesh/majordomus.yaml</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">s</span><span class="z-l-4 z-d-1">chema</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">esh/v1</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">k</span><span class="z-l-4 z-d-1">ind</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">esh-declaration</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">i</span><span class="z-l-4 z-d-1">d</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> m</span><span class="z-l-8 z-d-8">ajordomus</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">e</span><span class="z-l-4 z-d-1">nabled</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> nothing opens without it</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">m</span><span class="z-l-4 z-d-1">ulticast</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> e</span><span class="z-l-4 z-d-1">nabled</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> g</span><span class="z-l-4 z-d-1">roup</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 239.255.77.77</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> p</span><span class="z-l-4 z-d-1">ort</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 7741</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> t</span><span class="z-l-4 z-d-1">tl</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 1</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">nterval_seconds</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 15</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">b</span><span class="z-l-4 z-d-1">roadcast</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> m</span><span class="z-l-4 z-d-1">ode</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">isabled</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">r</span><span class="z-l-4 z-d-1">endezvous</span><span class="z-l-6 z-d-9">:</span><span> {</span><span class="z-l-4 z-d-1"> e</span><span class="z-l-4 z-d-1">ndpoints</span><span class="z-l-6 z-d-9">:</span><span> [</span><span>]</span><span class="z-l-6 z-d-9">,</span><span class="z-l-4 z-d-1"> i</span><span class="z-l-4 z-d-1">nterval_seconds</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 60</span><span> }</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">t</span><span class="z-l-4 z-d-1">rust</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  p</span><span class="z-l-4 z-d-1">olicy</span><span class="z-l-6 z-d-9">:</span><span class="z-l-8 z-d-8"> d</span><span class="z-l-8 z-d-8">eny_unknown</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  a</span><span class="z-l-4 z-d-1">llow</span><span class="z-l-6 z-d-9">:</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> `majordomus mesh identity` on each machine</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> 5</span><span class="z-l-8 z-d-8">b0f…e1</span></span>
+<span class="giallo-l"><span>    -</span><span class="z-l-8 z-d-8"> 9</span><span class="z-l-8 z-d-8">a41…07</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">c</span><span class="z-l-4 z-d-1">ooperation</span><span class="z-l-6 z-d-9">:</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  e</span><span class="z-l-4 z-d-1">nabled</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> true</span><span class="z-l-10 z-l-i z-d-4 z-d-i">               #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> default once the mesh is enabled</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  h</span><span class="z-l-4 z-d-1">eartbeat_seconds</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 5</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  e</span><span class="z-l-4 z-d-1">xpiry_seconds</span><span class="z-l-6 z-d-9">:</span><span class="z-l-9 z-d-11"> 30</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> at least three heartbeats</span></span>
+<span class="giallo-l"><span class="z-l-4 z-d-1">  s</span><span class="z-l-4 z-d-1">eeds</span><span class="z-l-6 z-d-9">:</span><span> [</span><span class="z-l-8 z-d-8">h</span><span class="z-l-8 z-d-8">ttp://10.0.0.12:8741</span><span>]</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> dial these whether or not discovery hears them</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> repository: my-project    # required for a shallow clone; separates a fork</span></span></code></pre>
+<p>The declaration is the one place mesh behaviour is configured; there are no environment
+variables for it. To be dialed from other machines, the server must listen beyond loopback:
+<code>majordomus serve --host 0.0.0.0</code> (or a deployment object). A server on loopback can still dial
+out, and a link, once dialed, replicates both ways.</p>
+<h2 id="this-repository-s-mesh"><a class="zola-anchor" href="#this-repository-s-mesh" aria-label="Anchor link for: this-repository-s-mesh">This repository's mesh</a></h2>
+<p>This repository runs its own mesh: <code>.ai/repo/mesh/majordomus.yaml</code> is committed with
+<code>enabled: true</code>, so every server of every worktree of it announces, listens and links. That is
+this repository's reviewed decision, not the tool's default: the skeleton a new repository
+starts from ships no declaration, and nothing opens there until its own operator commits one
+(the guarantee <code>mesh-off-by-default</code>).</p>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th></th><th>declared</th></tr></thead><tbody>
+<tr><td>multicast</td><td><code>239.255.77.77:7741</code>, TTL 1 — the local segment only; the sockets are bound with <code>SO_REUSEADDR</code> and <code>SO_REUSEPORT</code>, so every server on a machine hears the group</td></tr>
+<tr><td>broadcast</td><td>disabled</td></tr>
+<tr><td>rendezvous hubs</td><td>jetson (<code>192.168.100.30</code>, tailnet <code>100.92.246.32</code>) and lundra (<code>192.168.100.10</code>, tailnet <code>100.65.22.118</code>), port 8791, every 30 s</td></tr>
+<tr><td>seeds</td><td>none</td></tr>
+<tr><td>cooperation</td><td>the defaults: heartbeat 5 s, expiry 30 s</td></tr>
+<tr><td>trust</td><td><code>deny_unknown</code> with three keys: <code>641bdb94</code> (the owner's MacBook Pro), <code>9d652b2c</code> (jetson), <code>25c9758f</code> (lundra)</td></tr>
+</tbody></table>
+</div>
+<p><strong>Who is trusted.</strong> The owner's three machines and nothing else. The worktrees of one machine
+share that machine's key and link as itself; two machines link only when both keys are listed,
+which is why the MacBook's own key is on the list. Any other key on the segment is observed,
+trusted for nothing, and refused <code>untrusted</code> if it dials.</p>
+<p><strong>Where the hubs are.</strong> A hub is a server of this repository on jetson or lundra, listening
+beyond loopback on port 8791, listed by its LAN and its tailnet address. Multicast cannot cross
+the tailnet, and the macOS firewall drops it inbound, so the hubs are how machines on different
+segments find each other. Every server registers with every hub it can reach, one thread per
+hub with a 5-second bound per request. A hub that does not answer is asked less and less often
+— the 30-second interval doubles per failure, up to eight times — and delays nothing else: a
+server whose four hubs are all unreachable starts, discovers and links over multicast, and
+answers requests, exactly as one with none (<code>mesh status</code> shows the <code>rendezvous</code> provider
+<code>running</code> with <code>sent 0</code>).</p>
+<p><strong>What travels.</strong> What the security model above says: advertisements on the local segment and
+to the hubs; to linked runtimes of the owner's machines, session metadata, claim scopes, review
+subjects and published handover bodies. Nothing is encrypted; every hub address is on the
+private network or the tailnet, and <code>test/cases/491_the_mesh_is_on_here.sh</code> refuses a
+declaration that names a public one.</p>
+<p><strong>Adding a machine.</strong> Run <code>majordomus mesh identity</code> there, add the key under <code>trust.allow</code> with
+a comment naming the machine, and commit it; <code>majordomus mesh doctor</code> on that machine passes its
+<code>trust</code> check once the key is listed, and names the remedy until then. A new hub is a server
+started with <code>majordomus serve --host 0.0.0.0 --port 8791</code> on the machine, and its addresses
+added under <code>rendezvous.endpoints</code>.</p>
+<p><strong>Turning it off.</strong> Commit <code>enabled: false</code>; a server started after that opens nothing and
+<code>mesh status</code> says why.</p>
+<p><strong>What holds it.</strong> <code>test/cases/491_the_mesh_is_on_here.sh</code>: the committed declaration is the
+reviewed one as the executable reads it, <code>mesh doctor</code> holds over this repository, two
+worktrees under one key link, an unlisted key is refused <code>untrusted</code>, and a machine whose key is
+missing is told so. A fuller design — the doctor judging the running server and not only the
+machine, a session-start briefing line naming the mesh, and a script that installs a hub as a
+systemd user unit — is proposed on the branch <code>feature/the-mesh-is-on-and-held</code> (its ADR 0059)
+and is not part of this tree.</p>
+<h2 id="operating-it"><a class="zola-anchor" href="#operating-it" aria-label="Anchor link for: operating-it">Operating it</a></h2>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> doctor</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> prerequisites on this machine, each failure with impact and remedy</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> identity</span><span class="z-l-10 z-l-i z-d-4 z-d-i">          #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> this machine&#39;s key, for trust.allow</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> status</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> discovery: providers, tallies, refusals</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> nodes</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> discovery: one row per node × runtime</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> peers</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> machines → runtimes → sessions → claims, each link&#39;s state</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> peer</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">runtim</span><span>e</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">    #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> one runtime; exits 10 when unknown</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> state</span><span class="z-l-10 z-l-i z-d-4 z-d-i">             #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> sessions, claims (held/conflicted/expired), handovers, reviews, digest</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> events</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-after</span><span class="z-l-9 z-d-11"> 0</span><span class="z-l-10 z-l-i z-d-4 z-d-i">  #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> the journal</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> verify</span><span class="z-l-10 z-l-i z-d-4 z-d-i">            #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> a live round with every dialed peer, convergence; exits 10 on failure</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> session</span><span class="z-l-8 z-d-8"> open</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> s1</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-client</span><span class="z-l-8 z-d-8"> codex</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-issue</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">#184</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> claim</span><span class="z-l-8 z-d-8"> apps/majordomus-cli</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> s1</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-issue</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">#184</span><span class="z-l-8 z-d-8">&#39;</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> exits 10 on claim_conflict</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> release</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">claim-ke</span><span>y</span><span class="z-l-16 z-d-16">&gt;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> handover</span><span class="z-l-8 z-d-8"> publish</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-issue</span><span class="z-l-8 z-d-8"> &#39;</span><span class="z-l-8 z-d-8">#184</span><span class="z-l-8 z-d-8">&#39;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> handover</span><span class="z-l-8 z-d-8"> consume</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">i</span><span>d</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> s2</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> review</span><span class="z-l-8 z-d-8"> request</span><span class="z-l-8 z-d-8"> feature/x</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> s1</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-reviewer</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">runtim</span><span>e</span><span class="z-l-16 z-d-16">&gt;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> review</span><span class="z-l-8 z-d-8"> answer</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">request-ke</span><span>y</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> s2</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-verdict</span><span class="z-l-8 z-d-8"> approved</span></span></code></pre>
+<p>Every command has <code>--format json</code>, which prints the capability's answer unchanged.</p>
+<p><strong>HTTP and OpenAPI.</strong> <code>GET /api/v1/mesh</code>, <code>/nodes</code>, <code>/identity</code>, <code>/doctor</code>, <code>/cooperation</code>,
+<code>/peers</code>, <code>/peer?runtime=</code>, <code>/state</code>, <code>/events?after=&amp;limit=</code>; <code>POST /api/v1/mesh/register</code>,
+<code>/verify</code>, <code>/sessions</code>, <code>/sessions/close</code>, <code>/claims</code>, <code>/claims/release</code>, <code>/handovers</code>,
+<code>/handovers/consume</code>, <code>/reviews</code>, <code>/reviews/answer</code>, <code>/link/hello</code>, <code>/link/sync</code>. The schemas
+are in <code>/openapi.json</code>, generated from the capability declarations.</p>
+<p><strong>MCP.</strong> <code>majordomus_mesh</code>, <code>_nodes</code>, <code>_identity</code>, <code>_doctor</code>, <code>_register</code>, <code>_cooperation</code>, <code>_peers</code>,
+<code>_peer</code>, <code>_state</code>, <code>_events</code>, <code>_verify</code>, <code>_session_open</code>, <code>_session_close</code>, <code>_claim</code>,
+<code>_release</code>, <code>_handover_publish</code>, <code>_handover_consume</code>, <code>_review_request</code>, <code>_review_answer</code>. An
+agent claims work with <code>majordomus_mesh_claim</code> instead of inventing a coordination channel;
+without a <code>session</code> the call acts for the agent's own board session.</p>
+<p><strong>Cockpit.</strong> <code>/cockpit/mesh</code>: this node, cooperation (runtime, repository identity, endpoints,
+heartbeat and expiry, protocol, counters, digest), machines → runtimes (liveness badge, "last
+heartbeat Ns ago", link state, work counts) → sessions (intent, issue, branch, claims), claim
+conflicts, handovers, reviews, refused candidates, discovery providers and nodes. Actions run
+the same capabilities from their Capabilities pages.</p>
+<h2 id="troubleshooting"><a class="zola-anchor" href="#troubleshooting" aria-label="Anchor link for: troubleshooting">Troubleshooting</a></h2>
+<ol>
+<li><strong><code>mesh doctor</code></strong> on each machine. A failed <code>declaration</code>, <code>identity</code>, <code>trust</code>,
+<code>repository</code>, <code>udp</code> or <code>multicast</code> check names its impact and remedy.</li>
+<li><strong><code>mesh status</code></strong> — discovery. No nodes: multicast is not routed between the machines;
+declare <code>cooperation.seeds</code> or a rendezvous. Rising <code>signature</code> refusals: a broken or
+hostile sender. <code>version</code> refusals: a peer runs an executable older than discovery
+protocol 2.</li>
+<li><strong><code>mesh peers</code></strong> / <strong><code>mesh.cooperation</code></strong> — links and refusals. <code>repository_mismatch</code>: the
+runtimes serve different repositories, or one is a shallow clone or fork with a different
+identity — compare <code>mesh doctor</code>'s repository line on both. <code>untrusted</code>: add the key to
+<code>trust.allow</code>. <code>protocol_unsupported</code>: upgrade the older executable. A link stuck in
+<code>connecting</code> with a <code>last_error</code> of "connection refused": the peer listens on loopback.</li>
+<li><strong><code>mesh verify</code></strong> — a live round with every dialed peer, and whether both hold the same
+marks afterwards. <code>NOT converged</code> right after a burst of events is one round of lag; a
+persistent one with <code>journal pending &gt; 0</code> is a peer relaying a partial stream.</li>
+<li>Server logs carry <code>runtime_id</code>, <code>peer</code>, <code>link_id</code>, <code>session_id</code>, <code>repository_id</code> and the
+refusal <code>code</code> on every link event.</li>
+</ol>
+<h2 id="testing-and-evidence"><a class="zola-anchor" href="#testing-and-evidence" aria-label="Anchor link for: testing-and-evidence">Testing and evidence</a></h2>
+<div class="overflow-x-auto" tabindex="0">
+<table tabindex="0"><thead><tr><th>level</th><th>what</th><th>where</th><th>runs</th></tr></thead><tbody>
+<tr><td>unit &amp; property</td><td>journal dedup, gaps, hostile events, beats; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity</td><td><code>cargo test --lib mesh</code></td><td>CI <code>rust</code></td></tr>
+<tr><td>multi-process integration</td><td>separate <code>majordomus serve</code> processes with separate keys over TCP: two-runtime cooperation (sessions, claims, conflicts, reviews, handover, CLI parity, verify), repository isolation, untrusted key, SIGKILL expiry and restart, three runtimes in a line, hostile messages over HTTP, two worktrees under one key</td><td><code>cargo test --test mesh_cooperation</code></td><td>CI <code>rust</code>, <code>macos</code></td></tr>
+<tr><td>network lab</td><td>four Linux containers on one docker bridge: multicast discovery with no seeds, full-mesh handshake, repository isolation, cross-node claim and conflict, cross-node handover, three-node convergence, network partition and healing, process crash and restart, <code>mesh verify</code> in a node</td><td><code>test/mesh-lab/run</code> → <code>target/mesh-lab/evidence.json</code></td><td>CI <code>mesh-lab</code></td></tr>
+<tr><td>physical machines</td><td>the procedure below</td><td>manual</td><td>recorded when run</td></tr>
+</tbody></table>
+</div>
+<h3 id="physical-multi-machine-verification"><a class="zola-anchor" href="#physical-multi-machine-verification" aria-label="Anchor link for: physical-multi-machine-verification">Physical multi-machine verification</a></h3>
+<p>On two machines A and B on one network, each with a checkout of the same repository built
+from the same commit:</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="shellscript"><span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on each machine</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> identity</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                      #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> note the public key</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> in the repository, on both: enabled: true, trust.allow: [keyA, keyB],</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> cooperation.seeds on B: [http://&lt;A&#39;s address&gt;:8741]</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> serve</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-host</span><span class="z-l-9 z-d-11"> 0.0.0.0</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-port</span><span class="z-l-9 z-d-11"> 8741</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-idle</span><span class="z-l-9 z-d-11"> 0</span><span class="z-l-6 z-d-9"> &amp;</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> doctor</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> A and B</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> peers</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> each lists the other: connected, trusted</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> claim</span><span class="z-l-8 z-d-8"> apps</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> a1</span><span class="z-l-10 z-l-i z-d-4 z-d-i">       #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on A</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> claim</span><span class="z-l-8 z-d-8"> apps/x</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> b1</span><span class="z-l-10 z-l-i z-d-4 z-d-i">     #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on B: exits 10, claim_conflict naming A&#39;s claim</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> handover</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-derive</span><span class="z-l-16 z-d-16"> |</span><span class="z-l-1 z-d-3"> …</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on A, then:</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> handover</span><span class="z-l-8 z-d-8"> publish</span><span class="z-l-10 z-l-i z-d-4 z-d-i">              #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on A</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> state</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                         #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on B: the handover is listed</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> handover</span><span class="z-l-8 z-d-8"> consume</span><span class="z-l-16 z-d-16"> &lt;</span><span class="z-l-8 z-d-8">i</span><span>d</span><span class="z-l-16 z-d-16">&gt;</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-session</span><span class="z-l-8 z-d-8"> b1</span><span class="z-l-10 z-l-i z-d-4 z-d-i">   #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on B: a local record</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> handover</span><span class="z-l-3 z-d-7"> -</span><span class="z-l-3 z-d-7">-resolve</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                 #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on B, on the handover&#39;s branch</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> failure: stop A&#39;s server with kill -9, watch B&#39;s `mesh peers` go unreachable → expired and</span></span>
+<span class="giallo-l"><span class="z-l-10 z-l-i z-d-4 z-d-i">#</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> A&#39;s claim expire; start A again and watch it reconnect with restarts: 1</span></span>
+<span class="giallo-l"><span class="z-l-1 z-d-3">majordomus</span><span class="z-l-8 z-d-8"> mesh</span><span class="z-l-8 z-d-8"> verify</span><span class="z-l-10 z-l-i z-d-4 z-d-i">                        #</span><span class="z-l-10 z-l-i z-d-4 z-d-i"> on both: ok, converged</span></span></code></pre>
+<p><strong>Recorded run, 2026-09-15.</strong> A MacBook Pro (Darwin arm64, node <code>9ce70581…</code>) and <code>lundra</code>
+(Linux x86_64, node <code>94713da7…</code>) on one /24 LAN, each with its own checkout, its own state
+directory and <code>cooperation.repository</code> declared, allowlisting each other's key, seeds both
+ways, heartbeat 2 s, expiry 10 s. Measured: the Mac heard lundra by UDP multicast on the
+first poll; lundra dialed the Mac and the link was connected (round trip 11 ms); a claim
+written on the Mac was held on lundra 500 ms later and lundra's overlapping exclusive claim
+was refused with 422; a handover published on lundra was consumed into the Mac's checkout;
+both reported one digest; lundra's server was killed with <code>kill -9</code> and the Mac expired the
+link after 10 s with lundra's claim <code>expired: its runtime stopped beating</code>, after which the
+Mac could claim that scope; lundra restarted as the same runtime and reconnected, listed once
+with <code>restarts: 1</code>; <code>mesh verify</code> passed on both (lundra: round trip 9 ms, converged). An
+earlier attempt the same evening failed because the procedure's stop step orphaned the Mac's
+first server (<code>$!</code> named a subshell), which kept an empty allowlist and refused every link as
+<code>untrusted</code> — the refusal was visible on both sides, and <code>mesh verify</code> now fails when a runtime
+is refused as untrusted, protocol-incompatible or mis-signed, and when the declaration names
+seeds and no peer is connected, instead of reporting <code>ok</code>.</p>
+<h2 id="guarantees-and-what-is-not-guaranteed"><a class="zola-anchor" href="#guarantees-and-what-is-not-guaranteed" aria-label="Anchor link for: guarantees-and-what-is-not-guaranteed">Guarantees, and what is not guaranteed</a></h2>
+<p>Guaranteed and tested: authenticated links with typed refusals; repository isolation;
+cross-runtime exclusive claims with deterministic conflict resolution; liveness and expiry
+without clock agreement; reconnection without duplicate peers; convergence through relays with
+each event held once; at-least-once delivery with idempotent application; handovers and reviews
+across runtimes; one state across every surface.</p>
+<p>Not guaranteed: exactly-once delivery; strong consistency or linearisable claims; availability of
+a claim during a partition beyond each side's view; confidentiality on the wire; WAN operation,
+NAT traversal or routed multicast; compatibility with executables older than discovery protocol 2
+and link protocol 1; replication of anything but session metadata, claims, handovers and reviews.</p>
 <h2 id="extending-it"><a class="zola-anchor" href="#extending-it" aria-label="Anchor link for: extending-it">Extending it</a></h2>
-<p>A new discovery mechanism — mDNS, a tailnet's API, Consul, a cloud registry —
-implements <code>mesh::provider::MeshProvider</code> (start, status, raw bytes up the channel)
-and is handed to the runtime. That is the entire registration: the manager verifies,
-the registry converges, and every surface shows the new source's observations without
-a line of change — the test
-<code>a_synthetic_provider_reaches_the_registry_with_zero_registration</code> holds exactly this.</p>
+<p>A new discovery mechanism implements <code>mesh::provider::MeshProvider</code> and needs no other change.
+A new transport implements <code>mesh::link::LinkTransport</code> inside <code>src/mesh/</code>. A new kind of
+cooperative event is a variant of <code>mesh::journal::EventBody</code>, a case of <code>mesh::state::fold</code>
+and a capability of the mesh module; older runtimes relay it untouched. A change to the link
+messages raises <code>LINK_PROTOCOL_MAX</code> and keeps the previous version readable until the fleet has
+moved, or it is a deliberate break recorded in an ADR.</p>
 </article><h2 class="mt-12 text-xl font-semibold tracking-tight text-heading">Claims this document defines</h2>
     <p class="mt-2 text-sm text-body">Each links to its own page with implementation, test and where it is used.</p>
     <ul class="mt-4 grid gap-3 sm:grid-cols-2"><li><a href="https://majordomus.dev/guarantees/mesh-off-by-default/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
 </span><span class="text-sm text-heading">No mesh discovery socket opens until the repository commits an enabled mesh declaration, and a disabled or absent declaration is reported as the reason, not an error</span></a></li><li><a href="https://majordomus.dev/guarantees/mesh-one-registry/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-</span><span class="text-sm text-heading">Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own</span></a></li></ul></div>
+</span><span class="text-sm text-heading">Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own</span></a></li><li><a href="https://majordomus.dev/guarantees/mesh-liveness-expiry/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate</span></a></li><li><a href="https://majordomus.dev/guarantees/mesh-three-runtime-convergence/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop</span></a></li><li><a href="https://majordomus.dev/guarantees/mesh-network-acceptance/" class="flex h-full flex-col gap-2 rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><span><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
+</span><span class="text-sm text-heading">Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs</span></a></li></ul></div>
 </div>
 
 </div>
@@ -363,7 +663,7 @@ a line of change — the test
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
         
         <ul class="space-y-2 text-sm font-medium text-body">
-          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
         </ul>
         
       </div>
@@ -372,14 +672,13 @@ a line of change — the test
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
         
         <ul class="space-y-2 text-sm font-medium text-body">
-          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
         </ul>
         
       </div>
       
       <div class="min-w-0">
-        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
-        <ul class="space-y-2 text-sm font-medium text-body">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
           <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
           <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
@@ -391,7 +690,7 @@ a line of change — the test
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.9.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/35f64578296d5dad12caea7dcfa063896753347f" class="font-mono underline">35f6457</a> · inputs <span class="font-mono">07a890c9d0f3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.10.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/910835dd0723ce26186225a6ca1909d54e766d53" class="font-mono underline">910835d</a> · inputs <span class="font-mono">52e090755116</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

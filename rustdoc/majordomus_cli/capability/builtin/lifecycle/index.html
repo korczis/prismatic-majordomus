@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The `lifecycle` module: the episode lifecycle as something a person can watch."><title>majordomus_cli::capability::builtin::lifecycle - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module lifecycle</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module lifecycle</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#the-shape-of-the-module-and-the-constraint-it-is-under" title="The shape of the module, and the constraint it is under">The shape of the module, and the constraint it is under</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>capability::<wbr>builtin</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../../index.html">majordomus_cli</a>::<wbr><a href="../../index.html">capability</a>::<wbr><a href="../index.html">builtin</a></div><h1>Module <span>lifecycle</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../../src/majordomus_cli/capability/builtin/lifecycle.rs.html#1-1691">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The <code>lifecycle</code> module: the episode lifecycle as something a person can watch.</p>
+<p>The module is named for the lifecycle rather than for the session because <code>session</code> is
+already a kind of the layer — the closed records under the sessions section — and the
+registry composes one module per declarative kind. A capability module that took the
+same namespace would be composed twice and the registry refuses to build, which is the
+right answer: two different things called <code>session</code> in one namespace is exactly the
+ambiguity that refusal exists to catch.</p>
+<p><a href="../continuity/index.html" title="mod majordomus_cli::capability::builtin::continuity"><code>super::continuity</code></a> answers one question well — <em>what would a worker resuming in this
+checkout be handed?</em> — and it answers it about <strong>one</strong> episode, the one
+<code>state/session-current.yaml</code> points at. That is the right answer for a briefing and the
+wrong answer for an operator, because the pointer is a symlink that the most recent
+<code>session start</code> re-aims: on 2026-09-11 this repository held five open episodes in one
+checkout and <code>continuity.state</code> could name exactly one of them. Four workers were
+invisible to every surface the tool has, and the episode that never closes is the one
+nobody can see.</p>
+<p>So this module reads the store rather than the pointer, and it reports the things a
+subsystem needs somebody to look at:</p>
+<ul>
+<li><strong><code>lifecycle.episodes</code></strong> — every open episode in the local store, which of them this checkout
+points at, which belong to another worktree, and what the ledger last saw each do.</li>
+<li><strong><code>lifecycle.recovery</code></strong> — the episodes that can no longer close themselves, the temporary
+files a killed close left in the tracked directory, whether the pointer has been
+migrated to the per-provider layout, and the arithmetic ADR 0052 asks for: how many
+<code>session.started</code> events the ledger holds against how many <code>session.closed</code>.</li>
+<li><strong><code>lifecycle.runtime</code></strong> — the commit this process is serving answers about, against the commit
+the repository is on right now. A long-lived server that built its index once and held
+it served a six-hour-old HEAD from the API, from MCP and from this Cockpit with nothing
+saying the picture was old (<code>fix/server-sees-the-current-tree</code>). Whether that is still
+possible is a fact this page should state rather than a fact a reader should assume.</li>
+<li><strong><code>lifecycle.providers</code></strong> — which lifecycle events each provider’s adapter declares, whether it
+can capture prompts, and which of this repository’s enforcement entries are actually
+wired to its hook. Declared, never inferred from the presence of a file.</li>
+<li><strong><code>lifecycle.closed</code></strong> — the tracked durable projection under the layer’s sessions section: the
+only half of this subsystem that survives a clone.</li>
+</ul>
+<p><strong>Read, never written.</strong> Like <code>continuity</code>, this module is one of the lifecycle’s
+readers; the writer is the shell tool. A second writer would be a second account of
+events the ledger already holds, which is what that design refuses.</p>
+<p><strong>Served, never published.</strong> Everything under <code>.ai/local/</code> names this machine, so none of
+it is projected into <code>docs/generated/</code> or <code>site/</code> — the claim <code>local-state-ignored</code> owns
+that, over the whole local half (ADR 0014). The half that belongs to these five is that
+none of them declares a command line, because a command line is how a value reaches a
+script, a log and eventually a commit; <code>test/cases/171</code> asserts exactly that.</p>
+<p><strong>No thresholds and no clock.</strong> Nothing here decides that a record is old. Age is
+<code>session.freshness</code> in the policy and it is <a href="../continuity/index.html" title="mod majordomus_cli::capability::builtin::continuity"><code>super::continuity</code></a>’s to judge; a second
+engine for it in this file would be the second source of truth ADR 0052 names. What this
+module reports is what it can observe without an opinion: a timestamp as recorded, a
+count, a path that exists or does not.</p>
+<h2 id="the-shape-of-the-module-and-the-constraint-it-is-under"><a class="doc-anchor" href="#the-shape-of-the-module-and-the-constraint-it-is-under">§</a>The shape of the module, and the constraint it is under</h2>
+<p>Two of the paragraphs above are properties of the declaration rather than intentions,
+so they can be read off it. Every one of the five capabilities is served — over HTTP and
+over MCP — and <strong>none of them declares a command line</strong>, which is what “served, never
+published” amounts to mechanically: a command line is how a value reaches a script, a
+log and eventually a commit, and nothing under <code>.ai/local/</code> may take that path.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::capability::builtin::lifecycle;
+
+<span class="kw">let </span>m = lifecycle::module();
+<span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"lifecycle"</span>);
+
+<span class="comment">// declaration order, which is the order the five are read in
+</span><span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
+<span class="macro">assert_eq!</span>(ids, [
+    <span class="string">"lifecycle.episodes"</span>,
+    <span class="string">"lifecycle.recovery"</span>,
+    <span class="string">"lifecycle.runtime"</span>,
+    <span class="string">"lifecycle.providers"</span>,
+    <span class="string">"lifecycle.closed"</span>,
+]);
+
+<span class="comment">// served everywhere a worker in front of this checkout can reach, and nowhere a
+// script can: the local half of the layer never becomes a committed value
+</span><span class="kw">for </span>e <span class="kw">in </span><span class="kw-2">&amp;</span>m.capabilities {
+    <span class="kw">let </span>id = e.capability.id.as_str();
+    <span class="macro">assert!</span>(e.capability.exposure.http.is_some(), <span class="string">"{id} is not served over HTTP"</span>);
+    <span class="macro">assert!</span>(e.capability.exposure.mcp.is_some(), <span class="string">"{id} is not served over MCP"</span>);
+    <span class="macro">assert!</span>(e.capability.exposure.cli.is_none(), <span class="string">"{id} declares a command line"</span>);
+}</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Balance.html" title="struct majordomus_cli::capability::builtin::lifecycle::Balance">Balance</a></dt><dd>What the ledger says about episode lifecycle against what the store holds.</dd><dt><a class="struct" href="struct.ClosedSession.html" title="struct majordomus_cli::capability::builtin::lifecycle::ClosedSession">Closed<wbr>Session</a></dt><dd>One closed episode of the tracked, durable projection — the half of this subsystem that
+survives a clone.</dd><dt><a class="struct" href="struct.ClosedSessions.html" title="struct majordomus_cli::capability::builtin::lifecycle::ClosedSessions">Closed<wbr>Sessions</a></dt><dd>The tracked half of the subsystem: the records a clone receives.</dd><dt><a class="struct" href="struct.Episode.html" title="struct majordomus_cli::capability::builtin::lifecycle::Episode">Episode</a></dt><dd>One open episode, as its file records it and as the ledger has seen it.</dd><dt><a class="struct" href="struct.Episodes.html" title="struct majordomus_cli::capability::builtin::lifecycle::Episodes">Episodes</a></dt><dd>Every open episode of this checkout’s store — the answer <code>continuity.state</code> cannot give,
+because it reads the pointer and this reads the store.</dd><dt><a class="struct" href="struct.Orphan.html" title="struct majordomus_cli::capability::builtin::lifecycle::Orphan">Orphan</a></dt><dd>A temporary file left in a record directory by a close that did not finish.</dd><dt><a class="struct" href="struct.Pointer.html" title="struct majordomus_cli::capability::builtin::lifecycle::Pointer">Pointer</a></dt><dd>What the pointer is and whether it leads anywhere.</dd><dt><a class="struct" href="struct.ProviderLifecycle.html" title="struct majordomus_cli::capability::builtin::lifecycle::ProviderLifecycle">Provider<wbr>Lifecycle</a></dt><dd>One provider’s lifecycle surface: what its adapter declares it can do, and what this
+repository has wired to it.</dd><dt><a class="struct" href="struct.ProviderLifecycles.html" title="struct majordomus_cli::capability::builtin::lifecycle::ProviderLifecycles">Provider<wbr>Lifecycles</a></dt><dd>Every provider the distribution ships a bootstrap for, with the lifecycle half of each.</dd><dt><a class="struct" href="struct.Recovery.html" title="struct majordomus_cli::capability::builtin::lifecycle::Recovery">Recovery</a></dt><dd>What this checkout’s session store needs somebody to do.</dd><dt><a class="struct" href="struct.RuntimeView.html" title="struct majordomus_cli::capability::builtin::lifecycle::RuntimeView">Runtime<wbr>View</a></dt><dd>The commit this process answers about, against the commit the repository is on.</dd><dt><a class="struct" href="struct.Stranded.html" title="struct majordomus_cli::capability::builtin::lifecycle::Stranded">Stranded</a></dt><dd>An open episode that cannot close itself, and what to do about it.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.EpisodeStanding.html" title="enum majordomus_cli::capability::builtin::lifecycle::EpisodeStanding">Episode<wbr>Standing</a></dt><dd>Where an open episode stands, as far as the repository can observe it.</dd><dt><a class="enum" href="enum.PointerLayout.html" title="enum majordomus_cli::capability::builtin::lifecycle::PointerLayout">Pointer<wbr>Layout</a></dt><dd>The layout of the pointer, which is how far the per-provider migration has got here.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.EPISODES_URI.html" title="constant majordomus_cli::capability::builtin::lifecycle::EPISODES_URI">EPISODES_<wbr>URI</a></dt><dd>The URI under which <code>lifecycle.episodes</code> is read as an MCP resource.</dd><dt><a class="constant" href="constant.RECOVERY_URI.html" title="constant majordomus_cli::capability::builtin::lifecycle::RECOVERY_URI">RECOVERY_<wbr>URI</a></dt><dd>The URI under which <code>lifecycle.recovery</code> is read as an MCP resource.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.module.html" title="fn majordomus_cli::capability::builtin::lifecycle::module">module</a></dt><dd>The module’s one declaration: the five capabilities, their schemas and every projection
+of them.</dd></dl></section></div></main></body></html>

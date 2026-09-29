@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SAMPLE"],"fn":["derive"],"struct":["ScopeSuggestion","ScopeUse","ScopeVocabulary"]};

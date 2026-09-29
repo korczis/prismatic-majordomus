@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Assembling one measurement: the inventory and the registry in, a `QualityReport` out."><title>majordomus_cli::quality::report - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module report</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.10.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module report</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#one-discovery-many-renderings" title="One discovery, many renderings">One discovery, many renderings</a></li><li><a href="#what-it-measures" title="What it measures">What it measures</a></li></ul><h3><a href="#functions">Module Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>quality</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">quality</a></div><h1>Module <span>report</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/quality/report.rs.html#1-446">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Assembling one measurement: the inventory and the registry in, a <a href="../struct.QualityReport.html" title="struct majordomus_cli::quality::QualityReport"><code>QualityReport</code></a> out.</p>
+<h2 id="one-discovery-many-renderings"><a class="doc-anchor" href="#one-discovery-many-renderings">§</a>One discovery, many renderings</h2>
+<p>The crate is parsed once, the registry is read once, and everything downstream — the
+terminal rendering, the JSON, the HTTP response, the Cockpit panel, the CI annotations
+— is a reading of the single value this module returns. That is the same relationship
+every other projection in this executable has with the registry, and it is why a
+<code>--json</code> report and a human report can never disagree about whether the gate passed.</p>
+<h2 id="what-it-measures"><a class="doc-anchor" href="#what-it-measures">§</a>What it measures</h2><div class="example-wrap"><pre class="language-text"><code>src/**.rs  --syn--&gt;  Inventory  --policy--&gt;  item and module findings
+registry + clap tree + OpenAPI  --parity--&gt;  operation findings</code></pre></div>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::quality::report;
+
+<span class="comment">// a crate of one module, documented, exampled and tested: the shape of a clean report
+</span><span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>src = dir.path().join(<span class="string">"src"</span>);
+std::fs::create_dir_all(<span class="kw-2">&amp;</span>src).unwrap();
+std::fs::write(src.join(<span class="string">"lib.rs"</span>), <span class="macro">concat!</span>(
+    <span class="string">"//! A crate that does one thing, and this header says at some length what that one\n"</span>,
+    <span class="string">"//! thing is, which is what the module policy asks of every exported module here.\n"</span>,
+    <span class="string">"//!\n"</span>,
+    <span class="string">"//! ```\n"</span>,
+    <span class="string">"//! assert_eq!(majordomus_cli::two(), 2);\n"</span>,
+    <span class="string">"//! ```\n"</span>,
+    <span class="string">"/// Answers with two, every time, which is more than the signature promises.\n"</span>,
+    <span class="string">"///\n"</span>,
+    <span class="string">"/// ```\n"</span>,
+    <span class="string">"/// assert_eq!(majordomus_cli::two(), 2);\n"</span>,
+    <span class="string">"/// ```\n"</span>,
+    <span class="string">"pub fn two() -&gt; usize { 2 }\n"</span>,
+    <span class="string">"#[cfg(test)]\n"</span>,
+    <span class="string">"mod tests { #[test] fn it_is_two() { assert_eq!(super::two(), 2); } }\n"</span>,
+)).unwrap();
+
+<span class="kw">let </span>report = report::rust_only(dir.path(), <span class="string">"a-crate"</span>).unwrap();
+<span class="macro">assert!</span>(report.passes(), <span class="string">"{:?}"</span>, report.violations);
+<span class="macro">assert_eq!</span>(report.modules.modules, <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(report.public_api.owe_example, <span class="number">1</span>);</code></pre></div></div></details><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.inspect.html" title="fn majordomus_cli::quality::report::inspect">inspect</a></dt><dd>Measure everything: the Rust surface and the transport parity of the operations.</dd><dt><a class="fn" href="fn.rust_only.html" title="fn majordomus_cli::quality::report::rust_only">rust_<wbr>only</a></dt><dd>Measure the Rust surface of a crate: documentation, examples and module coverage.</dd></dl></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["PREFIX","SHELL_SCRIPTS","STYLESHEET"],"fn":["base64","csp"],"mod":["assets","html"],"struct":["Cockpit"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["LICENSE","NAME","PARAGRAPHS","REFERENCE_URL","REPOSITORY","SUMMARY"],"fn":["description","writes"]};

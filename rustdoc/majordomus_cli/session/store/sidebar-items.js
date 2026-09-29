@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CLAIM_DIR","OPEN_DIR","RECORD_DIR"],"enum":["CloseOutcome","StoreError"],"struct":["CloseReport","SessionStore"]};

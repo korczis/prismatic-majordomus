@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BIND_GRACE","BUSY_GRACE","JOIN_TIMEOUT","LEASEHOLDER_KEY","LEASE_PATH","PROBE_TIMEOUT","SCHEMA"],"enum":["LeaseFile","Role"],"fn":["elect","executable_identity","file_age","held","is_own","lease_file","lease_path","lost","probe","probe_reply","serving","was_lost"],"struct":["ExecutableIdentity","Lease","LeaseDocument"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CACHE_MAX_BYTES","DOCUMENT_CACHE","IMMUTABLE_CACHE"],"fn":["media_type","safe_relative"],"struct":["Files"]};

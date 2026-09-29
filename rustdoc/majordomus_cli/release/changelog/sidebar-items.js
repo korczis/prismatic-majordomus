@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADR_KIND","RELEASE_KIND"],"fn":["compose","compose_published","render"]};

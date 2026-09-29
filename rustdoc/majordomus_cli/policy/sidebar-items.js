@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["POLICY_SECTION","PROFILES_SECTION"],"enum":["ProjectionMode"],"fn":["is_safe_relative","profile_files","repository_providers_dir","sha256_bytes_hex","sha256_hex"],"struct":["ContextPolicy","FreshnessPolicy","LoadedPolicy","Policy","ProfilesPolicy","Projection","SessionPolicy"]};

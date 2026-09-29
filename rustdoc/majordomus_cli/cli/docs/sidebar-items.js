@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DECLARATION","ROUTE_PREFIX","SCHEMA"],"fn":["document","render","route","tree"],"struct":["ArgDoc","CliDocument","CommandDoc","ExampleView","PossibleValueDoc","SetupView"]};

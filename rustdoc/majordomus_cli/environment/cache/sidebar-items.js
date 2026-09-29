@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["CACHE_PATH","SCHEMA","TOOLCHAIN_LIFETIME"],"fn":["fingerprint_of","now_seconds"],"struct":["Cache","CachedTier","Entry"]};
