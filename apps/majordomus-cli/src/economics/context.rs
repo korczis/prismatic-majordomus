@@ -157,7 +157,8 @@ pub fn seeds(root: &Path, suite: &EconomicsSuite) -> Vec<String> {
 /// cannot resolve, or a file the disk no longer holds, is counted as `unresolved` rather
 /// than silently dropped. A seed the compiler refuses (an issue the repository does not
 /// have) is an error that starts with the seed, so that a suite can report it beside the
-/// record.
+/// record. [`measure`] shares one count of every file across all its seeds; this is the
+/// same measurement for a seed on its own.
 ///
 /// ```
 /// use majordomus_cli::economics::context::measure_seed;
@@ -168,6 +169,20 @@ pub fn seeds(root: &Path, suite: &EconomicsSuite) -> Vec<String> {
 /// assert!(err.starts_with("I9999: "), "{err}");
 /// ```
 pub fn measure_seed(ctx: &Context, seed: &str) -> Result<EconomicsContextSeed, String> {
+    measure_seed_with(ctx, seed, &mut Counter::default())
+}
+
+/// [`measure_seed`] over a count the caller keeps. A file's bytes and tokens depend on the
+/// file alone, so one count serves every seed of a measurement. The plan's issues reach
+/// largely the same files: tokenizing each of them again for every seed spent nine tenths of
+/// a measurement of this repository's 238 issues in the tokenizer — 176 s in an unoptimised
+/// build, where counting each file once takes 12 s — and the cases that measure it were
+/// killed at their 600 s bound in CI. The record is the same either way.
+fn measure_seed_with(
+    ctx: &Context,
+    seed: &str,
+    counter: &mut Counter,
+) -> Result<EconomicsContextSeed, String> {
     let root = Path::new(&ctx.index.repository.root);
     let compiled = devcontext::compile(
         ctx,
@@ -177,7 +192,6 @@ pub fn measure_seed(ctx: &Context, seed: &str) -> Result<EconomicsContextSeed, S
         },
     )
     .map_err(|e| format!("{seed}: {e}"))?;
-    let mut counter = Counter::default();
     let objects = &ctx.index.objects;
     let path_of = |uri: &str| -> Option<String> {
         objects
@@ -226,9 +240,9 @@ pub fn measure_seed(ctx: &Context, seed: &str) -> Result<EconomicsContextSeed, S
         }
         (n, b, t)
     };
-    let (selected, selected_bytes, selected_tokens) = sum(&selected_paths, &mut counter);
-    let (candidates_n, candidate_bytes, candidate_tokens) = sum(&candidates, &mut counter);
-    let (considered_n, _, considered_tokens) = sum(&considered, &mut counter);
+    let (selected, selected_bytes, selected_tokens) = sum(&selected_paths, counter);
+    let (candidates_n, candidate_bytes, candidate_tokens) = sum(&candidates, counter);
+    let (considered_n, _, considered_tokens) = sum(&considered, counter);
     // A file excluded for two reasons is counted under the first, in the order the compiler
     // names them, so that the per-reason figures add up to what was left out.
     let mut seen: BTreeSet<String> = selected_paths;
@@ -239,7 +253,7 @@ pub fn measure_seed(ctx: &Context, seed: &str) -> Result<EconomicsContextSeed, S
             .filter(|p| seen.insert((*p).clone()))
             .cloned()
             .collect();
-        let (_, _, t) = sum(&fresh, &mut counter);
+        let (_, _, t) = sum(&fresh, counter);
         excluded_tokens.insert(reason.clone(), t);
     }
     Ok(EconomicsContextSeed {
@@ -318,8 +332,10 @@ pub fn measure(
     let repository = super::revision(root)?;
     let mut out = Vec::new();
     let mut errors = Vec::new();
+    // one count of every file for the whole measurement, however many seeds reach it
+    let mut counter = Counter::default();
     for seed in seeds(root, suite) {
-        match measure_seed(ctx, &seed) {
+        match measure_seed_with(ctx, &seed, &mut counter) {
             Ok(s) => out.push(s),
             Err(e) => errors.push(e),
         }
