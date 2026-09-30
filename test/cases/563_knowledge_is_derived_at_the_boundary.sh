@@ -141,7 +141,7 @@ must "the quote and the backslash did not survive as one YAML escaping" \
 
 must "the fact record does not name the task" grep -q "^    - task:$TASK$" "$FACT"
 must "the fact record is not observed" grep -q '^epistemics: observed$' "$FACT"
-must "the fact record does not say what verified it" grep -qF 'verified by: true (exit 0)' "$FACT"
+must "the fact record does not say what verified it" grep -qE 'verified by: true \(exit[ ]0\)' "$FACT"
 
 # What was written parses and validates: a record the integrity check refuses is a record
 # nobody will promote, and the deriver is the one writer that must never produce one.

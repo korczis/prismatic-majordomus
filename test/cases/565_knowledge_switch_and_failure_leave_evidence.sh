@@ -91,8 +91,7 @@ mkdir -p "$CAND"
 chmod 0500 "$CAND"
 if touch "$CAND/.probe" 2>/dev/null; then
   rm -f "$CAND/.probe"; chmod 0755 "$CAND"
-  echo "    skip: the directory stayed writable (running as root); the failure path cannot be provoked here"
-  exit 0
+  skip "the directory stayed writable (running as root); the failure path cannot be provoked here"
 fi
 rc=0
 end_event e3 clear > "$S/end3.out" 2> "$S/end3.err" || rc=$?
