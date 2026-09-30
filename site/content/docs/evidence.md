@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 58
+weight = 60
 [extra]
 source = "docs/EVIDENCE.md"
 +++
@@ -17,7 +17,7 @@ disagree, the document is wrong and changes in the same commit. The decision is
 ADR 40;
 the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
-[`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/rules/project).
+[`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/rules/project).
 
 <pre class="mermaid">
 flowchart TD
@@ -54,14 +54,14 @@ subsystem, nobody could answer from the repository whether that case had ever ru
 which revision, with what result, or whether the result still applied, and the sentence was
 rendered on the public site as a guarantee on the strength of a file existing.
 
-This is the same defect [ADR 30](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)
+This is the same defect [ADR 30](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)
 named one level up: *a test result that cannot go stale is a claim about the past presented
 as a claim about the present.*
 
 ## The model
 
 Three objects and one derivation, in
-[`apps/majordomus-cli/src/evidence/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/evidence).
+[`apps/majordomus-cli/src/evidence/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli/src/evidence).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -125,6 +125,7 @@ thing a badge must never be derived from.
 | `at` | RFC 3339, UTC, to the second |
 | `origin` | `local`, `ci` or `release` |
 | `command` | the exact command that runs this one test again |
+| `run` | the CI run it was recorded in — provider, identifier, attempt, workflow, job and address — for a `ci` recording made inside one; absent otherwise (see *Recorded in CI*) |
 
 </div>
 
@@ -137,6 +138,20 @@ let a recorder write "this did not run" and have it counted among the things tha
 
 `origin` is provider-neutral. A CI adapter records `ci`; nothing in the model knows or
 cares which CI it was.
+
+The runner speaks that vocabulary. A case that cannot meet a precondition calls `skip` from
+`test/lib.sh`, which exits 4; `test/run.sh` prints `skip`, writes `SKIP` into the TSV in
+both the serial and the parallel phase, and counts it in a third tally beside passed and
+failed. It is not a failure — the run's exit status is unchanged — and it is not a pass
+either, which it was until the word existed: a case that declined exited 0, the runner
+wrote `ok`, and the ledger recorded the proof of a claim from a run that asserted nothing.
+The status is not the declaration on its own: `skip` also writes the file the runner names
+in `MJ_SKIP_MARK`, and a case that ends with 4 without it — `jq -e` fails with 4 when it
+produced no result, and a case runs under `set -e` — is a failure, not a skip.
+The claim is `a-skipped-case-is-not-a-proof` and the case is
+`test/cases/413_a_skipped_case_is_not_a_proof.sh`, which also refuses any case in
+`test/cases/` that still says `exit 0` before its last statement, so the old shape cannot
+come back with a new case.
 
 ## The seven states
 
@@ -395,7 +410,7 @@ it belongs to no binary and is dropped rather than credited to the previous one.
 ### In CI
 
 Half the wiring is already there. The `suite` job of
-[`.github/workflows/validate.yml`](https://github.com/korczis/prismatic-majordomus/blob/master/.github/workflows/validate.yml) runs
+[`.github/workflows/validate.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/validate.yml) runs
 `bash test/run.sh` with `MJ_TEST_REPORT: suite.tsv` and uploads that TSV as the
 `ci-metrics-suite` artifact; the `macos` job does the same. The recording step is one line
 after the suite step:
@@ -416,7 +431,7 @@ result either way.
 ## The four capabilities
 
 One declaration in
-[`src/capability/builtin/evidence.rs`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs);
+[`src/capability/builtin/evidence.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/capability/builtin/evidence.rs);
 every surface is derived from it ([`CAPABILITIES.md`](@/docs/capabilities.md)).
 
 <div class="overflow-x-auto" tabindex="0">
@@ -545,7 +560,7 @@ ADR 0087 (proposed) records the decision to index evidence by subject.
 
 ## The gate
 
-[`scripts/evidence-check`](https://github.com/korczis/prismatic-majordomus/blob/master/scripts/evidence-check) renders the executable's own answer
+[`scripts/evidence-check`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/scripts/evidence-check) renders the executable's own answer
 and ratchets it. It derives nothing of its own — a gate with a second opinion about what is
 proven would be a second model of proof.
 
@@ -577,7 +592,7 @@ else, which is the whole defect this subsystem exists to name one level down. Th
 the day the gate arrives every guaranteed claim is `not_run` — true, and as a blocking gate
 it would mean nothing could be merged by anybody until a full suite run had been recorded.
 So the debt that existed at that moment is written to
-[`.ai/repo/evidence-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/evidence-baseline.txt) by `--baseline`,
+[`.ai/repo/evidence-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/evidence-baseline.txt) by `--baseline`,
 never by hand.
 
 **What the ratchet refuses is not membership of that list.** It was, and that was a defect
@@ -613,7 +628,7 @@ that proves a claim and rewriting the file — never by adding a line. `--strict
 every unsupported guarantee; it is the end state, and CI switches to it when the
 unsupported half is empty.
 
-The gate is named in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml) as
+The gate is named in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/gates.yaml) as
 `evidence-check`, in the `structure` job, with `always: true` — so the verdict arrives on
 every push rather than when somebody remembers to run it, which is the other half of
 `project.never-reported-is-not-green`. The `evidence` path class names what can change the
@@ -633,6 +648,91 @@ only arrangement in which the evidence is worth anything to anybody but the pers
 the tests. `test/cases/124_evidence.sh` proves it on a fixture whose ledger is tracked
 exactly as this repository's is.
 
+## Recorded in CI
+
+The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, but
+they are kept where they happened rather than committed. A run cannot commit what it proved
+without adding a commit after the one it proved, on a trunk that moves faster than the suite
+finishes. The decision is
+[ADR 68](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md).
+
+<pre class="mermaid">
+flowchart LR
+  suite["suite job&lt;br&gt;suite.tsv"]
+  crate["rust job&lt;br&gt;cargo-test.txt"]
+  cov["coverage job&lt;br&gt;coverage.json"]
+  collect["evidence job&lt;br&gt;scripts/ci/evidence-collect"]
+  artifact["artifact `evidence`&lt;br&gt;ledger · report · coverage · manifest"]
+  pages["pages.yml&lt;br&gt;scripts/pages evidence"]
+  site["/evidence/&lt;br&gt;current · stale · unavailable"]
+  suite --&gt; collect
+  crate --&gt; collect
+  cov --&gt; collect
+  collect --&gt; artifact --&gt; pages --&gt; site
+  collect -. "commit still the tip: dispatch" .-&gt; pages
+</pre>
+
+
+**What the collector does.** `scripts/ci/evidence-collect` takes the raw reports the jobs left
+and records the suite's and the crate's results through `majordomus evidence record --origin ci`.
+It derives the report through `majordomus evidence show` and summarises the coverage export
+through `scripts/rust-coverage --summary-json`. It writes `manifest.json`, naming:
+
+- the commit;
+- the run;
+- the outcomes of that run's executions;
+- which reports were absent.
+
+An absent report is named, never counted as a pass. The job keeps the directory as the artifact
+`evidence` for ninety days. It is not a gate: it reads jobs that have already decided, and a red
+suite is exactly the evidence worth keeping.
+
+**An execution names its run.** A `ci` recording made inside a GitHub Actions environment stamps
+every execution with `run`: the provider, the run's identifier, its attempt, the workflow, the
+job and the address the provider gave. `RunRef::from_env` is the only place that knows the
+environment's names. A local recording names no run, even inside a CI shell, and rows recorded
+before runs were named have no `run` at all.
+
+```json
+"run": {
+  "provider": "github_actions",
+  "id": "<run id>",
+  "attempt": 1,
+  "workflow": "validate",
+  "job": "evidence",
+  "url": "https://github.com/korczis/prismatic-majordomus/actions/runs/<run id>/attempts/1"
+}
+```
+
+**What a publication says about it.** Before the build, `scripts/pages evidence` finds the
+`evidence` artifact recorded against the commit being published or its nearest ancestor. It
+chooses the nearest ancestor by history, not the newest upload. It writes
+`site/data/evidence.json`, which is never committed. It says exactly one of three things:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| state | when | what the page says |
+|---|---|---|
+| current | the evidence was recorded against the published commit | CURRENT, with the commit and the run |
+| stale | the evidence is of an ancestor | STALE, with how many commits and changed files lie between |
+| unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
+
+</div>
+
+
+None of the three stops a publication. When a master run's evidence is kept while its commit is
+still the tip, the job dispatches `pages.yml`, and that publication says current. When master
+has moved on, the newer publication already carries the evidence as stale and the newer run
+will refresh it.
+
+```
+scripts/pages evidence                          # this commit, fetched with gh
+scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+scripts/ci/evidence-collect --out <dir> --suite suite.tsv --crate-output cargo-test.txt --coverage coverage.json
+```
+
+The behavioural proof is `test/cases/357_ci_records_evidence.sh`.
+
 ## What this is not
 
 **It is not tamper-proof, and it does not pretend to be.** The ledger is a tracked file. A
@@ -650,14 +750,14 @@ where the two disagree is a tree where something was recorded against a commit t
 not describe it, and the `working_tree: dirty` field is usually the reason.
 
 **It is not the execution control plane.**
-[`src/execution/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/execution) and
+[`src/execution/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli/src/execution) and
 [`EXECUTIONS.md`](@/docs/executions.md) are about capability executions of a running server —
 in-flight work, progress, typed events, gone with the process. This is about test runs:
 durable, committed, and read long after the process that produced them exited. Two
 different subjects that share an English word.
 
 **It is not the obligation evidence of `lib/evidence.sh`.** That subsystem
-([ADR 30](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)) is
+([ADR 30](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)) is
 about what a *task* owes before it may be called completed, and its ledger is the
 append-only task ledger. The two share an idea — evidence that can go stale — and nothing
 else. Neither reads the other's records.
@@ -711,7 +811,9 @@ passed against this commit. Whether the test tests the claim is a question for r
 | the declaration yields exactly the projections it claims; only the recorder writes, and it is not on the network | implemented, unit tests in `src/capability/builtin/evidence.rs` |
 | the whole path end to end in a fixture repository — nothing recorded, provenance, a partial run, `stale` with the path named, `proven` against `inputs_unchanged`, `failing` and the exit code, both directions, the refusals | behaviourally verified (`test/cases/124_evidence.sh`) |
 | the gate planned on every push, and the paths that can change the answer | declared in `.ai/repo/ci/gates.yaml`; the planner that reads it is behaviourally verified (`test/cases/94_ci_plan.sh`) |
-| CI recording its own runs into the ledger | not implemented; the report is written and uploaded, nothing records it and nothing commits it |
+| CI recording its own runs, stamped with the run, into the `evidence` artifact of the commit | behaviourally verified (`test/cases/357_ci_records_evidence.sh`); see *Recorded in CI* |
+| the site publishing that evidence as current, stale with its distance, or unavailable with its reason | behaviourally verified (`test/cases/357_ci_records_evidence.sh`); rendered on `/evidence/` |
+| CI's evidence committed into the tracked ledger | refused — ADR 68: a run cannot commit what it proved without adding a commit after the one it proved |
 | the site rendering a claim's proof state beside its status | not implemented; the guarantees page still shows the declared status alone |
 | tamper resistance, a signed ledger, a run history, captured output | not implemented, and refused — see *What this is not* and ADR 40 |
 
