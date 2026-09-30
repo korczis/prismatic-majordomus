@@ -52,7 +52,7 @@
 //!
 //! let outcome = record(
 //!     root.path(),
-//!     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Ci },
+//!     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Ci, run: None },
 //! )
 //! .unwrap();
 //! assert_eq!(outcome.recorded, 1);
@@ -96,7 +96,7 @@ use crate::error::{Error, Result};
 /// ```
 /// use majordomus_cli::evidence::{record, Origin, RecordRequest};
 ///
-/// let nothing = RecordRequest { suite: None, crate_output: None, origin: Origin::Local };
+/// let nothing = RecordRequest { suite: None, crate_output: None, origin: Origin::Local, run: None };
 /// let root = tempfile::tempdir().unwrap();
 /// let refused = record(root.path(), &nothing).unwrap_err().to_string();
 /// assert!(refused.contains("nothing to record"), "{refused}");
@@ -105,6 +105,7 @@ use crate::error::{Error, Result};
 ///     suite: Some("tmp/run.tsv".into()),
 ///     crate_output: None,
 ///     origin: Origin::Ci,
+///     run: None,
 /// };
 /// assert_eq!(suite_run.origin, Origin::Ci);
 /// assert_eq!(suite_run.suite.as_deref(), Some(std::path::Path::new("tmp/run.tsv")));
@@ -114,7 +115,7 @@ use crate::error::{Error, Result};
 ///
 /// ```
 /// use majordomus_cli::evidence::{Origin, RecordRequest};
-/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci };
+/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci, run: None };
 /// assert_eq!(r.origin, Origin::Ci);
 /// ```
 pub struct RecordRequest {
@@ -124,6 +125,8 @@ pub struct RecordRequest {
     pub crate_output: Option<std::path::PathBuf>,
     /// Where the run happened.
     pub origin: Origin,
+    /// The continuous-integration run to stamp every execution with, when there is one.
+    pub run: Option<super::RunRef>,
 }
 
 /// What a recording did: how much of the run reached the ledger, how much of it passed,
@@ -157,7 +160,7 @@ pub struct RecordRequest {
 ///
 /// let outcome: RecordOutcome = record(
 ///     root.path(),
-///     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Local },
+///     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Local, run: None },
 /// )
 /// .unwrap();
 /// assert_eq!(outcome.recorded, 1, "only the case this repository actually has");
@@ -342,7 +345,7 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 /// let suite = |name: &str, rows: &str| {
 ///     let p = reports.path().join(name);
 ///     std::fs::write(&p, rows).unwrap();
-///     RecordRequest { suite: Some(p), crate_output: None, origin: Origin::Local }
+///     RecordRequest { suite: Some(p), crate_output: None, origin: Origin::Local, run: None }
 /// };
 ///
 /// let both = suite("all.tsv", "07_scope\tok\t1\tparallel\n08_other\tok\t2\tparallel\n");
@@ -452,6 +455,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             at: at.clone(),
             origin: req.origin,
             command: id.reproduce(),
+            run: req.run.clone(),
         });
     }
 
@@ -524,6 +528,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Ci,
+                run: None,
             },
         )
         .unwrap();
@@ -567,6 +572,7 @@ mod tests {
             suite: Some(tsv.clone()),
             crate_output: None,
             origin: Origin::Local,
+            run: None,
         };
 
         // the first recording writes the ledger; the second one sees it pending
@@ -616,6 +622,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -644,6 +651,7 @@ mod tests {
                 suite: Some(all),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -656,6 +664,7 @@ mod tests {
                 suite: Some(one),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -684,6 +693,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap_err()
@@ -715,6 +725,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -734,7 +745,8 @@ mod tests {
             &RecordRequest {
                 suite: None,
                 crate_output: None,
-                origin: Origin::Local
+                origin: Origin::Local,
+                run: None,
             }
         )
         .is_err());
@@ -756,6 +768,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap_err()

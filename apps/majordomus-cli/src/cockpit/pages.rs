@@ -9,6 +9,7 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::dashboard::DashboardOverview;
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
@@ -297,14 +298,127 @@ pub fn overview(ctx: &Context) -> Page {
         "Overview",
         el("div")
             .class("mj-grid")
+            .child(four_questions(ctx))
             .child(statistics)
             .child(identity)
             .child(health_card)
+            .child(preflight_card(ctx))
             .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
             .child(kinds)
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The four questions, first on the overview: `dashboard.overview` laid out, card by card.
+///
+/// Nothing here reads a fact of its own. Each card shows the value the capability carried,
+/// the status word its source gave it, the capability and pointer it was read from, and a
+/// link to the page holding the evidence. The value is also written as data
+/// (`data-value`, the card's JSON), so a test compares this page with the route byte for
+/// byte rather than parsing a rendering. A capability that fails is a failure on the page,
+/// never an empty card.
+fn four_questions(ctx: &Context) -> El {
+    let o: DashboardOverview = match ask(ctx, "dashboard.overview", json!({})) {
+        Ok(o) => o,
+        Err(e) => return card("Four questions", alert("fail", e)),
+    };
+    let shown = |v: &Value| match v {
+        Value::String(s) => s.clone(),
+        Value::Null => "none".into(),
+        other => other.to_string(),
+    };
+    let questions: Vec<El> = o
+        .questions
+        .iter()
+        .map(|q| {
+            el("div")
+                .attr("data-question", q.id.as_str())
+                .child(
+                    el("h3")
+                        .class("mj-card-title")
+                        .text(&q.title)
+                        .text(" ")
+                        .child(badge(q.status.as_str(), q.status.as_str())),
+                )
+                .child(
+                    el("ul").class("mj-checklist").children(
+                        q.cards
+                            .iter()
+                            .map(|c| {
+                                el("li")
+                                    .class("mj-checklist-item")
+                                    .attr("data-card", c.id.as_str())
+                                    .attr("data-value", c.value.to_string())
+                                    .attr("data-status", c.status.as_str())
+                                    .child(badge(c.status.as_str(), c.status.as_str()))
+                                    .child(
+                                        el("a")
+                                            .class("mj-link mj-checklist-title")
+                                            .attr("href", c.route.as_str())
+                                            .text(&c.title),
+                                    )
+                                    .child(mono(shown(&c.value)))
+                                    .child(el("span").class("mj-checklist-detail").text(format!(
+                                        "{} — from {} {}",
+                                        c.detail, c.source.capability, c.source.pointer
+                                    )))
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+        })
+        .collect();
+    // the route the registry declares for the capability, not one written here
+    let route = ctx
+        .registry
+        .get("dashboard.overview")
+        .and_then(|c| c.exposure.http.as_ref())
+        .map(|h| h.path.clone())
+        .unwrap_or_default();
+    card_with(
+        "Four questions",
+        link(route, "as JSON"),
+        el("div").children(questions),
+    )
+    .attr("data-overview-status", o.status.as_str())
+}
+
+/// The preflight card: whether Majordomus is in force here, claim by claim.
+///
+/// It asks `environment.preflight` — the value the command line prints and the entry banner
+/// summarises — and lays out each check with its verdict word as data (`data-check`,
+/// `data-verdict`), so that a test reads the same verdicts from this page that it reads
+/// from the route. A capability that fails is shown as a failure, never as an empty card.
+fn preflight_card(ctx: &Context) -> El {
+    let p: crate::environment::preflight::Preflight =
+        match ask(ctx, "environment.preflight", json!({})) {
+            Ok(p) => p,
+            Err(e) => return card("Preflight", alert("fail", e)),
+        };
+    let items: Vec<El> = p
+        .sections
+        .iter()
+        .flat_map(|s| s.checks.iter().map(move |c| (s, c)))
+        .map(|(s, c)| {
+            el("li")
+                .class("mj-checklist-item")
+                .attr("data-check", c.id.as_str())
+                .attr("data-verdict", c.verdict.as_str())
+                .child(badge(c.verdict.status(), c.verdict.as_str()))
+                .child(
+                    el("span")
+                        .class("mj-checklist-title")
+                        .text(format!("{} · {}", s.title, c.title)),
+                )
+                .child(el("span").class("mj-checklist-detail").text(&c.summary))
+        })
+        .collect();
+    card_with(
+        "Preflight",
+        link("/api/v1/environment/preflight", "Evidence"),
+        el("ul").class("mj-checklist").children(items),
+    )
 }
 
 /// The distribution card: whether the command the README advertises works right now.
@@ -2550,6 +2664,262 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
         ])
 }
 
+/// Token economics: the verdict the evidence allows, every metric with its measurement
+/// class, the state of each suite's evidence, the pairs (valid or not), the segments and
+/// the records that could not be read — all from `economics.summary`, so the page shows
+/// what the CLI, the API and MCP show. Every token figure is a reduction spelled by
+/// `economics::report::amount`, the same function the report and the CLI use, and every
+/// state is spelled as it serialises.
+pub fn economics(ctx: &Context) -> Page {
+    let s: crate::economics::model::EconomicsSummary =
+        match ask(ctx, "economics.summary", json!({})) {
+            Ok(r) => r,
+            Err(e) => return failed(Area::Economics, "Economics", e),
+        };
+    use crate::economics::model::{EconomicsFreshness, EconomicsMetricStatus, EconomicsPairStatus};
+    use crate::economics::report::{amount, interval_text, words};
+    use crate::economics::stats::percent_text;
+    let status_badge = |st: EconomicsMetricStatus| {
+        let look = match st {
+            EconomicsMetricStatus::Verified => "verified",
+            EconomicsMetricStatus::Preliminary => "partial",
+            EconomicsMetricStatus::Measured => "ok",
+            EconomicsMetricStatus::NotMeasured => "missing",
+        };
+        badge(look, words(&st))
+    };
+    let verdict = el("div")
+        .child(alert(
+            if s.verdict.publishable { "ok" } else { "warn" },
+            s.verdict.statement.clone(),
+        ))
+        .when(!s.verdict.unmet.is_empty(), |d| {
+            let mut list = el("ul").class("mj-list");
+            for u in &s.verdict.unmet {
+                list = list.child(el("li").text(u));
+            }
+            d.child(
+                el("p")
+                    .class("mj-prose")
+                    .text("The publication rule is not met:"),
+            )
+            .child(list)
+        });
+    let primary = s
+        .metrics
+        .iter()
+        .find(|m| Some(&m.id) == s.primary_metric.as_ref());
+    let context = s
+        .metrics
+        .iter()
+        .find(|m| m.id == crate::economics::CONTEXT_REDUCTION);
+    let stat = |m: Option<&crate::economics::model::EconomicsMetric>, label: &str| {
+        let (v, src) = match m {
+            Some(m) => (
+                m.value
+                    .map(|v| amount(v, &m.unit))
+                    .unwrap_or_else(|| "—".into()),
+                format!(
+                    "{} · {} from {} · n={}",
+                    m.id,
+                    m.class.word(),
+                    m.inputs.map(|i| i.word()).unwrap_or("-"),
+                    m.n
+                ),
+            ),
+            None => ("—".into(), "not declared".into()),
+        };
+        statistic(v, label, src)
+    };
+    let headline = el("div")
+        .class("mj-grid")
+        .child(stat(
+            primary,
+            "Total-token reduction with Majordomus (median over valid pairs)",
+        ))
+        .child(stat(
+            context,
+            "Context selection by the compiler (not total savings)",
+        ));
+    let suites = table(
+        &[
+            "Suite",
+            "Kind",
+            "Evidence",
+            "Runs",
+            "Valid pairs",
+            "Control failed",
+            "Treatment failed",
+            "Both failed",
+            "Other",
+            "Detail",
+        ],
+        s.suites
+            .iter()
+            .map(|v| {
+                let look = match v.freshness {
+                    EconomicsFreshness::Current => "current",
+                    EconomicsFreshness::Stale => "stale",
+                    EconomicsFreshness::Incompatible => "fail",
+                    EconomicsFreshness::NoEvidence => "missing",
+                };
+                let fresh = badge(look, words(&v.freshness));
+                row(vec![
+                    cell(mono(v.id.clone())),
+                    text_cell(v.kind.clone()),
+                    cell(fresh),
+                    text_cell(v.runs.to_string()),
+                    text_cell(format!("{}/{}", v.pairs.valid, v.pairs.attempted)),
+                    text_cell(v.pairs.control_failed.to_string()),
+                    text_cell(v.pairs.treatment_failed.to_string()),
+                    text_cell(v.pairs.both_failed.to_string()),
+                    text_cell(v.pairs.other.to_string()),
+                    text_cell(v.freshness_detail.clone().unwrap_or_default()),
+                ])
+            })
+            .collect(),
+    );
+    let metrics = table(
+        &[
+            "Metric",
+            "Value",
+            "Status",
+            "Class",
+            "n",
+            "Interval",
+            "What it is not",
+        ],
+        s.metrics
+            .iter()
+            .map(|m| {
+                let value = m
+                    .value
+                    .map(|v| amount(v, &m.unit))
+                    .unwrap_or_else(|| "—".into());
+                let class = match m.inputs {
+                    Some(i) => format!("{} from {}", m.class.word(), i.word()),
+                    None => m.class.word().to_string(),
+                };
+                row(vec![
+                    cell(link(
+                        format!("/api/v1/economics/explain?metric={}", percent_encode(&m.id)),
+                        m.id.clone(),
+                    )),
+                    text_cell(value),
+                    cell(status_badge(m.status)),
+                    cell(tag(class)),
+                    text_cell(m.n.to_string()),
+                    text_cell(
+                        m.interval
+                            .as_ref()
+                            .map(|i| interval_text(i, &m.unit))
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(m.not.clone().unwrap_or_default()),
+                ])
+            })
+            .collect(),
+    );
+    let pairs = table(
+        &[
+            "Task",
+            "Category",
+            "Rep",
+            "Status",
+            "Control tokens",
+            "Treatment tokens",
+            "Token reduction",
+            "Reasons",
+        ],
+        s.pairs
+            .iter()
+            .map(|p| {
+                let look = match p.status {
+                    EconomicsPairStatus::Valid => "valid",
+                    EconomicsPairStatus::Missing => "missing",
+                    _ => "failed",
+                };
+                let status = badge(look, words(&p.status));
+                row(vec![
+                    cell(mono(p.task.clone())),
+                    text_cell(p.category.clone()),
+                    text_cell(p.repetition.to_string()),
+                    cell(status),
+                    text_cell(
+                        p.control_usage
+                            .as_ref()
+                            .map(|u| u.total.to_string())
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(
+                        p.treatment_usage
+                            .as_ref()
+                            .map(|u| u.total.to_string())
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(
+                        p.token_reduction
+                            .map(percent_text)
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(p.reasons.join("; ")),
+                ])
+            })
+            .collect(),
+    );
+    let segments = table(
+        &[
+            "Dimension",
+            "Segment",
+            "Valid pairs",
+            "Median reduction",
+            "Min",
+            "Max",
+        ],
+        s.segments
+            .iter()
+            .filter_map(|g| {
+                let d = g.token_reduction.as_ref()?;
+                Some(row(vec![
+                    text_cell(g.dimension.clone()),
+                    text_cell(g.value.clone()),
+                    text_cell(g.n.to_string()),
+                    text_cell(percent_text(d.median)),
+                    text_cell(percent_text(d.min)),
+                    text_cell(percent_text(d.max)),
+                ]))
+            })
+            .collect(),
+    );
+    let mut unread = el("ul").class("mj-list");
+    for d in &s.diagnostics {
+        unread = unread.child(el("li").text(d));
+    }
+    let mut hypotheses = el("ul").class("mj-list");
+    for h in &s.hypotheses {
+        hypotheses =
+            hypotheses.child(el("li").text(format!("{} ({}): {}", h.id, h.status, h.statement)));
+    }
+    Page::new(
+        Area::Economics,
+        "Economics",
+        el("div")
+            .class("mj-grid")
+            .child(card("Verdict", verdict))
+            .when(!s.diagnostics.is_empty(), |g| {
+                g.child(card("Records that could not be read", unread))
+            })
+            .child(card("Headline", headline))
+            .child(card("Evidence", suites))
+            .child(card(format!("Metrics ({})", s.metrics.len()), metrics))
+            .child(card("Segments", segments))
+            .child(card(format!("Pairs ({})", s.pairs.len()), pairs))
+            .child(card("Hypotheses — stated before the evidence, not results", hypotheses)),
+    )
+    .subtitle("What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests. Observed, counted, derived, estimated and counterfactual numbers are labelled as such. Every token figure is a reduction, 1 - treatment / control: a negative reduction means Majordomus used more tokens.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Economics", None)])
+}
+
 /// The model catalogue and its routing: the vendors and models `share/models.yaml`
 /// declares, with each vendor's credential *presence* (never a value), rendered from
 /// the same `models.list` every other surface reads. No model name lives in this page.
@@ -2811,12 +3181,372 @@ pub fn mesh(ctx: &Context) -> Page {
         })
         .collect();
 
+    let cooperation: crate::mesh::cooperation::CooperationStatus =
+        match ask(ctx, "mesh.cooperation", json!({})) {
+            Ok(c) => c,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
+    let tree: crate::capability::builtin::mesh::PeerTree = match ask(ctx, "mesh.peers", json!({})) {
+        Ok(t) => t,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+    let folded: crate::capability::builtin::mesh::MeshStateAnswer =
+        match ask(ctx, "mesh.state", json!({})) {
+            Ok(s) => s,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
+
+    // Cooperation: this runtime, its repository identity, its link protocol and counters.
+    let mut coop = el("div").child(facts(vec![(
+        "Cooperation",
+        Node::Element(word_badge(if cooperation.active {
+            "active"
+        } else {
+            "inactive"
+        })),
+    )]));
+    if let Some(reason) = &cooperation.reason {
+        coop = coop.child(el("p").class("mj-prose").text(reason));
+    }
+    if let Some(runtime) = &cooperation.runtime {
+        let repository = cooperation
+            .repository
+            .as_ref()
+            .map(|r| format!("{} ({})", r.id, r.detail))
+            .unwrap_or_default();
+        coop = coop.child(facts(vec![
+            ("Runtime", Node::Element(mono(runtime.clone()))),
+            ("Repository", Node::Element(mono(repository))),
+            (
+                "Endpoints",
+                Node::Element(el("span").text(cooperation.endpoints.join(", "))),
+            ),
+            (
+                "Heartbeat / expiry",
+                Node::Element(el("span").text(format!(
+                    "{}s / {}s",
+                    cooperation.heartbeat_seconds, cooperation.expiry_seconds
+                ))),
+            ),
+            (
+                "Link protocol",
+                Node::Element(el("span").text(format!(
+                    "{}..{} — {}",
+                    cooperation.protocol.0,
+                    cooperation.protocol.1,
+                    cooperation.features.join(", ")
+                ))),
+            ),
+        ]));
+        let k = &cooperation.counters;
+        let j = &cooperation.journal;
+        coop = coop.child(facts(vec![
+            (
+                "Handshakes",
+                Node::Element(el("span").text(format!(
+                    "{} out, {} in; {} reconnects, {} restarts seen, {} links expired",
+                    k.handshakes_out, k.handshakes_in, k.reconnects, k.restarts, k.peers_expired
+                ))),
+            ),
+            (
+                "Syncs",
+                Node::Element(el("span").text(format!(
+                    "{} out ({} failed), {} in; {} events sent, {} served",
+                    k.syncs_out, k.syncs_failed, k.syncs_in, k.events_sent, k.events_served
+                ))),
+            ),
+            (
+                "Journal",
+                Node::Element(el("span").text(format!(
+                    "{} events in {} streams; {} received, {} duplicates absorbed, {} rejected, {} pending",
+                    j.events, j.streams, j.received, j.duplicates, j.rejected, j.pending
+                ))),
+            ),
+            (
+                "Claims refused",
+                Node::Element(el("span").text(k.claims_refused.to_string())),
+            ),
+        ]));
+    }
+    if let Some(digest) = &tree.digest {
+        coop = coop.child(facts(vec![(
+            "State digest",
+            Node::Element(mono(digest.clone())),
+        )]));
+    }
+    coop = coop.child(el("p").class("mj-prose").text(
+        "Actions run the same capabilities every surface runs: mesh.verify, mesh.claim, mesh.release, mesh.handover.publish, mesh.handover.consume, mesh.review.request — each on its page under Capabilities.",
+    ));
+
+    // Machine → runtime → session → claim, local first; a runtime that stopped beating
+    // says so and says when it last did, instead of keeping a green dot.
+    let machine_cards: Vec<El> = tree
+        .machines
+        .iter()
+        .map(|m| {
+            let runtimes: Vec<El> = m
+                .runtimes
+                .iter()
+                .map(|r| {
+                    let liveness = match r.liveness {
+                        crate::mesh::journal::StreamLiveness::Own => "this runtime",
+                        crate::mesh::journal::StreamLiveness::Live => "live",
+                        crate::mesh::journal::StreamLiveness::Expired => "expired",
+                    };
+                    let badge = r
+                        .link
+                        .as_ref()
+                        .map(|l| match l.state {
+                            crate::mesh::cooperation::LinkState::Connecting => "connecting",
+                            crate::mesh::cooperation::LinkState::Connected => "connected",
+                            crate::mesh::cooperation::LinkState::Degraded => "degraded",
+                            crate::mesh::cooperation::LinkState::Unreachable => "unreachable",
+                            crate::mesh::cooperation::LinkState::Expired => "expired",
+                        })
+                        .unwrap_or(liveness);
+                    let beat = r
+                        .last_beat_ms
+                        .map(|ms| format!("last heartbeat {}s ago", ms / 1000))
+                        .unwrap_or_else(|| "no heartbeat heard".into());
+                    let active_sessions = r
+                        .sessions
+                        .iter()
+                        .filter(|s| s.state == crate::mesh::state::SessionState::Active)
+                        .count();
+                    let live_claims = r
+                        .sessions
+                        .iter()
+                        .flat_map(|s| s.claims.iter())
+                        .filter(|c| c.state.is_live())
+                        .count();
+                    let link = r
+                        .link
+                        .as_ref()
+                        .map(|l| {
+                            format!(
+                                "{}{}, {} handshake(s), {} reconnect(s), {} restart(s){}{}",
+                                if l.outbound { "dialed" } else { "dials this runtime" },
+                                l.endpoint.as_ref().map(|e| format!(" at {e}")).unwrap_or_default(),
+                                l.handshakes,
+                                l.reconnects,
+                                l.restarts,
+                                l.rtt_ms.map(|ms| format!(", rtt {ms}ms")).unwrap_or_default(),
+                                l.last_error.as_ref().map(|e| format!(", last error: {e}")).unwrap_or_default(),
+                            )
+                        })
+                        .unwrap_or_else(|| "no link from this runtime".into());
+                    let sessions: Vec<El> = r
+                        .sessions
+                        .iter()
+                        .map(|s| {
+                            let state = match s.state {
+                                crate::mesh::state::SessionState::Active => "active",
+                                crate::mesh::state::SessionState::Closed => "closed",
+                                crate::mesh::state::SessionState::Expired => "expired",
+                            };
+                            let who = format!(
+                                "{}{}",
+                                s.info.client,
+                                s.info.worker.as_ref().map(|w| format!(" ({w})")).unwrap_or_default()
+                            );
+                            let claims = s
+                                .claims
+                                .iter()
+                                .map(|c| {
+                                    let st = match &c.state {
+                                        crate::mesh::state::ClaimState::Held => "held".to_string(),
+                                        crate::mesh::state::ClaimState::Released => "released".to_string(),
+                                        crate::mesh::state::ClaimState::Expired(why) => format!("expired: {why}"),
+                                        crate::mesh::state::ClaimState::Conflicted(w) => format!("conflicted with {w}"),
+                                    };
+                                    format!("{} [{:?}, {st}]", c.scope.join(", "), c.mode).to_lowercase()
+                                })
+                                .collect::<Vec<_>>()
+                                .join("; ");
+                            card_with(
+                                who,
+                                word_badge(state),
+                                el("div").child(facts(vec![
+                                    (
+                                        "Intent",
+                                        Node::Element(el("span").text(s.info.intent.clone().unwrap_or_else(|| "—".into()))),
+                                    ),
+                                    (
+                                        "Issue / task",
+                                        Node::Element(el("span").text(format!(
+                                            "{} / {}",
+                                            s.info.issue.as_deref().unwrap_or("—"),
+                                            s.info.task.as_deref().unwrap_or("—")
+                                        ))),
+                                    ),
+                                    (
+                                        "Branch",
+                                        Node::Element(mono(format!(
+                                            "{}{}",
+                                            s.info.branch.as_deref().unwrap_or("—"),
+                                            s.info.head.as_ref().map(|h| format!(" @ {}", &h[..h.len().min(8)])).unwrap_or_default()
+                                        ))),
+                                    ),
+                                    (
+                                        "Claims",
+                                        Node::Element(el("span").text(if claims.is_empty() { "none".to_string() } else { claims })),
+                                    ),
+                                ])),
+                            )
+                        })
+                        .collect();
+                    card_with(
+                        format!("Runtime {}", r.runtime),
+                        word_badge(badge),
+                        el("div")
+                            .child(facts(vec![
+                                ("Liveness", Node::Element(el("span").text(format!("{liveness}, {beat}")))),
+                                ("Link", Node::Element(el("span").text(link))),
+                                (
+                                    "Work",
+                                    Node::Element(el("span").text(format!(
+                                        "{active_sessions} active session(s), {live_claims} live claim(s)"
+                                    ))),
+                                ),
+                            ]))
+                            .when(!sessions.is_empty(), |d| {
+                                d.child(el("div").class("mj-grid").children(sessions))
+                            }),
+                    )
+                })
+                .collect();
+            card_with(
+                format!("{} — {}", m.name, m.node),
+                word_badge(if m.local { "local" } else { "remote" }),
+                el("div").class("mj-grid").children(runtimes),
+            )
+        })
+        .collect();
+
+    // Claims in conflict, handovers and reviews, from the one folded state.
+    let state = folded.state.clone().unwrap_or_default();
+    let conflicts: Vec<El> = state
+        .claims
+        .iter()
+        .filter_map(|c| match &c.state {
+            crate::mesh::state::ClaimState::Conflicted(winner) => {
+                Some(el("p").class("mj-prose").text(format!(
+                    "{} ({}) lost to {winner}",
+                    c.key,
+                    c.scope.join(", ")
+                )))
+            }
+            _ => None,
+        })
+        .collect();
+    let handovers: Vec<El> = state
+        .handovers
+        .iter()
+        .map(|h| {
+            card_with(
+                format!("Handover {}", h.id),
+                word_badge(if h.consumed_by.is_empty() {
+                    "published"
+                } else {
+                    "consumed"
+                }),
+                el("div").child(facts(vec![
+                    ("From", Node::Element(mono(h.runtime.clone()))),
+                    (
+                        "Task / issue",
+                        Node::Element(el("span").text(format!(
+                            "{} / {}",
+                            h.handover.task.as_deref().unwrap_or("—"),
+                            h.handover.issue.as_deref().unwrap_or("—")
+                        ))),
+                    ),
+                    (
+                        "Branch",
+                        Node::Element(mono(
+                            h.handover.branch.clone().unwrap_or_else(|| "—".into()),
+                        )),
+                    ),
+                    (
+                        "Consumed by",
+                        Node::Element(el("span").text(if h.consumed_by.is_empty() {
+                            "nobody yet".to_string()
+                        } else {
+                            h.consumed_by.join(", ")
+                        })),
+                    ),
+                ])),
+            )
+        })
+        .collect();
+    let reviews: Vec<El> = state
+        .reviews
+        .iter()
+        .map(|r| {
+            let answers = r
+                .answers
+                .iter()
+                .map(|a| format!("{}: {}", a.session, a.verdict))
+                .collect::<Vec<_>>()
+                .join("; ");
+            card_with(
+                format!("Review of {}", r.subject),
+                word_badge(match r.state {
+                    crate::mesh::state::ReviewState::Open => "open",
+                    crate::mesh::state::ReviewState::Answered => "answered",
+                }),
+                el("div").child(facts(vec![
+                    ("Requested by", Node::Element(mono(r.session.clone()))),
+                    (
+                        "Issue",
+                        Node::Element(
+                            el("span").text(r.issue.clone().unwrap_or_else(|| "—".into())),
+                        ),
+                    ),
+                    (
+                        "Answers",
+                        Node::Element(el("span").text(if answers.is_empty() {
+                            "none".to_string()
+                        } else {
+                            answers
+                        })),
+                    ),
+                ])),
+            )
+        })
+        .collect();
+    let refused: Vec<El> = tree
+        .refused
+        .iter()
+        .map(|r| {
+            el("p").class("mj-prose").text(format!(
+                "{} ({}): {} — {}",
+                r.endpoint,
+                r.direction,
+                r.refusal.code.as_str(),
+                r.refusal.detail
+            ))
+        })
+        .collect();
+
     Page::new(
         Area::Mesh,
         "Mesh",
         el("div")
             .class("mj-grid")
             .child(card("This node", overview))
+            .child(card("Cooperation", coop))
+            .child(card(
+                format!("Machines ({})", tree.machines.len()),
+                if machine_cards.is_empty() {
+                    el("p").class("mj-prose").text("No runtime cooperates here yet. A runtime links to trusted runtimes of the same repository as discovery or a declared seed finds them; `majordomus mesh verify` says what is missing.")
+                } else {
+                    el("div").class("mj-grid").children(machine_cards)
+                },
+            ))
+            .when(!conflicts.is_empty(), |d| d.child(card("Claim conflicts", el("div").children(conflicts))))
+            .when(!handovers.is_empty(), |d| d.child(card("Handovers", el("div").class("mj-grid").children(handovers))))
+            .when(!reviews.is_empty(), |d| d.child(card("Reviews", el("div").class("mj-grid").children(reviews))))
+            .when(!refused.is_empty(), |d| d.child(card("Refused candidates", el("div").children(refused))))
             .when(!providers.is_empty(), |d| {
                 d.child(card(
                     "Discovery providers",
@@ -3127,7 +3857,7 @@ pub fn release(ctx: &Context) -> Page {
                 Node::Element(mono(short_digest(&plan.fingerprint))),
             ),
             (
-                "Writers agree",
+                "Projection current",
                 Node::Element(badge(
                     if plan.writers_agree { "ok" } else { "fail" },
                     if plan.writers_agree { "yes" } else { "no" },
@@ -5336,6 +6066,22 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 
     let generated = view.content.contains(generate::HEADER)
         || view.provenance.path.starts_with(generate::OUT_DIR);
+    // the public page is the capability's answer, rendered; this page derives no address
+    let published = match &view.documentation {
+        Some(d) => match (&d.url, &d.route) {
+            (Some(url), _) => el("span").text("Published at ").child(link(url, url)),
+            (None, Some(route)) => el("span").text("Published at ").child(mono(route)),
+            (None, None) => el("span").text(format!(
+                "Not published: {}",
+                d.reason.as_deref().unwrap_or("no reason is declared")
+            )),
+        },
+        None => el("span").text(format!(
+            "Not published: this repository's {} declares no public page for kind {}",
+            crate::entity::PUBLICATION,
+            view.kind
+        )),
+    };
     let identity_card = card(
         "What it is",
         facts(vec![
@@ -5351,6 +6097,7 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
                     badge("declared", "declared")
                 }),
             ),
+            ("Public page", Node::Element(published)),
         ]),
     );
 

@@ -57,6 +57,8 @@ pub enum Area {
     Mesh,
     /// The declared model catalogue and its routing.
     Models,
+    /// Token economics, measured.
+    Economics,
     /// The health report.
     Health,
     /// What the crate's own public surface is held to.
@@ -155,6 +157,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Models",
             href: "/cockpit/models",
             area: Area::Models,
+        },
+        AreaInfo {
+            id: "economics",
+            label: "Economics",
+            href: "/cockpit/economics",
+            area: Area::Economics,
         },
         AreaInfo {
             id: "health",

@@ -3,12 +3,12 @@
 ## What it means
 
 The repository's standing posture — nothing leaves the machine — survives the existence
-of the mesh subsystem. A clone with no `.ai/repo/mesh/*.yaml`, or one whose declaration
-carries `enabled: false` (this repository's committed default), runs exactly as before:
-no UDP socket, no broadcast, no rendezvous request, no node identity file. Turning the
-mesh on is a person editing the declaration, having it reviewed, and committing it — an
-auditable act in history, never an environment variable or a flag someone forgets was
-set.
+of the mesh subsystem. A clone with no `.ai/repo/mesh/*.yaml` (what the skeleton a new
+repository starts from ships), or one whose declaration carries `enabled: false`, runs
+exactly as before: no UDP socket, no broadcast, no rendezvous request, no node identity
+file. Turning the mesh on is a person editing the declaration, having it reviewed, and
+committing it — an auditable act in history, never an environment variable or a flag
+someone forgets was set.
 
 Off is also an *answer*: `mesh.status` (and `majordomus mesh status`, and the Cockpit's
 mesh page) reports `active: false` with the reason — no declaration, declaration
@@ -29,10 +29,14 @@ decision and answers the repository's "Intentionally Absent" list point by point
 ## How to see it
 
 ```
-majordomus mesh status          # inactive, with the reason, in this repository
-majordomus mesh doctor          # the declaration check names the committed default
-grep enabled .ai/repo/mesh/majordomus.yaml
+majordomus mesh status          # inactive, with the reason, in a repository with no declaration
+majordomus mesh doctor          # the declaration check names the default posture
+ls share/skeleton/ai/repo       # the skeleton ships no mesh/ declaration
 ```
+
+This repository is the counter-example the guarantee allows: its own declaration is committed
+enabled (`grep enabled .ai/repo/mesh/majordomus.yaml`; `docs/MESH.md`, "This repository's
+mesh"), which is the reviewed, committed act described above, not a default that changed.
 
 `apps/majordomus-cli/tests/mesh.rs` (`a_disabled_declaration_opens_nothing_and_says_why`)
 is the executable form: a server over a disabled declaration answers `active: false`

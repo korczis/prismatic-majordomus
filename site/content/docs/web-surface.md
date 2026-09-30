@@ -21,6 +21,7 @@ documentation arrived the name meant two things; the rule
 |---|---|
 | home | `/` |
 | documentation | `/docs` |
+| rustdoc | `/rustdoc` |
 | swagger | `/swagger` |
 | openapi | `/openapi.json` |
 | capabilities | `/api/v1/` |
@@ -36,6 +37,7 @@ documentation arrived the name meant two things; the rule
 | The live channel: what this process's executions are doing | `/events` | native-route | protocol | internal | served-only | `http::events` |
 | MCP over HTTP for attached clients | `/mcp` | native-route | protocol | internal | served-only | `mcp endpoint` |
 | The OpenAPI document of the capability registry | `/openapi.json` | native-route | api | public | both | `capability registry` |
+| The Rust crate's documentation, as rustdoc renders it | `/rustdoc` | static-directory | documentation | public | both | `scripts/rust-check --doc` |
 | Swagger UI over the OpenAPI document | `/swagger` | native-route | documentation | public | served-only | `http::swagger` |
 | The site as it is deployed | `/` | static-directory | documentation | public | published-only | `scripts/site-build` |
 | This process, and everything it serves | `/` | native-route | interface | public | served-only | `web::home` |

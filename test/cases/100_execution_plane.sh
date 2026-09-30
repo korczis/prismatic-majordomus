@@ -13,9 +13,9 @@
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
 [ -f "$ROOT/apps/majordomus-cli/Cargo.toml" ] || { echo "    apps/majordomus-cli/Cargo.toml is missing"; exit 1; }
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
-command -v python3 >/dev/null 2>&1 || { echo "    skip: no python3"; exit 0; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "no curl"
+command -v python3 >/dev/null 2>&1 || skip "no python3"
+command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
@@ -26,15 +26,7 @@ SRV=""; trap 'rm -rf "$S"; [ -n "$SRV" ] && kill "$SRV" 2>/dev/null' EXIT
 git add -A >/dev/null && git commit -qm layer
 
 # ---------------------------------------------------------------- the server
-"$RB" serve --repo "$PWD" --port 0 > "$S/out.txt" 2> "$S/err.txt" & SRV=$!
-i=0
-until grep -q 'listening on http://' "$S/err.txt" 2>/dev/null; do
-  i=$((i+1)); [ "$i" -lt 300 ] || { echo "    the server never listened"; cat "$S/err.txt"; exit 1; }
-  kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$S/err.txt"; exit 1; }
-  sleep 0.1
-done
-U="$(sed -n 's#.*listening on \(http://127\.0\.0\.1:[0-9]*\).*#\1#p' "$S/err.txt" | head -n 1)"
-[ -n "$U" ] || { echo "    no URL on the listening line"; exit 1; }
+serve_up "$S/out.txt" "$S/err.txt" || exit 1
 
 post() { curl -s -X POST -H 'Content-Type: application/json' -d "$2" "$U$1"; }
 get()  { curl -s "$U$1"; }
@@ -187,8 +179,15 @@ for attempt in '{"capability":"sh -c echo"}' '{"capability":"../../bin/sh"}'; do
   case "$CODE" in 400|404) ;; *) echo "    '$attempt' was answered $CODE, not a refusal"; cat "$S/refused.json"; exit 1 ;; esac
 done
 get /openapi.json > "$S/openapi.json"
-jq -e '[.paths | keys[] | select(test("shell|/exec/"))] | length == 0' "$S/openapi.json" >/dev/null \
+# `shell.check` is the one route whose name says shell, and it runs nothing: it reads the
+# tree against the automation inventory, so it must stay a GET with no parameter and no body.
+jq -e '[.paths | keys[] | select(. != "/api/v1/shell/check") | select(test("shell|/exec/"))]
+       | length == 0' "$S/openapi.json" >/dev/null \
   || { echo "    a shell-shaped route is in the document"; exit 1; }
+jq -e '.paths["/api/v1/shell/check"]
+       | (keys == ["get"]) and (.get.requestBody == null) and ((.get.parameters // []) == [])' \
+  "$S/openapi.json" >/dev/null \
+  || { echo "    the shell inventory check is not a read-only GET that takes nothing"; exit 1; }
 # a plain GET of the live channel says what it is rather than upgrading
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$U$CHANNEL")" = 426 ] \
   || { echo "    a plain GET of the live channel did not answer 426"; exit 1; }

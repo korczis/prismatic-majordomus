@@ -103,6 +103,12 @@ Three things about it are contract rather than implementation:
 - **It is silent when there is nothing to say.** Entering a healthy repository prints
   nothing about the runtime, changes no file under `.ai/local/`, and starts no process. A
   person who enters this directory forty times a day is told nothing forty times.
+- **It reports only what is proven.** Under the banner it draws the compact preflight
+  ([`PREFLIGHT.md`](PREFLIGHT.md)): the server and its surfaces, the briefing, the rules, the
+  recorded test runs and the deployment, each with a verdict that rests on evidence. A service is
+  never marked answering because a connection was accepted. It is marked only when the server
+  behind it answers as this checkout's leaseholder, at this executable's version
+  (`project.entry-reports-only-evidence`).
 
 **The switches.** `session.ensure_server_on_start` in the policy governs both doors — one
 question, one answer, so the two cannot drift. `MAJORDOMUS_RUNTIME=off` is the same refusal
@@ -150,6 +156,8 @@ composes, because there is no episode without a worker to have one.
 | that same line on every `cd` | the server is started and then fails | read the log the line names, then `majordomus serve status` |
 | a second banner right after the first | direnv re-evaluated entry because the lease moved under `watch_file`; a server arriving or leaving draws the two-line form, never the box again | nothing |
 | `majordomus: the executable is older than the sources`, and no server comes up | entry refuses to start a runtime from stale code | `just build`; the next `cd` ensures one |
+| `server ◐` on the entry line while the addresses are listed | a server answers, from another version or a replaced executable; the banner's service marks say `○`, not `✓` | `majordomus serve stop`, then `serve ensure` |
+| `rules ?` or `enforced ?` on the entry line | the rule corpus is counted from the index, which entry never builds, and no full run has cached a count | `majordomus env preflight --full` |
 | the peers board is empty although others are working | the board is one server's memory, and each checkout has its own server | `majordomus serve status` names every server of the repository and what each holds |
 
 ## Where each fact lives

@@ -3,8 +3,8 @@
 # the constructs that break narrow viewports; it is static, so it catches the causes, not
 # the symptom. Rendered-width checks need a browser and are out of scope for a shell test.
 . "$ROOT/test/lib.sh"
-command -v zola >/dev/null || { echo "    zola absent; skipping"; exit 0; }
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v zola >/dev/null || skip "zola absent"
+command -v jq >/dev/null || skip "jq absent"
 # `--no-css` skips the Node steps, which is what this case wants: it lints markup and never
 # looks at a stylesheet. But the Zola build itself resolves `get_url(path="app.css")` in
 # base.html, and `site/static/app.css` is generated and gitignored — absent in any fresh
@@ -17,10 +17,19 @@ if [ -f "$ROOT/site/static/app.css" ]; then
 elif [ -x "$ROOT/node_modules/.bin/tailwindcss" ]; then
   expect_exit 0 "$ROOT/scripts/site-build"
 else
-  echo "    node_modules absent and no stylesheet to reuse; skipping"; exit 0
+  skip "node_modules absent and no stylesheet to reuse"
 fi
 out="$ROOT/site/public"
-pages="$(find "$out" -name '*.html')"
+# The pages linted here are the site's own. scripts/site-build also composes the other
+# published static surfaces into the build at their mounts (ADR 0086) — the crate's rustdoc at
+# /rustdoc — whose markup is another producer's and is judged by that surface's own check
+# (`majordomus quality rustdoc`), as scripts/site-check prunes them from its page contract.
+# Which mounts they are is the committed topology's answer, read through the same helper.
+composed="$(. "$ROOT/lib/common.sh"; mj_web_composed "$ROOT" mounts)" \
+  || { echo "    the topology cannot say which pages are the site's own"; exit 1; }
+prune=()
+for m in $composed; do prune+=(-path "$out$m" -prune -o); done
+pages="$(find "$out" ${prune[@]+"${prune[@]}"} -name '*.html' -print)"
 [ -n "$pages" ]
 bad=0
 for f in $pages; do

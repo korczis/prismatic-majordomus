@@ -13,7 +13,7 @@
 #
 # Skips itself when cargo is absent, as the site cases do for zola.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
+command -v cargo >/dev/null 2>&1 || skip "cargo not installed"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj92.XXXXXX")"; trap 'rm -rf "$S"' EXIT
 # the executable MAJORDOMUS_BIN names, or the one rust_bin builds; cargo itself is still

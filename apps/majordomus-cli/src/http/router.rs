@@ -709,7 +709,11 @@ impl Router {
         // `null` is what a sandboxed frame or a `file://` page sends; neither is this server
         let host = req.header("host").unwrap_or_default();
         let allowed = [format!("http://{host}"), format!("https://{host}")];
-        if allowed.iter().any(|a| a == origin) {
+        // The origin matching the Host header is only this server's own origin when the Host
+        // cannot be chosen by a page: a DNS-rebinding page names its own domain in both and
+        // matches. So the request must also be addressed by an IP literal or `localhost`,
+        // which no rebinding domain is.
+        if allowed.iter().any(|a| a == origin) && Self::host_is_literal(host) {
             return None;
         }
         tracing::warn!(
@@ -726,6 +730,31 @@ impl Router {
                 req.method
             ),
         ))
+    }
+
+    /// Whether a `Host` header names this machine by an address rather than by a domain a
+    /// third party could point at it: an IPv4 or bracketed IPv6 literal, `localhost` or a
+    /// `*.localhost` name, each with an optional port.
+    fn host_is_literal(host: &str) -> bool {
+        let name = if let Some(rest) = host.strip_prefix('[') {
+            match rest.split_once(']') {
+                Some((v6, tail)) if tail.is_empty() || tail.starts_with(':') => {
+                    return v6.parse::<std::net::Ipv6Addr>().is_ok();
+                }
+                _ => return false,
+            }
+        } else {
+            host.rsplit_once(':').map_or(host, |(name, port)| {
+                if port.parse::<u16>().is_ok() {
+                    name
+                } else {
+                    host
+                }
+            })
+        };
+        name.parse::<std::net::Ipv4Addr>().is_ok()
+            || name.eq_ignore_ascii_case("localhost")
+            || name.to_ascii_lowercase().ends_with(".localhost")
     }
 
     /// The capability mount itself: every route under it, from the registry that declares
@@ -969,6 +998,34 @@ pub fn percent_decode(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn only_an_address_or_localhost_is_a_host_no_rebinding_domain_can_name() {
+        for host in [
+            "127.0.0.1",
+            "127.0.0.1:8742",
+            "192.168.1.20:8742",
+            "[::1]:8742",
+            "[::1]",
+            "localhost",
+            "LOCALHOST:80",
+            "cockpit.localhost:8742",
+        ] {
+            assert!(Router::host_is_literal(host), "{host} names this machine");
+        }
+        for host in [
+            "",
+            "evil.example",
+            "evil.example:8742",
+            "127.0.0.1.evil.example",
+            "localhost.evil.example:8742",
+            "[::1",
+            "[::1]x",
+            "[evil]:8742",
+        ] {
+            assert!(!Router::host_is_literal(host), "{host} could be rebound");
+        }
+    }
 
     #[test]
     fn a_body_is_text_or_bytes_and_says_so_the_same_way() {

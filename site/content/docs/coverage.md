@@ -1,7 +1,7 @@
 +++
 title = "Coverage: one measurement, two questions"
 description = "test coverage of the Rust executable: one measurement (scripts/rust-coverage), the crate floor and the session/continuity domain, and the changed-code differential gate of #214 that refuses new debt while leaving untouched legacy debt alone"
-weight = 53
+weight = 54
 [extra]
 source = "docs/COVERAGE.md"
 +++
@@ -89,6 +89,16 @@ The gate reports, and exits, in one vocabulary — the same `scripts/rust-covera
 Unknown is not pass. Blocked is not pass. A crashed measurement is never green — a gate
 that turns "the coverage tool failed" into a pass is the failure mode the whole exercise
 exists to refuse.
+
+A test that fails under instrumentation is BLOCKED too: cargo-llvm-cov writes no export for
+a suite that failed. The gate then prints what the test harness reported, the `failures:`
+section of every failing binary with each failing test's name and panic, so the job log names
+the test rather than only its binary. A binary killed by a signal writes no such section and
+no `test result:` line, so its unfinished `running N tests` block is printed too: its header,
+how many tests completed and its last lines. It cannot name the test that was running, because
+the parallel harness writes a test's line only when that test completes; cargo's stderr names
+the binary and the signal. A green run prints none of the harness's output.
+`test/cases/536_the_coverage_gate_names_the_failing_test.sh` holds that behaviour.
 
 ## Running it
 

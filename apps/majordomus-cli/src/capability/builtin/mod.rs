@@ -35,12 +35,15 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub mod dashboard;
+pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
 pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
+pub mod economics;
 pub mod entity;
 pub mod environment;
 pub mod evidence;
@@ -63,8 +66,10 @@ pub mod release;
 pub mod repository;
 pub mod rules;
 mod scope;
+pub mod served;
 pub mod server;
 pub mod session_domain;
+pub(crate) mod shell;
 pub mod trace;
 mod views;
 pub mod web;
@@ -156,11 +161,14 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commands,
         graph,
         health,
+        dashboard,
         continuity,
         lifecycle,
         obligations,
         gates,
         deploy,
+        delivery,
+        served,
         evidence,
         rules,
         executions,
@@ -169,12 +177,14 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         peers,
         server,
         session_domain,
+        shell,
         perf,
         plan,
         recover,
         directories,
         devcontext,
         artifacts,
+        economics,
         environment,
         quality,
         distribution,
