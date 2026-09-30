@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "fb440559c8adad6dabca2de0c42b9b4cbc08bd27",
-  "source_version": "0.10.0",
-  "registry_fingerprint": "2a1158f23b8f9bf66c0638d15463fcf4a651abcf08035685d818b1c0b2735007"
+  "commit": "971be4f63df859b55da2b26e209a1c7dd54783c8",
+  "source_version": "0.11.0",
+  "registry_fingerprint": "3b78f4f33002a0080a37833b3fbe19b8096c5b415496c91268807b73597d5c20"
  },
  "counts": {
-  "pages": 1616,
-  "capabilities": 1620,
-  "cli_commands": 64,
-  "http_routes": 140,
-  "mcp_tools": 136,
-  "mcp_resources": 1523,
-  "modules": 71
+  "pages": 1624,
+  "capabilities": 1629,
+  "cli_commands": 65,
+  "http_routes": 141,
+  "mcp_tools": 137,
+  "mcp_resources": 1531,
+  "modules": 72
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 61
+   "count": 62
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 194
+   "count": 195
   },
   {
    "kind": "command",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 274
+   "count": 275
   },
   {
    "kind": "feature",
@@ -230,7 +230,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 251
+   "count": 256
   },
   {
    "kind": "use-case",
@@ -749,6 +749,14 @@
    "source": ".ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md"
   },
   {
+   "route": "/adrs/adr-0088/",
+   "title": "A dashboard is a projection of capabilities, and every card names the answer it was read from",
+   "description": "A dashboard is a projection of capabilities, and every card names the answer it was read from",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0088",
+   "source": ".ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md"
+  },
+  {
    "route": "/applications/",
    "title": "Applications",
    "description": "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description."
@@ -997,6 +1005,11 @@
    "route": "/docs/api/continuity/",
    "title": "HTTP API: continuity",
    "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
+  },
+  {
+   "route": "/docs/api/dashboard/",
+   "title": "HTTP API: dashboard",
+   "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."
   },
   {
    "route": "/docs/api/delivery/",
@@ -1347,6 +1360,16 @@
    "route": "/docs/cli/completion/query/",
    "title": "majordomus completion query",
    "description": "The candidates for one command line, from the command graph. What a shell adapter calls on every TAB"
+  },
+  {
+   "route": "/docs/cli/dashboard/",
+   "title": "majordomus dashboard",
+   "description": "The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it"
+  },
+  {
+   "route": "/docs/cli/dashboard/overview/",
+   "title": "majordomus dashboard overview",
+   "description": "Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown"
   },
   {
    "route": "/docs/cli/delivery/",
@@ -3494,6 +3517,11 @@
    "description": "https://majordomus.dev/rustdoc/ serves the crate's reference as rustdoc rendered it, from the"
   },
   {
+   "route": "/guarantees/rustdoc-referenced/",
+   "title": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+   "description": "Each builtin module has a page on the site, under /registry/modules/, and each module the crate"
+  },
+  {
    "route": "/guarantees/rustdoc-verified-live/",
    "title": "A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it",
    "description": "The reference is stale when it was built from a commit other than the one it is presented as. That"
@@ -5104,6 +5132,11 @@
    "description": "The open episode, the active task, the handover and checkpoint that resolve for this worktree and branch, each with its divergence label, the unresolved questions that refuse completion, and the record tallies. Selection is two-tiered and never repository-wide: a record from an unrelated worktree or branch is not offered, because a briefing that is quietly about somebody else is worse than none. Absence is reported as absence."
   },
   {
+   "route": "/registry/capabilities/dashboard-overview/",
+   "title": "dashboard.overview",
+   "description": "Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout."
+  },
+  {
    "route": "/registry/capabilities/delivery-feature/",
    "title": "delivery.feature",
    "description": "One product feature against the delivery invariant: every dimension with its verdict, the sentence that decided it and what would change it, whether it exists, and — when it does not — how far development has carried it and which dimensions block it. An id the layer does not declare is not found rather than answered as not delivered."
@@ -5797,6 +5830,11 @@
    "route": "/registry/modules/continuity/",
    "title": "Continuity",
    "description": "What this checkout's lifecycle is holding: the open episode, the record the next worker would resume from with the label that says how far to trust it, the newest progress note, and what is blocking acceptance. Read from the local half of the layer, which this process serves to the worker in front of it and never publishes."
+  },
+  {
+   "route": "/registry/modules/dashboard/",
+   "title": "Dashboards",
+   "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088)."
   },
   {
    "route": "/registry/modules/delivery/",
@@ -7128,8 +7166,8 @@
   },
   {
    "route": "/rustdoc/",
-   "title": "majordomus-cli 0.10.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.10.0, built from commit fb440559c8adad6dabca2de0c42b9b4cbc08bd27: the public items of the library and of the executable, and the source they were built from."
+   "title": "majordomus-cli 0.11.0 — Rust API reference",
+   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 971be4f63df859b55da2b26e209a1c7dd54783c8: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -7195,6 +7233,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/continuity/",
    "title": "majordomus_cli::capability::builtin::continuity - Rust",
    "description": "The `continuity` module: what this checkout’s lifecycle is holding right now — the open episode, the record the next worker would resume from, the newest progress note, what is blocking acceptance, and whether the provider’s events actually reach the tool."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/dashboard/",
+   "title": "majordomus_cli::capability::builtin::dashboard - Rust",
+   "description": "The `dashboard` module: the Overview of the Dashboard Suite, as a projection of the capabilities that already answer each of its facts (ADR 0088)."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/devtask/",

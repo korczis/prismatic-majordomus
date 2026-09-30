@@ -28,7 +28,7 @@
     <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
       <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.10.0 -->
+     Generator: majordomus-cli 0.11.0 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
   <title>Prismatic Majordomus</title>
   <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
@@ -163,7 +163,7 @@
 </div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
   <p class="mb-6 flex items-center gap-3"><span class="mj-badge mj-badge--guaranteed">guaranteed</span>
-<span class="font-mono text-sm text-body-subtle">178 claims</span></p>
+<span class="font-mono text-sm text-body-subtle">179 claims</span></p>
 <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><li class="min-w-0"><a href="https://majordomus.dev/guarantees/distribution-canonical-model/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">Every platform, artifact name and installation URL is derived from one model, and a projection that disagrees with it is refused</h2>
     <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/distribution/mod.rs · test/cases/84_distribution_model.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/install-command-is-derived/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
@@ -446,7 +446,9 @@
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">Every item the crate exports has its rustdoc page at the route derived from its path and kind, no item page exists without its item, and a module added to the crate becomes a required page with no list edited</h2>
     <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/quality/rustdoc.rs · test/cases/490_rustdoc_new_module.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/rustdoc-verified-live/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it</h2>
-    <p class="mt-2 break-all font-mono text-xs text-body-subtle">scripts/pages · test/cases/487_rustdoc_staleness.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/worktree-topology-derived/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">scripts/pages · test/cases/487_rustdoc_staleness.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/rustdoc-referenced/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+    <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">Every builtin module&#39;s page on the site links the page the crate&#39;s reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference</h2>
+    <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/site.rs · test/cases/492_rustdoc_module_links.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/worktree-topology-derived/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">A branch&#39;s worktree path is derived from git identity and the branch name alone — the primary checkout&#39;s sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured</h2>
     <p class="mt-2 break-all font-mono text-xs text-body-subtle">apps/majordomus-cli/src/worktree/path.rs · test/cases/96_worktree_topology.sh</p></a></li><li class="min-w-0"><a href="https://majordomus.dev/guarantees/worktree-migration-lossless/" class="block h-full min-w-0 rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
     <h2 class="wrap-anywhere text-base font-semibold tracking-tight text-heading">A misplaced worktree is brought to its canonical path with its modified, staged, unstaged and untracked work intact, verified by a fingerprint taken before and after the move, and a step is reported as moved only when the two are equal</h2>
@@ -585,7 +587,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.10.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/fb440559c8adad6dabca2de0c42b9b4cbc08bd27" class="font-mono underline">fb44055</a> · inputs <span class="font-mono">5d2a55bd3849</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/971be4f63df859b55da2b26e209a1c7dd54783c8" class="font-mono underline">971be4f</a> · inputs <span class="font-mono">cfb5e437d440</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

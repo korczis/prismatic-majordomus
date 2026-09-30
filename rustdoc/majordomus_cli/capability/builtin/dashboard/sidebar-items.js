@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DashboardMeasure"],"fn":["module"],"struct":["DashboardCard","DashboardOverview","DashboardQuestion","DashboardSource"]};
