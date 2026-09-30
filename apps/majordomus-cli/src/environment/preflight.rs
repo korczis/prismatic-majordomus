@@ -710,6 +710,80 @@ pub enum LedgerObservation {
     },
 }
 
+/// Where `scripts/rust-coverage` records the last measurement it made itself, relative to
+/// the repository root. Local state: a measurement belongs to the checkout that ran it.
+pub const COVERAGE_RECORD: &str = ".ai/local/state/coverage/rust.json";
+
+/// The last coverage measurement `scripts/rust-coverage` recorded, as it recorded it.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{derive, CoverageObservation, Observations, Verdict};
+/// let mut o = Observations::empty("demo", 0);
+/// o.coverage = CoverageObservation::Unreadable("schema 9".into());
+/// assert_eq!(derive(&o).check("verification.coverage").unwrap().verdict, Verdict::Unknown);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum CoverageObservation {
+    /// No record: nothing in this checkout has measured coverage.
+    #[default]
+    Absent,
+    /// A record this executable cannot read; the reason.
+    Unreadable(String),
+    /// The record.
+    Read(CoverageRecord),
+}
+
+/// One recorded coverage measurement: the fields of [`COVERAGE_RECORD`] this reads.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct CoverageRecord {
+    /// The format; this reads 1.
+    pub schema: u32,
+    /// HEAD when the measurement began.
+    pub commit: String,
+    /// `clean` only when the tree was clean and HEAD unmoved from the run's start to its end.
+    pub working_tree: String,
+    /// When it was recorded, RFC 3339.
+    pub at: String,
+    /// `pass` or `fail` against the thresholds, or `report` when none was held.
+    pub outcome: String,
+    /// cargo's exit status for the instrumented suite; non-zero means a test failed.
+    #[serde(default)]
+    pub suite_exit: i32,
+    /// The crate, test code excluded.
+    #[serde(rename = "crate")]
+    pub krate: CoverageDimensions,
+}
+
+/// Covered over total per dimension.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct CoverageDimensions {
+    /// Lines.
+    pub lines: CoverageFraction,
+    /// Functions.
+    pub functions: CoverageFraction,
+    /// Regions.
+    pub regions: CoverageFraction,
+}
+
+/// One dimension of a measurement: executed over executable.
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct CoverageFraction {
+    /// Executed.
+    pub covered: u64,
+    /// Executable.
+    pub total: u64,
+}
+
+impl CoverageFraction {
+    fn percent(&self) -> f64 {
+        if self.total == 0 {
+            100.0
+        } else {
+            self.covered as f64 * 100.0 / self.total as f64
+        }
+    }
+}
+
 /// The newest commit of the deployment ref, and the source commit it says it was built from.
 ///
 /// ```
@@ -773,6 +847,8 @@ pub struct Observations {
     pub peers: Result<PeersObservation, String>,
     /// The evidence ledger.
     pub ledger: LedgerObservation,
+    /// The last recorded coverage measurement.
+    pub coverage: CoverageObservation,
     /// Provider projections against their templates.
     pub projections: Vec<(String, ProjectionState)>,
     /// The deployment ref.
@@ -803,6 +879,7 @@ impl Observations {
             server: ServerObservation::default(),
             peers: Err("not asked".into()),
             ledger: LedgerObservation::Absent,
+            coverage: CoverageObservation::Absent,
             projections: Vec::new(),
             deployment: DeploymentObservation::NoRef,
         }
@@ -869,7 +946,7 @@ pub fn derive(o: &Observations) -> Preflight {
             title: "Verification".into(),
             checks: vec![
                 tests_check(o),
-                coverage_check(),
+                coverage_check(o, head.as_deref(), clean),
                 enforcement_check(o, head.as_deref(), clean),
                 projections_check(o),
                 docs_check(),
@@ -1533,15 +1610,104 @@ fn tests_check(o: &Observations) -> Check {
     }
 }
 
-fn coverage_check() -> Check {
-    Check::new(
-        "verification.coverage",
-        "coverage",
-        Verdict::Unavailable,
-        "no coverage measurement is recorded in the repository: scripts/rust-coverage measures and gates it and leaves no record this can read",
-        vec![],
-    )
-    .next("scripts/rust-coverage")
+fn coverage_check(o: &Observations, head: Option<&str>, clean: Option<bool>) -> Check {
+    let r = match &o.coverage {
+        CoverageObservation::Absent => {
+            return Check::new(
+                "verification.coverage",
+                "coverage",
+                Verdict::Unavailable,
+                "no coverage measurement is recorded in this checkout: scripts/rust-coverage records the one it makes",
+                vec![],
+            )
+            .next("scripts/rust-coverage")
+        }
+        CoverageObservation::Unreadable(reason) => {
+            return Check::new(
+                "verification.coverage",
+                "coverage",
+                Verdict::Unknown,
+                format!("the coverage record cannot be read: {reason}"),
+                vec![Evidence::new(COVERAGE_RECORD, reason.clone())],
+            )
+            .next("scripts/rust-coverage")
+        }
+        CoverageObservation::Read(r) => r,
+    };
+    let c = &r.krate;
+    let measured = format!(
+        "lines {:.2}% ({}/{}) · functions {:.2}% · regions {:.2}%",
+        c.lines.percent(),
+        c.lines.covered,
+        c.lines.total,
+        c.functions.percent(),
+        c.regions.percent()
+    );
+    let suite = if r.suite_exit != 0 {
+        format!(" · the suite failed (cargo exit {})", r.suite_exit)
+    } else {
+        String::new()
+    };
+    let evidence = vec![Evidence::new(
+        COVERAGE_RECORD,
+        format!(
+            "{} at {} on a {} tree: {}",
+            short(&r.commit),
+            r.at,
+            r.working_tree,
+            r.outcome
+        ),
+    )];
+    // Currency first, as for the rule tally: a measurement of another commit, or of a tree
+    // that was not clean for the whole run, says nothing about the code in front of you.
+    let at_head = head.is_some_and(|h| h == r.commit);
+    if !at_head || r.working_tree != "clean" || clean == Some(false) {
+        return Check::new(
+            "verification.coverage",
+            "coverage",
+            Verdict::Stale,
+            format!(
+                "{measured}; measured at {} on a {} tree, not this one",
+                short(&r.commit),
+                r.working_tree
+            ),
+            evidence,
+        )
+        .next("scripts/rust-coverage");
+    }
+    match r.outcome.as_str() {
+        "pass" if r.suite_exit == 0 => Check::new(
+            "verification.coverage",
+            "coverage",
+            Verdict::Verified,
+            format!("{measured}; both thresholds hold at HEAD"),
+            evidence,
+        ),
+        "report" => Check::new(
+            "verification.coverage",
+            "coverage",
+            Verdict::Active,
+            format!("{measured}{suite}; measured at HEAD, no threshold held"),
+            evidence,
+        )
+        .next("scripts/rust-coverage"),
+        "pass" | "fail" => Check::new(
+            "verification.coverage",
+            "coverage",
+            Verdict::Failed,
+            format!("{measured}{suite}; a threshold does not hold at HEAD"),
+            evidence,
+        )
+        .next("scripts/rust-coverage"),
+        other => Check::new(
+            "verification.coverage",
+            "coverage",
+            Verdict::Unknown,
+            format!("{measured}; the record's outcome '{other}' is not one this reads"),
+            evidence,
+        )
+        .next("scripts/rust-coverage"),
+    }
 }
 
 fn enforcement_check(o: &Observations, head: Option<&str>, clean: Option<bool>) -> Check {
@@ -1971,6 +2137,7 @@ pub fn observe(
         server,
         peers,
         ledger: observe_ledger(root, local, environment.vcs.tree(), probe.cache),
+        coverage: observe_coverage(root),
         projections: environment
             .providers
             .iter()
@@ -2217,6 +2384,20 @@ fn observe_ledger(
         current_failing: current.iter().filter(|e| !e.outcome.proves()).count(),
         newest_commit: newest.map(|e| e.commit.clone()).unwrap_or_default(),
         newest_at: newest.map(|e| e.at.clone()).unwrap_or_default(),
+    }
+}
+
+/// The coverage record `scripts/rust-coverage` left, read as it is: one small file, no git.
+pub fn observe_coverage(root: &Path) -> CoverageObservation {
+    let text = match std::fs::read_to_string(root.join(COVERAGE_RECORD)) {
+        Ok(text) => text,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return CoverageObservation::Absent,
+        Err(e) => return CoverageObservation::Unreadable(e.to_string()),
+    };
+    match serde_json::from_str::<CoverageRecord>(&text) {
+        Ok(r) if r.schema == 1 => CoverageObservation::Read(r),
+        Ok(r) => CoverageObservation::Unreadable(format!("schema {}, this reads 1", r.schema)),
+        Err(e) => CoverageObservation::Unreadable(e.to_string()),
     }
 }
 

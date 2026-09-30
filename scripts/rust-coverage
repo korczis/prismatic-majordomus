@@ -108,6 +108,30 @@ if [ "$MODE" = changed ]; then
       ' > "$CHANGED_FILE"
 fi
 
+# THE RECORD. A measurement this script makes itself, of the whole crate, is recorded at
+# .ai/local/state/coverage/rust.json, which the preflight's `verification.coverage` check
+# reads (apps/majordomus-cli/src/environment/preflight.rs, COVERAGE_RECORD). An export
+# passed with --from is of a tree this script never saw, and --changed and --domain measure
+# part of the crate, so none of them is recorded. The commit and tree are read before the
+# suite runs and again after it: a tree that was edited, or a HEAD that moved, while the
+# instrumented suite was running is recorded as `dirty`, which that check calls stale.
+RECORD="" TREE_BEFORE="" TREE_AFTER=""
+tree_state() {
+  # --no-optional-locks: a read must not refresh the index under another session's feet.
+  head="$(git -C "$ROOT" rev-parse --verify --quiet HEAD 2>/dev/null)" || return 1
+  if [ -z "$(git -C "$ROOT" --no-optional-locks status --porcelain 2>/dev/null)" ]; then
+    printf '%s clean\n' "$head"
+  else
+    printf '%s dirty\n' "$head"
+  fi
+}
+if [ -z "$FROM" ] && [ "$MODE" != changed ] && [ "$ONLY" != domain ] \
+    && command -v git >/dev/null 2>&1; then
+  RECORD="$ROOT/.ai/local/state/coverage/rust.json"
+  TREE_BEFORE="$(tree_state)" || RECORD=""
+fi
+
+cov_status=0
 if [ -z "$FROM" ]; then
   command -v cargo >/dev/null 2>&1 || { echo "rust-coverage: cargo is not installed" >&2; exit 12; }
   cargo llvm-cov --version >/dev/null 2>&1 || {
@@ -199,9 +223,12 @@ if [ -z "$FROM" ]; then
   [ "$cov_status" = 0 ] || printf 'rust-coverage: the suite failed (cargo exit %s); the coverage below is measured from the export it still wrote\n' "$cov_status" >&2
 fi
 [ -z "$EXPORT" ] || cp "$FROM" "$EXPORT"
+[ -z "$RECORD" ] || TREE_AFTER="$(tree_state)" || TREE_AFTER=""
 
 status=0
-CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" CHANGED_FILE="$CHANGED_FILE" CHANGED_BASE="$CHANGED" python3 - "$FROM" <<'PY' || status=$?
+CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" CHANGED_FILE="$CHANGED_FILE" CHANGED_BASE="$CHANGED" \
+  RECORD="$RECORD" TREE_BEFORE="$TREE_BEFORE" TREE_AFTER="$TREE_AFTER" SUITE_EXIT="$cov_status" \
+  python3 - "$FROM" <<'PY' || status=$?
 import json, os, re, sys
 
 # normpath so a root or an export filename carrying a doubled slash (a $TMPDIR ending in
@@ -510,14 +537,15 @@ missing = [d for d in domain if d not in files]
 # every source file that holds executable code under test, each as covered/total per
 # dimension. It is the only machine-readable form of this measurement, so an evidence page
 # or a per-subject attribution reads these numbers rather than a second parser of the export.
+def dims(t):
+    out = {}
+    for what in ("lines", "functions", "regions"):
+        got, of = getattr(t, what)
+        out[what] = {"covered": got, "total": of, "percent": round(pct((got, of)), 2)}
+    return out
+
 summary_json = os.environ.get("SUMMARY_JSON", "")
 if summary_json:
-    def dims(t):
-        out = {}
-        for what in ("lines", "functions", "regions"):
-            got, of = getattr(t, what)
-            out[what] = {"covered": got, "total": of, "percent": round(pct((got, of)), 2)}
-        return out
     doc = {
         "schema": 1,
         "measurement": "scripts/rust-coverage",
@@ -578,6 +606,40 @@ if mode == "gate":
                       "threshold of %.2f%% (scripts/session-coverage-threshold)"
                       % (got, what, want_dom))
                 rc = 10
+
+# ------------------------------------------------------------------ the record
+# What the preflight reads (see THE RECORD above): the crate and domain totals, the verdict
+# this run reached, and the commit and tree it measured. Written through a temporary file and
+# a rename, so a reader never sees half a record.
+record = os.environ.get("RECORD", "")
+if record:
+    before = os.environ.get("TREE_BEFORE", "").split()
+    after = os.environ.get("TREE_AFTER", "").split()
+    commit = before[0] if len(before) == 2 else ""
+    clean = len(before) == 2 and before == after and before[1] == "clean"
+    import datetime
+    doc = {
+        "schema": 1,
+        "measurement": "scripts/rust-coverage",
+        "commit": commit,
+        "working_tree": "clean" if clean else "dirty",
+        "at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "mode": mode,
+        "outcome": "report" if mode == "report" else ("fail" if rc else "pass"),
+        "suite_exit": int(os.environ.get("SUITE_EXIT", "0") or 0),
+        "crate": dims(crate_total),
+        "domain": dims(domain_total),
+    }
+    try:
+        os.makedirs(os.path.dirname(record), exist_ok=True)
+        tmp = record + ".tmp.%d" % os.getpid()
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+        os.replace(tmp, record)
+    except OSError as e:
+        print("rust-coverage: the measurement could not be recorded at %s: %s" % (record, e),
+              file=sys.stderr)
 sys.exit(rc)
 PY
 [ -n "$CHANGED_FILE" ] && rm -f "$CHANGED_FILE"
