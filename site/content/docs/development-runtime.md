@@ -399,8 +399,8 @@ Ranked by what blocks a development surface most.
    derive it.
 3. **Most lifecycle commands are interactive.** The graph withholds them as *"asks the person
    something; a request/response surface would hang"*. Interactivity is not a property a
-   surface can work around. *Closing it:* `project.commands-run-non-interactively@1`,
-   currently advisory.
+   surface can work around. *Closing it:* `project.commands-run-non-interactively@2`,
+   blocking since ADR 0039's amendment, decided by its scans.
 4. **Two disjoint event models.** A durable ledger vocabulary and a live stream
    vocabulary, with no bridge between them. A Cockpit cannot show one activity feed. *Closing it:* a mutating development
    capability appends a registered ledger event and publishes the same change to the

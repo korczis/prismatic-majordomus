@@ -4,10 +4,10 @@ description = "Every wait is bounded"
 weight = 85
 [extra]
 kind = "rule"
-slug = "project-every-wait-is-bounded-1"
-identity = "project.every-wait-is-bounded@1"
+slug = "project-every-wait-is-bounded-2"
+identity = "project.every-wait-is-bounded@2"
 status = "active"
-source = ".ai/repo/rules/project/every-wait-is-bounded.v1.md"
+source = ".ai/repo/rules/project/every-wait-is-bounded.v2.md"
 +++
 {% raw %}
 
@@ -59,14 +59,25 @@ question "what did it say" survives the wait.
 
 ## Failure behaviour
 
-Advisory today, and deliberately so: the mechanical half is a scan for the unbounded forms in
-this repository's own shell and CI, which does not exist yet. ADR 0039 records it as the
-follow-up that would make this rule blocking. Until then a violation is caught by review, and
-by the worker that gets stuck.
+`scripts/liveness-check` reads every tracked shell file and reports two of this rule's shapes.
+A network call with no bound on how long it may block — `curl` without `--max-time`, `-m` or
+`--connect-timeout`, at command position — is an `unbounded-network` finding: a retry loop
+whose body can wait forever is not bounded. A process put into the background whose completion
+nothing records within the next six commands is an `unsupervised-spawn` finding: nothing
+captures `$!` and nothing waits, so the work is started where no predicate will ever decide it.
+The gate runs `always: true` in the `structure` job, and the debt that existed when it landed is
+listed in `.ai/repo/liveness-baseline.txt` as `path:class`; a finding outside that list fails,
+and a baseline line that no longer matches anything is reported too, so the ratchet tightens
+rather than rots.
+
+What the scan cannot see stays with review: a wait inside the Rust executable, a recovery path
+that exists but is wrong, and a completion predicate that reads the wrong thing. The scan
+decides the shapes it names; it does not certify the rest.
 
 ## Verification
 
-Review. Once the follow-up gate exists, the scan over `scripts/`, `test/` and
-`.github/workflows/` for a spawn with no completion condition and a blocking command with no
-timeout is what decides this rule.
+`scripts/liveness-check`, gated in the `structure` job and mutation-tested by
+`test/cases/122_liveness_gate.sh`; `test/cases/121_liveness_doctrine.sh` holds this rule's own
+class and enforcement block. The follow-up ADR 0039 named is done: this rule is decided by its
+scan rather than by review.
 {% endraw %}
