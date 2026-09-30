@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="5513f7466963">
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="edc7bf48e646">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=1a22cdbf2b3d4ab192fd">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c9d3af24213375085bb6">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -312,6 +312,11 @@ not a failure of this call: every list below is then empty and every tally zero.
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
         <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The counts.</td>
       </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">verdict</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Where the tree stands as a whole, decided from every tally.</td>
+      </tr><tr class="border-t border-default align-top">
         <td class="px-3 py-2 font-mono text-heading">verify</td>
         <td class="px-3 py-2 font-mono text-xs text-body">string</td>
         <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
@@ -421,6 +426,36 @@ not a failure of this call: every list below is then empty and every tally zero.
         &quot;present&quot;
       ],
       &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ArtifactVerdict&quot;: {
+      &quot;description&quot;: &quot;Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.\n\n```\nuse majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;\nlet v: ArtifactVerdict = serde_json::from_str(\&quot;\\\&quot;unverified\\\&quot;\&quot;).unwrap();\nassert_eq!(v, ArtifactVerdict::Unverified);\nassert!(ArtifactVerdict::Current &lt; ArtifactVerdict::Unverified);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;current&quot;,
+          &quot;description&quot;: &quot;Every file is there and hashes to what the manifest recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unverified&quot;,
+          &quot;description&quot;: &quot;Every file is there, none is stale, and some carry no recorded hash: their bytes\nwere not compared here, so the tree is not known to be current.\n`majordomus generate --check` is what decides them.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;stale&quot;,
+          &quot;description&quot;: &quot;A file differs from what the manifest recorded.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;missing&quot;,
+          &quot;description&quot;: &quot;A file the manifest names is not in the tree.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;not_generated&quot;,
+          &quot;description&quot;: &quot;No manifest is committed: the repository has never run `majordomus generate`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
     },
     &quot;ArtifactView&quot;: {
       &quot;description&quot;: &quot;One generated file, as the manifest declares it and as the tree has it.&quot;,
@@ -548,6 +583,10 @@ not a failure of this call: every list below is then empty and every tally zero.
       &quot;$ref&quot;: &quot;#/$defs/ArtifactTallies&quot;,
       &quot;description&quot;: &quot;The counts.&quot;
     },
+    &quot;verdict&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ArtifactVerdict&quot;,
+      &quot;description&quot;: &quot;Where the tree stands as a whole, decided from every tally.&quot;
+    },
     &quot;verify&quot;: {
       &quot;description&quot;: &quot;The command that decides staleness byte for byte, which is stronger than the hash.&quot;,
       &quot;type&quot;: &quot;string&quot;
@@ -560,6 +599,7 @@ not a failure of this call: every list below is then empty and every tally zero.
     &quot;documents&quot;,
     &quot;artifacts&quot;,
     &quot;tallies&quot;,
+    &quot;verdict&quot;,
     &quot;regenerate&quot;,
     &quot;verify&quot;
   ],
@@ -595,7 +635,7 @@ not a failure of this call: every list below is then empty and every tally zero.
         <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::artifacts</dd></div>
         <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ArtifactsInput</dd></div>
         <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ArtifactReport</dd></div>
-        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/971be4f63df859b55da2b26e209a1c7dd54783c8/docs/generated/modules/artifacts.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/artifacts.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">3b78f4f33002a0080a37833b3fbe19b8096c5b415496c91268807b73597d5c20</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/2f5db585162a59163110fd7bfb19cfa8e682b1d5/docs/generated/modules/artifacts.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/artifacts.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">05a57a5112841da9f4fc74c67a2aba8fff5f1cee99ace584ce31b8e1360496cf</dd></div>
         <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.11.0</dd></div>
       </dl>
     </div>
@@ -666,7 +706,7 @@ not a failure of this call: every list below is then empty and every tally zero.
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/971be4f63df859b55da2b26e209a1c7dd54783c8" class="font-mono underline">971be4f</a> · inputs <span class="font-mono">cfb5e437d440</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2f5db585162a59163110fd7bfb19cfa8e682b1d5" class="font-mono underline">2f5db58</a> · inputs <span class="font-mono">7ba0c4f85c20</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

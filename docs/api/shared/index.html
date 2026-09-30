@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="5513f7466963">
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="edc7bf48e646">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=1a22cdbf2b3d4ab192fd">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c9d3af24213375085bb6">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -170,7 +170,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/971be4f63df859b55da2b26e209a1c7dd54783c8/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="schemas" class="mt-12 scroll-mt-24">
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="https://github.com/korczis/prismatic-majordomus/blob/2f5db585162a59163110fd7bfb19cfa8e682b1d5/docs/generated/openapi.json" class="font-mono underline">docs/generated/openapi.json</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="https://majordomus.dev/openapi.json" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p><section id="schemas" class="mt-12 scroll-mt-24">
       <h2 class="text-xl font-semibold tracking-tight text-heading">Schemas</h2>
       <p class="mt-2 text-sm text-body">The components more than one tag's operations use, or none does. Each row is the type's own field, its doc comment the description; a type another page owns links there.</p><article id="schema-ActiveTask" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -227,6 +227,46 @@ is reported as declared.</td>
         </tr></tbody>
     </table>
   </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/obligations/#schema-Closure" class="font-mono text-fg-brand underline">Closure</a> <a href="https://majordomus.dev/docs/api/gates/#schema-Completion" class="font-mono text-fg-brand underline">Completion</a> <a href="https://majordomus.dev/docs/api/continuity/#schema-Continuity" class="font-mono text-fg-brand underline">Continuity</a></p></article>
+<article id="schema-AnswerObservation" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
+  <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+    <h3 class="font-mono text-base font-semibold text-heading">AnswerObservation</h3>
+    <span class="min-w-0 break-all font-mono text-xs text-body-subtle">object</span>
+  </div><div class="mt-2 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">When the state behind an answer was read: the freshness contract of a capability answer.</p>
+<p>Declared once and carried in the output type of every answer that is a picture of
+state, so that the output schema, OpenAPI, the MCP tool schemas and the command line's
+JSON all carry it without a transport of their own. It is set where the state is read —
+the index build, the git read — never by the executor, which knows when a handler ran
+and not when the state it read was taken.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use std::time::{Duration, UNIX_EPOCH};</span></span>
+<span class="giallo-l"><span>use majordomus_cli::index::AnswerObservation;</span></span>
+<span class="giallo-l"><span>let at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);</span></span>
+<span class="giallo-l"><span>let o = AnswerObservation::taken(&quot;git read&quot;, at, Some(Duration::from_secs(120)));</span></span>
+<span class="giallo-l"><span>assert_eq!(o.observed_at, &quot;2026-08-29T10:40:00Z&quot;);</span></span>
+<span class="giallo-l"><span>assert_eq!(o.stale_after.as_deref(), Some(&quot;2026-08-29T10:42:00Z&quot;));</span></span>
+<span class="giallo-l"><span>assert!(!o.is_stale_at(at + Duration::from_secs(120)));</span></span>
+<span class="giallo-l"><span>assert!(o.is_stale_at(at + Duration::from_secs(121)));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[32rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">observed_at</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only
+in an answer from an index that was never built (a hand-made one in a test).</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">source</td>
+          <td class="px-3 py-2 font-mono text-body">string</td>
+          <td class="px-3 py-2 font-mono text-body">yes</td>
+          <td class="px-3 py-2 text-body">What was read at that time: <code>index build</code> or <code>git read</code>.</td>
+        </tr><tr class="border-t border-default align-top">
+          <td class="px-3 py-2 font-mono font-semibold text-heading">stale_after</td>
+          <td class="px-3 py-2 font-mono text-body">string | null</td>
+          <td class="px-3 py-2 font-mono text-body">no</td>
+          <td class="px-3 py-2 text-body">RFC 3339 UTC: after this the answer is not to be trusted as current even though
+nothing announced a change. Absent when there is no known blind spot.</td>
+        </tr></tbody>
+    </table>
+  </div><p class="mt-3 text-xs text-body-subtle">Used by <a href="https://majordomus.dev/docs/api/health/#schema-Health" class="font-mono text-fg-brand underline">Health</a> <a href="https://majordomus.dev/docs/api/repository/#schema-RepositoryObservations" class="font-mono text-fg-brand underline">RepositoryObservations</a></p></article>
 <article id="schema-CapabilityId" class="mt-6 min-w-0 scroll-mt-24 rounded-base border border-default bg-neutral-primary-soft p-4 sm:p-5">
   <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
     <h3 class="font-mono text-base font-semibold text-heading">CapabilityId</h3>
@@ -1094,7 +1134,7 @@ projection; the registry refuses to build otherwise.</div><ul class="mt-3 space-
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/971be4f63df859b55da2b26e209a1c7dd54783c8" class="font-mono underline">971be4f</a> · inputs <span class="font-mono">cfb5e437d440</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/2f5db585162a59163110fd7bfb19cfa8e682b1d5" class="font-mono underline">2f5db58</a> · inputs <span class="font-mono">7ba0c4f85c20</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

@@ -63,303 +63,421 @@
 <a href=#63 id=63 data-nosnippet>63</a>    }
 <a href=#64 id=64 data-nosnippet>64</a>}
 <a href=#65 id=65 data-nosnippet>65</a>
-<a href=#66 id=66 data-nosnippet>66</a><span class="attr">#[derive(Debug, Serialize, Deserialize, JsonSchema)]
-<a href=#67 id=67 data-nosnippet>67</a>#[serde(deny_unknown_fields)]
-<a href=#68 id=68 data-nosnippet>68</a></span><span class="doccomment">/// The input of `artifacts.list`: the whole manifest, or one slice of it.
-<a href=#69 id=69 data-nosnippet>69</a></span><span class="kw">pub struct </span>ArtifactsInput {
-<a href=#70 id=70 data-nosnippet>70</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#71 id=71 data-nosnippet>71</a>    </span><span class="doccomment">/// Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).
-<a href=#72 id=72 data-nosnippet>72</a>    </span><span class="kw">pub </span>document: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#73 id=73 data-nosnippet>73</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#74 id=74 data-nosnippet>74</a>    </span><span class="doccomment">/// Only the artifacts written in this encoding.
-<a href=#75 id=75 data-nosnippet>75</a>    </span><span class="kw">pub </span>format: <span class="prelude-ty">Option</span>&lt;ArtifactFormat&gt;,
-<a href=#76 id=76 data-nosnippet>76</a>}
-<a href=#77 id=77 data-nosnippet>77</a>
-<a href=#78 id=78 data-nosnippet>78</a><span class="kw">impl </span>BenchmarkCases <span class="kw">for </span>ArtifactsInput {
-<a href=#79 id=79 data-nosnippet>79</a>    <span class="kw">fn </span>benchmark_cases(<span class="kw">_</span>: <span class="kw-2">&amp;</span>CaseContext&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;NamedCase&lt;<span class="self">Self</span>&gt;&gt; {
-<a href=#80 id=80 data-nosnippet>80</a>        <span class="macro">vec!</span>[
-<a href=#81 id=81 data-nosnippet>81</a>            NamedCase::new(
-<a href=#82 id=82 data-nosnippet>82</a>                <span class="string">"all"</span>,
-<a href=#83 id=83 data-nosnippet>83</a>                ArtifactsInput {
-<a href=#84 id=84 data-nosnippet>84</a>                    document: <span class="prelude-val">None</span>,
-<a href=#85 id=85 data-nosnippet>85</a>                    format: <span class="prelude-val">None</span>,
-<a href=#86 id=86 data-nosnippet>86</a>                },
-<a href=#87 id=87 data-nosnippet>87</a>            ),
-<a href=#88 id=88 data-nosnippet>88</a>            NamedCase::new(
-<a href=#89 id=89 data-nosnippet>89</a>                <span class="string">"one-encoding"</span>,
-<a href=#90 id=90 data-nosnippet>90</a>                ArtifactsInput {
-<a href=#91 id=91 data-nosnippet>91</a>                    document: <span class="prelude-val">None</span>,
-<a href=#92 id=92 data-nosnippet>92</a>                    format: <span class="prelude-val">Some</span>(ArtifactFormat::Yaml),
-<a href=#93 id=93 data-nosnippet>93</a>                },
-<a href=#94 id=94 data-nosnippet>94</a>            ),
-<a href=#95 id=95 data-nosnippet>95</a>        ]
-<a href=#96 id=96 data-nosnippet>96</a>    }
-<a href=#97 id=97 data-nosnippet>97</a>}
-<a href=#98 id=98 data-nosnippet>98</a>
-<a href=#99 id=99 data-nosnippet>99</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-<a href=#100 id=100 data-nosnippet>100</a></span><span class="doccomment">/// One document, and the encodings it is committed in.
-<a href=#101 id=101 data-nosnippet>101</a></span><span class="kw">pub struct </span>DocumentView {
-<a href=#102 id=102 data-nosnippet>102</a>    <span class="doccomment">/// The document id, shared by every encoding of it.
-<a href=#103 id=103 data-nosnippet>103</a>    </span><span class="kw">pub </span>id: String,
-<a href=#104 id=104 data-nosnippet>104</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#105 id=105 data-nosnippet>105</a>    </span><span class="doccomment">/// The schema id its structured encodings carry.
-<a href=#106 id=106 data-nosnippet>106</a>    </span><span class="kw">pub </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#107 id=107 data-nosnippet>107</a>    <span class="doccomment">/// One line: what it was derived from.
-<a href=#108 id=108 data-nosnippet>108</a>    </span><span class="kw">pub </span>source: String,
-<a href=#109 id=109 data-nosnippet>109</a>    <span class="doccomment">/// The encodings, in the manifest's order.
-<a href=#110 id=110 data-nosnippet>110</a>    </span><span class="kw">pub </span>formats: Vec&lt;ArtifactFormat&gt;,
-<a href=#111 id=111 data-nosnippet>111</a>}
-<a href=#112 id=112 data-nosnippet>112</a>
-<a href=#113 id=113 data-nosnippet>113</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-<a href=#114 id=114 data-nosnippet>114</a></span><span class="doccomment">/// One generated file, as the manifest declares it and as the tree has it.
-<a href=#115 id=115 data-nosnippet>115</a></span><span class="kw">pub struct </span>ArtifactView {
-<a href=#116 id=116 data-nosnippet>116</a>    <span class="doccomment">/// Repository-relative path.
-<a href=#117 id=117 data-nosnippet>117</a>    </span><span class="kw">pub </span>path: String,
-<a href=#118 id=118 data-nosnippet>118</a>    <span class="doccomment">/// The document it projects.
-<a href=#119 id=119 data-nosnippet>119</a>    </span><span class="kw">pub </span>document: String,
-<a href=#120 id=120 data-nosnippet>120</a>    <span class="doccomment">/// The encoding.
-<a href=#121 id=121 data-nosnippet>121</a>    </span><span class="kw">pub </span>format: ArtifactFormat,
-<a href=#122 id=122 data-nosnippet>122</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#123 id=123 data-nosnippet>123</a>    </span><span class="doccomment">/// The JSON Schema its content satisfies, when it declares one.
-<a href=#124 id=124 data-nosnippet>124</a>    </span><span class="kw">pub </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#125 id=125 data-nosnippet>125</a>    <span class="doccomment">/// One line: what it was derived from.
-<a href=#126 id=126 data-nosnippet>126</a>    </span><span class="kw">pub </span>source: String,
-<a href=#127 id=127 data-nosnippet>127</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#128 id=128 data-nosnippet>128</a>    </span><span class="doccomment">/// The size the manifest recorded.
-<a href=#129 id=129 data-nosnippet>129</a>    </span><span class="kw">pub </span>bytes: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#130 id=130 data-nosnippet>130</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
-<a href=#131 id=131 data-nosnippet>131</a>    </span><span class="doccomment">/// The hash the manifest recorded.
-<a href=#132 id=132 data-nosnippet>132</a>    </span><span class="kw">pub </span>sha256: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#133 id=133 data-nosnippet>133</a>    <span class="doccomment">/// Where the file stands against it.
-<a href=#134 id=134 data-nosnippet>134</a>    </span><span class="kw">pub </span>state: ArtifactState,
-<a href=#135 id=135 data-nosnippet>135</a>}
-<a href=#136 id=136 data-nosnippet>136</a>
-<a href=#137 id=137 data-nosnippet>137</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-<a href=#138 id=138 data-nosnippet>138</a></span><span class="doccomment">/// How many of each, so a caller needs no arithmetic of its own.
-<a href=#139 id=139 data-nosnippet>139</a></span><span class="kw">pub struct </span>ArtifactTallies {
-<a href=#140 id=140 data-nosnippet>140</a>    <span class="doccomment">/// Documents in the manifest.
-<a href=#141 id=141 data-nosnippet>141</a>    </span><span class="kw">pub </span>documents: usize,
-<a href=#142 id=142 data-nosnippet>142</a>    <span class="doccomment">/// Files in the manifest, after any filter.
-<a href=#143 id=143 data-nosnippet>143</a>    </span><span class="kw">pub </span>artifacts: usize,
-<a href=#144 id=144 data-nosnippet>144</a>    <span class="doccomment">/// Hashes that match.
-<a href=#145 id=145 data-nosnippet>145</a>    </span><span class="kw">pub </span>current: usize,
-<a href=#146 id=146 data-nosnippet>146</a>    <span class="doccomment">/// Hashes that do not.
-<a href=#147 id=147 data-nosnippet>147</a>    </span><span class="kw">pub </span>stale: usize,
-<a href=#148 id=148 data-nosnippet>148</a>    <span class="doccomment">/// Files the manifest names and the tree lacks.
-<a href=#149 id=149 data-nosnippet>149</a>    </span><span class="kw">pub </span>missing: usize,
-<a href=#150 id=150 data-nosnippet>150</a>    <span class="doccomment">/// Files the manifest records no hash for.
-<a href=#151 id=151 data-nosnippet>151</a>    </span><span class="kw">pub </span>present: usize,
-<a href=#152 id=152 data-nosnippet>152</a>}
-<a href=#153 id=153 data-nosnippet>153</a>
-<a href=#154 id=154 data-nosnippet>154</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-<a href=#155 id=155 data-nosnippet>155</a></span><span class="doccomment">/// The answer of `artifacts.list`.
-<a href=#156 id=156 data-nosnippet>156</a></span><span class="kw">pub struct </span>ArtifactReport {
-<a href=#157 id=157 data-nosnippet>157</a>    <span class="doccomment">/// The manifest this was read from, repository-relative.
-<a href=#158 id=158 data-nosnippet>158</a>    </span><span class="kw">pub </span>manifest: String,
-<a href=#159 id=159 data-nosnippet>159</a>    <span class="doccomment">/// Whether the manifest is committed in this repository at all. A repository that has
-<a href=#160 id=160 data-nosnippet>160</a>    /// never run `majordomus generate` has no generated tree, which is a fact about it and
-<a href=#161 id=161 data-nosnippet>161</a>    /// not a failure of this call: every list below is then empty and every tally zero.
-<a href=#162 id=162 data-nosnippet>162</a>    </span><span class="kw">pub </span>present: bool,
-<a href=#163 id=163 data-nosnippet>163</a>    <span class="doccomment">/// The schema the manifest carries, empty when there is none to read.
-<a href=#164 id=164 data-nosnippet>164</a>    </span><span class="kw">pub </span>schema: String,
-<a href=#165 id=165 data-nosnippet>165</a>    <span class="doccomment">/// The documents, in the manifest's order.
-<a href=#166 id=166 data-nosnippet>166</a>    </span><span class="kw">pub </span>documents: Vec&lt;DocumentView&gt;,
-<a href=#167 id=167 data-nosnippet>167</a>    <span class="doccomment">/// The files, in the manifest's order, after any filter.
-<a href=#168 id=168 data-nosnippet>168</a>    </span><span class="kw">pub </span>artifacts: Vec&lt;ArtifactView&gt;,
-<a href=#169 id=169 data-nosnippet>169</a>    <span class="doccomment">/// The counts.
-<a href=#170 id=170 data-nosnippet>170</a>    </span><span class="kw">pub </span>tallies: ArtifactTallies,
-<a href=#171 id=171 data-nosnippet>171</a>    <span class="doccomment">/// The command that rewrites every one of them.
-<a href=#172 id=172 data-nosnippet>172</a>    </span><span class="kw">pub </span>regenerate: String,
-<a href=#173 id=173 data-nosnippet>173</a>    <span class="doccomment">/// The command that decides staleness byte for byte, which is stronger than the hash.
-<a href=#174 id=174 data-nosnippet>174</a>    </span><span class="kw">pub </span>verify: String,
-<a href=#175 id=175 data-nosnippet>175</a>}
-<a href=#176 id=176 data-nosnippet>176</a>
-<a href=#177 id=177 data-nosnippet>177</a><span class="doccomment">/// The manifest as committed, deserialised into the shape the generator wrote.
-<a href=#178 id=178 data-nosnippet>178</a></span><span class="attr">#[derive(Debug, Deserialize)]
-<a href=#179 id=179 data-nosnippet>179</a></span><span class="kw">struct </span>Manifest {
-<a href=#180 id=180 data-nosnippet>180</a>    schema: String,
-<a href=#181 id=181 data-nosnippet>181</a>    documents: Vec&lt;DocumentView&gt;,
-<a href=#182 id=182 data-nosnippet>182</a>    artifacts: Vec&lt;ManifestEntry&gt;,
-<a href=#183 id=183 data-nosnippet>183</a>}
-<a href=#184 id=184 data-nosnippet>184</a>
-<a href=#185 id=185 data-nosnippet>185</a><span class="attr">#[derive(Debug, Deserialize)]
-<a href=#186 id=186 data-nosnippet>186</a></span><span class="kw">struct </span>ManifestEntry {
-<a href=#187 id=187 data-nosnippet>187</a>    path: String,
-<a href=#188 id=188 data-nosnippet>188</a>    document: String,
-<a href=#189 id=189 data-nosnippet>189</a>    format: ArtifactFormat,
-<a href=#190 id=190 data-nosnippet>190</a>    <span class="attr">#[serde(default)]
-<a href=#191 id=191 data-nosnippet>191</a>    </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#192 id=192 data-nosnippet>192</a>    source: String,
-<a href=#193 id=193 data-nosnippet>193</a>    <span class="attr">#[serde(default)]
-<a href=#194 id=194 data-nosnippet>194</a>    </span>bytes: <span class="prelude-ty">Option</span>&lt;u64&gt;,
-<a href=#195 id=195 data-nosnippet>195</a>    <span class="attr">#[serde(default)]
-<a href=#196 id=196 data-nosnippet>196</a>    </span>sha256: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#197 id=197 data-nosnippet>197</a>}
-<a href=#198 id=198 data-nosnippet>198</a>
-<a href=#199 id=199 data-nosnippet>199</a><span class="kw">fn </span>artifacts_list(ctx: <span class="kw-2">&amp;</span>Context, input: ArtifactsInput) -&gt; <span class="prelude-ty">Result</span>&lt;ArtifactReport, CapabilityError&gt; {
-<a href=#200 id=200 data-nosnippet>200</a>    <span class="kw">let </span>rel = <span class="macro">format!</span>(<span class="string">"{OUT_DIR}/{MANIFEST_ID}.json"</span>);
-<a href=#201 id=201 data-nosnippet>201</a>    <span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
-<a href=#202 id=202 data-nosnippet>202</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(text) = std::fs::read_to_string(root.join(<span class="kw-2">&amp;</span>rel)) <span class="kw">else </span>{
-<a href=#203 id=203 data-nosnippet>203</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(ArtifactReport {
-<a href=#204 id=204 data-nosnippet>204</a>            manifest: rel,
-<a href=#205 id=205 data-nosnippet>205</a>            present: <span class="bool-val">false</span>,
-<a href=#206 id=206 data-nosnippet>206</a>            schema: String::new(),
-<a href=#207 id=207 data-nosnippet>207</a>            documents: Vec::new(),
-<a href=#208 id=208 data-nosnippet>208</a>            artifacts: Vec::new(),
-<a href=#209 id=209 data-nosnippet>209</a>            tallies: ArtifactTallies {
-<a href=#210 id=210 data-nosnippet>210</a>                documents: <span class="number">0</span>,
-<a href=#211 id=211 data-nosnippet>211</a>                artifacts: <span class="number">0</span>,
-<a href=#212 id=212 data-nosnippet>212</a>                current: <span class="number">0</span>,
-<a href=#213 id=213 data-nosnippet>213</a>                stale: <span class="number">0</span>,
-<a href=#214 id=214 data-nosnippet>214</a>                missing: <span class="number">0</span>,
-<a href=#215 id=215 data-nosnippet>215</a>                present: <span class="number">0</span>,
-<a href=#216 id=216 data-nosnippet>216</a>            },
-<a href=#217 id=217 data-nosnippet>217</a>            regenerate: <span class="string">"majordomus generate"</span>.into(),
-<a href=#218 id=218 data-nosnippet>218</a>            verify: <span class="string">"majordomus generate --check"</span>.into(),
-<a href=#219 id=219 data-nosnippet>219</a>        });
-<a href=#220 id=220 data-nosnippet>220</a>    };
-<a href=#221 id=221 data-nosnippet>221</a>    <span class="kw">let </span>manifest: Manifest = serde_json::from_str(<span class="kw-2">&amp;</span>text).map_err(|e| {
-<a href=#222 id=222 data-nosnippet>222</a>        CapabilityError::Internal(<span class="macro">format!</span>(
-<a href=#223 id=223 data-nosnippet>223</a>            <span class="string">"{rel} is not the manifest this executable writes: {e}"
-<a href=#224 id=224 data-nosnippet>224</a>        </span>))
-<a href=#225 id=225 data-nosnippet>225</a>    })<span class="question-mark">?</span>;
-<a href=#226 id=226 data-nosnippet>226</a>    <span class="kw">if </span>manifest.schema != MANIFEST_SCHEMA {
-<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(CapabilityError::Internal(<span class="macro">format!</span>(
-<a href=#228 id=228 data-nosnippet>228</a>            <span class="string">"{rel} carries schema '{}', and this executable reads {MANIFEST_SCHEMA}"</span>,
-<a href=#229 id=229 data-nosnippet>229</a>            manifest.schema
-<a href=#230 id=230 data-nosnippet>230</a>        )));
-<a href=#231 id=231 data-nosnippet>231</a>    }
-<a href=#232 id=232 data-nosnippet>232</a>
-<a href=#233 id=233 data-nosnippet>233</a>    <span class="kw">let </span><span class="kw-2">mut </span>artifacts = Vec::new();
-<a href=#234 id=234 data-nosnippet>234</a>    <span class="kw">let </span><span class="kw-2">mut </span>tallies = ArtifactTallies {
-<a href=#235 id=235 data-nosnippet>235</a>        documents: manifest.documents.len(),
-<a href=#236 id=236 data-nosnippet>236</a>        artifacts: <span class="number">0</span>,
-<a href=#237 id=237 data-nosnippet>237</a>        current: <span class="number">0</span>,
-<a href=#238 id=238 data-nosnippet>238</a>        stale: <span class="number">0</span>,
-<a href=#239 id=239 data-nosnippet>239</a>        missing: <span class="number">0</span>,
-<a href=#240 id=240 data-nosnippet>240</a>        present: <span class="number">0</span>,
-<a href=#241 id=241 data-nosnippet>241</a>    };
-<a href=#242 id=242 data-nosnippet>242</a>    <span class="kw">for </span>e <span class="kw">in </span>manifest.artifacts {
-<a href=#243 id=243 data-nosnippet>243</a>        <span class="kw">if </span>input.document.as_deref().is_some_and(|d| d != e.document) {
-<a href=#244 id=244 data-nosnippet>244</a>            <span class="kw">continue</span>;
-<a href=#245 id=245 data-nosnippet>245</a>        }
-<a href=#246 id=246 data-nosnippet>246</a>        <span class="kw">if </span>input.format.is_some_and(|f| f != e.format) {
-<a href=#247 id=247 data-nosnippet>247</a>            <span class="kw">continue</span>;
-<a href=#248 id=248 data-nosnippet>248</a>        }
-<a href=#249 id=249 data-nosnippet>249</a>        <span class="kw">let </span>state = <span class="kw">match </span>std::fs::read_to_string(root.join(<span class="kw-2">&amp;</span>e.path)) {
-<a href=#250 id=250 data-nosnippet>250</a>            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; ArtifactState::Missing,
-<a href=#251 id=251 data-nosnippet>251</a>            <span class="prelude-val">Ok</span>(on_disk) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>e.sha256 {
-<a href=#252 id=252 data-nosnippet>252</a>                <span class="prelude-val">None </span>=&gt; ArtifactState::Present,
-<a href=#253 id=253 data-nosnippet>253</a>                <span class="prelude-val">Some</span>(hash) <span class="kw">if </span><span class="kw-2">*</span>hash == sha256_hex(<span class="kw-2">&amp;</span>on_disk) =&gt; ArtifactState::Current,
-<a href=#254 id=254 data-nosnippet>254</a>                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; ArtifactState::Stale,
-<a href=#255 id=255 data-nosnippet>255</a>            },
-<a href=#256 id=256 data-nosnippet>256</a>        };
-<a href=#257 id=257 data-nosnippet>257</a>        <span class="kw">match </span>state {
-<a href=#258 id=258 data-nosnippet>258</a>            ArtifactState::Current =&gt; tallies.current += <span class="number">1</span>,
-<a href=#259 id=259 data-nosnippet>259</a>            ArtifactState::Stale =&gt; tallies.stale += <span class="number">1</span>,
-<a href=#260 id=260 data-nosnippet>260</a>            ArtifactState::Missing =&gt; tallies.missing += <span class="number">1</span>,
-<a href=#261 id=261 data-nosnippet>261</a>            ArtifactState::Present =&gt; tallies.present += <span class="number">1</span>,
-<a href=#262 id=262 data-nosnippet>262</a>        }
-<a href=#263 id=263 data-nosnippet>263</a>        tallies.artifacts += <span class="number">1</span>;
-<a href=#264 id=264 data-nosnippet>264</a>        artifacts.push(ArtifactView {
-<a href=#265 id=265 data-nosnippet>265</a>            path: e.path,
-<a href=#266 id=266 data-nosnippet>266</a>            document: e.document,
-<a href=#267 id=267 data-nosnippet>267</a>            format: e.format,
-<a href=#268 id=268 data-nosnippet>268</a>            schema: e.schema,
-<a href=#269 id=269 data-nosnippet>269</a>            source: e.source,
-<a href=#270 id=270 data-nosnippet>270</a>            bytes: e.bytes,
-<a href=#271 id=271 data-nosnippet>271</a>            sha256: e.sha256,
-<a href=#272 id=272 data-nosnippet>272</a>            state,
-<a href=#273 id=273 data-nosnippet>273</a>        });
-<a href=#274 id=274 data-nosnippet>274</a>    }
-<a href=#275 id=275 data-nosnippet>275</a>
-<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">let </span>documents = <span class="kw">match </span><span class="kw-2">&amp;</span>input.document {
-<a href=#277 id=277 data-nosnippet>277</a>        <span class="prelude-val">Some</span>(id) =&gt; manifest
-<a href=#278 id=278 data-nosnippet>278</a>            .documents
-<a href=#279 id=279 data-nosnippet>279</a>            .into_iter()
-<a href=#280 id=280 data-nosnippet>280</a>            .filter(|d| <span class="kw-2">&amp;</span>d.id == id)
-<a href=#281 id=281 data-nosnippet>281</a>            .collect(),
-<a href=#282 id=282 data-nosnippet>282</a>        <span class="prelude-val">None </span>=&gt; manifest.documents,
-<a href=#283 id=283 data-nosnippet>283</a>    };
-<a href=#284 id=284 data-nosnippet>284</a>    tallies.documents = documents.len();
-<a href=#285 id=285 data-nosnippet>285</a>
-<a href=#286 id=286 data-nosnippet>286</a>    <span class="prelude-val">Ok</span>(ArtifactReport {
-<a href=#287 id=287 data-nosnippet>287</a>        manifest: rel,
-<a href=#288 id=288 data-nosnippet>288</a>        present: <span class="bool-val">true</span>,
-<a href=#289 id=289 data-nosnippet>289</a>        schema: manifest.schema,
-<a href=#290 id=290 data-nosnippet>290</a>        documents,
-<a href=#291 id=291 data-nosnippet>291</a>        artifacts,
-<a href=#292 id=292 data-nosnippet>292</a>        tallies,
-<a href=#293 id=293 data-nosnippet>293</a>        regenerate: <span class="string">"majordomus generate"</span>.into(),
-<a href=#294 id=294 data-nosnippet>294</a>        verify: <span class="string">"majordomus generate --check"</span>.into(),
-<a href=#295 id=295 data-nosnippet>295</a>    })
-<a href=#296 id=296 data-nosnippet>296</a>}
-<a href=#297 id=297 data-nosnippet>297</a>
-<a href=#298 id=298 data-nosnippet>298</a><span class="doccomment">/// The module.
-<a href=#299 id=299 data-nosnippet>299</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
-<a href=#300 id=300 data-nosnippet>300</a>    <span class="macro">module!</span> {
-<a href=#301 id=301 data-nosnippet>301</a>        id: <span class="string">"artifacts"</span>,
-<a href=#302 id=302 data-nosnippet>302</a>        title: <span class="string">"Generated artifacts"</span>,
-<a href=#303 id=303 data-nosnippet>303</a>        description: <span class="string">"What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."</span>,
-<a href=#304 id=304 data-nosnippet>304</a>        stability: Stability::BehaviorallyVerified,
-<a href=#305 id=305 data-nosnippet>305</a>        capabilities: [
-<a href=#306 id=306 data-nosnippet>306</a>            <span class="macro">capability!</span> {
-<a href=#307 id=307 data-nosnippet>307</a>                id: <span class="string">"artifacts.list"</span>,
-<a href=#308 id=308 data-nosnippet>308</a>                title: <span class="string">"List the generated artifacts"</span>,
-<a href=#309 id=309 data-nosnippet>309</a>                description: <span class="string">"The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict."</span>,
-<a href=#310 id=310 data-nosnippet>310</a>                input: ArtifactsInput,
-<a href=#311 id=311 data-nosnippet>311</a>                output: ArtifactReport,
-<a href=#312 id=312 data-nosnippet>312</a>                stability: Stability::BehaviorallyVerified,
-<a href=#313 id=313 data-nosnippet>313</a>                exposure: Exposure {
-<a href=#314 id=314 data-nosnippet>314</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
-<a href=#315 id=315 data-nosnippet>315</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_artifacts"</span>.into()),
-<a href=#316 id=316 data-nosnippet>316</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: ARTIFACTS_URI.into(), name: <span class="string">"artifacts"</span>.into() }),
-<a href=#317 id=317 data-nosnippet>317</a>                    }),
-<a href=#318 id=318 data-nosnippet>318</a>                    http: get(<span class="string">"/api/v1/artifacts"</span>),
-<a href=#319 id=319 data-nosnippet>319</a>                    cli: <span class="prelude-val">None</span>,
-<a href=#320 id=320 data-nosnippet>320</a>                },
-<a href=#321 id=321 data-nosnippet>321</a>                tags: [<span class="string">"artifacts"</span>, <span class="string">"generation"</span>, <span class="string">"introspection"</span>],
-<a href=#322 id=322 data-nosnippet>322</a>                cache: CachePolicy::Process { max_entries: <span class="number">8</span>, ttl_seconds: <span class="prelude-val">Some</span>(<span class="number">5</span>) },
-<a href=#323 id=323 data-nosnippet>323</a>                handler: artifacts_list,
-<a href=#324 id=324 data-nosnippet>324</a>            },
-<a href=#325 id=325 data-nosnippet>325</a>        ],
-<a href=#326 id=326 data-nosnippet>326</a>    }
-<a href=#327 id=327 data-nosnippet>327</a>}
-<a href=#328 id=328 data-nosnippet>328</a>
-<a href=#329 id=329 data-nosnippet>329</a><span class="attr">#[cfg(test)]
-<a href=#330 id=330 data-nosnippet>330</a></span><span class="kw">mod </span>tests {
-<a href=#331 id=331 data-nosnippet>331</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
-<a href=#332 id=332 data-nosnippet>332</a>
-<a href=#333 id=333 data-nosnippet>333</a>    <span class="doccomment">/// The declaration is the only place the id, the tool name, the resource URI and the
-<a href=#334 id=334 data-nosnippet>334</a>    /// route exist. A refactor that dropped one of them would still compile, and every
-<a href=#335 id=335 data-nosnippet>335</a>    /// suite that tests the report itself would still pass; this is the assertion that
-<a href=#336 id=336 data-nosnippet>336</a>    /// would not — which is what `project.rust-command-tested-in-file` asks of a command.
-<a href=#337 id=337 data-nosnippet>337</a>    </span><span class="attr">#[test]
-<a href=#338 id=338 data-nosnippet>338</a>    </span><span class="kw">fn </span>the_declaration_yields_the_identity_and_the_projections_it_claims() {
-<a href=#339 id=339 data-nosnippet>339</a>        <span class="kw">let </span>m = module();
-<a href=#340 id=340 data-nosnippet>340</a>        <span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"artifacts"</span>);
-<a href=#341 id=341 data-nosnippet>341</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
-<a href=#342 id=342 data-nosnippet>342</a>            .capabilities
-<a href=#343 id=343 data-nosnippet>343</a>            .iter()
-<a href=#344 id=344 data-nosnippet>344</a>            .map(|e| e.capability.id.as_str())
-<a href=#345 id=345 data-nosnippet>345</a>            .collect();
-<a href=#346 id=346 data-nosnippet>346</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"artifacts.list"</span>]);
-<a href=#347 id=347 data-nosnippet>347</a>
-<a href=#348 id=348 data-nosnippet>348</a>        <span class="kw">let </span>c = <span class="kw-2">&amp;</span>m.capabilities[<span class="number">0</span>].capability;
-<a href=#349 id=349 data-nosnippet>349</a>        <span class="kw">let </span>mcp = c.exposure.mcp.as_ref().expect(<span class="string">"an MCP projection"</span>);
-<a href=#350 id=350 data-nosnippet>350</a>        <span class="macro">assert_eq!</span>(mcp.tool.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"majordomus_artifacts"</span>));
-<a href=#351 id=351 data-nosnippet>351</a>        <span class="macro">assert_eq!</span>(
-<a href=#352 id=352 data-nosnippet>352</a>            mcp.resource.as_ref().map(|r| r.uri.as_str()),
-<a href=#353 id=353 data-nosnippet>353</a>            <span class="prelude-val">Some</span>(ARTIFACTS_URI)
-<a href=#354 id=354 data-nosnippet>354</a>        );
-<a href=#355 id=355 data-nosnippet>355</a>        <span class="macro">assert_eq!</span>(
-<a href=#356 id=356 data-nosnippet>356</a>            c.exposure.http.as_ref().map(|h| h.path.as_str()),
-<a href=#357 id=357 data-nosnippet>357</a>            <span class="prelude-val">Some</span>(<span class="string">"/api/v1/artifacts"</span>)
-<a href=#358 id=358 data-nosnippet>358</a>        );
-<a href=#359 id=359 data-nosnippet>359</a>        <span class="comment">// read-only, and the registry refuses an executable capability that is not
-<a href=#360 id=360 data-nosnippet>360</a>        </span><span class="macro">assert!</span>(c.kind.is_read_only() &amp;&amp; c.kind.is_executable());
-<a href=#361 id=361 data-nosnippet>361</a>        <span class="comment">// and the module stamps its own namespace on what it composes
-<a href=#362 id=362 data-nosnippet>362</a>        </span><span class="macro">assert!</span>(ids.iter().all(|id| id.starts_with(<span class="string">"artifacts."</span>)));
-<a href=#363 id=363 data-nosnippet>363</a>    }
-<a href=#364 id=364 data-nosnippet>364</a>}
+<a href=#66 id=66 data-nosnippet>66</a><span class="doccomment">/// Where the generated tree stands as a whole: the one verdict every surface renders,
+<a href=#67 id=67 data-nosnippet>67</a>/// decided here so that no page decides it again from a subset of the tallies.
+<a href=#68 id=68 data-nosnippet>68</a>///
+<a href=#69 id=69 data-nosnippet>69</a>/// ```
+<a href=#70 id=70 data-nosnippet>70</a>/// use majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;
+<a href=#71 id=71 data-nosnippet>71</a>/// let v: ArtifactVerdict = serde_json::from_str("\"unverified\"").unwrap();
+<a href=#72 id=72 data-nosnippet>72</a>/// assert_eq!(v, ArtifactVerdict::Unverified);
+<a href=#73 id=73 data-nosnippet>73</a>/// assert!(ArtifactVerdict::Current &lt; ArtifactVerdict::Unverified);
+<a href=#74 id=74 data-nosnippet>74</a>/// ```
+<a href=#75 id=75 data-nosnippet>75</a></span><span class="attr">#[derive(
+<a href=#76 id=76 data-nosnippet>76</a>    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+<a href=#77 id=77 data-nosnippet>77</a>)]
+<a href=#78 id=78 data-nosnippet>78</a>#[serde(rename_all = <span class="string">"snake_case"</span>)]
+<a href=#79 id=79 data-nosnippet>79</a></span><span class="kw">pub enum </span>ArtifactVerdict {
+<a href=#80 id=80 data-nosnippet>80</a>    <span class="doccomment">/// Every file is there and hashes to what the manifest recorded.
+<a href=#81 id=81 data-nosnippet>81</a>    </span>Current,
+<a href=#82 id=82 data-nosnippet>82</a>    <span class="doccomment">/// Every file is there, none is stale, and some carry no recorded hash: their bytes
+<a href=#83 id=83 data-nosnippet>83</a>    /// were not compared here, so the tree is not known to be current.
+<a href=#84 id=84 data-nosnippet>84</a>    /// `majordomus generate --check` is what decides them.
+<a href=#85 id=85 data-nosnippet>85</a>    </span>Unverified,
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="doccomment">/// A file differs from what the manifest recorded.
+<a href=#87 id=87 data-nosnippet>87</a>    </span>Stale,
+<a href=#88 id=88 data-nosnippet>88</a>    <span class="doccomment">/// A file the manifest names is not in the tree.
+<a href=#89 id=89 data-nosnippet>89</a>    </span>Missing,
+<a href=#90 id=90 data-nosnippet>90</a>    <span class="doccomment">/// No manifest is committed: the repository has never run `majordomus generate`.
+<a href=#91 id=91 data-nosnippet>91</a>    </span>NotGenerated,
+<a href=#92 id=92 data-nosnippet>92</a>}
+<a href=#93 id=93 data-nosnippet>93</a>
+<a href=#94 id=94 data-nosnippet>94</a><span class="kw">impl </span>ArtifactVerdict {
+<a href=#95 id=95 data-nosnippet>95</a>    <span class="doccomment">/// The verdict over the tallies of a manifest that exists, or `NotGenerated` when none
+<a href=#96 id=96 data-nosnippet>96</a>    /// does. Missing outranks stale, stale outranks unhashed, and a set is current only when
+<a href=#97 id=97 data-nosnippet>97</a>    /// every file in it was hashed and matched.
+<a href=#98 id=98 data-nosnippet>98</a>    ///
+<a href=#99 id=99 data-nosnippet>99</a>    /// ```
+<a href=#100 id=100 data-nosnippet>100</a>    /// use majordomus_cli::capability::builtin::artifacts::{ArtifactTallies, ArtifactVerdict};
+<a href=#101 id=101 data-nosnippet>101</a>    /// let t = ArtifactTallies { documents: 1, artifacts: 3, current: 2, stale: 0, missing: 0, present: 1 };
+<a href=#102 id=102 data-nosnippet>102</a>    /// assert_eq!(ArtifactVerdict::of(true, &amp;t), ArtifactVerdict::Unverified);
+<a href=#103 id=103 data-nosnippet>103</a>    /// ```
+<a href=#104 id=104 data-nosnippet>104</a>    </span><span class="kw">pub fn </span>of(generated: bool, t: <span class="kw-2">&amp;</span>ArtifactTallies) -&gt; <span class="self">Self </span>{
+<a href=#105 id=105 data-nosnippet>105</a>        <span class="kw">if </span>!generated {
+<a href=#106 id=106 data-nosnippet>106</a>            ArtifactVerdict::NotGenerated
+<a href=#107 id=107 data-nosnippet>107</a>        } <span class="kw">else if </span>t.missing &gt; <span class="number">0 </span>{
+<a href=#108 id=108 data-nosnippet>108</a>            ArtifactVerdict::Missing
+<a href=#109 id=109 data-nosnippet>109</a>        } <span class="kw">else if </span>t.stale &gt; <span class="number">0 </span>{
+<a href=#110 id=110 data-nosnippet>110</a>            ArtifactVerdict::Stale
+<a href=#111 id=111 data-nosnippet>111</a>        } <span class="kw">else if </span>t.present &gt; <span class="number">0 </span>{
+<a href=#112 id=112 data-nosnippet>112</a>            ArtifactVerdict::Unverified
+<a href=#113 id=113 data-nosnippet>113</a>        } <span class="kw">else </span>{
+<a href=#114 id=114 data-nosnippet>114</a>            ArtifactVerdict::Current
+<a href=#115 id=115 data-nosnippet>115</a>        }
+<a href=#116 id=116 data-nosnippet>116</a>    }
+<a href=#117 id=117 data-nosnippet>117</a>
+<a href=#118 id=118 data-nosnippet>118</a>    <span class="doccomment">/// The word the verdict is serialised as, which is also the word every surface prints
+<a href=#119 id=119 data-nosnippet>119</a>    /// for it: the Cockpit, the command line and the HTTP answer never spell it differently.
+<a href=#120 id=120 data-nosnippet>120</a>    ///
+<a href=#121 id=121 data-nosnippet>121</a>    /// ```
+<a href=#122 id=122 data-nosnippet>122</a>    /// use majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;
+<a href=#123 id=123 data-nosnippet>123</a>    /// assert_eq!(ArtifactVerdict::NotGenerated.as_str(), "not_generated");
+<a href=#124 id=124 data-nosnippet>124</a>    /// ```
+<a href=#125 id=125 data-nosnippet>125</a>    </span><span class="kw">pub fn </span>as_str(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>str {
+<a href=#126 id=126 data-nosnippet>126</a>        <span class="kw">match </span><span class="self">self </span>{
+<a href=#127 id=127 data-nosnippet>127</a>            ArtifactVerdict::Current =&gt; <span class="string">"current"</span>,
+<a href=#128 id=128 data-nosnippet>128</a>            ArtifactVerdict::Unverified =&gt; <span class="string">"unverified"</span>,
+<a href=#129 id=129 data-nosnippet>129</a>            ArtifactVerdict::Stale =&gt; <span class="string">"stale"</span>,
+<a href=#130 id=130 data-nosnippet>130</a>            ArtifactVerdict::Missing =&gt; <span class="string">"missing"</span>,
+<a href=#131 id=131 data-nosnippet>131</a>            ArtifactVerdict::NotGenerated =&gt; <span class="string">"not_generated"</span>,
+<a href=#132 id=132 data-nosnippet>132</a>        }
+<a href=#133 id=133 data-nosnippet>133</a>    }
+<a href=#134 id=134 data-nosnippet>134</a>}
+<a href=#135 id=135 data-nosnippet>135</a>
+<a href=#136 id=136 data-nosnippet>136</a><span class="attr">#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+<a href=#137 id=137 data-nosnippet>137</a>#[serde(deny_unknown_fields)]
+<a href=#138 id=138 data-nosnippet>138</a></span><span class="doccomment">/// The input of `artifacts.list`: the whole manifest, or one slice of it.
+<a href=#139 id=139 data-nosnippet>139</a></span><span class="kw">pub struct </span>ArtifactsInput {
+<a href=#140 id=140 data-nosnippet>140</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#141 id=141 data-nosnippet>141</a>    </span><span class="doccomment">/// Only the artifacts of this document (`registry`, `cli`, `openapi`, ...).
+<a href=#142 id=142 data-nosnippet>142</a>    </span><span class="kw">pub </span>document: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#144 id=144 data-nosnippet>144</a>    </span><span class="doccomment">/// Only the artifacts written in this encoding.
+<a href=#145 id=145 data-nosnippet>145</a>    </span><span class="kw">pub </span>format: <span class="prelude-ty">Option</span>&lt;ArtifactFormat&gt;,
+<a href=#146 id=146 data-nosnippet>146</a>}
+<a href=#147 id=147 data-nosnippet>147</a>
+<a href=#148 id=148 data-nosnippet>148</a><span class="kw">impl </span>BenchmarkCases <span class="kw">for </span>ArtifactsInput {
+<a href=#149 id=149 data-nosnippet>149</a>    <span class="kw">fn </span>benchmark_cases(<span class="kw">_</span>: <span class="kw-2">&amp;</span>CaseContext&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;NamedCase&lt;<span class="self">Self</span>&gt;&gt; {
+<a href=#150 id=150 data-nosnippet>150</a>        <span class="macro">vec!</span>[
+<a href=#151 id=151 data-nosnippet>151</a>            NamedCase::new(
+<a href=#152 id=152 data-nosnippet>152</a>                <span class="string">"all"</span>,
+<a href=#153 id=153 data-nosnippet>153</a>                ArtifactsInput {
+<a href=#154 id=154 data-nosnippet>154</a>                    document: <span class="prelude-val">None</span>,
+<a href=#155 id=155 data-nosnippet>155</a>                    format: <span class="prelude-val">None</span>,
+<a href=#156 id=156 data-nosnippet>156</a>                },
+<a href=#157 id=157 data-nosnippet>157</a>            ),
+<a href=#158 id=158 data-nosnippet>158</a>            NamedCase::new(
+<a href=#159 id=159 data-nosnippet>159</a>                <span class="string">"one-encoding"</span>,
+<a href=#160 id=160 data-nosnippet>160</a>                ArtifactsInput {
+<a href=#161 id=161 data-nosnippet>161</a>                    document: <span class="prelude-val">None</span>,
+<a href=#162 id=162 data-nosnippet>162</a>                    format: <span class="prelude-val">Some</span>(ArtifactFormat::Yaml),
+<a href=#163 id=163 data-nosnippet>163</a>                },
+<a href=#164 id=164 data-nosnippet>164</a>            ),
+<a href=#165 id=165 data-nosnippet>165</a>        ]
+<a href=#166 id=166 data-nosnippet>166</a>    }
+<a href=#167 id=167 data-nosnippet>167</a>}
+<a href=#168 id=168 data-nosnippet>168</a>
+<a href=#169 id=169 data-nosnippet>169</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+<a href=#170 id=170 data-nosnippet>170</a></span><span class="doccomment">/// One document, and the encodings it is committed in.
+<a href=#171 id=171 data-nosnippet>171</a></span><span class="kw">pub struct </span>DocumentView {
+<a href=#172 id=172 data-nosnippet>172</a>    <span class="doccomment">/// The document id, shared by every encoding of it.
+<a href=#173 id=173 data-nosnippet>173</a>    </span><span class="kw">pub </span>id: String,
+<a href=#174 id=174 data-nosnippet>174</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#175 id=175 data-nosnippet>175</a>    </span><span class="doccomment">/// The schema id its structured encodings carry.
+<a href=#176 id=176 data-nosnippet>176</a>    </span><span class="kw">pub </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#177 id=177 data-nosnippet>177</a>    <span class="doccomment">/// One line: what it was derived from.
+<a href=#178 id=178 data-nosnippet>178</a>    </span><span class="kw">pub </span>source: String,
+<a href=#179 id=179 data-nosnippet>179</a>    <span class="doccomment">/// The encodings, in the manifest's order.
+<a href=#180 id=180 data-nosnippet>180</a>    </span><span class="kw">pub </span>formats: Vec&lt;ArtifactFormat&gt;,
+<a href=#181 id=181 data-nosnippet>181</a>}
+<a href=#182 id=182 data-nosnippet>182</a>
+<a href=#183 id=183 data-nosnippet>183</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+<a href=#184 id=184 data-nosnippet>184</a></span><span class="doccomment">/// One generated file, as the manifest declares it and as the tree has it.
+<a href=#185 id=185 data-nosnippet>185</a></span><span class="kw">pub struct </span>ArtifactView {
+<a href=#186 id=186 data-nosnippet>186</a>    <span class="doccomment">/// Repository-relative path.
+<a href=#187 id=187 data-nosnippet>187</a>    </span><span class="kw">pub </span>path: String,
+<a href=#188 id=188 data-nosnippet>188</a>    <span class="doccomment">/// The document it projects.
+<a href=#189 id=189 data-nosnippet>189</a>    </span><span class="kw">pub </span>document: String,
+<a href=#190 id=190 data-nosnippet>190</a>    <span class="doccomment">/// The encoding.
+<a href=#191 id=191 data-nosnippet>191</a>    </span><span class="kw">pub </span>format: ArtifactFormat,
+<a href=#192 id=192 data-nosnippet>192</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#193 id=193 data-nosnippet>193</a>    </span><span class="doccomment">/// The JSON Schema its content satisfies, when it declares one.
+<a href=#194 id=194 data-nosnippet>194</a>    </span><span class="kw">pub </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#195 id=195 data-nosnippet>195</a>    <span class="doccomment">/// One line: what it was derived from.
+<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="kw">pub </span>source: String,
+<a href=#197 id=197 data-nosnippet>197</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#198 id=198 data-nosnippet>198</a>    </span><span class="doccomment">/// The size the manifest recorded.
+<a href=#199 id=199 data-nosnippet>199</a>    </span><span class="kw">pub </span>bytes: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#200 id=200 data-nosnippet>200</a>    <span class="attr">#[serde(default, skip_serializing_if = <span class="string">"Option::is_none"</span>)]
+<a href=#201 id=201 data-nosnippet>201</a>    </span><span class="doccomment">/// The hash the manifest recorded.
+<a href=#202 id=202 data-nosnippet>202</a>    </span><span class="kw">pub </span>sha256: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#203 id=203 data-nosnippet>203</a>    <span class="doccomment">/// Where the file stands against it.
+<a href=#204 id=204 data-nosnippet>204</a>    </span><span class="kw">pub </span>state: ArtifactState,
+<a href=#205 id=205 data-nosnippet>205</a>}
+<a href=#206 id=206 data-nosnippet>206</a>
+<a href=#207 id=207 data-nosnippet>207</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+<a href=#208 id=208 data-nosnippet>208</a></span><span class="doccomment">/// How many of each, so a caller needs no arithmetic of its own.
+<a href=#209 id=209 data-nosnippet>209</a></span><span class="kw">pub struct </span>ArtifactTallies {
+<a href=#210 id=210 data-nosnippet>210</a>    <span class="doccomment">/// Documents in the manifest.
+<a href=#211 id=211 data-nosnippet>211</a>    </span><span class="kw">pub </span>documents: usize,
+<a href=#212 id=212 data-nosnippet>212</a>    <span class="doccomment">/// Files in the manifest, after any filter.
+<a href=#213 id=213 data-nosnippet>213</a>    </span><span class="kw">pub </span>artifacts: usize,
+<a href=#214 id=214 data-nosnippet>214</a>    <span class="doccomment">/// Hashes that match.
+<a href=#215 id=215 data-nosnippet>215</a>    </span><span class="kw">pub </span>current: usize,
+<a href=#216 id=216 data-nosnippet>216</a>    <span class="doccomment">/// Hashes that do not.
+<a href=#217 id=217 data-nosnippet>217</a>    </span><span class="kw">pub </span>stale: usize,
+<a href=#218 id=218 data-nosnippet>218</a>    <span class="doccomment">/// Files the manifest names and the tree lacks.
+<a href=#219 id=219 data-nosnippet>219</a>    </span><span class="kw">pub </span>missing: usize,
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="doccomment">/// Files the manifest records no hash for.
+<a href=#221 id=221 data-nosnippet>221</a>    </span><span class="kw">pub </span>present: usize,
+<a href=#222 id=222 data-nosnippet>222</a>}
+<a href=#223 id=223 data-nosnippet>223</a>
+<a href=#224 id=224 data-nosnippet>224</a><span class="attr">#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+<a href=#225 id=225 data-nosnippet>225</a></span><span class="doccomment">/// The answer of `artifacts.list`.
+<a href=#226 id=226 data-nosnippet>226</a></span><span class="kw">pub struct </span>ArtifactReport {
+<a href=#227 id=227 data-nosnippet>227</a>    <span class="doccomment">/// The manifest this was read from, repository-relative.
+<a href=#228 id=228 data-nosnippet>228</a>    </span><span class="kw">pub </span>manifest: String,
+<a href=#229 id=229 data-nosnippet>229</a>    <span class="doccomment">/// Whether the manifest is committed in this repository at all. A repository that has
+<a href=#230 id=230 data-nosnippet>230</a>    /// never run `majordomus generate` has no generated tree, which is a fact about it and
+<a href=#231 id=231 data-nosnippet>231</a>    /// not a failure of this call: every list below is then empty and every tally zero.
+<a href=#232 id=232 data-nosnippet>232</a>    </span><span class="kw">pub </span>present: bool,
+<a href=#233 id=233 data-nosnippet>233</a>    <span class="doccomment">/// The schema the manifest carries, empty when there is none to read.
+<a href=#234 id=234 data-nosnippet>234</a>    </span><span class="kw">pub </span>schema: String,
+<a href=#235 id=235 data-nosnippet>235</a>    <span class="doccomment">/// The documents, in the manifest's order.
+<a href=#236 id=236 data-nosnippet>236</a>    </span><span class="kw">pub </span>documents: Vec&lt;DocumentView&gt;,
+<a href=#237 id=237 data-nosnippet>237</a>    <span class="doccomment">/// The files, in the manifest's order, after any filter.
+<a href=#238 id=238 data-nosnippet>238</a>    </span><span class="kw">pub </span>artifacts: Vec&lt;ArtifactView&gt;,
+<a href=#239 id=239 data-nosnippet>239</a>    <span class="doccomment">/// The counts.
+<a href=#240 id=240 data-nosnippet>240</a>    </span><span class="kw">pub </span>tallies: ArtifactTallies,
+<a href=#241 id=241 data-nosnippet>241</a>    <span class="doccomment">/// Where the tree stands as a whole, decided from every tally.
+<a href=#242 id=242 data-nosnippet>242</a>    </span><span class="kw">pub </span>verdict: ArtifactVerdict,
+<a href=#243 id=243 data-nosnippet>243</a>    <span class="doccomment">/// The command that rewrites every one of them.
+<a href=#244 id=244 data-nosnippet>244</a>    </span><span class="kw">pub </span>regenerate: String,
+<a href=#245 id=245 data-nosnippet>245</a>    <span class="doccomment">/// The command that decides staleness byte for byte, which is stronger than the hash.
+<a href=#246 id=246 data-nosnippet>246</a>    </span><span class="kw">pub </span>verify: String,
+<a href=#247 id=247 data-nosnippet>247</a>}
+<a href=#248 id=248 data-nosnippet>248</a>
+<a href=#249 id=249 data-nosnippet>249</a><span class="doccomment">/// The manifest as committed, deserialised into the shape the generator wrote.
+<a href=#250 id=250 data-nosnippet>250</a></span><span class="attr">#[derive(Debug, Deserialize)]
+<a href=#251 id=251 data-nosnippet>251</a></span><span class="kw">struct </span>Manifest {
+<a href=#252 id=252 data-nosnippet>252</a>    schema: String,
+<a href=#253 id=253 data-nosnippet>253</a>    documents: Vec&lt;DocumentView&gt;,
+<a href=#254 id=254 data-nosnippet>254</a>    artifacts: Vec&lt;ManifestEntry&gt;,
+<a href=#255 id=255 data-nosnippet>255</a>}
+<a href=#256 id=256 data-nosnippet>256</a>
+<a href=#257 id=257 data-nosnippet>257</a><span class="attr">#[derive(Debug, Deserialize)]
+<a href=#258 id=258 data-nosnippet>258</a></span><span class="kw">struct </span>ManifestEntry {
+<a href=#259 id=259 data-nosnippet>259</a>    path: String,
+<a href=#260 id=260 data-nosnippet>260</a>    document: String,
+<a href=#261 id=261 data-nosnippet>261</a>    format: ArtifactFormat,
+<a href=#262 id=262 data-nosnippet>262</a>    <span class="attr">#[serde(default)]
+<a href=#263 id=263 data-nosnippet>263</a>    </span>schema: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#264 id=264 data-nosnippet>264</a>    source: String,
+<a href=#265 id=265 data-nosnippet>265</a>    <span class="attr">#[serde(default)]
+<a href=#266 id=266 data-nosnippet>266</a>    </span>bytes: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#267 id=267 data-nosnippet>267</a>    <span class="attr">#[serde(default)]
+<a href=#268 id=268 data-nosnippet>268</a>    </span>sha256: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#269 id=269 data-nosnippet>269</a>}
+<a href=#270 id=270 data-nosnippet>270</a>
+<a href=#271 id=271 data-nosnippet>271</a><span class="kw">fn </span>artifacts_list(ctx: <span class="kw-2">&amp;</span>Context, input: ArtifactsInput) -&gt; <span class="prelude-ty">Result</span>&lt;ArtifactReport, CapabilityError&gt; {
+<a href=#272 id=272 data-nosnippet>272</a>    <span class="kw">let </span>rel = <span class="macro">format!</span>(<span class="string">"{OUT_DIR}/{MANIFEST_ID}.json"</span>);
+<a href=#273 id=273 data-nosnippet>273</a>    <span class="kw">let </span>root = std::path::Path::new(<span class="kw-2">&amp;</span>ctx.index.repository.root);
+<a href=#274 id=274 data-nosnippet>274</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(text) = std::fs::read_to_string(root.join(<span class="kw-2">&amp;</span>rel)) <span class="kw">else </span>{
+<a href=#275 id=275 data-nosnippet>275</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(ArtifactReport {
+<a href=#276 id=276 data-nosnippet>276</a>            manifest: rel,
+<a href=#277 id=277 data-nosnippet>277</a>            present: <span class="bool-val">false</span>,
+<a href=#278 id=278 data-nosnippet>278</a>            schema: String::new(),
+<a href=#279 id=279 data-nosnippet>279</a>            documents: Vec::new(),
+<a href=#280 id=280 data-nosnippet>280</a>            artifacts: Vec::new(),
+<a href=#281 id=281 data-nosnippet>281</a>            tallies: ArtifactTallies {
+<a href=#282 id=282 data-nosnippet>282</a>                documents: <span class="number">0</span>,
+<a href=#283 id=283 data-nosnippet>283</a>                artifacts: <span class="number">0</span>,
+<a href=#284 id=284 data-nosnippet>284</a>                current: <span class="number">0</span>,
+<a href=#285 id=285 data-nosnippet>285</a>                stale: <span class="number">0</span>,
+<a href=#286 id=286 data-nosnippet>286</a>                missing: <span class="number">0</span>,
+<a href=#287 id=287 data-nosnippet>287</a>                present: <span class="number">0</span>,
+<a href=#288 id=288 data-nosnippet>288</a>            },
+<a href=#289 id=289 data-nosnippet>289</a>            verdict: ArtifactVerdict::NotGenerated,
+<a href=#290 id=290 data-nosnippet>290</a>            regenerate: <span class="string">"majordomus generate"</span>.into(),
+<a href=#291 id=291 data-nosnippet>291</a>            verify: <span class="string">"majordomus generate --check"</span>.into(),
+<a href=#292 id=292 data-nosnippet>292</a>        });
+<a href=#293 id=293 data-nosnippet>293</a>    };
+<a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">let </span>manifest: Manifest = serde_json::from_str(<span class="kw-2">&amp;</span>text).map_err(|e| {
+<a href=#295 id=295 data-nosnippet>295</a>        CapabilityError::Internal(<span class="macro">format!</span>(
+<a href=#296 id=296 data-nosnippet>296</a>            <span class="string">"{rel} is not the manifest this executable writes: {e}"
+<a href=#297 id=297 data-nosnippet>297</a>        </span>))
+<a href=#298 id=298 data-nosnippet>298</a>    })<span class="question-mark">?</span>;
+<a href=#299 id=299 data-nosnippet>299</a>    <span class="kw">if </span>manifest.schema != MANIFEST_SCHEMA {
+<a href=#300 id=300 data-nosnippet>300</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(CapabilityError::Internal(<span class="macro">format!</span>(
+<a href=#301 id=301 data-nosnippet>301</a>            <span class="string">"{rel} carries schema '{}', and this executable reads {MANIFEST_SCHEMA}"</span>,
+<a href=#302 id=302 data-nosnippet>302</a>            manifest.schema
+<a href=#303 id=303 data-nosnippet>303</a>        )));
+<a href=#304 id=304 data-nosnippet>304</a>    }
+<a href=#305 id=305 data-nosnippet>305</a>
+<a href=#306 id=306 data-nosnippet>306</a>    <span class="kw">let </span><span class="kw-2">mut </span>artifacts = Vec::new();
+<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">let </span><span class="kw-2">mut </span>tallies = ArtifactTallies {
+<a href=#308 id=308 data-nosnippet>308</a>        documents: manifest.documents.len(),
+<a href=#309 id=309 data-nosnippet>309</a>        artifacts: <span class="number">0</span>,
+<a href=#310 id=310 data-nosnippet>310</a>        current: <span class="number">0</span>,
+<a href=#311 id=311 data-nosnippet>311</a>        stale: <span class="number">0</span>,
+<a href=#312 id=312 data-nosnippet>312</a>        missing: <span class="number">0</span>,
+<a href=#313 id=313 data-nosnippet>313</a>        present: <span class="number">0</span>,
+<a href=#314 id=314 data-nosnippet>314</a>    };
+<a href=#315 id=315 data-nosnippet>315</a>    <span class="kw">for </span>e <span class="kw">in </span>manifest.artifacts {
+<a href=#316 id=316 data-nosnippet>316</a>        <span class="kw">if </span>input.document.as_deref().is_some_and(|d| d != e.document) {
+<a href=#317 id=317 data-nosnippet>317</a>            <span class="kw">continue</span>;
+<a href=#318 id=318 data-nosnippet>318</a>        }
+<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">if </span>input.format.is_some_and(|f| f != e.format) {
+<a href=#320 id=320 data-nosnippet>320</a>            <span class="kw">continue</span>;
+<a href=#321 id=321 data-nosnippet>321</a>        }
+<a href=#322 id=322 data-nosnippet>322</a>        <span class="kw">let </span>state = <span class="kw">match </span>std::fs::read_to_string(root.join(<span class="kw-2">&amp;</span>e.path)) {
+<a href=#323 id=323 data-nosnippet>323</a>            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; ArtifactState::Missing,
+<a href=#324 id=324 data-nosnippet>324</a>            <span class="prelude-val">Ok</span>(on_disk) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>e.sha256 {
+<a href=#325 id=325 data-nosnippet>325</a>                <span class="prelude-val">None </span>=&gt; ArtifactState::Present,
+<a href=#326 id=326 data-nosnippet>326</a>                <span class="prelude-val">Some</span>(hash) <span class="kw">if </span><span class="kw-2">*</span>hash == sha256_hex(<span class="kw-2">&amp;</span>on_disk) =&gt; ArtifactState::Current,
+<a href=#327 id=327 data-nosnippet>327</a>                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; ArtifactState::Stale,
+<a href=#328 id=328 data-nosnippet>328</a>            },
+<a href=#329 id=329 data-nosnippet>329</a>        };
+<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">match </span>state {
+<a href=#331 id=331 data-nosnippet>331</a>            ArtifactState::Current =&gt; tallies.current += <span class="number">1</span>,
+<a href=#332 id=332 data-nosnippet>332</a>            ArtifactState::Stale =&gt; tallies.stale += <span class="number">1</span>,
+<a href=#333 id=333 data-nosnippet>333</a>            ArtifactState::Missing =&gt; tallies.missing += <span class="number">1</span>,
+<a href=#334 id=334 data-nosnippet>334</a>            ArtifactState::Present =&gt; tallies.present += <span class="number">1</span>,
+<a href=#335 id=335 data-nosnippet>335</a>        }
+<a href=#336 id=336 data-nosnippet>336</a>        tallies.artifacts += <span class="number">1</span>;
+<a href=#337 id=337 data-nosnippet>337</a>        artifacts.push(ArtifactView {
+<a href=#338 id=338 data-nosnippet>338</a>            path: e.path,
+<a href=#339 id=339 data-nosnippet>339</a>            document: e.document,
+<a href=#340 id=340 data-nosnippet>340</a>            format: e.format,
+<a href=#341 id=341 data-nosnippet>341</a>            schema: e.schema,
+<a href=#342 id=342 data-nosnippet>342</a>            source: e.source,
+<a href=#343 id=343 data-nosnippet>343</a>            bytes: e.bytes,
+<a href=#344 id=344 data-nosnippet>344</a>            sha256: e.sha256,
+<a href=#345 id=345 data-nosnippet>345</a>            state,
+<a href=#346 id=346 data-nosnippet>346</a>        });
+<a href=#347 id=347 data-nosnippet>347</a>    }
+<a href=#348 id=348 data-nosnippet>348</a>
+<a href=#349 id=349 data-nosnippet>349</a>    <span class="kw">let </span>documents = <span class="kw">match </span><span class="kw-2">&amp;</span>input.document {
+<a href=#350 id=350 data-nosnippet>350</a>        <span class="prelude-val">Some</span>(id) =&gt; manifest
+<a href=#351 id=351 data-nosnippet>351</a>            .documents
+<a href=#352 id=352 data-nosnippet>352</a>            .into_iter()
+<a href=#353 id=353 data-nosnippet>353</a>            .filter(|d| <span class="kw-2">&amp;</span>d.id == id)
+<a href=#354 id=354 data-nosnippet>354</a>            .collect(),
+<a href=#355 id=355 data-nosnippet>355</a>        <span class="prelude-val">None </span>=&gt; manifest.documents,
+<a href=#356 id=356 data-nosnippet>356</a>    };
+<a href=#357 id=357 data-nosnippet>357</a>    tallies.documents = documents.len();
+<a href=#358 id=358 data-nosnippet>358</a>    <span class="kw">let </span>verdict = ArtifactVerdict::of(<span class="bool-val">true</span>, <span class="kw-2">&amp;</span>tallies);
+<a href=#359 id=359 data-nosnippet>359</a>
+<a href=#360 id=360 data-nosnippet>360</a>    <span class="prelude-val">Ok</span>(ArtifactReport {
+<a href=#361 id=361 data-nosnippet>361</a>        manifest: rel,
+<a href=#362 id=362 data-nosnippet>362</a>        present: <span class="bool-val">true</span>,
+<a href=#363 id=363 data-nosnippet>363</a>        schema: manifest.schema,
+<a href=#364 id=364 data-nosnippet>364</a>        documents,
+<a href=#365 id=365 data-nosnippet>365</a>        artifacts,
+<a href=#366 id=366 data-nosnippet>366</a>        tallies,
+<a href=#367 id=367 data-nosnippet>367</a>        verdict,
+<a href=#368 id=368 data-nosnippet>368</a>        regenerate: <span class="string">"majordomus generate"</span>.into(),
+<a href=#369 id=369 data-nosnippet>369</a>        verify: <span class="string">"majordomus generate --check"</span>.into(),
+<a href=#370 id=370 data-nosnippet>370</a>    })
+<a href=#371 id=371 data-nosnippet>371</a>}
+<a href=#372 id=372 data-nosnippet>372</a>
+<a href=#373 id=373 data-nosnippet>373</a><span class="doccomment">/// The module.
+<a href=#374 id=374 data-nosnippet>374</a></span><span class="kw">pub fn </span>module() -&gt; ModuleDescriptor {
+<a href=#375 id=375 data-nosnippet>375</a>    <span class="macro">module!</span> {
+<a href=#376 id=376 data-nosnippet>376</a>        id: <span class="string">"artifacts"</span>,
+<a href=#377 id=377 data-nosnippet>377</a>        title: <span class="string">"Generated artifacts"</span>,
+<a href=#378 id=378 data-nosnippet>378</a>        description: <span class="string">"What `majordomus generate` writes: every document with the encodings it is committed in — JSON for a program, YAML beside it, Markdown for a reader — each with its schema, its source and its hash, reconciled with the working tree. The declaration is the generator's own manifest; nothing here keeps a list."</span>,
+<a href=#379 id=379 data-nosnippet>379</a>        stability: Stability::BehaviorallyVerified,
+<a href=#380 id=380 data-nosnippet>380</a>        capabilities: [
+<a href=#381 id=381 data-nosnippet>381</a>            <span class="macro">capability!</span> {
+<a href=#382 id=382 data-nosnippet>382</a>                id: <span class="string">"artifacts.list"</span>,
+<a href=#383 id=383 data-nosnippet>383</a>                title: <span class="string">"List the generated artifacts"</span>,
+<a href=#384 id=384 data-nosnippet>384</a>                description: <span class="string">"The manifest `majordomus generate` commits as docs/generated/artifacts.json, reconciled with the working tree: every document with the encodings it is written in, and every file with its format, schema, source, size, hash and whether the file on disk still matches. Optionally narrowed to one document or one encoding. Reads only; `majordomus generate` writes and `majordomus generate --check` is the byte-for-byte verdict."</span>,
+<a href=#385 id=385 data-nosnippet>385</a>                input: ArtifactsInput,
+<a href=#386 id=386 data-nosnippet>386</a>                output: ArtifactReport,
+<a href=#387 id=387 data-nosnippet>387</a>                stability: Stability::BehaviorallyVerified,
+<a href=#388 id=388 data-nosnippet>388</a>                exposure: Exposure {
+<a href=#389 id=389 data-nosnippet>389</a>                    mcp: <span class="prelude-val">Some</span>(McpExposure {
+<a href=#390 id=390 data-nosnippet>390</a>                        tool: <span class="prelude-val">Some</span>(<span class="string">"majordomus_artifacts"</span>.into()),
+<a href=#391 id=391 data-nosnippet>391</a>                        resource: <span class="prelude-val">Some</span>(McpResource { uri: ARTIFACTS_URI.into(), name: <span class="string">"artifacts"</span>.into() }),
+<a href=#392 id=392 data-nosnippet>392</a>                    }),
+<a href=#393 id=393 data-nosnippet>393</a>                    http: get(<span class="string">"/api/v1/artifacts"</span>),
+<a href=#394 id=394 data-nosnippet>394</a>                    cli: <span class="prelude-val">None</span>,
+<a href=#395 id=395 data-nosnippet>395</a>                },
+<a href=#396 id=396 data-nosnippet>396</a>                tags: [<span class="string">"artifacts"</span>, <span class="string">"generation"</span>, <span class="string">"introspection"</span>],
+<a href=#397 id=397 data-nosnippet>397</a>                cache: CachePolicy::Process { max_entries: <span class="number">8</span>, ttl_seconds: <span class="prelude-val">Some</span>(<span class="number">5</span>) },
+<a href=#398 id=398 data-nosnippet>398</a>                handler: artifacts_list,
+<a href=#399 id=399 data-nosnippet>399</a>            },
+<a href=#400 id=400 data-nosnippet>400</a>        ],
+<a href=#401 id=401 data-nosnippet>401</a>    }
+<a href=#402 id=402 data-nosnippet>402</a>}
+<a href=#403 id=403 data-nosnippet>403</a>
+<a href=#404 id=404 data-nosnippet>404</a><span class="attr">#[cfg(test)]
+<a href=#405 id=405 data-nosnippet>405</a></span><span class="kw">mod </span>tests {
+<a href=#406 id=406 data-nosnippet>406</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#407 id=407 data-nosnippet>407</a>
+<a href=#408 id=408 data-nosnippet>408</a>    <span class="kw">fn </span>tallies(current: usize, stale: usize, missing: usize, present: usize) -&gt; ArtifactTallies {
+<a href=#409 id=409 data-nosnippet>409</a>        ArtifactTallies {
+<a href=#410 id=410 data-nosnippet>410</a>            documents: <span class="number">1</span>,
+<a href=#411 id=411 data-nosnippet>411</a>            artifacts: current + stale + missing + present,
+<a href=#412 id=412 data-nosnippet>412</a>            current,
+<a href=#413 id=413 data-nosnippet>413</a>            stale,
+<a href=#414 id=414 data-nosnippet>414</a>            missing,
+<a href=#415 id=415 data-nosnippet>415</a>            present,
+<a href=#416 id=416 data-nosnippet>416</a>        }
+<a href=#417 id=417 data-nosnippet>417</a>    }
+<a href=#418 id=418 data-nosnippet>418</a>
+<a href=#419 id=419 data-nosnippet>419</a>    <span class="doccomment">/// A file with no recorded hash was not compared, so a set holding one is not current:
+<a href=#420 id=420 data-nosnippet>420</a>    /// the verdict the Cockpit used to decide in the page, from missing and stale alone,
+<a href=#421 id=421 data-nosnippet>421</a>    /// called 146 hashed and 3 unhashed files "current".
+<a href=#422 id=422 data-nosnippet>422</a>    </span><span class="attr">#[test]
+<a href=#423 id=423 data-nosnippet>423</a>    </span><span class="kw">fn </span>an_unhashed_file_makes_the_tree_unverified_and_never_current() {
+<a href=#424 id=424 data-nosnippet>424</a>        <span class="macro">assert_eq!</span>(
+<a href=#425 id=425 data-nosnippet>425</a>            ArtifactVerdict::of(<span class="bool-val">true</span>, <span class="kw-2">&amp;</span>tallies(<span class="number">146</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">3</span>)),
+<a href=#426 id=426 data-nosnippet>426</a>            ArtifactVerdict::Unverified
+<a href=#427 id=427 data-nosnippet>427</a>        );
+<a href=#428 id=428 data-nosnippet>428</a>        <span class="macro">assert_eq!</span>(
+<a href=#429 id=429 data-nosnippet>429</a>            ArtifactVerdict::of(<span class="bool-val">true</span>, <span class="kw-2">&amp;</span>tallies(<span class="number">146</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)),
+<a href=#430 id=430 data-nosnippet>430</a>            ArtifactVerdict::Current
+<a href=#431 id=431 data-nosnippet>431</a>        );
+<a href=#432 id=432 data-nosnippet>432</a>    }
+<a href=#433 id=433 data-nosnippet>433</a>
+<a href=#434 id=434 data-nosnippet>434</a>    <span class="doccomment">/// Missing outranks stale, stale outranks unhashed, and no manifest is its own word.
+<a href=#435 id=435 data-nosnippet>435</a>    </span><span class="attr">#[test]
+<a href=#436 id=436 data-nosnippet>436</a>    </span><span class="kw">fn </span>the_verdict_ranks_what_is_worst() {
+<a href=#437 id=437 data-nosnippet>437</a>        <span class="macro">assert_eq!</span>(
+<a href=#438 id=438 data-nosnippet>438</a>            ArtifactVerdict::of(<span class="bool-val">true</span>, <span class="kw-2">&amp;</span>tallies(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>)),
+<a href=#439 id=439 data-nosnippet>439</a>            ArtifactVerdict::Missing
+<a href=#440 id=440 data-nosnippet>440</a>        );
+<a href=#441 id=441 data-nosnippet>441</a>        <span class="macro">assert_eq!</span>(
+<a href=#442 id=442 data-nosnippet>442</a>            ArtifactVerdict::of(<span class="bool-val">true</span>, <span class="kw-2">&amp;</span>tallies(<span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>)),
+<a href=#443 id=443 data-nosnippet>443</a>            ArtifactVerdict::Stale
+<a href=#444 id=444 data-nosnippet>444</a>        );
+<a href=#445 id=445 data-nosnippet>445</a>        <span class="macro">assert_eq!</span>(
+<a href=#446 id=446 data-nosnippet>446</a>            ArtifactVerdict::of(<span class="bool-val">false</span>, <span class="kw-2">&amp;</span>tallies(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)),
+<a href=#447 id=447 data-nosnippet>447</a>            ArtifactVerdict::NotGenerated
+<a href=#448 id=448 data-nosnippet>448</a>        );
+<a href=#449 id=449 data-nosnippet>449</a>    }
+<a href=#450 id=450 data-nosnippet>450</a>
+<a href=#451 id=451 data-nosnippet>451</a>    <span class="doccomment">/// The declaration is the only place the id, the tool name, the resource URI and the
+<a href=#452 id=452 data-nosnippet>452</a>    /// route exist. A refactor that dropped one of them would still compile, and every
+<a href=#453 id=453 data-nosnippet>453</a>    /// suite that tests the report itself would still pass; this is the assertion that
+<a href=#454 id=454 data-nosnippet>454</a>    /// would not — which is what `project.rust-command-tested-in-file` asks of a command.
+<a href=#455 id=455 data-nosnippet>455</a>    </span><span class="attr">#[test]
+<a href=#456 id=456 data-nosnippet>456</a>    </span><span class="kw">fn </span>the_declaration_yields_the_identity_and_the_projections_it_claims() {
+<a href=#457 id=457 data-nosnippet>457</a>        <span class="kw">let </span>m = module();
+<a href=#458 id=458 data-nosnippet>458</a>        <span class="macro">assert_eq!</span>(m.id.as_str(), <span class="string">"artifacts"</span>);
+<a href=#459 id=459 data-nosnippet>459</a>        <span class="kw">let </span>ids: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = m
+<a href=#460 id=460 data-nosnippet>460</a>            .capabilities
+<a href=#461 id=461 data-nosnippet>461</a>            .iter()
+<a href=#462 id=462 data-nosnippet>462</a>            .map(|e| e.capability.id.as_str())
+<a href=#463 id=463 data-nosnippet>463</a>            .collect();
+<a href=#464 id=464 data-nosnippet>464</a>        <span class="macro">assert_eq!</span>(ids, [<span class="string">"artifacts.list"</span>]);
+<a href=#465 id=465 data-nosnippet>465</a>
+<a href=#466 id=466 data-nosnippet>466</a>        <span class="kw">let </span>c = <span class="kw-2">&amp;</span>m.capabilities[<span class="number">0</span>].capability;
+<a href=#467 id=467 data-nosnippet>467</a>        <span class="kw">let </span>mcp = c.exposure.mcp.as_ref().expect(<span class="string">"an MCP projection"</span>);
+<a href=#468 id=468 data-nosnippet>468</a>        <span class="macro">assert_eq!</span>(mcp.tool.as_deref(), <span class="prelude-val">Some</span>(<span class="string">"majordomus_artifacts"</span>));
+<a href=#469 id=469 data-nosnippet>469</a>        <span class="macro">assert_eq!</span>(
+<a href=#470 id=470 data-nosnippet>470</a>            mcp.resource.as_ref().map(|r| r.uri.as_str()),
+<a href=#471 id=471 data-nosnippet>471</a>            <span class="prelude-val">Some</span>(ARTIFACTS_URI)
+<a href=#472 id=472 data-nosnippet>472</a>        );
+<a href=#473 id=473 data-nosnippet>473</a>        <span class="macro">assert_eq!</span>(
+<a href=#474 id=474 data-nosnippet>474</a>            c.exposure.http.as_ref().map(|h| h.path.as_str()),
+<a href=#475 id=475 data-nosnippet>475</a>            <span class="prelude-val">Some</span>(<span class="string">"/api/v1/artifacts"</span>)
+<a href=#476 id=476 data-nosnippet>476</a>        );
+<a href=#477 id=477 data-nosnippet>477</a>        <span class="comment">// read-only, and the registry refuses an executable capability that is not
+<a href=#478 id=478 data-nosnippet>478</a>        </span><span class="macro">assert!</span>(c.kind.is_read_only() &amp;&amp; c.kind.is_executable());
+<a href=#479 id=479 data-nosnippet>479</a>        <span class="comment">// and the module stamps its own namespace on what it composes
+<a href=#480 id=480 data-nosnippet>480</a>        </span><span class="macro">assert!</span>(ids.iter().all(|id| id.starts_with(<span class="string">"artifacts."</span>)));
+<a href=#481 id=481 data-nosnippet>481</a>    }
+<a href=#482 id=482 data-nosnippet>482</a>}
 </code></pre></div></section></main></body></html>

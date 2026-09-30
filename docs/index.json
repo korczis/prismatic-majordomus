@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "971be4f63df859b55da2b26e209a1c7dd54783c8",
+  "commit": "2f5db585162a59163110fd7bfb19cfa8e682b1d5",
   "source_version": "0.11.0",
-  "registry_fingerprint": "3b78f4f33002a0080a37833b3fbe19b8096c5b415496c91268807b73597d5c20"
+  "registry_fingerprint": "05a57a5112841da9f4fc74c67a2aba8fff5f1cee99ace584ce31b8e1360496cf"
  },
  "counts": {
-  "pages": 1624,
-  "capabilities": 1629,
+  "pages": 1627,
+  "capabilities": 1641,
   "cli_commands": 65,
   "http_routes": 141,
   "mcp_tools": 137,
-  "mcp_resources": 1531,
+  "mcp_resources": 1543,
   "modules": 72
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 62
+   "count": 63
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 195
+   "count": 196
   },
   {
    "kind": "command",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 275
+   "count": 276
   },
   {
    "kind": "feature",
@@ -190,7 +190,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 141
+   "count": 142
   },
   {
    "kind": "scope",
@@ -230,7 +230,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 256
+   "count": 264
   },
   {
    "kind": "use-case",
@@ -755,6 +755,14 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0088",
    "source": ".ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md"
+  },
+  {
+   "route": "/adrs/adr-0089/",
+   "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+   "description": "An interface shows only what is derived, and unknown is never drawn as healthy",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0089",
+   "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md"
   },
   {
    "route": "/applications/",
@@ -3079,7 +3087,7 @@
   {
    "route": "/guarantees/guaranteed/",
    "title": "Guaranteed capabilities",
-   "description": "Deterministic and blocking. Implemented, and a behavioural test proves it."
+   "description": "Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it."
   },
   {
    "route": "/guarantees/handover-record/",
@@ -3195,6 +3203,11 @@
    "route": "/guarantees/mesh-claims-cross-runtime/",
    "title": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
    "description": "A session on machine A claims apps/majordomus-cli exclusively. A session on machine B"
+  },
+  {
+   "route": "/guarantees/mesh-compaction-keeps-what-is-live/",
+   "title": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+   "description": "Every server restart is a new stream of the journal, so runtimes compact away streams that"
   },
   {
    "route": "/guarantees/mesh-cooperation-links/",
@@ -7109,6 +7122,14 @@
    "source": ".ai/repo/rules/project/ui-conformance.v1.md"
   },
   {
+   "route": "/rules/project-ui-derived-state-1/",
+   "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+   "description": "An interface shows only what is derived, and unknown is never drawn as healthy",
+   "kind": "rule",
+   "id": "majordomus://rule/project.ui-derived-state@1",
+   "source": ".ai/repo/rules/project/ui-derived-state.v1.md"
+  },
+  {
    "route": "/rules/project-unknown-keys-are-errors-1/",
    "title": "Unknown configuration keys are errors",
    "description": "Unknown configuration keys are errors",
@@ -7167,7 +7188,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.11.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 971be4f63df859b55da2b26e209a1c7dd54783c8: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 2f5db585162a59163110fd7bfb19cfa8e682b1d5: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",

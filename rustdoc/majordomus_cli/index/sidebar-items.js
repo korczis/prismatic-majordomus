@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["MAX_FILE_BYTES"],"enum":["State"],"struct":["Index","RepositoryInfo"]};
+window.SIDEBAR_ITEMS = {"constant":["MAX_FILE_BYTES","STALE_AFTER"],"enum":["State"],"struct":["AnswerObservation","Index","RepositoryInfo","RepositoryObservations"]};
