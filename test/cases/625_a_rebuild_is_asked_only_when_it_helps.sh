@@ -61,6 +61,10 @@ rebuild
 [ "$rc" = 12 ] || { echo "    a build in flight answered $rc, not 12"; cat "$T/out.txt"; exit 1; }
 [ "$(posts)" = 0 ] || { echo "    a request was sent while GitHub was building: that preempts the build"; exit 1; }
 grep -q 'preempt' "$T/out.txt" || { echo "    the refusal does not say what it protects"; cat "$T/out.txt"; exit 1; }
+# and it is this commit's own build that held it off, read before anything else is asked: the
+# newest-build check of section 3 would also refuse here, and must not be the only guard
+grep -q "a build of ${C:0:12} is building" "$T/out.txt" \
+  || { echo "    the refusal does not name this commit's build in flight"; cat "$T/out.txt"; exit 1; }
 echo "    a build in flight is left alone, and the refusal names the preemption"
 
 # ---------------------------------------------------------------- 3. another commit is building
