@@ -6,23 +6,23 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "3b78f4f33002a0080a37833b3fbe19b8096c5b415496c91268807b73597d5c20",
+    "fingerprint": "44adec48230607900871136f4b80012907159063d2eca75e3f71f99a494d53b5",
     "summary": {
-      "total": 1629,
+      "total": 1630,
       "builtin": 143,
-      "declarative": 1486,
+      "declarative": 1487,
       "by_kind": {
         "command": 19,
         "query": 124,
-        "resource": 1486
+        "resource": 1487
       },
       "by_stability": {
         "behaviorally_verified": 110,
         "experimental": 25,
-        "implemented": 1494
+        "implemented": 1495
       },
       "mcp_tools": 137,
-      "mcp_resources": 1531,
+      "mcp_resources": 1532,
       "http_routes": 141,
       "cli_commands": 65,
       "modules": 72,
@@ -52332,7 +52332,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 256,
+        "capabilities": 257,
         "capability_ids": []
       },
       {
@@ -52422,7 +52422,7 @@
     ]
   },
   "index": {
-    "fingerprint": "185edbc34433e318f683079062d654cfa2eff17f054c86f14457361f26613618",
+    "fingerprint": "b784b6ab0e2bb19a3e04308617f6dbbb7eaaa81b9ba64816d8c3a18ee1ba7a49",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -52471,7 +52471,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 256,
+      "test": 257,
       "use-case": 46,
       "workspace": 1
     },
@@ -57144,7 +57144,7 @@
         "title": "Worktrees",
         "path": "docs/WORKTREES.md",
         "source_class": "document",
-        "bytes": 24658
+        "bytes": 26366
       },
       {
         "uri": "majordomus://document/docs/claims/a-finding-names-how-to-see-it-again.md",
@@ -67532,6 +67532,14 @@
         "bytes": 4492
       },
       {
+        "uri": "majordomus://test/test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "kind": "test",
+        "identity": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "path": "test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh",
+        "source_class": "case",
+        "bytes": 6838
+      },
+      {
         "uri": "majordomus://test/test/cases/61_session_envelope.sh",
         "kind": "test",
         "identity": "test/cases/61_session_envelope.sh",
@@ -68819,7 +68827,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 256
+      "objects": 257
     },
     {
       "name": "use-case",
@@ -80381,8 +80389,22 @@
             "route": "/docs/cli/worktree/cleanup/",
             "executable": true,
             "usage": "majordomus worktree cleanup [OPTIONS]",
-            "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing",
+            "about": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove",
             "args": [
+              {
+                "name": "remove",
+                "long": "remove",
+                "positional": false,
+                "help": "Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how",
+                "value_name": "REMOVE",
+                "takes_value": false,
+                "required": false,
+                "global": false,
+                "possible_values": [],
+                "defaults": [
+                  "false"
+                ]
+              },
               {
                 "name": "repo",
                 "long": "repo",
