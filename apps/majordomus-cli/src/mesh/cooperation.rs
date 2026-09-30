@@ -101,7 +101,7 @@ use super::config::{CooperationConfig, TrustConfig};
 use super::identity::{node_id_of_key, NodeIdentity};
 use super::journal::{
     ClaimMode, EventBody, HandoverBody, Journal, JournalTallies, Marks, MeshEvent, Rejection,
-    SessionInfo, StreamId, StreamLiveness,
+    SessionInfo, StreamId, StreamLiveness, HANDOVER_RETENTION,
 };
 use super::link::{
     fresh_token, negotiate, sign, verify_signed, Domain, Hello, LinkRefusal, LinkReply,
@@ -1496,7 +1496,8 @@ impl Cooperation {
                     me.reconcile_workers();
                     me.expire_links();
                     if tick % 60 == 59 {
-                        me.journal.compact(me.expiry(), PEER_RETENTION, false);
+                        me.journal
+                            .compact(me.expiry(), PEER_RETENTION, HANDOVER_RETENTION, false);
                     }
                     tick += 1;
                     me.sleep(me.heartbeat());

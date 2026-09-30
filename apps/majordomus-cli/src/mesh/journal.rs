@@ -46,7 +46,7 @@
 //! assert_eq!(b.ingest(&missing, &|_| Ok(())).duplicate, 1);
 //! ```
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
@@ -92,6 +92,15 @@ pub const MAX_STREAMS_PER_NODE: usize = 64;
 /// otherwise start a compaction. Compacting the node at three quarters keeps the last
 /// quarter free for the runs to come.
 pub const NODE_COMPACTION_STREAMS: usize = MAX_STREAMS_PER_NODE * 3 / 4;
+
+/// How long past its retention a dead stream is kept for a handover it published that nobody
+/// has taken: a day. A handover is continuity meant to outlive the run that wrote it, so it
+/// holds its stream longer than anything else does, but only this long: a stream held is a
+/// slot of its node's quota ([`MAX_STREAMS_PER_NODE`]), and a machine whose runs each handed
+/// over something nobody took would otherwise fill its quota with the dead and have every
+/// later run refused. A handover somebody has taken holds nothing. One that lapses is still
+/// its author's record, and publishing it again offers it again under the same id.
+pub const HANDOVER_RETENTION: Duration = Duration::from_secs(24 * 60 * 60);
 
 /// The most events (held and pending) one node may occupy.
 pub const MAX_EVENTS_PER_NODE: usize = 20_000;
@@ -1271,10 +1280,18 @@ impl StreamLog {
     }
 }
 
+/// What is left of a stream compacted away: how far it got, and the beat it was last heard
+/// at. The sequence is advertised as its mark, so a peer that still holds the stream does not
+/// send it again; the beat is what the stream must rise above to be heard again.
+#[derive(Clone, Copy)]
+struct Tombstone {
+    seq: u64,
+    beat: u64,
+}
+
 struct Inner {
-    /// Streams compacted away, with the high-water sequence they had: their marks keep
-    /// being advertised, so a peer that still holds the stream does not send it again.
-    tombstones: BTreeMap<StreamId, u64>,
+    /// Streams compacted away. A stream is here or in `streams`, never in both.
+    tombstones: BTreeMap<StreamId, Tombstone>,
     streams: BTreeMap<StreamId, StreamLog>,
     lamport: u64,
     tallies: JournalTallies,
@@ -1564,11 +1581,11 @@ impl Journal {
                     },
                 )
             })
-            .chain(inner.tombstones.iter().map(|(id, seq)| {
+            .chain(inner.tombstones.iter().map(|(id, tombstone)| {
                 (
                     id.clone(),
                     StreamMark {
-                        seq: *seq,
+                        seq: tombstone.seq,
                         ..StreamMark::default()
                     },
                 )
@@ -1585,6 +1602,15 @@ impl Journal {
     /// beat it carries is fresh: a mark that can only report a stream dead — a relay still
     /// advertising a stream this runtime has compacted — gives the journal nothing to hold,
     /// and must not take a slot of its node's quota.
+    ///
+    /// A stream this runtime has compacted comes back the same way, and only on a beat above
+    /// the one it was compacted at: a laptop that slept past the retention wakes as the same
+    /// stream and beats again, while a relay replaying the old beat is remembering the
+    /// stream, not hearing it. Heard again, the stream's tombstone is lifted and its mark
+    /// falls to what is held of it — nothing — so the peers send it again from its first
+    /// event. The whole stream, not the part after the tombstone's mark: what it said before
+    /// it was compacted (a claim it still holds, a session still open) is live again with
+    /// it, and a suffix would leave this runtime admitting claims that conflict with it.
     ///
     /// ```
     /// use std::sync::Arc;
@@ -1632,6 +1658,10 @@ impl Journal {
             {
                 continue;
             }
+            let tombstone = inner.tombstones.get(id).copied();
+            if tombstone.is_some_and(|t| mark.beat <= t.beat) {
+                continue;
+            }
             if !inner.streams.contains_key(id) {
                 if !mark
                     .age_ms
@@ -1647,6 +1677,10 @@ impl Journal {
                 if inner.streams.len() >= MAX_STREAMS || of_node >= MAX_STREAMS_PER_NODE {
                     continue;
                 }
+            }
+            if tombstone.is_some() {
+                // Compacted as dead, and beating again: it is fetched again from its first event.
+                inner.tombstones.remove(id);
             }
             let log = inner
                 .streams
@@ -1853,12 +1887,12 @@ impl Journal {
             }
             return None;
         }
-        if inner
-            .tombstones
-            .get(&event.stream)
-            .is_some_and(|high| event.seq <= *high)
-        {
-            // Already held once and compacted away as dead: a late copy changes nothing.
+        if let Some(tombstone) = inner.tombstones.get_mut(&event.stream) {
+            // Compacted away as dead. A late copy of what was held changes nothing, and neither
+            // does an event the stream wrote after: until the stream beats again this runtime
+            // holds nothing of it, and when it does the stream is fetched again from its first
+            // event. The mark rises over a later event, so a relay holding it stops offering it.
+            tombstone.seq = tombstone.seq.max(event.seq);
             report.duplicate += 1;
             if count {
                 inner.tallies.duplicates += 1;
@@ -2098,8 +2132,8 @@ impl Journal {
             .collect()
     }
 
-    /// Drop every stream that has been expired for longer than `retention` and holds no
-    /// handover, when the journal is over its bound or `force` is set; the file is
+    /// Drop every stream that has been expired for longer than `retention` and that nothing
+    /// still needs, when the journal is over its bound or `force` is set; the file is
     /// rewritten to what remains. Only dead streams go, so no live claim can lose its
     /// release to compaction.
     ///
@@ -2110,20 +2144,29 @@ impl Journal {
     /// it — the journal-wide bounds are out of one node's reach — and every later run of
     /// a sibling would be refused here, its claims with it.
     ///
-    /// The two exclusions are what make dropping events safe. Only a stream that has been
-    /// silent well past its expiry goes, so no claim can lose the release that would have
-    /// ended it; and a stream holding a published handover stays, because a handover is
-    /// continuity somebody may still be waiting to pick up. A stream whose beat was never
-    /// heard here counts as silent from when this journal learned of it, so the streams a
-    /// restart reloads are not taken for dead before their runtimes could be heard. What is
-    /// dropped leaves a tombstone carrying the sequence it reached, so a peer that still
-    /// holds the stream is not sent it all over again.
+    /// What makes dropping events safe is what is kept. Only a stream that has been silent
+    /// well past its expiry goes, so no claim can lose the release that would have ended it.
+    /// A dead stream stays while it holds a published handover nobody has taken, because a
+    /// handover is continuity somebody may still be waiting to pick up — for at most
+    /// `handovers` past the retention ([`HANDOVER_RETENTION`] in a running server), or its
+    /// node's quota would fill with the dead. And a dead stream stays while it holds the
+    /// taking of a handover or the answer to a review that stays, so that a handover that is
+    /// still offered never looks untaken again and an answered review never opens again.
+    /// Who took what and who answered what are read by the fold ([`super::state::fold`]),
+    /// the one reading every surface shows.
+    ///
+    /// A stream whose beat was never heard here counts as silent from when this journal
+    /// learned of it, so the streams a restart reloads are not taken for dead before their
+    /// runtimes could be heard. What is dropped leaves a tombstone carrying the sequence it
+    /// reached, so a peer that still holds the stream is not sent it all over again, and the
+    /// beat it was last heard at, which a stream that returns must rise above
+    /// ([`Journal::merge_marks`]).
     ///
     /// ```
     /// use std::sync::Arc;
     /// use std::time::Duration;
     /// use majordomus_cli::mesh::identity::NodeIdentity;
-    /// use majordomus_cli::mesh::journal::{EventBody, Journal};
+    /// use majordomus_cli::mesh::journal::{EventBody, HandoverBody, Journal, HANDOVER_RETENTION};
     ///
     /// let a = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000001",
     ///     "repo".into(), None).unwrap();
@@ -2134,14 +2177,32 @@ impl Journal {
     /// assert_eq!(b.events().len(), 1);
     ///
     /// // under its bounds, compaction does nothing unless it is asked
-    /// assert_eq!(b.compact(Duration::ZERO, Duration::ZERO, false), 0);
+    /// let zero = Duration::ZERO;
+    /// assert_eq!(b.compact(zero, zero, HANDOVER_RETENTION, false), 0);
     ///
     /// // asked, the silent stream goes, and its mark stays so it is not re-sent
-    /// assert_eq!(b.compact(Duration::ZERO, Duration::ZERO, true), 1);
+    /// assert_eq!(b.compact(zero, zero, HANDOVER_RETENTION, true), 1);
     /// assert!(b.events().is_empty());
     /// assert_eq!(b.marks()[a.own_stream()].seq, 1, "the tombstone remembers how far it got");
+    ///
+    /// // a handover nobody has taken keeps its stream, until the handover retention passes
+    /// let c = Journal::open(Arc::new(NodeIdentity::ephemeral().unwrap()), "0000000000000003",
+    ///     "repo".into(), None).unwrap();
+    /// let body = "# Objective\nship\n".to_string();
+    /// let handover = HandoverBody { id: HandoverBody::digest_of(&body), task: None, issue: None,
+    ///     milestone: None, branch: None, head: None, created_at: None, name: None, body };
+    /// c.append_own(EventBody::HandoverPublished { handover }).unwrap();
+    /// b.ingest(&c.missing_for(&b.marks(), 1 << 20), &|_| Ok(()));
+    /// assert_eq!(b.compact(zero, zero, HANDOVER_RETENTION, true), 0);
+    /// assert_eq!(b.compact(zero, zero, zero, true), 1);
     /// ```
-    pub fn compact(&self, expiry: Duration, retention: Duration, force: bool) -> u64 {
+    pub fn compact(
+        &self,
+        expiry: Duration,
+        retention: Duration,
+        handovers: Duration,
+        force: bool,
+    ) -> u64 {
         let now = Instant::now();
         let mut inner = self.inner.lock().expect("journal lock");
         let total: usize = inner.streams.values().map(|l| l.events.len()).sum();
@@ -2158,20 +2219,18 @@ impl Journal {
         if !over && crowded.is_empty() {
             return 0;
         }
-        let dead: Vec<StreamId> = inner
+        let due: BTreeSet<StreamId> = inner
             .streams
             .iter()
             .filter(|(id, log)| {
                 **id != self.own
                     && (over || crowded.iter().any(|node| node == id.node()))
                     && log.silent_for(now) > expiry + retention
-                    && !log
-                        .events
-                        .values()
-                        .any(|e| e.kind() == "handover_published")
             })
             .map(|(id, _)| id.clone())
             .collect();
+        let offer_lapsed = |log: &StreamLog| log.silent_for(now) > expiry + retention + handovers;
+        let dead = unneeded(&inner.streams, due, &offer_lapsed);
         let mut dropped = 0u64;
         for id in dead {
             if let Some(log) = inner.streams.remove(&id) {
@@ -2181,7 +2240,11 @@ impl Journal {
                         inner.tombstones.remove(&first);
                     }
                 }
-                inner.tombstones.insert(id.clone(), log.high_water());
+                let tombstone = Tombstone {
+                    seq: log.high_water(),
+                    beat: log.beat,
+                };
+                inner.tombstones.insert(id.clone(), tombstone);
             }
         }
         inner.tallies.compacted += dropped;
@@ -2236,6 +2299,77 @@ impl Journal {
         tallies.lamport = inner.lamport;
         tallies
     }
+}
+
+/// Of the streams `due` for compaction, the ones nothing still needs. A due stream is needed
+/// while it offers a handover nobody has taken and its offer has not lapsed
+/// (`offer_lapsed`), and while it holds the taking of a handover or the answer to a review
+/// whose own stream is needed or not due — to a fixed point, because keeping one stream can
+/// keep the stream that answered it. Who took what and who answered what is the fold's
+/// reading, so that compaction and every surface agree on it.
+fn unneeded(
+    streams: &BTreeMap<StreamId, StreamLog>,
+    due: BTreeSet<StreamId>,
+    offer_lapsed: &dyn Fn(&StreamLog) -> bool,
+) -> Vec<StreamId> {
+    if due.is_empty() {
+        return Vec::new();
+    }
+    let held: Vec<MeshEvent> = streams
+        .values()
+        .flat_map(|log| log.events.values().cloned())
+        .collect();
+    let state = super::state::fold(&held, &|_| StreamLiveness::Expired);
+    let mut publishers: BTreeMap<String, Vec<StreamId>> = BTreeMap::new();
+    for (id, log) in streams {
+        let published = log
+            .events
+            .values()
+            .filter(|e| e.kind() == "handover_published");
+        for event in published {
+            if let Some(EventBody::HandoverPublished { handover }) = event.body() {
+                publishers.entry(handover.id).or_default().push(id.clone());
+            }
+        }
+    }
+    let stream_of = |key: &str| key.split_once('/').and_then(|(s, _)| StreamId::parse(s));
+    // What each taking and each answer refers to: the streams holding its handover or review.
+    let mut refers: Vec<(StreamId, Vec<StreamId>)> = Vec::new();
+    let mut kept: BTreeSet<StreamId> = streams
+        .keys()
+        .filter(|id| !due.contains(*id))
+        .cloned()
+        .collect();
+    for handover in &state.handovers {
+        let by = publishers.get(&handover.id).cloned().unwrap_or_default();
+        if handover.consumed_by.is_empty() {
+            let offering = by.iter().filter(|id| due.contains(*id));
+            kept.extend(offering.filter(|id| !offer_lapsed(&streams[*id])).cloned());
+        }
+        for taker in handover.consumed_by.iter().filter_map(|key| stream_of(key)) {
+            refers.push((taker, by.clone()));
+        }
+    }
+    for review in &state.reviews {
+        let Some(asked) = stream_of(&review.key) else {
+            continue;
+        };
+        for answerer in review.answers.iter().filter_map(|a| stream_of(&a.session)) {
+            refers.push((answerer, vec![asked.clone()]));
+        }
+    }
+    loop {
+        let more: Vec<StreamId> = refers
+            .iter()
+            .filter(|(from, to)| !kept.contains(from) && to.iter().any(|t| kept.contains(t)))
+            .map(|(from, _)| from.clone())
+            .collect();
+        if more.is_empty() {
+            break;
+        }
+        kept.extend(more);
+    }
+    due.into_iter().filter(|id| !kept.contains(id)).collect()
 }
 
 #[cfg(test)]
@@ -2503,7 +2637,10 @@ mod tests {
         let b = journal("0000000000000002");
         opened(&a, "s1");
         b.ingest(&a.missing_for(&b.marks(), usize::MAX), &accept_all);
-        assert_eq!(b.compact(Duration::ZERO, Duration::ZERO, true), 1);
+        assert_eq!(
+            b.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true),
+            1
+        );
         assert_eq!(
             b.marks()[a.own_stream()].seq,
             1,
@@ -2583,7 +2720,7 @@ mod tests {
         .unwrap();
         b.ingest(&a.missing_for(&b.marks(), usize::MAX), &accept_all);
         b.ingest(&h.missing_for(&b.marks(), usize::MAX), &accept_all);
-        let dropped = b.compact(Duration::ZERO, Duration::ZERO, true);
+        let dropped = b.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true);
         assert_eq!(dropped, 1, "A's session event goes; the handover stays");
         assert_eq!(b.events().len(), 1);
     }
@@ -2612,7 +2749,7 @@ mod tests {
             );
             // The supervisor's compaction, as it runs: unforced, and every earlier run has
             // been silent for longer than the retention (zero here).
-            observer.compact(Duration::ZERO, Duration::ZERO, false);
+            observer.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, false);
         }
     }
 
@@ -2642,7 +2779,7 @@ mod tests {
             mark.age_ms = Some(10 * 60 * 1000);
         }
         observer.merge_marks(&stale, &|_| true, expiry);
-        let dropped = observer.compact(expiry, Duration::ZERO, true);
+        let dropped = observer.compact(expiry, Duration::ZERO, HANDOVER_RETENTION, true);
         assert_eq!(dropped, (MAX_STREAMS_PER_NODE - 1) as u64);
 
         // The relay advertises the same stale beats in its next round.
@@ -2689,13 +2826,293 @@ mod tests {
         .unwrap();
         let (expiry, retention) = (Duration::from_secs(30), Duration::from_secs(15 * 60));
         assert_eq!(
-            restarted.compact(expiry, retention, true),
+            restarted.compact(expiry, retention, HANDOVER_RETENTION, true),
             0,
             "the sibling may still be running: it has not been silent here for a retention"
         );
         assert_eq!(restarted.events().len(), 1);
         // Once it has been silent for as long as any stream must be, it goes.
-        assert_eq!(restarted.compact(Duration::ZERO, Duration::ZERO, true), 1);
+        assert_eq!(
+            restarted.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, true),
+            1
+        );
+    }
+
+    /// A handover saying `text`, published by `j`: the event and the handover's id.
+    fn publish(j: &Journal, text: &str) -> (MeshEvent, String) {
+        let body = format!("# Objective\n{text}\n");
+        let id = HandoverBody::digest_of(&body);
+        let handover = HandoverBody {
+            id: id.clone(),
+            task: None,
+            issue: None,
+            milestone: None,
+            branch: None,
+            head: None,
+            created_at: None,
+            name: None,
+            body,
+        };
+        let event = j
+            .append_own(EventBody::HandoverPublished { handover })
+            .unwrap();
+        (event, id)
+    }
+
+    /// The events `j` wrote itself, without what it holds of other streams.
+    fn own_events(j: &Journal) -> Vec<MeshEvent> {
+        let mut own = j.events();
+        own.retain(|e| e.stream == *j.own_stream());
+        own
+    }
+
+    /// Tell `observer` that `j` beat once, long ago: it has been silent past any expiry.
+    fn heard_long_ago(observer: &Journal, j: &Journal, expiry: Duration) {
+        j.beat_own();
+        let mut stale = j.marks();
+        stale.get_mut(j.own_stream()).unwrap().age_ms = Some(10 * 60 * 1000);
+        observer.merge_marks(&stale, &|_| true, expiry);
+    }
+
+    /// Every server run of a machine that publishes a handover leaves a stream holding one.
+    /// A handover somebody has taken is continuity that has been picked up: it must not keep
+    /// its dead stream in the node's quota, or a machine whose runs each handed over — and
+    /// each was taken — fills its quota with the dead and every later run is refused here.
+    #[test]
+    fn a_node_whose_dead_streams_published_taken_handovers_is_not_starved() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        // A runtime on another machine takes every handover. Each is its run's first event,
+        // Lamport 1, so the taking follows it in every fold.
+        let taker = journal("0000000000000003");
+        opened(&taker, "t1");
+        for run in 0..(MAX_STREAMS_PER_NODE + 6) {
+            let restarted =
+                Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+            let (published, id) = publish(&restarted, &format!("run {run}"));
+            let report = observer.ingest(&[opened(&restarted, "s1"), published], &accept_all);
+            assert_eq!(
+                report.accepted, 2,
+                "run {run} of a sibling server was refused: {:?}",
+                report.rejected
+            );
+            taker
+                .append_own(EventBody::HandoverConsumed {
+                    handover: id,
+                    session: "t1".into(),
+                })
+                .unwrap();
+            observer.ingest(
+                &taker.missing_for(&observer.marks(), usize::MAX),
+                &accept_all,
+            );
+            observer.compact(Duration::ZERO, Duration::ZERO, HANDOVER_RETENTION, false);
+        }
+    }
+
+    /// A handover nobody takes pins its dead stream, and only for a bounded retention: past
+    /// it, the stream is compacted like any other, or a machine whose runs each handed over
+    /// something nobody took would be refused here for good.
+    #[test]
+    fn an_untaken_handover_pins_its_stream_only_for_the_handover_retention() {
+        let dir = tempfile::tempdir().unwrap();
+        let key = dir.path().join("node.json");
+        let machine = || Arc::new(NodeIdentity::load_or_create(&key).unwrap());
+        let observer = Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
+        for run in 0..(MAX_STREAMS_PER_NODE + 6) {
+            let restarted =
+                Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+            let (published, _) = publish(&restarted, &format!("run {run}"));
+            let report = observer.ingest(&[opened(&restarted, "s1"), published], &accept_all);
+            assert_eq!(
+                report.accepted, 2,
+                "run {run} of a sibling server was refused: {:?}",
+                report.rejected
+            );
+            // Every earlier run has been silent past the retention and the handover retention
+            // (both zero here).
+            observer.compact(Duration::ZERO, Duration::ZERO, Duration::ZERO, false);
+        }
+    }
+
+    /// Who took a handover and who answered a review are records of the taker's stream, not
+    /// of the handover's or the review's. When the taker has stopped and the publisher has
+    /// not, compacting the taker away would make a live handover look untaken and an
+    /// answered review open again: those records stay as long as what they refer to does.
+    #[test]
+    fn compaction_keeps_the_takers_and_the_answers_of_what_it_keeps() {
+        use crate::mesh::state::{fold, ReviewState};
+
+        let expiry = Duration::from_secs(30);
+        let observer = journal("0000000000000001");
+        let publisher = journal("0000000000000002");
+        let taker = journal("0000000000000003");
+        let reviewer = journal("0000000000000004");
+        opened(&publisher, "s1");
+        let (_, id) = publish(&publisher, "carry the mesh");
+        publisher
+            .append_own(EventBody::ReviewRequested {
+                review: "r1".into(),
+                session: "s1".into(),
+                subject: "feature/mesh".into(),
+                scope: Vec::new(),
+                issue: None,
+                reviewer: None,
+            })
+            .unwrap();
+        // The taker and the reviewer hear of the handover and the request before they act.
+        for j in [&taker, &reviewer] {
+            j.ingest(&publisher.events(), &accept_all);
+        }
+        opened(&taker, "t1");
+        taker
+            .append_own(EventBody::HandoverConsumed {
+                handover: id,
+                session: "t1".into(),
+            })
+            .unwrap();
+        opened(&reviewer, "v1");
+        reviewer
+            .append_own(EventBody::ReviewAnswered {
+                request: format!("{}/r1", publisher.own_stream()),
+                session: "v1".into(),
+                verdict: "approved".into(),
+                note: None,
+            })
+            .unwrap();
+        for j in [&publisher, &taker, &reviewer] {
+            j.beat_own();
+            observer.merge_marks(&j.marks(), &|_| true, expiry);
+            observer.ingest(&own_events(j), &accept_all);
+        }
+        // The taker and the reviewer stopped long ago; the publisher is beating.
+        heard_long_ago(&observer, &taker, expiry);
+        heard_long_ago(&observer, &reviewer, expiry);
+        publisher.beat_own();
+        observer.merge_marks(&publisher.marks(), &|_| true, expiry);
+
+        let state = |j: &Journal| fold(&j.events(), &|s| j.liveness(s, expiry));
+        let before = state(&observer);
+        assert_eq!(before.handovers[0].consumed_by.len(), 1);
+        assert_eq!(before.reviews[0].state, ReviewState::Answered);
+        observer.compact(expiry, Duration::ZERO, HANDOVER_RETENTION, true);
+        let after = state(&observer);
+        assert_eq!(
+            after.handovers, before.handovers,
+            "a live handover looks untaken again"
+        );
+        assert_eq!(
+            after.reviews, before.reviews,
+            "an answered review is open again"
+        );
+    }
+
+    /// A laptop that sleeps past the expiry and the retention is compacted away by its peers;
+    /// it wakes as the same process, so as the same stream, and goes on writing. Its peers
+    /// must hear it again — the whole stream, from its first event, because the claim it took
+    /// before it slept holds again the moment it beats and a suffix would not show it.
+    #[test]
+    fn a_compacted_stream_that_beats_again_is_fetched_again_from_its_first_event() {
+        use crate::mesh::state::{fold, ClaimState};
+
+        let expiry = Duration::from_secs(30);
+        let laptop = journal("0000000000000001");
+        let observer = journal("0000000000000002");
+        // One sync round as the supervisor runs it: the events the observer lacks, then marks.
+        let round = || {
+            observer.ingest(
+                &laptop.missing_for(&observer.marks(), usize::MAX),
+                &accept_all,
+            );
+            observer.merge_marks(&laptop.marks(), &|_| true, expiry);
+        };
+        let claim = |claim: &str, scope: &str| EventBody::ClaimAcquired {
+            claim: claim.into(),
+            session: "s1".into(),
+            scope: vec![scope.into()],
+            intent: None,
+            mode: ClaimMode::Exclusive,
+            issue: None,
+        };
+        opened(&laptop, "s1");
+        laptop.append_own(claim("c1", "apps")).unwrap();
+        laptop.beat_own();
+        round();
+        assert_eq!(observer.events().len(), 2);
+
+        // It sleeps: the observer last heard it long ago, and compacts it away.
+        heard_long_ago(&observer, &laptop, expiry);
+        assert_eq!(
+            observer.compact(expiry, Duration::ZERO, HANDOVER_RETENTION, true),
+            2
+        );
+        assert!(observer.events().is_empty());
+
+        // It wakes, takes another claim, and beats.
+        laptop.append_own(claim("c2", "docs")).unwrap();
+        laptop.beat_own();
+        for _ in 0..3 {
+            round();
+        }
+        assert_eq!(
+            observer.events(),
+            laptop.events(),
+            "the stream is held again, whole, from its first event"
+        );
+        let state = fold(&observer.events(), &|s| observer.liveness(s, expiry));
+        assert_eq!(state.claims.len(), 2);
+        assert!(
+            state.claims.iter().all(|c| c.state == ClaimState::Held),
+            "the claim taken before the sleep holds again: {:?}",
+            state.claims
+        );
+    }
+
+    /// What a peer that has not compacted yet still says about a stream this runtime has
+    /// compacted brings nothing back: a beat no higher than the one it was compacted at,
+    /// however fresh the relay says it is, and an event the stream wrote but never beat for.
+    /// The late event is absorbed into the tombstone's mark, so the relay stops offering it.
+    #[test]
+    fn a_replayed_beat_or_a_late_event_of_a_compacted_stream_brings_nothing_back() {
+        let expiry = Duration::from_secs(30);
+        let gone = journal("0000000000000001");
+        let observer = journal("0000000000000002");
+        opened(&gone, "s1");
+        gone.beat_own();
+        observer.merge_marks(&gone.marks(), &|_| true, expiry);
+        observer.ingest(
+            &gone.missing_for(&observer.marks(), usize::MAX),
+            &accept_all,
+        );
+        heard_long_ago(&observer, &gone, expiry);
+        let mut replayed = gone.marks();
+        assert_eq!(
+            observer.compact(expiry, Duration::ZERO, HANDOVER_RETENTION, true),
+            1
+        );
+
+        // A relay reports the last beat it heard as if it had just risen.
+        replayed.get_mut(gone.own_stream()).unwrap().age_ms = Some(0);
+        observer.merge_marks(&replayed, &|_| true, expiry);
+        assert_eq!(
+            observer.tallies().streams,
+            1,
+            "a replayed beat brought it back"
+        );
+        assert_eq!(observer.marks()[gone.own_stream()].seq, 1);
+
+        // An event it wrote after the observer compacted it arrives through a relay.
+        let late = opened(&gone, "s2");
+        let report = observer.ingest(&[late], &accept_all);
+        assert_eq!((report.accepted, report.pending), (0, 0));
+        assert_eq!(observer.tallies().streams, 1, "a late event took a slot");
+        assert_eq!(
+            observer.marks()[gone.own_stream()].seq,
+            2,
+            "the tombstone covers it, so it is not offered again"
+        );
     }
 
     /// The scopes the fold property's claims are drawn from: some meet, some do not.
@@ -2734,10 +3151,24 @@ mod tests {
         out
     }
 
-    type Run = (usize, bool, u8);
+    /// One run of the fold property: its claim's scope, its mode and how it ended (see
+    /// [`history`]), then what it offers — a bit set, `1` a handover and `2` a review
+    /// request — and what it takes: `(1, k)` consumes run `k`'s handover, `(2, k)` answers
+    /// run `k`'s review, `(0, _)` neither. `k` counts over every run, dead and live; a run
+    /// takes nothing of its own, and nothing of a run that offered nothing.
+    type Run = (usize, bool, u8, u8, (u8, usize));
 
     fn runs(count: std::ops::Range<usize>) -> impl proptest::strategy::Strategy<Value = Vec<Run>> {
-        proptest::collection::vec((0usize..4, proptest::bool::ANY, 0u8..4), count)
+        proptest::collection::vec(
+            (
+                0usize..4,
+                proptest::bool::ANY,
+                0u8..4,
+                0u8..4,
+                (0u8..3, 0usize..64),
+            ),
+            count,
+        )
     }
 
     proptest::proptest! {
@@ -2746,9 +3177,11 @@ mod tests {
         /// Compacting a crowded node takes away the records of the streams it drops — every
         /// one of them long dead — and nothing else. The claims that hold or conflict, the
         /// sessions still open and the overlaps between them are the same before and after;
-        /// every record of a stream that stays is the same; and the digest moves exactly
-        /// when compaction forgets something that had been said, because the fold lists
-        /// ended sessions and claims too.
+        /// every record of a stream that stays is the same, a handover with every taker and a
+        /// review with every answer; a handover nobody has taken stays within its retention;
+        /// a dead stream stays only while it holds such a handover, or a taking or an answer
+        /// of something that stays; and the digest moves exactly when compaction forgets
+        /// something that had been said, because the fold lists ended sessions and claims too.
         #[test]
         fn compacting_a_crowded_node_changes_nothing_live(
             dead in runs(NODE_COMPACTION_STREAMS..MAX_STREAMS_PER_NODE - 8),
@@ -2764,37 +3197,93 @@ mod tests {
             let expiry = Duration::from_secs(30);
             let observer =
                 Journal::open(machine(), "0000000000000001", "repo".into(), None).unwrap();
-            let mut ended: BTreeSet<StreamId> = BTreeSet::new();
-            for &(scope, exclusive, ending) in &dead {
-                // Earlier runs of one sibling server: heard beating, then silent long ago.
-                let run =
-                    Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
-                run.beat_own();
-                observer.merge_marks(&run.marks(), &|_| true, expiry);
-                let ending = if dead_were_silent { 3 } else { ending };
-                observer.ingest(&history(&run, scope, exclusive, ending), &accept_all);
-                run.beat_own();
-                let mut stale = run.marks();
-                stale.get_mut(run.own_stream()).unwrap().age_ms = Some(10 * 60 * 1000);
-                observer.merge_marks(&stale, &|_| true, expiry);
-                ended.insert(run.own_stream().clone());
+            // Earlier runs of one sibling server, then the servers of the machine's other
+            // worktrees: every journal first, so that any run can take what another offers.
+            let runs: Vec<(Journal, bool, Run)> = dead
+                .iter()
+                .map(|&(scope, exclusive, ending, offers, takes)| {
+                    let run =
+                        Journal::open(machine(), "0000000000000002", "repo".into(), None).unwrap();
+                    let ending = if dead_were_silent { 3 } else { ending };
+                    (run, true, (scope, exclusive, ending, offers, takes))
+                })
+                .chain(live.iter().enumerate().map(|(slot, &run)| {
+                    let runtime = format!("{:016x}", 16 + slot);
+                    (Journal::open(machine(), &runtime, "repo".into(), None).unwrap(), false, run)
+                }))
+                .collect();
+            let mut handovers: Vec<Option<String>> = vec![None; runs.len()];
+            let mut reviews = vec![false; runs.len()];
+            for (i, (run, _, (scope, exclusive, ending, offers, _))) in runs.iter().enumerate() {
+                history(run, *scope, *exclusive, *ending);
+                if *ending == 3 {
+                    continue;
+                }
+                if offers & 1 == 1 {
+                    handovers[i] = Some(publish(run, &format!("run {i}")).1);
+                }
+                if offers & 2 == 2 {
+                    let asked = EventBody::ReviewRequested {
+                        review: "r1".into(),
+                        session: "s1".into(),
+                        subject: format!("run {i}"),
+                        scope: Vec::new(),
+                        issue: None,
+                        reviewer: None,
+                    };
+                    run.append_own(asked).unwrap();
+                    reviews[i] = true;
+                }
             }
-            for (slot, &(scope, exclusive, ending)) in live.iter().enumerate() {
-                // The servers of the machine's other worktrees, beating now.
-                let runtime = format!("{:016x}", 16 + slot);
-                let run = Journal::open(machine(), &runtime, "repo".into(), None).unwrap();
+            for (i, (run, _, (_, _, ending, _, (take, of)))) in runs.iter().enumerate() {
+                let of = of % runs.len();
+                if *ending == 3 || of == i {
+                    continue;
+                }
+                let body = match (*take, &handovers[of]) {
+                    (1, Some(id)) => EventBody::HandoverConsumed {
+                        handover: id.clone(),
+                        session: "s1".into(),
+                    },
+                    (2, _) if reviews[of] => EventBody::ReviewAnswered {
+                        request: format!("{}/r1", runs[of].0.own_stream()),
+                        session: "s1".into(),
+                        verdict: "approved".into(),
+                        note: None,
+                    },
+                    _ => continue,
+                };
+                // It heard of the offer before it took it, as a taker does.
+                run.ingest(&own_events(&runs[of].0), &accept_all);
+                run.append_own(body).unwrap();
+            }
+            let mut ended: BTreeSet<StreamId> = BTreeSet::new();
+            for (run, dead, _) in &runs {
                 run.beat_own();
-                observer.ingest(&history(&run, scope, exclusive, ending), &accept_all);
-                observer.merge_marks(&run.marks(), &|_| true, expiry);
+                if *dead {
+                    // Heard beating, then silent long ago.
+                    observer.merge_marks(&run.marks(), &|_| true, expiry);
+                    observer.ingest(&own_events(run), &accept_all);
+                    heard_long_ago(&observer, run, expiry);
+                    ended.insert(run.own_stream().clone());
+                } else {
+                    // Beating now.
+                    observer.ingest(&own_events(run), &accept_all);
+                    observer.merge_marks(&run.marks(), &|_| true, expiry);
+                }
             }
             let state = |j: &Journal| fold(&j.events(), &|s| j.liveness(s, expiry));
+            let held = |j: &Journal| j.stream_liveness(expiry).into_keys().collect::<BTreeSet<_>>();
             let before = state(&observer);
+            let held_before = held(&observer);
 
             // Unforced, and the journal is far under its own bounds: the node alone is due.
-            let dropped = observer.compact(expiry, Duration::ZERO, false);
+            let dropped = observer.compact(expiry, Duration::ZERO, HANDOVER_RETENTION, false);
             let after = state(&observer);
+            let gone: BTreeSet<StreamId> =
+                held_before.difference(&held(&observer)).cloned().collect();
 
-            proptest::prop_assert_eq!(observer.tallies().streams, 1 + live.len());
+            proptest::prop_assert!(gone.is_subset(&ended), "a stream that is not dead went");
             let alive = |s: &CooperationState| {
                 (
                     s.claims.iter().filter(|c| c.state.is_live()).cloned().collect::<Vec<_>>(),
@@ -2807,13 +3296,32 @@ mod tests {
                 )
             };
             proptest::prop_assert_eq!(alive(&before), alive(&after));
+            // A review, a taker and an answerer are keyed `<stream>/<local id>`.
+            let stream_of = |key: &str| key.split_once('/').map(|(s, _)| s.to_string());
+            let stays = |key: &str| !gone.iter().any(|g| stream_of(key).as_deref() == Some(g.as_str()));
             let kept = |s: &CooperationState| {
                 (
-                    s.sessions.iter().filter(|v| !ended.contains(&v.stream)).cloned().collect::<Vec<_>>(),
-                    s.claims.iter().filter(|c| !ended.contains(&c.stream)).cloned().collect::<Vec<_>>(),
+                    s.sessions.iter().filter(|v| !gone.contains(&v.stream)).cloned().collect::<Vec<_>>(),
+                    s.claims.iter().filter(|c| !gone.contains(&c.stream)).cloned().collect::<Vec<_>>(),
+                    s.handovers.iter().filter(|h| !gone.contains(&h.stream)).cloned().collect::<Vec<_>>(),
+                    s.reviews.iter().filter(|r| stays(&r.key)).cloned().collect::<Vec<_>>(),
                 )
             };
-            proptest::prop_assert_eq!(kept(&before), (after.sessions.clone(), after.claims.clone()));
+            proptest::prop_assert_eq!(
+                kept(&before),
+                (after.sessions.clone(), after.claims.clone(), after.handovers.clone(), after.reviews.clone())
+            );
+            proptest::prop_assert!(
+                before.handovers.iter().filter(|h| h.consumed_by.is_empty()).all(|h| !gone.contains(&h.stream)),
+                "a handover nobody has taken went within its retention"
+            );
+            for stream in ended.difference(&gone) {
+                let its = |key: &String| stream_of(key).as_deref() == Some(stream.as_str());
+                let pinned = after.handovers.iter().any(|h| {
+                    (h.stream == *stream && h.consumed_by.is_empty()) || h.consumed_by.iter().any(its)
+                }) || after.reviews.iter().any(|r| r.answers.iter().any(|a| its(&a.session)));
+                proptest::prop_assert!(pinned, "the dead stream {} stayed for nothing", stream);
+            }
             proptest::prop_assert_eq!(before.digest == after.digest, dropped == 0);
         }
     }
