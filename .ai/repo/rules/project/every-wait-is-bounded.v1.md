@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.execution-state-is-authoritative@1, project.never-reported-is-not-green@1]
 tags: [process, shell, orchestration]
+
+x-majordomus:
+  tests: [test/cases/121_liveness_doctrine.sh, test/cases/122_liveness_gate.sh]
 ---
 
 # Rationale
@@ -59,13 +62,24 @@ question "what did it say" survives the wait.
 
 # Failure behaviour
 
-Advisory today, and deliberately so: the mechanical half is a scan for the unbounded forms in
-this repository's own shell and CI, which does not exist yet. ADR 0039 records it as the
-follow-up that would make this rule blocking. Until then a violation is caught by review, and
-by the worker that gets stuck.
+The mechanical half exists and runs on every push. `scripts/liveness-check` — the CI gate
+`liveness-check` in the `structure` job — reads the tracked shell for two of the unbounded
+forms this rule forbids: a network call with no bound on how long it may block
+(`unbounded-network`) and a process put into the background whose completion nobody records
+(`unsupervised-spawn`). A finding that is not in `.ai/repo/liveness-baseline.txt` is a
+regression and fails the gate; the debt the baseline records is held flat rather than hidden.
+
+The rule stays advisory because the gate decides a subset of it, not the whole. It reads this
+repository's own tracked shell, so it says nothing about a wait a worker arranges at run time,
+and it recognises shapes rather than intent: a completion predicate over real state and a
+recovery path are not things a text scan can see. Where the gate is silent, review decides,
+and so does the worker that gets stuck.
 
 # Verification
 
-Review. Once the follow-up gate exists, the scan over `scripts/`, `test/` and
-`.github/workflows/` for a spawn with no completion condition and a blocking command with no
-timeout is what decides this rule.
+`scripts/liveness-check`, proved by `test/cases/122_liveness_gate.sh`, which mutates a fixture
+until the gate reports the regression and checks that it stays quiet about baselined debt and
+about prose that merely mentions a blocking command. `test/cases/121_liveness_doctrine.sh`
+proves this rule object itself against the checkout: its identity, its front matter, the
+enforcement block above and the dependencies it names. Beyond the two shapes the gate reads,
+review.

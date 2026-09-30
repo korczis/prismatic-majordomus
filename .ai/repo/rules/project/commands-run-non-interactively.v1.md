@@ -71,4 +71,9 @@ a keypress but whose name is not on the list, and a command a person runs by han
 
 # Verification
 
-`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there.
+`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there. One
+shape is also read on every push by `scripts/liveness-check` — the CI gate `liveness-check` in
+the `structure` job — as `pager-blocks`: a `git log`, `diff`, `show` or `blame` that writes
+straight to a terminal and so pages on a keypress an agent never sends. That gate is proved by
+`test/cases/122_liveness_gate.sh`, and `test/cases/121_liveness_doctrine.sh` proves this rule
+object itself and that it names the gate back.
