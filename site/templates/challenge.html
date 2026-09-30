@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{#- /challenge/ — the page to send somebody who has never heard of Majordomus.
+
+    The words are site/data/challenge.toml's. Everything shown happening is the recorded run in
+    site/data/generated/challenge.json: the scenario, its steps, the claims each comparison row
+    stands on, the file that defines the scenario and the fixture that prepares it. This
+    template names none of them. -#}
+{% block title %}{{ page.title }} — {{ project.name }}{% endblock title %}
+{% block ogtitle %}{{ page.title }} — {{ project.name }}{% endblock ogtitle %}
+{% block description %}{{ page.description }}{% endblock description %}
+{% block ogdescription %}{{ page.description }}{% endblock ogdescription %}
+{% block content %}
+{%- set ch = load_data(path="data/generated/challenge.json") -%}
+{%- set cw = load_data(path="data/challenge.toml") -%}
+{%- set dist = load_data(path="data/registry/distribution.json") -%}
+{%- set repo = "https://github.com/" ~ dist.repository -%}
+{%- set base = config.base_url | trim_end(pat="/") -%}
+<section id="challenge" class="border-b border-default bg-neutral-primary" data-challenge="{{ ch.use_case.id }}">
+  <div class="mx-auto grid max-w-screen-xl gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:px-8">
+    <div class="min-w-0">
+      <p class="font-mono text-xs uppercase tracking-widest text-fg-brand">{{ cw.page.kicker }}</p>
+      <h1 class="mt-3 text-3xl font-extrabold tracking-tight text-heading sm:text-4xl lg:text-5xl">{{ cw.page.title }}</h1>
+      <p class="mt-5 text-lg leading-relaxed text-body">{{ cw.page.lead }}</p>
+      <p class="mt-5 text-base leading-relaxed text-body">{{ cw.page.problem }}</p>
+      <dl class="mt-6 grid grid-cols-1 gap-3 border-t border-default pt-4 sm:grid-cols-3">
+        <div class="min-w-0"><dt class="text-xs text-body">recorded steps</dt><dd class="font-mono text-2xl font-bold text-heading">{{ ch.counts.steps }}</dd></div>
+        <div class="min-w-0"><dt class="text-xs text-body">refusals</dt><dd class="font-mono text-2xl font-bold text-fg-danger-strong">{{ ch.counts.refusals }}</dd></div>
+        <div class="min-w-0"><dt class="text-xs text-body">guarantees exercised</dt><dd class="font-mono text-2xl font-bold text-heading">{{ ch.exercised | length }}</dd></div>
+      </dl>
+      <div class="mt-7 flex flex-col gap-3 sm:flex-row">
+        <a href="#reproduce" class="inline-flex items-center justify-center rounded-base bg-brand px-5 py-3 text-sm font-medium text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium" data-cta="reproduce">{{ cw.page.reproduce_title }}</a>
+        <a href="#inspect" class="inline-flex items-center justify-center rounded-base border border-default bg-neutral-primary-soft px-5 py-3 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary">{{ cw.page.inspect_title }}</a>
+      </div>
+    </div>
+    <div class="min-w-0">
+      <h2 class="mb-1 text-lg font-semibold text-heading">{{ cw.page.replay_title }}</h2>
+      <p class="mb-4 text-sm text-body">{{ cw.page.replay_lead }}</p>
+      {%- set rp_id = "challenge-replay" -%}
+      {% include "partials/challenge-replay.html" %}
+    </div>
+  </div>
+</section>
+
+<section id="compare" class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ cw.page.compare_title }}</h2>
+    <p class="mt-3 max-w-3xl text-body">{{ cw.page.compare_lead }}</p>
+    <div class="mt-6 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[40rem] text-left text-sm">
+        <thead class="bg-neutral-secondary-soft text-xs uppercase tracking-wide text-body-subtle">
+          <tr><th scope="col" class="px-4 py-3">Without a control plane</th><th scope="col" class="px-4 py-3">With Majordomus</th><th scope="col" class="px-4 py-3">Held by</th></tr>
+        </thead>
+        <tbody class="divide-y divide-default bg-neutral-primary">
+          {%- for row in cw.compare %}
+          {%- set c = ch.claims[loop.index0] %}
+          <tr>
+            <td class="px-4 py-3 align-top text-body">{{ row.without }}</td>
+            <td class="px-4 py-3 align-top font-medium text-heading">{{ row.with }}</td>
+            <td class="px-4 py-3 align-top">
+              <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="font-mono text-xs text-fg-brand hover:underline">{{ c.id }}</a>
+              <span class="ms-1 rounded bg-success-soft px-1 font-mono text-xs text-fg-success-strong">{{ c.status }}</span>
+              {%- if c.test %}<br><a href="{{ repo }}/blob/master/{{ c.test }}" class="font-mono text-xs text-body hover:underline">{{ c.test }}</a>{% endif %}
+            </td>
+          </tr>
+          {%- endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="reproduce" class="border-b border-default bg-neutral-primary">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ cw.page.reproduce_title }}</h2>
+    <p class="mt-3 max-w-3xl text-body">{{ cw.page.reproduce_lead }}</p>
+    <ol class="mt-6 grid gap-4 lg:grid-cols-3">
+      <li class="min-w-0">{% <code label="install the tool" wrap={true}> %}{{ ch.install_command }}{% </code> %}</li>
+      <li class="min-w-0">{% <code label="get the scenario" wrap={true}> %}git clone {{ repo }}.git && cd {{ dist.repository | split(pat="/") | last }}{% </code> %}</li>
+      <li class="min-w-0">{% <code label="replay it" wrap={true}> %}{{ ch.reproduce }}{% </code> %}</li>
+    </ol>
+    <p class="mt-4 text-sm"><a href="{{ get_url(path='/getting-started/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">Then put it on your own repository &rarr;</a></p>
+  </div>
+</section>
+
+<section id="inspect" class="bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+    <h2 class="text-2xl font-bold tracking-tight text-heading sm:text-3xl">{{ cw.page.inspect_title }}</h2>
+    <p class="mt-3 max-w-3xl text-body">{{ cw.page.inspect_lead }}</p>
+    <div class="mt-6 grid gap-6 lg:grid-cols-2">
+      <ul class="space-y-3 text-sm">
+        <li class="min-w-0"><span class="block text-xs text-body-subtle">the scenario, as a file</span><a href="{{ repo }}/blob/master/{{ ch.use_case.source }}" class="break-all font-mono text-fg-brand hover:underline">{{ ch.use_case.source }}</a></li>
+        <li class="min-w-0"><span class="block text-xs text-body-subtle">the repository it runs in, prepared</span><a href="{{ repo }}/blob/master/{{ ch.use_case.setup_source }}" class="break-all font-mono text-fg-brand hover:underline">{{ ch.use_case.setup_source }}</a></li>
+        <li class="min-w-0"><span class="block text-xs text-body-subtle">the runner that executes and records it</span><a href="{{ repo }}/blob/master/lib/usecase.sh" class="break-all font-mono text-fg-brand hover:underline">lib/usecase.sh</a></li>
+        <li class="min-w-0"><span class="block text-xs text-body-subtle">the same run, with every assertion</span><a href="{{ base }}{{ ch.use_case.route }}" class="font-medium text-fg-brand hover:underline">{{ ch.use_case.title }} &rarr;</a></li>
+        <li class="min-w-0"><span class="block text-xs text-body-subtle">every claim and the test that settles it</span><a href="{{ get_url(path='/evidence/', trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">The evidence graph &rarr;</a></li>
+      </ul>
+      <div class="min-w-0">
+        <h3 class="text-sm font-semibold text-heading">Guarantees this run exercises</h3>
+        <ul class="mt-3 divide-y divide-default rounded-base border border-default bg-neutral-primary">
+          {%- for c in ch.exercised %}
+          <li class="min-w-0 px-4 py-3 text-sm">
+            <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="font-mono text-xs text-fg-brand hover:underline">{{ c.id }}</a>
+            <p class="mt-1 text-body">{{ c.claim }}</p>
+            <p class="mt-1 break-all font-mono text-xs text-body-subtle">{{ c.implementation }} &middot; {{ c.test }}</p>
+          </li>
+          {%- endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock content %}
