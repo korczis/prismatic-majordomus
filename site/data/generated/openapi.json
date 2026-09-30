@@ -15327,7 +15327,7 @@
       "variants": []
     },
     {
-      "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```",
+      "description": "The continuous-integration run an execution was recorded in: enough to navigate back to\nthe run that produced it.\n\n`Origin` says what kind of run it was and deliberately names no provider. This names the\none run, in the words the provider addressed it with when it happened — its identifier,\nits attempt, the workflow and job, and the address a reader follows — because a link built\nlater from a template would point wherever the template's idea of the provider had drifted\nto. Only an adapter constructs it; nothing in the model reads the provider's name.\n\n```\nuse majordomus_cli::evidence::RunRef;\n\nlet actions = |k: &str| {\n    let v = match k {\n        \"GITHUB_ACTIONS\" => \"true\",\n        \"GITHUB_SERVER_URL\" => \"https://github.com\",\n        \"GITHUB_REPOSITORY\" => \"owner/repo\",\n        \"GITHUB_RUN_ID\" => \"42\",\n        \"GITHUB_RUN_ATTEMPT\" => \"2\",\n        \"GITHUB_WORKFLOW\" => \"validate\",\n        \"GITHUB_JOB\" => \"evidence\",\n        _ => return None,\n    };\n    Some(v.to_string())\n};\nlet run = RunRef::from_env(actions).unwrap();\nassert_eq!(run.id, \"42\");\nassert_eq!(run.attempt, 2);\nassert_eq!(run.url, \"https://github.com/owner/repo/actions/runs/42/attempts/2\");\n// a run that names neither its pull request's head nor its event still names itself\nassert_eq!((run.head_sha, run.event), (None, None));\n\nlet head = \"0123456789abcdef0123456789abcdef01234567\";\nlet pull = |k: &str| match k {\n    \"MJ_RUN_HEAD_SHA\" => Some(head.to_string()),\n    \"GITHUB_EVENT_NAME\" => Some(\"pull_request\".to_string()),\n    _ => actions(k),\n};\nlet run = RunRef::from_env(pull).unwrap();\nassert_eq!(run.head_sha.as_deref(), Some(head));\nassert_eq!(run.event.as_deref(), Some(\"pull_request\"));\n\n// outside a run there is nothing to name, and a half-described run is not a run\nassert!(RunRef::from_env(|_| None).is_none());\nassert!(RunRef::from_env(|k| (k == \"GITHUB_ACTIONS\").then(|| \"true\".to_string())).is_none());\n```",
       "home": "shared",
       "is_enum": false,
       "name": "EvidenceRun",
@@ -15373,6 +15373,20 @@
           "refs": [],
           "required": true,
           "type": "string"
+        },
+        {
+          "description": "The pull request's head commit when the run was a pull-request run (its `commit` is\nGitHub's merge commit, the tree that ran). Carried beside the commit, never\nsubstituted for it.",
+          "name": "head_sha",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The event that started the run: `push`, `pull_request`, `schedule`,\n`workflow_dispatch`.",
+          "name": "event",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
         }
       ],
       "type": "object",

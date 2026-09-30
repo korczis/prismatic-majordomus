@@ -14,7 +14,7 @@ modules: [evidence]
 commands: [evidence]
 docs: [docs/EVIDENCE.md]
 adrs: [adr-0041]
-claims: [evidence-proof-is-an-execution, evidence-currency-is-not-collapsed, evidence-partial-run-preserves-the-rest, evidence-navigates-both-ways, evidence-unsupported-guarantee-is-reported, evidence-judged-at-the-presented-revision, evidence-a-skip-is-not-run, evidence-a-failure-outranks-an-absence, evidence-a-crate-binary-that-ran-nothing-is-not-a-pass]
+claims: [evidence-proof-is-an-execution, evidence-currency-is-not-collapsed, evidence-partial-run-preserves-the-rest, evidence-navigates-both-ways, evidence-unsupported-guarantee-is-reported, evidence-judged-at-the-presented-revision, evidence-a-skip-is-not-run, evidence-a-failure-outranks-an-absence, evidence-a-crate-binary-that-ran-nothing-is-not-a-pass, evidence-tree-is-measured-by-the-run, evidence-a-recording-is-a-typed-run, evidence-local-recording-stays-local]
 related: [benchmarks, ci, declare-once]
 tags: [evidence, claims, tests, verification, provenance]
 ---

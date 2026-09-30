@@ -5,9 +5,9 @@
 //! `cargo test` prints a `Running <binary>` line and a `test result:` line per test binary.
 //! Neither is durable, neither carries a commit, and neither is joined to anything.
 //!
-//! This module reads what those runs wrote, stamps each result with the provenance the run
-//! itself did not record (which commit, which tree, which digest, when, from where) and
-//! merges it into the ledger.
+//! This module reads what those runs wrote, carries into each result what the run measured
+//! about its own checkout (which commit, which tree) with the digest, the time and the
+//! origin, and merges it into the ledger.
 //!
 //! # It records, it does not decide
 //!
@@ -28,13 +28,20 @@
 //! own unit-test binary and its doctests, is listed in [`RecordOutcome::dropped`] rather
 //! than ignored.
 //!
-//! # Why the commit is taken here rather than by the runner
+//! # The run measures; the recorder carries
 //!
-//! Because the runner is a shell script that runs in a disposable temporary repository and
-//! genuinely does not know which checkout it was invoked from. Taking the commit at record
-//! time is taking it from the tree the run was made against, which is the same thing,
-//! provided the recording happens in that tree. A dirty tree is recorded as dirty for
-//! exactly this reason: it is the one case where the commit does not describe what ran.
+//! The recorder does not measure its own checkout. A run measures the checkout it left with
+//! `majordomus evidence stamp` ([`super::provenance::stamp`]): the commit, and the tree with
+//! the evidence ledger ignored and the run's own untracked outputs excluded. The recorder
+//! carries that measurement into every execution of the report it names, and refuses one of
+//! another commit or of other bytes. A report recorded without a measurement carries the
+//! tree `unknown`: the recorder does not vouch for a tree it did not see, and such a row
+//! never reads `proven`. When the measured tree was clean, the digest is taken from the
+//! commit, which holds the bytes the run executed.
+//!
+//! A stamp measures the checkout when it is taken, after the report was written, and not
+//! the tree while the run executed: a run on a dirty tree that is cleaned before the stamp
+//! reads clean.
 //!
 //! # A run, recorded
 //!
@@ -42,7 +49,9 @@
 //! of joining the two:
 //!
 //! ```
-//! use majordomus_cli::evidence::{record, Ledger, Origin, Outcome, RecordRequest};
+//! use majordomus_cli::evidence::{
+//!     record, stamp, EvidenceProducer, Ledger, Origin, Outcome, RecordRequest, StampRequest,
+//! };
 //! use std::process::Command;
 //!
 //! let root = tempfile::tempdir().unwrap();
@@ -63,15 +72,21 @@
 //! let tsv = reports.path().join("run.tsv");
 //! std::fs::write(&tsv, "07_scope\tok\t12\tparallel\n").unwrap();
 //!
-//! let outcome = record(
-//!     root.path(),
-//!     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Ci, run: None },
-//! )
-//! .unwrap();
+//! // the run measures its own checkout, naming its report
+//! let stamp_req = StampRequest {
+//!     producer: Some(EvidenceProducer::Suite),
+//!     report: Some(tsv.clone()),
+//!     ..StampRequest::default()
+//! };
+//! let measured = stamp(root.path(), &stamp_req).unwrap();
+//!
+//! let mut request = RecordRequest { suite: Some(tsv), ..RecordRequest::new(Origin::Ci) };
+//! request.provenance.insert(EvidenceProducer::Suite, measured);
+//! let outcome = record(root.path(), &request).unwrap();
 //! assert_eq!(outcome.recorded, 1);
 //! assert_eq!(outcome.passed, 1);
-//! assert_eq!(outcome.commit.len(), 40, "the provenance the run did not record itself");
-//! assert_eq!(outcome.working_tree, "clean");
+//! assert_eq!(outcome.commit.len(), 40);
+//! assert_eq!(outcome.working_tree, "clean", "the tree the run's own measurement stated");
 //!
 //! // and it is in the ledger, stamped, with the command that produces it again
 //! let ledger = Ledger::load(root.path()).unwrap();
@@ -95,9 +110,17 @@
 //! assert_eq!(got[0].1, Outcome::Pass);
 //! ```
 
+use std::collections::BTreeMap;
 use std::path::Path;
 
-use super::run::{EvidenceDropped, EvidenceProducer};
+use super::coverage::{CommitId, EvidenceCoverage, EvidenceCoverageFloors};
+use super::freshness::TreeState;
+use super::ledger::{LedgerTarget, LEDGER_PATH, LOCAL_LEDGER_PATH};
+use super::provenance::EvidenceProvenance;
+use super::run::{
+    run_id, EvidenceAbsent, EvidenceDropped, EvidenceProducer, EvidenceRunRecord,
+    EvidenceRunTotals, RUN_RECORD_SCHEMA,
+};
 use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use crate::error::{Error, Result};
 
@@ -120,17 +143,13 @@ const UNATTRIBUTED: &str = "no Running line named the binary it belongs to";
 /// ```
 /// use majordomus_cli::evidence::{record, Origin, RecordRequest};
 ///
-/// let nothing = RecordRequest { suite: None, crate_output: None, origin: Origin::Local, run: None };
+/// let nothing = RecordRequest::default();
 /// let root = tempfile::tempdir().unwrap();
 /// let refused = record(root.path(), &nothing).unwrap_err().to_string();
 /// assert!(refused.contains("nothing to record"), "{refused}");
 ///
-/// let suite_run = RecordRequest {
-///     suite: Some("tmp/run.tsv".into()),
-///     crate_output: None,
-///     origin: Origin::Ci,
-///     run: None,
-/// };
+/// let suite_run =
+///     RecordRequest { suite: Some("tmp/run.tsv".into()), ..RecordRequest::new(Origin::Ci) };
 /// assert_eq!(suite_run.origin, Origin::Ci);
 /// assert_eq!(suite_run.suite.as_deref(), Some(std::path::Path::new("tmp/run.tsv")));
 /// ```
@@ -139,7 +158,7 @@ const UNATTRIBUTED: &str = "no Running line named the binary it belongs to";
 ///
 /// ```
 /// use majordomus_cli::evidence::{Origin, RecordRequest};
-/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci, run: None };
+/// let r = RecordRequest::new(Origin::Ci);
 /// assert_eq!(r.origin, Origin::Ci);
 /// ```
 pub struct RecordRequest {
@@ -151,6 +170,46 @@ pub struct RecordRequest {
     pub origin: Origin,
     /// The continuous-integration run to stamp every execution with, when there is one.
     pub run: Option<super::RunRef>,
+    /// What each report's run measured about its checkout, by producer: values, not paths,
+    /// so a runner can pass the measurement it just took.
+    pub provenance: BTreeMap<EvidenceProducer, EvidenceProvenance>,
+    /// A coverage summary (`scripts/rust-coverage --summary-json`), when one is recorded.
+    pub coverage: Option<std::path::PathBuf>,
+    /// The ledger the executions are merged into.
+    pub ledger: LedgerTarget,
+    /// Where to write the run record as well, when asked.
+    pub run_record: Option<std::path::PathBuf>,
+}
+
+impl Default for RecordRequest {
+    /// A local recording of nothing into the tracked ledger.
+    fn default() -> RecordRequest {
+        RecordRequest::new(Origin::Local)
+    }
+}
+
+impl RecordRequest {
+    /// A recording of nothing yet, from `origin`, into the tracked ledger: the base every
+    /// request is built on, so that a field added later breaks no caller.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::{LedgerTarget, Origin, RecordRequest};
+    /// let r = RecordRequest { suite: Some("run.tsv".into()), ..RecordRequest::new(Origin::Ci) };
+    /// assert_eq!((r.origin, r.ledger), (Origin::Ci, LedgerTarget::Repo));
+    /// assert!(r.provenance.is_empty() && r.coverage.is_none() && r.run_record.is_none());
+    /// ```
+    pub fn new(origin: Origin) -> RecordRequest {
+        RecordRequest {
+            suite: None,
+            crate_output: None,
+            origin,
+            run: None,
+            provenance: BTreeMap::new(),
+            coverage: None,
+            ledger: LedgerTarget::Repo,
+            run_record: None,
+        }
+    }
 }
 
 /// What a recording did: how much of the run reached the ledger, how much of it passed,
@@ -184,16 +243,17 @@ pub struct RecordRequest {
 ///
 /// let outcome: RecordOutcome = record(
 ///     root.path(),
-///     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Local, run: None },
+///     &RecordRequest { suite: Some(tsv), crate_output: None, ..RecordRequest::new(Origin::Local) },
 /// )
 /// .unwrap();
 /// assert_eq!(outcome.recorded, 1, "only the case this repository actually has");
 /// assert_eq!(outcome.passed, 1);
-/// assert_eq!(outcome.working_tree, "clean");
+/// assert_eq!(outcome.working_tree, "unknown", "no measurement came with the report");
+/// assert_eq!(outcome.run_record.unknown, outcome.unknown);
 /// assert_eq!(outcome.unknown, ["suite:99_ghost"], "named here, recorded for nobody");
 /// assert!(Ledger::load(root.path()).unwrap().latest("suite:99_ghost").is_none());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 /// # Example
 ///
 /// A crate run's recording: the integration binary a claim can name is recorded, and the
@@ -229,7 +289,7 @@ pub struct RecordRequest {
 /// .unwrap();
 ///
 /// let request =
-///     RecordRequest { suite: None, crate_output: Some(log), origin: Origin::Local, run: None };
+///     RecordRequest { suite: None, crate_output: Some(log), ..RecordRequest::new(Origin::Local) };
 /// let outcome: RecordOutcome = record(root.path(), &request).unwrap();
 /// assert_eq!((outcome.recorded, outcome.passed), (1, 1), "the binary under tests/");
 /// assert_eq!(outcome.dropped.len(), 1, "the doctests, listed");
@@ -243,8 +303,8 @@ pub struct RecordOutcome {
     pub passed: usize,
     /// The commit they were recorded against.
     pub commit: String,
-    /// The tree's state at the time: `clean`, `dirty` or `unknown`. The ledger's own
-    /// pending change is not what makes it dirty — see [`record`].
+    /// The weakest tree the reports' own measurements stated: `clean`, `dirty`, or
+    /// `unknown` when a report came without one. Read from [`RecordOutcome::run_record`].
     pub working_tree: String,
     /// Reports the run named that no runner in this repository owns; recorded for nobody
     /// and named here rather than dropped.
@@ -252,15 +312,17 @@ pub struct RecordOutcome {
     /// What the reports held that no claim can name yet, in the order the reports held it:
     /// the crate's own unit-test binary, its doctests, a binary outside `tests/`, a result
     /// line no binary owned. Listed rather than ignored, so a run is never silently smaller
-    /// than it was.
+    /// than it was. The same list as the run record's.
     pub dropped: Vec<EvidenceDropped>,
+    /// The recording as a typed run.
+    pub run_record: EvidenceRunRecord,
 }
 
 /// The instant, RFC 3339, UTC, to whole seconds.
 ///
 /// Written out rather than taken from a date crate: the crate has no time dependency, and
 /// one timestamp does not justify one. This is the civil-date algorithm, which is exact.
-fn now_rfc3339() -> String {
+pub(crate) fn now_rfc3339() -> String {
     let secs = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
@@ -634,9 +696,15 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 /// Read the runs a request names, stamp each result with provenance, and merge into the
 /// ledger of `root`.
 ///
-/// It decides nothing: a case that failed is a case the runner said failed. It refuses
-/// three things — a request naming no run at all, a tree with no commit to stamp, and a
-/// malformed report, which is refused rather than partly read.
+/// It decides nothing: a case that failed is a case the runner said failed. Every refusal
+/// comes before any write: a request naming no report, a tree with no commit, a
+/// measurement of a report not given, of another producer, of another commit or of other
+/// bytes, a local or release measurement that names no report, a CI report without a
+/// measurement, a malformed report (refused rather than partly read), a coverage summary
+/// of another schema, and a run-record path that is a directory or a ledger.
+///
+/// Each execution carries its report's measured tree, or `unknown` without one, and the
+/// recording is returned as an [`EvidenceRunRecord`] in [`RecordOutcome::run_record`].
 ///
 /// Because it merges, a later partial run updates only what it ran:
 ///
@@ -660,7 +728,7 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 /// let suite = |name: &str, rows: &str| {
 ///     let p = reports.path().join(name);
 ///     std::fs::write(&p, rows).unwrap();
-///     RecordRequest { suite: Some(p), crate_output: None, origin: Origin::Local, run: None }
+///     RecordRequest { suite: Some(p), crate_output: None, ..RecordRequest::new(Origin::Local) }
 /// };
 ///
 /// let both = suite("all.tsv", "07_scope\tok\t1\tparallel\n08_other\tok\t2\tparallel\n");
@@ -684,41 +752,97 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 /// assert!(refused.contains("field(s)"), "{refused}");
 /// ```
 pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
-    if req.suite.is_none() && req.crate_output.is_none() {
-        return Err(Error::InvalidSurface {
-            surface: "evidence".into(),
-            reason: "nothing to record: give --suite, --crate-output, or both".into(),
-        });
+    use EvidenceProducer as P;
+    if req.suite.is_none() && req.crate_output.is_none() && req.coverage.is_none() {
+        return Err(refused(
+            "nothing to record: give --suite, --crate-output, --coverage or several",
+        ));
     }
 
-    let git = crate::git::inspect(root);
-    // The ledger is evidence *about* the tree, not part of what any test measures, so an
-    // earlier recording's own row is not what makes this tree dirty. Without the exclusion
-    // the second recording in a session would be stamped `dirty` by the first one's
-    // bookkeeping, and — since a dirty run can never derive `proven` — a repository that
-    // records twice could never prove anything again.
-    let (commit, working_tree) = match &git {
-        crate::git::GitState::Available(i) => (
-            i.head.clone().unwrap_or_else(|| "unknown".into()),
-            crate::git::working_tree_ignoring(root, &[super::LEDGER_PATH]),
-        ),
-        crate::git::GitState::Unavailable { .. } => ("unknown".into(), "unknown".into()),
-    };
-    if commit == "unknown" {
-        return Err(Error::InvalidSurface {
-            surface: "evidence".into(),
-            reason: "this is not a git work tree with a commit, so a run recorded here would \
-                     carry no provenance and prove nothing"
-                .into(),
-        });
+    let commit = match crate::git::inspect(root) {
+        crate::git::GitState::Available(i) => i.head,
+        crate::git::GitState::Unavailable { .. } => None,
     }
-    let at = now_rfc3339();
+    .ok_or_else(|| {
+        refused(
+            "this is not a git work tree with a commit, so a run recorded here would carry no \
+             provenance and prove nothing",
+        )
+    })?;
+
+    let report_of = |p: EvidenceProducer| match p {
+        P::Suite => req.suite.as_deref(),
+        P::Crate => req.crate_output.as_deref(),
+        P::Coverage => req.coverage.as_deref(),
+    };
+    for (&p, prov) in &req.provenance {
+        let w = p.as_str();
+        if report_of(p).is_none() {
+            return Err(refused(format!(
+                "a measurement of the {w} report was given, and no {w} report"
+            )));
+        }
+        if let Some(x) = prov.producer.filter(|x| *x != p) {
+            return Err(refused(format!(
+                "the {w} measurement measures the {} report, not the {w} one",
+                x.as_str()
+            )));
+        }
+        if CommitId::parse(&prov.commit).is_err() || prov.commit != commit {
+            return Err(refused(format!(
+                "the {w} report was measured at {}, and this checkout is at {}: record it in a \
+                 checkout of the commit it ran",
+                short12(&prov.commit),
+                short12(&commit)
+            )));
+        }
+        if req.origin != Origin::Ci && prov.report.is_none() {
+            return Err(refused(format!(
+                "the {w} measurement names no report, so it cannot say which run it measured: \
+                 stamp with --report <file>"
+            )));
+        }
+    }
+    if req.origin == Origin::Ci {
+        for p in [P::Suite, P::Crate] {
+            if report_of(p).is_some() && !req.provenance.contains_key(&p) {
+                return Err(refused(format!(
+                    "a CI report is recorded only with the measurement its own run made: give \
+                     --provenance {}=<file> from `majordomus evidence stamp`",
+                    p.as_str()
+                )));
+            }
+        }
+    }
+    // the bytes a report holds, refused when its measurement describes other bytes
+    let read_report = |p: EvidenceProducer, path: &Path| -> Result<Vec<u8>> {
+        let bytes = std::fs::read(path).map_err(Error::Transport)?;
+        if let Some(artifact) = req.provenance.get(&p).and_then(|m| m.report.as_ref()) {
+            let actual = digest_of(&bytes);
+            if artifact.digest != actual {
+                return Err(refused(format!(
+                    "the measurement describes another report ({} ≠ {})",
+                    short12(artifact.digest.trim_start_matches("sha256:")),
+                    short12(actual.trim_start_matches("sha256:"))
+                )));
+            }
+        }
+        Ok(bytes)
+    };
+    let tree_of = |p: EvidenceProducer| {
+        req.provenance
+            .get(&p)
+            .map_or(TreeState::Unknown, |m| m.working_tree)
+    };
 
     let mut results: Vec<(TestId, Outcome, u64)> = Vec::new();
     let mut unknown = Vec::new();
+    let mut absent = Vec::new();
 
     if let Some(p) = &req.suite {
-        let text = std::fs::read_to_string(p).map_err(Error::Transport)?;
+        let bytes = read_report(P::Suite, p)?;
+        let text = String::from_utf8_lossy(&bytes);
+        let before = results.len();
         for (name, outcome, seconds) in parse_suite(&text)? {
             // the runner names a case by its stem, which is exactly the suite test id
             let id = TestId {
@@ -731,12 +855,26 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
                 unknown.push(format!("suite:{name}"));
             }
         }
+        if results.len() == before {
+            absent.push(absence(
+                P::Suite,
+                "the report named no test this repository has",
+            ));
+        }
+    } else {
+        absent.push(absence(P::Suite, "no suite report was given"));
     }
 
     let mut dropped = Vec::new();
     if let Some(p) = &req.crate_output {
-        let text = std::fs::read_to_string(p).map_err(Error::Transport)?;
-        let read = read_crate_output(&text);
+        let bytes = read_report(P::Crate, p)?;
+        let read = read_crate_output(&String::from_utf8_lossy(&bytes));
+        if read.binaries.is_empty() {
+            absent.push(absence(
+                P::Crate,
+                "the output named no integration test binary",
+            ));
+        }
         for binary in read.binaries {
             let id = TestId {
                 runner: Runner::Crate,
@@ -750,18 +888,57 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         }
         // what the output held that no claim can name yet, in the order it held it
         dropped = read.dropped;
+    } else {
+        absent.push(absence(P::Crate, "no crate report was given"));
     }
 
+    let coverage = match &req.coverage {
+        Some(p) => {
+            let bytes = read_report(P::Coverage, p)?;
+            let id = CommitId::parse(&commit).map_err(refused)?;
+            let floors = EvidenceCoverageFloors::read(root);
+            let text = String::from_utf8_lossy(&bytes);
+            let cov = EvidenceCoverage::from_summary(&text, id, tree_of(P::Coverage), floors)
+                .map_err(|e| refused(format!("{}: {e}", p.display())))?;
+            Some(cov)
+        }
+        None => {
+            absent.push(absence(P::Coverage, "no coverage report was given"));
+            None
+        }
+    };
+
+    if let Some(out) = &req.run_record {
+        let is_ledger = [LEDGER_PATH, LOCAL_LEDGER_PATH].iter().any(|l| {
+            let ledger = root.join(l);
+            out == &ledger
+                || matches!(
+                    (std::fs::canonicalize(out), std::fs::canonicalize(&ledger)),
+                    (Ok(a), Ok(b)) if a == b
+                )
+        });
+        if out.as_os_str().is_empty() || out.is_dir() || is_ledger {
+            return Err(refused(format!(
+                "`{}` cannot hold a run record: it is empty, a directory or a ledger",
+                out.display()
+            )));
+        }
+    }
+
+    let at = now_rfc3339();
     let mut executions = Vec::with_capacity(results.len());
     let mut passed = 0;
     for (id, outcome, seconds) in results {
         if outcome.proves() {
             passed += 1;
         }
+        let producer = match id.runner {
+            Runner::Suite => P::Suite,
+            Runner::Crate => P::Crate,
+        };
+        let tree = tree_of(producer);
         let source = id.source();
-        let digest = std::fs::read(root.join(&source))
-            .map(|b| digest_of(&b))
-            .unwrap_or_else(|_| "sha256:unreadable".into());
+        let digest = digest_ran(root, &commit, &source, tree);
         executions.push(Execution {
             test: id.as_string(),
             runner: id.runner,
@@ -769,7 +946,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             outcome,
             seconds,
             commit: commit.clone(),
-            working_tree: working_tree.clone(),
+            working_tree: tree.as_str().into(),
             digest,
             at: at.clone(),
             origin: req.origin,
@@ -778,27 +955,107 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         });
     }
 
-    let mut ledger = Ledger::load(root)?;
-    let recorded = ledger.merge(executions);
+    let mut ledger = Ledger::load_from(root, req.ledger)?;
+    let recorded = ledger.merge(executions.clone());
     // A run that recorded nothing writes nothing. Saving here would create a ledger
     // holding no executions out of a report that named only tests this repository does
     // not have — a file that says "evidence was recorded" where none was. The malformed
     // report above is refused before any write for the same reason, and the two paths
     // must not disagree about what an empty recording leaves behind.
     if recorded > 0 {
-        ledger.save(root)?;
+        ledger.save_to(root, req.ledger)?;
     }
 
     crate::order::canonical_strings(&mut unknown);
     unknown.dedup();
+    let given = [P::Suite, P::Crate, P::Coverage]
+        .into_iter()
+        .filter(|p| report_of(*p).is_some());
+    let working_tree = given.fold(TreeState::Clean, |t, p| t.weaker(tree_of(p)));
+    let run_record = EvidenceRunRecord {
+        schema: RUN_RECORD_SCHEMA,
+        id: run_id(req.origin, req.run.as_ref(), &commit, &at),
+        origin: req.origin,
+        commit: commit.clone(),
+        working_tree,
+        recorded_at: at,
+        ledger: req.ledger,
+        run: req.run.clone(),
+        provenance: req.provenance.values().cloned().collect(),
+        totals: EvidenceRunTotals::of(&executions),
+        absent,
+        dropped,
+        unknown,
+        coverage,
+        executions,
+    };
+
+    if let Some(out) = &req.run_record {
+        write_run_record(out, &run_record).map_err(|e| {
+            refused(format!(
+                "the executions were recorded into {}, and the run record could not be \
+                 written to {}: {e}",
+                req.ledger.path(),
+                out.display()
+            ))
+        })?;
+    }
+
     Ok(RecordOutcome {
         recorded,
         passed,
         commit,
-        working_tree,
-        unknown,
-        dropped,
+        working_tree: run_record.working_tree.as_str().to_string(),
+        unknown: run_record.unknown.clone(),
+        dropped: run_record.dropped.clone(),
+        run_record,
     })
+}
+
+fn refused(reason: impl Into<String>) -> Error {
+    Error::InvalidSurface {
+        surface: "evidence".into(),
+        reason: reason.into(),
+    }
+}
+
+fn absence(producer: EvidenceProducer, reason: &str) -> EvidenceAbsent {
+    EvidenceAbsent {
+        producer,
+        reason: reason.into(),
+    }
+}
+
+/// The first twelve characters of an id, or the whole of a shorter one.
+fn short12(id: &str) -> &str {
+    id.get(..12).unwrap_or(id)
+}
+
+/// The digest of the bytes the run executed: the commit's blob when the run measured a
+/// clean tree, else the working copy, else `sha256:unreadable`.
+fn digest_ran(root: &Path, commit: &str, source: &str, tree: TreeState) -> String {
+    if tree == TreeState::Clean {
+        let blob = crate::git::read_only(root)
+            .args(["cat-file", "blob", &format!("{commit}:{source}")])
+            .output();
+        if let Ok(out) = blob {
+            if out.status.success() {
+                return digest_of(&out.stdout);
+            }
+        }
+    }
+    std::fs::read(root.join(source))
+        .map(|b| digest_of(&b))
+        .unwrap_or_else(|_| "sha256:unreadable".into())
+}
+
+fn write_run_record(out: &Path, run_record: &EvidenceRunRecord) -> std::io::Result<()> {
+    if let Some(dir) = out.parent().filter(|d| !d.as_os_str().is_empty()) {
+        std::fs::create_dir_all(dir)?;
+    }
+    let mut text = serde_json::to_string_pretty(run_record)?;
+    text.push('\n');
+    std::fs::write(out, text)
 }
 
 #[cfg(test)]
@@ -813,6 +1070,29 @@ mod tests {
             .output()
             .unwrap();
         assert!(out.status.success(), "git {args:?}");
+    }
+
+    /// The measurement a suite run leaves at `root` now, naming its report.
+    fn stamp_of(root: &Path, producer: EvidenceProducer, report: &Path) -> EvidenceProvenance {
+        let req = super::super::provenance::StampRequest {
+            producer: Some(producer),
+            report: Some(report.to_path_buf()),
+            ..Default::default()
+        };
+        super::super::provenance::stamp(root, &req).unwrap()
+    }
+
+    /// A suite recording from `origin` that carries the measurement its run just took.
+    fn measured(root: &Path, origin: Origin, tsv: &Path) -> RecordRequest {
+        let mut req = RecordRequest {
+            suite: Some(tsv.to_path_buf()),
+            ..RecordRequest::new(origin)
+        };
+        req.provenance.insert(
+            EvidenceProducer::Suite,
+            stamp_of(root, EvidenceProducer::Suite, tsv),
+        );
+        req
     }
 
     fn repo() -> tempfile::TempDir {
@@ -842,16 +1122,7 @@ mod tests {
         )
         .unwrap();
 
-        let got = record(
-            d.path(),
-            &RecordRequest {
-                suite: Some(tsv),
-                crate_output: None,
-                origin: Origin::Ci,
-                run: None,
-            },
-        )
-        .unwrap();
+        let got = record(d.path(), &measured(d.path(), Origin::Ci, &tsv)).unwrap();
         assert_eq!(got.recorded, 2);
         assert_eq!(got.passed, 1);
         assert_eq!(got.commit.len(), 40);
@@ -878,50 +1149,38 @@ mod tests {
         );
     }
 
-    /// The tree a run is stamped with is the tree it measured, and the ledger is not part
-    /// of that: a recording made when the only pending change is the previous recording's
-    /// own row is `clean`. Any other pending change is `dirty`, because the commit the run
-    /// is joined to is then not what ran.
+    /// The ledger is not part of what a run measures: a stamp taken when the only pending
+    /// change is the previous recording's own row is `clean`. Any other pending change is
+    /// `dirty`, because the commit the run is joined to is then not what ran.
     #[test]
     fn the_ledgers_own_row_does_not_make_the_tree_dirty() {
         let d = repo();
         let reports = tempfile::tempdir().unwrap();
         let tsv = reports.path().join("run.tsv");
         std::fs::write(&tsv, "07_scope\tok\t1\tparallel\n").unwrap();
-        let req = || RecordRequest {
-            suite: Some(tsv.clone()),
-            crate_output: None,
-            origin: Origin::Local,
-            run: None,
-        };
 
-        // the first recording writes the ledger; the second one sees it pending
-        assert_eq!(record(d.path(), &req()).unwrap().working_tree, "clean");
-        let second = record(d.path(), &req()).unwrap();
+        // stamp, record: the ledger now has a pending row; stamp again, and it is still clean
+        let first = record(d.path(), &measured(d.path(), Origin::Local, &tsv)).unwrap();
+        assert_eq!(first.working_tree, "clean");
+        let second = record(d.path(), &measured(d.path(), Origin::Local, &tsv)).unwrap();
         assert_eq!(
             second.working_tree, "clean",
             "the previous recording's own row made the next run read as measured on a dirty tree"
         );
-        assert_eq!(
-            Ledger::load(d.path())
+        let row = |d: &Path| {
+            Ledger::load(d)
                 .unwrap()
                 .latest("suite:07_scope")
                 .unwrap()
-                .working_tree,
-            "clean"
-        );
+                .clone()
+        };
+        assert_eq!(row(d.path()).working_tree, "clean");
 
-        // anything else pending is dirty, and the recorded row says so
+        // an edited unrelated file makes the stamp dirty, and the recorded row says so
         std::fs::write(d.path().join("test/cases/08_other.sh"), "echo edited\n").unwrap();
-        assert_eq!(record(d.path(), &req()).unwrap().working_tree, "dirty");
-        assert_eq!(
-            Ledger::load(d.path())
-                .unwrap()
-                .latest("suite:07_scope")
-                .unwrap()
-                .working_tree,
-            "dirty"
-        );
+        let third = record(d.path(), &measured(d.path(), Origin::Local, &tsv)).unwrap();
+        assert_eq!(third.working_tree, "dirty");
+        assert_eq!(row(d.path()).working_tree, "dirty");
     }
 
     /// A report naming a case this repository does not have is named, not recorded. An
@@ -941,8 +1200,7 @@ mod tests {
             &RecordRequest {
                 suite: Some(tsv),
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap();
@@ -970,8 +1228,7 @@ mod tests {
             &RecordRequest {
                 suite: Some(all),
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap();
@@ -983,8 +1240,7 @@ mod tests {
             &RecordRequest {
                 suite: Some(one),
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap();
@@ -1012,8 +1268,7 @@ mod tests {
             &RecordRequest {
                 suite: Some(tsv),
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap_err()
@@ -1044,8 +1299,7 @@ mod tests {
             &RecordRequest {
                 suite: Some(tsv),
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap();
@@ -1065,8 +1319,7 @@ mod tests {
             &RecordRequest {
                 suite: None,
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             }
         )
         .is_err());
@@ -1087,8 +1340,7 @@ mod tests {
             &RecordRequest {
                 suite: Some(tsv),
                 crate_output: None,
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap_err()
@@ -1247,8 +1499,7 @@ mod tests {
             &RecordRequest {
                 suite: None,
                 crate_output: Some(log),
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap();
@@ -1428,8 +1679,7 @@ mod tests {
             &RecordRequest {
                 suite: None,
                 crate_output: Some(log),
-                origin: Origin::Local,
-                run: None,
+                ..RecordRequest::new(Origin::Local)
             },
         )
         .unwrap();
@@ -1470,5 +1720,409 @@ mod tests {
                 (EvidenceProducer::Crate, "a result line", UNATTRIBUTED)
             );
         }
+    }
+
+    fn report(dir: &tempfile::TempDir, name: &str, rows: &str) -> std::path::PathBuf {
+        let p = dir.path().join(name);
+        std::fs::write(&p, rows).unwrap();
+        p
+    }
+
+    fn refusal(root: &Path, req: &RecordRequest) -> String {
+        record(root, req).unwrap_err().to_string()
+    }
+
+    fn ledger_bytes(root: &Path) -> Option<Vec<u8>> {
+        std::fs::read(root.join(LEDGER_PATH)).ok()
+    }
+
+    #[test]
+    fn a_report_is_stamped_with_its_runs_measurement_not_the_recorders() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        // a dirty stamp, then a clean recorder
+        std::fs::write(d.path().join("pending.txt"), "x").unwrap();
+        let dirty = measured(d.path(), Origin::Local, &tsv);
+        std::fs::remove_file(d.path().join("pending.txt")).unwrap();
+        assert_eq!(record(d.path(), &dirty).unwrap().working_tree, "dirty");
+        // a clean stamp, then a dirty recorder
+        let clean = measured(d.path(), Origin::Local, &tsv);
+        std::fs::write(d.path().join("pending.txt"), "x").unwrap();
+        assert_eq!(record(d.path(), &clean).unwrap().working_tree, "clean");
+    }
+
+    #[test]
+    fn a_report_without_a_measurement_records_an_unknown_tree() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        for origin in [Origin::Local, Origin::Release] {
+            let got = record(
+                d.path(),
+                &RecordRequest {
+                    suite: Some(tsv.clone()),
+                    ..RecordRequest::new(origin)
+                },
+            );
+            let got = got.unwrap();
+            assert_eq!(got.working_tree, "unknown");
+            assert!(got.run_record.provenance.is_empty());
+            let row = Ledger::load(d.path())
+                .unwrap()
+                .latest("suite:07_scope")
+                .unwrap()
+                .clone();
+            assert_eq!(row.working_tree, "unknown");
+        }
+    }
+
+    #[test]
+    fn a_local_measurement_that_names_no_report_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        for origin in [Origin::Local, Origin::Release] {
+            let mut req = measured(d.path(), origin, &tsv);
+            req.provenance
+                .get_mut(&EvidenceProducer::Suite)
+                .unwrap()
+                .report = None;
+            let err = refusal(d.path(), &req);
+            assert!(err.contains("stamp with --report"), "{err}");
+        }
+        assert_eq!(ledger_bytes(d.path()), None);
+    }
+
+    #[test]
+    fn a_ci_measurement_without_a_report_is_accepted() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let mut req = measured(d.path(), Origin::Ci, &tsv);
+        req.provenance
+            .get_mut(&EvidenceProducer::Suite)
+            .unwrap()
+            .report = None;
+        assert_eq!(record(d.path(), &req).unwrap().working_tree, "clean");
+    }
+
+    #[test]
+    fn a_ci_report_without_a_measurement_is_refused_before_anything_is_written() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let log = report(&reports, "crate.log", "");
+        for req in [
+            RecordRequest {
+                suite: Some(tsv.clone()),
+                ..RecordRequest::new(Origin::Ci)
+            },
+            RecordRequest {
+                crate_output: Some(log),
+                ..measured(d.path(), Origin::Ci, &tsv)
+            },
+        ] {
+            let err = refusal(d.path(), &req);
+            assert!(err.contains("give --provenance"), "{err}");
+        }
+        assert_eq!(ledger_bytes(d.path()), None);
+    }
+
+    #[test]
+    fn a_measurement_of_another_commit_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let old = measured(d.path(), Origin::Local, &tsv);
+        std::fs::write(d.path().join("next.txt"), "x").unwrap();
+        git(d.path(), &["add", "-A"]);
+        git(d.path(), &["commit", "-qm", "next"]);
+        let err = refusal(d.path(), &old);
+        let then = &old.provenance[&EvidenceProducer::Suite].commit[..12];
+        assert!(
+            err.contains(then) && err.contains("in a checkout of the commit it ran"),
+            "{err}"
+        );
+        let mut short = measured(d.path(), Origin::Local, &tsv);
+        let m = short.provenance.get_mut(&EvidenceProducer::Suite).unwrap();
+        m.commit.truncate(12);
+        assert!(refusal(d.path(), &short).contains("was measured at"));
+    }
+
+    #[test]
+    fn a_measurement_of_another_report_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let other = report(&reports, "other.tsv", "07_scope\tok\t2\tparallel\n");
+        let mut req = measured(d.path(), Origin::Local, &other);
+        req.suite = Some(tsv);
+        let err = refusal(d.path(), &req);
+        assert!(err.contains("describes another report"), "{err}");
+        assert_eq!(ledger_bytes(d.path()), None);
+    }
+
+    #[test]
+    fn a_measurement_for_a_report_not_given_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let mut req = measured(d.path(), Origin::Local, &tsv);
+        let m = req.provenance[&EvidenceProducer::Suite].clone();
+        for p in [EvidenceProducer::Crate, EvidenceProducer::Coverage] {
+            let mut m = m.clone();
+            m.producer = Some(p);
+            req.provenance.insert(p, m);
+            let err = refusal(d.path(), &req);
+            assert!(
+                err.contains(&format!("and no {} report", p.as_str())),
+                "{err}"
+            );
+            req.provenance.remove(&p);
+        }
+    }
+
+    #[test]
+    fn a_measurement_whose_producer_disagrees_with_its_key_is_refused() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let mut req = measured(d.path(), Origin::Local, &tsv);
+        req.provenance
+            .get_mut(&EvidenceProducer::Suite)
+            .unwrap()
+            .producer = Some(EvidenceProducer::Crate);
+        let err = refusal(d.path(), &req);
+        assert!(
+            err.contains("measures the crate report, not the suite one"),
+            "{err}"
+        );
+    }
+
+    #[test]
+    fn every_refusal_leaves_no_ledger_and_no_run_record() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let other = report(&reports, "other.tsv", "08_other\tok\t1\tparallel\n");
+        let bad = report(&reports, "bad.tsv", "07_scope\tok\n");
+        let cov = report(&reports, "cov.json", r#"{"schema": 2}"#);
+        let out = reports.path().join("out/run.json");
+        let with_out = |mut r: RecordRequest| {
+            r.run_record = Some(out.clone());
+            r
+        };
+        let unreported = {
+            let mut r = measured(d.path(), Origin::Local, &tsv);
+            r.provenance
+                .get_mut(&EvidenceProducer::Suite)
+                .unwrap()
+                .report = None;
+            r
+        };
+        let another = RecordRequest {
+            suite: Some(tsv.clone()),
+            ..measured(d.path(), Origin::Local, &other)
+        };
+        let foreign = {
+            let mut r = measured(d.path(), Origin::Local, &tsv);
+            r.provenance
+                .get_mut(&EvidenceProducer::Suite)
+                .unwrap()
+                .commit = "a".repeat(40);
+            r
+        };
+        let refusals = [
+            RecordRequest::default(),
+            RecordRequest {
+                suite: Some(tsv.clone()),
+                ..RecordRequest::new(Origin::Ci)
+            },
+            unreported,
+            another,
+            foreign,
+            RecordRequest {
+                suite: Some(bad),
+                ..RecordRequest::default()
+            },
+            RecordRequest {
+                coverage: Some(cov),
+                ..RecordRequest::default()
+            },
+            RecordRequest {
+                suite: Some(tsv.clone()),
+                run_record: Some(reports.path().to_path_buf()),
+                ..RecordRequest::default()
+            },
+            RecordRequest {
+                suite: Some(tsv.clone()),
+                run_record: Some(d.path().join(LEDGER_PATH)),
+                ..RecordRequest::default()
+            },
+            RecordRequest {
+                suite: Some(tsv.clone()),
+                run_record: Some(d.path().join(LOCAL_LEDGER_PATH)),
+                ..RecordRequest::default()
+            },
+            RecordRequest {
+                suite: Some(tsv.clone()),
+                run_record: Some("".into()),
+                ..RecordRequest::default()
+            },
+        ];
+        for (n, req) in refusals.into_iter().enumerate() {
+            let keep = req.run_record.is_some();
+            let req = if keep { req } else { with_out(req) };
+            assert!(record(d.path(), &req).is_err(), "refusal {n} recorded");
+            assert_eq!(ledger_bytes(d.path()), None, "refusal {n} wrote the ledger");
+            assert!(!d.path().join(LOCAL_LEDGER_PATH).exists(), "refusal {n}");
+            assert!(!out.exists(), "refusal {n} wrote a run record");
+        }
+    }
+
+    #[test]
+    fn the_digest_is_taken_from_the_commit_when_the_run_was_clean() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let req = measured(d.path(), Origin::Local, &tsv);
+        std::fs::write(d.path().join("test/cases/07_scope.sh"), "echo edited\n").unwrap();
+        let got = record(d.path(), &req).unwrap();
+        assert_eq!(
+            got.run_record.executions[0].digest,
+            digest_of(b"echo scope\n")
+        );
+    }
+
+    #[test]
+    fn the_digest_is_taken_from_the_checkout_when_the_tree_is_not_known_clean() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        std::fs::write(d.path().join("test/cases/07_scope.sh"), "echo edited\n").unwrap();
+        let dirty = measured(d.path(), Origin::Local, &tsv);
+        let got = record(d.path(), &dirty).unwrap();
+        assert_eq!(
+            got.run_record.executions[0].digest,
+            digest_of(b"echo edited\n")
+        );
+        let unmeasured = RecordRequest {
+            suite: Some(tsv.clone()),
+            ..RecordRequest::default()
+        };
+        let got = record(d.path(), &unmeasured).unwrap();
+        assert_eq!(
+            got.run_record.executions[0].digest,
+            digest_of(b"echo edited\n")
+        );
+        // a source git cannot answer for, measured clean, is read from the checkout
+        std::fs::write(d.path().join("test/cases/09_new.sh"), "echo new\n").unwrap();
+        assert_eq!(
+            digest_ran(
+                d.path(),
+                &got.commit,
+                "test/cases/09_new.sh",
+                TreeState::Clean
+            ),
+            digest_of(b"echo new\n")
+        );
+        assert_eq!(
+            digest_ran(
+                d.path(),
+                &got.commit,
+                "test/cases/none.sh",
+                TreeState::Dirty
+            ),
+            "sha256:unreadable"
+        );
+    }
+
+    #[test]
+    fn a_local_recording_changes_no_tracked_file() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let req = RecordRequest {
+            ledger: LedgerTarget::Local,
+            ..measured(d.path(), Origin::Local, &tsv)
+        };
+        let got = record(d.path(), &req).unwrap();
+        assert_eq!(got.run_record.ledger, LedgerTarget::Local);
+        assert_eq!(
+            ledger_bytes(d.path()),
+            None,
+            "the tracked ledger is not written"
+        );
+        let local = Ledger::load_from(d.path(), LedgerTarget::Local).unwrap();
+        assert!(local.latest("suite:07_scope").is_some());
+    }
+
+    #[test]
+    fn the_run_record_written_is_the_run_record_returned() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(
+            &reports,
+            "run.tsv",
+            "07_scope\tok\t1\tparallel\n99_ghost\tok\t1\tparallel\n",
+        );
+        let out = reports.path().join("deep/run.json");
+        let req = RecordRequest {
+            run_record: Some(out.clone()),
+            ..measured(d.path(), Origin::Local, &tsv)
+        };
+        let got = record(d.path(), &req).unwrap();
+        let text = std::fs::read_to_string(&out).unwrap();
+        assert!(text.ends_with("}\n"));
+        let back: EvidenceRunRecord = serde_json::from_str(&text).unwrap();
+        assert_eq!(back, got.run_record);
+        assert_eq!(back.unknown, ["suite:99_ghost"]);
+        assert_eq!(back.schema, RUN_RECORD_SCHEMA);
+        let absent: Vec<_> = back.absent.iter().map(|a| a.producer).collect();
+        assert_eq!(
+            absent,
+            [EvidenceProducer::Crate, EvidenceProducer::Coverage]
+        );
+    }
+
+    #[test]
+    fn a_run_record_that_cannot_be_written_says_the_executions_were_recorded() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = report(&reports, "run.tsv", "07_scope\tok\t1\tparallel\n");
+        let blocker = report(&reports, "file", "x");
+        let req = RecordRequest {
+            run_record: Some(blocker.join("run.json")),
+            ..measured(d.path(), Origin::Local, &tsv)
+        };
+        let err = refusal(d.path(), &req);
+        assert!(
+            err.contains("the executions were recorded into")
+                && err.contains("run record could not be written"),
+            "{err}"
+        );
+        assert!(ledger_bytes(d.path()).is_some());
+    }
+
+    #[test]
+    fn the_outcomes_dropped_list_is_the_run_records() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let log = report(&reports, "crate.log", "     Running unittests src/lib.rs (x)\ntest result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.1s\n");
+        let got = record(
+            d.path(),
+            &RecordRequest {
+                crate_output: Some(log),
+                ..RecordRequest::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(got.dropped.len(), 1);
+        assert_eq!(got.dropped, got.run_record.dropped);
+        assert_eq!(
+            got.run_record.absent[1].reason,
+            "the output named no integration test binary"
+        );
     }
 }

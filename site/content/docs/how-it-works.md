@@ -766,8 +766,9 @@ commit is `proven` at that commit, `inputs_unchanged` at a later commit that did
 inputs, and `stale` at one that did. `proven` and `inputs_unchanged` are never collapsed into one
 state, because the second is an inference about relevance and the first is not.
 
-The four evidence capabilities are `evidence.report`, `evidence.claim`, `evidence.test` and
-`evidence.record` — the last is the only writer and is command-line only.
+The evidence capabilities are declared once in
+`apps/majordomus-cli/src/capability/builtin/evidence.rs`; `evidence.record` is the only writer
+and is command-line only, and so is `evidence.stamp`, which reads a path its caller names.
 
 ## One doctrine traced: scope integrity
 

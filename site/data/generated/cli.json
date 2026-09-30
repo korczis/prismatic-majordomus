@@ -22194,6 +22194,12 @@
           "command": "majordomus evidence record",
           "name": "record",
           "route": "/docs/cli/evidence/record/"
+        },
+        {
+          "about": "Measure the checkout as a run left it, for `record --provenance`",
+          "command": "majordomus evidence stamp",
+          "name": "stamp",
+          "route": "/docs/cli/evidence/stamp/"
         }
       ],
       "command": "majordomus evidence",
@@ -22779,6 +22785,54 @@
         },
         {
           "defaults": [],
+          "global": false,
+          "help": "The file `evidence stamp --out` wrote; prefix `suite=`, `crate=` or `coverage=` when the file names no producer and several reports are given",
+          "long": "provenance",
+          "name": "provenance",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "[PRODUCER=]FILE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The summary `scripts/rust-coverage --summary-json` wrote",
+          "long": "coverage",
+          "name": "coverage",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "COVERAGE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "repo (the default) or local",
+          "long": "ledger",
+          "name": "ledger",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "LEDGER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Also write the run record to this file",
+          "long": "run-record",
+          "name": "run_record",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "RUN_RECORD"
+        },
+        {
+          "defaults": [],
           "global": true,
           "help": "Start the search for the repository root here (default: the current directory)",
           "long": "repo",
@@ -22892,6 +22946,187 @@
       ],
       "route": "/docs/cli/evidence/record/",
       "usage": "majordomus evidence record [OPTIONS]"
+    },
+    {
+      "about": "Measure the checkout as a run left it, for `record --provenance`",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus evidence",
+          "name": "evidence",
+          "route": "/docs/cli/evidence/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The producer whose run this is: suite, crate or coverage",
+          "long": "producer",
+          "name": "producer",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PRODUCER"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The report the run wrote",
+          "long": "report",
+          "name": "report",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "REPORT"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "One of the run's own untracked outputs (a file, or a directory with everything under it)",
+          "long": "exclude",
+          "name": "exclude",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "EXCLUDE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Write the measurement to this file",
+          "long": "out",
+          "name": "out",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "OUT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "Output shape",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus evidence stamp",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "evidence",
+            "stamp",
+            "--producer",
+            "suite",
+            "--format",
+            "json"
+          ],
+          "command": "majordomus evidence stamp --producer suite --format json",
+          "description": "The measurement a runner takes when its run ends: the commit, the tree with the evidence ledger ignored and the run's own untracked outputs excluded, the producer, its toolchain, the recorder's version and the host. `evidence record --provenance` carries it into the executions of that run's report.",
+          "expectation": "exits 0; prints one JSON document carrying /producer, /commit, /working_tree, /recorder, /host",
+          "id": "evidence-stamp-json",
+          "setup": [],
+          "title": "What a run measured, as one document"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "stamp",
+      "parent_route": "/docs/cli/evidence/",
+      "path": [
+        "majordomus",
+        "evidence",
+        "stamp"
+      ],
+      "route": "/docs/cli/evidence/stamp/",
+      "usage": "majordomus evidence stamp [OPTIONS]"
     },
     {
       "about": "Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit",
@@ -26510,10 +26745,10 @@
     }
   ],
   "counts": {
-    "arguments": 1153,
-    "commands": 166,
-    "examples": 168,
-    "runnable": 146
+    "arguments": 1166,
+    "commands": 167,
+    "examples": 169,
+    "runnable": 147
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.11.0",

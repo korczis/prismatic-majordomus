@@ -742,7 +742,12 @@ pub fn freshness(
         // shown is that commit. All three, or it is not proven.
         let capped = capped_by_working_tree(ProofState::Proven, &e.working_tree);
         if capped != ProofState::Proven {
-            return Judgement::because(capped, "the run measured a tree that was not its commit");
+            let why = if TreeState::parse(&e.working_tree) == TreeState::Dirty {
+                "the run measured a tree that was not its commit"
+            } else {
+                "the run's tree was not measured, so it cannot be shown to be its commit"
+            };
+            return Judgement::because(capped, why);
         }
         if presented_tree != TreeState::Clean {
             return Judgement::because(
@@ -1185,9 +1190,14 @@ mod tests {
             for presented in [TreeState::Clean, TreeState::Dirty, TreeState::Unknown] {
                 let j = judge(&e, Some(&contains(&[])), presented);
                 assert_eq!(j.state, ProofState::InputsUnchanged, "{tree}");
+                let detail = if tree == "dirty" {
+                    "the run measured a tree that was not its commit"
+                } else {
+                    "the run's tree was not measured, so it cannot be shown to be its commit"
+                };
                 assert_eq!(
                     j.detail.as_deref(),
-                    Some("the run measured a tree that was not its commit"),
+                    Some(detail),
                     "{tree} / {presented:?}: row 11 comes before row 12"
                 );
             }
