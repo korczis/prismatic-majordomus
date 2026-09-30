@@ -124,30 +124,33 @@ arbitrary. Most of them were paid for.
    script or a workflow declared `none` — 74 of 215 of them — not out of neglect but because
    there was no word for the subject. Meanwhile the doctrine line reads *"command coverage —
    every public command is exercised and refuted"*, which is true, and which reads like *"the
-   tests are linked to what they test"*. Four vocabularies now:
+   tests are linked to what they test"*. Besides a bare command, four prefixed kinds now:
 
    | form | resolves against |
    |---|---|
    | a bare name | a public command, as before |
    | `gate:<id>` | an entry of `.ai/repo/ci/gates.yaml` |
-   | `script:<path>` | an executable under the repository root |
+   | `script:<path>` | an executable under `scripts/`, with no `..` in its path |
    | `workflow:<name>` | a file under `.github/workflows/` |
    | `capability:<id>` | a capability of the Rust executable, in `docs/generated/registry.json` |
 
    The last one matters more than it looks. `doctor` reports *"command coverage — every public
-   command is exercised and refuted"*, which is true **of the shell tool's 30 commands**. The
-   executable carries 127 commands in 37 modules, `rust-command-check` requires one running
-   assertion per *module*, and examples are documentation rather than tests. `usecase coverage`
-   records the gap — 90 advisory targets, **76 of them `mcp_tool:majordomus_*`** — and advisory
-   means enforced by nothing. Until `capability:` existed, a case covering
+   command is exercised and refuted"*, which is true **of the shell tool's public commands**.
+   The executable carries far more commands across its modules, `rust-command-check` requires
+   one running assertion per *module*, and examples are documentation rather than tests.
+   `usecase coverage` records the gap as advisory targets, most of them
+   `mcp_tool:majordomus_*` (measure with `bin/majordomus doctor`), and advisory means enforced
+   by nothing. Until `capability:` existed, a case covering
    `majordomus_plan_transition` had no legal word for its own subject, so that coverage was not
    merely unrecorded: it was **unrecordable**.
 
-   An unrecognised prefix is refused rather than read as a command name. A prefixed name is
+   Every name is matched literally, so `gate:.*` names no gate. An unrecognised prefix is
+   refused rather than read as a command name. A prefixed name is
    **not** counted as command coverage: every public command must still be named by a bare
    one, so widening the vocabulary cannot discharge the narrower duty. `test/cases/617` holds
-   all of it, and the rule lives in two places that must agree —
-   [`lib/commands.sh`](lib/commands.sh) and `test/cases/31_command_coverage.sh`.
+   all of it by running both checkers against a fixture suite. The rule is one function,
+   `mj_covers_resolve` in [`lib/commands.sh`](lib/commands.sh), called by the doctor check and
+   by `test/cases/31_command_coverage.sh` alike.
 8. Commit in conventional format, `type(scope): description`, small commits that each
    leave the tree consistent.
 8. Before marking the pull request ready, compare every capability sentence you touched

@@ -24,6 +24,8 @@
 MJ_BIN_DIR="$ROOT/bin"; MJ_LIB_DIR="$ROOT/lib"; export MJ_BIN_DIR MJ_LIB_DIR
 # shellcheck source=../../lib/common.sh
 . "$ROOT/lib/common.sh"
+# shellcheck source=../../lib/commands.sh
+. "$ROOT/lib/commands.sh"
 
 REG="$ROOT/share/commands.yaml"
 FLAT="$T/commands.flat"
@@ -66,8 +68,9 @@ cases_for() { grep -E "^$1 $2 " "$CLAIMS" | awk '{print $3}' | LC_ALL=C sort -u 
 # ---- a declared cover must name something that exists. A header pointing at a command that
 #      was renamed or removed is a broken reference, not harmless documentation.
 #
-#      Two vocabularies, the same pair lib/commands.sh applies: a bare name is a public
-#      command, and `gate:`, `script:`, `workflow:` and `capability:` name the other kinds of
+#      Two vocabularies, resolved by the one function the doctor check uses
+#      (mj_covers_resolve in lib/commands.sh), so the two cannot disagree: a bare name is a
+#      public command, and `gate:`, `script:`, `workflow:` and `capability:` name the other kinds of
 #      thing a case can be about. Before those existed, a case covering a gate or a script had
 #      no word for its own subject and `none` was its only legal value — 74 of 215 cases on
 #      2026-09-15.
@@ -76,31 +79,10 @@ cases_for() { grep -E "^$1 $2 " "$CLAIMS" | awk '{print $3}' | LC_ALL=C sort -u 
 #      coverage: the obligations below still read bare names only, so widening the vocabulary
 #      cannot discharge the narrower duty that every public command carries two cases.
 for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | LC_ALL=C sort -u); do
-  case "$c" in
-    gate:*)
-      grep -qE "^  - id: ${c#gate:}\$" "$ROOT/.ai/repo/ci/gates.yaml" 2>/dev/null || {
-        echo "    a test case declares coverage of gate '${c#gate:}', which the model does not declare"
-        exit 1; }
-      continue ;;
-    script:*)
-      [ -x "$ROOT/${c#script:}" ] || {
-        echo "    a test case declares coverage of script '${c#script:}', which is not an executable here"
-        exit 1; }
-      continue ;;
-    capability:*)
-      grep -q "\"id\": *\"${c#capability:}\"" "$ROOT/docs/generated/registry.json" 2>/dev/null || {
-        echo "    a test case declares coverage of capability '${c#capability:}', which the registry does not carry"
-        exit 1; }
-      continue ;;
-    workflow:*)
-      [ -f "$ROOT/.github/workflows/${c#workflow:}" ] || {
-        echo "    a test case declares coverage of workflow '${c#workflow:}', which is not here"
-        exit 1; }
-      continue ;;
-    *:*)
-      echo "    a test case declares coverage under an unknown vocabulary: '$c'"
-      echo "    the kinds are gate:, script:, workflow: and capability:, or a bare public command"
-      exit 1 ;;
+  rc=0; why="$(mj_covers_resolve "$ROOT" "$c")" || rc=$?
+  case "$rc" in
+    0) continue ;;
+    1) echo "    $why"; exit 1 ;;
   esac
   printf '%s\n' $public | grep -qx "$c" || {
     echo "    a test case declares coverage of '$c', which is not a public command"

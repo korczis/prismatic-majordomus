@@ -94,6 +94,52 @@ mj_validate_command_surface() {
   return 0
 }
 
+# ---------------------------------------------------------------- mj_covers_resolve
+# mj_covers_resolve <root> <name>
+# Resolves one prefixed name of a `# majordomus-covers:` or `# majordomus-negative:` header
+# against the models under <root>. Exit 0: it names something that exists. Exit 1: it does
+# not, and stdout says why. Exit 2: it is a bare name, which the caller checks against the
+# public command surface. The doctor check and test/cases/31 both call this one function, so
+# the rule cannot drift between them.
+#
+# Every match is literal. A name is data, not a pattern: `gate:.*` names no gate, and a
+# regular expression built from it would have matched every one. A script is an executable
+# under scripts/, never a path that climbs out of it.
+mj_covers_resolve() {
+  local root="$1" c="$2" v
+  case "$c" in
+    gate:*)
+      v="${c#gate:}"
+      [ -n "$v" ] && grep -Fxq "  - id: $v" "$root/.ai/repo/ci/gates.yaml" 2>/dev/null && return 0
+      echo "a test case declares coverage of gate '$v', which the model does not declare"
+      return 1 ;;
+    capability:*)
+      # The registry projection rather than the executable: this runs where the executable
+      # may not be built, and the projection is committed and gate-held current.
+      v="${c#capability:}"
+      [ -n "$v" ] && grep -Fq "\"id\": \"$v\"" "$root/docs/generated/registry.json" 2>/dev/null && return 0
+      echo "a test case declares coverage of capability '$v', which the registry does not carry"
+      return 1 ;;
+    workflow:*)
+      v="${c#workflow:}"
+      case "$v" in ''|*/*|.*) ;; *) [ -f "$root/.github/workflows/$v" ] && return 0 ;; esac
+      echo "a test case declares coverage of workflow '$v', which is not a file under .github/workflows/"
+      return 1 ;;
+    script:*)
+      v="${c#script:}"
+      case "$v" in
+        */../*|*/..|*/./*) ;;
+        scripts/?*) [ -f "$root/$v" ] && [ -x "$root/$v" ] && return 0 ;;
+      esac
+      echo "a test case declares coverage of script '$v', which is not an executable under scripts/"
+      return 1 ;;
+    *:*)
+      echo "a test case declares coverage under an unknown vocabulary: '$c'; the kinds are gate:, script:, workflow: and capability:, or a bare public command"
+      return 1 ;;
+  esac
+  return 2
+}
+
 # ---------------------------------------------------------------- command_coverage_complete
 # Every public command is exercised and refuted by a test that declares it. This is a rule
 # about Majordomus's own suite, so it applies only in the repository that carries one.
@@ -145,35 +191,16 @@ mj_validate_command_coverage() {
   #
   # A prefixed name is not a command and is deliberately not counted as command coverage: the
   # loop above still requires every public command to be named by a bare one, so widening the
-  # vocabulary cannot be used to satisfy the narrower obligation.
+  # vocabulary cannot be used to satisfy the narrower obligation. mj_covers_resolve holds the
+  # rule for the prefixed names; test/cases/31 calls the same function.
+  local why rc
   for c in $(printf '%s\n' $behaviour $negative | LC_ALL=C sort -u); do
     [ "$c" = none ] && continue
-    case "$c" in
-      gate:*)
-        gid="${c#gate:}"
-        grep -qE "^  - id: ${gid}\$" "$root/.ai/repo/ci/gates.yaml" 2>/dev/null || {
-          mj_doctrine_fail command "$c" "a test case declares coverage of a gate the model does not declare" "grep -n 'id: ${gid}' .ai/repo/ci/gates.yaml"; bad=1; }
-        continue ;;
-      capability:*)
-        cid="${c#capability:}"
-        # The registry projection rather than the executable: this runs where the executable
-        # may not be built, and the projection is committed and gate-held current.
-        grep -q "\"id\": *\"${cid}\"" "$root/docs/generated/registry.json" 2>/dev/null || {
-          mj_doctrine_fail command "$c" "a test case declares coverage of a capability the registry does not carry" "grep -n '\"${cid}\"' docs/generated/registry.json"; bad=1; }
-        continue ;;
-      workflow:*)
-        wn="${c#workflow:}"
-        [ -f "$root/.github/workflows/$wn" ] || {
-          mj_doctrine_fail command "$c" "a test case declares coverage of a workflow that is not here" "ls -l .github/workflows/${wn}"; bad=1; }
-        continue ;;
-      script:*)
-        sp="${c#script:}"
-        [ -x "$root/$sp" ] || {
-          mj_doctrine_fail command "$c" "a test case declares coverage of a script that is not an executable file here" "ls -l ${sp}"; bad=1; }
-        continue ;;
-      *:*)
-        mj_doctrine_fail command "$c" "a test case declares coverage under an unknown vocabulary; the kinds are gate:, script:, workflow: and capability:, or a bare public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
-        continue ;;
+    rc=0; why="$(mj_covers_resolve "$root" "$c")" || rc=$?
+    case "$rc" in
+      0) continue ;;
+      1) mj_doctrine_fail command "$c" "$why" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
+         continue ;;
     esac
     grep -Fxq "$c" <<<"$public" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
