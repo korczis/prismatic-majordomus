@@ -121,7 +121,14 @@ fn mesh_identity(_: &Context, _: Empty) -> Result<MeshIdentityReport, Capability
 
 fn mesh_doctor(ctx: &Context, _: Empty) -> Result<MeshDoctorReport, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
-    Ok(crate::mesh::doctor::doctor_at(declaration(ctx), Some(root)))
+    // The runtime's verdict is reported only where a shared server made one: in the
+    // command line's process nothing activates the mesh, and that absence is not news.
+    let runtime = ctx.mesh.decided().then(|| ctx.mesh.status());
+    Ok(crate::mesh::doctor::doctor_at(
+        declaration(ctx),
+        Some(root),
+        runtime.as_ref(),
+    ))
 }
 
 /// The repository's mesh declaration, as the index discovered it: `None` when no object
@@ -1139,7 +1146,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "mesh.doctor",
                 title: "The mesh self-check",
-                description: "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, the repository has a mesh identity, the advertised endpoints are reachable from beyond this machine, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory. Each failed check names its impact and its remedy. Deterministic, no second node required.",
+                description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
                 input: Empty,
                 output: MeshDoctorReport,
                 stability: Stability::Experimental,

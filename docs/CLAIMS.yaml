@@ -1701,6 +1701,15 @@ claims:
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. Discovery still grants nothing: being heard or trusted admits no link on its own — a link needs the handshake of mesh-cooperation-links — and nothing a linked peer sends executes anything; the cooperation commands write this runtime's journal and, for a consumed handover, one record in this checkout's handovers directory (ADR 0067).
 
+  - id: mesh-declared-is-held
+    claim: An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/doctor.rs
+    test: test/cases/494_the_mesh_is_declared_and_held.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand.
+
   - id: models-one-declaration
     claim: Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own
     source: docs/MODELS.md
