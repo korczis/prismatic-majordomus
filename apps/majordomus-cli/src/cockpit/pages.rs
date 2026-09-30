@@ -418,13 +418,20 @@ fn four_questions(ctx: &Context) -> El {
                 )
         })
         .collect();
-    // the route the registry declares for the capability, not one written here
-    let route = ctx
-        .registry
-        .get("dashboard.overview")
-        .and_then(|c| c.exposure.http.as_ref())
-        .map(|h| h.path.clone())
-        .unwrap_or_default();
+    // the route the registry declares for the capability, not one written here: asked of
+    // `capabilities.describe`, so the page reads no registry of its own (ADR 0089)
+    let route = ask::<Value>(
+        ctx,
+        "capabilities.describe",
+        json!({ "id": "dashboard.overview" }),
+    )
+    .ok()
+    .and_then(|c| {
+        c.pointer("/exposure/http/path")
+            .and_then(Value::as_str)
+            .map(String::from)
+    })
+    .unwrap_or_default();
     card_with(
         "Four questions",
         link(route, "as JSON"),
