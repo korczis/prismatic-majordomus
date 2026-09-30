@@ -730,7 +730,8 @@ fn ask(url: &str, root: &Path, timeout: Duration) -> Answer {
 /// Is the process with this id alive on this machine? A lease is a file of this checkout,
 /// so its pid is a pid of this host. `kill(pid, 0)` delivers nothing and asks only whether
 /// the process exists; a process owned by somebody else answers `EPERM`, which is alive.
-fn alive(pid: u32) -> bool {
+/// Whether a process with this pid exists (signal 0: checked, nothing sent).
+pub(crate) fn alive(pid: u32) -> bool {
     if pid == 0 {
         return false;
     }
