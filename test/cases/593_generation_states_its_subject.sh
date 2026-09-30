@@ -71,8 +71,11 @@ expect_grep 'the closed sessions could not be read'
 expect_grep 'exited 15'
 expect_grep 'refused, this is the mutation'
 expect_grep 'subject this run could not reach'
-# an empty listing is never what a refusal means
-expect_no_grep 'in sync'
+# an empty listing is never what a refusal means: --check, the mode that can say "in sync",
+# refuses too instead of comparing the smaller repository's projection with the committed one
+expect_exit 12 "$T/scripts/generate-site-data" --check --no-scenarios
+expect_grep 'the closed sessions could not be read'
+expect_no_grep 'site data: in sync'
 # and nothing was published: the previous generation is intact, byte for byte
 [ "$(ls "$T/site/data/generated" | LC_ALL=C sort)" = "$before_files" ]
 [ "$(cat "$T/site/data/generated/sessions.json")" = "$before_sessions" ]
