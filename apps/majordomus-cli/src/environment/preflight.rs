@@ -734,6 +734,17 @@ pub enum CoverageObservation {
 }
 
 /// One recorded coverage measurement: the fields of [`COVERAGE_RECORD`] this reads.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::CoverageRecord;
+/// let r: CoverageRecord = serde_json::from_str(r#"{"schema": 1, "commit": "abc",
+///   "working_tree": "clean", "at": "2026-09-30T00:00:00Z", "outcome": "pass",
+///   "crate": {"lines": {"covered": 9, "total": 10}, "functions": {"covered": 1, "total": 1},
+///             "regions": {"covered": 3, "total": 4}}}"#).unwrap();
+/// // a record written before the suite's exit status was kept reads as a passing suite
+/// assert_eq!(r.suite_exit, 0);
+/// assert_eq!(r.krate.lines.covered, 9);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct CoverageRecord {
     /// The format; this reads 1.
@@ -754,7 +765,15 @@ pub struct CoverageRecord {
     pub krate: CoverageDimensions,
 }
 
-/// Covered over total per dimension.
+/// Covered over total for each of the three dimensions llvm-cov measures: lines, functions
+/// and regions, of the crate with its test code excluded.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::CoverageDimensions;
+/// let d: CoverageDimensions = serde_json::from_str(r#"{"lines": {"covered": 9, "total": 10},
+///   "functions": {"covered": 1, "total": 2}, "regions": {"covered": 0, "total": 0}}"#).unwrap();
+/// assert_eq!((d.functions.covered, d.functions.total), (1, 2));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct CoverageDimensions {
     /// Lines.
@@ -766,6 +785,12 @@ pub struct CoverageDimensions {
 }
 
 /// One dimension of a measurement: executed over executable.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::CoverageFraction;
+/// let f: CoverageFraction = serde_json::from_str(r#"{"covered": 3, "total": 4}"#).unwrap();
+/// assert!(f.covered <= f.total);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
 pub struct CoverageFraction {
     /// Executed.
@@ -2388,6 +2413,17 @@ fn observe_ledger(
 }
 
 /// The coverage record `scripts/rust-coverage` left, read as it is: one small file, no git.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{observe_coverage, CoverageObservation, COVERAGE_RECORD};
+/// let dir = tempfile::tempdir().unwrap();
+/// // nothing measured yet is absent, not an error
+/// assert_eq!(observe_coverage(dir.path()), CoverageObservation::Absent);
+/// let path = dir.path().join(COVERAGE_RECORD);
+/// std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+/// std::fs::write(&path, r#"{"schema": 9}"#).unwrap();
+/// assert!(matches!(observe_coverage(dir.path()), CoverageObservation::Unreadable(_)));
+/// ```
 pub fn observe_coverage(root: &Path) -> CoverageObservation {
     let text = match std::fs::read_to_string(root.join(COVERAGE_RECORD)) {
         Ok(text) => text,
