@@ -97,7 +97,7 @@ gates: [doc-command-check]
 ```bash
 majordomus start "<task>" --scope <paths>
 git commit -m "message"
-curl -fsSL https://example.invalid/install.sh | sh
+ls -la
 ```')"
 MJ_ROOT="$t" expect_exit 0 "$GATE"
 
