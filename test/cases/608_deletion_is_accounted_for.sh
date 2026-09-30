@@ -12,22 +12,36 @@
 # `recover` removes, it has first folded into the record that stays, and it says so in the ledger.
 #
 # The promise also names the stray-file sweep, `recover.orphans`: which two temporary shapes it
-# may remove, past which threshold, and that no directory is ever among them. Section 1 holds the
-# promise to naming those bounds; test/cases/135_session_store_recovery.sh holds the sweep to them.
+# may remove, past which threshold, under which three conditions, and what it never removes.
+# And it names every removal outside `recover`: the directory trees `web compose`, `rules vendor
+# update` and `worktree migrate` remove whole, and the legacy files `majordomus migrate` replaces.
+# Section 1 holds the promise to naming each of those limits, phrase by phrase, so dropping any one
+# of them turns this case red; test/cases/135_session_store_recovery.sh holds the sweep to them.
 . "$ROOT/test/lib.sh"
 
 # ---------------------------------------------------------------- 1. the promise names the exception
 SEC="$ROOT/SECURITY.md"
 grep -q 'No recursive deletion' "$SEC" || { echo "    SECURITY.md no longer promises anything about deletion"; exit 1; }
-grep -q 'recover' "$SEC" || { echo "    SECURITY.md promises about deletion without naming the one command that deletes"; exit 1; }
+grep -q 'recover' "$SEC" || { echo "    SECURITY.md promises about deletion without naming recover, the command that removes records"; exit 1; }
 grep -q 'nothing is deleted\.' "$SEC" && { echo "    SECURITY.md still says nothing is deleted; recover records removes superseded records"; exit 1; }
 # The sweep of temporary files is the other half of what recover removes, and the promise has to
 # bound it as tightly as the code does: the capability, the two names it may touch, the threshold,
-# and the directories it leaves.
+# the three conditions under which it removes, what it publishes instead, and what it leaves.
 for bound in 'recover\.orphans' '\.tmp\.\*' '<target>\.mj-tmp' 'session\.stranded_after' \
+             'that is empty' 'already published' 'whose target already' \
+             'published first and removed only' 'cannot classify' 'age it cannot read' \
              'every directory are reported' 'session\.recovered' '--check'; do
   grep -q -- "$bound" "$SEC" \
     || { echo "    SECURITY.md's deletion promise does not state the bound /$bound/ the sweep keeps"; exit 1; }
+done
+# Every removal outside recover is named with its limit: compose empties whatever its destination
+# holds, vendor update swaps the package whole behind --force, worktree migrate removes only a
+# fingerprinted original, and migrate removes provider templates only behind a verified backup.
+for bound in 'web compose' '--destination' 'whatever that path already holds' \
+             'rules vendor update' 'without `--force`' 'worktree migrate' 'fingerprinted identical' \
+             'majordomus migrate' 'verified byte for byte'; do
+  grep -q -- "$bound" "$SEC" \
+    || { echo "    SECURITY.md's deletion promise does not state the removal or limit /$bound/"; exit 1; }
 done
 echo "    the published promise names the command that removes and what it accounts for"
 
