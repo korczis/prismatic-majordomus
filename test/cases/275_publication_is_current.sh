@@ -20,7 +20,7 @@
 # The two that matter are exit 10 and exit 12. A requirement that passes when it could not
 # measure anything is decoration, so an unreachable subject refuses `completed` as well — but
 # it says which of the two happened, and an honest outcome (blocked, partial) is still never
-# refused over it. test/cases/369_an_unknown_gate_refuses_completed.sh proves the same for
+# refused over it. test/cases/578_an_unknown_gate_refuses_completed.sh proves the same for
 # the completion-gates reader.
 . "$ROOT/test/lib.sh"
 # The completion-gates validator runs beside this one at finish and refuses `completed` when
