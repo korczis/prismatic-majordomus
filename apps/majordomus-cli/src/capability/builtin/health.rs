@@ -151,6 +151,14 @@ pub struct Liveness {
     pub alive: bool,
     /// This executable's version, so a rolling deployment can tell which build answered.
     pub version: String,
+    /// The commit this executable was built from, in full, or `unknown` when the build could
+    /// not name one. A version is what a build calls itself and two revisions share it; this
+    /// is what a deployment is checked against. Never omitted: an absent field would read as
+    /// a server too old to say, and `unknown` is a different, truthful answer.
+    pub commit: String,
+    /// Whether that commit's tree carried uncommitted changes when this executable was built;
+    /// `null` when the build did not know.
+    pub dirty: Option<bool>,
 }
 
 /// The answer to "can this process serve traffic": the local initialisation a request
@@ -162,6 +170,11 @@ pub struct Readiness {
     pub ready: bool,
     /// This executable's version.
     pub version: String,
+    /// The commit this executable was built from, or `unknown`; the same value `health.live`
+    /// answers.
+    pub commit: String,
+    /// Whether the build's tree was dirty; `null` when the build did not know.
+    pub dirty: Option<bool>,
     /// How many capabilities the registry holds; zero would mean nothing to serve.
     pub capabilities: usize,
     /// How many objects the index holds. Read from the index this process built at
@@ -178,6 +191,8 @@ fn liveness(_: &Context, _: Empty) -> Result<Liveness, CapabilityError> {
     Ok(Liveness {
         alive: true,
         version: crate::VERSION.into(),
+        commit: crate::COMMIT.into(),
+        dirty: crate::DIRTY,
     })
 }
 
@@ -190,6 +205,8 @@ fn readiness(ctx: &Context, _: Empty) -> Result<Readiness, CapabilityError> {
     Ok(Readiness {
         ready: capabilities > 0,
         version: crate::VERSION.into(),
+        commit: crate::COMMIT.into(),
+        dirty: crate::DIRTY,
         capabilities,
         objects,
         layer: match ctx.index.state {
@@ -620,6 +637,8 @@ mod tests {
         assert_eq!(a, b);
         assert!(a.alive);
         assert_eq!(a.version, crate::VERSION);
+        assert_eq!(a.commit, crate::COMMIT);
+        assert_eq!(a.dirty, crate::DIRTY);
     }
 
     /// Readiness reads what this process already holds — the registry it built and the
@@ -633,6 +652,8 @@ mod tests {
         assert_eq!(r.capabilities, ctx.registry.summary().total);
         assert_eq!(r.objects, ctx.index.objects.len());
         assert_eq!(r.layer, HealthStatus::Ok);
+        assert_eq!(r.commit, crate::COMMIT);
+        assert_eq!(r.dirty, crate::DIRTY);
     }
 
     /// Both are registered capabilities, so every projection carries them without a
