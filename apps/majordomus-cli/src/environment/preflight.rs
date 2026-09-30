@@ -710,6 +710,60 @@ pub enum LedgerObservation {
     },
 }
 
+/// Where `scripts/pages current` — the generation check the pre-commit hook runs — records its
+/// last verdict, relative to the repository root.
+pub const GENERATION_RECORD: &str = ".ai/local/state/generation/check.json";
+
+/// The last generation check `scripts/pages current` recorded, and the tree HEAD has now.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{derive, GenerationObservation, Observations, Verdict};
+/// let mut o = Observations::empty("demo", 0);
+/// o.generation = GenerationObservation::Unreadable("schema 9".into());
+/// assert_eq!(derive(&o).check("verification.docs").unwrap().verdict, Verdict::Unknown);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub enum GenerationObservation {
+    /// No record: the check has not run in this checkout.
+    #[default]
+    Absent,
+    /// A record this executable cannot read; the reason.
+    Unreadable(String),
+    /// The record, and HEAD's tree when git could name it.
+    Read {
+        /// What the check recorded.
+        record: GenerationRecord,
+        /// `git rev-parse HEAD^{tree}` now.
+        head_tree: Option<String>,
+    },
+}
+
+/// One recorded generation check: the fields of [`GENERATION_RECORD`] this reads.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::GenerationRecord;
+/// let r: GenerationRecord = serde_json::from_str(r#"{"schema": 1, "check": "scripts/pages current",
+///   "commit": "abc", "tree": "", "at": "2026-09-30T00:00:00Z", "outcome": "pass"}"#).unwrap();
+/// // an empty tree is a working tree that was not the index: the check proved no tree
+/// assert!(r.tree.is_empty());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct GenerationRecord {
+    /// The format; this reads 1.
+    pub schema: u32,
+    /// HEAD when the check ran; before a commit, that commit's parent.
+    #[serde(default)]
+    pub commit: String,
+    /// The tree the check measured (`git write-tree` of the index), or empty when the working
+    /// tree differed from the index and so no tree is what was measured.
+    #[serde(default)]
+    pub tree: String,
+    /// When it was recorded, RFC 3339.
+    pub at: String,
+    /// `pass`, `fail`, or `partial` when the registry half could not be checked.
+    pub outcome: String,
+}
+
 /// Where `scripts/rust-coverage` records the last measurement it made itself, relative to
 /// the repository root. Local state: a measurement belongs to the checkout that ran it.
 pub const COVERAGE_RECORD: &str = ".ai/local/state/coverage/rust.json";
@@ -874,6 +928,8 @@ pub struct Observations {
     pub ledger: LedgerObservation,
     /// The last recorded coverage measurement.
     pub coverage: CoverageObservation,
+    /// The last recorded generation check.
+    pub generation: GenerationObservation,
     /// Provider projections against their templates.
     pub projections: Vec<(String, ProjectionState)>,
     /// The deployment ref.
@@ -905,6 +961,7 @@ impl Observations {
             peers: Err("not asked".into()),
             ledger: LedgerObservation::Absent,
             coverage: CoverageObservation::Absent,
+            generation: GenerationObservation::Absent,
             projections: Vec::new(),
             deployment: DeploymentObservation::NoRef,
         }
@@ -974,7 +1031,7 @@ pub fn derive(o: &Observations) -> Preflight {
                 coverage_check(o, head.as_deref(), clean),
                 enforcement_check(o, head.as_deref(), clean),
                 projections_check(o),
-                docs_check(),
+                docs_check(o, clean),
                 deployment_check(o, head.as_deref()),
             ],
         },
@@ -1880,15 +1937,88 @@ fn projections_check(o: &Observations) -> Check {
     }
 }
 
-fn docs_check() -> Check {
-    Check::new(
-        "verification.docs",
-        "generated docs",
-        Verdict::Unknown,
-        "no generation check is recorded for this tree, and entry does not run the generator",
-        vec![],
-    )
-    .next("majordomus generate --check")
+fn docs_check(o: &Observations, clean: Option<bool>) -> Check {
+    let (r, head_tree) = match &o.generation {
+        GenerationObservation::Absent => {
+            return Check::new(
+                "verification.docs",
+                "generated docs",
+                Verdict::Unknown,
+                "no generation check is recorded in this checkout: scripts/pages current records one, and the pre-commit hook runs it; entry does not run the generator",
+                vec![],
+            )
+            .next("scripts/pages current")
+        }
+        GenerationObservation::Unreadable(reason) => {
+            return Check::new(
+                "verification.docs",
+                "generated docs",
+                Verdict::Unknown,
+                format!("the generation record cannot be read: {reason}"),
+                vec![Evidence::new(GENERATION_RECORD, reason.clone())],
+            )
+            .next("scripts/pages current")
+        }
+        GenerationObservation::Read { record, head_tree } => (record, head_tree.as_deref()),
+    };
+    let measured = if r.tree.is_empty() {
+        "a working tree that was not its index".to_string()
+    } else {
+        format!("tree {}", short(&r.tree))
+    };
+    let evidence = vec![Evidence::new(
+        GENERATION_RECORD,
+        format!("{measured} at {}: {}", r.at, r.outcome),
+    )];
+    // Currency by tree, not commit: the hook checks the index before the commit exists, and
+    // that index is exactly the tree the commit then has.
+    let current = !r.tree.is_empty() && head_tree == Some(r.tree.as_str()) && clean != Some(false);
+    if !current {
+        return Check::new(
+            "verification.docs",
+            "generated docs",
+            Verdict::Stale,
+            format!(
+                "the last generation check ({}) was of {measured}, not of HEAD's tree over a clean working tree",
+                r.outcome
+            ),
+            evidence,
+        )
+        .next("scripts/pages current");
+    }
+    match r.outcome.as_str() {
+        "pass" => Check::new(
+            "verification.docs",
+            "generated docs",
+            Verdict::Verified,
+            "every generated artifact was checked current against HEAD's tree: the site data by input hash and the registry projections by majordomus generate --check",
+            evidence,
+        ),
+        "fail" => Check::new(
+            "verification.docs",
+            "generated docs",
+            Verdict::Failed,
+            "the generation check found stale derived data in HEAD's tree",
+            evidence,
+        )
+        .next("scripts/derive"),
+        "partial" => Check::new(
+            "verification.docs",
+            "generated docs",
+            Verdict::Unknown,
+            "the site data was checked current against HEAD's tree; the registry half was not, because the executable was not built",
+            evidence,
+        )
+        .next("scripts/pages current"),
+        other => Check::new(
+            "verification.docs",
+            "generated docs",
+            Verdict::Unknown,
+            format!("the record's outcome '{other}' is not one this reads"),
+            evidence,
+        )
+        .next("scripts/pages current"),
+    }
 }
 
 fn deployment_check(o: &Observations, head: Option<&str>) -> Check {
@@ -2163,6 +2293,7 @@ pub fn observe(
         peers,
         ledger: observe_ledger(root, local, environment.vcs.tree(), probe.cache),
         coverage: observe_coverage(root),
+        generation: observe_generation(root),
         projections: environment
             .providers
             .iter()
@@ -2435,6 +2566,43 @@ pub fn observe_coverage(root: &Path) -> CoverageObservation {
         Ok(r) => CoverageObservation::Unreadable(format!("schema {}, this reads 1", r.schema)),
         Err(e) => CoverageObservation::Unreadable(e.to_string()),
     }
+}
+
+/// The generation record `scripts/pages current` left, and HEAD's tree to judge it against.
+/// Git is asked only when there is a record to judge.
+///
+/// ```
+/// use majordomus_cli::environment::preflight::{observe_generation, GenerationObservation, GENERATION_RECORD};
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(observe_generation(dir.path()), GenerationObservation::Absent);
+/// let path = dir.path().join(GENERATION_RECORD);
+/// std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+/// std::fs::write(&path, r#"{"schema": 9, "at": "t", "outcome": "pass"}"#).unwrap();
+/// assert!(matches!(observe_generation(dir.path()), GenerationObservation::Unreadable(_)));
+/// ```
+pub fn observe_generation(root: &Path) -> GenerationObservation {
+    let text = match std::fs::read_to_string(root.join(GENERATION_RECORD)) {
+        Ok(text) => text,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return GenerationObservation::Absent,
+        Err(e) => return GenerationObservation::Unreadable(e.to_string()),
+    };
+    let record = match serde_json::from_str::<GenerationRecord>(&text) {
+        Ok(r) if r.schema == 1 => r,
+        Ok(r) => {
+            return GenerationObservation::Unreadable(format!("schema {}, this reads 1", r.schema))
+        }
+        Err(e) => return GenerationObservation::Unreadable(e.to_string()),
+    };
+    let head_tree = Command::new("git")
+        .arg("-C")
+        .arg(root)
+        .args(["rev-parse", "--verify", "--quiet", "HEAD^{tree}"])
+        .output()
+        .ok()
+        .filter(|out| out.status.success())
+        .map(|out| String::from_utf8_lossy(&out.stdout).trim().to_string())
+        .filter(|t| !t.is_empty());
+    GenerationObservation::Read { record, head_tree }
 }
 
 fn observe_deployment(root: &Path) -> DeploymentObservation {
