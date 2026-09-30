@@ -1,7 +1,7 @@
 +++
 title = "objects.search"
 description = "Case-insensitive substring search over identities, titles, descriptions and content."
-weight = 90
+weight = 91
 slug = "objects-search"
 [extra]
 id = "objects.search"

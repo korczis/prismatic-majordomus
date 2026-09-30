@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 61,
+      "count": 62,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 61
+      "count": 62
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 194
+      "count": 195
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 274
+      "count": 275
     },
     {
       "kind": "feature",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 251
+      "count": 256
     },
     {
       "kind": "use-case",
@@ -671,6 +671,13 @@
           "label": "adr-0033",
           "kind": "adr",
           "route": "/adrs/adr-0033/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
           "external": false
         }
       ]
@@ -4227,6 +4234,89 @@
           "kind": "test",
           "route": null,
           "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0088",
+      "identity": "adr-0088",
+      "slug": "adr-0088",
+      "cockpit": "/cockpit/objects/adr/adr-0088",
+      "title": "A dashboard is a projection of capabilities, and every card names the answer it was read from",
+      "status": "proposed",
+      "tags": [
+        "architecture",
+        "interface",
+        "capabilities",
+        "cockpit"
+      ],
+      "source": ".ai/repo/adrs/0088-a-dashboard-is-a-projection-of-capabilities-and-every-card-names-its-source.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/pages.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0087",
+          "kind": "adr",
+          "route": "/adrs/adr-0087/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/COCKPIT.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/534_the_overview_answers_four_questions.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/tests/dashboard.rs",
+          "kind": "test",
+          "route": null,
+          "external": true
         }
       ],
       "referenced_by": []
@@ -8696,6 +8786,13 @@
           "label": "adr-0054",
           "kind": "adr",
           "route": "/adrs/adr-0054/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0088",
+          "kind": "adr",
+          "route": "/adrs/adr-0088/",
           "external": false
         },
         {

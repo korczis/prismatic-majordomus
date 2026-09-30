@@ -1593,7 +1593,7 @@
       "implementation": "test/run.sh",
       "test": "test/cases/94_ci_plan.sh",
       "status": "guaranteed",
-      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.",
+      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary; test/lib.sh refuses a case that does not stand in the fixture test/run.sh made for it, so a case started by hand cannot write its fixture into a checkout. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.",
       "responsibility": "none",
       "source_route": "/docs/ci/",
       "command": null,
@@ -2053,6 +2053,19 @@
       "source_route": "/docs/rustdoc/",
       "command": null,
       "test_case": "487_rustdoc_staleness"
+    },
+    {
+      "id": "rustdoc-referenced",
+      "claim": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+      "source": "docs/RUSTDOC.md",
+      "implementation": "apps/majordomus-cli/src/site.rs",
+      "test": "test/cases/492_rustdoc_module_links.sh",
+      "status": "guaranteed",
+      "note": "The mapping is quality::rustdoc::module_routes, the crate's exported modules each with the page derived from the crate's own inventory, which majordomus quality rustdoc requires of the tree as a missing-page finding. majordomus generate carries it into the site's registry dataset as rustdoc on each module, and a module rustdoc gives no page (pub(crate) or private) carries none. The template joins it with the surfaces the build composed, from data/build.json, which scripts/site-build writes from docs/generated/web.json; it derives no route, and a build without the reference links nothing. scripts/ci/link-check resolves every such link against the composed site.",
+      "responsibility": "none",
+      "source_route": "/docs/rustdoc/",
+      "command": null,
+      "test_case": "492_rustdoc_module_links"
     },
     {
       "id": "worktree-topology-derived",

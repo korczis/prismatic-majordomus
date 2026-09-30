@@ -1110,7 +1110,7 @@
       "status": "guaranteed",
       "route": "/guarantees/suite-parallel/",
       "external": false,
-      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
+      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary; test/lib.sh refuses a case that does not stand in the fixture test/run.sh made for it, so a case started by hand cannot write its fixture into a checkout. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
     },
     {
       "id": "claim:rust-binary-artifact",
@@ -1426,6 +1426,15 @@
       "route": "/guarantees/rustdoc-verified-live/",
       "external": false,
       "note": "Two witnesses that do not share a writer name the commit, the producer's built_from and the value rustdoc renders on the crate's own COMMIT constant page. scripts/pages verify-rustdoc is a hard step of the pages workflow once the site serves the deployed commit, so a deployment whose public reference is absent, broken or stale fails its run, and scripts/ci/pages-check asks again as the pages-live gate."
+    },
+    {
+      "id": "claim:rustdoc-referenced",
+      "kind": "claim",
+      "label": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-referenced/",
+      "external": false,
+      "note": "The mapping is quality::rustdoc::module_routes, the crate's exported modules each with the page derived from the crate's own inventory, which majordomus quality rustdoc requires of the tree as a missing-page finding. majordomus generate carries it into the site's registry dataset as rustdoc on each module, and a module rustdoc gives no page (pub(crate) or private) carries none. The template joins it with the surfaces the build composed, from data/build.json, which scripts/site-build writes from docs/generated/web.json; it derives no route, and a build without the reference links nothing. scripts/ci/link-check resolves every such link against the composed site."
     },
     {
       "id": "claim:worktree-topology-derived",
@@ -3287,6 +3296,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/490_rustdoc_new_module.sh"
     },
     {
+      "id": "test:test/cases/492_rustdoc_module_links.sh",
+      "kind": "test",
+      "label": "test/cases/492_rustdoc_module_links.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/492_rustdoc_module_links.sh"
+    },
+    {
       "id": "test:test/cases/49_roadmap_doctrine.sh",
       "kind": "test",
       "label": "test/cases/49_roadmap_doctrine.sh",
@@ -4326,6 +4342,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:rustdoc-referenced",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:worktree-topology-derived",
       "target": "source:docs/WORKTREES.md",
       "kind": "specified_by"
@@ -5246,6 +5267,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:rustdoc-referenced",
+      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:worktree-topology-derived",
       "target": "impl:apps/majordomus-cli/src/worktree/path.rs",
       "kind": "implemented_by"
@@ -6163,6 +6189,11 @@
     {
       "source": "claim:rustdoc-verified-live",
       "target": "test:test/cases/487_rustdoc_staleness.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
+      "target": "test:test/cases/492_rustdoc_module_links.sh",
       "kind": "proved_by"
     },
     {
