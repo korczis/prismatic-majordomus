@@ -29,7 +29,7 @@
     <li class="rounded-base border border-default bg-neutral-primary-soft p-4 {{ indent }}">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <code class="font-mono text-sm font-medium text-heading">{{ d.name }}/</code>
-        <span class="font-mono text-xs text-body-subtle">{{ d.dir }}</span>
+        <span class="min-w-0 break-all font-mono text-xs text-body-subtle">{{ d.dir }}</span>
         {%- if d.contract -%}
         <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ d.contract.scope }}</span>
         <span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">{{ d.contract.composition }}</span>
@@ -41,13 +41,13 @@
         {%- endif -%}
       </div>
       {%- if d.contract %}
-      <p class="mt-2 text-sm text-heading"><code class="font-mono text-xs text-fg-brand">{{ d.contract.id }}</code> — {{ d.contract.title }}</p>
+      <p class="mt-2 text-sm text-heading"><code class="break-all font-mono text-xs text-fg-brand">{{ d.contract.id }}</code> — {{ d.contract.title }}</p>
       <p class="mt-1 text-sm leading-relaxed text-body">{{ d.contract.description }}</p>
       {%- if d.contract.tracks | length > 0 %}
       <p class="mt-2 text-xs text-body-subtle">tracks {% for t in d.contract.tracks %}<code class="break-all font-mono">{{ t }}</code>{% if not loop.last %}, {% endif %}{% endfor %}</p>
       {%- endif %}
       {%- else %}
-      <p class="mt-2 text-sm text-body">No contract of its own; {% if d.governed_by %}<code class="font-mono text-xs">{{ d.governed_by }}</code> exempts the directories below it{% else %}nothing requires one here{% endif %}.</p>
+      <p class="mt-2 text-sm text-body">No contract of its own; {% if d.governed_by %}<code class="break-all font-mono text-xs">{{ d.governed_by }}</code> exempts the directories below it{% else %}nothing requires one here{% endif %}.</p>
       {%- endif %}
     </li>
     {%- endfor -%}

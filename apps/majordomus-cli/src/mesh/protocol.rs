@@ -29,9 +29,15 @@ use serde::{Deserialize, Serialize};
 use super::identity::{node_id_of_key, InstanceId, NodeId, NodeIdentity};
 use super::MeshError;
 
-/// The protocol version this executable speaks. A reader accepts exactly this version
-/// today; a future version bump is a conscious compatibility decision, not a drift.
-pub const PROTOCOL_VERSION: u32 = 1;
+/// The protocol version this executable writes. Version 2 added the runtime slot (`rt`),
+/// so that two servers of one machine — two worktrees — are two runtimes rather than one
+/// node restarting forever. A version-1 reader refuses a version-2 datagram as `version`,
+/// which is counted and explicit; a version-2 reader reads both.
+pub const PROTOCOL_VERSION: u32 = 2;
+
+/// The oldest protocol version this executable reads. A version-1 advertisement has no
+/// runtime slot and is recorded as the node's unnamed runtime.
+pub const MIN_PROTOCOL_VERSION: u32 = 1;
 
 /// The largest datagram the protocol sends or reads, in bytes. A packet above this is
 /// refused before parsing: the bound is the first defense, not the parser.
@@ -72,14 +78,21 @@ pub struct Advertisement {
     /// awareness, never an authorization.
     #[serde(default)]
     pub caps: Vec<String>,
-    /// The repositories this node serves, as the same 32-hex git-repository digests
-    /// `server.status` reports. A digest discloses nothing about a path; a reader that
-    /// serves the same repository recognises it, anyone else learns only "some repo".
+    /// The repositories this node serves, as mesh repository ids (32 hex, see
+    /// [`super::repository`]): derived from the repository's root commits or its declared
+    /// identity, never from a path, so that one repository cloned on two machines is
+    /// recognised as one. A digest discloses nothing; a reader that serves the same
+    /// repository recognises it, anyone else learns only "some repo".
     #[serde(default)]
     pub repos: Vec<String>,
     /// The executable version, informational.
     #[serde(default)]
     pub ver: String,
+    /// The runtime slot (16 hex): which server of this node — one per checkout. Empty in
+    /// version 1. Omitted from the signed bytes when empty, so a version-1 signature
+    /// verifies unchanged.
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub rt: String,
 }
 
 /// The wire envelope: the advertisement plus its signature.
@@ -106,7 +119,7 @@ impl Advertisement {
     }
 }
 
-/// Build and sign this node's advertisement.
+/// Build and sign this node's advertisement, for the node's unnamed runtime.
 #[allow(clippy::too_many_arguments)]
 pub fn advertise(
     identity: &NodeIdentity,
@@ -116,7 +129,30 @@ pub fn advertise(
     repos: &[String],
     version: &str,
 ) -> Envelope {
+    advertise_as(identity, "", seq, endpoints, caps, repos, version)
+}
+
+/// Build and sign the advertisement of one runtime of this node.
+///
+/// ```
+/// use majordomus_cli::mesh::identity::NodeIdentity;
+/// use majordomus_cli::mesh::protocol::{advertise_as, encode, parse};
+/// let node = NodeIdentity::ephemeral().unwrap();
+/// let envelope = advertise_as(&node, "00000000000000aa", 1, &[], &[], &[], "docs");
+/// assert_eq!(parse(&encode(&envelope).unwrap()).unwrap().adv.rt, "00000000000000aa");
+/// ```
+#[allow(clippy::too_many_arguments)]
+pub fn advertise_as(
+    identity: &NodeIdentity,
+    runtime: &str,
+    seq: u64,
+    endpoints: &[String],
+    caps: &[String],
+    repos: &[String],
+    version: &str,
+) -> Envelope {
     let adv = Advertisement {
+        rt: runtime.into(),
         v: PROTOCOL_VERSION,
         pk: identity.public.public_key.clone(),
         inst: identity.public.instance_id.clone(),
@@ -198,10 +234,18 @@ pub fn parse_at(bytes: &[u8], clock: u64) -> Result<Envelope, Refusal> {
     }
     let envelope: Envelope = serde_json::from_slice(bytes).map_err(|_| Refusal::Malformed)?;
     let adv = &envelope.adv;
-    if adv.v != PROTOCOL_VERSION {
+    if adv.v < MIN_PROTOCOL_VERSION || adv.v > PROTOCOL_VERSION {
         return Err(Refusal::Version);
     }
-    if adv.ep.len() > MAX_ENDPOINTS
+    let runtime_ok = adv.rt.is_empty()
+        || (adv.v >= 2
+            && adv.rt.len() == 16
+            && adv
+                .rt
+                .bytes()
+                .all(|b| b.is_ascii_digit() || (b'a'..=b'f').contains(&b)));
+    if !runtime_ok
+        || adv.ep.len() > MAX_ENDPOINTS
         || adv.ep.iter().any(|e| !plausible_authority(e))
         || adv.name.len() > 64
         || adv.caps.len() > 8

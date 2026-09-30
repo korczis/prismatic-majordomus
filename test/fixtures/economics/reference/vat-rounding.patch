@@ -1,0 +1,21 @@
+diff --git a/ledgerlite/invoice.py b/ledgerlite/invoice.py
+--- a/ledgerlite/invoice.py
++++ b/ledgerlite/invoice.py
+@@ -6,7 +6,7 @@ import datetime
+ from dataclasses import dataclass, field
+ 
+ from . import tax
+-from .money import Money, round_half_up
++from .money import Money
+ 
+ 
+ @dataclass
+@@ -38,7 +38,7 @@ class Invoice:
+ 
+     def vat(self) -> Money:
+         rate = tax.rate_for(self.country)
+-        return Money(round_half_up(self.net().minor * rate, 10_000), self.currency)
++        return Money(sum(tax.line_tax(l.net().minor, rate) for l in self.lines), self.currency)
+ 
+     def gross(self) -> Money:
+         return self.net() + self.vat()

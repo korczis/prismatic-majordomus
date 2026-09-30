@@ -1,0 +1,13 @@
+schema: economics-task/v1
+id: vat-rounding
+title: "Fix the cent-off VAT on multi-line invoices"
+category: bug-fix
+complexity: small
+source: "A defect reported from outside, whose fix is written down in a decision record the worker must find."
+fixture: test/fixtures/economics/ledgerlite
+acceptance: test/fixtures/economics/acceptance/vat-rounding
+reference: test/fixtures/economics/reference/vat-rounding.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md

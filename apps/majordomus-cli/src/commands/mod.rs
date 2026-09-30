@@ -34,9 +34,12 @@ pub(crate) mod capabilities;
 pub(crate) mod command_graph;
 pub(crate) mod commit;
 pub(crate) mod completion;
+pub(crate) mod dashboard;
+pub(crate) mod delivery;
 pub(crate) mod devcontext;
 pub(crate) mod devtask;
 pub(crate) mod distribution;
+pub(crate) mod economics;
 pub(crate) mod entity;
 pub(crate) mod env;
 pub(crate) mod evidence;
@@ -51,6 +54,8 @@ pub(crate) mod release;
 pub(crate) mod rules;
 pub(crate) mod scope;
 pub(crate) mod serve;
+pub(crate) mod served;
+pub(crate) mod shell;
 pub(crate) mod web;
 pub(crate) mod why;
 pub(crate) mod worktree;
@@ -85,8 +90,13 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Mesh(args) => mesh::run(args),
         Command::Models(args) => models::run(args),
         Command::Evidence(args) => evidence::run(args),
+        Command::Served(args) => served::run(args),
         Command::Rules(args) => rules::run(args),
+        Command::Delivery(args) => delivery::run(args),
+        Command::Economics(args) => economics::run(args),
         Command::Entity(args) => entity::run(args),
+        Command::Shell(args) => shell::run(args),
+        Command::Dashboard(args) => dashboard::run(args),
     }
 }
 
@@ -138,6 +148,12 @@ mod tests {
             }),
             (&["majordomus", "quality", "report"], |c| {
                 matches!(c, Command::Quality(_))
+            }),
+            (&["majordomus", "economics", "summary"], |c| {
+                matches!(c, Command::Economics(_))
+            }),
+            (&["majordomus", "dashboard", "overview"], |c| {
+                matches!(c, Command::Dashboard(_))
             }),
             (
                 &["majordomus", "devcontext", "compile", "--issue", "I1"],

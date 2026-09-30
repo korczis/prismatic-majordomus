@@ -1,0 +1,65 @@
+diff --git a/ledgerlite/invoice.py b/ledgerlite/invoice.py
+--- a/ledgerlite/invoice.py
++++ b/ledgerlite/invoice.py
+@@ -6,7 +6,7 @@ import datetime
+ from dataclasses import dataclass, field
+ 
+ from . import tax
+-from .money import Money, round_half_up
++from .money import Money, round_half_even, round_half_up
+ 
+ 
+ @dataclass
+@@ -14,9 +14,12 @@ class Line:
+     description: str
+     quantity: int
+     unit_price: Money
++    discount_bp: int = 0
+ 
+     def net(self) -> Money:
+-        return self.unit_price.times(self.quantity)
++        gross = self.unit_price.times(self.quantity).minor
++        discount = round_half_even(gross * self.discount_bp, 10_000)
++        return Money(gross - discount, self.unit_price.currency)
+ 
+ 
+ @dataclass
+@@ -28,8 +31,10 @@ class Invoice:
+     currency: str = "EUR"
+     lines: list[Line] = field(default_factory=list)
+ 
+-    def add(self, description: str, quantity: int, unit_price_minor: int) -> Line:
+-        line = Line(description, quantity, Money(unit_price_minor, self.currency))
++    def add(
++        self, description: str, quantity: int, unit_price_minor: int, discount_bp: int = 0
++    ) -> Line:
++        line = Line(description, quantity, Money(unit_price_minor, self.currency), discount_bp)
+         self.lines.append(line)
+         return line
+ 
+diff --git a/ledgerlite/storage.py b/ledgerlite/storage.py
+--- a/ledgerlite/storage.py
++++ b/ledgerlite/storage.py
+@@ -19,7 +19,12 @@ def _invoice_to_dict(inv: Invoice) -> dict:
+         "country": inv.country,
+         "issued": dates.render(inv.issued),
+         "lines": [
+-            {"description": l.description, "quantity": l.quantity, "unit_price": l.unit_price.minor}
++            {
++                "description": l.description,
++                "quantity": l.quantity,
++                "unit_price": l.unit_price.minor,
++                "discount_bp": l.discount_bp,
++            }
+             for l in inv.lines
+         ],
+     }
+@@ -28,7 +33,7 @@ def _invoice_to_dict(inv: Invoice) -> dict:
+ def _invoice_from_dict(d: dict) -> Invoice:
+     inv = Invoice(d["number"], d["customer"], d["country"], dates.parse(d["issued"]))
+     for l in d["lines"]:
+-        inv.add(l["description"], l["quantity"], l["unit_price"])
++        inv.add(l["description"], l["quantity"], l["unit_price"], l.get("discount_bp", 0))
+     return inv
+ 
+ 

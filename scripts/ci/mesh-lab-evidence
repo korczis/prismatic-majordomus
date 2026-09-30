@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# mesh-lab-evidence — judge the mesh lab's record, from outside the lab.
+#
+# `docs/CLAIMS.yaml` named test/mesh-lab/run as both the implementation and the test of
+# `mesh-network-acceptance`: the script under test wrote its own verdict and nothing else
+# read it. A run that exits 0 having asserted nothing — a scenario silently dropped, a
+# `pass` never reached, an executable the containers could not name — would have been
+# indistinguishable from an accepted network. This reads target/mesh-lab/evidence.json
+# after the fact and refuses it unless the record is complete: the schema it claims, an
+# overall `passed`, every required scenario present with a `pass` verdict and a detail that
+# says what was measured, four nodes, both transports, and an executable and platform the
+# lab could actually read out of a node.
+#
+# The required set is declared here, in the reader, and test/cases/414_mesh_lab_evidence.sh
+# holds it equal to the scenarios test/mesh-lab/run reaches — so a scenario added to the
+# lab without being named here, or named here and never run, is a failing case rather than
+# a quietly smaller proof.
+#
+#   scripts/ci/mesh-lab-evidence                    judge target/mesh-lab/evidence.json
+#   scripts/ci/mesh-lab-evidence path/evidence.json judge that record
+#   scripts/ci/mesh-lab-evidence --scenarios        print the required scenario names
+#
+# Exit 0 when the record accepts the network, 10 when it does not, 2 when there is no
+# record to read (a lab that never ran is not a lab that passed).
+
+set -euo pipefail
+
+# Every scenario test/mesh-lab/run must reach for the claim to stand.
+SCENARIOS=(
+  multicast_discovery
+  handshake
+  repository_isolation
+  cross_node_claim
+  claim_conflict
+  cross_node_handover
+  three_node_convergence
+  network_partition
+  process_crash_recovery
+  cli_verify
+)
+
+if [ "${1:-}" = "--scenarios" ]; then
+  printf '%s\n' "${SCENARIOS[@]}"
+  exit 0
+fi
+
+root="${MJ_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+file="${1:-$root/target/mesh-lab/evidence.json}"
+fail=0
+
+finding() {
+  printf 'mesh-lab-evidence: FAIL %s\n' "$1"
+  fail=1
+}
+
+[ -f "$file" ] || {
+  printf 'mesh-lab-evidence: no record at %s — the lab did not run (test/mesh-lab/run)\n' "$file" >&2
+  exit 2
+}
+jq -e . "$file" >/dev/null 2>&1 || {
+  printf 'mesh-lab-evidence: %s is not readable JSON\n' "$file" >&2
+  exit 2
+}
+
+schema="$(jq -r '.schema // ""' "$file")"
+[ "$schema" = "mesh-lab-evidence/v1" ] ||
+  finding "schema is '$schema', not mesh-lab-evidence/v1"
+
+status="$(jq -r '.status // ""' "$file")"
+[ "$status" = "passed" ] ||
+  finding "the lab's own verdict is '$status', not passed"
+
+for field in started_at finished_at; do
+  value="$(jq -r --arg f "$field" '.[$f] // ""' "$file")"
+  [ -n "$value" ] || finding "$field is missing — an undated record dates from nowhere"
+done
+
+for field in executable platform; do
+  value="$(jq -r --arg f "$field" '.[$f] // "unknown"' "$file")"
+  case "$value" in
+    ""|unknown) finding "$field is '$value' — the lab could not read it out of a node, so the record does not say what ran" ;;
+  esac
+done
+
+nodes="$(jq -r '.topology.nodes // [] | length' "$file")"
+[ "$nodes" -ge 4 ] ||
+  finding "topology names $nodes node(s); the lab is four containers (three of one repository, one of another)"
+
+for transport in udp_multicast http; do
+  jq -e --arg t "$transport" '(.topology.transports // []) | index($t)' "$file" >/dev/null ||
+    finding "topology does not name the transport '$transport'"
+done
+
+for name in "${SCENARIOS[@]}"; do
+  verdict="$(jq -r --arg n "$name" '.scenarios[$n].verdict // "absent"' "$file")"
+  case "$verdict" in
+    pass)
+      detail="$(jq -r --arg n "$name" '.scenarios[$n].detail // ""' "$file")"
+      [ -n "$detail" ] ||
+        finding "scenario $name passed without saying what it measured"
+      ;;
+    absent) finding "scenario $name is absent from the record" ;;
+    *) finding "scenario $name: $verdict — $(jq -r --arg n "$name" '.scenarios[$n].detail // ""' "$file")" ;;
+  esac
+done
+
+# A scenario the lab recorded and this reader does not know is drift in the other
+# direction: the proof grew and the judge did not.
+while read -r name; do
+  [ -n "$name" ] || continue
+  known=0
+  for want in "${SCENARIOS[@]}"; do [ "$want" = "$name" ] && known=1; done
+  [ "$known" = 1 ] ||
+    finding "the record carries a scenario this reader does not require: $name"
+done < <(jq -r '.scenarios // {} | keys[]' "$file")
+
+if [ "$fail" = 0 ]; then
+  printf 'mesh-lab-evidence: OK %s — %s scenarios passed on %s (%s)\n' \
+    "${file#"$root"/}" "${#SCENARIOS[@]}" \
+    "$(jq -r '.platform' "$file")" "$(jq -r '.executable' "$file")"
+  exit 0
+fi
+exit 10

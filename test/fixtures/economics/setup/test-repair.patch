@@ -1,0 +1,24 @@
+diff --git a/ledgerlite/cli.py b/ledgerlite/cli.py
+--- a/ledgerlite/cli.py
++++ b/ledgerlite/cli.py
+@@ -50,7 +50,7 @@ def cmd_total(args) -> int:
+ 
+ 
+ def cmd_report(args) -> int:
+-    for m in report.monthly_totals(_load(args.file)):
++    for m in report.monthly_summary(_load(args.file)):
+         print(f"{m.month} {m.invoices} {format_amount(m.gross)}")
+     return 0
+ 
+diff --git a/ledgerlite/report.py b/ledgerlite/report.py
+--- a/ledgerlite/report.py
++++ b/ledgerlite/report.py
+@@ -18,7 +18,7 @@ class MonthTotals:
+     gross: Money
+ 
+ 
+-def monthly_totals(invoices: list[Invoice], currency: str = "EUR") -> list[MonthTotals]:
++def monthly_summary(invoices: list[Invoice], currency: str = "EUR") -> list[MonthTotals]:
+     """Totals per calendar month, oldest first. Invoices in other currencies are skipped."""
+     buckets: dict[str, list[Invoice]] = {}
+     for inv in invoices:

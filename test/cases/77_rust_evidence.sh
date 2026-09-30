@@ -34,6 +34,7 @@ want='cargo fmt --check
 cargo clippy -D warnings
 cargo test
 cargo doc -D warnings
+rustdoc surface
 cargo bench --no-run
 cargo build
 capabilities validate
@@ -52,6 +53,12 @@ expect_grep 'cargo test --no-fail-fast' "$RC"
 # compared nothing, could not fail, and ran the job out of time before the gates after it
 expect_no_grep 'step "bench --profile' "$RC"
 expect_grep "RUSTDOCFLAGS='-D warnings' cargo doc --no-deps" "$RC"
+# The rustdoc step is also the producer of the published reference (ADR 0086): `--doc` and
+# the full modes run the one invocation above and hand its output off as the rustdoc surface.
+# A second `cargo doc` line — a publication variant with other flags — would publish pages
+# the gate never proved, so there is exactly one.
+[ "$(grep -cE '^[^#]*cargo doc ' "$RC")" = 1 ] \
+  || { echo "    scripts/rust-check invokes cargo doc more than once; what is published must be what the gate proved"; exit 1; }
 expect_grep 'cargo bench --no-run' "$RC"
 expect_grep 'cargo run --quiet -- capabilities validate' "$RC"
 expect_grep 'cargo run --quiet -- generate --check' "$RC"

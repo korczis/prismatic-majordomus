@@ -1,0 +1,42 @@
+id: I1964
+milestone: test-evidence
+title: The evidence reference is documented and held to the tree
+slug: evidence-is-documented
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Rewrite docs/EVIDENCE.md as the reference of the finished model, with the pipeline drawn in mermaid and a case named on every row of the matrix, and hold it to the tree with a case; cite ADR 0068, 0080 and 0087 structurally once they have landed."
+why: "docs/EVIDENCE.md is shared by section while the work runs, so it can describe the finished model only after the slices land, and a reference that names what the code no longer declares is a stale projection."
+current_state: "docs/EVIDENCE.md describes the ledger and its states; its sections are edited by I1948 and I1949 while the work runs."
+desired_state: "The reference names every command, capability, state and file the code declares for evidence, draws the pipeline in mermaid, and a case fails when it names something the tree does not have or omits something it does."
+scope:
+  - docs/EVIDENCE.md
+  - docs/COVERAGE.md
+  - docs/README.md
+  - docs/CI.md
+  - docs/GITHUB_PAGES_ARCHITECTURE.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - test/cases/528_the_evidence_reference_is_held_to_the_tree.sh
+  - .ai/repo/features/evidence.md
+  - .ai/repo/features/coverage.md
+  - .ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md
+  - .ai/repo/evidence/README.md
+  - .ai/repo/doc-command-baseline.txt
+non_scope:
+  - "A diagram in box art: a relationship is drawn in mermaid"
+  - "Accepting ADR 0087, which is the owner's act"
+depends_on:
+  - I1962
+  - I1963
+acceptance_criteria:
+  - "The reference names what the code declares, and the case fails on a name the tree does not have"
+  - "Every row of the matrix names a case"
+  - "The pipeline is a mermaid diagram and passes diagram-check"
+validation:
+  - bash test/run.sh 528_the_evidence_reference_is_held_to_the_tree
+  - scripts/ci/diagram-check
+evidence_required:
+  - reference_held_to_the_tree
+created_at: 2026-09-26
+updated_at: 2026-09-26

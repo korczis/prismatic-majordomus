@@ -36,9 +36,17 @@ expect_grep 'FAIL verification .* false — exit 1'
 [ "$(refusals)" = 2 ] || { echo "    finish --check wrote a refusal; a check is a question, not a claim"; exit 1; }
 # handover supplies the note; regression test path is required by debugging profile
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command "true"
+# The verify command is the project's own verification, run as a worker would run it. The
+# outcome being claimed is finish's own state: a `check` the verify command runs must not
+# see it, or that check judges its obligations and gates as a completed finish and refuses.
+venv="$(mktemp "${TMPDIR:-/tmp}/mj-venv.XXXXXX")"
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "env > '$venv'"
 expect_grep 'OK +note'
 expect_grep 'FAIL regression .* no test path'
+grep -q '^PATH=' "$venv" || { echo "    the verify command did not run"; exit 1; }
+grep -q '^MJ_FINISH_OUTCOME=' "$venv" \
+  && { echo "    the verify command inherited $(grep '^MJ_FINISH_OUTCOME=' "$venv")"; exit 1; }
+rm -f "$venv"
 echo t2 >> test/a_test
 expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
 expect_grep 'OK +regression'

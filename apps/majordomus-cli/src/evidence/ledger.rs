@@ -47,6 +47,7 @@
 //!         at: "2026-09-11T00:00:00Z".into(),
 //!         origin: Origin::Local,
 //!         command: format!("bash test/run.sh {name}"),
+//!         run: None,
 //!     }
 //! }
 //!
@@ -128,6 +129,7 @@ pub const LEDGER_VERSION: u32 = 1;
 /// #         commit: "0".repeat(40), working_tree: "clean".into(), digest: "sha256:0".into(),
 /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
 /// #         command: format!("bash test/run.sh {name}"),
+/// #         run: None,
 /// #     }
 /// # }
 /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_PATH, LEDGER_VERSION};
@@ -274,6 +276,7 @@ impl Ledger {
     /// #         commit: "0".repeat(40), working_tree: "clean".into(), digest: "sha256:0".into(),
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
+    /// #         run: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::Ledger;
@@ -305,6 +308,7 @@ impl Ledger {
     /// #         commit: "0".repeat(40), working_tree: "clean".into(), digest: "sha256:0".into(),
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
+    /// #         run: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::Ledger;
@@ -350,6 +354,7 @@ impl Ledger {
     /// #         commit: "0".repeat(40), working_tree: "clean".into(), digest: "sha256:0".into(),
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
+    /// #         run: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_PATH};
@@ -390,6 +395,7 @@ impl Ledger {
     /// #         commit: "0".repeat(40), working_tree: "clean".into(), digest: "sha256:0".into(),
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
+    /// #         run: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::ledger::{Ledger, LEDGER_PATH};
@@ -437,6 +443,7 @@ impl Ledger {
     /// #         commit: "0".repeat(40), working_tree: "clean".into(), digest: "sha256:0".into(),
     /// #         at: "2026-09-11T00:00:00Z".into(), origin: Origin::Local,
     /// #         command: format!("bash test/run.sh {name}"),
+    /// #         run: None,
     /// #     }
     /// # }
     /// use majordomus_cli::evidence::Ledger;
@@ -484,6 +491,7 @@ mod tests {
             at: "2026-09-11T00:00:00Z".into(),
             origin: Origin::Local,
             command: format!("bash test/run.sh {test}"),
+            run: None,
         }
     }
 

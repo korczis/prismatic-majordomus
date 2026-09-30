@@ -42,16 +42,23 @@
 //! assert!(protocol::parse(b"garbage").is_err());
 //! ```
 
+pub mod address;
 pub mod broadcast;
 pub mod config;
+pub mod cooperation;
 pub mod doctor;
+pub mod handover;
 pub mod identity;
+pub mod journal;
+pub mod link;
 pub mod manager;
 pub mod multicast;
 pub mod protocol;
 pub mod provider;
 pub mod registry;
 pub mod rendezvous;
+pub mod repository;
+pub mod state;
 pub mod trust;
 
 pub use config::{MeshConfig, KIND};

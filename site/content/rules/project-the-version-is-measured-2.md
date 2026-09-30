@@ -1,7 +1,7 @@
 +++
 title = "The version is measured against the public surface, not claimed"
 description = "The version is measured against the public surface, not claimed"
-weight = 130
+weight = 133
 [extra]
 kind = "rule"
 slug = "project-the-version-is-measured-2"
@@ -170,7 +170,7 @@ be unreadable.
 
 `test/cases/112_version_matches_surface.sh` is the behavioural half, in a disposable
 repository with a real history and real published releases: an additive change refused and
-then fixed by the writer, an undershooting override refused with both version sites
+then fixed by the writer, an undershooting override refused with the manifest
 untouched, an overshooting one allowed and reported as an override, an unchanged contract
 owing nothing, a removal named as breaking, an unreadable baseline refused as unreadable
 rather than as an empty diff, a tag nobody recorded reported, and — the assertion that keeps
