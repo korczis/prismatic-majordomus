@@ -72,6 +72,16 @@ Unknown is not pass. Blocked is not pass. A crashed measurement is never green â
 that turns "the coverage tool failed" into a pass is the failure mode the whole exercise
 exists to refuse.
 
+A test that fails under instrumentation is BLOCKED too: cargo-llvm-cov writes no export for
+a suite that failed. The gate then prints what the test harness reported, the `failures:`
+section of every failing binary with each failing test's name and panic, so the job log names
+the test rather than only its binary. A binary killed by a signal writes no such section and
+no `test result:` line, so its unfinished `running N tests` block is printed too: its header,
+how many tests completed and its last lines. It cannot name the test that was running, because
+the parallel harness writes a test's line only when that test completes; cargo's stderr names
+the binary and the signal. A green run prints none of the harness's output.
+`test/cases/536_the_coverage_gate_names_the_failing_test.sh` holds that behaviour.
+
 ## Running it
 
 ```

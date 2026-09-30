@@ -629,6 +629,87 @@ mod tests {
         assert!(findings.is_empty(), "{findings:?}");
     }
 
+    /// The failure mode the reservation exists for: a second producer publishing the
+    /// crate's reference at its canonical mount — a copy of the rustdoc under another id,
+    /// written by somebody who thought it should also be "a report". Two answers for one
+    /// path, and whichever the router consulted first would be the reference.
+    #[test]
+    fn a_second_surface_at_the_rustdoc_mount_is_a_duplicate_canonical_route() {
+        use crate::web::discover::{self, Runtime, RUSTDOC, RUSTDOC_MOUNT};
+        let tmp = tempfile::tempdir().unwrap();
+        let krate = tmp.path().join(crate::capability::model::CRATE_DIR);
+        std::fs::create_dir_all(krate.join("src")).unwrap();
+        std::fs::write(krate.join("Cargo.toml"), "").unwrap();
+        std::fs::write(krate.join("src/lib.rs"), "//! x\n").unwrap();
+        let copy = tmp.path().join(GENERATED_ROOT).join("rust-api");
+        std::fs::create_dir_all(&copy).unwrap();
+        std::fs::write(
+            copy.join(discover::DECLARATION_FILE),
+            r#"{"schema":"web-surface/v1","id":"rust-api","mount":"/rustdoc"}"#,
+        )
+        .unwrap();
+
+        let topology = discover::discover(tmp.path(), Runtime::full()).unwrap();
+        let findings = validate(&topology, tmp.path(), Artifacts::Ignore);
+        assert!(blocking(&findings), "{findings:?}");
+        let collision = findings
+            .iter()
+            .find(|f| f.rule == "surface.mount-collision")
+            .expect("two owners of one path is a collision");
+        assert!(collision.surface.contains(RUSTDOC), "{}", collision.surface);
+        assert!(
+            collision.surface.contains("rust-api"),
+            "{}",
+            collision.surface
+        );
+        // each side says where its claim came from, so the reader knows which to move
+        assert!(
+            collision
+                .message
+                .contains("target/web/rust-api/surface.json"),
+            "{}",
+            collision.message
+        );
+        let reserved = findings
+            .iter()
+            .find(|f| f.rule == "surface.reserved-namespace" && f.surface == "rust-api")
+            .expect("the copy is refused by name, not only as half of a collision");
+        assert!(
+            reserved.message.contains(RUSTDOC_MOUNT),
+            "{}",
+            reserved.message
+        );
+
+        // and the reservation holds with the owner gone: in a repository whose crate was
+        // moved, nothing else may help itself to the reference's name
+        std::fs::remove_dir_all(&krate).unwrap();
+        let orphaned = discover::discover(tmp.path(), Runtime::full()).unwrap();
+        assert!(orphaned.get(RUSTDOC).is_none());
+        let findings = validate(&orphaned, tmp.path(), Artifacts::Ignore);
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule == "surface.reserved-namespace" && f.surface == "rust-api"),
+            "{findings:?}"
+        );
+    }
+
+    #[test]
+    fn a_surface_inside_the_rustdoc_mount_is_refused_as_nesting() {
+        let t = Topology::new(vec![
+            deployment("app"),
+            surface("rustdoc", "/rustdoc", Some("target/web/rustdoc")),
+            surface("search", "/rustdoc/search", Some("target/web/search")),
+        ]);
+        let findings = validate(&t, Path::new("/nonexistent"), Artifacts::Ignore);
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.rule == "surface.nested-mount" && f.surface == "search inside rustdoc"),
+            "{findings:?}"
+        );
+    }
+
     #[test]
     fn an_artifact_outside_the_generated_root_is_refused() {
         let t = Topology::new(vec![surface("rogue", "/rogue", Some("docs"))]);

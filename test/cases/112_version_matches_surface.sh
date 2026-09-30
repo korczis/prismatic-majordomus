@@ -17,7 +17,7 @@
 # about that seam:
 #
 #   an additive change            the analysis refuses, and `release bump` is what fixes it
-#   an undershooting override     refused, with both version sites untouched
+#   an undershooting override     refused, with the manifest untouched
 #   an overshooting override      allowed, and reported as an override rather than silently
 #   an unchanged contract         nothing owed, so the gate is not a thing to route around
 #   a removal                     named as breaking whatever the policy charges for it
@@ -82,9 +82,11 @@ order: 75
 One file per release, `v<major>.<minor>.<patch>.yaml`, contract `release/v1`.
 Y
 
-# The two version sites. Each carries the version a second time where the writer must not
-# touch it — a dependency pinned at it, and a comment naming it — so a writer that rewrote
-# the file rather than the one line it owns is caught.
+# The one place the version is authored, and its projection. The manifest carries the version
+# a second time where the writer must not touch it — a dependency pinned at it — so a writer
+# that rewrote the file rather than the one line it owns is caught. The projection is what
+# `majordomus generate` would write where the crate lives beside the tool; here the share is
+# the checkout's, so the fixture states it, and the writer must leave it to derivation.
 version_sites() {  # version_sites VERSION
   cat > apps/majordomus-cli/Cargo.toml <<Y
 [package]
@@ -95,16 +97,14 @@ edition = "2021"
 [dependencies]
 serde = { version = "$1" }
 Y
-  cat > bin/majordomus <<Y
-#!/usr/bin/env bash
-# this tool was MJ_VERSION $1 when it was written
-MJ_VERSION="$1"
-echo "fixture \$MJ_VERSION"
-Y
-  chmod +x bin/majordomus
+  mkdir -p share
+  printf '# GENERATED FILE — DO NOT EDIT DIRECTLY\nversion=%s\n' "$1" > share/version.txt
 }
-declared_version() { sed -n 's/^MJ_VERSION="\([^"]*\)".*/\1/p' bin/majordomus | head -n 1; }
-crate_version()    { awk '/^\[package\]/{p=1;next} /^\[/{p=0} p && /^version *=/{gsub(/[^0-9.]/,"",$3); print $3; exit}' apps/majordomus-cli/Cargo.toml; }
+# The one shell reader of the authority, carried by the fixture so that it reads the fixture's
+# manifest: never a second parse of Cargo.toml here.
+mkdir -p scripts && cp "$ROOT/scripts/release-version" scripts/release-version
+declared_version() { scripts/release-version; }
+projected_version() { sed -n 's/^version=//p' share/version.txt; }
 
 # record VERSION TAG COMMIT
 record() {
@@ -125,7 +125,7 @@ Y
 }
 
 version_sites 1.1.0
-git add -A >/dev/null && git commit -qm "chore(fixture): the releases section and the two version sites"
+git add -A >/dev/null && git commit -qm "chore(fixture): the releases section, the manifest and its projection"
 
 # The executable's own registry, which is what this tree's surface will be measured as.
 "$RB" generate registry >/dev/null 2>&1 || { echo "    generate registry failed in the fixture"; exit 1; }
@@ -186,8 +186,7 @@ expect_grep 'WARNING the commits since v1\.1\.0 classify themselves as'
 # written. An override that could undershoot would make every measurement above decorative.
 expect_exit 10 "$RB" release bump --level patch
 expect_grep 'REFUSED'
-[ "$(declared_version)" = 1.1.0 ] || { echo "    a refused bump wrote to bin/majordomus anyway: $(declared_version)"; exit 1; }
-[ "$(crate_version)" = 1.1.0 ]    || { echo "    a refused bump wrote to the manifest anyway: $(crate_version)"; exit 1; }
+[ "$(declared_version)" = 1.1.0 ] || { echo "    a refused bump wrote to the manifest anyway: $(declared_version)"; exit 1; }
 
 # and neither may it go down
 expect_exit 10 "$RB" release bump --exact 1.0.0
@@ -197,19 +196,18 @@ expect_grep 'REFUSED'
 # --dry-run says what it would do and writes nothing
 expect_exit 0 "$RB" release bump --dry-run
 expect_grep '1\.1\.0 -> 1\.2\.0'
-[ "$(declared_version)" = 1.1.0 ] || { echo "    --dry-run wrote to bin/majordomus"; exit 1; }
-[ "$(crate_version)" = 1.1.0 ]    || { echo "    --dry-run wrote to the manifest"; exit 1; }
+[ "$(declared_version)" = 1.1.0 ] || { echo "    --dry-run wrote to the manifest"; exit 1; }
 
 # ---------------------------------------------------------------- the one writer applies the plan
 expect_exit 0 "$RB" release bump
 expect_grep '1\.1\.0 -> 1\.2\.0'
-[ "$(declared_version)" = 1.2.0 ] || { echo "    the bump did not reach bin/majordomus: $(declared_version)"; exit 1; }
-[ "$(crate_version)" = 1.2.0 ]    || { echo "    the bump did not reach the manifest: $(crate_version)"; exit 1; }
+[ "$(declared_version)" = 1.2.0 ] || { echo "    the bump did not reach the manifest: $(declared_version)"; exit 1; }
 # the one line each file owns, and nothing else
 grep -q 'serde = { version = "1.1.0" }' apps/majordomus-cli/Cargo.toml || {
   echo "    the writer rewrote a dependency's version"; sed -n '1,10p' apps/majordomus-cli/Cargo.toml; exit 1; }
-grep -q '# this tool was MJ_VERSION 1.1.0 when it was written' bin/majordomus || {
-  echo "    the writer rewrote a comment"; sed -n '1,5p' bin/majordomus; exit 1; }
+# and the projection is derivation's, not the writer's: it still states the old version
+[ "$(projected_version)" = 1.1.0 ] || {
+  echo "    the writer wrote the projection, which only derivation writes: $(projected_version)"; exit 1; }
 
 # and now the same analysis passes, from the same engine that refused it
 expect_exit 0 "$RB" release analyze
@@ -223,7 +221,6 @@ expect_grep 'already 1\.2\.0'
 expect_exit 0 "$RB" release bump --level major
 expect_grep 'explicit override'
 [ "$(declared_version)" = 2.0.0 ] || { echo "    the deliberate major bump did not apply: $(declared_version)"; exit 1; }
-[ "$(crate_version)" = 2.0.0 ]    || { echo "    the deliberate major bump did not reach the manifest"; exit 1; }
 version_sites 1.2.0   # back to the measured minimum for what follows
 git add -A >/dev/null && git commit -qm "chore(fixture): back to the measured version"
 

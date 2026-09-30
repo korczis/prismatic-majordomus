@@ -47,14 +47,14 @@ pages still render, say so, and remain fully usable.
 
 | Route | What it shows | Derived from |
 |---|---|---|
-| `/cockpit` | repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `repository.info`, `health.report` |
+| `/cockpit` | the four questions first (is it healthy, what changed, what is broken, what needs action), then repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `dashboard.overview`, `repository.info`, `health.report` |
 | `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
 | `/cockpit/capabilities/<id>` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
 | `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
 | `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
 | `/cockpit/objects/<kind>` | one kind's index, at the kind's own address | `entity.kinds`, `objects.list` |
-| `/cockpit/objects/<kind>/<slug>` | one entity: what it is, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
+| `/cockpit/objects/<kind>/<slug>` | one entity: what it is and where the public site publishes it, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
 | `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
@@ -77,6 +77,13 @@ row, a page, and its place in every other page's backlinks without an edit anywh
 Cockpit. Two identities of one kind that reduce to one address would be a collision rather
 than a tie-break; `majordomus entity kinds` reports every one and `scripts/ci/entity-check`
 refuses the tree while one exists. The rule is `project.entities-are-routable`.
+
+An entity page also names the object's public documentation page — "Published at
+https://majordomus.dev/adrs/adr-0056/" — or the reason its kind is not published. The page
+derives no address: it renders the `documentation` field of `entity.show`, which reads
+`site/data/publication.toml` and the site's `base_url` at request time, the same declaration
+`scripts/generate-site-data` writes the site's pages from. A repository with no such
+declaration has no public page to name, and the page says so.
 
 ## How a listing of the whole layer is read
 
@@ -186,6 +193,27 @@ The behavioural claim is one test:
 rule into a disposable repository and asserts it reaches the capability listing, a page of
 its own, the object explorer, the search and the listing the palette reads — with no line
 of the Cockpit written for it.
+
+## The four questions: a dashboard that is a projection
+
+The overview opens with the Overview of the Dashboard Suite (ADR 0088): four questions — *is it
+healthy*, *what changed*, *what is broken*, *what needs action* — answered by
+`dashboard.overview`, which is an ordinary capability (`GET /api/v1/dashboard/overview`, MCP
+`majordomus_dashboard_overview`, `majordomus dashboard overview`). It has no data of its own.
+Each card is one fact read out of another capability's answer — `health.report`,
+`release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state`, and
+`peers.list` for this checkout's board — and it carries that capability, the input it was asked
+with, the RFC 6901 pointer its value was read from and the measure (`exact`, or `count` for the
+length of a list the source omits when empty), beside the source's own verdict, the page to
+drill into and the command that acts on it. A source that cannot answer makes its cards
+`unknown`, never `ok`.
+
+The page writes each card's value as `data-value` — the JSON the route answered — so the page
+and the route are compared byte for byte. `tests/dashboard.rs` is the gate: it asks every
+card's source the card's own question over the source's own route, reads the pointer, and fails
+when the card's value differs; it names no card, so the next one is held to it unedited.
+`test/cases/534_the_overview_answers_four_questions.sh` holds the same contract through the
+built executable.
 
 ## Graphs
 

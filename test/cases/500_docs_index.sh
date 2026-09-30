@@ -6,8 +6,9 @@
 #      SVG's <title>), strips the " — <site name>" suffix the page itself declares, decodes
 #      entities, leaves out a redirect, joins an entity page to its object, sorts by route and
 #      writes the same bytes twice;
-#   2. `scripts/pages verify-docs` passes over the served site on its commit and refuses another
-#      commit or a missing page;
+#   2. `scripts/pages verify-docs` passes over the served site on its commit, refuses another
+#      commit, a missing page and an index that is not one (10), and says an index that never
+#      answered was not measured (12);
 #   3. docs-index.mjs refuses a build in which a route the catalogue publishes was not built
 #      (exit 10), and an entities.json without a catalogue (exit 12);
 #   4. the catalogue scripts/generate-site-data writes names every kind site/data/publication.toml
@@ -97,7 +98,18 @@ if command -v python3 >/dev/null 2>&1; then
   [ "$rc" = 10 ] || note "verify-docs with an entity page answering 404 exited $rc, not 10"
   grep -q '/adrs/adr-0001/ answered 404' "$S/v.out" || note "verify-docs does not name the route that failed: $(cat "$S/v.out")"
   mv "$S/moved" "$S/public/adrs/adr-0001"
+  # an index that answers and is not one is a finding (10); an index that never answered is
+  # an unmeasured deployment (12), and the two say different things
+  cp "$S/public/docs/index.json" "$S/index.keep"
+  printf '{"schema":2}\n' > "$S/public/docs/index.json"
+  rc=0; bash "$ROOT/scripts/pages" verify-docs --url "$V" --commit 0123456789ab --quiet >"$S/v.out" 2>&1 || rc=$?
+  [ "$rc" = 10 ] || note "verify-docs over an index that is not one exited $rc, not 10"
+  grep -q 'is not a documentation index' "$S/v.out" || note "verify-docs does not say the index is not one: $(cat "$S/v.out")"
+  cp "$S/index.keep" "$S/public/docs/index.json"
   kill "$SRV" 2>/dev/null || true
+  rc=0; MJ_PAGES_INDEX_SECONDS=3 bash "$ROOT/scripts/pages" verify-docs --url "$V" --commit 0123456789ab --quiet >"$S/v.out" 2>&1 || rc=$?
+  [ "$rc" = 12 ] || note "verify-docs with nothing answering exited $rc, not 12"
+  grep -q 'could not be fetched' "$S/v.out" || note "verify-docs does not say the index was never fetched: $(cat "$S/v.out")"
 else
   note "python3 is required to serve the fixture"
 fi

@@ -122,6 +122,44 @@ pub struct ModuleView {
     /// Repository-relative path of the Rust file the module's descriptors were composed
     /// in, for a builtin module.
     pub source_path: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    /// The page the crate's published reference documents the module on, for a builtin
+    /// module whose Rust module the crate exports. Absent for a module rustdoc gives no
+    /// page (`pub(crate)` or private), for a declarative module, and for every module of a
+    /// repository without the crate.
+    pub rustdoc: Option<ReferencePage>,
+}
+
+/// A page of the crate's reference: the web surface that publishes it and the page within
+/// it, as the rustdoc check derives it from the crate's own inventory.
+///
+/// The mount is deliberately not here. Whether the reference is composed into a build, and
+/// at which mount, is the build's fact — `scripts/site-build` records every surface it
+/// composed in `data/build.json` — so a page links this one only when the build that
+/// renders it carries the surface, and at the mount it was composed at.
+///
+/// ```
+/// use majordomus_cli::site::ReferencePage;
+/// use majordomus_cli::web::discover::RUSTDOC;
+/// let page = ReferencePage {
+///     surface: RUSTDOC,
+///     module: "majordomus_cli::capability::builtin::quality".into(),
+///     path: "majordomus_cli/capability/builtin/quality/index.html".into(),
+/// };
+/// let v = serde_json::to_value(&page).unwrap();
+/// assert_eq!(v["surface"], "rustdoc");
+/// // relative to the surface: the mount is the build's, joined by the page that links it
+/// assert!(!v["path"].as_str().unwrap().starts_with('/'));
+/// ```
+#[derive(Debug, Clone, Serialize)]
+pub struct ReferencePage {
+    /// The web surface the page is published under: [`crate::web::discover::RUSTDOC`].
+    pub surface: &'static str,
+    /// The Rust module's crate path: `majordomus_cli::capability::builtin::quality`.
+    pub module: String,
+    /// The page, relative to the surface's root:
+    /// `majordomus_cli/capability/builtin/quality/index.html`.
+    pub path: String,
 }
 
 /// The index as the site shows it.
@@ -390,6 +428,30 @@ pub struct MeasurementView {
     pub handler_invocations: Option<u64>,
 }
 
+/// The crate's exported modules, by crate path, each with the page its reference documents
+/// it on: `quality::rustdoc::module_routes`, the derivation `majordomus quality rustdoc`
+/// holds the published tree to, read here rather than restated. It is read from the crate's
+/// source, so the dataset is the same on every machine whether or not the tree was built;
+/// a repository without the crate has no reference, and no module links one.
+fn reference_pages(root: &Path) -> Result<BTreeMap<String, ReferencePage>> {
+    let mut pages = BTreeMap::new();
+    let Some(dir) = crate::capability::builtin::quality::crate_dir(root) else {
+        return Ok(pages);
+    };
+    for route in crate::quality::rustdoc::module_routes(&dir)? {
+        // a module rustdoc documents twice (under two re-exports) is linked at the first
+        // page in canonical order, which is the order the routes are answered in
+        pages
+            .entry(route.path.clone())
+            .or_insert_with(|| ReferencePage {
+                surface: crate::web::discover::RUSTDOC,
+                module: route.path,
+                path: route.route,
+            });
+    }
+    Ok(pages)
+}
+
 /// Build the dataset.
 pub fn dataset(
     ctx: &Context,
@@ -408,6 +470,7 @@ pub fn dataset(
         })
         .collect();
     crate::order::canonical(&mut builtin);
+    let reference = reference_pages(repo.root())?;
     let mut modules: Vec<ModuleView> = registry
         .modules()
         .map(|m| {
@@ -418,6 +481,10 @@ pub fn dataset(
                         && matches!(c.provenance, Provenance::Builtin { .. })
                 })
                 .collect();
+            let rust_module = mine.first().and_then(|c| match &c.provenance {
+                Provenance::Builtin { module } => Some(module.as_str()),
+                Provenance::Declarative { .. } => None,
+            });
             ModuleView {
                 id: m.id.to_string(),
                 title: m.title.clone(),
@@ -432,6 +499,7 @@ pub fn dataset(
                 source_path: (m.source != ModuleSource::Declarative)
                     .then(|| mine.first().map(|c| c.provenance.source_path()))
                     .flatten(),
+                rustdoc: rust_module.and_then(|module| reference.get(module).cloned()),
             }
         })
         .collect();
@@ -1092,4 +1160,70 @@ pub fn product_artifacts(ctx: &Context) -> Result<Vec<crate::generate::Artifact>
             render_json(&graph_document),
         ),
     ])
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A repository holding the crate at the path this repository's crate lives, with the
+    /// given sources under `src/`.
+    fn repository_with(files: &[(&str, &str)]) -> tempfile::TempDir {
+        let root = tempfile::tempdir().unwrap();
+        let dir = root.path().join(crate::capability::model::CRATE_DIR);
+        std::fs::create_dir_all(dir.join("src")).unwrap();
+        std::fs::write(
+            dir.join("Cargo.toml"),
+            "[package]\nname = \"majordomus-cli\"\nversion = \"0.1.0\"\n",
+        )
+        .unwrap();
+        for (path, text) in files {
+            let p = dir.join("src").join(path);
+            std::fs::create_dir_all(p.parent().unwrap()).unwrap();
+            std::fs::write(p, text).unwrap();
+        }
+        root
+    }
+
+    #[test]
+    fn a_module_links_the_reference_page_only_when_the_crate_exports_it() {
+        let repo = repository_with(&[
+            ("lib.rs", "//! Root.\npub mod capability;\n"),
+            ("capability/mod.rs", "//! Capabilities.\npub mod builtin;\n"),
+            (
+                "capability/builtin/mod.rs",
+                "//! Builtin.\npub mod open;\npub(crate) mod crated;\nmod closed;\n",
+            ),
+            ("capability/builtin/open.rs", "//! Open.\n"),
+            ("capability/builtin/crated.rs", "//! Crate-visible.\n"),
+            ("capability/builtin/closed.rs", "//! Private.\n"),
+        ]);
+        let pages = reference_pages(repo.path()).unwrap();
+        // a module the crate exports is linked at the page rustdoc documents it on, under the
+        // surface the topology publishes the reference as
+        let open = &pages["majordomus_cli::capability::builtin::open"];
+        assert_eq!(
+            open.path,
+            "majordomus_cli/capability/builtin/open/index.html"
+        );
+        assert_eq!(open.module, "majordomus_cli::capability::builtin::open");
+        assert_eq!(open.surface, crate::web::discover::RUSTDOC);
+        // one rustdoc gives no page is never linked: `pub(crate)` and private alike
+        assert!(!pages.contains_key("majordomus_cli::capability::builtin::crated"));
+        assert!(!pages.contains_key("majordomus_cli::capability::builtin::closed"));
+
+        // a repository without the crate has no reference and links nothing
+        let bare = tempfile::tempdir().unwrap();
+        assert!(reference_pages(bare.path()).unwrap().is_empty());
+    }
+
+    #[test]
+    fn a_crate_that_cannot_be_read_is_an_error_and_never_an_empty_mapping() {
+        // half a crate would drop modules without saying so
+        let repo = repository_with(&[
+            ("lib.rs", "//! Root.\npub mod broken;\n"),
+            ("broken.rs", "pub fn ("),
+        ]);
+        assert!(reference_pages(repo.path()).is_err());
+    }
 }

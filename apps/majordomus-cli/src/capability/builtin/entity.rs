@@ -9,6 +9,10 @@
 //! - **What is it joined to?** Its outgoing references and — the half nothing declared —
 //!   the references that resolve to it, both read from the one relation table the graph
 //!   and the dangling-reference check already share.
+//! - **Where is it published?** Its public documentation page, when the repository's site
+//!   publishes its kind: [`crate::entity::Publication`] reads `site/data/publication.toml`
+//!   and the site's `base_url`, the same declaration the site generator builds the pages
+//!   from, so the address named here is the page the site holds.
 //! - **What can be said about its enforcement?** Which of the executable artefacts it
 //!   names are in the tree, stated as a state a page may not round up, and a pointer to the
 //!   capability that can prove more where the registry holds one.
@@ -49,7 +53,7 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::entity::{self, Collision, Edge, Surface};
+use crate::entity::{self, Collision, Documentation, Edge, Publication, Surface};
 use crate::model::Object;
 use crate::{capability, module};
 
@@ -371,10 +375,19 @@ fn evidence(ctx: &Context, o: &Object) -> Evidence {
 ///     "relations": [],
 ///     "surfaces": [],
 ///     "evidence": { "state": "unclaimed", "meaning": "nothing named" },
+///     "documentation": {
+///         "projection": "entity",
+///         "route": "/adrs/adr-0056/",
+///         "url": "https://majordomus.dev/adrs/adr-0056/",
+///         "declared_in": "site/data/publication.toml",
+///     },
 /// }))
 /// .unwrap();
 ///
 /// assert_eq!(view.route, "/cockpit/objects/adr/adr-0056");
+/// // the Cockpit route is the object's; the public page is the site's, and both are named
+/// let public = view.documentation.as_ref().and_then(|d| d.url.as_deref());
+/// assert_eq!(public, Some("https://majordomus.dev/adrs/adr-0056/"));
 /// // the kind's index is the entity's route with the last segment removed
 /// assert!(view.route.starts_with(&view.kind_route));
 /// ```
@@ -414,6 +427,12 @@ pub struct EntityView {
     pub surfaces: Vec<Surface>,
     /// What can be said about its enforcement without running anything.
     pub evidence: Evidence,
+    /// Its public documentation page, derived from the repository's publication declaration
+    /// (`site/data/publication.toml`) and the site's `base_url` by the same function the site
+    /// generator writes the page with. Null when the repository declares no publication or
+    /// does not declare this kind; a kind declared as not published carries the reason.
+    #[serde(default)]
+    pub documentation: Option<Documentation>,
 }
 
 fn subject<'a>(ctx: &'a Context, input: &EntityInput) -> Result<&'a Object, CapabilityError> {
@@ -454,6 +473,10 @@ fn objects_entity(ctx: &Context, input: EntityInput) -> Result<EntityView, Capab
         relations: entity::edges(&ctx.registry, &ctx.index.objects, o),
         surfaces: entity::surfaces(&ctx.registry, o),
         evidence: evidence(ctx, o),
+        // read at request time: the declaration is the repository's, and a repository
+        // without a site has none
+        documentation: Publication::read(std::path::Path::new(&ctx.index.repository.root))
+            .and_then(|p| p.documentation(&o.kind, &entity::slug(&o.identity))),
     })
 }
 
@@ -601,7 +624,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "entity.show",
                 title: "Read one entity",
-                description: "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, and the state of the executable artefacts it names.",
+                description: "One object of the layer as an addressable node, by URI or by the address it is served at: identity and route, provenance, front matter and content, every reference it declares and every reference that resolves to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page as the repository's site/data/publication.toml derives it (null when the repository declares none).",
                 input: EntityInput,
                 output: EntityView,
                 stability: Stability::Implemented,

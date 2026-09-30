@@ -37,12 +37,13 @@ for c in $COMMANDS; do help_is_only_usage "$c" "before init" || exit 1; done
 "$MJ" init >/dev/null
 for c in $COMMANDS; do help_is_only_usage "$c" "after init" || exit 1; done
 
-# version needs no installation and is the string the rest of the project derives from
+# version needs no installation, and it is the version authored in the crate manifest: the
+# tool prints its projection, and the one shell reader of the manifest says what it must be
 expect_exit 0 "$MJ" version
 expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+$'
 expect_exit 0 "$MJ" --version
 expect_grep '^majordomus [0-9]+\.[0-9]+\.[0-9]+$'
-ver="$(sed -n 's/^MJ_VERSION="\([^"]*\)"$/\1/p' "$ROOT/bin/majordomus")"
+ver="$("$ROOT/scripts/release-version")"
 expect_grep "^majordomus $ver$"
 # version is dispatched ahead of the option parser, which is exactly how a command comes to
 # ignore arguments the rest of the surface refuses. It has to refuse them for itself.

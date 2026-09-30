@@ -6,7 +6,7 @@
 # runner with a private harness of throwaway cases.
 . "$ROOT/test/lib.sh"
 PLAN="$ROOT/scripts/ci-plan"; VERDICT="$ROOT/scripts/ci/verdict"; MODEL="$ROOT/.ai/repo/ci/gates.yaml"
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq absent"
 plan() { printf '%s\n' "$@" | "$PLAN" --files - ; }
 selected() { plan "$@" | jq -r '.selected | join(" ")'; }
 # the same plan, asked for the gates whose runner is not available on demand (the macOS ones):
@@ -206,7 +206,7 @@ printf '# majordomus-exclusive: it must see no other case running\necho exclusiv
 out="$(MJ_TEST_JOBS=3 MJ_TEST_REPORT="$T/report.tsv" bash "$H/test/run.sh" 2>&1)" && { echo "    a failing case did not turn the parallel run red"; exit 1; }
 printf '%s\n' "$out" | grep -q 'this one explains itself' || { printf '%s\n' "$out"; echo "    the failing case's log was not rendered"; exit 1; }
 printf '%s\n' "$out" | grep -q '^FAIL p_fails$' || { echo "    the failing case has no FAIL line"; exit 1; }
-printf '%s\n' "$out" | grep -q '^tests: 6 passed, 1 failed$' || { printf '%s\n' "$out"; echo "    the summary is not deterministic (6 passed, 1 failed)"; exit 1; }
+printf '%s\n' "$out" | grep -q '^tests: 6 passed, 1 failed, 0 skipped$' || { printf '%s\n' "$out"; echo "    the summary is not deterministic (6 passed, 1 failed, 0 skipped)"; exit 1; }
 printf '%s\n' "$out" | grep -q 'exclusive cases, one at a time' || { echo "    the exclusive phase did not run"; exit 1; }
 [ "$(wc -l < "$T/report.tsv" | tr -d ' ')" = 7 ] || { cat "$T/report.tsv"; echo "    the report does not carry every case"; exit 1; }
 grep -q "^x1	ok	[0-9]*	exclusive$" "$T/report.tsv" || { cat "$T/report.tsv"; echo "    the report does not mark the exclusive case"; exit 1; }
@@ -222,6 +222,32 @@ printf 'echo dirty > "$ROOT/test/cases/dirt.txt"\n' > "$H/test/cases/p_writes.sh
 out="$(MJ_TEST_JOBS=2 bash "$H/test/run.sh" 2>&1)" && { echo "    a case that wrote into the checkout did not turn the run red"; exit 1; }
 printf '%s\n' "$out" | grep -q 'the checkout changed during the parallel phase: test/cases/dirt.txt' || { printf '%s\n' "$out"; echo "    the dirtied path is not named"; exit 1; }
 rm -f "$H/test/cases/dirt.txt" "$H/test/cases/p_writes.sh"
+# a case runs only in the fixture the runner made for it: started by hand, it writes its
+# fixture into whatever directory it is in, a checkout included, so test/lib.sh refuses
+# before the case's first line runs. This case writes and stages a file where it stands.
+printf '. "$ROOT/test/lib.sh"\nprintf stub > stub.txt\ngit add -A\n' > "$H/test/cases/p_by_hand.sh"
+mkdir -p "$T/away" "$T/other/test"; : > "$T/other/test/run.sh"
+harness_state() { git -C "$H" status --porcelain --untracked-files=all; git -C "$H" diff --cached --name-only; }
+before="$(harness_state)"
+by_hand() {   # by_hand <label> <dir> [VAR=value...]: the case run by hand in <dir> is refused
+  local label="$1" dir="$2" rc=0; shift 2
+  out="$(cd "$dir" && env -u T "$@" ROOT="$H" bash -eu "$H/test/cases/p_by_hand.sh" 2>&1)" || rc=$?
+  [ "$rc" = 1 ] || { printf '%s\n' "$out"; echo "    a case run by hand $label exited $rc, not 1"; exit 1; }
+  printf '%s\n' "$out" | grep -q 'run this case through test/run.sh' \
+    || { printf '%s\n' "$out"; echo "    a case run by hand $label does not say to run it through test/run.sh"; exit 1; }
+  [ ! -e "$dir/stub.txt" ] || { echo "    a case run by hand $label wrote its fixture into $dir"; exit 1; }
+}
+by_hand "from the checkout, with no fixture" "$H"
+by_hand "from the checkout, naming a fixture it does not stand in" "$H" T="$T/away"
+by_hand "with the checkout named as its fixture" "$H" T="$H"
+by_hand "in a directory inside the checkout, named as its fixture" "$H/test/cases" T="$H/test/cases"
+by_hand "in another checkout of the repository, named as its fixture" "$T/other" T="$T/other"
+[ "$(harness_state)" = "$before" ] || { harness_state; echo "    a refused case changed the checkout it was started from"; exit 1; }
+# and the same case through the runner passes, writing into its own fixture only
+out="$(bash "$H/test/run.sh" p_by_hand 2>&1)" || { printf '%s\n' "$out"; echo "    the case failed through the runner"; exit 1; }
+printf '%s\n' "$out" | grep -q '^ok   p_by_hand$' || { printf '%s\n' "$out"; echo "    the runner did not report the case ok"; exit 1; }
+[ "$(harness_state)" = "$before" ] || { harness_state; echo "    the case wrote into the checkout through the runner"; exit 1; }
+rm -f "$H/test/cases/p_by_hand.sh"
 # the filter and the empty directory are usage errors in parallel mode too
 MJ_TEST_JOBS=2 bash "$H/test/run.sh" no_such_case >/dev/null 2>&1 && { echo "    a filter matching nothing passed"; exit 1; }
 rm -f "$H"/test/cases/*.sh

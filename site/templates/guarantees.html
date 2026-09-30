@@ -25,9 +25,9 @@
         {%- for c in [c for c in caps.claims if c.status == status] -%}
         <tr class="align-top">
           <td class="px-4 py-3 text-heading"><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="hover:underline">{{ c.claim }}</a>{% if c.note %}<p class="mt-1 text-body-subtle">{{ c.note }}</p>{% endif %}</td>
-          <td class="px-4 py-3"><a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></td>
-          <td class="px-4 py-3">{% if c.implementation %}<a href="{{ project.repository_url }}/blob/master/{{ c.implementation }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
-          <td class="px-4 py-3">{% if c.test %}<a href="{{ project.repository_url }}/blob/master/{{ c.test }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
+          <td class="px-4 py-3"><a href="{{ <source_blob path={c.source} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></td>
+          <td class="px-4 py-3">{% if c.implementation %}<a href="{{ <source_blob path={c.implementation} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
+          <td class="px-4 py-3">{% if c.test %}<a href="{{ <source_blob path={c.test} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
         </tr>
         {%- endfor -%}
       </tbody>

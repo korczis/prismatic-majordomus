@@ -1,0 +1,39 @@
+# The shapes of text a published or committed artifact of this repository must never carry.
+#
+# One definition, read by every check that looks for them: scripts/ci/no-machine-paths
+# (every tracked file), scripts/site-check (the built site) and `majordomus quality rustdoc`
+# (the crate's documentation tree, through src/quality/leaks.rs, which compiles this file
+# into the executable). Each reader applies the classes it is about; none of them keeps a
+# copy of a pattern, because a pattern that lived in three places has already drifted once.
+#
+# One pattern per line: <class> TAB <name> TAB <POSIX extended regular expression>.
+# The expressions are written in the subset grep -E, git grep -E and the Rust regex crate
+# read identically: bracket classes, [[:space:]], alternation, bounded repetition, \b.
+# Each is matched against one line at a time, case-sensitively, as grep matches them.
+#
+# The classes:
+#   machine-path    a path of the machine that wrote the file: a developer's home directory
+#                   on macOS, a developer checkout under a Linux home. Deliberately not every
+#                   Linux home directory: docs/CLI.md documents a command whose sample output
+#                   names a home without a checkout, and a gate that fires on the
+#                   documentation of its own tool is a gate somebody switches off.
+#   runner-path     the home of a hosted CI runner, where a tree built in CI would record it.
+#   private-host    a host name only a private network resolves.
+#   credential      a long opaque value assigned to something called a key, a secret, a
+#                   token or a password.
+#   not-credential  applied to a credential match, not to the text: a match it finds is a
+#                   name rather than a value. A reference to the workflow's own token, and a
+#                   value that is a SCREAMING_SNAKE_CASE constant name — letters and
+#                   underscores only, so `bytes_per_token` assigned the constant that holds
+#                   it is code, while any value carrying a digit or a lower-case letter is
+#                   still a credential. The case is spelled out rather than folded because
+#                   grep and sed disagree about every way of asking for folding.
+machine-path	macos-home	/Users/[a-z]+/
+machine-path	linux-developer-checkout	/home/[a-z]+/dev/
+runner-path	hosted-runner-home	/home/runner/
+private-host	internal-domain	\.internal\b
+private-host	corporate-domain	\.corp\b
+credential	assignment	(api[_-]?key|secret|token|password)[[:space:]]*[:=][[:space:]]*["']?[A-Za-z0-9_\-]{12,}
+not-credential	id-token-permission	[Ii][Dd]-[Tt][Oo][Kk][Ee][Nn]
+not-credential	workflow-token-reference	[Gg][Ii][Tt][Hh][Uu][Bb]_[Tt][Oo][Kk][Ee][Nn]
+not-credential	constant-name	[:=][[:space:]]*["']?[A-Z]+(_[A-Z]+)+$
