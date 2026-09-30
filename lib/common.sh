@@ -51,9 +51,10 @@ mj_inputs_hash() {
 # The git tree object id of the working tree exactly as it stands: HEAD's tree with every
 # modification, addition and deletion applied. Computed in a temporary index, so the real
 # index keeps its staged content and its stat cache; ignored paths stay out, which is what
-# .ai/local/ is. The temporary index starts as a copy of the real one, so `add -A` rehashes
-# only what changed since git last looked rather than every file in the tree; the result is
-# the same either way, because `add -A` makes the index match the tree whatever it held.
+# .ai/local/ is. The temporary index is seeded from HEAD, never copied from the real one: a
+# copy carries its assume-unchanged and skip-worktree flags and its stat cache, and `add -A`
+# trusts those, so an edit to a flagged file would be neither recorded nor noticed moving.
+# Seeding from HEAD rehashes every file (about a second on this repository) and sees them all.
 # Empty when git cannot answer, so a caller degrades to knowing nothing rather than to
 # believing something.
 #
@@ -62,14 +63,12 @@ mj_inputs_hash() {
 # because it did not exist yet. A tree id is also git's own answer to that question,
 # comparable with every other tree id without this tool being present to explain it.
 mj_worktree_tree_id() {
-  local idx out real
+  local idx out
   idx="$(mktemp "${TMPDIR:-/tmp}/mj-index.XXXXXX")" || return 0
   rm -f "$idx"
   out="$( cd "$MJ_ROOT" || exit 1
-    real="$(unset GIT_INDEX_FILE; git rev-parse --git-path index 2>/dev/null)" || exit 1
     export GIT_INDEX_FILE="$idx"
-    if [ -f "$real" ]; then cp "$real" "$idx" 2>/dev/null || exit 1
-    elif git rev-parse --verify -q HEAD >/dev/null 2>&1; then git read-tree HEAD 2>/dev/null || exit 1; fi
+    if git rev-parse --verify -q HEAD >/dev/null 2>&1; then git read-tree HEAD 2>/dev/null || exit 1; fi
     git add -A 2>/dev/null || exit 1
     git write-tree 2>/dev/null )"
   rm -f "$idx"

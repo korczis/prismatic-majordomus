@@ -22,6 +22,21 @@ tree1="$(sed -n 's/.*"tree":"\([0-9a-f]*\)".*/\1/p' .ai/local/state/ledger.jsonl
 [ "$tree1" = "$(idx="$(mktemp -u "${TMPDIR:-/tmp}/mj-t.XXXXXX")"; GIT_INDEX_FILE="$idx" git read-tree HEAD && GIT_INDEX_FILE="$idx" git add -A && GIT_INDEX_FILE="$idx" git write-tree; rm -f "$idx")" ] \
   || { printf '    the recorded tree is not the tree that is here: %s\n' "$tree1"; exit 1; }
 
+# A file git is told to assume unchanged is still part of the tree a verification ran over:
+# its edit is recorded, and an edit to it during the run is a tree that moved.
+git add -A && git commit -qm t1a
+git update-index --assume-unchanged lib/a
+"$MJ" start "t1b" --scope lib >/dev/null
+echo e >> lib/a
+note
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "echo y >> lib/a"
+expect_grep 'FAIL verification .*the tree changed while it ran'
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+tree1b="$(sed -n 's/.*"tree":"\([0-9a-f]*\)".*/\1/p' .ai/local/state/ledger.jsonl | tail -n1)"
+[ "$tree1b" != "$(git rev-parse 'HEAD^{tree}')" ] \
+  || { printf '    an assume-unchanged edit was recorded as the committed tree\n'; exit 1; }
+git update-index --no-assume-unchanged lib/a
+
 git add -A && git commit -qm t1
 "$MJ" start "t2" --scope lib >/dev/null
 id2="$(sed -n 's/^id: //p' .ai/local/state/current.yaml)"

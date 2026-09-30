@@ -22,7 +22,7 @@ x-majordomus:
 
 # Rationale
 
-Completion requires a verification command that actually ran and exited 0; its exit code and duration are recorded.
+Completion requires a verification command that actually ran and exited 0; its exit code, its duration and the tree it ran over are recorded.
 
 An exit code on its own names no subject. A checkout with more than one worker in it — a
 second agent, a person saving a file, a watcher regenerating an artefact — moves under a
