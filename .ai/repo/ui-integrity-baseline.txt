@@ -1,0 +1,19 @@
+# The ui-integrity findings (ADR 0089, project.ui-derived-state) that were known
+# when this file was written: debt, which does not fail the gate.
+#
+# Written by scripts/ci/cockpit-projection-check --ui-integrity --write-baseline;
+# never by hand. A finding this file does not name fails. The set only shrinks:
+# a line is paid by fixing the finding it names, never by adding a line.
+count-default apps/majordomus-cli/src/cockpit/pages.rs activity let count = v.get("count").and_then(Value::as_u64).unwrap_or(0);
+count-default apps/majordomus-cli/src/cockpit/pages.rs activity let nanos = v.get("total_nanos").and_then(Value::as_u64).unwrap_or(0);
+count-default apps/majordomus-cli/src/cockpit/pages.rs upstream_cell u.ahead.unwrap_or(0),
+count-default apps/majordomus-cli/src/cockpit/pages.rs upstream_cell u.behind.unwrap_or(0)
+direct-read apps/majordomus-cli/src/cockpit/pages.rs api ctx.registry
+direct-read apps/majordomus-cli/src/cockpit/pages.rs capabilities ctx.registry
+direct-read apps/majordomus-cli/src/cockpit/pages.rs capability ctx.registry
+direct-read apps/majordomus-cli/src/cockpit/pages.rs search ctx.registry
+direct-read apps/majordomus-cli/src/cockpit/pages.rs topology ctx.registry
+healthy-default apps/majordomus-cli/src/models/mod.rs ModelStatus::Available
+unconditional-ok apps/majordomus-cli/src/capability/builtin/health.rs peers
+unconditional-ok apps/majordomus-cli/src/capability/builtin/health.rs registry
+unconditional-ok apps/majordomus-cli/src/capability/builtin/health.rs scope
