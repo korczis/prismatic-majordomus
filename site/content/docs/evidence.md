@@ -1,7 +1,7 @@
 +++
 title = "Evidence"
 description = "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits"
-weight = 58
+weight = 60
 [extra]
 source = "docs/EVIDENCE.md"
 +++
@@ -17,7 +17,7 @@ disagree, the document is wrong and changes in the same commit. The decision is
 ADR 40;
 the rules it serves are `project.no-claim-without-test` and
 `project.never-reported-is-not-green` under
-[`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/rules/project).
+[`.ai/repo/rules/project/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/rules/project).
 
 <pre class="mermaid">
 flowchart TD
@@ -54,14 +54,14 @@ subsystem, nobody could answer from the repository whether that case had ever ru
 which revision, with what result, or whether the result still applied, and the sentence was
 rendered on the public site as a guarantee on the strength of a file existing.
 
-This is the same defect [ADR 30](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)
+This is the same defect [ADR 30](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)
 named one level up: *a test result that cannot go stale is a claim about the past presented
 as a claim about the present.*
 
 ## The model
 
 Three objects and one derivation, in
-[`apps/majordomus-cli/src/evidence/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/evidence).
+[`apps/majordomus-cli/src/evidence/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli/src/evidence).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -139,6 +139,20 @@ let a recorder write "this did not run" and have it counted among the things tha
 `origin` is provider-neutral. A CI adapter records `ci`; nothing in the model knows or
 cares which CI it was.
 
+The runner speaks that vocabulary. A case that cannot meet a precondition calls `skip` from
+`test/lib.sh`, which exits 4; `test/run.sh` prints `skip`, writes `SKIP` into the TSV in
+both the serial and the parallel phase, and counts it in a third tally beside passed and
+failed. It is not a failure — the run's exit status is unchanged — and it is not a pass
+either, which it was until the word existed: a case that declined exited 0, the runner
+wrote `ok`, and the ledger recorded the proof of a claim from a run that asserted nothing.
+The status is not the declaration on its own: `skip` also writes the file the runner names
+in `MJ_SKIP_MARK`, and a case that ends with 4 without it — `jq -e` fails with 4 when it
+produced no result, and a case runs under `set -e` — is a failure, not a skip.
+The claim is `a-skipped-case-is-not-a-proof` and the case is
+`test/cases/413_a_skipped_case_is_not_a_proof.sh`, which also refuses any case in
+`test/cases/` that still says `exit 0` before its last statement, so the old shape cannot
+come back with a new case.
+
 ## The seven states
 
 Ranked from strongest to weakest, so a summary that sorts by the state reads as a ranking.
@@ -177,9 +191,16 @@ invalidated the run rather than being told to go and look.
 This is the point of the whole subsystem, and it is the thing to preserve in any change to
 it.
 
-**`proven`** means a passing run exists and *nothing has changed since it*: the diff between
-the execution's own commit and the working tree is empty. It is proof of the tree in front
-of you — the tree the run measured is the tree you are looking at.
+**`proven`** means a passing run exists, *nothing has changed since it*, and *the run
+measured the commit it is joined to*: the diff between the execution's own commit and the
+working tree is empty, and the execution's `working_tree` is `clean`. It is proof of the
+tree in front of you — the tree the run measured is the tree you are looking at.
+
+Both halves are needed, and each fails differently. A run recorded while something else was
+pending sat on its commit without measuring it (ADR 0041: "`proven` is a passing run
+recorded against this exact commit with a clean tree"), so it is capped at
+`inputs_unchanged` however empty the diff is when the report is taken — a later `git
+checkout` of the edited file cannot retroactively make the commit describe what ran.
 
 The ledger's own row is excluded from that diff, because the evidence is *about* the tree
 rather than part of what the tests measure. Without that exclusion `proven` would be
@@ -188,6 +209,10 @@ committing the record moves HEAD past the commit the record names. That was a re
 in the first cut of this design, found in review; `test/cases/124_evidence.sh` now asserts
 both halves — that the tree is dirty after a recording, and that every claim is `proven`
 anyway — so a regression that made `proven` depend on a clean tree again would fail.
+
+The same exclusion applies when a run is *recorded*: a recording whose only pending change
+is the previous recording's own row is stamped `clean`, because that row is not something
+any test measured. Any other pending path is `dirty` and the execution says so.
 
 **`inputs_unchanged`** means a passing run exists and nothing the claim names has moved
 since it. That is the **absence of a known invalidation** — not proof at HEAD. Something
@@ -313,7 +338,7 @@ it belongs to no binary and is dropped rather than credited to the previous one.
 ### In CI
 
 Half the wiring is already there. The `suite` job of
-[`.github/workflows/validate.yml`](https://github.com/korczis/prismatic-majordomus/blob/master/.github/workflows/validate.yml) runs
+[`.github/workflows/validate.yml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.github/workflows/validate.yml) runs
 `bash test/run.sh` with `MJ_TEST_REPORT: suite.tsv` and uploads that TSV as the
 `ci-metrics-suite` artifact; the `macos` job does the same. The recording step is one line
 after the suite step:
@@ -334,7 +359,7 @@ result either way.
 ## The four capabilities
 
 One declaration in
-[`src/capability/builtin/evidence.rs`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/evidence.rs);
+[`src/capability/builtin/evidence.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/capability/builtin/evidence.rs);
 every surface is derived from it ([`CAPABILITIES.md`](@/docs/capabilities.md)).
 
 <div class="overflow-x-auto" tabindex="0">
@@ -392,7 +417,7 @@ claim has no evidence" is the one answer these capabilities must never give.
 
 ## The gate
 
-[`scripts/evidence-check`](https://github.com/korczis/prismatic-majordomus/blob/master/scripts/evidence-check) renders the executable's own answer
+[`scripts/evidence-check`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/scripts/evidence-check) renders the executable's own answer
 and ratchets it. It derives nothing of its own — a gate with a second opinion about what is
 proven would be a second model of proof.
 
@@ -407,15 +432,24 @@ scripts/evidence-check --repo PATH  # judge that repository instead of this one
 Only `guaranteed` claims are judged. `advisory` states that enforcement is not observable
 from outside, `planned` that nothing implements it, and `rejected` that nothing will;
 demanding a current proof of those would be demanding proof of a thing the claim already
-says is not there. A `guaranteed` claim in any of the three passing states — `proven`,
-`inputs_unchanged` or `stale` — is supported; `failing`, `not_run`, `unrunnable` and
-`no_test` are findings, each with the reason and the command that would settle it.
+says is not there. A `guaranteed` claim is supported by `proven` or `inputs_unchanged`, and
+by nothing else; `stale`, `failing`, `not_run`, `unrunnable` and `no_test` are findings,
+each with the reason and the command that would settle it.
+
+`stale` is the one of those that looks like support and is not, and it was counted as
+support until it was measured: 14 guarantees rested on it, against 0 proven. A stale run
+*is* a pass — `passing()` says so, and the summary must keep it apart from a failure — but
+it is a pass of a subject that has since moved: the claim's implementation or its test
+changed after the run offered as its proof, so what passed is not what the claim now names.
+Accepting it made the gate accept, as support for a guarantee, a measurement of something
+else, which is the whole defect this subsystem exists to name one level down. The floor is
+`inputs_unchanged`: weaker than `proven`, but at least a pass of *this* subject.
 
 **It is advisory today, and this is a choice with an end.** The ledger starts empty, so on
 the day the gate arrives every guaranteed claim is `not_run` — true, and as a blocking gate
 it would mean nothing could be merged by anybody until a full suite run had been recorded.
 So the debt that existed at that moment is written to
-[`.ai/repo/evidence-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/evidence-baseline.txt) by `--baseline`,
+[`.ai/repo/evidence-baseline.txt`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/evidence-baseline.txt) by `--baseline`,
 never by hand.
 
 **What the ratchet refuses is not membership of that list.** It was, and that was a defect
@@ -451,7 +485,7 @@ that proves a claim and rewriting the file — never by adding a line. `--strict
 every unsupported guarantee; it is the end state, and CI switches to it when the
 unsupported half is empty.
 
-The gate is named in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/ci/gates.yaml) as
+The gate is named in [`.ai/repo/ci/gates.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/ci/gates.yaml) as
 `evidence-check`, in the `structure` job, with `always: true` — so the verdict arrives on
 every push rather than when somebody remembers to run it, which is the other half of
 `project.never-reported-is-not-green`. The `evidence` path class names what can change the
@@ -479,7 +513,7 @@ A trunk run's rows are committed later, by a separate pull request (ADR 0080), b
 cannot commit what it proved without adding a commit after the one it proved, on a trunk that
 moves faster than the suite finishes. That recording pull request is not wired yet. The
 decision is
-[ADR 68](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md),
+[ADR 68](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md),
 as ADR 0087 amends it.
 
 <pre class="mermaid">
@@ -608,14 +642,14 @@ where the two disagree is a tree where something was recorded against a commit t
 not describe it, and the `working_tree: dirty` field is usually the reason.
 
 **It is not the execution control plane.**
-[`src/execution/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli/src/execution) and
+[`src/execution/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli/src/execution) and
 [`EXECUTIONS.md`](@/docs/executions.md) are about capability executions of a running server —
 in-flight work, progress, typed events, gone with the process. This is about test runs:
 durable, committed, and read long after the process that produced them exited. Two
 different subjects that share an English word.
 
 **It is not the obligation evidence of `lib/evidence.sh`.** That subsystem
-([ADR 30](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)) is
+([ADR 30](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0030-a-task-owes-obligations-and-evidence-goes-stale.md)) is
 about what a *task* owes before it may be called completed, and its ledger is the
 append-only task ledger. The two share an idea — evidence that can go stale — and nothing
 else. Neither reads the other's records.
