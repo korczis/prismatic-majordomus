@@ -138,7 +138,7 @@ fn activate_mesh(ctx: &Arc<Context>, version: &str, url: &str) {
 }
 
 impl SharedServer {
-    /// Bind, publish the URL into the lease, and start serving. With `fallback`, a taken
+    /// Bind, start serving, then publish the URL into the lease. With `fallback`, a taken
     /// port is replaced by a free one and said so; without it, a taken port is an error.
     #[allow(clippy::too_many_arguments)]
     pub fn start(
@@ -166,7 +166,6 @@ impl SharedServer {
         let router = Router::new(live, version)
             .with_mcp(Arc::clone(&endpoint))
             .with_cockpit(share_dir);
-        lease.publish(&url)?;
         // The mesh, when the repository declares one — before the workers pick up their
         // first request, so a client that connects on the "listening" line already sees
         // the activated runtime. Never blocking: providers open sockets on their own
@@ -176,7 +175,12 @@ impl SharedServer {
         // what it serves is read off the resolution, so this line cannot name a route the
         // process does not have or miss one it does
         let surfaces = router.served()?.summary(&url);
-        let running = bound.start(router);
+        // A published URL must already answer. Publishing before mesh activation and
+        // surface resolution lets direnv probe a bound socket with no request workers,
+        // report a failed server, and reload before anything can answer it.
+        let running = start_published(bound, router, || lease.publish(&url)).inspect_err(|_| {
+            ctx_for_mesh.mesh.stop();
+        })?;
         // The server's own reader: every REAP_INTERVAL it forgets the HTTP sessions that
         // stopped pinging — on every path, not only while the owner waits for peers to
         // leave, so that a dead peer never stays `attached` on the board — and it checks
@@ -283,5 +287,89 @@ impl SharedServer {
         self.lease.release();
         self.mesh.stop();
         tracing::info!("shared server stopped");
+    }
+}
+
+/// Publish only after requests can be handled, and close the socket if publication fails.
+fn start_published(
+    bound: server::Bound,
+    router: Router,
+    publish: impl FnOnce() -> Result<()>,
+) -> Result<Running> {
+    let running = bound.start(router);
+    if let Err(error) = publish() {
+        running.stop();
+        return Err(error);
+    }
+    Ok(running)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::app::App;
+    use crate::cli::{DiscoveryMode, RepoArgs};
+    use crate::error::Error;
+    use crate::synthetic::SyntheticRepository;
+
+    #[test]
+    fn publication_observes_a_serving_socket_and_failure_closes_it() {
+        let fixture = SyntheticRepository::small().unwrap();
+        let app = App::load(&RepoArgs {
+            repo: Some(fixture.root().to_path_buf()),
+            discovery: DiscoveryMode::Filesystem,
+            share: Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../share")),
+            ..Default::default()
+        })
+        .unwrap();
+        let router = Router::new(Arc::clone(&app.context), crate::VERSION);
+        router.served().unwrap();
+
+        // Check at the publication boundary, not after start returns or its log appears.
+        // No retry can hide a URL being announced before requests are handled.
+        for refused in [false, true] {
+            let bound = server::bind("127.0.0.1", 0).unwrap();
+            let url = bound.url();
+            let address: std::net::SocketAddr = bound.address().parse().unwrap();
+            let result = start_published(bound, router.clone(), || {
+                let reply =
+                    crate::lease::probe_reply(&url, app.repository.root(), Duration::from_secs(2));
+                assert!(reply.is_some(), "publication preceded request handling");
+                if refused {
+                    Err(Error::Lease {
+                        reason: "publication refused".into(),
+                    })
+                } else {
+                    Ok(())
+                }
+            });
+            if refused {
+                assert!(result.is_err());
+            } else {
+                result.unwrap().stop();
+            }
+            assert!(
+                std::net::TcpStream::connect_timeout(&address, Duration::from_secs(1)).is_err(),
+                "request workers retained the socket after shutdown"
+            );
+        }
+
+        // Losing the lease while routes are prepared must also unwind the real startup.
+        let crate::lease::Role::Server(lease) = crate::lease::elect(&app.repository).unwrap()
+        else {
+            panic!("fixture unexpectedly has a server");
+        };
+        std::fs::remove_file(lease.path()).unwrap();
+        assert!(SharedServer::start(
+            Arc::new(crate::live::Live::pinned(app.context)),
+            crate::VERSION,
+            "127.0.0.1",
+            0,
+            false,
+            None,
+            lease,
+            None,
+        )
+        .is_err());
     }
 }

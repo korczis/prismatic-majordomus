@@ -2316,19 +2316,35 @@ pub fn mark(verdict: Verdict, unicode: bool) -> &'static str {
 /// ```
 pub fn compact(p: &Preflight, unicode: bool) -> String {
     let bullet = if unicode { "·" } else { "-" };
-    let episode = p
-        .check("session.episode")
-        .filter(|c| c.verdict.proves())
-        .and_then(|c| c.evidence.first())
-        .and_then(|e| e.observed.strip_prefix("session_id "))
-        .map(|id| format!("episode {id}"))
-        .unwrap_or_else(|| "no episode".into());
+    let episode = compact_episode(p);
     let mut out = format!(
         "{} {} {bullet} {} {bullet} {episode}\n ",
         if unicode { "◆" } else { ">" },
         p.repository,
         p.branch.as_deref().unwrap_or("detached"),
     );
+    out.push_str(&compact_checks(p, unicode));
+    out
+}
+
+/// Entry already drew the repository and branch. Keep its episode and checks without a
+/// second repository heading; the standalone compact preflight retains its own heading.
+pub(crate) fn entry_details(p: &Preflight, unicode: bool) -> String {
+    format!("  {}\n {}", compact_episode(p), compact_checks(p, unicode))
+}
+
+fn compact_episode(p: &Preflight) -> String {
+    p.check("session.episode")
+        .filter(|c| c.verdict.proves())
+        .and_then(|c| c.evidence.first())
+        .and_then(|e| e.observed.strip_prefix("session_id "))
+        .map(|id| format!("episode {id}"))
+        .unwrap_or_else(|| "no episode".into())
+}
+
+fn compact_checks(p: &Preflight, unicode: bool) -> String {
+    let bullet = if unicode { "·" } else { "-" };
+    let mut out = String::new();
     let shown = [
         ("governance.rules", "rules"),
         ("session.context", "context"),
