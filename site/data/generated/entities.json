@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 63,
+      "count": 68,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 142,
+      "count": 144,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 63
+      "count": 68
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 196
+      "count": 197
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 276
+      "count": 277
     },
     {
       "kind": "feature",
@@ -133,7 +133,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 237
+      "count": 238
     },
     {
       "kind": "knowledge",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 142
+      "count": 144
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 264
+      "count": 274
     },
     {
       "kind": "use-case",
@@ -2237,9 +2237,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.commands-run-non-interactively@1",
+          "label": "project.commands-run-non-interactively@2",
           "kind": "rule",
-          "route": "/rules/project-commands-run-non-interactively-1/",
+          "route": "/rules/project-commands-run-non-interactively-2/",
           "external": false
         },
         {
@@ -2251,9 +2251,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -2594,6 +2594,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0067",
@@ -2958,6 +2965,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0067",
@@ -3376,9 +3390,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -3426,6 +3440,156 @@
         "web"
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0059",
+      "identity": "adr-0059",
+      "slug": "adr-0059",
+      "cockpit": "/cockpit/objects/adr/adr-0059",
+      "title": "The mesh is on for this repository, and every session start holds it",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "coordination",
+        "operations"
+      ],
+      "source": ".ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/doctor.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "mesh-declared-is-held",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "mesh-declaration",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/491_the_mesh_is_on_here.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0061",
+      "identity": "adr-0061",
+      "slug": "adr-0061",
+      "cockpit": "/cockpit/objects/adr/adr-0061",
+      "title": "A gate's verdict is evidence, and a rule the repository enforces itself is proven by it",
+      "status": "proposed",
+      "tags": [
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/adrs/0061-a-gate-s-verdict-is-evidence-and-a-rule-the-repository-enfor.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0062",
+      "identity": "adr-0062",
+      "slug": "adr-0062",
+      "cockpit": "/cockpit/objects/adr/adr-0062",
+      "title": "A verification is proved against a commit, and two attempts that disagree are not proof",
+      "status": "proposed",
+      "tags": [
+        "evidence",
+        "verification"
+      ],
+      "source": ".ai/repo/adrs/0062-a-verification-is-proved-against-a-commit-and-two-attempts-t.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0063",
+      "identity": "adr-0063",
+      "slug": "adr-0063",
+      "cockpit": "/cockpit/objects/adr/adr-0063",
+      "title": "A peer's uncommitted work is part of its claim, and a commit that carries it is refused",
+      "status": "proposed",
+      "tags": [
+        "coordination"
+      ],
+      "source": ".ai/repo/adrs/0063-a-peer-s-uncommitted-work-is-part-of-its-claim-and-a-commit-.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0064",
+      "identity": "adr-0064",
+      "slug": "adr-0064",
+      "cockpit": "/cockpit/objects/adr/adr-0064",
+      "title": "A declared tool has a version, and a mismatch is a finding",
+      "status": "proposed",
+      "tags": [
+        "environment"
+      ],
+      "source": ".ai/repo/adrs/0064-a-declared-tool-has-a-version-and-a-mismatch-is-a-finding.md",
       "references": [],
       "referenced_by": []
     },
@@ -3542,7 +3706,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -7101,6 +7273,38 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-number-names-one-case@1",
+      "identity": "project.a-number-names-one-case@1",
+      "slug": "project-a-number-names-one-case-1",
+      "cockpit": "/cockpit/objects/rule/project-a-number-names-one-case-1",
+      "title": "A case number names one case",
+      "status": "active",
+      "tags": [
+        "tests",
+        "identifiers",
+        "coordination"
+      ],
+      "source": ".ai/repo/rules/project/a-number-names-one-case.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-verdict-states-its-subject@1",
+          "kind": "rule",
+          "route": "/rules/project-a-verdict-states-its-subject-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-is-claimed-before-it-is-built@1",
+          "kind": "rule",
+          "route": "/rules/project-work-is-claimed-before-it-is-built-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -7160,7 +7364,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-number-names-one-case@1",
+          "kind": "rule",
+          "route": "/rules/project-a-number-names-one-case-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7230,9 +7442,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -7427,6 +7639,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0048/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.independent-of-prismatic@1",
+          "kind": "rule",
+          "route": "/rules/project-independent-of-prismatic-1/",
+          "external": false
         }
       ]
     },
@@ -7473,10 +7692,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.commands-run-non-interactively@1",
-      "identity": "project.commands-run-non-interactively@1",
-      "slug": "project-commands-run-non-interactively-1",
-      "cockpit": "/cockpit/objects/rule/project-commands-run-non-interactively-1",
+      "id": "majordomus://rule/project.commands-run-non-interactively@2",
+      "identity": "project.commands-run-non-interactively@2",
+      "slug": "project-commands-run-non-interactively-2",
+      "cockpit": "/cockpit/objects/rule/project-commands-run-non-interactively-2",
       "title": "A command runs with nobody at the keyboard",
       "status": "active",
       "tags": [
@@ -7484,7 +7703,7 @@
         "process",
         "agents"
       ],
-      "source": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+      "source": ".ai/repo/rules/project/commands-run-non-interactively.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -8182,9 +8401,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -8408,10 +8627,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.every-wait-is-bounded@1",
-      "identity": "project.every-wait-is-bounded@1",
-      "slug": "project-every-wait-is-bounded-1",
-      "cockpit": "/cockpit/objects/rule/project-every-wait-is-bounded-1",
+      "id": "majordomus://rule/project.every-wait-is-bounded@2",
+      "identity": "project.every-wait-is-bounded@2",
+      "slug": "project-every-wait-is-bounded-2",
+      "cockpit": "/cockpit/objects/rule/project-every-wait-is-bounded-2",
       "title": "Every wait is bounded",
       "status": "active",
       "tags": [
@@ -8419,7 +8638,7 @@
         "shell",
         "orchestration"
       ],
-      "source": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+      "source": ".ai/repo/rules/project/every-wait-is-bounded.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -8555,16 +8774,16 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.commands-run-non-interactively@1",
+          "label": "project.commands-run-non-interactively@2",
           "kind": "rule",
-          "route": "/rules/project-commands-run-non-interactively-1/",
+          "route": "/rules/project-commands-run-non-interactively-2/",
           "external": false
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -8826,6 +9045,30 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.independent-of-prismatic@1",
+      "identity": "project.independent-of-prismatic@1",
+      "slug": "project-independent-of-prismatic-1",
+      "cockpit": "/cockpit/objects/rule/project-independent-of-prismatic-1",
+      "title": "Independent of Prismatic",
+      "status": "active",
+      "tags": [
+        "provenance",
+        "dependencies"
+      ],
+      "source": ".ai/repo/rules/project/independent-of-prismatic.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.clean-room@1",
+          "kind": "rule",
+          "route": "/rules/project-clean-room-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -9475,9 +9718,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         }
       ]
@@ -9976,9 +10219,9 @@
       "referenced_by": [
         {
           "edge": "depends_on",
-          "label": "project.commands-run-non-interactively@1",
+          "label": "project.commands-run-non-interactively@2",
           "kind": "rule",
-          "route": "/rules/project-commands-run-non-interactively-1/",
+          "route": "/rules/project-commands-run-non-interactively-2/",
           "external": false
         }
       ]
@@ -11227,6 +11470,13 @@
           "label": "adr-0053",
           "kind": "adr",
           "route": "/adrs/adr-0053/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-number-names-one-case@1",
+          "kind": "rule",
+          "route": "/rules/project-a-number-names-one-case-1/",
           "external": false
         },
         {
