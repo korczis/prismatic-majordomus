@@ -268,7 +268,7 @@ fi
 # ahead of its own message, stripped so the relayed line reads as this script's own.
 relay_check() {
   local subject="$1" script="$2" ok_prefix="$3" fail_prefix="$4"
-  local out rc=0 before line name
+  local out rc=0 before line name said
   name="$(basename "$script")"
   out="$(mktemp "${TMPDIR:-/tmp}/mj.relay.XXXXXX")"
   before="$fails"
@@ -284,10 +284,12 @@ relay_check() {
       *) [ "$rc" = 0 ] || bad "$subject" "$line" ;;
     esac
   done < "$out"
+  # the verdict for a failed run that recorded no failure: silent, or speaking only OK lines,
+  # blank lines or a summary. The message names which, so a reader is sent to the right cause.
+  said="printed nothing"; [ ! -s "$out" ] || said="printed no failure"
   rm -f "$out"
-  # the verdict for no output at all: a failed run that recorded nothing has not passed
   [ "$rc" = 0 ] || [ "$fails" != "$before" ] \
-    || bad "$subject" "$name exited $rc and printed nothing; a check that could not speak has not passed"
+    || bad "$subject" "$name exited $rc and $said; a failed run that recorded no failure has not passed"
   return 0
 }
 relay_check link "$ROOT/scripts/ci/link-check" "OK   links        " "FAIL "
@@ -806,9 +808,10 @@ while IFS= read -r line; do
     *) printf 'FAIL homepage     %s\n' "$line"; fails=$((fails+1)) ;;
   esac
 done < "$HOMEROWS"
+home_said="printed nothing"; [ ! -s "$HOMEROWS" ] || home_said="printed no failure"
 rm -f "$HOMEROWS"
 [ "$home_rc" = 0 ] || [ "$fails" != "$home_before" ] \
-  || bad homepage "homepage-check exited $home_rc and printed nothing; a check that could not speak has not passed"
+  || bad homepage "homepage-check exited $home_rc and $home_said; a failed run that recorded no failure has not passed"
 
 # 13c. the why section links both ways: every moment reaches its commands, responsibilities and
 # claims, and every one of those pages carries a link back. A one-way link is how the section

@@ -43,6 +43,10 @@ exit 12'
 stub clean-check     '#!/bin/sh
 echo "OK   links        every link resolves"
 exit 0'
+stub quiet-fail-check '#!/bin/sh
+echo "OK   links        every link resolves"
+echo ""
+exit 10'
 stub finding-check   '#!/bin/sh
 echo "FAIL a link points at nothing"
 exit 10'
@@ -79,10 +83,21 @@ rc=0; grep -q 'printed nothing' "$T/out.txt" || rc=$?
 [ "$rc" = 1 ] || { echo "    a checker that reported a finding was also counted as silent"; exit 1; }
 echo "    a finding is counted once, and silence is not added to it"
 
+# ---------------------------------------------------------------- 4b. a failed run that spoke
+#     but recorded no failure is a failure, and is not described as silent
+relay link quiet-fail-check
+[ "$fails" = 1 ] || { echo "    a run that printed OK and exited 10 recorded $fails failure(s), not 1"; cat "$T/out.txt"; exit 1; }
+grep -q 'quiet-fail-check exited 10 and printed no failure' "$T/out.txt" \
+  || { echo "    the failure does not say the run spoke without a finding:"; sed 's/^/    | /' "$T/out.txt"; exit 1; }
+rc=0; grep -q 'printed nothing' "$T/out.txt" || rc=$?
+[ "$rc" = 1 ] || { echo "    a checker that printed lines was described as having printed nothing"; exit 1; }
+echo "    a run that fails with only OK lines is a failure, described as what it printed"
+
 # ---------------------------------------------------------------- 5. the homepage relay, which
 #     keeps its own loop, owes the same verdict for silence
-awk '/^HOMEROWS=/ { on = 1 } on { print } on && /printed nothing/ { exit }' "$SC" > "$T/home.sh"
+awk '/^HOMEROWS=/ { on = 1 } on { print } on && /recorded no failure has not passed/ { exit }' "$SC" > "$T/home.sh"
 grep -q 'homepage-check' "$T/home.sh" && grep -q 'printed nothing' "$T/home.sh" \
+  && grep -q 'printed no failure' "$T/home.sh" \
   || { echo "    the homepage-check relay in scripts/site-check has no verdict for silence"; exit 1; }
 mkdir -p "$T/fake/scripts/ci"
 home() { printf '%s\n' "$1" > "$T/fake/scripts/ci/homepage-check"; chmod +x "$T/fake/scripts/ci/homepage-check"
@@ -99,4 +114,9 @@ home '#!/bin/sh
 echo "FAIL homepage     a section is out of order"
 exit 10'
 grep -q '^fails=1$' "$T/out.txt" || { echo "    a homepage finding was not counted exactly once:"; sed 's/^/    | /' "$T/out.txt"; exit 1; }
-echo "    the homepage relay counts silence as a failure, and a pass or a finding as itself"
+home '#!/bin/sh
+echo "OK   homepage     the story is in its declared order"
+exit 10'
+grep -q '^fails=1$' "$T/out.txt" && grep -q 'homepage-check exited 10 and printed no failure' "$T/out.txt" \
+  || { echo "    a homepage-check that failed with only OK lines was not described as such:"; sed 's/^/    | /' "$T/out.txt"; exit 1; }
+echo "    the homepage relay counts silence and a finding-less failure as failures, each as itself"
