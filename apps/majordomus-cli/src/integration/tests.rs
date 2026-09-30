@@ -10,8 +10,8 @@
 
 use std::collections::BTreeMap;
 
-use majordomus_cli::integration::drain::{self, DrainStepOutcome, Integrator};
-use majordomus_cli::integration::{
+use crate::integration::drain::{self, DrainStepOutcome, Integrator};
+use crate::integration::{
     build_queue, CheckObservation, CheckRunState, ForgeObservation, IntegrationQueue,
     PullRequestAssessment, PullRequestDisposition, PullRequestObservation, RelationToMaster,
     RequiredCheckState, OBSERVATION_SCHEMA,
@@ -687,7 +687,7 @@ fn commit_on(dir: &std::path::Path, branch: &str, from: &str, files: &[(&str, &s
 
 #[test]
 fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
-    use majordomus_cli::integration::relation_to_master;
+    use crate::integration::relation_to_master;
     let dir = scratch();
     git(&dir, &["init", "-q", "-b", "master"]);
     std::fs::write(dir.join(".gitattributes"), "gen.json merge=derived\n").unwrap();
@@ -766,4 +766,35 @@ fn the_relation_to_master_is_decided_by_git_with_the_derived_attribute() {
         relation_to_master(&dir, &master, "0000000000000000000000000000000000000000"),
         RelationToMaster::Unknown { .. }
     ));
+}
+
+#[test]
+fn a_dependency_is_a_declaration_not_a_mention() {
+    use crate::integration::declared_dependencies;
+    assert_eq!(
+        declared_dependencies("Stacked on #601.\nSee #12 for context."),
+        vec![601]
+    );
+    assert_eq!(
+        declared_dependencies("Depends on #644 and #645"),
+        vec![644, 645]
+    );
+    assert!(declared_dependencies("fixes #12").is_empty());
+}
+
+#[test]
+fn every_disposition_has_one_word_and_one_lane() {
+    let words: std::collections::BTreeSet<&str> = PullRequestDisposition::ALL
+        .iter()
+        .map(|d| d.as_str())
+        .collect();
+    assert_eq!(words.len(), PullRequestDisposition::ALL.len());
+    assert_eq!(
+        PullRequestDisposition::NeedsRefresh.as_str(),
+        "needs_refresh"
+    );
+    assert_eq!(
+        PullRequestDisposition::Ready.lane(),
+        crate::integration::IntegrationLane::Ready
+    );
 }

@@ -42,7 +42,7 @@ pub mod git;
 pub mod graph;
 pub mod http;
 pub mod index;
-pub mod integration;
+pub(crate) mod integration;
 pub mod lease;
 pub mod ledger;
 pub mod live;

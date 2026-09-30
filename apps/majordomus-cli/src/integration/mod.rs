@@ -15,13 +15,25 @@
 //!           CLI · HTTP · MCP · Cockpit ◄───────┤
 //!                                              ▼
 //!                           drain: lease ► re-observe ► re-decide ► act ► verify ► re-plan
-//! ```
+//! ```text
 //!
 //! The observation is the only network product and it is recorded with its moment; every
 //! read surface renders it offline. A decision names the master and head it was taken
 //! against ([`EvaluatedAgainst`]), and the executor acts only when a fresh observation
 //! still says the same — a merge invalidates every earlier plan by construction, because
 //! the next step starts from a new observation of a new master.
+//!
+//! # Why this module is not public
+//!
+//! It is `pub(crate)`. Integration is an operation of this executable, reached through its
+//! command line (`majordomus prs`) and its capability registry (`integration.*` on HTTP, MCP
+//! and OpenAPI), and not a library other crates link against, so it is not part of the
+//! crate's exported API and the exported-surface gate (`quality report`) does not cover it.
+//! What covers it instead: the unit tests beside it (`tests.rs`: every disposition, the
+//! stale-decision refusal, the re-plan after every merge, the cleanup threshold, relations
+//! computed by real git, and two properties), and
+//! `test/cases/720_integration_follows_the_current_master.sh`, which drives the real
+//! command line against a scripted forge.
 //!
 //! # Why the forge's `mergeable` is not read
 //!
@@ -34,6 +46,8 @@ pub mod drain;
 pub mod forge;
 pub mod model;
 pub mod relation;
+#[cfg(test)]
+mod tests;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -41,13 +55,13 @@ use std::path::{Path, PathBuf};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-pub use classify::{
-    classify, declared_dependencies, required_checks, review_state, risk_of, IntegrationPolicy,
-    QueueContext, BLOCKING_LABELS,
-};
+#[cfg(test)]
+pub(crate) use classify::declared_dependencies;
+pub use classify::{classify, IntegrationPolicy, QueueContext, BLOCKING_LABELS};
 pub use forge::{ForgeObservation, OBSERVATION_SCHEMA, PR_REF_PREFIX};
 pub use model::*;
-pub use relation::relation_to_master;
+#[cfg(test)]
+pub(crate) use relation::relation_to_master;
 
 /// Where this checkout's integration state lives, relative to the repository root.
 pub const STATE_DIR: &str = ".ai/local/state/integration";

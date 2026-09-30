@@ -180,7 +180,9 @@ pub fn pull_request_of(v: &Value) -> Option<PullRequestObservation> {
 
 /// The required contexts and review requirement from a branch-protection document.
 pub fn protection_of(v: &Value) -> (Option<Vec<String>>, Option<bool>) {
-    let mut contexts: Vec<String> = v
+    // a set: the protection lists a context under `contexts` and again under `checks`, and
+    // the order is the set's, so no sort sits beside what renders it
+    let mut contexts: std::collections::BTreeSet<String> = v
         .pointer("/required_status_checks/contexts")
         .and_then(Value::as_array)
         .map(|a| {
@@ -193,21 +195,18 @@ pub fn protection_of(v: &Value) -> (Option<Vec<String>>, Option<bool>) {
         .pointer("/required_status_checks/checks")
         .and_then(Value::as_array)
     {
-        for c in checks {
-            if let Some(name) = c.get("context").and_then(Value::as_str) {
-                if !contexts.iter().any(|x| x == name) {
-                    contexts.push(name.to_string());
-                }
-            }
-        }
+        contexts.extend(
+            checks
+                .iter()
+                .filter_map(|c| c.get("context").and_then(Value::as_str).map(str::to_string)),
+        );
     }
-    contexts.sort();
     let reviews = v
         .pointer("/required_pull_request_reviews/required_approving_review_count")
         .and_then(Value::as_u64)
         .map(|n| n > 0)
         .or(Some(v.get("required_pull_request_reviews").is_some()));
-    (Some(contexts), reviews)
+    (Some(contexts.into_iter().collect()), reviews)
 }
 
 impl Forge for GhForge<'_> {
@@ -282,11 +281,18 @@ impl Forge for GhForge<'_> {
                 "number,title,author,headRefName,headRefOid,baseRefName,isDraft,labels,createdAt,updatedAt,body,statusCheckRollup,reviewDecision,autoMergeRequest,isCrossRepository",
             ],
         )?;
-        let mut pull_requests: Vec<PullRequestObservation> = list
+        // keyed by number, so the observation is in number order whatever the forge listed
+        let pull_requests: Vec<PullRequestObservation> = list
             .as_array()
-            .map(|a| a.iter().filter_map(pull_request_of).collect())
+            .map(|a| {
+                a.iter()
+                    .filter_map(pull_request_of)
+                    .map(|p| (p.number, p))
+                    .collect::<std::collections::BTreeMap<_, _>>()
+                    .into_values()
+                    .collect()
+            })
             .unwrap_or_default();
-        pull_requests.sort_by_key(|p| p.number);
         Ok(ForgeObservation {
             schema: OBSERVATION_SCHEMA,
             repository,

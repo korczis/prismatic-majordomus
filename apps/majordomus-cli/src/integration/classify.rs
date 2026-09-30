@@ -74,8 +74,8 @@ const LARGE: usize = 40;
 
 /// The required-check verdict for one head, from the checks reported on it.
 ///
-/// ```
-/// use majordomus_cli::integration::{required_checks, CheckObservation, CheckRunState, RequiredCheckState};
+/// ```text
+/// use crate::integration::{required_checks, CheckObservation, CheckRunState, RequiredCheckState};
 /// let ci = |state| vec![CheckObservation { name: "ci".into(), state }];
 /// let req = Some(vec!["ci".to_string()]);
 /// assert_eq!(required_checks(&ci(CheckRunState::Passed), req.as_deref()), RequiredCheckState::Passed);
@@ -84,7 +84,7 @@ const LARGE: usize = 40;
 /// assert_eq!(required_checks(&other, req.as_deref()), RequiredCheckState::Missing);
 /// // unread protection is never a pass
 /// assert_eq!(required_checks(&ci(CheckRunState::Passed), None), RequiredCheckState::Unknown);
-/// ```
+/// ```text
 pub fn required_checks(
     checks: &[super::model::CheckObservation],
     required: Option<&[String]>,
@@ -148,10 +148,10 @@ pub fn review_state(decision: &str, required: Option<bool>) -> PullRequestReview
 /// `Requires #N` or `After #N`, case-insensitively. Prose that merely mentions a number is
 /// not a declaration.
 ///
-/// ```
-/// use majordomus_cli::integration::declared_dependencies;
+/// ```text
+/// use crate::integration::declared_dependencies;
 /// assert_eq!(declared_dependencies("Stacked on #601.\nSee #12 for context."), vec![601]);
-/// ```
+/// ```text
 pub fn declared_dependencies(body: &str) -> Vec<u64> {
     let mut out = BTreeSet::new();
     for line in body.lines() {

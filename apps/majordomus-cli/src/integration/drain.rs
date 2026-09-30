@@ -148,11 +148,6 @@ impl IntegrationLease {
     pub fn renew(&self) {
         let _ = fs::write(&self.path, &self.token);
     }
-
-    /// The lease file.
-    pub fn path(&self) -> &Path {
-        &self.path
-    }
 }
 
 impl Drop for IntegrationLease {

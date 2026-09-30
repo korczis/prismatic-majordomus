@@ -72,11 +72,11 @@ pub fn derived_paths(root: &Path, master: &str, paths: &[String]) -> BTreeSet<St
 
 /// What `head` is to `master`, with the authored paths it changes.
 ///
-/// ```no_run
-/// use majordomus_cli::integration::{relation_to_master, RelationToMaster};
+/// ```text
+/// use crate::integration::{relation_to_master, RelationToMaster};
 /// let r = relation_to_master(std::path::Path::new("."), "origin/master", "origin/master");
 /// assert_eq!(r, RelationToMaster::Contained);
-/// ```
+/// ```text
 pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMaster {
     if !has_commit(root, head) {
         return RelationToMaster::Unknown {
@@ -156,11 +156,10 @@ pub fn relation_to_master(root: &Path, master: &str, head: &str) -> RelationToMa
         return RelationToMaster::Superseded;
     }
     if authored.is_empty() {
-        let mut paths: Vec<String> = changed;
-        paths.extend(conflicted);
-        paths.sort();
-        paths.dedup();
-        return RelationToMaster::DerivedOnly { paths };
+        let paths: BTreeSet<String> = changed.into_iter().chain(conflicted).collect();
+        return RelationToMaster::DerivedOnly {
+            paths: paths.into_iter().collect(),
+        };
     }
     match git(root, &["merge-base", "--is-ancestor", master, head]) {
         Ok((true, _)) => RelationToMaster::UpToDate { authored },

@@ -15,19 +15,18 @@ decides again from what is there now. The decision is recorded in ADR 0101, the 
 
 ## The pipeline
 
-```text
-forge (gh) ──► observation (recorded, with its moment)
-                   │
-git merge-tree ──► relation to master (with this clone's merge drivers; cached by SHA pair)
-                   │
-classify ─────────► one assessment per pull request: disposition, reasons, evidence, risk
-                   │
-rank ─────────────► the queue: deterministic order, the next merge, the next refresh
-                   │
-CLI · HTTP · MCP · Cockpit render it, offline
-                   │
-drain ────────────► lease ► observe ► decide ► observe again ► act ► verify ► (repeat)
-```
+<pre class="mermaid">
+flowchart TD
+  gh["forge (gh)"] --&gt; obs["observation&lt;br/&gt;(recorded, with its moment)"]
+  git["git merge-tree + check-attr"] --&gt; rel["relation to master&lt;br/&gt;(cached by SHA pair)"]
+  obs --&gt; cls["classify: one assessment per pull request&lt;br/&gt;disposition, reasons, evidence, risk"]
+  rel --&gt; cls
+  cls --&gt; rank["rank: deterministic order,&lt;br/&gt;next merge, next refresh"]
+  rank --&gt; surfaces["CLI · HTTP · MCP · Cockpit&lt;br/&gt;(offline)"]
+  rank --&gt; drain["drain: lease, observe, decide,&lt;br/&gt;observe again, act, verify"]
+  drain --&gt;|every merge: plan void| gh
+</pre>
+
 
 The forge's `mergeable` flag is never read. This repository resolves derived files with a
 per-clone merge driver (`merge=derived`) that the forge cannot run, so the forge calls nearly
@@ -71,7 +70,7 @@ The queue is ordered by lane, disposition, risk (low, medium, high, from the pat
 how many other ready or refreshable pull requests share an authored path (fewer first,
 because landing it invalidates less), age (older first, so new easy work cannot starve old
 work) and number. Every key is a value of the assessment, so the order is total and does
-not depend on the order the forge listed them. `tests/integration_queue.rs` proves this as a
+not depend on the order the forge listed them. `src/integration/tests.rs` proves this as a
 property.
 
 ## One merge at a time

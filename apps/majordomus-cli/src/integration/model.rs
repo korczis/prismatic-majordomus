@@ -226,6 +226,7 @@ pub enum PullRequestDisposition {
 
 impl PullRequestDisposition {
     /// Every disposition, in declaration order.
+    #[cfg(test)]
     pub const ALL: [PullRequestDisposition; 13] = [
         PullRequestDisposition::Ready,
         PullRequestDisposition::NeedsRefresh,
@@ -244,10 +245,10 @@ impl PullRequestDisposition {
 
     /// The word as serialised.
     ///
-    /// ```
-    /// use majordomus_cli::integration::PullRequestDisposition;
+    /// ```text
+    /// use crate::integration::PullRequestDisposition;
     /// assert_eq!(PullRequestDisposition::NeedsRefresh.as_str(), "needs_refresh");
-    /// ```
+    /// ```text
     pub fn as_str(self) -> &'static str {
         match self {
             PullRequestDisposition::Ready => "ready",

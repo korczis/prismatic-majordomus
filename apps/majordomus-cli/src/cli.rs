@@ -2459,6 +2459,17 @@ pub struct RepoArgs {
 #[derive(Debug, Args)]
 /// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain` and `cleanup`
 /// reads the last recorded forge observation and never reaches the network.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PrsArgs, PrsCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pr", "explain", "12", "--format", "json"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// let args: PrsArgs = args;
+/// assert!(matches!(args.command, Some(PrsCommand::Explain { number: 12 })));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
 pub struct PrsArgs {
     #[command(flatten)]
     /// Where the repository is found.
@@ -2474,7 +2485,26 @@ pub struct PrsArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The subcommands of `majordomus prs`.
+/// The subcommands of `majordomus prs`. `status`, `plan`, `explain` and `events` render the
+/// recorded observation offline; `refresh`, `drain` and `cleanup` reach the forge, and a
+/// drain is bounded by `--max` merges and, without `--dry-run`, holds the base branch's
+/// integration lease while it acts.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PrsCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "drain", "--max", "3", "--refresh"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Drain { max: 3, dry_run: false, refresh: true })
+/// ));
+/// // with no subcommand it is `status`
+/// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(args.command.is_none());
+/// ```
 pub enum PrsCommand {
     /// Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent
     Status,

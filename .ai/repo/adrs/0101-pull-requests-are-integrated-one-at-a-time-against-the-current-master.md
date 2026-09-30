@@ -22,7 +22,7 @@ related:
   - file:apps/majordomus-cli/src/integration/classify.rs
   - file:apps/majordomus-cli/src/integration/drain.rs
   - file:apps/majordomus-cli/src/capability/builtin/integration.rs
-  - file:apps/majordomus-cli/tests/integration_queue.rs
+  - file:apps/majordomus-cli/src/integration/tests.rs
   - file:docs/INTEGRATION.md
   - test:test/cases/720_integration_follows_the_current_master.sh
 ---

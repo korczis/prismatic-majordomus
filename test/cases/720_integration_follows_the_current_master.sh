@@ -24,7 +24,7 @@ ORIGIN="$T/../origin-720.git"; W="$T/../work-720"; STATE="$T/../forge-720"; BIN=
 rm -rf "$ORIGIN" "$W" "$STATE" "$BIN"; mkdir -p "$STATE" "$BIN"
 gitq init -q --bare -b master "$ORIGIN"
 gitq clone -q "$ORIGIN" "$W" 2>/dev/null
-cd "$W"
+cd "$W" || exit 1
 echo base > a.txt; gitq add a.txt; gitq commit -qm base; gitq push -q origin HEAD:master
 # #2 branches from the first master, then master moves: #2 is behind
 gitq checkout -qb feature/2; echo two > two.txt; gitq add two.txt; gitq commit -qm two
@@ -35,6 +35,9 @@ gitq checkout -qb feature/1; echo one > one.txt; gitq add one.txt; gitq commit -
 gitq push -q origin HEAD:refs/heads/feature/1 HEAD:refs/pull/1/head
 H1="$(git rev-parse feature/1)"; H2="$(git rev-parse feature/2)"
 gitq checkout -q master
+# the registry serves a supervised repository: the clone gets its layer, before the scripted
+# forge is on the PATH (init has nothing to ask it)
+"$MJ" init >"$STATE/init.log" 2>&1 || { echo "    majordomus init failed in the scratch clone:"; tail -5 "$STATE/init.log"; exit 1; }
 
 pr() {   # <number> <head sha> <branch> <created>
   printf '{"number":%s,"title":"change %s","author":{"login":"someone"},"headRefName":"%s","headRefOid":"%s","baseRefName":"master","isDraft":false,"labels":[],"createdAt":"%s","updatedAt":"%s","body":"","statusCheckRollup":[{"__typename":"CheckRun","name":"ci","status":"COMPLETED","conclusion":"SUCCESS"}],"reviewDecision":"","autoMergeRequest":null,"isCrossRepository":false}' \
@@ -89,6 +92,15 @@ disp() { printf '%s' "$q" | jq -r --argjson n "$1" '.assessments[] | select(.num
 [ "$(printf '%s' "$q" | jq -r '.assessments[0].evaluated_against.head_sha')" = "$H1" ] \
   || { echo "    the first assessment does not name the head it was decided against"; exit 1; }
 prs explain 1 | grep "disposition:  ready" >/dev/null || { echo "    explain does not say ready"; exit 1; }
+# the wire contract: the capability HTTP and MCP serve answers the same queue, through the
+# registry, and names the same next merge and dispositions as the command line
+reg="$("$RB" run integration.queue --repo "$W" --format json)" || { echo "    integration.queue did not run"; exit 1; }
+[ "$(printf '%s' "$reg" | jq -r '.output.observed')" = true ] || { echo "    the capability says nothing is observed"; exit 1; }
+[ "$(printf '%s' "$reg" | jq -r '.output.queue.next_merge')" = 1 ] || { echo "    the capability's next merge is not #1"; exit 1; }
+[ "$(printf '%s' "$reg" | jq -c '[.output.queue.assessments[] | [.number, .disposition]]')" = "$(printf '%s' "$q" | jq -c '[.assessments[] | [.number, .disposition]]')" ] \
+  || { echo "    the capability and the command line disagree about the queue"; exit 1; }
+exp="$("$RB" run integration.explain --repo "$W" --input '{"number":2}' --format json)" || { echo "    integration.explain did not run"; exit 1; }
+[ "$(printf '%s' "$exp" | jq -r '.output.assessment.disposition')" = needs_refresh ] || { echo "    integration.explain does not say needs_refresh for #2"; exit 1; }
 
 # ---------------------------------------------------------------- 4. a dry run
 out="$(prs drain --dry-run --max 3)"

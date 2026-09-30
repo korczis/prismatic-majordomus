@@ -10,7 +10,7 @@ class: blocking
 depends_on: [project.land-and-publish@1, project.accumulation-is-measured@2]
 tags: [integration, git, github, safety, governance, evidence]
 x-majordomus:
-  tests: [test/cases/720_integration_follows_the_current_master.sh, apps/majordomus-cli/tests/integration_queue.rs]
+  tests: [test/cases/720_integration_follows_the_current_master.sh, apps/majordomus-cli/src/integration/tests.rs]
 ---
 # Rationale
 
@@ -43,11 +43,11 @@ what keeps it from drifting back.
 `test/cases/720_integration_follows_the_current_master.sh` fails when the integration code
 names `--admin` or a force push, when a read-only `prs` command reaches the network or
 writes the audit trail, when the relation to master is taken from the forge's `mergeable`,
-or when the executor loses its re-observation before acting. The crate's
-`tests/integration_queue.rs` holds the dispositions, the stale-decision refusal, the
+or when the executor loses its re-observation before acting. The module's
+`src/integration/tests.rs` holds the dispositions, the stale-decision refusal, the
 re-plan after every merge and the cleanup threshold.
 
 # Verification
 
 `bash test/run.sh 720_integration_follows_the_current_master` and
-`cargo test --test integration_queue`.
+`cargo test --lib integration`.
