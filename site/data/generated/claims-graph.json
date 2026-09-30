@@ -1529,11 +1529,11 @@
     {
       "id": "claim:evidence-recorded-in-ci",
       "kind": "claim",
-      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
       "status": "guaranteed",
       "route": "/guarantees/evidence-recorded-in-ci/",
       "external": false,
-      "note": "The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68."
+      "note": "The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it."
     },
     {
       "id": "claim:rule-proof-is-named-and-resolves",
@@ -1788,6 +1788,15 @@
       "note": "Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data."
     },
     {
+      "id": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "kind": "claim",
+      "label": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass/",
+      "external": false,
+      "note": "The result line of cargo test says ok for a binary that ran nothing, so the recorder reads its counts. A failed count is a failure, a binary that passed nothing or ran a filtered subset is a skip, a line with no count or a binary with no result line is an error, and escape sequences are stripped first. The unit-test binary of the crate, its doctests, binaries outside tests/ and result lines no Running line named are listed in the recording as dropped, with the reason, because no claim can name them until a runner records them one by one."
+    },
+    {
       "id": "claim:a-skipped-case-is-not-a-proof",
       "kind": "claim",
       "label": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
@@ -1933,6 +1942,13 @@
       "id": "impl:apps/majordomus-cli/src/evidence/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/evidence/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/evidence/record.rs",
       "route": null,
       "external": false
     },
@@ -3351,6 +3367,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/502_evidence_is_judged_at_the_presented_revision.sh"
     },
     {
+      "id": "test:test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "kind": "test",
+      "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+    },
+    {
       "id": "test:test/cases/50_blocker_across_handover.sh",
       "kind": "test",
       "label": "test/cases/50_blocker_across_handover.sh",
@@ -4583,6 +4606,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "source:docs/EVIDENCE.md",
       "kind": "specified_by"
@@ -5523,6 +5551,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "impl:apps/majordomus-cli/src/evidence/record.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:a-skipped-case-is-not-a-proof",
       "target": "impl:test/run.sh",
       "kind": "implemented_by"
@@ -6460,6 +6493,11 @@
     {
       "source": "claim:commit-plan-is-refusable",
       "target": "test:test/cases/274_commit_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "target": "test:test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
       "kind": "proved_by"
     },
     {

@@ -13445,7 +13445,7 @@ capabilities:
     module: evidence
     kind: command
     title: Record a run that happened
-    description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing."
+    description: "Reads what the runs already wrote — the suite's TSV report, cargo test's output — stamps each result with the provenance the run itself did not carry (the commit, the tree state, the digest of the test's own source, the time, the origin) and merges it into the ledger. It records; it decides nothing: a case that failed is a case the runner said failed, and a test no report named is left exactly as it was, so recording one case never erases the evidence for the rest. A tree with no commit to name is refused, because an execution with no commit proves nothing. A crate binary that ran no test, or only a filtered subset, is recorded as a skip, and what no claim can name yet (the crate's own unit tests, its doctests) is listed as dropped."
     input:
       name: EvidenceRecordInput
       schema:
@@ -13495,6 +13495,11 @@ capabilities:
             items:
               type: string
             description: Results the run named that no runner in this repository owns.
+          dropped:
+            type: array
+            items:
+              "$ref": "#/$defs/EvidenceDropped"
+            description: "What the reports held that no claim can name yet: the crate's unit-test binary, its\ndoctests. Listed rather than ignored, and absent from the document when empty."
           ledger:
             type: string
             description: Where the ledger was written.
@@ -13505,8 +13510,38 @@ capabilities:
           - working_tree
           - unknown
           - ledger
-        description: "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n```"
+        description: "What a recording did: how much of the run reached the ledger, and under what provenance.\n\nThe recorder decides nothing, and this report says so. A result no runner in this\nrepository owns is named in `unknown` rather than written under a guessed identity, and\na failure is recorded like a pass — the ledger holds what happened, so `passed` is a\ncount and never a filter.\n\n```\nuse majordomus_cli::capability::builtin::evidence::RecordReport;\n\nlet report = RecordReport {\n    recorded: 3,\n    passed: 2,\n    commit: \"06fa258913a1b2c3d4e5f60718293a4b5c6d7e8f\".to_string(),\n    working_tree: \"clean\".to_string(),\n    unknown: vec![\"docs/CLAIMS.yaml\".to_string()],\n    dropped: vec![],\n    ledger: majordomus_cli::evidence::LEDGER_PATH.to_string(),\n};\n// the failing test is one of the three recorded, not a fourth thing that was dropped\nassert_eq!(report.recorded - report.passed, 1);\nassert!(report.ledger.starts_with(\".ai/repo/\"));\n\nlet json = serde_json::to_value(&report).unwrap();\nassert_eq!(json[\"unknown\"].as_array().unwrap().len(), 1);\nassert_eq!(json[\"working_tree\"], \"clean\");\n// a suite-only recording listed nothing, and its document is what it always was\nassert!(json.get(\"dropped\").is_none());\n```"
         title: RecordReport
+        "$defs":
+          EvidenceDropped:
+            type: object
+            properties:
+              producer:
+                "$ref": "#/$defs/EvidenceProducer"
+                description: The report the entry was read from.
+              what:
+                type: string
+                description: "What the entry was, in the report's own words: `unittests src/lib.rs`,\n`doc-tests <crate>`, the path of a binary that is not under `tests/`, or `a result\nline` when a result belonged to no binary at all."
+              reason:
+                type: string
+                description: Why it is listed rather than recorded. It carries no counts.
+            required:
+              - producer
+              - what
+              - reason
+            description: "Something a report held that no claim can name yet, listed instead of ignored.\n\n`cargo test` runs the crate's own unit-test binary and its doctests beside the\nintegration binaries under `tests/`. They ran, and a claim names a test by its path, so\nnone of their tests is anything a claim can point at until a runner records them one by\none. A recording lists each such entry with the report it came from (`producer`), what\nit was (`what`) and why it is not recorded (`reason`), so that the part of a run\nnobody can use yet is visible rather than silently smaller.\n\n\n```\nuse majordomus_cli::evidence::{EvidenceDropped, EvidenceProducer};\n\nlet d: EvidenceDropped = serde_json::from_value(serde_json::json!({\n    \"producer\": \"crate\",\n    \"what\": \"doc-tests majordomus_cli\",\n    \"reason\": \"doctests, which no claim can name until a runner records them one by one\",\n}))\n.unwrap();\nassert_eq!(d.producer, EvidenceProducer::Crate);\nassert_eq!(serde_json::to_value(&d).unwrap()[\"producer\"], \"crate\");\n```"
+          EvidenceProducer:
+            oneOf:
+              - type: string
+                const: suite
+                description: "The suite runner's TSV report (`MJ_TEST_REPORT` of `test/run.sh`)."
+              - type: string
+                const: crate
+                description: "`cargo test`'s output: one result line per test binary."
+              - type: string
+                const: coverage
+                description: "A coverage summary (`scripts/rust-coverage --summary-json`)."
+            description: "Which report an entry of a run belongs to: the suite's TSV, `cargo test`'s output, or a\ncoverage summary.\n\nThe serde word is the word a person types and a document carries (`suite`, `crate`,\n`coverage`), and `EvidenceProducer::parse` reads exactly those three back. A word that\nnames no report is not a producer, so a misspelled one is refused where it is read\nrather than guessed at.\n\n```\nuse majordomus_cli::evidence::EvidenceProducer;\n\nassert_eq!(EvidenceProducer::parse(\"crate\"), Some(EvidenceProducer::Crate));\nassert_eq!(EvidenceProducer::Coverage.as_str(), \"coverage\");\nassert_eq!(serde_json::to_value(EvidenceProducer::Suite).unwrap(), \"suite\");\nassert_eq!(EvidenceProducer::parse(\"Suite\"), None, \"the word is exact\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::evidence

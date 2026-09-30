@@ -2199,12 +2199,12 @@
     },
     {
       "id": "evidence-recorded-in-ci",
-      "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+      "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
       "source": "docs/EVIDENCE.md",
       "implementation": "scripts/ci/evidence-collect",
       "test": "test/cases/357_ci_records_evidence.sh",
       "status": "guaranteed",
-      "note": "The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68.",
+      "note": "The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it.",
       "responsibility": "none",
       "source_route": "/docs/evidence/",
       "command": null,
@@ -2573,6 +2573,19 @@
       "source_route": "/docs/commit/",
       "command": null,
       "test_case": "274_commit_policy"
+    },
+    {
+      "id": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+      "claim": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+      "source": "docs/EVIDENCE.md",
+      "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+      "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+      "status": "guaranteed",
+      "note": "The result line of cargo test says ok for a binary that ran nothing, so the recorder reads its counts. A failed count is a failure, a binary that passed nothing or ran a filtered subset is a skip, a line with no count or a binary with no result line is an error, and escape sequences are stripped first. The unit-test binary of the crate, its doctests, binaries outside tests/ and result lines no Running line named are listed in the recording as dropped, with the reason, because no claim can name them until a runner records them one by one.",
+      "responsibility": "none",
+      "source_route": "/docs/evidence/",
+      "command": null,
+      "test_case": "506_a_crate_binary_that_ran_nothing_is_not_a_pass"
     },
     {
       "id": "a-skipped-case-is-not-a-proof",

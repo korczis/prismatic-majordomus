@@ -6268,6 +6268,21 @@
         }
       },
       {
+        "id": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "kind": "claim",
+        "label": "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/evidence/record.rs",
+          "responsibility": "none",
+          "source": "docs/EVIDENCE.md",
+          "test": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "kind": "claim",
         "label": "evidence-a-failure-outranks-an-absence",
@@ -6399,12 +6414,11 @@
         "id": "majordomus://claim/evidence-recorded-in-ci",
         "kind": "claim",
         "label": "evidence-recorded-in-ci",
-        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
         "route": "/cockpit/objects/claim/evidence-recorded-in-ci",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
           "implementation": "scripts/ci/evidence-collect",
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
@@ -11521,6 +11535,14 @@
         "source": "docs/claims/event-vocabulary.md"
       },
       {
+        "id": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "kind": "document",
+        "label": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
+        "summary": "A crate test binary that ran no test or only a filtered subset is recorded as a skip, one with a failed test as a failure and one that printed no result as an error, whatever colour codes its output carries, and what no claim can name yet is listed as dropped",
+        "route": "/cockpit/objects/document/docs-claims-evidence-a-crate-binary-that-ran-nothing-is-not-a-pass-md",
+        "source": "docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/evidence-a-failure-outranks-an-absence.md",
         "kind": "document",
         "label": "docs/claims/evidence-a-failure-outranks-an-absence.md",
@@ -13432,7 +13454,8 @@
             "evidence-unsupported-guarantee-is-reported",
             "evidence-judged-at-the-presented-revision",
             "evidence-a-skip-is-not-run",
-            "evidence-a-failure-outranks-an-absence"
+            "evidence-a-failure-outranks-an-absence",
+            "evidence-a-crate-binary-that-ran-nothing-is-not-a-pass"
           ],
           "commands": [
             "evidence"
@@ -36009,6 +36032,13 @@
         "source": "test/cases/504_public_text_is_redacted_once.sh"
       },
       {
+        "id": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "test",
+        "label": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-506-a-crate-binary-that-ran-nothing-is-not-a-pass-sh",
+        "source": "test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "kind": "test",
         "label": "test/cases/50_blocker_across_handover.sh",
@@ -44706,6 +44736,26 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "file:apps/majordomus-cli/src/evidence/record.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://document/docs/EVIDENCE.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass",
+        "target": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/evidence-a-failure-outranks-an-absence",
         "target": "file:apps/majordomus-cli/src/evidence/freshness.rs",
         "kind": "implemented_by"
@@ -48707,6 +48757,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/event-vocabulary.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/evidence-a-crate-binary-that-ran-nothing-is-not-a-pass.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -56846,6 +56901,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/506_a_crate_binary_that_ran_nothing_is_not_a_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/50_blocker_across_handover.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60642,8 +60702,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1937,
-      "edges": 4372,
+      "nodes": 1940,
+      "edges": 4378,
       "acyclic": true,
       "truncated": false
     }

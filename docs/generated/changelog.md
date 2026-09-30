@@ -11,15 +11,7 @@ Current version: **0.11.0**
 
 ### Decisions
 
-- **ADR-0087** Evidence is indexed by subject and judged at the presented revision _(proposed)_
-- **ADR-0086** The crate's rustdoc is a published web surface at /rustdoc, produced by the invocation its gate proves and verified at the public URL _(proposed)_
-- **ADR-0085** The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection _(proposed)_
-- **ADR-0082** Token economics are measured from matched runs and published only past a declared rule _(proposed)_
-- **ADR-0080** A CI run reaches the tracked ledger through a recording branch, never through the run that produced it _(proposed)_
-- **ADR-0071** A feature exists only when its delivery is computed and every dimension passes _(proposed)_
 - **ADR-0068** CI evidence is kept where the run happened, and published with the commit it proves _(proposed)_
-- **ADR-0067** Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere _(proposed)_
-- **ADR-0066** Entry reports a verdict per claim and the evidence behind it, from one preflight value _(proposed)_
 
 ### Added
 

@@ -15,6 +15,19 @@
 //! and nothing here can produce one: a test id that appears in no report is simply not
 //! recorded, and the report will say `not run` for it, which is true.
 //!
+//! # A crate binary states only what ran
+//!
+//! "Records what the runner said" needs care with `cargo test`, whose result line starts
+//! with `ok` for a binary that ran nothing at all: every test ignored, or every test
+//! filtered out of a run that named one. So [`read_crate_output`] reads the counts, not
+//! only the word. A binary that ran no test, or only a filtered subset, is a skip; one with
+//! a failed test is a failure whatever its word says; one whose result line carries no
+//! count, or that printed no result line at all, is an error, because the harness could not
+//! say what ran. Colour codes are stripped before any line is matched, so a coloured run and
+//! a plain one read the same. What the output held that no claim can name yet, the crate's
+//! own unit-test binary and its doctests, is listed in [`RecordOutcome::dropped`] rather
+//! than ignored.
+//!
 //! # Why the commit is taken here rather than by the runner
 //!
 //! Because the runner is a shell script that runs in a disposable temporary repository and
@@ -84,8 +97,19 @@
 
 use std::path::Path;
 
+use super::run::{EvidenceDropped, EvidenceProducer};
 use super::{digest_of, Execution, Ledger, Origin, Outcome, Runner, TestId};
 use crate::error::{Error, Result};
+
+/// Why the crate's own unit-test binary is listed rather than recorded.
+const UNIT_TESTS: &str =
+    "the crate's own unit tests, which no claim can name until a runner records them one by one";
+/// Why the crate's doctests are listed rather than recorded.
+const DOC_TESTS: &str = "doctests, which no claim can name until a runner records them one by one";
+/// Why a binary that is not under `tests/` is listed rather than recorded.
+const NOT_AN_INTEGRATION_BINARY: &str = "not an integration test binary under tests/";
+/// Why a result line with no binary before it is listed rather than recorded.
+const UNATTRIBUTED: &str = "no Running line named the binary it belongs to";
 
 /// What to record, and where from.
 ///
@@ -172,17 +196,45 @@ pub struct RecordRequest {
 #[derive(Debug, Clone, PartialEq, Eq)]
 /// # Example
 ///
-/// What a recording did: how many executions were written, how many passed, and which
-/// results named a test no runner in this repository owns.
+/// A crate run's recording: the integration binary a claim can name is recorded, and the
+/// doctests, which ran and which no claim can name yet, are listed in
+/// [`RecordOutcome::dropped`] rather than ignored.
 ///
 /// ```
-/// use majordomus_cli::evidence::RecordOutcome;
-/// let o = RecordOutcome {
-///     recorded: 2, passed: 2, commit: "a04b65c9".into(),
-///     working_tree: "clean".into(), unknown: vec![],
-/// };
-/// assert_eq!(o.recorded, 2);
-/// assert!(o.unknown.is_empty());
+/// # use std::process::Command;
+/// # let root = tempfile::tempdir().unwrap();
+/// # let git = |args: &[&str]| {
+/// #     Command::new("git").arg("-C").arg(root.path()).args(args).output().unwrap()
+/// # };
+/// # git(&["init", "-q"]);
+/// # git(&["config", "user.email", "t@example.com"]);
+/// # git(&["config", "user.name", "t"]);
+/// # std::fs::create_dir_all(root.path().join("apps/majordomus-cli/tests")).unwrap();
+/// # std::fs::write(root.path().join("apps/majordomus-cli/tests/why.rs"), "// why\n").unwrap();
+/// # git(&["add", "-A"]);
+/// # git(&["commit", "-qm", "init"]);
+/// use majordomus_cli::evidence::{record, EvidenceProducer, Origin, RecordOutcome, RecordRequest};
+///
+/// let reports = tempfile::tempdir().unwrap();
+/// let log = reports.path().join("crate.log");
+/// std::fs::write(
+///     &log,
+///     "     Running tests/why.rs (target/debug/deps/why-1)\n\
+///      test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+///      finished in 0.10s\n\
+///         Doc-tests majordomus_cli\n\
+///      test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+///      finished in 1.00s\n",
+/// )
+/// .unwrap();
+///
+/// let request =
+///     RecordRequest { suite: None, crate_output: Some(log), origin: Origin::Local, run: None };
+/// let outcome: RecordOutcome = record(root.path(), &request).unwrap();
+/// assert_eq!((outcome.recorded, outcome.passed), (1, 1), "the binary under tests/");
+/// assert_eq!(outcome.dropped.len(), 1, "the doctests, listed");
+/// assert_eq!(outcome.dropped[0].producer, EvidenceProducer::Crate);
+/// assert_eq!(outcome.dropped[0].what, "doc-tests majordomus_cli");
 /// ```
 pub struct RecordOutcome {
     /// How many executions were written.
@@ -197,6 +249,11 @@ pub struct RecordOutcome {
     /// Reports the run named that no runner in this repository owns; recorded for nobody
     /// and named here rather than dropped.
     pub unknown: Vec<String>,
+    /// What the reports held that no claim can name yet, in the order the reports held it:
+    /// the crate's own unit-test binary, its doctests, a binary outside `tests/`, a result
+    /// line no binary owned. Listed rather than ignored, so a run is never silently smaller
+    /// than it was.
+    pub dropped: Vec<EvidenceDropped>,
 }
 
 /// The instant, RFC 3339, UTC, to whole seconds.
@@ -224,12 +281,296 @@ fn now_rfc3339() -> String {
     format!("{y:04}-{m:02}-{d:02}T{h:02}:{mi:02}:{s:02}Z")
 }
 
-/// One `Running tests/<name>.rs` / `test result:` pair per test binary, joined.
+/// One integration test binary of a `cargo test` run, as its result line stated it.
+///
+/// `name` is the binary's source under `tests/` without the extension, never the hashed
+/// file cargo built, which changes between builds. The counts are the result line's own
+/// (a count the line did not carry is 0), and `outcome` is decided from them by the rule
+/// [`read_crate_output`] states: a binary that ran nothing is not a pass.
+///
+/// ```
+/// use majordomus_cli::evidence::{read_crate_output, CrateBinary, Outcome};
+///
+/// let read = read_crate_output(
+///     "     Running tests/why.rs (target/debug/deps/why-1)\n\
+///      test result: ok. 1 passed; 0 failed; 2 ignored; 0 measured; 4 filtered out; \
+///      finished in 0.60s\n",
+/// );
+/// let why: &CrateBinary = &read.binaries[0];
+/// assert_eq!(why.name, "why");
+/// assert_eq!((why.passed, why.failed, why.ignored, why.filtered_out), (1, 0, 2, 4));
+/// assert_eq!(why.seconds, 1, "0.60s rounds to the nearest second");
+/// assert_eq!(why.outcome, Outcome::Skip, "a filtered subset is not the binary's proof");
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CrateBinary {
+    /// The binary's name: `tests/<name>.rs` without the directory and the extension.
+    pub name: String,
+    /// What the binary's result line, read by its counts, says happened.
+    pub outcome: Outcome,
+    /// `finished in` rounded to whole seconds; 0 when the line carried none.
+    pub seconds: u64,
+    /// Tests that ran and passed.
+    pub passed: u64,
+    /// Tests that ran and failed.
+    pub failed: u64,
+    /// Tests that were compiled in and not run.
+    pub ignored: u64,
+    /// Tests a name filter left out of this run.
+    pub filtered_out: u64,
+}
+
+/// What `cargo test`'s output held: the integration binaries a claim can name, and what it
+/// cannot, listed in [`CrateRead::dropped`] in the order the output held it.
+///
+/// ```
+/// use majordomus_cli::evidence::{read_crate_output, CrateRead};
+///
+/// let read: CrateRead = read_crate_output(
+///     "   Doc-tests majordomus_cli\n\
+///      test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+///      finished in 2.00s\n",
+/// );
+/// assert!(read.binaries.is_empty(), "no claim can name a doctest yet");
+/// assert_eq!(read.dropped[0].what, "doc-tests majordomus_cli");
+/// ```
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct CrateRead {
+    /// Each binary under `tests/` that the output named, in order, with its outcome.
+    pub binaries: Vec<CrateBinary>,
+    /// What the output held that no claim can name yet, with the reason for each.
+    pub dropped: Vec<EvidenceDropped>,
+}
+
+/// The entry a `Running` or `Doc-tests` line opened, waiting for its result line.
+enum Pending {
+    /// An integration binary under `tests/`: a claim can name it.
+    Binary(String),
+    /// Anything else: listed, with why, when it closes.
+    Dropped(String, &'static str),
+}
+
+impl CrateRead {
+    /// Close the entry that was waiting for a result line and got none before the next
+    /// `Running`, the next `Doc-tests` or the end of the output. A binary that started and
+    /// never reported is an error, because the harness could not say what ran; anything
+    /// else is listed as it is.
+    fn close(&mut self, pending: Option<Pending>) {
+        match pending {
+            None => {}
+            Some(Pending::Binary(name)) => self.binaries.push(CrateBinary {
+                name,
+                outcome: Outcome::Error,
+                seconds: 0,
+                passed: 0,
+                failed: 0,
+                ignored: 0,
+                filtered_out: 0,
+            }),
+            Some(Pending::Dropped(what, reason)) => self.dropped.push(dropped(what, reason)),
+        }
+    }
+}
+
+/// A crate entry listed rather than recorded.
+fn dropped(what: impl Into<String>, reason: &str) -> EvidenceDropped {
+    EvidenceDropped {
+        producer: EvidenceProducer::Crate,
+        what: what.into(),
+        reason: reason.to_string(),
+    }
+}
+
+/// Read `cargo test`'s output: each `Running tests/<name>.rs` line joined to the
+/// `test result:` line that follows it, judged by its counts, and everything else it ran
+/// listed rather than ignored.
 ///
 /// `cargo test`'s machine format is still unstable, so this reads what every cargo prints.
-/// The `Running` line names the binary the following result belongs to; without it a run
-/// of forty binaries is forty anonymous result lines, which is how a per-test-binary
-/// outcome becomes an untraceable total.
+/// The `Running` line names the binary the following result belongs to; without it a run of
+/// forty binaries is forty anonymous result lines, which is how a per-test-binary outcome
+/// becomes an untraceable total. Escape sequences are stripped from every line before it is
+/// matched, so a coloured run reads as a plain one.
+///
+/// A result line is judged by the first of these that holds:
+///
+/// | The result line | Outcome |
+/// |---|---|
+/// | a failed count above zero | fail |
+/// | the word `FAILED` | fail |
+/// | the word `ok` and no `passed` count | error |
+/// | the word `ok` and nothing passed (every test ignored, say) | skip |
+/// | the word `ok` and a filtered-out count above zero (a subset) | skip |
+/// | the word `ok` | pass |
+/// | any other word | error |
+///
+/// A binary whose `Running` line is followed by no result line is an error. The crate's own
+/// unit-test binary (`Running unittests <path>`), its doctests (`Doc-tests <crate>`), a
+/// binary outside `tests/` and a result line with no `Running` line before it are listed in
+/// [`CrateRead::dropped`] with the reason, and never credited to a neighbour.
+///
+/// ```
+/// use majordomus_cli::evidence::{read_crate_output, Outcome};
+///
+/// let read = read_crate_output(
+///     "     Running tests/all_ignored.rs (target/debug/deps/all_ignored-1)\n\
+///      test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; \
+///      finished in 0.00s\n\
+///           Running tests/broken.rs (target/debug/deps/broken-1)\n\
+///      test result: ok. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; \
+///      finished in 0.20s\n\
+///           Running tests/silent.rs (target/debug/deps/silent-1)\n",
+/// );
+/// let outcomes: Vec<(&str, Outcome)> =
+///     read.binaries.iter().map(|b| (b.name.as_str(), b.outcome)).collect();
+/// assert_eq!(
+///     outcomes,
+///     [("all_ignored", Outcome::Skip), ("broken", Outcome::Fail), ("silent", Outcome::Error)]
+/// );
+/// ```
+pub fn read_crate_output(text: &str) -> CrateRead {
+    let mut read = CrateRead::default();
+    let mut pending: Option<Pending> = None;
+    for line in text.lines() {
+        let plain = strip_ansi(line);
+        let t = plain.trim();
+        if let Some(rest) = t.strip_prefix("Running ") {
+            read.close(pending.take());
+            // `tests/why.rs (target/debug/deps/why-1a2b)` — the source path is the name,
+            // never the hashed binary, which changes between builds
+            let mut words = rest.split_whitespace();
+            let first = words.next().unwrap_or("");
+            pending = Some(if first == "unittests" {
+                let path = words.next().unwrap_or("");
+                Pending::Dropped(format!("unittests {path}"), UNIT_TESTS)
+            } else if let Some(name) = first
+                .strip_prefix("tests/")
+                .and_then(|p| p.strip_suffix(".rs"))
+            {
+                Pending::Binary(name.to_string())
+            } else {
+                Pending::Dropped(first.to_string(), NOT_AN_INTEGRATION_BINARY)
+            });
+            continue;
+        }
+        if let Some(rest) = t.strip_prefix("Doc-tests ") {
+            read.close(pending.take());
+            let krate = rest.split_whitespace().next().unwrap_or("");
+            pending = Some(Pending::Dropped(format!("doc-tests {krate}"), DOC_TESTS));
+            continue;
+        }
+        if let Some(rest) = t.strip_prefix("test result: ") {
+            match pending.take() {
+                None => read.dropped.push(dropped("a result line", UNATTRIBUTED)),
+                Some(Pending::Dropped(what, reason)) => read.dropped.push(dropped(what, reason)),
+                Some(Pending::Binary(name)) => read.binaries.push(judge(name, rest)),
+            }
+        }
+    }
+    read.close(pending.take());
+    read
+}
+
+/// A binary's result line, `<word>. <counts>; finished in <S>s`, judged by the table of
+/// [`read_crate_output`].
+fn judge(name: String, rest: &str) -> CrateBinary {
+    let (word, counts) = rest.split_once('.').unwrap_or((rest, ""));
+    let word = word.trim();
+    let (mut passed, mut failed, mut ignored, mut filtered_out) = (None, 0, 0, 0);
+    let mut seconds = 0;
+    for part in counts.split(';').map(str::trim) {
+        if let Some(s) = part.strip_prefix("finished in ") {
+            seconds = s
+                .trim_end_matches('s')
+                .trim()
+                .parse::<f64>()
+                .map(|f| f.round() as u64)
+                .unwrap_or(0);
+            continue;
+        }
+        let Some((n, label)) = part.split_once(' ') else {
+            continue;
+        };
+        let Ok(n) = n.parse::<u64>() else { continue };
+        match label.trim() {
+            "passed" => passed = Some(n),
+            "failed" => failed = n,
+            "ignored" => ignored = n,
+            "filtered out" => filtered_out = n,
+            _ => {}
+        }
+    }
+    let outcome = if failed > 0 || word == "FAILED" {
+        Outcome::Fail
+    } else if word == "ok" {
+        match passed {
+            // the line said `ok` and not what ran: nothing here can say it passed
+            None => Outcome::Error,
+            // it ran nothing, or only a subset a filter chose: a skip, not the proof
+            Some(0) => Outcome::Skip,
+            Some(_) if filtered_out > 0 => Outcome::Skip,
+            Some(_) => Outcome::Pass,
+        }
+    } else {
+        Outcome::Error
+    };
+    CrateBinary {
+        name,
+        outcome,
+        seconds,
+        passed: passed.unwrap_or(0),
+        failed,
+        ignored,
+        filtered_out,
+    }
+}
+
+/// A line with its terminal escape sequences removed: `ESC [` up to its final byte (`@`
+/// to `~`), `ESC ]` up to BEL or `ESC \`, `ESC` with intermediate bytes (space to `/`) up to
+/// the final byte after them, and any other `ESC` with the character after it.
+/// `cargo test` colours its output when it thinks a person is watching, and a coloured
+/// `Running` or `ok` is the same line as a plain one. The test harness resets its colour
+/// through the terminal's own `sgr0`, which on an xterm is `ESC ( B ESC [ m`: the `( B`
+/// selects the character set, and reading it as a two-character pair would leave its `B`
+/// behind and turn `ok` into `okB`.
+fn strip_ansi(line: &str) -> String {
+    const ESC: char = '\u{1b}';
+    let mut out = String::with_capacity(line.len());
+    let mut chars = line.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c != ESC {
+            out.push(c);
+            continue;
+        }
+        match chars.next() {
+            Some('[') => {
+                for c in chars.by_ref() {
+                    if ('@'..='~').contains(&c) {
+                        break;
+                    }
+                }
+            }
+            Some(']') => {
+                let mut after_esc = false;
+                for c in chars.by_ref() {
+                    if c == '\u{7}' || (after_esc && c == '\\') {
+                        break;
+                    }
+                    after_esc = c == ESC;
+                }
+            }
+            // intermediate bytes, then the one final byte that ends the sequence
+            Some(' '..='/') => {
+                while chars.next_if(|c| (' '..='/').contains(c)).is_some() {}
+                chars.next();
+            }
+            Some(_) | None => {}
+        }
+    }
+    out
+}
+
+/// One `Running tests/<name>.rs` / `test result:` pair per test binary, joined: the
+/// binaries of [`read_crate_output`] as `(name, outcome, seconds)`, without what it listed.
 ///
 /// ```
 /// use majordomus_cli::evidence::parse_crate_binaries;
@@ -250,37 +591,11 @@ fn now_rfc3339() -> String {
 /// assert!(parse_crate_binaries("nothing to see here").is_empty());
 /// ```
 pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
-    let mut out = Vec::new();
-    let mut pending: Option<String> = None;
-    for line in text.lines() {
-        let t = line.trim();
-        if let Some(rest) = t.strip_prefix("Running ") {
-            // `tests/why.rs (target/debug/deps/why-1a2b)` — the source path is the name,
-            // never the hashed binary, which changes between builds
-            let path = rest.split_whitespace().next().unwrap_or("");
-            pending = path
-                .strip_prefix("tests/")
-                .and_then(|p| p.strip_suffix(".rs"))
-                .map(str::to_string);
-            continue;
-        }
-        if let Some(rest) = t.strip_prefix("test result: ") {
-            let Some(name) = pending.take() else { continue };
-            let outcome = if rest.starts_with("ok") {
-                Outcome::Pass
-            } else {
-                Outcome::Fail
-            };
-            let seconds = rest
-                .split("finished in ")
-                .nth(1)
-                .and_then(|s| s.trim_end_matches('s').trim().parse::<f64>().ok())
-                .map(|f| f.round() as u64)
-                .unwrap_or(0);
-            out.push((name, outcome, seconds));
-        }
-    }
-    out
+    read_crate_output(text)
+        .binaries
+        .into_iter()
+        .map(|b| (b.name, b.outcome, b.seconds))
+        .collect()
 }
 
 /// The runner's TSV: `name <TAB> result <TAB> seconds <TAB> phase`, one case per line.
@@ -418,19 +733,23 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         }
     }
 
+    let mut dropped = Vec::new();
     if let Some(p) = &req.crate_output {
         let text = std::fs::read_to_string(p).map_err(Error::Transport)?;
-        for (name, outcome, seconds) in parse_crate_binaries(&text) {
+        let read = read_crate_output(&text);
+        for binary in read.binaries {
             let id = TestId {
                 runner: Runner::Crate,
-                name: name.clone(),
+                name: binary.name.clone(),
             };
             if root.join(id.source()).exists() {
-                results.push((id, outcome, seconds));
+                results.push((id, binary.outcome, binary.seconds));
             } else {
-                unknown.push(format!("crate:{name}"));
+                unknown.push(format!("crate:{}", binary.name));
             }
         }
+        // what the output held that no claim can name yet, in the order it held it
+        dropped = read.dropped;
     }
 
     let mut executions = Vec::with_capacity(results.len());
@@ -478,6 +797,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
         commit,
         working_tree,
         unknown,
+        dropped,
     })
 }
 
@@ -812,5 +1132,343 @@ mod tests {
              test result: ok. 400 passed; 0 failed\n",
         );
         assert!(got.is_empty(), "{got:?}");
+    }
+
+    /// The one binary of a crate output, read: a helper for the tests below, which each
+    /// state one row of the rule.
+    fn only(text: &str) -> CrateBinary {
+        let read = read_crate_output(text);
+        assert_eq!(read.binaries.len(), 1, "{read:?}");
+        read.binaries.into_iter().next().unwrap()
+    }
+
+    /// `ok` over a binary that ran nothing is not a pass: every test ignored, or no test at
+    /// all, is a skip. A pass would prove a claim with a run that measured nothing.
+    #[test]
+    fn a_binary_that_ran_no_test_is_a_skip() {
+        let all_ignored = only(
+            "     Running tests/beta.rs (target/debug/deps/beta-1)\n\
+             test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; \
+             finished in 0.00s\n",
+        );
+        assert_eq!(all_ignored.outcome, Outcome::Skip);
+        assert_eq!((all_ignored.passed, all_ignored.ignored), (0, 2));
+
+        let empty = only(
+            "     Running tests/empty.rs (target/debug/deps/empty-1)\n\
+             test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+             finished in 0.00s\n",
+        );
+        assert_eq!(empty.outcome, Outcome::Skip);
+    }
+
+    /// A run that a name filter narrowed to a subset ran some of the binary's tests and not
+    /// the rest: it is not the binary's proof, so it is a skip, however many passed.
+    #[test]
+    fn a_filtered_subset_is_a_skip() {
+        let subset = only(
+            "     Running tests/gamma.rs (target/debug/deps/gamma-1)\n\
+             test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; \
+             finished in 0.00s\n",
+        );
+        assert_eq!(subset.outcome, Outcome::Skip);
+        assert_eq!((subset.passed, subset.filtered_out), (1, 4));
+
+        let whole = only(
+            "     Running tests/gamma.rs (target/debug/deps/gamma-1)\n\
+             test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+             finished in 0.00s\n",
+        );
+        assert_eq!(whole.outcome, Outcome::Pass, "the same binary, run whole");
+    }
+
+    /// A failed count is a failure whatever word the line starts with, and `FAILED` is a
+    /// failure whatever the counts say.
+    #[test]
+    fn a_failed_count_is_a_failure_whatever_the_word() {
+        for line in [
+            "test result: ok. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out",
+            "test result: FAILED. 2 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out",
+            "test result: FAILED. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out",
+            "test result: interrupted. 0 passed; 1 failed",
+        ] {
+            let b = only(&format!(
+                "     Running tests/delta.rs (target/debug/deps/delta-1)\n{line}\n"
+            ));
+            assert_eq!(b.outcome, Outcome::Fail, "{line}");
+        }
+    }
+
+    /// The lines cargo and the harness print between a `Running` line and its result, the
+    /// per-test lines among them, close nothing: the result that follows is still the
+    /// binary's. A part of the result line that is not a count is passed over, and the counts
+    /// after it are still read.
+    #[test]
+    fn the_lines_between_a_binary_and_its_result_are_read_past() {
+        let b = only(
+            "     Running tests/alpha.rs (target/debug/deps/alpha-1)\n\
+             \n\
+             running 3 tests\n\
+             test alpha_holds ... ok\n\
+             test alpha_is_fast ... ok\n\
+             test alpha_later ... ignored\n\
+             \n\
+             test result: ok. 2 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; \
+             finished in 0.40s\n\
+             \n",
+        );
+        assert_eq!((b.name.as_str(), b.outcome), ("alpha", Outcome::Pass));
+        assert_eq!((b.passed, b.ignored), (2, 1));
+
+        let noted = only(
+            "     Running tests/alpha.rs (target/debug/deps/alpha-1)\n\
+             test result: ok. a note; 3 passed; 0 failed; 0 ignored; 0 measured; \
+             0 filtered out; finished in 1.40s\n",
+        );
+        assert_eq!(noted.outcome, Outcome::Pass, "the counts after the note");
+        assert_eq!((noted.passed, noted.seconds), (3, 1));
+    }
+
+    /// A crate binary the output names and this repository does not have is named, not
+    /// recorded, exactly as a suite case would be: its execution would prove nothing here.
+    #[test]
+    fn a_crate_binary_this_repository_does_not_have_is_named_not_recorded() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(
+            &log,
+            "     Running tests/ghost.rs (target/debug/deps/ghost-1)\n\
+             test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n",
+        )
+        .unwrap();
+        let got = record(
+            d.path(),
+            &RecordRequest {
+                suite: None,
+                crate_output: Some(log),
+                origin: Origin::Local,
+                run: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(got.recorded, 0);
+        assert_eq!(got.unknown, ["crate:ghost"]);
+        assert!(
+            !d.path().join(crate::evidence::LEDGER_PATH).exists(),
+            "a recording of nothing this repository has writes no ledger"
+        );
+    }
+
+    /// A result line that says `ok` and no count says nothing about what ran, and a word
+    /// nobody knows is not a verdict: both are errors, never a pass.
+    #[test]
+    fn a_result_line_without_counts_is_an_error() {
+        for line in [
+            "test result: ok.",
+            "test result: ok",
+            "test result: ok. finished in 0.10s",
+            "test result: okay. 3 passed; 0 failed",
+            "test result: . 3 passed",
+        ] {
+            let b = only(&format!(
+                "     Running tests/alpha.rs (target/debug/deps/alpha-1)\n{line}\n"
+            ));
+            assert_eq!(b.outcome, Outcome::Error, "{line}");
+        }
+    }
+
+    /// A binary that started and never printed a result line, before the next binary, before
+    /// the doctests or at the end of the output, is an error: the harness could not run it.
+    #[test]
+    fn a_binary_that_printed_no_result_is_an_error() {
+        let read = read_crate_output(
+            "     Running tests/eps.rs (target/debug/deps/eps-1)\n\
+                  Running tests/zeta.rs (target/debug/deps/zeta-1)\n\
+             test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; \
+             finished in 0.00s\n\
+                  Running tests/eta.rs (target/debug/deps/eta-1)\n\
+                Doc-tests majordomus_cli\n\
+                  Running tests/theta.rs (target/debug/deps/theta-1)\n",
+        );
+        let got: Vec<(&str, Outcome, u64)> = read
+            .binaries
+            .iter()
+            .map(|b| (b.name.as_str(), b.outcome, b.seconds))
+            .collect();
+        assert_eq!(
+            got,
+            [
+                ("eps", Outcome::Error, 0),
+                ("zeta", Outcome::Pass, 0),
+                ("eta", Outcome::Error, 0),
+                ("theta", Outcome::Error, 0),
+            ]
+        );
+        // the doctests got no result line either, and are listed as they are
+        assert_eq!(read.dropped.len(), 1, "{:?}", read.dropped);
+        assert_eq!(read.dropped[0].what, "doc-tests majordomus_cli");
+    }
+
+    /// Colour codes are stripped before a line is matched: a coloured run reads exactly as
+    /// the plain one. Each escape form is stripped on its own as well.
+    #[test]
+    fn colour_codes_are_stripped_before_matching() {
+        let e = '\u{1b}';
+        let coloured = format!(
+            "{e}[1m{e}[92m     Running{e}[0m tests/alpha.rs (target/debug/deps/alpha-1)\n\
+             test result: {e}[32mok{e}(B{e}[m. 3 passed; 0 failed; 0 ignored; 0 measured; \
+             0 filtered out; finished in 1.40s\n\
+             {e}[1m{e}[92m     Running{e}[0m tests/delta.rs (target/debug/deps/delta-1)\n\
+             test result: {e}[31mFAILED{e}[0m. 2 passed; 1 failed; 0 ignored; 0 measured; \
+             0 filtered out; finished in 0.20s\n\
+             {e}[1m{e}[92m   Doc-tests{e}[0m majordomus_cli\n\
+             test result: ok. 5 passed; 0 failed\n"
+        );
+        let plain = strip_ansi(&coloured);
+        assert!(!plain.contains(e), "{plain:?}");
+        assert_eq!(read_crate_output(&coloured), read_crate_output(&plain));
+        let read = read_crate_output(&coloured);
+        let got: Vec<(&str, Outcome, u64)> = read
+            .binaries
+            .iter()
+            .map(|b| (b.name.as_str(), b.outcome, b.seconds))
+            .collect();
+        assert_eq!(
+            got,
+            [("alpha", Outcome::Pass, 1), ("delta", Outcome::Fail, 0)]
+        );
+        assert_eq!(read.dropped[0].what, "doc-tests majordomus_cli");
+
+        // each form alone: CSI up to its final byte, OSC up to BEL or ESC \, intermediate
+        // bytes up to their final byte, and a pair
+        assert_eq!(strip_ansi(&format!("a{e}[1;32mb{e}[0mc")), "abc");
+        assert_eq!(
+            strip_ansi(&format!("ok{e}(B{e}[m.")),
+            "ok.",
+            "the harness's own reset on an xterm, whose `B` is part of the escape"
+        );
+        assert_eq!(strip_ansi(&format!("a{e}#8b{e})0c{e} Fd")), "abcd");
+        assert_eq!(
+            strip_ansi(&format!("a{e}$(Bb")),
+            "ab",
+            "every intermediate byte, then the final one"
+        );
+        assert_eq!(strip_ansi(&format!("a{e}[?25lb")), "ab");
+        assert_eq!(strip_ansi(&format!("a{e}]0;title\u{7}b")), "ab");
+        assert_eq!(strip_ansi(&format!("a{e}]8;;http://x{e}\\b")), "ab");
+        assert_eq!(strip_ansi(&format!("a{e}7b{e}8c")), "abc");
+        assert_eq!(
+            strip_ansi(&format!("a{e}")),
+            "a",
+            "a trailing ESC is dropped"
+        );
+        assert_eq!(strip_ansi("plain [brackets] stay"), "plain [brackets] stay");
+    }
+
+    /// The crate's own unit-test binary and its doctests ran, and no claim can name one of
+    /// their tests: they are listed as dropped, with the report and the reason, in the
+    /// order the output held them, and the recording carries the same list.
+    #[test]
+    fn unit_and_doc_tests_are_listed_as_dropped() {
+        let d = repo();
+        std::fs::create_dir_all(d.path().join("apps/majordomus-cli/tests")).unwrap();
+        std::fs::write(
+            d.path().join("apps/majordomus-cli/tests/why.rs"),
+            "// why\n",
+        )
+        .unwrap();
+        git(d.path(), &["add", "-A"]);
+        git(d.path(), &["commit", "-qm", "why"]);
+        let out = "     Running unittests src/lib.rs (target/debug/deps/majordomus_cli-1)\n\
+                   test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                        Running tests/why.rs (target/debug/deps/why-1)\n\
+                   test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                        Running benches/speed.rs (target/debug/deps/speed-1)\n\
+                   test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n\
+                      Doc-tests majordomus_cli\n\
+                   test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out\n";
+        let read = read_crate_output(out);
+        assert_eq!(read.binaries.len(), 1);
+        assert_eq!(read.binaries[0].name, "why");
+        let listed: Vec<(EvidenceProducer, &str, &str)> = read
+            .dropped
+            .iter()
+            .map(|d| (d.producer, d.what.as_str(), d.reason.as_str()))
+            .collect();
+        assert_eq!(
+            listed,
+            [
+                (EvidenceProducer::Crate, "unittests src/lib.rs", UNIT_TESTS),
+                (
+                    EvidenceProducer::Crate,
+                    "benches/speed.rs",
+                    NOT_AN_INTEGRATION_BINARY
+                ),
+                (
+                    EvidenceProducer::Crate,
+                    "doc-tests majordomus_cli",
+                    DOC_TESTS
+                ),
+            ]
+        );
+        for entry in &read.dropped {
+            assert!(
+                !entry.reason.chars().any(|c| c.is_ascii_digit()),
+                "a reason carries no counts: {}",
+                entry.reason
+            );
+        }
+
+        let reports = tempfile::tempdir().unwrap();
+        let log = reports.path().join("crate.log");
+        std::fs::write(&log, out).unwrap();
+        let got = record(
+            d.path(),
+            &RecordRequest {
+                suite: None,
+                crate_output: Some(log),
+                origin: Origin::Local,
+                run: None,
+            },
+        )
+        .unwrap();
+        assert_eq!(got.recorded, 1);
+        assert_eq!(
+            got.dropped, read.dropped,
+            "the recording carries the same list"
+        );
+        let ledger = Ledger::load(d.path()).unwrap();
+        assert_eq!(
+            ledger.executions.len(),
+            1,
+            "nothing dropped reached the ledger"
+        );
+        assert_eq!(ledger.executions[0].test, "crate:why");
+    }
+
+    /// A result line that no `Running` line named belongs to no binary: it is listed, and
+    /// never credited to the binary before it or after it.
+    #[test]
+    fn a_result_line_no_running_line_named_is_dropped() {
+        let read = read_crate_output(
+            "test result: ok. 1 passed; 0 failed\n\
+                  Running tests/why.rs (target/debug/deps/why-1)\n\
+             test result: ok. 2 passed; 0 failed; finished in 1.60s\n\
+             test result: FAILED. 0 passed; 1 failed\n",
+        );
+        assert_eq!(read.binaries.len(), 1);
+        assert_eq!(
+            read.binaries[0].outcome,
+            Outcome::Pass,
+            "not the stray FAILED"
+        );
+        assert_eq!(read.dropped.len(), 2);
+        for entry in &read.dropped {
+            assert_eq!(
+                (entry.producer, entry.what.as_str(), entry.reason.as_str()),
+                (EvidenceProducer::Crate, "a result line", UNATTRIBUTED)
+            );
+        }
     }
 }
