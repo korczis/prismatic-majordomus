@@ -195,6 +195,13 @@ expect_file "$T/shared-target/MARKER"
 mkbuild "$WTS/idle"
 rc=0
 MJ_ROOT="$FIX" "$REAPER" --servers --kill --min-age 999d > "$T/servers.txt" 2>&1 || rc=$?
+# the sweep ran and exited cleanly: a reaper that died on its options would leave the
+# marker too, so the marker alone proves nothing without the exit code and the output
+[ "$rc" = 0 ] || { echo "    --servers --kill exited $rc"; cat "$T/servers.txt"; exit 1; }
+LAST_OUT="$(cat "$T/servers.txt")"
+expect_no_grep 'would reclaim'
+expect_no_grep '^WORKTREE +SIZE'
+expect_no_grep 'reap-orphans: build output'
 expect_file "$WTS/idle/apps/majordomus-cli/target/MARKER"
 
 # ---------------------------------------------------------------- the bound
