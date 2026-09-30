@@ -1,7 +1,7 @@
 +++
 title = "No counts in prose"
 description = "No counts in prose"
-weight = 105
+weight = 106
 [extra]
 kind = "rule"
 slug = "project-no-counts-in-prose-1"

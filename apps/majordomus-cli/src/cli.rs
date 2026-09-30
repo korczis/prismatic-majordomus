@@ -64,6 +64,9 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
+    #[command(alias = "pr")]
+    Prs(PrsArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
@@ -2454,6 +2457,59 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain` and `cleanup`
+/// reads the last recorded forge observation and never reaches the network.
+pub struct PrsArgs {
+    #[command(flatten)]
+    /// Where the repository is found.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `status`.
+    pub command: Option<PrsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus prs`.
+pub enum PrsCommand {
+    /// Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent
+    Status,
+    /// What the executor would do next: the next merge, the pull requests that need master brought in, and the lanes; nothing is changed
+    Plan,
+    /// Why one pull request is where it is: the revisions it was decided against, every piece of evidence, its rank and the factors behind it
+    Explain {
+        /// The pull request number.
+        number: u64,
+    },
+    /// Observe the forge now (the GitHub CLI and one `git fetch`) and record the observation; the only read that reaches the network
+    Refresh,
+    /// Merge the next ready pull request, verify it landed, observe again, and repeat — at most `--max` merges; `--dry-run` decides without acting
+    Drain {
+        /// At most this many merges.
+        #[arg(long, default_value_t = 1)]
+        max: usize,
+        /// Observe and decide, change nothing.
+        #[arg(long)]
+        dry_run: bool,
+        /// When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master
+        #[arg(long)]
+        refresh: bool,
+    },
+    /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
+    Cleanup {
+        /// Close them.
+        #[arg(long)]
+        apply: bool,
+    },
+    /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
+    Events,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus worktree` (alias `wt`). The output shape is global, so it reads the way a
 /// person writes it — `worktree list --format json` — and is declared once.
 pub struct WorktreeArgs {
@@ -3854,6 +3910,94 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["executions", "protocol", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/protocol_version", "/websocket", "/event_types/0", "/stream_types/0", "/limits/max_events"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs",
+        examples: &[ExampleDoc {
+            id: "prs-default-unobserved",
+            title: "The queue, before the forge was ever observed",
+            description: "`prs` with nothing after it is `prs status`. It reads the last recorded forge observation and never reaches the network, so in a checkout where `prs refresh` has never run it has nothing to rank: it says so, names the command that observes, and exits 10.",
+            argv: &["prs"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs status",
+        examples: &[ExampleDoc {
+            id: "prs-status-json-unobserved",
+            title: "The ranked queue as one document",
+            description: "Every open pull request's assessment in rank order — disposition, lane, reasons, the master and head it was decided against, evidence, risk, overlaps — with the next merge and the tallies. The same value `GET /api/v1/pull-requests` and the MCP tool `majordomus_pull_requests` answer. With no observation recorded it exits 10.",
+            argv: &["prs", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs plan",
+        examples: &[ExampleDoc {
+            id: "prs-plan-unobserved",
+            title: "What the executor would do next",
+            description: "The next merge, the pull requests that need master brought in, and the repair, cleanup and held lanes. The plan is void after any merge: the executor observes again before its next step. With no observation recorded it exits 10.",
+            argv: &["prs", "plan"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs explain",
+        examples: &[ExampleDoc {
+            id: "prs-explain-unobserved",
+            title: "Why one pull request is where it is",
+            description: "The revisions it was decided against, every piece of evidence, its rank and the factors behind it. The same answer `GET /api/v1/pull-requests/explain?number=` gives. With no observation recorded it exits 10.",
+            argv: &["prs", "explain", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs events",
+        examples: &[ExampleDoc {
+            id: "prs-events-empty",
+            title: "The audit trail of this checkout's executor",
+            description: "Every selection, stale decision, merge with the master before and after, refusal, refresh and closure, oldest first. A checkout whose executor never ran has none, and says so.",
+            argv: &["prs", "events"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["no integration action"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs refresh",
+        examples: &[ExampleDoc {
+            id: "prs-refresh-no-forge",
+            title: "Observing the forge, where there is none",
+            description: "`refresh` is one of the three `prs` commands that reach the network: it asks the GitHub CLI about the repository, its branch protection and its open pull requests, and fetches their heads. A repository with no GitHub remote cannot be observed, and the answer is exit 12 — unusable, never an empty queue.",
+            argv: &["prs", "refresh"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs drain",
+        examples: &[ExampleDoc {
+            id: "prs-drain-dry-run-no-forge",
+            title: "A dry run starts from a fresh observation",
+            description: "Even a dry run observes the forge first — a decision is never taken from the recorded observation — so where the forge cannot be reached it stops with exit 12 before deciding anything, and nothing is merged, refreshed or recorded.",
+            argv: &["prs", "drain", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs cleanup",
+        examples: &[ExampleDoc {
+            id: "prs-cleanup-no-forge",
+            title: "Cleanup lists before it closes, and observes before it lists",
+            description: "Without `--apply` cleanup only lists the pull requests whose work is provably on master; either way it observes the forge first, so where there is none it exits 12.",
+            argv: &["prs", "cleanup"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
         }],
     },
     CommandExamples {

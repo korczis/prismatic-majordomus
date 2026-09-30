@@ -605,6 +605,33 @@
         "status": "query"
       },
       {
+        "id": "capability:integration.events",
+        "kind": "capability",
+        "label": "integration.events",
+        "summary": "The integration audit trail",
+        "route": "/cockpit/capabilities/integration.events",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.explain",
+        "kind": "capability",
+        "label": "integration.explain",
+        "summary": "Why one pull request is where it is",
+        "route": "/cockpit/capabilities/integration.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:integration.queue",
+        "kind": "capability",
+        "label": "integration.queue",
+        "summary": "The integration queue",
+        "route": "/cockpit/capabilities/integration.queue",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:lifecycle.closed",
         "kind": "capability",
         "label": "lifecycle.closed",
@@ -1746,6 +1773,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "kind": "file",
+        "label": "integration.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/capability/builtin/lifecycle.rs",
         "kind": "file",
         "label": "lifecycle.rs",
@@ -2106,6 +2141,30 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/integration/classify.rs",
+        "kind": "file",
+        "label": "classify.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/classify.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/drain.rs",
+        "kind": "file",
+        "label": "drain.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/drain.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/integration/mod.rs",
+        "kind": "file",
+        "label": "mod.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/integration/mod.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/lease.rs",
         "kind": "file",
         "label": "lease.rs",
@@ -2447,6 +2506,14 @@
         "label": "http_serve.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/http_serve.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/tests/integration_queue.rs",
+        "kind": "file",
+        "label": "integration_queue.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/tests/integration_queue.rs",
         "external": true
       },
       {
@@ -4862,6 +4929,38 @@
             "site",
             "evidence",
             "enforcement"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0101",
+        "kind": "adr",
+        "label": "adr-0101",
+        "summary": "Pull requests are integrated one at a time, each against a master observed a moment before",
+        "route": "/cockpit/objects/adr/adr-0101",
+        "source": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-30",
+          "related": [
+            "rule:project.integration-follows-the-current-master",
+            "rule:project.land-and-publish",
+            "rule:project.accumulation-is-measured",
+            "rule:project.no-network-no-eval",
+            "file:apps/majordomus-cli/src/integration/mod.rs",
+            "file:apps/majordomus-cli/src/integration/classify.rs",
+            "file:apps/majordomus-cli/src/integration/drain.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+            "file:apps/majordomus-cli/tests/integration_queue.rs",
+            "file:docs/INTEGRATION.md",
+            "test:test/cases/720_integration_follows_the_current_master.sh"
+          ],
+          "tags": [
+            "integration",
+            "git",
+            "github",
+            "governance",
+            "safety"
           ]
         }
       },
@@ -10891,6 +10990,14 @@
         "summary": "Installing Majordomus",
         "route": "/cockpit/objects/document/docs-install-md",
         "source": "docs/INSTALL.md"
+      },
+      {
+        "id": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "document",
+        "label": "docs/INTEGRATION.md",
+        "summary": "Pull-request integration",
+        "route": "/cockpit/objects/document/docs-integration-md",
+        "source": "docs/INTEGRATION.md"
       },
       {
         "id": "majordomus://document/docs/MCP.md",
@@ -31680,6 +31787,30 @@
         }
       },
       {
+        "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "kind": "rule",
+        "label": "project.integration-follows-the-current-master@1",
+        "summary": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
+        "route": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
+        "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.land-and-publish@1",
+            "project.accumulation-is-measured@2"
+          ],
+          "tags": [
+            "integration",
+            "git",
+            "github",
+            "safety",
+            "governance",
+            "evidence"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.interfaces-are-projections@1",
         "kind": "rule",
         "label": "project.interfaces-are-projections@1",
@@ -36273,6 +36404,13 @@
         "source": "test/cases/71_context_sync.sh"
       },
       {
+        "id": "majordomus://test/test/cases/720_integration_follows_the_current_master.sh",
+        "kind": "test",
+        "label": "test/cases/720_integration_follows_the_current_master.sh",
+        "route": "/cockpit/objects/test/test-cases-720-integration-follows-the-current-master-sh",
+        "source": "test/cases/720_integration_follows_the_current_master.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/72_rust_mcp.sh",
         "kind": "test",
         "label": "test/cases/72_rust_mcp.sh",
@@ -38689,6 +38827,11 @@
         "label": "health"
       },
       {
+        "id": "module:integration",
+        "kind": "module",
+        "label": "integration"
+      },
+      {
         "id": "module:lifecycle",
         "kind": "module",
         "label": "lifecycle"
@@ -39905,6 +40048,66 @@
       },
       {
         "source": "capability:health.report",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.events",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.events",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.events",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.events",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.queue",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.queue",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.queue",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:integration.queue",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -43586,6 +43789,66 @@
       {
         "source": "majordomus://adr/adr-0089",
         "target": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "file:apps/majordomus-cli/src/integration/classify.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "file:apps/majordomus-cli/src/integration/drain.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "file:apps/majordomus-cli/src/integration/mod.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "file:apps/majordomus-cli/tests/integration_queue.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "majordomus://document/docs/INTEGRATION.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "majordomus://rule/project.no-network-no-eval@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0101",
+        "target": "majordomus://test/test/cases/720_integration_follows_the_current_master.sh",
         "kind": "put_in_force"
       },
       {
@@ -48415,6 +48678,11 @@
       },
       {
         "source": "majordomus://document/docs/INSTALL.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/INTEGRATION.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -55324,6 +55592,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "majordomus://rule/project.accumulation-is-measured@2",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.integration-follows-the-current-master@1",
+        "target": "majordomus://rule/project.land-and-publish@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.interfaces-are-projections@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -57140,6 +57423,11 @@
       },
       {
         "source": "majordomus://test/test/cases/71_context_sync.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/720_integration_follows_the_current_master.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60384,6 +60672,21 @@
         "kind": "composes"
       },
       {
+        "source": "module:integration",
+        "target": "capability:integration.events",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:integration",
+        "target": "capability:integration.queue",
+        "kind": "composes"
+      },
+      {
         "source": "module:lifecycle",
         "target": "capability:lifecycle.closed",
         "kind": "composes"
@@ -60800,8 +61103,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1943,
-      "edges": 4390,
+      "nodes": 1956,
+      "edges": 4422,
       "acyclic": true,
       "truncated": false
     }

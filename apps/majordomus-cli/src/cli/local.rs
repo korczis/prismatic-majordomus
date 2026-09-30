@@ -208,6 +208,31 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the UI conformance report surface from a probe's output, which is a producer of the web root rather than a reading of it.",
     },
     LocalCommand {
+        command: "prs",
+        reason: LocalReason::Alias("prs status"),
+        note: "with no subcommand it answers `prs status`, the ranked integration queue.",
+    },
+    LocalCommand {
+        command: "prs plan",
+        reason: LocalReason::RendersCapability("integration.queue"),
+        note: "renders the queue's next merge, next refresh and lanes for a person; the value is `integration.queue`'s.",
+    },
+    LocalCommand {
+        command: "prs refresh",
+        reason: LocalReason::WritesRepository,
+        note: "observes the forge over the network, fetches every open head into refs/majordomus/prs/ and records the observation; the shared server never reaches the network (ADR 0101).",
+    },
+    LocalCommand {
+        command: "prs drain",
+        reason: LocalReason::WritesRepository,
+        note: "merges pull requests on the forge and pushes master into their branches, under the base branch's integration lease; a mutation of the repository and its remote.",
+    },
+    LocalCommand {
+        command: "prs cleanup",
+        reason: LocalReason::WritesRepository,
+        note: "closes pull requests on the forge whose work is provably on master, only with --apply.",
+    },
+    LocalCommand {
         command: "worktree create",
         reason: LocalReason::WritesRepository,
         note: "creates a branch and a linked worktree on disk at the path the topology derives for it.",
