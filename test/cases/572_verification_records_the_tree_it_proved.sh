@@ -37,6 +37,16 @@ tree1b="$(sed -n 's/.*"tree":"\([0-9a-f]*\)".*/\1/p' .ai/local/state/ledger.json
   || { printf '    an assume-unchanged edit was recorded as the committed tree\n'; exit 1; }
 git update-index --no-assume-unchanged lib/a
 
+# A file the run creates is part of the tree too: a verification that leaves a new untracked
+# file behind ran over a tree that is not the one it left, whichever index git keeps.
+git add -A && git commit -qm t1b
+"$MJ" start "t1c" --scope lib >/dev/null
+echo f >> lib/a
+note
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "echo n > lib/created"
+expect_grep 'FAIL verification .*the tree changed while it ran'
+expect_exit 0 "$MJ" finish --outcome completed --verify-command "true"
+
 git add -A && git commit -qm t1
 "$MJ" start "t2" --scope lib >/dev/null
 id2="$(sed -n 's/^id: //p' .ai/local/state/current.yaml)"
