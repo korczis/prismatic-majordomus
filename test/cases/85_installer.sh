@@ -6,9 +6,9 @@
 #
 # What is proved: a first install, an idempotent second, an upgrade, a refused downgrade,
 # a pinned version, --init, the PATH hint, and — the half that matters — that every failure
-# leaves a working installation working: a wrong digest, a truncated download, an archive
-# that escapes its own directory, an archive that carries a link, a missing release, and a
-# destination that cannot be written.
+# leaves a working installation working: a wrong digest, no digest tool or a malformed digest,
+# a truncated download, an archive that escapes its own directory, an archive that carries a
+# link, a missing release, and a destination that cannot be written.
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 command -v curl >/dev/null 2>&1 || skip "no curl"
@@ -98,6 +98,52 @@ out="$(install_run --force || true)"
 printf '%s\n' "$out" | grep -q "not the size the release records" || { echo "    a truncated download was not named: $out"; exit 1; }
 [ "$("$BIN/majordomus" version)" = "majordomus $VERSION" ] || { echo "    a truncated download destroyed the working install"; exit 1; }
 cp "$T/$name.good" "$FIX/$name"
+
+# --- no digest tool, or a digest tool that prints no digest, fails closed ---------------------
+# A PATH holding every command this machine has except the two digest tools the installer
+# accepts (anything else, whatever it is called, must not be a fallback), then the same PATH
+# behind a sha256sum that prints junk.
+NODIGEST="$T/nodigest"; mkdir -p "$NODIGEST"
+old_ifs=$IFS; IFS=:
+for d in $PATH; do
+  [ -d "$d" ] || continue
+  for f in "$d"/*; do
+    b="${f##*/}"
+    case "$b" in sha256sum|openssl) continue ;; esac
+    if [ -x "$f" ] && [ ! -e "$NODIGEST/$b" ]; then ln -s "$f" "$NODIGEST/$b"; fi
+  done
+done
+IFS=$old_ifs
+digest_run() { # <PATH> -> $out and $digest_rc
+  digest_rc=0
+  out="$(env PATH="$1" HOME="$HOMEDIR" \
+      MAJORDOMUS_RELEASE_BASE_URL="$HTTP_BASE" MAJORDOMUS_INSECURE_BASE_URL=1 \
+      /bin/sh "$ROOT/site/static/install.sh" --force 2>&1)" || digest_rc=$?
+}
+before_launcher="$(sha256_of_file "$BIN/majordomus")"
+digest_run "$NODIGEST"
+[ "$digest_rc" != 0 ] || { echo "    an install without a digest tool exited 0: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "no way to compute a SHA-256 digest" \
+  || { echo "    a missing digest tool was not named: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "Nothing was installed or replaced" \
+  || { echo "    a missing digest tool did not say nothing was installed: $out"; exit 1; }
+[ "$(sha256_of_file "$BIN/majordomus")" = "$before_launcher" ] \
+  || { echo "    an install without a digest tool changed the launcher"; exit 1; }
+JUNKDIGEST="$T/junkdigest"; mkdir -p "$JUNKDIGEST"
+# 64 characters, none of them hex: a length check alone would accept it, so the hex check
+# is held too; either check removed turns the refusal into a digest mismatch.
+printf '#!/bin/sh\necho "%s  $1"\n' "$(printf '%064d' 0 | tr 0 z)" > "$JUNKDIGEST/sha256sum"
+chmod 755 "$JUNKDIGEST/sha256sum"
+digest_run "$JUNKDIGEST:$NODIGEST"
+[ "$digest_rc" != 0 ] || { echo "    an install with a malformed digest exited 0: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "the digest of the download could not be computed" \
+  || { echo "    a malformed digest was not named: $out"; exit 1; }
+printf '%s\n' "$out" | grep -q "Nothing was installed or replaced" \
+  || { echo "    a malformed digest did not say nothing was installed: $out"; exit 1; }
+[ "$(sha256_of_file "$BIN/majordomus")" = "$before_launcher" ] \
+  || { echo "    an install with a malformed digest changed the launcher"; exit 1; }
+[ "$("$BIN/majordomus" version)" = "majordomus $VERSION" ] \
+  || { echo "    a digest failure destroyed the working install"; exit 1; }
 
 # --- an archive that escapes its own directory is refused --------------------------------------
 serve_malicious() { # <archive built at $T/evil.tar.gz>
