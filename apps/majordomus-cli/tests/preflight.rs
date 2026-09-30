@@ -17,9 +17,10 @@ use majordomus_cli::capability::builtin::continuity::Freshness;
 use majordomus_cli::capability::builtin::server::ServerStanding;
 use majordomus_cli::environment::preflight::{
     derive, observe, observe_coverage, Check, CoverageObservation, DeploymentObservation,
-    EpisodeObservation, GitObservation, HandoverObservation, LedgerObservation, Observations,
-    Preflight, Probe, RulesObservation, RulesTally, ServerObservation, TaskObservation, Verdict,
-    COVERAGE_RECORD, PAGES_REF,
+    EpisodeObservation, GenerationObservation, GenerationRecord, GitObservation,
+    HandoverObservation, LedgerObservation, Observations, Preflight, Probe, RulesObservation,
+    RulesTally, ServerObservation, TaskObservation, Verdict, COVERAGE_RECORD, GENERATION_RECORD,
+    PAGES_REF,
 };
 use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
 use majordomus_cli::Repository;
@@ -436,6 +437,67 @@ fn a_verified_coverage_check_names_its_record() {
     );
 }
 
+const TREE: &str = "3333333333333333333333333333333333333333";
+
+/// The generation check's verdict when the record says `outcome` about `tree`, HEAD's tree is
+/// `head_tree`, and the working tree is `clean`.
+fn generation_verdict(outcome: &str, tree: &str, head_tree: Option<&str>, clean: bool) -> Check {
+    let mut o = at(HEAD);
+    o.git.as_mut().unwrap().clean = clean;
+    o.generation = GenerationObservation::Read {
+        record: GenerationRecord {
+            schema: 1,
+            commit: OLD.into(),
+            tree: tree.into(),
+            at: "2026-09-30T00:00:00Z".into(),
+            outcome: outcome.into(),
+        },
+        head_tree: head_tree.map(str::to_string),
+    };
+    derive(&o).check("verification.docs").unwrap().clone()
+}
+
+#[test]
+fn generated_docs_are_judged_by_the_tree_the_check_measured() {
+    // the hook checks the index before the commit exists: the record names the parent commit,
+    // and it is the tree that must match
+    let c = generation_verdict("pass", TREE, Some(TREE), true);
+    assert_eq!(c.verdict, Verdict::Verified, "{}", c.summary);
+    assert!(
+        c.evidence.iter().any(|e| e.source == GENERATION_RECORD),
+        "{c:?}"
+    );
+    assert_eq!(
+        generation_verdict("fail", TREE, Some(TREE), true).verdict,
+        Verdict::Failed
+    );
+    // the registry half skipped is a check that did not finish
+    assert_eq!(
+        generation_verdict("partial", TREE, Some(TREE), true).verdict,
+        Verdict::Unknown
+    );
+    // another tree, a working tree that was not its index, or edits since: nothing about HEAD
+    assert_eq!(
+        generation_verdict("pass", OLD, Some(TREE), true).verdict,
+        Verdict::Stale
+    );
+    assert_eq!(
+        generation_verdict("pass", "", Some(TREE), true).verdict,
+        Verdict::Stale
+    );
+    assert_eq!(
+        generation_verdict("pass", TREE, Some(TREE), false).verdict,
+        Verdict::Stale
+    );
+    assert_eq!(
+        generation_verdict("pass", TREE, None, true).verdict,
+        Verdict::Stale
+    );
+    let mut o = at(HEAD);
+    o.generation = GenerationObservation::Unreadable("schema 2".into());
+    assert_eq!(verdict(&o, "verification.docs"), Verdict::Unknown);
+}
+
 #[test]
 fn coverage_and_generated_docs_are_never_claimed_on_nothing() {
     let p = derive(&at(HEAD));
@@ -511,6 +573,38 @@ fn the_deployment_ref_is_read_and_judged_against_head() {
     let c = p.check("verification.deployment").unwrap();
     assert_eq!(c.verdict, Verdict::Stale, "{c:?}");
     assert!(c.summary.contains(&deployed[..12]), "{}", c.summary);
+}
+
+#[test]
+fn the_generation_record_is_read_against_heads_tree() {
+    let (f, parent) = fixture_with_evidence();
+    // what the pre-commit hook records: the parent commit, and the tree the commit then has
+    let record = |tree: &str, outcome: &str| {
+        f.write(
+            GENERATION_RECORD,
+            &json!({ "schema": 1, "check": "scripts/pages current", "commit": parent,
+                     "tree": tree, "at": "2026-09-30T10:00:00Z", "outcome": outcome })
+            .to_string(),
+        );
+    };
+    let head_tree = f.git(&["rev-parse", "HEAD^{tree}"]).trim().to_string();
+    record(&head_tree, "pass");
+    let p = observed(&f);
+    let c = p.check("verification.docs").unwrap();
+    assert_eq!(c.verdict, Verdict::Verified, "{c:?}");
+    // a later commit has another tree, and the record says nothing about it
+    f.write("more.md", "# more\n");
+    f.commit("later");
+    assert_eq!(
+        observed(&f).check("verification.docs").unwrap().verdict,
+        Verdict::Stale
+    );
+    let head_tree = f.git(&["rev-parse", "HEAD^{tree}"]).trim().to_string();
+    record(&head_tree, "fail");
+    assert_eq!(
+        observed(&f).check("verification.docs").unwrap().verdict,
+        Verdict::Failed
+    );
 }
 
 #[test]
