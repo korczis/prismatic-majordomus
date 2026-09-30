@@ -88,22 +88,50 @@ Every declared pair, valid or not. Tokens are the provider-reported totals of ev
 |---|---|---|---|---|---|---|---|---|---|
 | csv-credit-notes | regression | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | csv-credit-notes | regression | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| csv-credit-notes | regression | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| csv-credit-notes | regression | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| csv-credit-notes | regression | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| csv-credit-notes | regression | 6 | missing | — | — | — | — | — | the control run is not recorded |
 | currency-czk | small-feature | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | currency-czk | small-feature | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| currency-czk | small-feature | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| currency-czk | small-feature | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| currency-czk | small-feature | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| currency-czk | small-feature | 6 | missing | — | — | — | — | — | the control run is not recorded |
 | invoice-discounts | cross-module | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | invoice-discounts | cross-module | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| invoice-discounts | cross-module | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| invoice-discounts | cross-module | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| invoice-discounts | cross-module | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| invoice-discounts | cross-module | 6 | missing | — | — | — | — | — | the control run is not recorded |
 | recurring-invoices | multi-session | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | recurring-invoices | multi-session | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| recurring-invoices | multi-session | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| recurring-invoices | multi-session | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| recurring-invoices | multi-session | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| recurring-invoices | multi-session | 6 | missing | — | — | — | — | — | the control run is not recorded |
 | storage-v2 | schema-change | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | storage-v2 | schema-change | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| storage-v2 | schema-change | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| storage-v2 | schema-change | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| storage-v2 | schema-change | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| storage-v2 | schema-change | 6 | missing | — | — | — | — | — | the control run is not recorded |
 | test-repair | test-repair | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | test-repair | test-repair | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| test-repair | test-repair | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| test-repair | test-repair | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| test-repair | test-repair | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| test-repair | test-repair | 6 | missing | — | — | — | — | — | the control run is not recorded |
 | vat-rounding | bug-fix | 1 | missing | — | — | — | — | — | the control run is not recorded |
 | vat-rounding | bug-fix | 2 | missing | — | — | — | — | — | the control run is not recorded |
+| vat-rounding | bug-fix | 3 | missing | — | — | — | — | — | the control run is not recorded |
+| vat-rounding | bug-fix | 4 | missing | — | — | — | — | — | the control run is not recorded |
+| vat-rounding | bug-fix | 5 | missing | — | — | — | — | — | the control run is not recorded |
+| vat-rounding | bug-fix | 6 | missing | — | — | — | — | — | the control run is not recorded |
 
 "Token reduction" is `1 - treatment / control` on total tokens, and "cost reduction" the same on the harness's cost projection: positive means Majordomus used fewer tokens, and a negative reduction means Majordomus used more tokens. "First-request overhead" is not a reduction: it is the treatment's first-request input minus the control's, so positive means Majordomus added tokens before the model acted. An excluded pair shows its reductions so that the outlier rule's effect is visible; only valid pairs enter the metrics.
 
-0 of 14 declared pair(s) are valid.
+0 of 42 declared pair(s) are valid.
 
 ## Context selection (deterministic)
 

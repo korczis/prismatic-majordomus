@@ -1,5 +1,7 @@
-# The first live suite: every task of the corpus, both variants, twice. Small on purpose;
-# its results are preliminary by the publication rule in ../methodology.yaml.
+# The first live suite: every task of the corpus, both variants, six times. Every task is
+# its own category, so the publication rule in ../methodology.yaml (30 valid pairs, 4
+# categories with 5 each, 80% of attempted pairs valid) needs at least five repetitions of
+# every task; the sixth leaves room for failed pairs.
 schema: economics-suite/v1
 id: pilot
 version: 1
@@ -8,7 +10,7 @@ title: Pilot, live Claude Code sessions
 provider: anthropic
 harness: claude-code
 model: claude-sonnet-5
-repetitions: 2
+repetitions: 6
 control: baseline
 treatment: majordomus
 max_budget_usd_per_session: 5
