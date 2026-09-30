@@ -365,8 +365,9 @@ are never deleted, because the disk is what runs out and a branch is the only du
 piece of work has.
 
 The listing and the removal are two moments, and everything that makes a worktree safe to
-remove can change between them, so `--remove` re-measures each candidate immediately before it
-goes and names what it refuses:
+remove can change between them, so the listing only nominates: `--remove` reads the branch's
+standing against its remote, whether anything is running inside and whether the tree is clean
+again for each candidate immediately before it goes, and names what it refuses:
 
 | refusal | why it is not covered by "merged and clean" |
 |---|---|
@@ -375,6 +376,10 @@ goes and names what it refuses:
 | uncommitted work | read again at the moment of removal, not taken from the listing |
 | `lsof` is missing, or git could not compare with the upstream | not knowing is not the same as nothing being there |
 
-`test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh` plants each of them in a fixture
-with its own remote, including the combination the refusals exist for: a branch merged into the
-trunk *and* carrying a commit its remote has never seen.
+`test/cases/611_the_reclaim_refuses_what_it_cannot_prove.sh` plants a fixture with its own
+remote: a spare worktree, which goes, and a branch ahead of its remote, one never pushed, one
+whose remote branch was deleted, one with a process inside and one dirty before the listing,
+which stay. It includes the combination the refusals exist for: a branch merged into the
+trunk *and* carrying a commit its remote has never seen. What changes *after* the listing — a
+commit, a deleted remote branch, a file written — is planted by the unit tests of the reclaim
+in `apps/majordomus-cli/src/commands/worktree.rs`. A missing `lsof` is not planted anywhere.

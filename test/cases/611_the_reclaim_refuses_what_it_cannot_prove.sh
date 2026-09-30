@@ -12,6 +12,8 @@
 #
 #   ahead of its remote   commits that exist on one disk; `merged into the trunk` is about the
 #                         branch's remote history and says nothing about a local head that ran on
+#   no upstream, or   a branch never pushed, or whose remote branch was deleted: nothing but
+#   upstream gone     this disk holds its history, whatever the trunk says about it
 #   something inside      two worktrees looked untouched since the 12th and had live processes in
 #                         them; mtime lies and only a reading taken now is true
 #   cannot tell           no lsof, or git could not compare with the upstream: not knowing is not
@@ -55,8 +57,21 @@ mk spare-one
 mk ahead-of-remote
 mk occupied
 mk dirty-tree
+mk upstream-gone
 
-# the four states, each made after the worktree exists
+# Merged into the trunk and never pushed: its only upstream is this disk.
+git switch -q -c no-upstream master
+printf 'no-upstream\n' > no-upstream.txt
+git add -A && git commit -qm no-upstream
+git switch -q master
+git merge -q --no-ff -m "merge no-upstream" no-upstream
+git push -q origin master
+"$RB" worktree create no-upstream >/dev/null 2>&1 \
+  || { echo "    could not create the worktree of no-upstream"; exit 1; }
+
+# the states, each made after the worktree exists
+git push -q origin --delete upstream-gone && git fetch -q --prune origin \
+  || { echo "    could not delete the remote branch of upstream-gone"; exit 1; }
 # Merged into the trunk *and* ahead of its remote, which is the combination that makes this
 # refusal necessary: the branch's merged history is on origin, the commit on top of it is on
 # this disk only, and `merged into the trunk` cannot see the difference. 9e met exactly this
@@ -110,16 +125,28 @@ esac
 [ -d "$occ" ] || { echo "    the occupied worktree was removed"; exit 1; }
 echo "    a worktree something is working in is refused, measured now rather than from its mtime"
 
+for pair in "no-upstream:no upstream" "upstream-gone:is gone"; do
+  b="${pair%%:*}"; want="${pair#*:}"
+  [ "$(refused "$b")" = 1 ] || { echo "    $b was not refused"; cat "$T/out.json"; exit 1; }
+  case "$(why "$b")" in
+    *"$want"*) ;;
+    *) echo "    $b was refused for the wrong reason: $(why "$b")"; exit 1 ;;
+  esac
+  [ -d "$("$RB" worktree path "$b")" ] || { echo "    $b was refused and removed anyway"; exit 1; }
+done
+echo "    a branch with no upstream, or whose upstream is gone, is refused"
+
 # Uncommitted work present when the listing is taken keeps the branch off the list, so this
 # asserts the outcome, not which layer refused it; work that appears between the listing and
-# the removal is re-read by the reclaim and again by `worktree remove` under its lock.
+# the removal is re-read by the reclaim (the unit tests in commands/worktree.rs plant it) and
+# again by `worktree remove` under its lock.
 [ "$(removed dirty-tree)" = 0 ] || { echo "    a worktree with uncommitted work was removed"; exit 1; }
 [ -f "$("$RB" worktree path dirty-tree)/dirty-tree.txt" ] \
   || { echo "    the uncommitted work is gone"; exit 1; }
 echo "    uncommitted work is never removed"
 
 # --- and the names survive
-for b in spare-one ahead-of-remote occupied dirty-tree; do
+for b in spare-one ahead-of-remote occupied dirty-tree upstream-gone no-upstream; do
   git show-ref --verify --quiet "refs/heads/$b" \
     || { echo "    branch $b was deleted; the reclaim is about disk, not names"; exit 1; }
 done
