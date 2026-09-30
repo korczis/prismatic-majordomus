@@ -608,7 +608,7 @@ brew install zola           # or the release binary; CI pins 0.23.4
 just derive                 # every committed derived artifact, in order (scripts/derive)
 just derive-check           # is every committed derived artifact current? writes nothing
 just test                   # the shell suite, the Rust gates, derive-check
-scripts/site-serve          # generate, build, serve at http://127.0.0.1:1111/prismatic-majordomus/
+scripts/site-serve          # generate, build, serve the built pages at http://127.0.0.1:1111/
 scripts/rust-check --doc    # the crate's reference, target/web/rustdoc — site-build composes it and refuses without it
 scripts/site-build          # production build into site/public/
 scripts/site-check          # the static checks CI runs

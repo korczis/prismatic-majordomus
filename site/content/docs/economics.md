@@ -9,7 +9,7 @@ source = "docs/ECONOMICS.md"
 {% raw %}
 
 Majordomus does not state a token-saving percentage it has not measured, and this document
-contains none. The numbers are in [`generated/economics.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/economics.md), written
+contains none. The numbers are in [`generated/economics.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/economics.md), written
 by `majordomus generate economics` from recorded runs, and on the site's economics page, which
 renders the same generated data. Typed into prose, a number about tokens, context or cost is
 refused by `majordomus economics check`.
@@ -53,7 +53,7 @@ Two measurements exist, and they answer different questions:
 ## Control and treatment
 
 The canonical definitions are in
-[`.ai/repo/benchmarks/economics/methodology.yaml`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/benchmarks/economics/methodology.yaml).
+[`.ai/repo/benchmarks/economics/methodology.yaml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/benchmarks/economics/methodology.yaml).
 
 - **Control, without Majordomus.** The fixture repository as a competent team keeps it: a
   README, a short `CLAUDE.md` pointing at the conventions, conventions and decision records in
@@ -70,7 +70,7 @@ inherits instructions, connectors or memory the other lacks.
 
 ## The task corpus
 
-Seven tasks in [`.ai/repo/benchmarks/economics/tasks/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/benchmarks/economics/tasks),
+Seven tasks in [`.ai/repo/benchmarks/economics/tasks/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai/repo/benchmarks/economics/tasks),
 each standing for a development pattern this repository sees: a defect whose fix is written
 down in a decision record, a small additive feature, a change across four modules and a
 persisted format, a suite broken by a rename where a convention decides the right fix, a

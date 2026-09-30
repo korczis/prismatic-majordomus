@@ -956,20 +956,7 @@ impl Expected {
         out.exported_items = library.items.iter().filter(|i| i.exported).count();
         let router = Router::library(library, lib);
         out.add(&router, library);
-        for item in library
-            .items
-            .iter()
-            .filter(|i| i.kind == ItemKind::Module && i.exported)
-        {
-            for route in router.routes(item) {
-                out.modules.push(RustdocModuleRoute {
-                    path: item.path.clone(),
-                    route: route.file,
-                });
-            }
-        }
-        canonical(&mut out.modules);
-        out.modules.dedup();
+        out.modules = library_modules(&router, library);
         for (name, inventory) in binaries {
             out.crates.push(name.clone());
             out.add(&Router::binary(inventory, name), inventory);
@@ -991,6 +978,48 @@ impl Expected {
             }
         }
     }
+}
+
+/// Every exported module of a library with the page it is documented on, in canonical order.
+/// A module owns a page, so each route here is also one of [`Expected::pages`]: a page the
+/// judgement requires of the tree and reports as `missing-page` when it is absent.
+fn library_modules(router: &Router<'_>, library: &Inventory) -> Vec<RustdocModuleRoute> {
+    let mut modules = Vec::new();
+    for item in library
+        .items
+        .iter()
+        .filter(|i| i.kind == ItemKind::Module && i.exported)
+    {
+        for route in router.routes(item) {
+            modules.push(RustdocModuleRoute {
+                path: item.path.clone(),
+                route: route.file,
+            });
+        }
+    }
+    canonical(&mut modules);
+    modules.dedup();
+    modules
+}
+
+/// Every exported module of the crate at `crate_dir` with the page rustdoc documents it on:
+/// [`RustdocReport::modules`], answered without a tree to judge.
+///
+/// This is the one module-to-page mapping a consumer that links into the published reference
+/// reads — the site's registry dataset ([`crate::site`]) among them — so a link to a module's
+/// page is a link to a page [`judge`] holds the tree to, and never a route of the consumer's
+/// own making. A module rustdoc gives no page — `pub(crate)`, private, or under a private
+/// parent with no `pub use` of it — is absent from the answer, so it is never linked.
+///
+/// Errors when the crate cannot be read: a manifest without a name, a file that does not
+/// parse. A mapping derived from half a crate would drop modules without saying so.
+pub(crate) fn module_routes(crate_dir: &Path) -> Result<Vec<RustdocModuleRoute>, Error> {
+    let targets = targets(crate_dir)?;
+    let library = Inventory::of_target(crate_dir, &targets.lib_root, &targets.lib)?;
+    Ok(library_modules(
+        &Router::library(&library, &targets.lib),
+        &library,
+    ))
 }
 
 // ------------------------------------------------------------------------------ the tree walk
@@ -2404,6 +2433,62 @@ pub struct Renamed;
         assert_eq!(
             route_of(&inv, "fixture_crate::inner::b"),
             vec!["fixture_crate/fn.b.html"]
+        );
+    }
+
+    /// The mapping a consumer links through is the judgement's own: answered without a tree,
+    /// the routes the report carries, each one a page the judgement requires of the tree,
+    /// and nothing for a module rustdoc gives no page.
+    #[test]
+    fn the_module_routes_are_the_judgements_and_each_is_a_required_page() {
+        let dir = krate(&[
+            (
+                "src/lib.rs",
+                "//! Root.\npub mod open;\npub(crate) mod crated;\nmod closed;\n",
+            ),
+            ("src/open.rs", "//! Open.\npub mod nested;\n"),
+            ("src/open/nested.rs", "//! Nested.\n"),
+            ("src/crated.rs", "//! Crate-visible.\npub mod under;\n"),
+            (
+                "src/crated/under.rs",
+                "//! Public under a crate-visible parent.\n",
+            ),
+            ("src/closed.rs", "//! Private.\n"),
+        ]);
+        let routes = module_routes(dir.path()).unwrap();
+        let pairs: Vec<(&str, &str)> = routes
+            .iter()
+            .map(|r| (r.path.as_str(), r.route.as_str()))
+            .collect();
+        assert_eq!(
+            pairs,
+            vec![
+                ("fixture_crate", "fixture_crate/index.html"),
+                ("fixture_crate::open", "fixture_crate/open/index.html"),
+                (
+                    "fixture_crate::open::nested",
+                    "fixture_crate/open/nested/index.html"
+                ),
+            ]
+        );
+        let expected = expected_of(dir.path());
+        assert_eq!(expected.modules, routes, "one mapping, not two");
+        for r in &routes {
+            assert!(
+                expected.pages.contains_key(&r.route),
+                "{} is linked and not a page the judgement requires",
+                r.route
+            );
+        }
+        // and the judgement of a tree without that page reports it missing
+        let tree = clean_tree(&expected);
+        std::fs::remove_file(tree.path().join("fixture_crate/open/index.html")).unwrap();
+        assert_eq!(
+            kinds(&judged(dir.path(), tree.path())),
+            vec![(
+                RustdocFindingKind::MissingPage,
+                "fixture_crate::open".to_string()
+            )]
         );
     }
 

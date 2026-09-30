@@ -12,6 +12,7 @@
     "op-commit-scopes": "docs/api/commit/",
     "op-commit-validate": "docs/api/commit/",
     "op-continuity-state": "docs/api/continuity/",
+    "op-dashboard-overview": "docs/api/dashboard/",
     "op-delivery-feature": "docs/api/delivery/",
     "op-delivery-report": "docs/api/delivery/",
     "op-deploy-check": "docs/api/deploy/",
@@ -266,6 +267,11 @@
     "schema-Counts": "docs/api/why/",
     "schema-CpuKind": "docs/api/deploy/",
     "schema-CriticalBlocker": "docs/api/devtask/",
+    "schema-DashboardCard": "docs/api/dashboard/",
+    "schema-DashboardMeasure": "docs/api/dashboard/",
+    "schema-DashboardOverview": "docs/api/dashboard/",
+    "schema-DashboardQuestion": "docs/api/dashboard/",
+    "schema-DashboardSource": "docs/api/dashboard/",
     "schema-Declaration": "docs/api/repository/",
     "schema-Deduplicated": "docs/api/devcontext/",
     "schema-DeliveryReport": "docs/api/delivery/",
@@ -429,7 +435,7 @@
     "schema-Health": "docs/api/health/",
     "schema-HealthCheck": "docs/api/health/",
     "schema-HealthRoutes": "docs/api/deploy/",
-    "schema-HealthStatus": "docs/api/health/",
+    "schema-HealthStatus": "docs/api/shared/",
     "schema-HistoryReport": "docs/api/commit/",
     "schema-HttpExposure": "docs/api/capabilities/",
     "schema-HttpMethod": "docs/api/capabilities/",
@@ -798,6 +804,7 @@
     "tag-commands": "docs/api/commands/",
     "tag-commit": "docs/api/commit/",
     "tag-continuity": "docs/api/continuity/",
+    "tag-dashboard": "docs/api/dashboard/",
     "tag-delivery": "docs/api/delivery/",
     "tag-deploy": "docs/api/deploy/",
     "tag-design": "docs/api/design/",
@@ -838,9 +845,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 140,
-    "schemas": 653,
-    "tags": 42
+    "operations": 141,
+    "schemas": 658,
+    "tags": 43
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -869,7 +876,7 @@
     "description": "The API reference, rendered from this document.",
     "url": "https://majordomus.dev/docs/api/"
   },
-  "generated_by": "majordomus-cli 0.10.0",
+  "generated_by": "majordomus-cli 0.11.0",
   "generator": "scripts/generate-site-data (scripts/lib/openapi-site.jq)",
   "info": {
     "contact_name": "Majordomus",
@@ -878,7 +885,7 @@
     "license": "MIT",
     "summary": "The projection of a repository's AI layer: every rule, prompt, session and project record under .ai/, the capabilities that read them and the declared commands that change them, served over MCP, HTTP and the command line from one registry.",
     "title": "Majordomus",
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
   "infrastructure": [
     {
@@ -937,6 +944,7 @@
     "commit.scopes": "commit",
     "commit.validate": "commit",
     "continuity.state": "continuity",
+    "dashboard.overview": "dashboard",
     "delivery.feature": "delivery",
     "delivery.report": "delivery",
     "deploy.check": "deploy",
@@ -1195,6 +1203,11 @@
     "Counts": "why",
     "CpuKind": "deploy",
     "CriticalBlocker": "devtask",
+    "DashboardCard": "dashboard",
+    "DashboardMeasure": "dashboard",
+    "DashboardOverview": "dashboard",
+    "DashboardQuestion": "dashboard",
+    "DashboardSource": "dashboard",
     "Declaration": "repository",
     "Deduplicated": "devcontext",
     "DeliveryReport": "delivery",
@@ -1358,7 +1371,7 @@
     "Health": "health",
     "HealthCheck": "health",
     "HealthRoutes": "deploy",
-    "HealthStatus": "health",
+    "HealthStatus": "shared",
     "HistoryReport": "commit",
     "HttpExposure": "capabilities",
     "HttpMethod": "capabilities",
@@ -8796,6 +8809,229 @@
       "variants": []
     },
     {
+      "description": "One fact on a dashboard: a value read out of one capability's answer, the verdict the\nsource gives it, where a reader drills in, and what acts on it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardCard;\nuse serde_json::json;\n\nlet card: DashboardCard = serde_json::from_value(json!({\n    \"id\": \"health-status\",\n    \"title\": \"Health\",\n    \"value\": \"ok\",\n    \"status\": \"ok\",\n    \"detail\": \"the worst of 8 check(s)\",\n    \"source\": { \"capability\": \"health.report\", \"input\": {}, \"pointer\": \"/status\", \"measure\": \"exact\" },\n    \"route\": \"/cockpit/health\",\n})).unwrap();\n// the value is the source's: reading the pointer out of its answer gives it back\nassert_eq!(card.source.measure.read(&json!({ \"status\": \"ok\" }), &card.source.pointer), card.value);\nassert!(card.action.is_none());\n```",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "DashboardCard",
+      "properties": [
+        {
+          "description": "A stable id, `[a-z][a-z0-9-]*`, unique across the dashboard.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What the value is.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The value, read out of the source's answer by the source's measure: a number, a\nstring or a boolean, or `null` when the source holds none.",
+          "name": "value",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "The source's verdict on it; `unknown` when the source could not answer.",
+          "name": "status",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        },
+        {
+          "description": "One line: what the value means, or why the source could not answer.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Where the value came from.",
+          "name": "source",
+          "refs": [
+            "DashboardSource"
+          ],
+          "required": true,
+          "type": "DashboardSource"
+        },
+        {
+          "description": "The Cockpit page a reader drills into for the evidence.",
+          "name": "route",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The command that acts on it, when one does.",
+          "name": "action",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardQuestion"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How a card's value is read out of its source's answer. Neither reading is arithmetic on\nthe source's behalf.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardMeasure;\nuse serde_json::json;\n\nlet answer = json!({ \"status\": \"warn\", \"tallies\": { \"ok\": 6 }, \"overlaps\": [1, 2] });\n// exact: the value at the pointer, null when there is none\nassert_eq!(DashboardMeasure::Exact.read(&answer, \"/status\"), json!(\"warn\"));\nassert_eq!(DashboardMeasure::Exact.read(&answer, \"/tallies/fail\"), json!(null));\n// count: a number as it stands, a list or map by its length, and an omitted one is none\nassert_eq!(DashboardMeasure::Count.read(&answer, \"/tallies/ok\"), json!(6));\nassert_eq!(DashboardMeasure::Count.read(&answer, \"/overlaps\"), json!(2));\nassert_eq!(DashboardMeasure::Count.read(&answer, \"/tallies/fail\"), json!(0));\n```",
+      "home": "dashboard",
+      "is_enum": true,
+      "name": "DashboardMeasure",
+      "properties": [],
+      "type": "\"exact\" | \"count\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardSource"
+      ],
+      "values": [
+        {
+          "description": "The value at the pointer, exactly; `null` when the pointer resolves to nothing.",
+          "value": "exact"
+        },
+        {
+          "description": "The number at the pointer, or the length of the list or map there; `0` when the\nsource left it out, which is how the sources say an empty list or a zero tally.",
+          "value": "count"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The Overview: four questions, each answered by facts other capabilities hold.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardOverview;\nuse majordomus_cli::capability::builtin::HealthStatus;\nuse serde_json::json;\n\nlet o: DashboardOverview = serde_json::from_value(json!({ \"status\": \"unknown\", \"questions\": [] })).unwrap();\nassert_eq!(o.status, HealthStatus::Unknown);\n```",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "DashboardOverview",
+      "properties": [
+        {
+          "description": "The worst of the questions: `unknown` outranks `fail`, because an undecided fact is\nnot a healthy one.",
+          "name": "status",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        },
+        {
+          "description": "`healthy`, `changed`, `broken`, `action`, in that order.",
+          "name": "questions",
+          "refs": [
+            "DashboardQuestion"
+          ],
+          "required": true,
+          "type": "array of DashboardQuestion"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "dashboard.overview"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One of the four questions the Overview answers, with the cards that answer it.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::DashboardQuestion;\nuse majordomus_cli::capability::builtin::HealthStatus;\nuse serde_json::json;\n\nlet q: DashboardQuestion = serde_json::from_value(json!({\n    \"id\": \"healthy\", \"title\": \"Is it healthy?\", \"status\": \"ok\", \"cards\": [],\n})).unwrap();\nassert_eq!(q.status, HealthStatus::Ok);\n```",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "DashboardQuestion",
+      "properties": [
+        {
+          "description": "`healthy`, `changed`, `broken` or `action`.",
+          "name": "id",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The question, as a reader asks it.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The worst of its cards.",
+          "name": "status",
+          "refs": [
+            "HealthStatus"
+          ],
+          "required": true,
+          "type": "HealthStatus"
+        },
+        {
+          "description": "The facts that answer it, each read from a capability.",
+          "name": "cards",
+          "refs": [
+            "DashboardCard"
+          ],
+          "required": true,
+          "type": "array of DashboardCard"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardOverview"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Where a card's value came from: the capability asked, the input it was asked with, and\nthe pointer into its answer. Asking the capability the same question and reading the\npointer with the same measure yields the card's value; that is the whole contract.\n\n```\nuse majordomus_cli::capability::builtin::dashboard::{DashboardMeasure, DashboardSource};\nuse serde_json::json;\n\nlet s: DashboardSource = serde_json::from_value(json!({\n    \"capability\": \"health.report\",\n    \"input\": {},\n    \"pointer\": \"/status\",\n    \"measure\": \"exact\",\n})).unwrap();\nassert_eq!(s.measure, DashboardMeasure::Exact);\nassert_eq!(s.measure.read(&json!({ \"status\": \"ok\" }), &s.pointer), json!(\"ok\"));\n```",
+      "home": "dashboard",
+      "is_enum": false,
+      "name": "DashboardSource",
+      "properties": [
+        {
+          "description": "The canonical id of the capability the value was read from.",
+          "name": "capability",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The input it was asked with, as its input schema takes it.",
+          "name": "input",
+          "refs": [],
+          "required": true,
+          "type": "any"
+        },
+        {
+          "description": "An RFC 6901 JSON pointer into that capability's answer.",
+          "name": "pointer",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How the value is read at the pointer.",
+          "name": "measure",
+          "refs": [
+            "DashboardMeasure"
+          ],
+          "required": true,
+          "type": "DashboardMeasure"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "DashboardCard"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "`scope.yaml`, typed. Unknown keys are refused by the type and by the `scope` schema.",
       "home": "repository",
       "is_enum": false,
@@ -14229,6 +14465,7 @@
         "commit.scopes",
         "commit.validate",
         "continuity.state",
+        "dashboard.overview",
         "delivery.report",
         "delivery.feature",
         "deploy.get",
@@ -18659,13 +18896,16 @@
     },
     {
       "description": "Where one dimension of the system stands. Ordered by severity, so the worst check\ndecides the whole.",
-      "home": "health",
+      "home": "shared",
       "is_enum": true,
       "name": "HealthStatus",
       "properties": [],
       "type": "\"ok\" | \"warn\" | \"fail\" | \"unknown\"",
       "used_by": [],
       "used_by_schemas": [
+        "DashboardCard",
+        "DashboardOverview",
+        "DashboardQuestion",
         "Health",
         "HealthCheck",
         "Readiness"
@@ -38782,6 +39022,67 @@
         }
       ],
       "slug": "continuity"
+    },
+    {
+      "description": "The Dashboard Suite as a projection of the canonical state: every card is one fact read out of an existing capability's answer, carrying the capability it asked, the input, the JSON pointer its value was read from, the Cockpit page that holds the evidence and the command that acts on it. No dashboard stores, counts or judges anything of its own (ADR 0088).",
+      "name": "dashboard",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "dashboard overview",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/dashboard/overview\"",
+          "description": "Is it healthy, what changed, what is broken, what needs action — each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list` (this checkout's board), asked once each through the executor. Every card carries its source capability, input and RFC 6901 pointer, so asking the source the same question yields the same value; a source that cannot answer makes its cards `unknown`, never `ok`. Nothing here rebuilds canonical state or asks anything beyond this process and its checkout.",
+          "home": "dashboard",
+          "id": "dashboard.overview",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_dashboard_overview",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/dashboard/overview",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::dashboard",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The Overview: four questions: the result.",
+              "schema": "DashboardOverview",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "DashboardOverview",
+          "stability": "behaviorally_verified",
+          "summary": "The Overview: four questions"
+        }
+      ],
+      "slug": "dashboard"
     },
     {
       "description": "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery.",

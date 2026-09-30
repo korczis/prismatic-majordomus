@@ -205,6 +205,23 @@
       "tool": "majordomus_continuity"
     },
     {
+      "api_anchor": "/docs/api/dashboard/#op-dashboard-overview",
+      "claims": [],
+      "cli": "majordomus dashboard overview",
+      "id": "dashboard.overview",
+      "kind": "query",
+      "module": "dashboard",
+      "module_route": "/registry/modules/dashboard/",
+      "resource": null,
+      "route": "/registry/capabilities/dashboard-overview/",
+      "slug": "dashboard-overview",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "tests": [],
+      "title": "The Overview: four questions",
+      "tool": "majordomus_dashboard_overview"
+    },
+    {
       "api_anchor": "/docs/api/delivery/#op-delivery-feature",
       "claims": [],
       "cli": "majordomus delivery show",
@@ -2734,6 +2751,13 @@
         "test": "test/cases/490_rustdoc_new_module.sh"
       },
       {
+        "id": "rustdoc-referenced",
+        "implementation": "apps/majordomus-cli/src/site.rs",
+        "route": "/guarantees/rustdoc-referenced/",
+        "status": "guaranteed",
+        "test": "test/cases/492_rustdoc_module_links.sh"
+      },
+      {
         "id": "worktree-topology-derived",
         "implementation": "apps/majordomus-cli/src/worktree/path.rs",
         "route": "/guarantees/worktree-topology-derived/",
@@ -2971,11 +2995,11 @@
     ]
   },
   "counts": {
-    "capabilities": 142,
-    "claims": 62,
-    "modules": 42
+    "capabilities": 143,
+    "claims": 63,
+    "modules": 43
   },
-  "generator": "majordomus-cli 0.10.0",
+  "generator": "majordomus-cli 0.11.0",
   "modules": [
     {
       "capabilities": [
@@ -3091,6 +3115,22 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/continuity.rs",
       "title": "Continuity"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "dashboard.overview",
+          "route": "/registry/capabilities/dashboard-overview/",
+          "slug": "dashboard-overview"
+        }
+      ],
+      "claims": [],
+      "id": "dashboard",
+      "route": "/registry/modules/dashboard/",
+      "slug": "dashboard",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/dashboard.rs",
+      "title": "Dashboards"
     },
     {
       "capabilities": [

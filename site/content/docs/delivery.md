@@ -16,7 +16,7 @@ EXISTS = ON_MASTER ∧ DEPLOYED ∧ PUBLICLY_VERIFIED ∧ REQUIRED_TESTS_CURRENT
 ```
 
 Anything short of that is **not delivered**. The decision is
-[ADR 71](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md);
+[ADR 71](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md);
 the code is `apps/majordomus-cli/src/delivery/`.
 
 ## Reading it

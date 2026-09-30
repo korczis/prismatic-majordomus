@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
@@ -160,6 +161,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commands,
         graph,
         health,
+        dashboard,
         continuity,
         lifecycle,
         obligations,

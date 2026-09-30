@@ -9,6 +9,7 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::dashboard::DashboardOverview;
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
@@ -297,6 +298,7 @@ pub fn overview(ctx: &Context) -> Page {
         "Overview",
         el("div")
             .class("mj-grid")
+            .child(four_questions(ctx))
             .child(statistics)
             .child(identity)
             .child(health_card)
@@ -306,6 +308,80 @@ pub fn overview(ctx: &Context) -> Page {
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
+}
+
+/// The four questions, first on the overview: `dashboard.overview` laid out, card by card.
+///
+/// Nothing here reads a fact of its own. Each card shows the value the capability carried,
+/// the status word its source gave it, the capability and pointer it was read from, and a
+/// link to the page holding the evidence. The value is also written as data
+/// (`data-value`, the card's JSON), so a test compares this page with the route byte for
+/// byte rather than parsing a rendering. A capability that fails is a failure on the page,
+/// never an empty card.
+fn four_questions(ctx: &Context) -> El {
+    let o: DashboardOverview = match ask(ctx, "dashboard.overview", json!({})) {
+        Ok(o) => o,
+        Err(e) => return card("Four questions", alert("fail", e)),
+    };
+    let shown = |v: &Value| match v {
+        Value::String(s) => s.clone(),
+        Value::Null => "none".into(),
+        other => other.to_string(),
+    };
+    let questions: Vec<El> = o
+        .questions
+        .iter()
+        .map(|q| {
+            el("div")
+                .attr("data-question", q.id.as_str())
+                .child(
+                    el("h3")
+                        .class("mj-card-title")
+                        .text(&q.title)
+                        .text(" ")
+                        .child(badge(q.status.as_str(), q.status.as_str())),
+                )
+                .child(
+                    el("ul").class("mj-checklist").children(
+                        q.cards
+                            .iter()
+                            .map(|c| {
+                                el("li")
+                                    .class("mj-checklist-item")
+                                    .attr("data-card", c.id.as_str())
+                                    .attr("data-value", c.value.to_string())
+                                    .attr("data-status", c.status.as_str())
+                                    .child(badge(c.status.as_str(), c.status.as_str()))
+                                    .child(
+                                        el("a")
+                                            .class("mj-link mj-checklist-title")
+                                            .attr("href", c.route.as_str())
+                                            .text(&c.title),
+                                    )
+                                    .child(mono(shown(&c.value)))
+                                    .child(el("span").class("mj-checklist-detail").text(format!(
+                                        "{} — from {} {}",
+                                        c.detail, c.source.capability, c.source.pointer
+                                    )))
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+        })
+        .collect();
+    // the route the registry declares for the capability, not one written here
+    let route = ctx
+        .registry
+        .get("dashboard.overview")
+        .and_then(|c| c.exposure.http.as_ref())
+        .map(|h| h.path.clone())
+        .unwrap_or_default();
+    card_with(
+        "Four questions",
+        link(route, "as JSON"),
+        el("div").children(questions),
+    )
+    .attr("data-overview-status", o.status.as_str())
 }
 
 /// The preflight card: whether Majordomus is in force here, claim by claim.
