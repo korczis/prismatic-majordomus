@@ -122,3 +122,45 @@ awk -v j="  $job_of_rebuild:" '$0 == j {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' 
 awk '$0 == "  rustdoc:" {f=1; next} /^  [a-z][a-z-]*:$/ {f=0} f' "$WF" | grep -qE "needs\.owed\.outputs\.remedy == 'deploy'" \
   || { echo "    the jobs that deploy are not held off when the remedy is a rebuild: it would deploy and ask"; exit 1; }
 echo "    the scheduled path reads the state and chooses deploy or rebuild"
+
+# ---------------------------------------------------------------- 8. only a right tree is rebuilt
+# The choice itself, run rather than read: the remedy step's own script, lifted from the workflow,
+# in a clone whose gh-pages names a commit, beside a `scripts/pages` that reports an errored build.
+# A rebuild repairs an errored build of the trunk's tree and nothing else. When gh-pages carries an
+# older tree — a push deploy that failed before publishing, over a build that had errored too —
+# rebuilding republishes the stale site and skips the deploy on every scheduled run, for ever.
+step="$T/remedy.sh"
+awk '/^      - id: remedy$/{f=1; next} f && /^      - /{exit} f && /^        run: \|$/{r=1; next} r{print}' "$WF" \
+  | sed 's/^          //' > "$step"
+grep -q 'pages built' "$step" || { echo "    the remedy step's script could not be lifted from the workflow"; exit 1; }
+R="$T/repo"; mkdir -p "$R/scripts"
+git init -q "$R"
+printf '#!/bin/sh\nprintf '"'"'errored\\t%%s\\tPage build failed.\\n'"'"' "$(git rev-parse origin/gh-pages)"\n' > "$R/scripts/pages"
+chmod +x "$R/scripts/pages"
+git -C "$R" -c user.name=t -c user.email=t@t add -A
+git -C "$R" -c user.name=t -c user.email=t@t commit -q -m trunk
+trunk="$(git -C "$R" rev-parse HEAD)"
+remedy_for() {   # $1: the commit gh-pages' build.json names
+  git -C "$R" checkout -q --orphan pub
+  git -C "$R" rm -rq --cached . 2>/dev/null || true
+  printf '{\n  "schema": 1,\n  "commit": "%s",\n  "surfaces": [ { "commit": "%s" } ]\n}\n' "$1" "$trunk" > "$R/build.json"
+  git -C "$R" -c user.name=t -c user.email=t@t add build.json
+  git -C "$R" -c user.name=t -c user.email=t@t commit -q -m "deploy: site from $1"
+  git -C "$R" update-ref refs/remotes/origin/gh-pages HEAD
+  git -C "$R" checkout -q -f "$trunk"
+  git -C "$R" branch -q -D pub
+  rm -f "$R/build.json"
+  : > "$T/gh_output"; : > "$T/summary"
+  rc=0
+  ( cd "$R" && GITHUB_OUTPUT="$T/gh_output" GITHUB_STEP_SUMMARY="$T/summary" bash -e "$step" ) \
+    > "$T/step.out" 2>&1 || rc=$?
+  [ "$rc" = 0 ] || { echo "    the remedy step failed ($rc)"; cat "$T/step.out"; exit 1; }
+  sed -n 's/^remedy=//p' "$T/gh_output"
+}
+got="$(remedy_for "$trunk")"
+[ "$got" = rebuild ] || { echo "    an errored build of the trunk's own tree chose '$got', not rebuild"; cat "$T/step.out"; exit 1; }
+got="$(remedy_for 3333333333333333333333333333333333333333)"
+[ "$got" = deploy ] || {
+  echo "    an errored build of an OLDER tree chose '$got', not deploy: it would rebuild a stale site"
+  cat "$T/step.out"; exit 1; }
+echo "    an errored build is rebuilt only when gh-pages carries the trunk's tree; a stale one is deployed"
