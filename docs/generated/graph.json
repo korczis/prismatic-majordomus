@@ -2097,6 +2097,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "file",
+        "label": "doctor.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/journal.rs",
         "kind": "file",
         "label": "journal.rs",
@@ -4484,6 +4492,35 @@
             "governance",
             "routing",
             "web"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0059",
+        "kind": "adr",
+        "label": "adr-0059",
+        "summary": "The mesh is on for this repository, and every session start holds it",
+        "route": "/cockpit/objects/adr/adr-0059",
+        "source": ".ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-30",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/mesh/majordomus.yaml",
+            "file:docs/MESH.md",
+            "file:apps/majordomus-cli/src/mesh/doctor.rs",
+            "file:lib/capture.sh",
+            "claim:mesh-declared-is-held",
+            "test:test/cases/494_the_mesh_is_declared_and_held.sh",
+            "test:test/cases/491_the_mesh_is_on_here.sh"
+          ],
+          "tags": [
+            "mesh",
+            "coordination",
+            "operations"
           ]
         }
       },
@@ -6876,6 +6913,21 @@
           "responsibility": "none",
           "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-declared-is-held",
+        "kind": "claim",
+        "label": "mesh-declared-is-held",
+        "summary": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+        "route": "/cockpit/objects/claim/mesh-declared-is-held",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
         }
       },
       {
@@ -11732,6 +11784,14 @@
         "summary": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
         "route": "/cockpit/objects/document/docs-claims-mesh-cooperation-links-md",
         "source": "docs/claims/mesh-cooperation-links.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-declared-is-held.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-declared-is-held.md",
+        "summary": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+        "route": "/cockpit/objects/document/docs-claims-mesh-declared-is-held-md",
+        "source": "docs/claims/mesh-declared-is-held.md"
       },
       {
         "id": "majordomus://document/docs/claims/mesh-liveness-expiry.md",
@@ -35795,6 +35855,13 @@
         "source": "test/cases/491_the_mesh_is_on_here.sh"
       },
       {
+        "id": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "kind": "test",
+        "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
+        "route": "/cockpit/objects/test/test-cases-494-the-mesh-is-declared-and-held-sh",
+        "source": "test/cases/494_the_mesh_is_declared_and_held.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "kind": "test",
         "label": "test/cases/49_roadmap_doctrine.sh",
@@ -42658,6 +42725,61 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://adr/adr-0059",
+        "target": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://claim/mesh-declared-is-held",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://mesh-declaration/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://test/test/cases/491_the_mesh_is_on_here.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0066",
         "target": "kind:adr",
         "kind": "is_a"
@@ -45266,6 +45388,26 @@
         "source": "majordomus://claim/mesh-cooperation-links",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-liveness-expiry",
@@ -48559,6 +48701,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mesh-cooperation-links.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-declared-is-held.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -56428,6 +56575,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60229,8 +60381,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1916,
-      "edges": 4332,
+      "nodes": 1921,
+      "edges": 4349,
       "acyclic": true,
       "truncated": false
     }

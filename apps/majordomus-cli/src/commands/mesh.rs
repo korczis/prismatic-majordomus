@@ -1,16 +1,19 @@
 //! `majordomus mesh`: the terminal rendering of the mesh capabilities.
 //!
-//! `identity` and `doctor` answer in-process — the identity file and the machine's
-//! sockets are facts of this machine, so the local registry's own handlers are
-//! truthful. Everything else is a fact of the *running server*'s memory — the registry,
-//! the links, the journal — so the command finds this checkout's server (through the same
-//! `server.status` capability `serve status` renders) and asks it over HTTP; a missing
-//! server is an answer with its reason, never an error. The command owns rendering and
+//! `identity` answers in-process — the identity file is a fact of this machine, so the
+//! local registry's own handler is truthful. Everything else is a fact of the *running
+//! server*'s memory — the registry, the links, the journal — so the command finds this
+//! checkout's server (through the same `server.status` capability `serve status` renders)
+//! and asks it over HTTP; a missing server is an answer with its reason, never an error.
+//! `doctor` is both: its `runtime` check is the server's verdict on the declaration, so the
+//! report is the server's when one serves this checkout, and this process's — where that
+//! check reports an absence — when none does (ADR 0059). The command owns rendering and
 //! nothing else: every value it prints is a capability's answer, and `--format json`
 //! prints that answer unchanged for scripts.
 //!
 //! Exit codes: 0 answered; 10 answered with a refusal or a failed verdict (a claim
-//! conflict, an unknown runtime, a failed verification) — the answer is printed either way.
+//! conflict, an unknown runtime, a failed verification, a failed doctor check) — the
+//! answer is printed either way.
 
 use std::time::Duration;
 
@@ -37,8 +40,8 @@ pub fn run(args: MeshArgs) -> Result<u8> {
     match args.command {
         MeshCommand::Status(q) => ask(&q, "GET", "/api/v1/mesh", None, render_status, never),
         MeshCommand::Nodes(q) => ask(&q, "GET", "/api/v1/mesh/nodes", None, render_nodes, never),
-        MeshCommand::Identity(q) => in_process(q, &["mesh", "identity"], render_identity),
-        MeshCommand::Doctor(q) => in_process(q, &["mesh", "doctor"], render_doctor),
+        MeshCommand::Identity(q) => in_process(q, &["mesh", "identity"], render_identity, never),
+        MeshCommand::Doctor(q) => doctor(q),
         MeshCommand::Peers(q) => ask(&q, "GET", "/api/v1/mesh/peers", None, render_peers, never),
         MeshCommand::Peer(a) => {
             let target = format!("/api/v1/mesh/peer?runtime={}", encode(&a.runtime));
@@ -178,6 +181,29 @@ fn never(_: &Value) -> bool {
     false
 }
 
+/// A report whose verdict is not `ok`.
+fn not_ok(v: &Value) -> bool {
+    v["ok"] != json!(true)
+}
+
+/// `mesh doctor`: the running server's report when one serves this checkout, because its
+/// `runtime` check is that server's verdict on the declaration; this process's otherwise.
+/// Exit 10 when a check failed.
+fn doctor(args: MeshQueryArgs) -> Result<u8> {
+    match server_url(&args)? {
+        Some(url) => ask_at(
+            &url,
+            &args,
+            "GET",
+            "/api/v1/mesh/doctor",
+            None,
+            render_doctor,
+            not_ok,
+        ),
+        None => in_process(args, &["mesh", "doctor"], render_doctor, not_ok),
+    }
+}
+
 /// Percent-encode a query value: everything but unreserved characters.
 fn encode(text: &str) -> String {
     text.bytes()
@@ -191,8 +217,14 @@ fn encode(text: &str) -> String {
         .collect()
 }
 
-/// Execute the capability the CLI path names, in this process, and render it.
-fn in_process(args: MeshQueryArgs, path: &[&str], render: fn(&Value) -> String) -> Result<u8> {
+/// Execute the capability the CLI path names, in this process, and render it; exit 10 when
+/// `failed` says the answer is a failed verdict.
+fn in_process(
+    args: MeshQueryArgs,
+    path: &[&str],
+    render: fn(&Value) -> String,
+    failed: fn(&Value) -> bool,
+) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let ctx = &app.context;
     let words: Vec<String> = path.iter().map(|w| w.to_string()).collect();
@@ -208,7 +240,7 @@ fn in_process(args: MeshQueryArgs, path: &[&str], render: fn(&Value) -> String) 
         })?;
     let value = ctx.execute(id, json!({})).map_err(map)?;
     emit(&args, &value, render);
-    Ok(0)
+    Ok(if failed(&value) { EXIT_REFUSED } else { 0 })
 }
 
 /// This checkout's ready server, when there is one.
@@ -245,6 +277,19 @@ fn ask(
         emit(args, &answer, render);
         return Ok(if method == "GET" { 0 } else { EXIT_REFUSED });
     };
+    ask_at(&url, args, method, target, body, render, failed)
+}
+
+/// [`ask`] of the server at `url`, already found.
+fn ask_at(
+    url: &str,
+    args: &MeshQueryArgs,
+    method: &str,
+    target: &str,
+    body: Option<Value>,
+    render: fn(&Value) -> String,
+    failed: fn(&Value) -> bool,
+) -> Result<u8> {
     let timeout = if target.ends_with("/verify") {
         VERIFY_TIMEOUT
     } else {
@@ -252,7 +297,7 @@ fn ask(
     };
     let payload = body.map(|b| strip_nulls(b).to_string());
     let reply = crate::mcp::bridge::request(
-        &url,
+        url,
         method,
         target,
         &[("Content-Type", "application/json")],
