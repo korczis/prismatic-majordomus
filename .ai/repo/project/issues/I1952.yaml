@@ -1,0 +1,46 @@
+id: I1952
+milestone: test-evidence
+title: Evidence subjects are derived once, in Rust
+slug: evidence-subjects-are-derived
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Derive the subject index of ADR 0087 decision 9 from existing declarations, compute a subject's verdict over its members through the one aggregation, and have majordomus generate write it as site/data/registry/evidence-subjects.json."
+why: "Nothing ties a widget to a subject, and the command-to-test join is derived in shell more than once, with different rules for which header line counts."
+current_state: "No subject index exists. scripts/generate-site-data derives the tests of commands.json, lib/commands.sh reads the first header line, and scripts/ci/command-furnished reads any line."
+desired_state: "evidence::subject derives claim, rule, feature, command, capability, mcp and use_case subjects; RuleState::as_proof() is the one declared mapping from a rule state; subject findings are a separate, advisory list; majordomus generate writes site/data/registry/evidence-subjects.json, declared in docs/generated/artifacts.json so its merge is derived; and a case holds the shell derivations equal to the index."
+scope:
+  - apps/majordomus-cli/src/evidence/subject.rs
+  - apps/majordomus-cli/src/evidence/mod.rs
+  - apps/majordomus-cli/src/rules/mod.rs
+  - apps/majordomus-cli/src/generate.rs
+  - apps/majordomus-cli/tests/generated_documents.rs
+  - share/schemas/generated/site-evidence-subjects.schema.json
+  - site/data/registry/evidence-subjects.json
+  - test/cases/507_evidence_subjects_are_derived.sh
+  - docs/EVIDENCE.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .gitattributes
+non_scope:
+  - "site/data/generated, which scripts/generate-site-data owns and replaces wholesale"
+  - "An authored list of subjects"
+  - "A capability: the index is read by I1953"
+  - "Making subject findings refuse, which is I1962's"
+depends_on:
+  - I1948
+  - I1947
+acceptance_criteria:
+  - "The index is written only by majordomus generate, to site/data/registry/evidence-subjects.json, and holds no ledger content and no commit"
+  - "A subject's verdict is computed over its members' own verdicts, a rule member contributing through RuleState::as_proof()"
+  - "A case holds the tests of commands.json equal to the index's command routes"
+  - "Subject findings never enter the claim report's findings"
+validation:
+  - bash test/run.sh 507_evidence_subjects_are_derived
+  - majordomus generate --check
+  - cargo test --workspace --all-features
+evidence_required:
+  - subjects_derived_once
+  - parity_with_shell_derivations
+created_at: 2026-09-26
+updated_at: 2026-09-26

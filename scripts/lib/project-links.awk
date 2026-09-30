@@ -15,11 +15,19 @@
 #
 # A link target is resolved to a repository path, then:
 #   a document with a page      -> its route        (docs/MCP.md, docs/claims/<id>.md, AGENTS.md, docs/CLAIMS.yaml)
-#   a tracked file              -> <repo>/blob/master/<path>
-#   a tracked directory         -> <repo>/tree/master/<path>
+#   a tracked file              -> <repo>/blob/@source-ref@/<path>
+#   a tracked directory         -> <repo>/tree/@source-ref@/<path>
 #   anything else               -> the link text alone: git does not track it (checkout-local state), so
 #                                  no forge and no page can answer for it
 # Absolute URLs, @/ links, #fragments, mailto: and anything inside a fenced code block are untouched.
+#
+# @source-ref@ is a placeholder for the ref, resolved at build time. What this writes is committed
+# (site/content, site/data/generated), and a committed file cannot name the commit it is in, so the
+# link cannot carry that commit here; naming master instead links a page to whatever master holds on
+# the day it is followed, not the text the page was rendered from. scripts/site-build replaces the
+# placeholder in the built site with the commit data/build.json records (master for a dirty or
+# unknown build), the same ref site/templates/source-links.html gives the template-made links, and
+# refuses a build that still carries one; scripts/ci/link-check refuses one too.
 function dirname_of(p,   i) { i = match(p, /\/[^\/]*$/); return i ? substr(p, 1, RSTART - 1) : "" }
 function normalise(p,   n, parts, out, i, k) {
   n = split(p, parts, "/"); k = 0
@@ -46,11 +54,12 @@ function resolve(target,   path, frag, h, r) {
   if (r == "\001") return "\002"
   if (r in route_of) return internal(route_of[r], frag)
   if (r ~ /^docs\/claims\/[^\/]+\.md$/ && (r in is_file)) { sub(/^docs\/claims\//, "", r); sub(/\.md$/, "", r); return internal("/guarantees/" r "/", frag) }
-  if (r in is_file) return repo "/blob/master/" r (frag != "" ? "#" frag : "")
-  if (r in is_dir) return repo "/tree/master/" r
+  if (r in is_file) return repo "/blob/" SOURCE_REF "/" r (frag != "" ? "#" frag : "")
+  if (r in is_dir) return repo "/tree/" SOURCE_REF "/" r
   return "\003"
 }
 BEGIN {
+  SOURCE_REF = "@source-ref@"
   dir = dirname_of(src)
   while ((getline line < tracked) > 0) {
     if (line == "") continue

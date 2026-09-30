@@ -5,6 +5,7 @@
 //! in the Cockpit — in its listing, in its navigation, in its search, on a page of its own,
 //! with a form generated from its schema — without one line of the Cockpit being edited.
 //! `a_capability_the_repository_adds_reaches_every_cockpit_surface` is that claim, run.
+//! Claims: cockpit-is-a-projection-of-the-registry.
 
 mod common;
 
@@ -22,6 +23,7 @@ const PAGES: &[&str] = &[
     "/cockpit/continuity",
     "/cockpit/health",
     "/cockpit/artifacts",
+    "/cockpit/economics",
     "/cockpit/api",
     "/cockpit/search",
     "/cockpit/activity",
@@ -196,6 +198,45 @@ fn a_capability_the_repository_adds_reaches_every_cockpit_surface() {
             .any(|c| c["id"] == id),
         "the capability listing the palette reads does not carry it"
     );
+}
+
+#[test]
+fn an_entity_page_names_its_public_page_from_the_repository_declaration() {
+    // the fixture has no site: the entity says so rather than inventing an address
+    let f = Fixture::new();
+    let route = "/cockpit/objects/rule/project-alpha-1";
+    let uri = "majordomus://rule/project.alpha@1";
+    {
+        let s = Served::start(&f.root(), &[]);
+        let (status, page) = html(&s, route);
+        assert_eq!(status, 200);
+        assert!(page.contains("Not published"), "{page}");
+        let (_, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+        assert!(api["documentation"].is_null(), "{api}");
+    }
+
+    // declare the kind as published one page per object, and the same entity names it
+    f.write(
+        "site/data/publication.toml",
+        "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+    );
+    f.write(
+        "site/config.toml",
+        "base_url = \"https://example.invalid\"\n",
+    );
+    f.commit("publish rules");
+    let s = Served::start(&f.root(), &[]);
+    let public = "https://example.invalid/rules/project-alpha-1/";
+    let (status, page) = html(&s, route);
+    assert_eq!(status, 200);
+    assert!(page.contains("Published at"), "{page}");
+    assert!(
+        page.contains(&format!("href=\"{public}\"")),
+        "the page links the public page: {page}"
+    );
+    let (_, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+    assert_eq!(api["documentation"]["url"], public);
+    assert_eq!(api["documentation"]["route"], "/rules/project-alpha-1/");
 }
 
 #[test]
@@ -726,6 +767,24 @@ fn a_state_changing_request_from_another_origin_is_refused_and_a_read_is_not() {
         status, 403,
         "a same-origin call is not a cross-origin one: {body}"
     );
+
+    // a DNS-rebinding page names its own domain in both Origin and Host, so the two match;
+    // a domain is not this server's own origin, and the write is still refused
+    let rebound = {
+        use std::io::{Read, Write};
+        let mut stream = std::net::TcpStream::connect(&s.address).expect("connect");
+        let body = "{\"intent\":\"from a rebound page\"}";
+        write!(
+            stream,
+            "POST /api/v1/peers/announce HTTP/1.1\r\nHost: rebound.example:8742\r\nOrigin: http://rebound.example:8742\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            body.len()
+        )
+        .unwrap();
+        let mut raw = String::new();
+        stream.read_to_string(&mut raw).unwrap();
+        raw
+    };
+    assert!(rebound.starts_with("HTTP/1.1 403"), "{rebound}");
 
     // and a read from anywhere is untouched: a browser cannot see the answer anyway
     let (status, _, _) = s.request_with(

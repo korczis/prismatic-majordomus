@@ -194,6 +194,15 @@ gates:
     runs: scripts/ci/claim-proof-check --strict
     summary: every claim marked guaranteed names a runnable test that names the claim back, so the link reads from both ends; the verdict states its denominator and names the population it is not about, and with the debt at zero any exception fails
 
+  # A number about tokens, context or cost reaches a reader only from recorded evidence: prose
+  # that types one is refused, and a claim bound to an economics metric cannot be guaranteed
+  # while the metric's evidence does not stand (ADR 0082).
+  - id: economics-claims
+    job: structure
+    always: true
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
+    summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
+
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
@@ -279,7 +288,16 @@ gates:
   - id: mesh-check
     job: structure
     runs: scripts/ci/mesh-check
-    summary: the mesh stays one subsystem — UDP sockets only under src/mesh/, one MeshRegistry constructed only there, and the mesh-declaration kind, its schema and the rule that holds it move together (project.mesh-is-observation-not-authority)
+    summary: the mesh stays one subsystem — UDP sockets, link transports, link handlers and the journal only under src/mesh/ (and its capability module), one MeshRegistry constructed only there, a Cockpit mesh page that asks the mesh capabilities, and the mesh-declaration kind, its schema and both rules moving together (project.mesh-is-observation-not-authority, project.mesh-cooperation-is-authenticated)
+
+  # Cooperation accepted over a real network: four Linux containers on one docker bridge,
+  # multicast discovery with no seeds, links, a claim and a handover across nodes, a node
+  # disconnected from the network and healed, a node killed and restarted, and mesh verify
+  # inside a node. Loopback integration tests prove the protocol; this proves a network.
+  - id: mesh-lab
+    job: mesh-lab
+    runs: test/mesh-lab/run
+    summary: separate Linux nodes on a real bridge discover each other by multicast, link, share claims and handovers, converge, and recover from a partition and a crash, and scripts/ci/mesh-lab-evidence then judges the record the lab wrote — a complete acceptance or nothing (project.mesh-cooperation-is-authenticated, claim mesh-network-acceptance)
 
   # ADR 0032 keeps the network half of a workspace adapter out of the crate and asks for a
   # gate, "or the boundary is a sentence rather than a constraint". It reads the manifest
@@ -312,6 +330,17 @@ gates:
     runs: scripts/ci/entry-converges --no-suite
     summary: entry by a shell starts nothing and builds nothing, the start event ensures the server where the policy says it does, the briefing has one author and the lease one typed reader, and a server nobody owns has a bounded life
 
+  # Shell automation is migrating into typed and scripted capabilities (ADR 0069), and a
+  # migration converges only if new shell stops arriving. The judge is the executable's own
+  # `shell.check` — typed Rust, because a new shell gate is exactly what this refuses — so
+  # it needs the executable, and it reads git's index and file heads only: no site, no
+  # network. Selected by the `shell-inventory` class rather than `always`, so a plan that
+  # touches no governed directory does not build the crate in this job for it.
+  - id: shell-inventory
+    job: structure
+    runs: bin/majordomus-cli shell check
+    summary: every shell unit under bin/, lib/, scripts/, share/, .githooks/ and .claude/hooks/ is declared in .ai/repo/automation/inventory.jsonl with an exemption that says why it is shell and when it stops being, and no record names a unit the tree no longer has
+
   - id: step-bound
     job: structure
     always: true
@@ -333,9 +362,11 @@ gates:
     runs: scripts/cockpit-probe
     summary: every Cockpit route the server serves answered, and the pages and interactions measured in a real browser; the route set is the one the UI audit uses
 
+  # The build composes the crate's rustdoc at /rustdoc and refuses without it (ADR 0086), so the
+  # command a person runs produces it first, as the site job does through .github/actions/rustdoc.
   - id: site-build
     job: site
-    runs: scripts/site-build && scripts/site-check
+    runs: scripts/rust-check --doc && scripts/site-build && scripts/site-check
     summary: the derived data current, the site built once, every static check over the output
 
   - id: site-probe
@@ -344,12 +375,26 @@ gates:
     runs: SITE_PROBE_JOBS=4 scripts/site-probe
     summary: every route at three widths in a real browser, the menu, the dropdown, the theme toggle, the diagrams
 
+  # The crate's Rust API reference, judged as the published surface it is (ADR 0086): the pages
+  # rustdoc wrote for the one invocation the rust-check gate proves warning-free, handed off by
+  # that same step into target/web/rustdoc — so it `requires` rust-check, whose --ci run in this
+  # job is what produces the tree, and a plan that selects it can never run it against no tree
+  # or an older one. The site's own contracts do not read these pages (they are another
+  # producer's); this is their contract: every exported item at its derived route, no orphan
+  # page, the tree built from HEAD, the crate index and its assets present, every internal link
+  # resolving, and no machine path or secret in a published byte.
+  - id: rustdoc
+    job: rust
+    requires: [rust-check]
+    runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality rustdoc
+    summary: the crate's published rustdoc tree is this commit's and complete — every exported item has its page at its derived route, no page is an orphan, the crate index and its assets are present, every internal link resolves, and no machine path or secret is published
+
   # Every interactive control on every page of the built site, exercised in a browser by the behaviour spec
   # that claims it (project.every-link-and-control-is-tested). A job of its own: the site job's browser
   # steps already use its whole bound, and a gate that shares a job which never finishes enforces nothing.
   - id: interaction-probe
     job: interactions
-    runs: scripts/site-build --no-data && scripts/interaction-probe
+    runs: scripts/rust-check --doc && scripts/site-build --no-data && scripts/interaction-probe
     summary: every interactive control on every page is claimed by one behaviour spec and does what it says in a browser — menus, dropdowns, theme, copy buttons, tabs, filters, the diagnosis, the contract, the changelog, the graphs and every keyboard scroll region
 
   # A job of its own for the same reason as interaction-probe: after the site job's build, check and
@@ -357,7 +402,7 @@ gates:
   - id: ui-audit
     job: ui
     requires: [site-build]
-    runs: scripts/ui audit --report
+    runs: scripts/rust-check --doc && scripts/ui audit --report
     summary: every discovered page of every surface the executable serves — built directories and the routes it renders itself — at every width the theme implies, in a browser, against the responsive, semantic, component and WCAG invariants; the report is rendered at /tests/ui
 
   # The one gate that measures the published site rather than this tree: the advertised
@@ -441,11 +486,6 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
-  # The release's own declarations, which `generate --check` cannot reach: it proves the
-  # written changelog matches the tree, not that the two version sites the crate writes are
-  # the two the release script reads, nor that they still agree. Until this gate, the second
-  # question was asked only when a tag was cut, so a half-applied bump lived on the default
-  # branch until somebody tried to publish. File reads only; it belongs in the structure job.
   # Box art in a published document: a picture nothing can render, link, theme, diff against
   # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
   # job; the ratchet is meant to reach zero.
@@ -472,10 +512,44 @@ gates:
     runs: scripts/ci/entity-check
     summary: every object of the layer is addressable — no two identities of a kind reduce to one route — and site/data/publication.toml declares, for every kind the index holds and for no kind it does not, whether the site publishes it as entity pages, as an editorial section, or not at all and why
 
+  # The release's own declarations, which `generate --check` cannot reach: it proves the
+  # written changelog and share/version.txt match the tree, not that the one place the
+  # version is authored is the place the release script reads, nor that the shell tool
+  # actually prints what that place declares. Until this gate, the second question was asked
+  # only when a tag was cut, so a half-applied bump lived on the default branch until
+  # somebody tried to publish. File reads only; it belongs in the structure job.
   - id: release-check
     job: structure
     runs: scripts/ci/release-check
-    summary: the version is one fact with one writer — the crate and the release script name the same two sites, the two state one version, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
+    summary: the version is authored in one place with one writer — the crate's writer and the release script name the same manifest, the shell tool prints what it declares, the lock records it, no changelog is kept by hand, the tree is not behind what was published, and every published tag has a release record so that a release the pipeline failed to record cannot pass for a finished one
+
+  # The version is authored once, in apps/majordomus-cli/Cargo.toml, and the shell tool reads
+  # its projection share/version.txt (ADR 0085). What refuses a second statement is the
+  # release module itself — `release::version::diagnose`, the same findings `release analyze`
+  # carries on every surface — and this gate is only its caller: `release version` exits 10
+  # when the projection is not what the manifest declares, or when a version is written down
+  # by hand in bin/, lib/, scripts/ or share/ outside a generated artifact.
+  #
+  # `always`, because no path class can name where a second statement will be written: the
+  # shell class does not select release-check, and a `FOO_VERSION="1.2.3"` added to lib/ or a
+  # hand edit of share/version.txt would otherwise merge green and fail the next master push.
+  # It needs the executable, which the structure job already builds for evidence-check.
+  - id: version-authored-once
+    job: structure
+    always: true
+    runs: bin/majordomus-cli release version
+    summary: the version is authored in one place — share/version.txt, the projection the shell tool reads, states what the crate manifest declares, and no version is written by hand in bin/, lib/, scripts/ or share/ outside a generated artifact
+
+  # A page's link into its own source names the commit the site was built from, not master:
+  # a link to master points at whatever the file says today, and the page beside it says
+  # what the file said when it was rendered. The templates make those links through
+  # site/templates/source-links.html; this is the ratchet over the ones still hard-coded
+  # (test/cases/533_source_links_name_the_built_commit.sh). File reads only.
+  - id: source-pin-check
+    job: structure
+    always: true
+    runs: scripts/ci/source-pin-check
+    summary: no template under site/templates adds a source link that names master instead of the commit the page was built from — a ratchet over the blob/master and tree/master occurrences, per file, against .ai/repo/source-pin-baseline.txt
 
 classes:
   # the pipeline itself: a change here can only be validated by running everything
@@ -483,16 +557,20 @@ classes:
     paths: [.github/workflows/**, .github/actions/**, scripts/ci/**, scripts/ci-plan, scripts/ci-baseline, .ai/repo/ci/**, test/run.sh, test/lib.sh, justfile, .just/**]
     gates: full
 
-  # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline
+  # the Rust executable: its crate, its gate script, its coverage floor, its benchmark baseline.
+  # The crate's sources and the web module that serves the reference are under
+  # apps/majordomus-cli/**, and scripts/rust-check is its producer, so this class is the one
+  # that selects the rustdoc gate; the composite action that runs the producer in CI
+  # (.github/actions/rustdoc) is under the `ci` class above, which plans everything.
   - id: rust
     paths: [apps/majordomus-cli/**, scripts/ci/rust-command-check, scripts/ci/projection-check, scripts/ci/crate-boundary, scripts/rust-check, scripts/rust-coverage, scripts/ci/coverage-differential, scripts/rust-coverage-threshold, scripts/session-coverage-threshold, scripts/session-coverage-domain, .ai/repo/rust-quality-baseline.txt, .ai/repo/benchmarks/rust/**]
-    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, crate-boundary, version-surface, release-check]
+    gates: [rust-check, rust-command, generation-converges, rust-quality, projection-closure, rust-coverage, coverage-differential, rust-bench, command-graph, shell-suite, macos, cockpit-probe, worktree-topology, providers-data, order-check, entry-converges, mesh-check, mesh-lab, crate-boundary, version-surface, release-check, rustdoc]
 
   # the mesh: its declaration objects, their schema, the gate that holds the subsystem
-  # to ADR 0050, and the architecture document
+  # to ADR 0050 and ADR 0067, the network lab that accepts it, and the architecture document
   - id: mesh
-    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, docs/MESH.md]
-    gates: [mesh-check, rust-integration, shell-suite]
+    paths: [.ai/repo/mesh/**, share/schemas/majordomus/mesh-declaration/**, scripts/ci/mesh-check, scripts/ci/mesh-lab-evidence, test/mesh-lab/**, test/cases/414_mesh_lab_evidence.sh, apps/majordomus-cli/src/mesh/**, docs/MESH.md, docs/claims/mesh-*.md]
+    gates: [mesh-check, mesh-lab, rust-integration, shell-suite]
 
   # projections of the registry and the policy: generate --check decides whether they are
   # current, and their content is read by the site and by the suite
@@ -602,13 +680,14 @@ classes:
     paths: [.gitignore, .editorconfig, .github/ISSUE_TEMPLATE/**, .github/pull_request_template.md]
     gates: []
 
-  # the release as a projection: the module that composes the changelog and writes the two
-  # version sites, the sites themselves, and the records the changelog is composed from.
-  # Every path here is already in `rust`, `shell` or `layer`; the overlap is deliberate and
-  # can only widen a plan, and it is what keeps the class readable as one subject rather
-  # than as four edits to lists that are about something else.
+  # the release as a projection: the module that composes the changelog and writes the
+  # version, the one place it is authored and the lock's record of it, the projection the
+  # shell tool reads and the tool that reads it, and the records the changelog is composed
+  # from. Every path here is already in `rust`, `shell`, `share` or `layer`; the overlap is
+  # deliberate and can only widen a plan, and it is what keeps the class readable as one
+  # subject rather than as four edits to lists that are about something else.
   - id: release
-    paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, bin/majordomus, .ai/repo/releases/**]
+    paths: [apps/majordomus-cli/src/release/**, apps/majordomus-cli/Cargo.toml, apps/majordomus-cli/Cargo.lock, share/version.txt, bin/majordomus, .ai/repo/releases/**]
     gates: [release-check]
 
   # The commands that keep the self-accumulating quantities bounded (rule
@@ -617,3 +696,10 @@ classes:
   - id: backlog
     paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]
+
+  # Shell automation against its migration inventory: a unit added, changed or deleted under
+  # a governed directory, the inventory itself, the module that judges it, and its case.
+  # Every governed directory is already in another class; the overlap only widens a plan.
+  - id: shell-inventory
+    paths: [bin/**, lib/**, scripts/**, share/**, .githooks/**, .claude/hooks/**, .ai/repo/automation/**, apps/majordomus-cli/src/automation/**, apps/majordomus-cli/src/capability/builtin/shell.rs, apps/majordomus-cli/src/commands/shell.rs, test/cases/365_new_shell_is_refused.sh, test/cases/366_automation_inventory_agrees_with_the_tree.sh]
+    gates: [shell-inventory]

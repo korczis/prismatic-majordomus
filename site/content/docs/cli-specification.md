@@ -2049,13 +2049,15 @@ when the container could not be written or does not read back as what went in.
 Print the version and exit. `--version` is accepted as a synonym, and `version` works
 without an installation: it never reads `.ai/`.
 
-**Reads:** nothing.
+**Reads:** `share/version.txt` beside the tool — never the one `MAJORDOMUS_SHARE` names.
 **Writes:** nothing.
 
 **Behaviour:**
 - Prints `majordomus <version>` on stdout and exits `0`.
-- The same string is the single source of the version everywhere else, including the
-  public site's footer.
+- The version is authored in `apps/majordomus-cli/Cargo.toml`; `share/version.txt` is its
+  generated projection, shipped in every archive, and this command prints it. The public
+  site's footer reads the same answer.
+- Exits `12`, naming the file, when the distribution carries no `share/version.txt`.
 
 ## Hook integration (target)
 

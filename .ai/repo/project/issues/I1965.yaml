@@ -1,0 +1,31 @@
+id: I1965
+milestone: test-evidence
+title: The entry preflight reads the one verdict
+slug: the-preflight-reads-the-one-verdict
+priority: p2
+profile: implementation
+parallel_safe: true
+objective: "Move the entry preflight's verification.tests check onto the freshness function and its verification.enforcement check onto the rules corpus verdict, ending the one known exception ADR 0087 names in decisions 3 and 4. It depends on PR #578 as well as on I1948, because the preflight exists only on #578."
+why: "The preflight proposed in PR #578 counts a run as current by a filter of its own, with no containment test, and recounts rules::report instead of reading RulesVerdict. The entry briefing, the Cockpit overview, /api/v1/environment/preflight and the MCP tool majordomus_preflight render it, so every entry surface carries a second derivation of proven."
+current_state: "The preflight exists only on PR #578 (feature/entry-proves-what-is-active). Its observe_ledger calls evidence::changed_since and matches digests with no containment test; its enforcement_check compares the proven count with the owed count."
+desired_state: "observe_ledger judges each recorded run through the freshness function, with the test source as its input, at the working tree: a run counts as current only when proven, as failing only on a failure, and a skip as not run. enforcement_check says verified only when RulesVerdict is proven. The cache keeps its fingerprint, and no capability declaration or schema changes."
+scope:
+  - apps/majordomus-cli/src/environment/preflight.rs
+  - test/cases/529_the_preflight_reads_the_one_verdict.sh
+non_scope:
+  - "A capability declaration or an output schema change: if one proves necessary, the slice stops and joins the capability chain after I1953"
+  - "apps/majordomus-cli/src/evidence and apps/majordomus-cli/src/rules"
+depends_on:
+  - I1948
+acceptance_criteria:
+  - "A run recorded on a commit HEAD does not contain, with an identical tree, is not current"
+  - "A corpus whose blocking rule is only inputs_unchanged is not verified"
+  - "A skip is counted as not run, never as a failure"
+  - "The entry briefing and the Cockpit overview render the verdict evidence show gives"
+validation:
+  - bash test/run.sh 529_the_preflight_reads_the_one_verdict
+evidence_required:
+  - preflight_reads_the_one_verdict
+risk: "It starts only once PR #578 and PR #597, carrying I1948's slice, are both on master. The case name is this slice's to confirm when it is written."
+created_at: 2026-09-26
+updated_at: 2026-09-26

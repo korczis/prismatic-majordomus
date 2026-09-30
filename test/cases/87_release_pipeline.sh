@@ -91,6 +91,78 @@ expect_exit 0 "$ROOT/scripts/release-version" --check --tag "v$("$ROOT/scripts/r
 awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && /scripts\/derive/{found=1} END{exit !found}' "$WF" \
   || { echo "    the publication job does not run scripts/derive; it would commit a guide the site's data no longer matches"; exit 1; }
 
+# --- the record is in the index before anything derives from it, and judged before it is proposed
+# The layer is what git's index lists (VcsIndex runs `git ls-files`), so an untracked record is
+# no object of it: the generators that read files by path see it, the ones that enumerate the
+# index do not, and the tree they write together is red on arrival. v0.8.0's record pull
+# request (#624) failed generate --check for exactly that and was repaired by hand. So the
+# order inside the publication job is the property: written, staged, derived, everything
+# staged, derive-check, and only then pushed and proposed. Positions are line numbers of the
+# job's commands, comments excluded, so a sentence that mentions a command cannot stand in
+# for it.
+job_line() { # <job> <awk regex>: the first command line of the job that matches, or nothing
+  awk -v job="^  $1:" -v re="$2" '
+    /^  [a-z0-9_-]+:[ \t]*$/ {p = ($0 ~ job); next}
+    p && $0 !~ /^[ \t]*#/ && $0 ~ re {print NR; exit}' "$WF"
+}
+recorded="$(job_line publish 'scripts/release-record --tag')"
+staged="$(job_line publish 'git add -- "[.]ai/repo/releases/[$]tag[.]yaml"')"
+derived="$(job_line publish '^[ \t]*(run:[ \t]*)?scripts/derive[ \t]*$')"
+staged_all="$(job_line publish 'git add -A')"
+checked="$(job_line publish 'scripts/derive-check')"
+pushed="$(job_line publish 'git push')"
+proposed="$(job_line publish 'gh pr create')"
+for pair in "recorded:$recorded" "staged:$staged" "derived:$derived" "staged_all:$staged_all" \
+            "checked:$checked" "pushed:$pushed" "proposed:$proposed"; do
+  [ -n "${pair#*:}" ] || { echo "    the publication job has no command for '${pair%%:*}'"; exit 1; }
+done
+before() { # <a> <b> <message>: line a precedes line b
+  [ "$1" -lt "$2" ] || { echo "    $3 (line $1 is not before line $2)"; exit 1; }
+}
+before "$recorded" "$staged" "the record is staged before it is written"
+before "$staged" "$derived" "the record is staged after scripts/derive runs, so the index-reading projections derive without it"
+before "$derived" "$staged_all" "the projections are staged before the derivation wrote them"
+before "$staged_all" "$checked" "scripts/derive-check judges the tree before what will be committed is staged"
+before "$checked" "$pushed" "the record branch is pushed before scripts/derive-check judged it"
+before "$checked" "$proposed" "the record pull request is opened before scripts/derive-check judged it"
+awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && /continue-on-error/{found=1} END{exit found}' "$WF" \
+  || { echo "    a publication step may fail without failing the job; a refused derive-check must stop the proposal"; exit 1; }
+# ...and its verdict is the job's. Running before the push is not judging: `|| true`, a branch
+# that only warns or exits 0, or `&& ...` would report the refusal and propose the tree anyway,
+# which is the pull request born red this order exists to prevent. The runner's shell is
+# `bash -e`, so the bare command fails the step; the other accepted form is a failure branch
+# that ends in a non-zero exit.
+awk -v n="$checked" '
+  NR == n {
+    if ($0 ~ /^[ \t]*scripts\/derive-check[ \t]*$/) {ok = 1; exit}
+    if ($0 !~ /^[ \t]*scripts\/derive-check[ \t]*\|\|[ \t]*\{[ \t]*$/) exit
+    branch = 1; next
+  }
+  branch && /^[ \t]*\}[ \t]*$/ {exit}
+  branch && /^[ \t]*exit[ \t]+0?[ \t]*$/ {ok = 0; exit}
+  branch && /^[ \t]*exit[ \t]+[1-9][0-9]*[ \t]*$/ {ok = 1}
+  END {exit !ok}' "$WF" \
+  || { echo "    a refused scripts/derive-check does not fail the publication job"; exit 1; }
+awk '/^  publish:/{p=1} /^  smoke:/{p=0} p && $0 !~ /^[ \t]*#/ && /set \+e/{found=1} END{exit found}' "$WF" \
+  || { echo "    the publication job turns off bash -e, so a refused scripts/derive-check need not fail it"; exit 1; }
+
+# --- smoke fails, and names the pull request, while the record is only a proposal -------------
+# It used to exit 0 with a notice, and the install step after it then failed with a message
+# about a download instead of the unmerged record that was the cause. The wait's one success
+# exit is inside its bounded loop; nothing before the loop may pass the step.
+grep -qF 'record_pr: ${{ steps.record.outputs.record_pr }}' "$WF" \
+  || { echo "    the publication job does not expose the record pull request as an output"; exit 1; }
+job_line smoke 'needs[.]publish[.]outputs[.]record_pr' | grep -q . \
+  || { echo "    the smoke job does not name the record pull request it waits on"; exit 1; }
+job_line smoke '::error::.*record is still a proposal.*re-run this job' | grep -q . \
+  || { echo "    the smoke job does not fail with an error naming the unmerged record and the re-run"; exit 1; }
+loop="$(job_line smoke 'for attempt in [$][(]seq 1 [0-9]+[)]')"
+passed="$(job_line smoke 'exit 0')"
+[ -n "$loop" ] || { echo "    the smoke job's wait is no longer bounded"; exit 1; }
+if [ -n "$passed" ]; then
+  before "$loop" "$passed" "the smoke job passes before its bounded wait saw the release"
+fi
+
 # --- the publication phase is the only one that runs gh ------------------------------------------
 awk '/^  plan:/{p=1} /^  publish:/{p=0} p && /gh release/{found=1} END{exit found}' "$WF" \
   || { echo "    a job before publication calls gh release"; exit 1; }

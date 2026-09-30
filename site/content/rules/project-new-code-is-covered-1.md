@@ -1,7 +1,7 @@
 +++
 title = "New and changed executable code is covered by a test; legacy debt may only shrink"
 description = "New and changed executable code is covered by a test; legacy debt may only shrink"
-weight = 101
+weight = 103
 [extra]
 kind = "rule"
 slug = "project-new-code-is-covered-1"

@@ -163,6 +163,21 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "writes the committed projections of the registry into the working tree, which a read-only API never offers.",
     },
     LocalCommand {
+        command: "economics measure",
+        reason: LocalReason::WritesRepository,
+        note: "records a counted measurement of the context compiler into the benchmark's evidence directory, which a read-only API never offers.",
+    },
+    LocalCommand {
+        command: "economics run",
+        reason: LocalReason::WritesRepository,
+        note: "spends provider usage running real harness sessions and records their usage and gate verdicts as evidence; a deliberate act of a person, never a request.",
+    },
+    LocalCommand {
+        command: "economics references",
+        reason: LocalReason::SessionLocal,
+        note: "builds disposable workspaces on this machine and runs each task's tests in them; a remote caller shares neither the machine nor the toolchain.",
+    },
+    LocalCommand {
         command: "bench",
         reason: LocalReason::WritesRepository,
         note: "times every capability through every transport and writes the results; a measurement served over a transport would be measuring itself.",
@@ -269,6 +284,71 @@ pub const LOCAL: &[LocalCommand] = &[
         command: "mesh nodes",
         reason: LocalReason::RendersCapability("mesh.nodes"),
         note: "asks this checkout's running server for mesh.nodes and renders it, for the same reason as mesh status: the registry is the server's, not this process's.",
+    },
+    LocalCommand {
+        command: "mesh peers",
+        reason: LocalReason::RendersCapability("mesh.peers"),
+        note: "asks this checkout's running server for mesh.peers and renders the machine, runtime and session tree: links and the journal are the server's memory.",
+    },
+    LocalCommand {
+        command: "mesh peer",
+        reason: LocalReason::RendersCapability("mesh.peer"),
+        note: "asks this checkout's running server for mesh.peer and renders one runtime; exits 10 when the runtime is not known there.",
+    },
+    LocalCommand {
+        command: "mesh state",
+        reason: LocalReason::RendersCapability("mesh.state"),
+        note: "asks this checkout's running server for mesh.state and renders the folded cooperation state and its digest.",
+    },
+    LocalCommand {
+        command: "mesh events",
+        reason: LocalReason::RendersCapability("mesh.events"),
+        note: "asks this checkout's running server for mesh.events and renders one page of the journal.",
+    },
+    LocalCommand {
+        command: "mesh verify",
+        reason: LocalReason::RendersCapability("mesh.verify"),
+        note: "runs mesh.verify on this checkout's running server — the rounds are the server's links — and exits 10 when a check or a round fails.",
+    },
+    LocalCommand {
+        command: "mesh claim",
+        reason: LocalReason::RendersCapability("mesh.claim"),
+        note: "runs mesh.claim on this checkout's running server, whose journal replicates it; exits 10 with the conflicting claims when it is refused.",
+    },
+    LocalCommand {
+        command: "mesh release",
+        reason: LocalReason::RendersCapability("mesh.release"),
+        note: "runs mesh.release on this checkout's running server, the only process that holds the claim.",
+    },
+    LocalCommand {
+        command: "mesh session open",
+        reason: LocalReason::RendersCapability("mesh.session.open"),
+        note: "runs mesh.session.open on this checkout's running server, whose journal replicates the session.",
+    },
+    LocalCommand {
+        command: "mesh session close",
+        reason: LocalReason::RendersCapability("mesh.session.close"),
+        note: "runs mesh.session.close on this checkout's running server.",
+    },
+    LocalCommand {
+        command: "mesh handover publish",
+        reason: LocalReason::RendersCapability("mesh.handover.publish"),
+        note: "runs mesh.handover.publish on this checkout's running server, which reads the record and replicates it.",
+    },
+    LocalCommand {
+        command: "mesh handover consume",
+        reason: LocalReason::RendersCapability("mesh.handover.consume"),
+        note: "runs mesh.handover.consume on this checkout's running server, which holds the replicated handover and writes the local record.",
+    },
+    LocalCommand {
+        command: "mesh review request",
+        reason: LocalReason::RendersCapability("mesh.review.request"),
+        note: "runs mesh.review.request on this checkout's running server, whose link table knows which peers carry reviews.",
+    },
+    LocalCommand {
+        command: "mesh review answer",
+        reason: LocalReason::RendersCapability("mesh.review.answer"),
+        note: "runs mesh.review.answer on this checkout's running server, whose journal holds the request.",
     },
     LocalCommand {
         command: "capabilities validate",
@@ -418,6 +498,11 @@ pub const LOCAL: &[LocalCommand] = &[
         note: "prints the same facts with where each one was read from.",
     },
     LocalCommand {
+        command: "env preflight",
+        reason: LocalReason::RendersCapability("environment.preflight"),
+        note: "prints what is proven about this checkout, verdict by verdict with its evidence; it resolves fast from the cached rule tally unless --full asks it to count.",
+    },
+    LocalCommand {
         command: "env banner",
         reason: LocalReason::SessionLocal,
         note: "prints the one-line banner direnv shows on entering this worktree; it is about the shell that just arrived.",
@@ -468,7 +553,7 @@ pub const LOCAL: &[LocalCommand] = &[
     LocalCommand {
         command: "release bump",
         reason: LocalReason::WritesRepository,
-        note: "raises the version in both places it is written; the one writer, and a deliberate act.",
+        note: "raises the version in the one place it is authored, and the lock's record of it; the one writer, and a deliberate act.",
     },
 ];
 
