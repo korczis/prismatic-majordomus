@@ -68,7 +68,7 @@ pub enum Command {
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
     Product(ProductArgs),
-    /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version the two writers state, and the one command that raises both
+    /// What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it
     Release(ReleaseArgs),
     /// What this executable's own public surface is held to: documentation, executable examples, module coverage, and every command accounted for against the capability registry
     Quality(QualityArgs),
@@ -84,10 +84,112 @@ pub enum Command {
     Models(ModelsArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
+    /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
+    Served(ServedArgs),
     /// Every rule against the proof there is for it: what each one names, whether it is in the tree, whether a runner drives it, whether anything ran, and whether what ran is older than what it is about
     Rules(RulesArgs),
+    /// Whether each product feature exists: on master, deployed, publicly verified, tested, its evidence published and linked — every dimension computed, unknown never a pass
+    Delivery(DeliveryArgs),
+    /// Token economics, measured: matched runs with and without Majordomus, every metric with its measurement class and sample size, the statement the evidence allows, and the check that refuses an unsupported savings claim
+    Economics(EconomicsArgs),
     /// Every object of the layer as an addressable node: the kinds and their routes, and one entity with its references, its backlinks, the surfaces that answer for it and the state of what it names
     Entity(EntityArgs),
+    /// The repository's shell automation against the tracked migration inventory: every shell unit declared with an exemption, and every exemption naming a unit the tree still has
+    Shell(ShellArgs),
+    /// The Dashboard Suite: each page a projection of the capabilities that hold its facts, every card carrying its source capability, the JSON pointer its value was read from, the Cockpit page with the evidence and the command that acts on it
+    Dashboard(DashboardArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus dashboard`. Every subcommand is one page of the Dashboard Suite, run through
+/// the capability that answers it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DashboardArgs, DashboardCommand, OutputFormat};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "dashboard", "overview", "--format", "json"]).unwrap();
+/// let Command::Dashboard(args) = cli.command else { panic!("not the dashboard command") };
+/// let args: DashboardArgs = args;
+/// assert!(matches!(args.command, DashboardCommand::Overview));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct DashboardArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `overview`. Required: the group runs nothing of its own.
+    pub command: DashboardCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus dashboard`: one per page of the suite.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, DashboardCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "dashboard", "overview"]).unwrap();
+/// let Command::Dashboard(args) = cli.command else { panic!("not the dashboard command") };
+/// assert!(matches!(args.command, DashboardCommand::Overview));
+/// ```
+pub enum DashboardCommand {
+    /// Is it healthy, what changed, what is broken, what needs action: every card with its value, the source's verdict, and the capability and pointer it was read from; exit 10 when the overview is fail or unknown
+    Overview,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus shell`. The output shape is global, so it reads the way a person writes it.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ShellArgs};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "shell", "check", "--format", "json"]).unwrap();
+/// let Command::Shell(args) = cli.command else { panic!("not the shell command") };
+/// let args: ShellArgs = args;
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ShellArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `check`. Required: the group runs nothing of its own.
+    pub command: ShellCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus shell`: `check` measures the repository's shell units
+/// against the automation inventory, and `--canonical` puts the inventory's records back
+/// in canonical order before it measures.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ShellCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "shell", "check", "--canonical"]).unwrap();
+/// let Command::Shell(args) = cli.command else { panic!("not the shell command") };
+/// assert!(matches!(args.command, ShellCommand::Check { canonical: true }));
+/// ```
+pub enum ShellCommand {
+    /// Refuse every shell unit the inventory does not declare, and every declaration whose unit is gone; exit 10 on a finding, 12 when the tree cannot be measured
+    Check {
+        /// Rewrite .ai/repo/automation/inventory.jsonl with its records in canonical order, then check
+        #[arg(long)]
+        canonical: bool,
+    },
 }
 
 #[derive(Debug, Args)]
@@ -182,6 +284,592 @@ pub enum MeshCommand {
     Identity(MeshQueryArgs),
     /// Prove the mesh prerequisites on this machine alone: declaration, identity, sockets, multicast, broadcast, and the protocol end to end
     Doctor(MeshQueryArgs),
+    /// Every machine, runtime and session this checkout's server cooperates with, with each link's state
+    Peers(MeshQueryArgs),
+    /// One runtime: its machine, liveness, link, sessions and claims; exits 10 when it is not known here
+    Peer(MeshPeerArgs),
+    /// The state every linked runtime converges on: sessions, claims and conflicts, handovers, reviews, and the digest
+    State(MeshQueryArgs),
+    /// The cooperation journal's events after a Lamport stamp, in Lamport order
+    Events(MeshEventsArgs),
+    /// Prove cooperation now: local health, a live round with every peer this server dials, and convergence; exits 10 when a check fails
+    Verify(MeshQueryArgs),
+    /// Claim repository paths for a session; exits 10 naming the claims it meets when an exclusive claim on any linked runtime holds them
+    Claim(MeshClaimArgs),
+    /// Release a claim this server's current run holds
+    Release(MeshReleaseArgs),
+    /// Open, update or close a session on the mesh
+    Session(MeshSessionArgs),
+    /// Publish a handover of this checkout to the mesh, or consume one another runtime published
+    Handover(MeshHandoverArgs),
+    /// Ask the mesh for a review, or answer a request
+    Review(MeshReviewArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh peer`: which single runtime of the mesh to describe. The runtime key is
+/// `<node>-<runtime>`, and a bare node id is accepted as a shorthand for that node's first
+/// runtime, because a machine running one server is the common case and spelling its
+/// runtime out adds nothing. The key is positional and required: a `peer` question with no
+/// subject is `peers`, which is a different command.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshPeerArgs};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "peer", "a1b2c3d4-r1"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Peer(peer) = mesh.command else { panic!("expected `peer`") };
+/// assert_eq!(peer.runtime, "a1b2c3d4-r1");
+///
+/// // the runtime is the whole question, so there is no answer without one
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "peer"]).is_err());
+/// ```
+pub struct MeshPeerArgs {
+    /// The runtime key `<node>-<runtime>`, or a node id for its first runtime
+    pub runtime: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh events`: a window onto the cooperation journal, in Lamport order. `--after` is a
+/// resume point rather than a timestamp, so a caller that remembers the last stamp it saw
+/// reads each event exactly once however the clocks of the machines involved disagree;
+/// `--limit` bounds one answer. Both are optional, and saying neither asks for the newest
+/// page under the server's own default.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshEventsArgs};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "events", "--after", "42", "--limit", "10"])
+///         .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!(events.after, Some(42));
+/// assert_eq!(events.limit, Some(10));
+///
+/// // neither flag is the whole journal under the server's default page
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "events"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Events(events) = mesh.command else { panic!("expected `events`") };
+/// assert_eq!((events.after, events.limit), (None, None));
+/// ```
+pub struct MeshEventsArgs {
+    /// Only events whose Lamport stamp is above this
+    #[arg(long)]
+    pub after: Option<u64>,
+    /// At most this many (default 100, at most 1000)
+    #[arg(long)]
+    pub limit: Option<u64>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh claim`: the paths a session takes, the session taking them, and whether the claim
+/// refuses an overlap or only reports one. The scope is positional and repeatable because
+/// a claim over nothing is not a claim; `--session` is required because a claim belongs to
+/// a session and ends with it, and `--advisory` is the difference between a claim that can
+/// refuse another runtime's and one that only makes the overlap visible.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshClaimArgs, MeshCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "claim", "src/mesh", "docs/MESH.md",
+///     "--session", "s1", "--intent", "document the mesh",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Claim(claim) = mesh.command else { panic!("expected `claim`") };
+/// assert_eq!(claim.scope, ["src/mesh", "docs/MESH.md"]);
+/// assert_eq!(claim.session, "s1");
+/// assert!(!claim.advisory, "a claim refuses an overlap unless it says otherwise");
+///
+/// // a claim over no path at all is a parse error, not an empty claim
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "claim", "--session", "s1"]).is_err());
+/// ```
+pub struct MeshClaimArgs {
+    /// Repository-relative paths to claim
+    #[arg(required = true)]
+    pub scope: Vec<String>,
+    /// The claiming session's id within this runtime (opened when new)
+    #[arg(long)]
+    pub session: String,
+    /// What the claim is for
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// An advisory claim: overlaps are reported, never refused
+    #[arg(long)]
+    pub advisory: bool,
+    /// The issue the claim is for
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The task the session works under
+    #[arg(long)]
+    pub task: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh release`: the one claim to give back, by the `<stream>/<claim>` key `mesh claim`
+/// printed when it took it. The key names the stream that made the claim as well as the
+/// claim itself, so a runtime can only release what it holds, and a person who kept the
+/// line `mesh claim` printed needs nothing else.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReleaseArgs};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "release", "a1b2c3d4-r1/claim-7"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Release(release) = mesh.command else { panic!("expected `release`") };
+/// assert_eq!(release.claim, "a1b2c3d4-r1/claim-7");
+///
+/// // releasing nothing in particular is not a release
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "release"]).is_err());
+/// ```
+pub struct MeshReleaseArgs {
+    /// The claim's key, `<stream>/<claim>`, as `mesh claim` printed it
+    pub claim: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh session`: the group that carries a session's lifecycle on the mesh. The group
+/// itself runs nothing — every runnable path under it is `open` or `close` — so it refuses
+/// to be invoked bare rather than guessing which half of a lifecycle was meant.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionArgs, MeshSessionCommand};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "session", "close", "--session", "s1"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let session: MeshSessionArgs = session;
+/// assert!(matches!(session.command, MeshSessionCommand::Close(_)));
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "session"]).is_err());
+/// ```
+pub struct MeshSessionArgs {
+    #[command(subcommand)]
+    /// `open` or `close`.
+    pub command: MeshSessionCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The two ends of a session's life on the mesh: `open`, which announces a session and
+/// updates what it says about itself, and `close`, which ends it and with it every claim
+/// it held on every linked runtime. There is no third verb, because everything a session
+/// does between those two ends is a claim, a handover or a review.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s1", "--client", "claude-code",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// assert_eq!(open.client.as_deref(), Some("claude-code"));
+/// ```
+pub enum MeshSessionCommand {
+    /// Open or update a session: what it is, what it does, where
+    Open(MeshSessionOpenArgs),
+    /// Close a session; its claims end with it on every linked runtime
+    Close(MeshSessionCloseArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh session open`: everything a session says about itself, so that another runtime's
+/// operator can tell who is here and what they are doing. Only `--session` is required;
+/// the rest — client, worker, intent, task, issue, milestone, branch, head — are what the
+/// session knows about its own work, and opening the same id twice updates the record
+/// rather than refusing, which is what makes this usable from a hook that cannot know
+/// whether it has run before.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCommand, MeshSessionOpenArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "session", "open", "--session", "s1",
+///     "--worker", "documenter", "--branch", "feature/mesh-cooperation",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Open(open) = session.command else { panic!("expected `open`") };
+/// let open: MeshSessionOpenArgs = open;
+/// assert_eq!(open.session, "s1");
+/// assert_eq!(open.worker.as_deref(), Some("documenter"));
+/// assert_eq!(open.branch.as_deref(), Some("feature/mesh-cooperation"));
+/// assert_eq!(open.task, None, "what the session does not say stays unsaid");
+///
+/// // a session without an id is not a session
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "open"]).is_err());
+/// ```
+pub struct MeshSessionOpenArgs {
+    /// The session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// The client (`claude-code`, `codex`, `cli`)
+    #[arg(long)]
+    pub client: Option<String>,
+    /// The worker's name for itself
+    #[arg(long)]
+    pub worker: Option<String>,
+    /// What the session is doing
+    #[arg(long)]
+    pub intent: Option<String>,
+    /// The task id
+    #[arg(long)]
+    pub task: Option<String>,
+    /// The issue
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The milestone
+    #[arg(long)]
+    pub milestone: Option<String>,
+    /// The branch
+    #[arg(long)]
+    pub branch: Option<String>,
+    /// The head commit
+    #[arg(long)]
+    pub head: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh session close`: the id of the session that has finished. Closing is the one act
+/// that ends a session's claims everywhere at once, so it takes the session and nothing
+/// else — there is no partial close, and no flag that could make one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshSessionCloseArgs, MeshSessionCommand};
+///
+/// let cli =
+///     Cli::try_parse_from(["majordomus", "mesh", "session", "close", "--session", "s1"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Session(session) = mesh.command else { panic!("expected `session`") };
+/// let MeshSessionCommand::Close(close) = session.command else { panic!("expected `close`") };
+/// let close: MeshSessionCloseArgs = close;
+/// assert_eq!(close.session, "s1");
+///
+/// // and closing no session in particular is refused
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "session", "close"]).is_err());
+/// ```
+pub struct MeshSessionCloseArgs {
+    /// The session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh handover`: the group that moves a handover record between runtimes. Continuity
+/// between two workers of one repository is otherwise a file one of them cannot see, and
+/// the two verbs here are the two halves of that move; the group runs neither by itself.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverArgs, MeshHandoverCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "mesh", "handover", "publish"]).unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let handover: MeshHandoverArgs = handover;
+/// assert!(matches!(handover.command, MeshHandoverCommand::Publish(_)));
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "handover"]).is_err());
+/// ```
+pub struct MeshHandoverArgs {
+    #[command(subcommand)]
+    /// `publish` or `consume`.
+    pub command: MeshHandoverCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The two halves of moving continuity across the mesh: `publish` offers this checkout's
+/// handover to every linked runtime, and `consume` takes one another runtime offered and
+/// writes it where `handover --resolve` will find it. Publishing does not choose a reader
+/// and consuming does not ask the publisher, so neither side has to be running when the
+/// other acts.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "handover", "consume", "h-7", "--session", "s1",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let MeshHandoverCommand::Consume(consume) = handover.command else { panic!("expected it") };
+/// assert_eq!(consume.handover, "h-7");
+/// ```
+pub enum MeshHandoverCommand {
+    /// Publish this checkout's newest handover record (or the one named) to every linked runtime
+    Publish(MeshHandoverPublishArgs),
+    /// Consume a handover another runtime published, writing it as a local record `handover --resolve` finds
+    Consume(MeshHandoverConsumeArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh handover publish`: which record to offer, and what it belongs to. Every flag is
+/// optional because the useful default is the newest handover this checkout wrote — the
+/// one a worker has just finished — and `--path` exists for the case where that is not the
+/// one meant. The issue and milestone travel with the record so that a runtime receiving
+/// it can file it without reading it.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverCommand,
+///     MeshHandoverPublishArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "handover", "publish", "--issue", "I1703",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let MeshHandoverCommand::Publish(publish) = handover.command else { panic!("expected it") };
+/// let publish: MeshHandoverPublishArgs = publish;
+/// assert_eq!(publish.issue.as_deref(), Some("I1703"));
+/// assert_eq!(publish.path, None, "no path means the newest record this checkout wrote");
+/// ```
+pub struct MeshHandoverPublishArgs {
+    /// The record, relative to the repository root, under .ai/local/state/handovers/
+    #[arg(long)]
+    pub path: Option<String>,
+    /// The issue the handover belongs to
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The milestone it belongs to
+    #[arg(long)]
+    pub milestone: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh handover consume`: which offered handover to take, and on whose behalf. The
+/// consumption is recorded on the mesh so that two workers cannot silently pick up the
+/// same handover, which is why the session is required and not inferred.
+/// `--no-materialize` records the act without writing the local record, for a caller that
+/// wants the claim on the handover but will read it some other way.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshHandoverCommand,
+///     MeshHandoverConsumeArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "handover", "consume", "h-7", "--session", "s1",
+///     "--no-materialize",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Handover(handover) = mesh.command else { panic!("expected `handover`") };
+/// let MeshHandoverCommand::Consume(consume) = handover.command else { panic!("expected it") };
+/// let consume: MeshHandoverConsumeArgs = consume;
+/// assert_eq!((consume.handover.as_str(), consume.session.as_str()), ("h-7", "s1"));
+/// assert!(consume.no_materialize);
+///
+/// // the consuming session is what makes the consumption attributable, so it is required
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "handover", "consume", "h-7"]).is_err());
+/// ```
+pub struct MeshHandoverConsumeArgs {
+    /// The handover's id, as `mesh state` lists it
+    pub handover: String,
+    /// The consuming session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// Record the consumption without writing a local handover record
+    #[arg(long)]
+    pub no_materialize: bool,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh review`: the group that carries a review across runtimes, so that a worker can
+/// have its branch read by a worker it cannot otherwise address. Asking and answering are
+/// separate acts by separate runtimes, which is why they are separate subcommands and the
+/// group itself runs nothing.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewArgs, MeshReviewCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "request", "feature/x", "--session", "s1",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let review: MeshReviewArgs = review;
+/// assert!(matches!(review.command, MeshReviewCommand::Request(_)));
+///
+/// // the group has no behaviour of its own
+/// assert!(Cli::try_parse_from(["majordomus", "mesh", "review"]).is_err());
+/// ```
+pub struct MeshReviewArgs {
+    #[command(subcommand)]
+    /// `request` or `answer`.
+    pub command: MeshReviewCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The two sides of a review on the mesh: `request` puts a subject and its scope in front
+/// of the other runtimes, and `answer` records one runtime's verdict on it. A request
+/// names a reviewer only when it wants a particular one; unaddressed, it is an offer any
+/// linked runtime may answer.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "answer", "a1b2c3d4-r1/rev-2",
+///     "--session", "s1", "--verdict", "approved",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Answer(answer) = review.command else { panic!("expected `answer`") };
+/// assert_eq!(answer.verdict, "approved");
+/// ```
+pub enum MeshReviewCommand {
+    /// Ask for a review of a branch, commit or pull request
+    Request(MeshReviewRequestArgs),
+    /// Answer a review request
+    Answer(MeshReviewAnswerArgs),
+}
+
+#[derive(Debug, Args)]
+/// `mesh review request`: what is to be read, who is asking, and optionally who is asked.
+/// The subject is a branch, a commit or a pull request, written as the requester refers to
+/// it; `--scope` is repeatable and narrows the request to the paths that matter, which is
+/// what makes an answer cheap enough to be worth asking for. Leaving `--reviewer` unsaid
+/// offers the request to every linked runtime rather than to none.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewCommand,
+///     MeshReviewRequestArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "request", "feature/mesh-cooperation",
+///     "--session", "s1", "--scope", "src/mesh", "--scope", "docs/MESH.md",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Request(request) = review.command else { panic!("expected it") };
+/// let request: MeshReviewRequestArgs = request;
+/// assert_eq!(request.subject, "feature/mesh-cooperation");
+/// assert_eq!(request.scope, ["src/mesh", "docs/MESH.md"]);
+/// assert_eq!(request.reviewer, None, "unaddressed: any linked runtime may answer");
+/// ```
+pub struct MeshReviewRequestArgs {
+    /// What to review: a branch, a commit, a pull request
+    pub subject: String,
+    /// The requesting session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// A path the review covers (repeatable)
+    #[arg(long)]
+    pub scope: Vec<String>,
+    /// The issue
+    #[arg(long)]
+    pub issue: Option<String>,
+    /// The runtime asked, `<node>-<runtime>`
+    #[arg(long)]
+    pub reviewer: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
+}
+
+#[derive(Debug, Args)]
+/// `mesh review answer`: the request being answered, the session answering it, and the
+/// verdict. The verdict is one of three declared words rather than free text, so that a
+/// requester can act on an answer without reading it, and clap refuses anything else at
+/// the boundary; the note is where the reasoning goes.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, MeshCommand, MeshReviewAnswerArgs, MeshReviewCommand};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "answer", "a1b2c3d4-r1/rev-2", "--session", "s1",
+///     "--verdict", "changes_requested", "--note", "the fold is not deterministic",
+/// ])
+/// .unwrap();
+/// let Command::Mesh(mesh) = cli.command else { panic!("expected `mesh`") };
+/// let MeshCommand::Review(review) = mesh.command else { panic!("expected `review`") };
+/// let MeshReviewCommand::Answer(answer) = review.command else { panic!("expected `answer`") };
+/// let answer: MeshReviewAnswerArgs = answer;
+/// assert_eq!(answer.request, "a1b2c3d4-r1/rev-2");
+/// assert_eq!(answer.verdict, "changes_requested");
+/// assert_eq!(answer.note.as_deref(), Some("the fold is not deterministic"));
+///
+/// // a verdict outside the three declared words is refused before anything runs
+/// assert!(Cli::try_parse_from([
+///     "majordomus", "mesh", "review", "answer", "a1b2c3d4-r1/rev-2", "--session", "s1",
+///     "--verdict", "lgtm",
+/// ])
+/// .is_err());
+/// ```
+pub struct MeshReviewAnswerArgs {
+    /// The request's key, `<stream>/<review>`
+    pub request: String,
+    /// The answering session's id within this runtime
+    #[arg(long)]
+    pub session: String,
+    /// What the reviewer decided
+    #[arg(long, value_parser = [
+        clap::builder::PossibleValue::new("approved")
+            .help("the work is good as it stands and the requester may proceed"),
+        clap::builder::PossibleValue::new("changes_requested")
+            .help("the work needs changing before it proceeds; the note says what"),
+        clap::builder::PossibleValue::new("commented")
+            .help("an observation with no verdict: neither approval nor a request to change"),
+    ])]
+    pub verdict: String,
+    /// The note
+    #[arg(long)]
+    pub note: Option<String>,
+    #[command(flatten)]
+    /// Where the repository is and how to answer.
+    pub query: MeshQueryArgs,
 }
 
 #[derive(Debug, Args)]
@@ -325,11 +1013,20 @@ pub enum EnvCommand {
         #[arg(value_name = "FIELD")]
         field: Option<String>,
     },
+    /// Whether Majordomus is in force in this checkout, claim by claim, with the evidence behind each verdict: git, the episode and its briefing, the task and handover, the policy, rules and ADRs, the shared server and the surfaces it serves, the peer board, recorded test runs, rule enforcement, provider projections and the deployment. A verdict that asserts something is in force always names its evidence. Resolves fast, from the rule tally a `--full` run cached; the HTTP route `/api/v1/environment/preflight` and the MCP tool `majordomus_preflight` answer the same value
+    Preflight {
+        /// The short form entering the repository draws: one line of claims and the most urgent thing to look at
+        #[arg(long)]
+        compact: bool,
+        /// Build the index and count the rule proofs now, and leave the tally for entry to read
+        #[arg(long)]
+        full: bool,
+    },
 }
 
 #[derive(Debug, Args)]
 /// `majordomus release`. The read half is derived and the write half is one command, so
-/// that raising a version is a thing that happens once rather than in two files by hand.
+/// that raising a version is one edit to the one place it is authored, and the rest is derived.
 pub struct ReleaseArgs {
     #[command(flatten)]
     /// Where and how the repository is read.
@@ -353,7 +1050,7 @@ pub enum ReleaseCommand {
         #[arg(value_name = "VERSION")]
         version: Option<String>,
     },
-    /// The version the two writers state, whether they agree, and the bump the commits since the last release imply
+    /// The version the crate manifest declares, whether the projection the shell tool reads states it, any version written by hand where the tool's files live, and the bump the commits since the last release imply
     Version,
     /// What the public contract did since the last release, and the smallest version this tree may therefore declare
     Analyze {
@@ -364,7 +1061,7 @@ pub enum ReleaseCommand {
         #[arg(long)]
         explain: bool,
     },
-    /// Raise the version in both places at once, to at least what the public contract requires
+    /// Raise the version in the one place it is authored, to at least what the public contract requires; scripts/derive derives the rest
     Bump {
         /// Raise by this much instead of by the measured minimum; never below it
         #[arg(long, value_name = "LEVEL")]
@@ -379,11 +1076,12 @@ pub enum ReleaseCommand {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus quality`. One subcommand today; declared as a group so that a second
-/// measurement joins it rather than crowding the root.
+/// `majordomus quality`. Declared as a group so that each measurement of the crate joins it
+/// rather than crowding the root: the public surface's quality, and the tree rustdoc renders
+/// from it.
 pub struct QualityArgs {
     #[command(subcommand)]
-    /// `report`.
+    /// `report` or `rustdoc`.
     pub command: QualityCommand,
 }
 
@@ -392,6 +1090,59 @@ pub struct QualityArgs {
 pub enum QualityCommand {
     /// Measure the crate and report every finding, with the rule it breaks and what to do about it
     Report(QualityReportArgs),
+    /// Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked
+    Rustdoc(QualityRustdocArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus quality rustdoc`: the tree rustdoc rendered from the crate, judged against the
+/// crate's own inventory of exported items.
+///
+/// Without `--tree` the subject is the `rustdoc` web surface's artifact as the topology
+/// resolves it, through the capability `quality.rustdoc`, exactly as HTTP and MCP ask. With
+/// it, a person judges another copy of the same tree — the one `scripts/site-build` composed
+/// into the site, say — by the same judgement; a path is an input of this terminal only and
+/// never of the capability.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, QualityCommand, QualityRustdocArgs};
+///
+/// let cli = Cli::try_parse_from([
+///     "majordomus", "quality", "rustdoc", "--tree", "site/public/rustdoc", "--kind", "link",
+/// ])
+/// .unwrap();
+/// let args: QualityRustdocArgs = match cli.command {
+///     Command::Quality(q) => match q.command {
+///         QualityCommand::Rustdoc(args) => args,
+///         other => panic!("expected `quality rustdoc`, parsed {other:?}"),
+///     },
+///     other => panic!("expected `quality`, parsed {other:?}"),
+/// };
+/// assert_eq!(args.tree.as_deref(), Some(std::path::Path::new("site/public/rustdoc")));
+/// assert_eq!(args.kind.as_deref(), Some("link"));
+/// assert!(!args.summary);
+/// ```
+pub struct QualityRustdocArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+
+    /// Only findings of this kind, e.g. missing-page, orphan-page, stale, link, machine-path
+    #[arg(long)]
+    pub kind: Option<String>,
+
+    /// Print the verdict and the counts and leave the findings out
+    #[arg(long)]
+    pub summary: bool,
+
+    /// Judge this directory instead of the rustdoc surface's artifact, e.g. site/public/rustdoc
+    #[arg(long, value_name = "DIR")]
+    pub tree: Option<std::path::PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -424,6 +1175,369 @@ pub struct QualityReportArgs {
     /// Record today's findings as the accepted baseline, so the debt can shrink and cannot grow
     #[arg(long)]
     pub write_baseline: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics`. A group with no action of its own: a subcommand is required,
+/// and each one is either the command line of an `economics.*` capability or one of the
+/// three producers of evidence that `cli::local` classifies as command-line-only.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsArgs, EconomicsCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "economics", "check"]).unwrap();
+/// let args: EconomicsArgs = match cli.command {
+///     Command::Economics(args) => args,
+///     other => panic!("expected `economics`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.command, EconomicsCommand::Check(_)));
+///
+/// // naming no subcommand is a usage error, never a default that reads or spends
+/// assert!(Cli::try_parse_from(["majordomus", "economics"]).is_err());
+/// ```
+pub struct EconomicsArgs {
+    #[command(subcommand)]
+    /// `summary`, `explain`, `runs`, `check`, `measure`, `run`, `references`.
+    pub command: EconomicsCommand,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus economics`: four readers and three producers of evidence.
+///
+/// `summary`, `explain`, `runs` and `check` are the command line of the `economics.*`
+/// capabilities, which compute every number once for every surface. `measure`, `run` and
+/// `references` are the command line's own: they write records into the repository, spend
+/// provider usage or build workspaces on this machine, which no read-only projection offers.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand};
+///
+/// fn parse(argv: &[&str]) -> EconomicsCommand {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     args.command
+/// }
+///
+/// assert!(matches!(parse(&["majordomus", "economics", "summary"]), EconomicsCommand::Summary(_)));
+/// assert!(matches!(
+///     parse(&["majordomus", "economics", "explain", "effective_token_reduction"]),
+///     EconomicsCommand::Explain(e) if e.metric == "effective_token_reduction"
+/// ));
+/// assert!(matches!(parse(&["majordomus", "economics", "run"]), EconomicsCommand::Run(_)));
+/// assert!(Cli::try_parse_from(["majordomus", "economics", "publish"]).is_err());
+/// ```
+pub enum EconomicsCommand {
+    /// Every metric with its class, sample size and interval, the pairs, the segments, the state of the evidence, and the one statement the publication rule allows
+    Summary(EconomicsSummaryArgs),
+    /// One metric and everything it rests on: formula, class, pairs, runs, exclusions, and how to reproduce it
+    Explain(EconomicsExplainArgs),
+    /// The recorded runs every metric is computed from
+    Runs(EconomicsRunsArgs),
+    /// Refuse an unsupported savings claim: quantities next to the economics vocabulary in hand-written prose, and bound claims whose evidence does not stand
+    Check(EconomicsCheckArgs),
+    /// Run a deterministic suite (no model is called) and record its measurement
+    Measure(EconomicsMeasureArgs),
+    /// Run a live suite: real harness sessions with and without Majordomus, recorded as raw usage and gate verdicts. Spends provider usage
+    Run(EconomicsRunArgs),
+    /// Prove every task's hidden tests fail on its starting state and pass on its reference solution. No model is called
+    References(EconomicsReferencesArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics summary`. Every filter is optional and they combine as a
+/// conjunction. They narrow the pairs and the metrics computed from them; the verdict is
+/// always stated over all the live evidence, so a narrowed view cannot make publishable a
+/// statement the whole evidence does not support.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{
+///     Cli, Command, EconomicsCommand, EconomicsSummaryArgs, OutputFormat,
+/// };
+///
+/// fn summary_of(argv: &[&str]) -> EconomicsSummaryArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Summary(summary) = args.command else { panic!("summary") };
+///     summary
+/// }
+///
+/// let s = summary_of(&[
+///     "majordomus", "economics", "summary", "--suite", "pilot", "--category", "bug-fix",
+///     "--format", "json",
+/// ]);
+/// assert_eq!(s.suite.as_deref(), Some("pilot"));
+/// assert_eq!(s.category.as_deref(), Some("bug-fix"));
+/// assert_eq!(s.format, OutputFormat::Json);
+/// // a filter not named is no filter
+/// assert!(s.task.is_none() && s.model.is_none());
+/// ```
+pub struct EconomicsSummaryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only this suite
+    #[arg(long)]
+    pub suite: Option<String>,
+    /// Only tasks of this category
+    #[arg(long)]
+    pub category: Option<String>,
+    /// Only this task
+    #[arg(long)]
+    pub task: Option<String>,
+    /// Only runs that asked for this model
+    #[arg(long)]
+    pub model: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics explain`. The metric is a required positional identifier, spelled
+/// as the summary lists it; one the methodology does not declare is refused as not found,
+/// with the declared metrics named, rather than answered with an empty explanation.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{
+///     Cli, Command, EconomicsCommand, EconomicsExplainArgs, OutputFormat,
+/// };
+///
+/// fn explain_of(argv: &[&str]) -> EconomicsExplainArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Explain(explain) = args.command else { panic!("explain") };
+///     explain
+/// }
+///
+/// let e = explain_of(&["majordomus", "economics", "explain", "effective_token_reduction"]);
+/// assert_eq!(e.metric, "effective_token_reduction");
+/// assert_eq!(e.format, OutputFormat::Text);
+/// // there is no default metric to explain
+/// assert!(Cli::try_parse_from(["majordomus", "economics", "explain"]).is_err());
+/// ```
+pub struct EconomicsExplainArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// The metric, e.g. effective_token_reduction
+    pub metric: String,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics runs`. The recorded runs themselves, before any pairing or
+/// statistics: the raw facts a disputed metric is checked against. The filters combine as a
+/// conjunction and select whole records; they change no number inside one.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsRunsArgs};
+///
+/// fn runs_of(argv: &[&str]) -> EconomicsRunsArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Runs(runs) = args.command else { panic!("runs") };
+///     runs
+/// }
+///
+/// let r = runs_of(&[
+///     "majordomus", "economics", "runs", "--task", "vat-rounding", "--variant", "baseline",
+/// ]);
+/// assert_eq!(r.task.as_deref(), Some("vat-rounding"));
+/// assert_eq!(r.variant.as_deref(), Some("baseline"));
+/// assert!(r.suite.is_none(), "every suite's runs unless one is named");
+/// ```
+pub struct EconomicsRunsArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+    /// Only this suite
+    #[arg(long)]
+    pub suite: Option<String>,
+    /// Only this task
+    #[arg(long)]
+    pub task: Option<String>,
+    /// Only this variant
+    #[arg(long)]
+    pub variant: Option<String>,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics check`. It takes no filter, because a gate that could be narrowed
+/// could be narrowed past the claim it exists to refuse. It exits 10 when it finds a
+/// quantity stated beside the economics vocabulary in hand-written prose, or a bound claim
+/// whose evidence does not stand.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCheckArgs, EconomicsCommand, OutputFormat};
+///
+/// fn check_of(argv: &[&str]) -> EconomicsCheckArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Check(check) = args.command else { panic!("check") };
+///     check
+/// }
+///
+/// assert_eq!(check_of(&["majordomus", "economics", "check"]).format, OutputFormat::Text);
+/// let json = check_of(&["majordomus", "economics", "check", "--format", "json"]);
+/// assert_eq!(json.format, OutputFormat::Json);
+/// // nothing narrows the gate
+/// assert!(Cli::try_parse_from(["majordomus", "economics", "check", "--suite", "x"]).is_err());
+/// ```
+pub struct EconomicsCheckArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics measure`. Runs a deterministic suite, the context compiler over
+/// the suite's seeds with no model called, and writes its record as
+/// `runs/<suite>/<commit>.json` under the benchmark directory, so a second measurement at
+/// the same commit replaces the first. A live suite is refused with the `run` command that
+/// runs it; `--dry-run` measures, prints and writes nothing.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsMeasureArgs};
+///
+/// fn measure_of(argv: &[&str]) -> EconomicsMeasureArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Measure(measure) = args.command else { panic!("measure") };
+///     measure
+/// }
+///
+/// let default = measure_of(&["majordomus", "economics", "measure"]);
+/// assert_eq!(default.suite, "context");
+/// assert!(!default.dry_run, "measuring records unless told otherwise");
+/// assert!(measure_of(&["majordomus", "economics", "measure", "--dry-run"]).dry_run);
+/// ```
+pub struct EconomicsMeasureArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// The deterministic suite to measure
+    #[arg(long, default_value = "context")]
+    pub suite: String,
+    /// Measure and print, write nothing
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics run`. Spends provider usage: each selected task runs as real
+/// harness sessions with and without Majordomus installed, and each run is recorded as raw
+/// usage and gate verdicts. Empty `tasks` and `repetitions` mean every one the suite
+/// declares. `--dry-run` prepares each workspace, prints the harness command and removes the
+/// workspace again without starting a session, so it spends nothing. A run already recorded
+/// is skipped and never written over; `--force` is accepted only to be refused with the
+/// reason, because a recorded run is evidence.
+///
+/// ```
+/// use std::path::Path;
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsRunArgs};
+///
+/// fn run_of(argv: &[&str]) -> EconomicsRunArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::Run(run) = args.command else { panic!("run") };
+///     run
+/// }
+///
+/// let run = run_of(&[
+///     "majordomus", "economics", "run", "--task", "a", "--task", "b", "--dry-run",
+/// ]);
+/// // repeated singular flags accumulate into the selection
+/// assert_eq!(run.tasks, ["a", "b"]);
+/// assert!(run.dry_run && !run.force);
+/// // the pilot suite, every repetition, two runs at once, thirty minutes a session
+/// assert_eq!(run.suite, "pilot");
+/// assert!(run.repetitions.is_empty() && run.work_dir.is_none());
+/// assert_eq!((run.parallel, run.session_timeout), (2, 1800));
+/// assert_eq!(run.harness, Path::new("claude"));
+/// ```
+pub struct EconomicsRunArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// The live suite to run
+    #[arg(long, default_value = "pilot")]
+    pub suite: String,
+    /// Only this task (repeatable)
+    #[arg(long = "task")]
+    pub tasks: Vec<String>,
+    /// Only this repetition (repeatable)
+    #[arg(long = "repetition")]
+    pub repetitions: Vec<u32>,
+    /// Where transcripts go; never inside the repository. Workspaces are fresh directories
+    /// of the system temporary directory, removed when their run ends
+    #[arg(long, value_name = "PATH")]
+    pub work_dir: Option<PathBuf>,
+    /// The harness executable
+    #[arg(long, value_name = "PATH", default_value = "claude")]
+    pub harness: PathBuf,
+    /// Runs in flight at once
+    #[arg(long, default_value_t = 2)]
+    pub parallel: usize,
+    /// Per-session wall-clock limit, in seconds
+    #[arg(long, default_value_t = 1800)]
+    pub session_timeout: u64,
+    /// Refused: a recorded run is evidence and is never overwritten; exclude it in the
+    /// methodology with a reason and record another repetition
+    #[arg(long)]
+    pub force: bool,
+    /// Prepare every workspace and print the harness command; run nothing, spend nothing
+    #[arg(long)]
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Args)]
+/// `majordomus economics references`. Proves every task can fail: its hidden tests must
+/// fail on the starting fixture and pass once the reference solution is applied, or a
+/// failed run would say nothing about the agent. No model is called; the workspaces are
+/// built on this machine, under the system temporary directory unless `--work-dir` names
+/// another, and a task that breaks the rule makes the command exit 10.
+///
+/// ```
+/// use std::path::Path;
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, EconomicsCommand, EconomicsReferencesArgs};
+///
+/// fn references_of(argv: &[&str]) -> EconomicsReferencesArgs {
+///     let cli = Cli::try_parse_from(argv.iter().copied()).unwrap();
+///     let Command::Economics(args) = cli.command else { panic!("economics") };
+///     let EconomicsCommand::References(r) = args.command else { panic!("references") };
+///     r
+/// }
+///
+/// assert!(references_of(&["majordomus", "economics", "references"]).work_dir.is_none());
+/// let placed = references_of(&[
+///     "majordomus", "economics", "references", "--work-dir", "scratch/refs",
+/// ]);
+/// assert_eq!(placed.work_dir.as_deref(), Some(Path::new("scratch/refs")));
+/// ```
+pub struct EconomicsReferencesArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+    /// Where the workspaces go
+    #[arg(long, value_name = "PATH")]
+    pub work_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Args)]
@@ -631,6 +1745,164 @@ pub enum EvidenceCommand {
         /// Where the run happened: local (the default), ci or release
         #[arg(long)]
         origin: Option<String>,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus delivery`: every product feature against the delivery invariant. The output
+/// shape is global, so it reads the way a person writes it — `delivery report --format json`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeliveryArgs, DeliveryCommand, OutputFormat};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "delivery", "report", "--check", "--format", "json"])
+///     .unwrap();
+/// let args: DeliveryArgs = match cli.command {
+///     Command::Delivery(args) => args,
+///     other => panic!("expected `delivery`, parsed {other:?}"),
+/// };
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// assert!(matches!(args.command, DeliveryCommand::Report { check: true }));
+///
+/// // the group runs nothing of its own: every runnable path here is a capability's
+/// assert!(Cli::try_parse_from(["majordomus", "delivery"]).is_err());
+/// ```
+pub struct DeliveryArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `report` or `show`. Required: the group runs nothing of its own.
+    pub command: DeliveryCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus delivery`: the command line of `delivery.report` and
+/// `delivery.feature`.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, DeliveryCommand};
+///
+/// fn parse(args: &[&str]) -> DeliveryCommand {
+///     let cli = Cli::try_parse_from(args.iter().copied()).unwrap();
+///     let Command::Delivery(args) = cli.command else { panic!("delivery") };
+///     args.command
+/// }
+///
+/// assert!(matches!(parse(&["majordomus", "delivery", "report"]), DeliveryCommand::Report { check: false }));
+/// assert!(matches!(
+///     parse(&["majordomus", "delivery", "show", "evidence", "--check"]),
+///     DeliveryCommand::Show { id, check: true } if id == "evidence"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "delivery", "show"]).is_err());
+/// ```
+pub enum DeliveryCommand {
+    /// Every feature against every dimension, with the development stage of what does not exist
+    Report {
+        /// Exit 10 when any feature does not exist
+        #[arg(long)]
+        check: bool,
+    },
+    /// One feature: every dimension with its reason and remediation
+    Show {
+        /// The feature's id, as `product list` gives it
+        id: String,
+        /// Exit 10 when the feature does not exist
+        #[arg(long)]
+        check: bool,
+    },
+}
+
+#[derive(Debug, Args)]
+/// `majordomus served`: what a deployment serves, observed from outside and judged against
+/// a commit. `ServedArgs` carries the repository the question is asked of, the subcommand
+/// and the output shape.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ServedArgs, ServedCommand};
+///
+/// let cli = Cli::try_parse_from(["majordomus", "served", "show"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// let _: ServedArgs = args;   // the group's own arguments
+///
+/// fn parse(args: &[&str]) -> ServedCommand {
+///     let Command::Served(a) = Cli::try_parse_from(args).unwrap().command else { panic!() };
+///     a.command
+/// }
+/// assert!(matches!(
+///     parse(&["majordomus", "served", "observe", "--commit", "origin/master", "--dry-run"]),
+///     ServedCommand::Observe { commit: Some(c), dry_run: true, .. } if c == "origin/master"
+/// ));
+/// assert!(matches!(
+///     parse(&["majordomus", "served", "show", "--deployment", "pages"]),
+///     ServedCommand::Show { deployment: Some(d), commit: None } if d == "pages"
+/// ));
+/// assert!(Cli::try_parse_from(["majordomus", "served"]).is_err());
+/// ```
+pub struct ServedArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `observe` or `show`.
+    pub command: ServedCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus served`: `observe` is the command line of
+/// `served.observe` and `show` of `served.show`. `observe` is the only one that reaches the
+/// network, and it is a command line and nothing else.
+///
+/// ```
+/// use clap::Parser;
+/// use majordomus_cli::cli::{Cli, Command, ServedCommand};
+/// let cli = Cli::try_parse_from(["majordomus", "served", "observe", "--dry-run"]).unwrap();
+/// let Command::Served(args) = cli.command else { panic!("served") };
+/// assert!(matches!(args.command, ServedCommand::Observe { dry_run: true, .. }));
+/// ```
+pub enum ServedCommand {
+    /// Probe the build identity a deployment serves, judge it against a commit and record it
+    Observe {
+        /// The commit expected to be served (default HEAD)
+        #[arg(long)]
+        commit: Option<String>,
+        /// The site's base URL (default: base_url of site/config.toml)
+        #[arg(long)]
+        url: Option<String>,
+        /// The identity file under the base (default build.json)
+        #[arg(long)]
+        identity: Option<String>,
+        /// The name the observation is recorded under (default pages)
+        #[arg(long)]
+        deployment: Option<String>,
+        /// Bound on the probe, in seconds (default 10)
+        #[arg(long)]
+        timeout: Option<u64>,
+        /// Judge without recording
+        #[arg(long)]
+        dry_run: bool,
+    },
+    /// Each deployment's newest record, re-judged against a commit
+    Show {
+        /// The commit to judge against (default HEAD)
+        #[arg(long)]
+        commit: Option<String>,
+        /// Only this deployment
+        #[arg(long)]
+        deployment: Option<String>,
     },
 }
 
@@ -1433,7 +2705,7 @@ pub enum ServeCommand {
         #[arg(long, value_enum, default_value_t = OutputFormat::Text)]
         format: OutputFormat,
     },
-    /// Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for the lease to go
+    /// Stop this checkout's server — the one its lease names, when it answers for this checkout — and wait for that server's lease to go, which another process taking the checkout over does not undo
     Stop {
         /// How long to wait for the server to end
         #[arg(long, value_name = "SECONDS", default_value_t = 10)]
@@ -1534,7 +2806,8 @@ pub enum GenerateTarget {
     /// docs/generated/artifacts.{json,yaml,md}: the index of every generated artifact
     Manifest,
     /// The installer, the installation guide, the release build matrix and the public
-    /// release metadata, from share/distribution.yaml and .ai/repo/releases/
+    /// release metadata, from share/distribution.yaml and .ai/repo/releases/; and
+    /// share/version.txt, the version the shell tool ships with, from the crate manifest
     Distribution,
     /// `docs/generated/web.json`: the resolved web topology the site's route reference renders
     Web,
@@ -1549,6 +2822,9 @@ pub enum GenerateTarget {
     /// both Tailwind builds import, the tokens and the declaration compiled into the crate,
     /// every copy of the brand, site/data/registry/design.json and docs/generated/design.*
     Design,
+    /// docs/generated/economics.{json,yaml,md}: the token-economics evidence and its report,
+    /// computed from the recorded benchmark runs by the one calculator
+    Economics,
 }
 
 #[derive(Debug, Args)]
@@ -2206,7 +3482,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "release-version",
             title: "The version, and the one the commits imply",
-            description: "The version is stated in two files for a reason the release script gives: an installed tree has no Cargo.toml and the crate is compiled before the shell tool exists, so neither can read the other at run time. This says what both state and whether they agree. What the next version must be is a different question, measured from the public contract by `release analyze`.",
+            description: "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.",
             argv: &["release", "version", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/declared", "/agree", "/bump"]),
@@ -2227,8 +3503,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "release bump",
         examples: &[ExampleDoc {
             id: "release-bump-dry-run",
-            title: "Raising it, in both places, once",
-            description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the one line each of the three version sites owns and reads all three back afterwards. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
+            title: "Raising it, in the one place it is authored",
+            description: "The one writer, and it computes nothing: it reads the plan `release analyze` prints and applies it, so the version it writes is the measured minimum rather than a judgement of its own. `--level` and `--exact` name a higher version when a person means more than the contract did, and are refused below the minimum with nothing written — an override that could undershoot would make the measurement decorative. It rewrites the manifest's one version line and the lock's record of it, reads both back, and leaves share/version.txt and the generator stamps to scripts/derive. A repository that has published nothing has no baseline to raise from — the example runs in one — and says so with exit 12 rather than inventing a number.",
             argv: &["release", "bump", "--dry-run"],
             setup: &[],
             expect: Expect::ExitCode(12),
@@ -2312,6 +3588,17 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "env preflight",
+        examples: &[ExampleDoc {
+            id: "env-preflight-json",
+            title: "What is in force here, and what proves it",
+            description: "One verdict per claim — `verified`, `active`, `fresh`, `stale`, `degraded`, `unavailable`, `failed`, `unknown` or `not_applicable` — and the evidence it rests on: the file, command or loopback answer that was read. A rule file on disk is not a rule anything enforces, an address that accepts a connection is not a server of this version, and a recorded test run at another commit does not verify this tree, so none of them is reported as one. `attention` lists what needs a look, most urgent first.",
+            argv: &["env", "preflight", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/schema", "/sections/0/checks/0/verdict", "/attention"]),
+        }],
+    },
+    CommandExamples {
         command: "run",
         examples: &[ExampleDoc {
             id: "run-demonstrate",
@@ -2367,6 +3654,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "delivery report",
+        examples: &[ExampleDoc {
+            id: "delivery-report-json",
+            title: "Does each feature exist, dimension by dimension",
+            description: "The same answer `GET /api/v1/delivery` and the MCP tool `majordomus_delivery` return: every feature ordered by id, each of the six dimensions with its verdict, reason and remediation, the development stage of a feature that does not exist, the paths it is implemented by, and the publication read once for all of them. A repository with no site and no trunk says unknown, and unknown is never a pass, so nothing here exists.",
+            argv: &["delivery", "report", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/features/0/dimensions", "/tallies/exists", "/publication/identity/state"]),
+        }],
+    },
+    CommandExamples {
+        command: "delivery show",
+        examples: &[ExampleDoc {
+            id: "delivery-show",
+            title: "One feature, and what stands between it and existing",
+            description: "Every dimension of one feature with the sentence that decided it and what would change it. `--check` turns the conjunction into the exit code: 10 unless every dimension passes. An id the layer does not declare is not found, never reported as not delivered.",
+            argv: &["delivery", "show", "fixture-feature"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["fixture-feature", "on_master", "NOT DELIVERED"]),
+        }],
+    },
+    CommandExamples {
         command: "entity kinds",
         examples: &[ExampleDoc {
             id: "entity-kinds-json",
@@ -2383,7 +3692,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
             ExampleDoc {
                 id: "entity-show-rule",
                 title: "One entity at its own address",
-                description: "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, and what can be said about the executable artefacts it names. The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
+                description: "The same answer `GET /api/v1/entity` and the MCP tool `majordomus_entity` return, and the same one the Cockpit lays out: the entity's route, the references it declares, the references that resolve to it — derived, never declared — the surfaces that answer for it, what can be said about the executable artefacts it names, and its public documentation page (`documentation`, null here because this fixture has no site/data/publication.toml). The address is the route's two segments, which is the shorter spelling of the URI and the one the Cockpit's address bar holds.",
                 argv: &["entity", "show", "rule/project-alpha-1", "--format", "json"],
                 setup: &[],
                 expect: Expect::Json(&[
@@ -2413,6 +3722,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["rules", "report", "--format", "json"],
             setup: &[],
             expect: Expect::Json(&["/rules", "/states", "/coverage/rules", "/findings"]),
+        }],
+    },
+    CommandExamples {
+        command: "dashboard overview",
+        examples: &[ExampleDoc {
+            id: "dashboard-overview-json",
+            title: "The four questions, every card with the answer it was read from",
+            description: "The same answer `GET /api/v1/dashboard/overview`, the MCP tool `majordomus_dashboard_overview` and the first section of the Cockpit's overview return: is it healthy, what changed, what is broken, what needs action, each answered by cards read out of `health.report`, `release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state` and `peers.list`. Every card carries its source capability, the input it was asked with and the JSON pointer its value was read from, so `majordomus run <capability>` read at that pointer gives the same value. The exit code is the overview's own word: 0 for ok and warn, 10 for fail and unknown. This fixture commits no registry manifest, so `health.report` cannot decide one of its checks, the health card is `unknown` rather than ok, and the answer is 10.",
+            argv: &["dashboard", "overview", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "shell check",
+        examples: &[ExampleDoc {
+            id: "shell-check-json",
+            title: "Every shell unit against the automation inventory",
+            description: "The shell units under the governed directories, how many records the inventory holds, the exemptions by disposition, and every finding with its remedy, as `/units`, `/exemptions`, `/findings` and `/passes`. The exit code is the verdict: 0 when every unit is declared and every record names a unit the tree still has, 10 on a finding, and 12 when the tree could not be measured, which is not a pass. Here the repository holds the bash library `lib/a.sh` and no inventory, so the answer is 10 and the finding names the file and the remedy.",
+            argv: &["shell", "check", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {
@@ -2446,6 +3777,28 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["evidence", "record", "--suite", "target/no-such-run.tsv"],
             setup: &[],
             expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "served observe",
+        examples: &[ExampleDoc {
+            id: "served-observe-unreachable",
+            title: "A deployment that could not be reached is not a deployment that is current",
+            description: "One bounded probe of the build identity under the base URL, judged against HEAD. Nothing listens on the discard port, so nothing is received and the verdict is `unreachable` with exit 12 — the unanswered question, never the yes. `--dry-run` judges without recording. Against the public site the same command answers `served` (0) when the build contains the commit and `stale` (10) when it does not.",
+            argv: &["served", "observe", "--url", "http://127.0.0.1:9", "--timeout", "1", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "served show",
+        examples: &[ExampleDoc {
+            id: "served-show-json",
+            title: "What each deployment was last seen serving, judged against HEAD now",
+            description: "The newest recorded observation of each deployment, re-judged against the commit asked about without probing anything. The same answer `GET /api/v1/served` and the MCP tool `majordomus_served` give. A checkout that has observed nothing answers with an empty list rather than a verdict.",
+            argv: &["served", "show", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/expected", "/observations", "/unreadable", "/deployments"]),
         }],
     },
     CommandExamples {
@@ -3118,7 +4471,7 @@ pub const EXAMPLES: &[CommandExamples] = &[
         examples: &[ExampleDoc {
             id: "serve-stop-nothing",
             title: "Stop this checkout's server, when there is one",
-            description: "Signals the server this checkout's lease names, when it answers for this checkout, and waits for the lease to go. A checkout with no lease has nothing to stop, and says so.",
+            description: "Signals the server this checkout's lease names, when it answers for this checkout, and waits for that server's lease to go — the one it read, by its token, so a second process taking the checkout over in the same instant is reported rather than mistaken for a server that would not stop. A checkout with no lease has nothing to stop, and says so.",
             argv: &["serve", "stop"],
             setup: &[],
             expect: Expect::StdoutContains(&["nothing to stop"]),
@@ -3450,6 +4803,114 @@ pub const EXAMPLES: &[CommandExamples] = &[
         ],
     },
     CommandExamples {
+        command: "quality rustdoc",
+        examples: &[
+            ExampleDoc {
+                id: "quality-rustdoc",
+                title: "Whether the crate's rustdoc tree is complete, current and sound",
+                description: "The rustdoc surface's tree judged against the crate's own inventory: every exported item's page at its route, no page without an item, built from HEAD, the index and its assets present, every relative link resolved, nothing naming the machine or shaped like a credential. Exits 0 clean, 10 with findings, and 12 when there is nothing to judge — as here, in a repository that carries no Rust crate, or wherever the producer (scripts/rust-check --doc) has not run. A check that cannot see its subject says so; it never reports clean.",
+                argv: &["quality", "rustdoc"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
+            },
+            ExampleDoc {
+                id: "quality-rustdoc-tree-json",
+                title: "Another copy of the tree, judged the same way",
+                description: "A directory named on the command line — the tree scripts/site-build composed into the site — judged by the same judgement, as the document every transport answers with: the verdict, the counts, every exported module with its page, and one typed finding per defect. Only a person at their own terminal names a directory; over HTTP and MCP the subject is always the surface's artifact.",
+                argv: &["quality", "rustdoc", "--tree", "site/public/rustdoc", "--format", "json"],
+                setup: &[],
+                expect: Expect::ExitCode(12),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "economics summary",
+        examples: &[
+            ExampleDoc {
+                id: "economics-summary",
+                title: "What the evidence allows to be said about tokens",
+                description: "Every metric with its measurement class, sample size and interval, the state of each suite's evidence, and the one statement the publication rule allows. In a repository that declares no benchmark methodology — which is where the examples run — the statement is that no verified total-token-savings claim is available, and no number is printed.",
+                argv: &["economics", "summary"],
+                setup: &[],
+                expect: Expect::StdoutContains(&["No verified total-token-savings claim"]),
+            },
+            ExampleDoc {
+                id: "economics-summary-json",
+                title: "The same answer as the API and MCP give it",
+                description: "The typed summary: the verdict, the metrics, the pairs and the segments, exactly as GET /api/v1/economics and the majordomus_economics tool return them.",
+                argv: &["economics", "summary", "--format", "json"],
+                setup: &[],
+                expect: Expect::Json(&["/present", "/verdict/statement", "/metrics"]),
+            },
+        ],
+    },
+    CommandExamples {
+        command: "economics explain",
+        examples: &[ExampleDoc {
+            id: "economics-explain",
+            title: "Everything one metric rests on",
+            description: "The metric's formula, class, pairs, runs, exclusions and the commands that reproduce it. In a repository that declares no benchmark methodology — which is where the examples run — there is no metric: any id is answered with the statement why, exit 0 and no number. A metric id a declared methodology does not have is refused with the list of those that do (exit 12).",
+            argv: &["economics", "explain", "effective_token_reduction"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["no benchmark methodology is declared"]),
+        }],
+    },
+    CommandExamples {
+        command: "economics runs",
+        examples: &[ExampleDoc {
+            id: "economics-runs-json",
+            title: "The raw facts behind every number",
+            description: "Every recorded run with its gate verdicts and the totals derived from its provider usage. None where nothing was run.",
+            argv: &["economics", "runs", "--format", "json"],
+            setup: &[],
+            expect: Expect::Json(&["/count", "/runs"]),
+        }],
+    },
+    CommandExamples {
+        command: "economics check",
+        examples: &[ExampleDoc {
+            id: "economics-check",
+            title: "Refuse a savings claim nothing measured",
+            description: "Scans the hand-written prose and claim sentences for a quantity next to the economics vocabulary, and checks every claim bound to a metric. Exits 10 naming each finding; exits 0 here, where nothing claims anything.",
+            argv: &["economics", "check"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["economics check:", "0 finding(s)"]),
+        }],
+    },
+    CommandExamples {
+        command: "economics measure",
+        examples: &[ExampleDoc {
+            id: "economics-measure-dry-run",
+            title: "Count what the context compiler selects",
+            description: "Runs the deterministic context suite: no model is called; every seed's candidates and selection are counted with a pinned tokenizer. Refused with exit 12 where no methodology is declared.",
+            argv: &["economics", "measure", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "economics run",
+        examples: &[ExampleDoc {
+            id: "economics-run-dry-run",
+            title: "Prepare a live suite without spending anything",
+            description: "Builds every control and treatment workspace and prints the harness command each session would run; nothing is sent to a provider. Refused with exit 12 where no methodology is declared.",
+            argv: &["economics", "run", "--suite", "pilot", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "economics references",
+        examples: &[ExampleDoc {
+            id: "economics-references",
+            title: "Prove every task can be failed and can be passed",
+            description: "Applies each task's reference solution to its fixture: the hidden tests must fail on the starting state and pass on the reference. Refused with exit 12 where no methodology is declared.",
+            argv: &["economics", "references"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "devcontext compile",
         examples: &[
             ExampleDoc {
@@ -3534,6 +4995,149 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh peers",
+        examples: &[ExampleDoc {
+            id: "mesh-peers",
+            title: "Who cooperates, machine by machine",
+            description: "Machines, runtimes, sessions and claims, from this checkout's running server. With no server, or with cooperation off, the answer says so and why — the mesh lives in the server's memory.",
+            argv: &["mesh", "peers"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh peer",
+        examples: &[ExampleDoc {
+            id: "mesh-peer",
+            title: "One runtime, by its key",
+            description: "A runtime's machine, liveness, link, sessions and claims. A runtime the running server does not know is `not found`; with no server there is nobody to ask, and the answer says that rather than reporting an absence it never measured.",
+            argv: &["mesh", "peer", "00000000000000000000000000000000-0000000000000000"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh state",
+        examples: &[ExampleDoc {
+            id: "mesh-state",
+            title: "The state every linked runtime converges on",
+            description: "Sessions, claims with their standing, handovers, reviews and the digest two runtimes compare — or, with no running server, why there is none.",
+            argv: &["mesh", "state"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh events",
+        examples: &[ExampleDoc {
+            id: "mesh-events",
+            title: "One page of the cooperation journal",
+            description: "The journal's signed events above a Lamport stamp; `--after` is the previous page's `lamport`. With no running server the answer is the reason.",
+            argv: &["mesh", "events", "--after", "0", "--limit", "50"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["cooperation inactive"]),
+        }],
+    },
+    CommandExamples {
+        command: "mesh verify",
+        examples: &[ExampleDoc {
+            id: "mesh-verify",
+            title: "Prove cooperation now, or say why it cannot",
+            description: "A live round with every peer the server dials and the local checks, each failure with its impact and remedy. It exits 10 when anything fails — here, because no server runs to verify.",
+            argv: &["mesh", "verify"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh claim",
+        examples: &[ExampleDoc {
+            id: "mesh-claim",
+            title: "Claim paths for a session across the mesh",
+            description: "An exclusive claim that meets a live exclusive claim on any linked runtime exits 10 with claim_conflict naming it. A claim needs the running server that replicates it; without one the command exits 10 and says so.",
+            argv: &["mesh", "claim", "docs", "--session", "s1", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh release",
+        examples: &[ExampleDoc {
+            id: "mesh-release",
+            title: "Release a claim this server holds",
+            description: "Only the holder's current run releases a claim; a dead holder's claim expires instead. Without a running server there is nothing to release, and the command exits 10.",
+            argv: &["mesh", "release", "stream/c-000000000000"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh session open",
+        examples: &[ExampleDoc {
+            id: "mesh-session-open",
+            title: "Say what a session is doing, to every linked runtime",
+            description: "Client, intent, issue and branch of a session, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "session", "open", "--session", "s1", "--client", "codex", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh session close",
+        examples: &[ExampleDoc {
+            id: "mesh-session-close",
+            title: "Close a session and end its claims",
+            description: "Every claim the session holds ends with it, on every linked runtime. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "session", "close", "--session", "s1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh handover publish",
+        examples: &[ExampleDoc {
+            id: "mesh-handover-publish",
+            title: "Publish this checkout's newest handover",
+            description: "The newest record under .ai/local/state/handovers/ travels to every linked runtime, bounded and identified by its body's digest. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "handover", "publish", "--issue", "#184"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh handover consume",
+        examples: &[ExampleDoc {
+            id: "mesh-handover-consume",
+            title: "Consume a handover another runtime published",
+            description: "Records the consumption and writes the handover where `majordomus handover --resolve` finds it on the same branch. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "handover", "consume", "00000000000000000000000000000000", "--session", "s1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh review request",
+        examples: &[ExampleDoc {
+            id: "mesh-review-request",
+            title: "Ask the mesh for a review",
+            description: "A named reviewer must be a linked runtime carrying the reviews feature, or the request exits 10 with feature_unsupported. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "request", "feature/x", "--session", "s1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "mesh review answer",
+        examples: &[ExampleDoc {
+            id: "mesh-review-answer",
+            title: "Answer a review request from any runtime",
+            description: "approved, changes_requested or commented, with a note, replicated to every linked runtime. It needs the running server; without one it exits 10.",
+            argv: &["mesh", "review", "answer", "stream/r-000000000000", "--session", "s1", "--verdict", "approved"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
         }],
     },
     CommandExamples {

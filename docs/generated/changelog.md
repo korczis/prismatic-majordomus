@@ -1,11 +1,233 @@
 <!-- GENERATED FILE — DO NOT EDIT DIRECTLY
      Source: the layer's release records, the decisions dated in each release's window, and the commits in its range; regenerate with `majordomus generate`
-     Generator: majordomus-cli 0.9.0 -->
+     Generator: majordomus-cli 0.11.0 -->
 # Changelog
 
 Every entry below is derived: a section per release the layer records, its decisions the ADRs dated inside that release's window, its changes the conventional commits in its range, its artifacts the record's own evidence. Nothing here is written by hand, and `majordomus generate changelog --check` fails when it stops matching the tree.
 
-Current version: **0.9.0**
+Current version: **0.11.0**
+
+## v0.10.0 — 2026-09-29
+
+### Decisions
+
+- **ADR-0087** Evidence is indexed by subject and judged at the presented revision _(proposed)_
+- **ADR-0086** The crate's rustdoc is a published web surface at /rustdoc, produced by the invocation its gate proves and verified at the public URL _(proposed)_
+- **ADR-0085** The version is authored once, in the crate manifest, and shipped to the shell tool as a generated projection _(proposed)_
+- **ADR-0082** Token economics are measured from matched runs and published only past a declared rule _(proposed)_
+- **ADR-0080** A CI run reaches the tracked ledger through a recording branch, never through the run that produced it _(proposed)_
+- **ADR-0071** A feature exists only when its delivery is computed and every dimension passes _(proposed)_
+- **ADR-0068** CI evidence is kept where the run happened, and published with the commit it proves _(proposed)_
+- **ADR-0067** Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere _(proposed)_
+- **ADR-0066** Entry reports a verdict per claim and the evidence behind it, from one preflight value _(proposed)_
+
+### Added
+
+- **test**: a case that declines to run is recorded as a skip, never as a pass (`d348a6c76`)
+- **evidence**: text a run printed is redacted by one rule set (`5f1226aca`)
+- **product**: every active use case has a feature, and case 503 holds it (`bd74cd30d`)
+- **design**: the verdict words are status words (`ba0770c9c`)
+- **economics**: record the context suite's first measurement (`54ee7cd24`)
+- **site**: the schema reference links every schema file to its source (`300e93ce0`)
+- **mesh**: this repository runs its own mesh (`372eccf36`)
+- **entity**: every entity names its public documentation page (`ed1398a9c`)
+- **economics**: measure token economics from matched runs, never typed (`f48b9b078`)
+- **web**: the crate's rustdoc is a published surface, produced by its gate and verified live (`5baad7874`)
+- **evidence**: CI records its runs, and the site publishes them with the commit they prove (`5a43a3a05`)
+- **rules**: the report says what was proven, not merely that it found no fault (`9119e306a`)
+- **delivery**: whether a feature exists is computed, and unknown is not delivered (`9ba6a17f5`)
+- **served**: a deployment is evidence, judged by the commit it serves (`1f7e98bbb`)
+- **mesh**: runtimes cooperate over authenticated links and one replicated journal (`964d26e3d`)
+- **shell**: new shell is refused unless the inventory exempts it (`4a05b6292`)
+- **environment**: entry reports a verdict per claim and the evidence behind it (`271989160`)
+- **mesh**: a signed cooperation journal and a deterministic state fold (`7bea9265b`)
+
+### Fixed
+
+- **test**: a server's URL is read from its own listening line, once (`a5ea413ff`)
+- **site**: long directory paths wrap on the context page (`7f824c3ec`)
+- **economics**: one context measurement counts each file once (`b5fc0d5bf`)
+- **economics**: the explain example expects the answer, not a refusal (`51a84dd4f`)
+- **site**: the economics page links through Zola and names the built commit (`6973ef9fe`)
+- **economics**: the benchmark fixture is English and its references resolve (`ad09800e5`)
+- **ci**: crate-boundary argues for tiktoken-rs (`da63efb49`)
+- **economics**: explain answers a repository without a methodology (`782a7e97f`)
+- **rust**: a checkout with no site config still hands off its rustdoc reference (`02bcb9aac`)
+- **test**: case 89 empties the server log before it waits on it (`cf5fb2fe6`)
+- **test**: the batch's cases decline through skip, the one shape case 413 accepts (`9b52c572b`)
+- **shell**: the inventory declares the four CI scripts the batch brings (`5118a3140`)
+- **shell**: declare the entity gate master added since the branch (`b594d9f8f`)
+- **test**: case 532 declines through skip, the one shape case 413 accepts (`e0d35c170`)
+- **pages**: the deploy job's bound exceeds its steps' again, evidence step included (`6974910c8`)
+- **evidence**: public text refuses a secret once redacted or cut off (`21d22d944`)
+- **evidence**: public text refuses a credential its shape only announces (`9e654b61b`)
+- **claims**: deployment-contract-refuses-by-name promises only what case 84 asserts (`6e4b40867`)
+- **test**: no case in test/cases/ can decline with exit 0 any more (`c2fb7a66e`)
+- **ci**: the job summary counts a SKIP as skipped, not as failed (`1ba9834cd`)
+- **test**: a status 4 the case never declared is a failure, not a skip (`08209a66d`)
+- **ci**: a case is bounded at 3600 s, above the budget that warns of it (`b1386ae7b`)
+- **ci**: suite-budget fails a pipeline on any stage and sorts in byte order (`d68bd8dc5`)
+- **ci**: the suite's bound is measured, declared once, and refuses growth (`39b2916f9`)
+- **mesh**: a runtime dials its present siblings before the ones that stopped (`2b4aa04cb`)
+- **site**: the responsibility pages' file links and site-check follow the built commit (`07035a459`)
+- **mesh**: a node's streams are compacted before its quota refuses a sibling (`84ad1dd4e`)
+- **pages**: the comment no longer reads to case 97 as a timing phase (`937343683`)
+- **site**: a page's source links name the commit it was built from (`2548eff4c`)
+- **execution**: a cancel is recorded before its token is visible (`45439dbf0`)
+- **pages**: verify-docs says an index it never fetched was not measured (`a50e2385b`)
+- **ci**: the evidence collector and rust-check fail when any part of a pipeline does (`c22cb2c11`)
+- **evidence**: a proof older than what it is about does not support a guarantee (`e24f21dd7`)
+- **mcp**: the instructions say what writes, counted off the registry, not a promise of read-only (`92f641910`)
+- **evidence**: a run recorded while the tree was dirty is not proof of the commit it sat on (`b77bfbcdb`)
+- **release**: the carrier scan orders canonically, and case 484 pages nothing (`8a0a68ddc`)
+- **release**: a version declared in TOML, JavaScript or Python is refused too (`7c5f58da0`)
+- **mesh**: a push is counted as it leaves, not when its answer returns (`8173f333d`)
+- **site**: git's listing of tracked paths reaches jq by file, not by argv (`6122a6bc9`)
+- **mesh**: the lab evidence sorts in one collation and the diagram ids stop colliding with headings (`1f3f1cece`)
+- **shell**: declare the shell gates master added since the branch (`be2eeec35`)
+- **release**: a release record is derived before it is proposed (`018293b15`)
+- **served**: list the deployments in canonical order (`447b76a8b`)
+- **test**: case 384 observes a non-zero verdict instead of dying on it (`16a319417`)
+- **serve**: stop waits for the lease it read, not for the path to be free (`c0e885275`)
+- **serve**: the shutdown's own bound is stated, and begin_stop carries its example (`b3214a797`)
+- **serve**: the lease is released before the mesh drains, not after it (`016b04b4f`)
+- **site**: the tracked listing reaches jq through a file, and a slow run is not a failed one (`249e597a1`)
+- **mesh**: a command with nobody to ask says so, and the lab waits for the runtime it asks (`fb0285477`)
+- **mesh**: the gates the first commit failed, each at its cause (`f086432f7`)
+- **environment**: a verdict names the tree it was measured on, and the lease is read once (`9fc7284d8`)
+
+### Performance
+
+- **release**: a release's history is listed once, not asked once per decision (`08cbd76d5`)
+
+### Changed
+
+- **order**: the economics sort sites adopt the canonical order (`358a0ab69`)
+- **evidence**: the redactor orders its kinds canonically and writes English (`799834606`)
+- **evidence**: the redaction table spells a one-byte class inline (`418ebac6b`)
+- **release**: the shell tool reads its version from share/version.txt (`7655e9a7f`)
+- **release**: the version is authored once, in the crate manifest (`f3553508d`)
+
+### Documentation
+
+- **environment**: the RulesTally example builds its report with a verdict (`e1d61945f`)
+- **adr**: the recording stops where the ledger covers, and trunk proof needs a quiet trunk (`3145123fd`)
+- **adr**: the recording stops at a ledger-only commit, and publication states match first (`a1ccbebed`)
+- **ci**: the per-case budget is the pass limit, and its worst cost is censored (`d0b912444`)
+- **adr**: evidence is indexed by subject and judged at the presented revision (`bea35d448`)
+- **mesh**: the guide and how-it-works describe cooperation as it ships (`1c35c5d3c`)
+- **execution**: say which guard makes a cancel land before its token is seen (`d8f91e79f`)
+- **rules**: the verdict's two accessors say what they are for, not what the signature says (`a258c6894`)
+- **adr**: ADR 0085, the version is authored once and shipped as a projection (`30a0cb128`)
+- **served**: every exported item carries an example that runs (`c71152a3b`)
+
+### Tests
+
+- **evidence**: the ledger-row test names no CI run, a field #577 added (`85d21b7d6`)
+- **evidence**: the byte class test spells its samples as byte strings (`d478261fb`)
+- **evidence**: the rules side of the tree cap is judged over a test that exists (`8c8efd8bd`)
+- **ci**: the artifact case asserts the pairing, not the order of the uploads (`1d4ff7935`)
+- **release**: a refused derive-check must fail the publication job (`b5ff5ecce`)
+- **release**: the version is authored once, and the cases read it through its one reader (`7f6e3842f`)
+- **mesh**: the lab's record is judged from outside the lab, and two claim joins are corrected (`a4ead40eb`)
+- **mesh**: the rendering layer is measured, and the version says what the contract did (`e83842630`)
+
+### Housekeeping
+
+- **ci**: the rust job is bounded by what the batch measurably costs (`bf5dbd274`)
+- **ci**: the suite budget is re-derived from the batch's measured cost (`fabdc4442`)
+- **derive**: the projections follow the economics fixes (`55c556e73`)
+- **derive**: the projections follow the merge with master (`b9fdfef74`)
+- **derive**: the projections follow the merge with master 35f6457 (`937da6db6`)
+- **derive**: the projections follow the merge with master (`a366f3185`)
+- **derive**: the projections follow the merge with master 35f6457 (`3f5a84527`)
+- **derive**: the projections follow the merge with master (`67b589d7d`)
+- **derive**: the projections follow the rebase onto master (`e60a0101d`)
+- **derive**: the projections follow the rebase onto master (`e7d6d60b0`)
+- **release**: the surface measured a minor, so the version is 0.10.0 (`51a685abd`)
+- **derive**: the projections reach their fixed point after the merge (`08d9820d0`)
+- **derive**: the projections follow the merge with master (`131c04ee6`)
+- **derive**: the projections follow the merge with master (`07b48a0db`)
+- **derive**: the projections follow the merge with master (`3959fe407`)
+- **derive**: the projections follow the rebase onto master (`bf0dd8305`)
+- **derive**: the projections follow the rebase onto master (`c99c34e4d`)
+- **derive**: the projections follow the v0.9.0 release record (`0dba33e5b`)
+- **evidence**: the baseline records the debt a stricter gate can see (`a009197d1`)
+- **release**: record v0.9.0 and the metadata it publishes (`f0f19dea1`)
+- **derive**: the projections follow the merge with master, at 0.9.0 (`415cd1d4d`)
+- **derive**: the projections follow the merge with master 823ca04 (`1d00b7b80`)
+- **derive**: the projections follow the canonical carrier scan (`91f7cc0c7`)
+- **derive**: the projections follow the wider version-carrier detector (`ece5faead`)
+- **derive**: the projections follow the version authored once (`f2d128fea`)
+- **release**: 0.9.0, because served.show joined the contract (`8b7da5672`)
+- **release**: 0.9.0, because the environment gained the preflight capability (`814d72a76`)
+- **derive**: the projections follow the merge with master (`380c721b4`)
+- **release**: 0.9.0, because delivery.feature and delivery.report joined the contract (`c00501b4a`)
+- **derive**: the projections follow the merge with master (`b2ef9560e`)
+- **merge**: feature/a-deployment-is-evidence meets master (`e3cf03be8`)
+- **derive**: the projections follow the merge with master (`83a8af1c1`)
+- **derive**: the projections follow the merge with master (`89eea3687`)
+- **derive**: the projections follow the merge with master (`8d7125e75`)
+- **derive**: the projections follow the merge with master (`58a0428b0`)
+- **derive**: the projections follow the merge with master (`13cad65c7`)
+- **derive**: the projections follow the merge with master (`8587973f9`)
+
+### Formatting
+
+- **mesh**: the rendering tests are formatted as rustfmt writes them (`dab6e1b56`)
+- **delivery**: cargo fmt — the module lists stay sorted and the git args wrap (`9e830d8fa`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.10.0-aarch64-apple-darwin.tar.gz (`eec02d0717ff`)
+- `macos-x86_64` — majordomus-v0.10.0-x86_64-apple-darwin.tar.gz (`e7657b7bcfa1`)
+- `linux-x86_64-gnu` — majordomus-v0.10.0-x86_64-unknown-linux-gnu.tar.gz (`35e6e8fd6eb4`)
+- `linux-x86_64-musl` — majordomus-v0.10.0-x86_64-unknown-linux-musl.tar.gz (`06351fb7ac00`)
+- `linux-aarch64-gnu` — majordomus-v0.10.0-aarch64-unknown-linux-gnu.tar.gz (`5b7cb6a18f86`)
+- `linux-aarch64-musl` — majordomus-v0.10.0-aarch64-unknown-linux-musl.tar.gz (`17e56539424b`)
+
+
+## v0.9.0 — 2026-09-25
+
+### Decisions
+
+- **ADR-0056** Every object of the layer has a derived address, both directions of every relation, and a declared place of publication _(proposed)_
+
+### Added
+
+- **docs**: the documentation hub and its index are read off the registry and the build (`c3555511c`)
+- **entity**: every object of the layer is addressable, cross-linked and published (`c0b1e9424`)
+
+### Fixed
+
+- **docs**: the hub names every kind it links, and the release is the minor the surface measured (`f8a5caf56`)
+- **entity**: an edge's order is the collection's own, and the surface is exampled (`0fdca807c`)
+- **site**: an entity's URI may not push a phone page sideways (`cb2a69059`)
+
+### Documentation
+
+- **coverage**: the differential rules are a table, not a hand-drawn block (`d15df020d`)
+- **entity**: the entity capability's surface carries executable examples (`054c312bf`)
+
+### Tests
+
+- **cockpit**: the entity routes join the read-only and rebuild sweeps (`c0b15d496`)
+
+### Housekeeping
+
+- **derive**: the projections follow the v0.8.0 release record (`6932fc67b`)
+- **release**: record v0.8.0 and the metadata it publishes (`49a8f053a`)
+- **derive**: the projections follow the merge with master df244393d (`803dc0e47`)
+
+### Published
+
+- `macos-aarch64` — majordomus-v0.9.0-aarch64-apple-darwin.tar.gz (`c2f71342018d`)
+- `macos-x86_64` — majordomus-v0.9.0-x86_64-apple-darwin.tar.gz (`8a0e587dcc45`)
+- `linux-x86_64-gnu` — majordomus-v0.9.0-x86_64-unknown-linux-gnu.tar.gz (`15189a2bb8d6`)
+- `linux-x86_64-musl` — majordomus-v0.9.0-x86_64-unknown-linux-musl.tar.gz (`28d1644ba2f9`)
+- `linux-aarch64-gnu` — majordomus-v0.9.0-aarch64-unknown-linux-gnu.tar.gz (`c619f973950a`)
+- `linux-aarch64-musl` — majordomus-v0.9.0-aarch64-unknown-linux-musl.tar.gz (`4cd7a2edac6d`)
+
 
 ## v0.8.0 — 2026-09-20
 

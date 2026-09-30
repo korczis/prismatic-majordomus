@@ -1,0 +1,99 @@
+#!/usr/bin/env bash
+# suite-budget — what the behavioural suite cost this run, against what .ai/repo/ci/suite.yaml
+# says it may cost.
+#
+# The failure this exists for. A job that outgrows `timeout-minutes` is not reported as slow;
+# it is `cancelled`, which in GitHub's own interface is what a superseded run looks like. The
+# suite's bound was set from a 93-100 minute cost and the cost grew to 148.3 without anything
+# measuring it: by 2026-09-20 the margin was 1.7 minutes, so whether a pull request was
+# validated at all came down to runner weather. Raising the bound buys time and measures
+# nothing. This measures, so the next time the suite grows a tenth the run says so, names the
+# case that grew, and still finishes.
+#
+# What it measures, and what it deliberately does not. Case seconds, summed from the run's own
+# MJ_TEST_REPORT, plus the slowest single case. Not wall clock: wall depends on MJ_TEST_JOBS
+# and on the runner's cores, so a budget over wall would fail on GitHub's weather rather than
+# on a regression anybody here can fix. Case time is the quantity this repository controls.
+#
+#   scripts/ci/suite-budget [--report FILE] [--model FILE]
+#
+#   --report FILE   the TSV test/run.sh writes under MJ_TEST_REPORT (default: suite.tsv)
+#   --model FILE    the declaration (default: .ai/repo/ci/suite.yaml)
+#
+# exit 0   within budget
+# exit 10  over budget — the total, the slowest case, or both
+# exit 12  it could not measure: no report, no model, or a model with no budget. Never a pass,
+#          because "I did not look" and "I looked and it was fine" are different answers.
+#
+# A pipeline here fails when any of its stages fails (the `set -o` below), so none of them
+# ends in an early reader such as `head`: a reader that stops early can kill the writer with
+# SIGPIPE, which would then end the script on the pipe's timing rather than on a
+# measurement. The slowest case is taken by awk in one pass, and the ten slowest are cut by
+# awk after a byte-order sort.
+set -eu
+set -o pipefail
+
+REPORT="suite.tsv"
+MODEL=".ai/repo/ci/suite.yaml"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --report) REPORT="$2"; shift 2 ;;
+    --model) MODEL="$2"; shift 2 ;;
+    *) echo "suite-budget: unknown option $1" >&2; exit 2 ;;
+  esac
+done
+
+[ -f "$MODEL" ] || { echo "suite-budget: $MODEL is missing; the budget is declared there and nowhere else"; exit 12; }
+[ -f "$REPORT" ] || { echo "suite-budget: $REPORT is missing; the suite writes it under MJ_TEST_REPORT, so there is nothing to measure"; exit 12; }
+
+declared() {
+  awk -v key="$1" '
+    $0 ~ ("^ *" key ": *[0-9]") { sub("^ *" key ": *", ""); sub("[^0-9].*$", ""); print; exit }
+  ' "$MODEL"
+}
+budget_total="$(declared cases_seconds || true)"
+budget_slowest="$(declared slowest_case_seconds || true)"
+[ -n "$budget_total" ] && [ -n "$budget_slowest" ] || {
+  echo "suite-budget: $MODEL declares no budget.cases_seconds and budget.slowest_case_seconds"
+  exit 12
+}
+
+# name <tab> result <tab> seconds <tab> phase
+total="$(awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { s += $3 } END { print s + 0 }' "$REPORT")"
+cases="$(awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { n++ } END { print n + 0 }' "$REPORT")"
+# the case at the highest cost, a tie going to the name first in byte order — the same case
+# the ten-slowest listing below puts first — in one awk pass, so no early reader
+slowest_row="$(LC_ALL=C awk -F'\t' '
+  NF >= 3 && $3 ~ /^[0-9]+$/ {
+    c = $3 + 0
+    if (!seen || c > max || (c == max && $1 < name)) { max = c; name = $1; seen = 1 }
+  }
+  END { if (seen) print max, name }
+' "$REPORT")"
+slowest="${slowest_row%% *}"
+slowest_name="${slowest_row#* }"
+
+[ "$cases" -gt 0 ] || { echo "suite-budget: $REPORT carries no case rows; the suite wrote a report it could not fill"; exit 12; }
+
+status=0
+printf 'suite-budget: %s case(s), %s s of case time against a budget of %s s; slowest %s at %s s against %s s\n' \
+  "$cases" "$total" "$budget_total" "$slowest_name" "$slowest" "$budget_slowest"
+
+if [ "$total" -gt "$budget_total" ]; then
+  printf 'FAILED  the suite costs %s s, over the %s s .ai/repo/ci/suite.yaml declares\n' "$total" "$budget_total"
+  printf '        the ten slowest cases of this run:\n'
+  awk -F'\t' 'NF >= 3 && $3 ~ /^[0-9]+$/ { print $3, $1 }' "$REPORT" \
+    | LC_ALL=C sort -k1,1rn -k2,2 \
+    | awk 'NR <= 10 { printf "          %6s s  %s\n", $1, $2 }'
+  printf '        make a case cheaper, or raise the budget in .ai/repo/ci/suite.yaml citing the measurement that justifies it\n'
+  status=10
+fi
+
+if [ "$slowest" -gt "$budget_slowest" ]; then
+  printf 'FAILED  %s costs %s s, over the %s s one case may cost\n' "$slowest_name" "$slowest" "$budget_slowest"
+  printf '        a single case that runs away is invisible in the total until it is most of it\n'
+  status=10
+fi
+
+[ "$status" = 0 ] && echo "suite-budget: within budget"
+exit "$status"

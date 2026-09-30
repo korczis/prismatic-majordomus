@@ -1,0 +1,56 @@
+id: I1948
+milestone: test-evidence
+title: Evidence is judged at the presented revision, by one freshness function
+slug: evidence-is-judged-at-the-presented-revision
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Write the freshness table, the presented revision, containment and aggregation of ADR 0087 once each (decisions 4, 5, 7 and 8), so that evidence show can judge the checked-out commit by the ledger committed in it and every verdict comes from one derivation."
+why: "The rules module holds a second copy of the freshness derivation, a skip reads failing, a plain maximum hides a failure behind an absence, and the corpus verdict proposed in PR #597 says proven over rules whose inputs are merely unchanged. No command judges a commit rather than the working tree."
+current_state: "evidence/mod.rs and rules/mod.rs each derive freshness; containment lives privately in the delivery module of PR #600; PR #597 adds RulesVerdict, which accepts inputs_unchanged as proven. This slice is stacked on PR #597 (fix/a-verdict-says-what-was-proven), with its pull request into that branch."
+desired_state: "evidence::freshness implements ADR 0087's freshness table and one aggregate() with failure precedence; `evidence show --presented <rev> --presented-tree <state>` judges the checked-out commit by its committed ledger and reads the working ledger's uncommitted executions through the monotone rule; containment lives in git/mod.rs; the rules module's copy is gone while evidence::changed_since stays byte-for-byte; RulesVerdict is proven only when every blocking rule is proven; ProofState::token() maps each wire word to its design token."
+scope:
+  - apps/majordomus-cli/src/git/mod.rs
+  - apps/majordomus-cli/src/evidence/mod.rs
+  - apps/majordomus-cli/src/evidence/freshness.rs
+  - apps/majordomus-cli/src/evidence/ledger.rs
+  - apps/majordomus-cli/src/rules/mod.rs
+  - apps/majordomus-cli/src/rules/tests.rs
+  - apps/majordomus-cli/src/capability/builtin/evidence.rs
+  - apps/majordomus-cli/src/cli.rs
+  - apps/majordomus-cli/src/commands/evidence.rs
+  - docs/EVIDENCE.md
+  - docs/DOCTRINE.md
+  - docs/HOW_IT_WORKS.md
+  - docs/CONCEPTS.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - .ai/repo/features/evidence.md
+  - test/cases/502_evidence_is_judged_at_the_presented_revision.sh
+  - test/cases/133_rule_graph.sh
+non_scope:
+  - "apps/majordomus-cli/src/environment: the entry preflight is I1965's"
+  - "Changing evidence::changed_since, which PR #578 calls from the preflight"
+  - "Adding a field to Execution or RunRef"
+  - "A version bump"
+depends_on: []
+acceptance_criteria:
+  - "Each row of ADR 0087's freshness table is reached by a case assertion, and only row 10 yields proven"
+  - "evidence show --presented refuses a revision that is not the checked-out commit, reads the ledger committed in it, and caps proven at stale over a clean failing run the working ledger holds uncommitted"
+  - "A skip reads not_run with its reason, never failing and never proven"
+  - "aggregate() returns failing whenever any part fails, before any absence"
+  - "RulesVerdict is proven only when every blocking rule is proven"
+  - "The rules module's own freshness derivation is removed, and evidence::changed_since is unchanged byte-for-byte"
+  - "Merging with PR #578 in either order produces no conflict"
+validation:
+  - bash test/run.sh 502_evidence_is_judged_at_the_presented_revision
+  - bash test/run.sh 133_rule_graph
+  - bash test/run.sh 124_evidence
+  - cargo test --workspace --all-features
+evidence_required:
+  - one_freshness_function
+  - presented_revision_judged
+  - failure_precedes_absence
+risk: "Stacked on PR #597, it lands with #597: merged into it, or retargeted to master after #597 lands. If scripts/ci/version-matches-surface asks for a bump, the slice stops and reports; it never bumps."
+created_at: 2026-09-26
+updated_at: 2026-09-26

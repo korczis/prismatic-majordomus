@@ -3,17 +3,17 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.9.0"
+    "version": "0.11.0"
   },
-  "fingerprint": "d1eac7148cead0d3beabb67ce2a841528d223c6242ea8a55441e9702037127bc",
+  "fingerprint": "9b27a0c3c69d8dc155c4bdd581a008880b6f532a9f12a227f4d16db4fb7547f7",
   "route": "/features/",
   "counts": {
-    "features": 24,
-    "features_all": 25,
+    "features": 25,
+    "features_all": 26,
     "featured": 13,
     "providers": 6,
-    "modules": 38,
-    "modules_covered": 36,
+    "modules": 43,
+    "modules_covered": 37,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 26,
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 22
+      "features": 23
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 18
+      "features": 19
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 22
+      "features": 23
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 19
+      "features": 20
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 24
+      "features": 25
     }
   ],
   "features": [
@@ -265,6 +265,16 @@
               "resource": "majordomus://quality",
               "route": "GET /api/v1/quality",
               "cli": "majordomus quality report"
+            },
+            {
+              "id": "quality.rustdoc",
+              "title": "Rustdoc tree integrity",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_quality_rustdoc",
+              "resource": "majordomus://quality/rustdoc",
+              "route": "GET /api/v1/quality/rustdoc",
+              "cli": "majordomus quality rustdoc"
             }
           ]
         }
@@ -286,7 +296,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 25
+          "objects": 26
         },
         {
           "name": "command",
@@ -294,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 177
+          "objects": 195
         }
       ],
       "rule_refs": [
@@ -556,13 +566,13 @@
         "why"
       ],
       "counts": {
-        "capabilities": 10,
-        "mcp_tools": 10,
-        "mcp_resources": 238,
-        "http_routes": 10,
-        "cli_paths": 9,
+        "capabilities": 11,
+        "mcp_tools": 11,
+        "mcp_resources": 258,
+        "http_routes": 11,
+        "cli_paths": 10,
         "commands": 2,
-        "objects": 233,
+        "objects": 252,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -647,7 +657,8 @@
         "openapi",
         "swagger",
         "mcp",
-        "docs"
+        "docs",
+        "rustdoc"
       ],
       "related": [
         "declare-once",
@@ -778,6 +789,15 @@
               "stability": "behaviorally_verified",
               "tool": "majordomus_environment_explain",
               "route": "GET /api/v1/environment/explain"
+            },
+            {
+              "id": "environment.preflight",
+              "title": "Whether Majordomus is in force here, and what proves it",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_preflight",
+              "resource": "majordomus://environment/preflight",
+              "route": "GET /api/v1/environment/preflight"
             },
             {
               "id": "environment.status",
@@ -1079,6 +1099,12 @@
           "title": "The documentation, as this process serves it",
           "mount": "/docs",
           "category": "documentation"
+        },
+        {
+          "id": "rustdoc",
+          "title": "The Rust crate's documentation, as rustdoc renders it",
+          "mount": "/rustdoc",
+          "category": "documentation"
         }
       ],
       "moments": [
@@ -1274,10 +1300,10 @@
         "declare-once"
       ],
       "counts": {
-        "capabilities": 20,
-        "mcp_tools": 20,
-        "mcp_resources": 7,
-        "http_routes": 20,
+        "capabilities": 21,
+        "mcp_tools": 21,
+        "mcp_resources": 8,
+        "http_routes": 21,
         "cli_paths": 7,
         "commands": 0,
         "objects": 0,
@@ -1961,10 +1987,10 @@
     },
     {
       "id": "mesh",
-      "title": "Running instances find each other, and prove who they are",
+      "title": "Sessions on several machines work one repository without colliding",
       "short_title": "Mesh",
-      "headline": "A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.",
-      "summary": "A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.",
+      "headline": "Majordomus runtimes of one repository — on one machine or several — discover each other, link through a signed handshake, and share sessions, claims, handovers and reviews through one replicated journal that survives disconnects, crashes and partitions.",
+      "summary": "Each runtime is a key-authenticated participant; discovery (multicast, broadcast, rendezvous, seeds) only finds candidates, and a signed handshake admits a link only for the same repository, a compatible protocol and a trusted key. Linked runtimes replicate one signed event journal every heartbeat and fold it into the same state everywhere, so an exclusive claim on one machine refuses an overlapping claim on another, a handover published on one is consumed on another, and a runtime that crashes expires everywhere on its own. The CLI, HTTP, OpenAPI, MCP and the Cockpit render the same state, and every guarantee is held by tests over real processes and a container lab on a real network.",
       "status": "stable",
       "weight": 45,
       "featured": true,
@@ -1980,15 +2006,23 @@
         "mesh-declaration"
       ],
       "rules": [
-        "project.mesh-is-observation-not-authority"
+        "project.mesh-is-observation-not-authority",
+        "project.mesh-cooperation-is-authenticated"
       ],
       "docs": [
         "docs/MESH.md"
       ],
       "adrs": [
-        "adr-0050"
+        "adr-0050",
+        "adr-0067"
       ],
       "claims": [
+        "mesh-cooperation-links",
+        "mesh-claims-cross-runtime",
+        "mesh-repository-isolation",
+        "mesh-liveness-expiry",
+        "mesh-three-runtime-convergence",
+        "mesh-network-acceptance",
         "mesh-observation-not-authority",
         "mesh-one-registry",
         "mesh-off-by-default"
@@ -2004,8 +2038,10 @@
       "tags": [
         "mesh",
         "discovery",
+        "cooperation",
         "network",
-        "security"
+        "security",
+        "distributed"
       ],
       "route": "/features/mesh/",
       "source": ".ai/repo/features/mesh.md",
@@ -2020,10 +2056,26 @@
         {
           "id": "mesh",
           "title": "Mesh",
-          "description": "The nodes this process discovered on the mesh: authenticated observations of other running Majordomus instances, converged into one registry, with the providers that heard them and the trust the policy assigned. Observation, never authority: a listed node can execute nothing here.",
+          "description": "The mesh of this process: discovery — authenticated observations of other running Majordomus instances in one registry — and cooperation — authenticated links to trusted runtimes of the same repository, replicating sessions, claims, handovers and reviews through one journal every runtime folds into the same state. Discovery grants nothing; a link is admitted per peer, and nothing a peer sends executes anything here.",
           "stability": "experimental",
           "source_path": "apps/majordomus-cli/src/capability/builtin/mesh.rs",
           "capabilities": [
+            {
+              "id": "mesh.claim",
+              "title": "Claim a scope across the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_claim",
+              "route": "POST /api/v1/mesh/claims"
+            },
+            {
+              "id": "mesh.cooperation",
+              "title": "Cooperation, at a glance",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_cooperation",
+              "route": "GET /api/v1/mesh/cooperation"
+            },
             {
               "id": "mesh.doctor",
               "title": "The mesh self-check",
@@ -2032,6 +2084,30 @@
               "tool": "majordomus_mesh_doctor",
               "route": "GET /api/v1/mesh/doctor",
               "cli": "majordomus mesh doctor"
+            },
+            {
+              "id": "mesh.events",
+              "title": "The cooperation journal",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_events",
+              "route": "GET /api/v1/mesh/events"
+            },
+            {
+              "id": "mesh.handover.consume",
+              "title": "Consume a handover from the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_handover_consume",
+              "route": "POST /api/v1/mesh/handovers/consume"
+            },
+            {
+              "id": "mesh.handover.publish",
+              "title": "Publish a handover to the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_handover_publish",
+              "route": "POST /api/v1/mesh/handovers"
             },
             {
               "id": "mesh.identity",
@@ -2043,12 +2119,42 @@
               "cli": "majordomus mesh identity"
             },
             {
+              "id": "mesh.link.hello",
+              "title": "Open a link (the handshake)",
+              "kind": "command",
+              "stability": "experimental",
+              "route": "POST /api/v1/mesh/link/hello"
+            },
+            {
+              "id": "mesh.link.sync",
+              "title": "One sync round of a link",
+              "kind": "command",
+              "stability": "experimental",
+              "route": "POST /api/v1/mesh/link/sync"
+            },
+            {
               "id": "mesh.nodes",
               "title": "The discovered nodes",
               "kind": "query",
               "stability": "experimental",
               "tool": "majordomus_mesh_nodes",
               "route": "GET /api/v1/mesh/nodes"
+            },
+            {
+              "id": "mesh.peer",
+              "title": "One runtime",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_peer",
+              "route": "GET /api/v1/mesh/peer"
+            },
+            {
+              "id": "mesh.peers",
+              "title": "Who cooperates, machine by machine",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_peers",
+              "route": "GET /api/v1/mesh/peers"
             },
             {
               "id": "mesh.register",
@@ -2059,6 +2165,54 @@
               "route": "POST /api/v1/mesh/register"
             },
             {
+              "id": "mesh.release",
+              "title": "Release a claim",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_release",
+              "route": "POST /api/v1/mesh/claims/release"
+            },
+            {
+              "id": "mesh.review.answer",
+              "title": "Answer a review request",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_review_answer",
+              "route": "POST /api/v1/mesh/reviews/answer"
+            },
+            {
+              "id": "mesh.review.request",
+              "title": "Ask the mesh for a review",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_review_request",
+              "route": "POST /api/v1/mesh/reviews"
+            },
+            {
+              "id": "mesh.session.close",
+              "title": "Close a session on the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_session_close",
+              "route": "POST /api/v1/mesh/sessions/close"
+            },
+            {
+              "id": "mesh.session.open",
+              "title": "Open or update a session on the mesh",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_session_open",
+              "route": "POST /api/v1/mesh/sessions"
+            },
+            {
+              "id": "mesh.state",
+              "title": "The state every linked runtime converges on",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_state",
+              "route": "GET /api/v1/mesh/state"
+            },
+            {
               "id": "mesh.status",
               "title": "The mesh, at a glance",
               "kind": "query",
@@ -2066,6 +2220,14 @@
               "tool": "majordomus_mesh",
               "resource": "majordomus://mesh",
               "route": "GET /api/v1/mesh"
+            },
+            {
+              "id": "mesh.verify",
+              "title": "Prove cooperation now",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_mesh_verify",
+              "route": "POST /api/v1/mesh/verify"
             }
           ]
         }
@@ -2085,12 +2247,20 @@
           "class": "blocking",
           "enforced": true,
           "path": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+        },
+        {
+          "id": "project.mesh-cooperation-is-authenticated",
+          "identity": "project.mesh-cooperation-is-authenticated@1",
+          "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
         }
       ],
       "doc_refs": [
         {
           "path": "docs/MESH.md",
-          "title": "The mesh: discovery of running Majordomus instances"
+          "title": "Majordomus Mesh"
         }
       ],
       "adr_refs": [
@@ -2099,9 +2269,45 @@
           "title": "Mesh peer discovery is provider-based observation with authenticated node identity",
           "status": "proposed",
           "path": ".ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md"
+        },
+        {
+          "id": "adr-0067",
+          "title": "Mesh cooperation is authenticated links between runtimes and one replicated journal folded the same way everywhere",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md"
         }
       ],
       "claim_refs": [
+        {
+          "id": "mesh-cooperation-links",
+          "claim": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-claims-cross-runtime",
+          "claim": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-repository-isolation",
+          "claim": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-liveness-expiry",
+          "claim": "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-three-runtime-convergence",
+          "claim": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+          "status": "guaranteed"
+        },
+        {
+          "id": "mesh-network-acceptance",
+          "claim": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+          "status": "guaranteed"
+        },
         {
           "id": "mesh-observation-not-authority",
           "claim": "A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown",
@@ -2109,7 +2315,7 @@
         },
         {
           "id": "mesh-one-registry",
-          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+          "claim": "Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
           "status": "guaranteed"
         },
         {
@@ -2132,24 +2338,24 @@
         "models"
       ],
       "counts": {
-        "capabilities": 5,
-        "mcp_tools": 5,
+        "capabilities": 21,
+        "mcp_tools": 19,
         "mcp_resources": 2,
-        "http_routes": 5,
+        "http_routes": 21,
         "cli_paths": 2,
         "commands": 0,
         "objects": 1,
-        "rules": 1,
-        "enforced_rules": 1,
+        "rules": 2,
+        "enforced_rules": 2,
         "docs": 1,
-        "adrs": 1,
-        "claims": 3,
+        "adrs": 2,
+        "claims": 9,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 3
+          "guaranteed": 9
         },
         "modules": {
           "experimental": 1
@@ -2282,7 +2488,9 @@
       ],
       "web_refs": [],
       "moments": [],
-      "backlinks": [],
+      "backlinks": [
+        "economics"
+      ],
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
@@ -2305,6 +2513,180 @@
         },
         "modules": {
           "experimental": 1
+        }
+      }
+    },
+    {
+      "id": "economics",
+      "title": "Token economics, measured from matched runs and never typed",
+      "short_title": "Economics",
+      "headline": "What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests, with every number labelled by how it was obtained and published only past a declared rule.",
+      "summary": "A task corpus runs in a real harness twice — without Majordomus and with it — and the provider's usage, the gate verdicts and the context compiler's counted selection are recorded as raw facts; one calculator derives pairs, distributions, seeded bootstrap intervals and the one statement the methodology's publication rule allows, projected to the CLI, HTTP, OpenAPI, MCP, the Cockpit, a generated report and the site; economics check refuses any savings number typed by hand.",
+      "status": "stable",
+      "weight": 47,
+      "featured": false,
+      "areas": [
+        "observability",
+        "cost"
+      ],
+      "audiences": [],
+      "modules": [
+        "economics"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [],
+      "docs": [
+        "docs/ECONOMICS.md"
+      ],
+      "adrs": [
+        "adr-0082"
+      ],
+      "claims": [
+        "context-selection-counted",
+        "economics-claims-gated",
+        "token-savings-measured"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "economics"
+      ],
+      "web": [],
+      "related": [
+        "models",
+        "evidence"
+      ],
+      "tags": [
+        "economics",
+        "tokens",
+        "benchmark",
+        "evidence"
+      ],
+      "route": "/features/economics/",
+      "source": ".ai/repo/features/economics.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "economics",
+          "title": "Token economics",
+          "description": "What a coding session consumes with Majordomus installed and without it, from recorded runs: matched control and treatment sessions judged by the same hidden acceptance tests, the provider's usage as it reported it, and every number labelled with its measurement class (observed, counted, derived, estimated, counterfactual). One calculator; every surface is a projection of it, and the verdict states only what the methodology's publication rule allows.",
+          "stability": "behaviorally_verified",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/economics.rs",
+          "capabilities": [
+            {
+              "id": "economics.check",
+              "title": "Refuse unsupported economics claims",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_check",
+              "route": "GET /api/v1/economics/check",
+              "cli": "majordomus economics check"
+            },
+            {
+              "id": "economics.explain",
+              "title": "Explain one economics metric",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_explain",
+              "route": "GET /api/v1/economics/explain",
+              "cli": "majordomus economics explain"
+            },
+            {
+              "id": "economics.runs",
+              "title": "Recorded benchmark runs",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics_runs",
+              "route": "GET /api/v1/economics/runs",
+              "cli": "majordomus economics runs"
+            },
+            {
+              "id": "economics.summary",
+              "title": "Token economics summary",
+              "kind": "query",
+              "stability": "behaviorally_verified",
+              "tool": "majordomus_economics",
+              "resource": "majordomus://economics",
+              "route": "GET /api/v1/economics",
+              "cli": "majordomus economics summary"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/ECONOMICS.md",
+          "title": "Economics"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0082",
+          "title": "Token economics are measured from matched runs and published only past a declared rule",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0082-token-economics-are-measured-from-matched-runs-and-published-only-past-a-declared-rule.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "context-selection-counted",
+          "claim": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+          "status": "guaranteed"
+        },
+        {
+          "id": "economics-claims-gated",
+          "claim": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+          "status": "guaranteed"
+        },
+        {
+          "id": "token-savings-measured",
+          "claim": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+          "status": "planned"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "economics",
+          "title": "Economics",
+          "route": "/cockpit/economics"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 4,
+        "mcp_tools": 4,
+        "mcp_resources": 1,
+        "http_routes": 4,
+        "cli_paths": 4,
+        "commands": 0,
+        "objects": 0,
+        "rules": 0,
+        "enforced_rules": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 3,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 2,
+          "planned": 1
+        },
+        "modules": {
+          "behaviorally_verified": 1
         }
       }
     },
@@ -2379,7 +2761,9 @@
         "checkpoint-long-work",
         "open-and-close-a-session",
         "capture-the-prompts-that-started-the-work",
-        "let-the-provider-draw-the-episode-boundary"
+        "let-the-provider-draw-the-episode-boundary",
+        "recover-an-episode-nobody-closed",
+        "resume-from-a-prompt-asset"
       ],
       "cockpit": [
         "continuity"
@@ -2757,6 +3141,16 @@
           "id": "let-the-provider-draw-the-episode-boundary",
           "title": "Have the session opened and closed without anybody remembering to",
           "category": "continuity"
+        },
+        {
+          "id": "recover-an-episode-nobody-closed",
+          "title": "Close an episode whose client never came back",
+          "category": "continuity"
+        },
+        {
+          "id": "resume-from-a-prompt-asset",
+          "title": "Start a session from a rendered framing, not a pasted transcript",
+          "category": "continuity"
         }
       ],
       "cockpit_refs": [
@@ -2909,7 +3303,7 @@
         "docs": 2,
         "adrs": 4,
         "claims": 11,
-        "use_cases": 5,
+        "use_cases": 7,
         "moments": 20
       },
       "evidence": {
@@ -3073,7 +3467,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 53
+          "objects": 62
         },
         {
           "name": "knowledge",
@@ -3081,7 +3475,7 @@
         },
         {
           "name": "document",
-          "objects": 253
+          "objects": 275
         }
       ],
       "rule_refs": [
@@ -3330,11 +3724,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 308,
+        "mcp_resources": 339,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 307,
+        "objects": 338,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3544,7 +3938,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 138
+          "objects": 141
         }
       ],
       "rule_refs": [
@@ -3908,11 +4302,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 140,
+        "mcp_resources": 143,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 138,
+        "objects": 141,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -4083,7 +4477,10 @@
       "use_cases": [
         "accept-or-refuse-finished-work",
         "block-acceptance-on-an-open-question",
-        "carry-a-blocker-across-a-handover"
+        "carry-a-blocker-across-a-handover",
+        "know-whether-this-work-is-finished",
+        "prove-what-a-task-owed-before-calling-it-done",
+        "say-what-reached-the-remote-and-what-did-not"
       ],
       "cockpit": [],
       "web": [],
@@ -4318,6 +4715,21 @@
           "id": "carry-a-blocker-across-a-handover",
           "title": "Hand work over with a question still open, and keep it blocking",
           "category": "continuity"
+        },
+        {
+          "id": "know-whether-this-work-is-finished",
+          "title": "Know whether the work in this checkout is finished",
+          "category": "completion"
+        },
+        {
+          "id": "prove-what-a-task-owed-before-calling-it-done",
+          "title": "Prove what a task owed before calling it done",
+          "category": "completion"
+        },
+        {
+          "id": "say-what-reached-the-remote-and-what-did-not",
+          "title": "Say what reached the remote and what did not",
+          "category": "completion"
         }
       ],
       "cockpit_refs": [],
@@ -4461,7 +4873,7 @@
         "docs": 2,
         "adrs": 0,
         "claims": 9,
-        "use_cases": 3,
+        "use_cases": 6,
         "moments": 20
       },
       "evidence": {
@@ -4933,7 +5345,9 @@
         "adr-0012",
         "adr-0020"
       ],
-      "claims": [],
+      "claims": [
+        "cockpit-is-a-projection-of-the-registry"
+      ],
       "use_cases": [],
       "cockpit": [
         "overview",
@@ -5076,7 +5490,13 @@
           "path": ".ai/repo/adrs/0020-the-capability-graph-is-composed-not-centralised-and-projecte.md"
         }
       ],
-      "claim_refs": [],
+      "claim_refs": [
+        {
+          "id": "cockpit-is-a-projection-of-the-registry",
+          "claim": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+          "status": "guaranteed"
+        }
+      ],
       "use_case_refs": [],
       "cockpit_refs": [
         {
@@ -5226,12 +5646,14 @@
         "enforced_rules": 1,
         "docs": 1,
         "adrs": 2,
-        "claims": 0,
+        "claims": 1,
         "use_cases": 0,
         "moments": 11
       },
       "evidence": {
-        "claims": {},
+        "claims": {
+          "guaranteed": 1
+        },
         "modules": {
           "behaviorally_verified": 2
         }
@@ -5646,7 +6068,8 @@
       "use_cases": [
         "install-the-tool-in-one-command",
         "migrate-from-the-old-layout",
-        "know-which-tool-is-running"
+        "know-which-tool-is-running",
+        "hand-the-repository-to-a-reader"
       ],
       "cockpit": [],
       "web": [],
@@ -5725,7 +6148,7 @@
         {
           "id": "release",
           "title": "Release",
-          "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the two places the version is stated and says what the commits since the last release imply it should become.",
+          "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become.",
           "stability": "implemented",
           "source_path": "apps/majordomus-cli/src/capability/builtin/release.rs",
           "capabilities": [
@@ -5790,7 +6213,7 @@
         },
         {
           "name": "release-record",
-          "objects": 5
+          "objects": 7
         }
       ],
       "rule_refs": [
@@ -5894,6 +6317,11 @@
           "id": "know-which-tool-is-running",
           "title": "Check the version before trusting a diagnosis",
           "category": "adoption"
+        },
+        {
+          "id": "hand-the-repository-to-a-reader",
+          "title": "Hand the repository to someone who cannot clone it",
+          "category": "knowledge"
         }
       ],
       "cockpit_refs": [],
@@ -5916,17 +6344,17 @@
       "counts": {
         "capabilities": 8,
         "mcp_tools": 8,
-        "mcp_resources": 7,
+        "mcp_resources": 9,
         "http_routes": 8,
         "cli_paths": 5,
         "commands": 4,
-        "objects": 6,
+        "objects": 8,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
         "adrs": 1,
         "claims": 8,
-        "use_cases": 3,
+        "use_cases": 4,
         "moments": 2
       },
       "evidence": {
@@ -6165,11 +6593,11 @@
       "kind_refs": [
         {
           "name": "milestone",
-          "objects": 19
+          "objects": 20
         },
         {
           "name": "issue",
-          "objects": 216
+          "objects": 237
         }
       ],
       "rule_refs": [
@@ -6312,11 +6740,11 @@
       "counts": {
         "capabilities": 14,
         "mcp_tools": 14,
-        "mcp_resources": 237,
+        "mcp_resources": 259,
         "http_routes": 14,
         "cli_paths": 2,
         "commands": 1,
-        "objects": 235,
+        "objects": 257,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -6517,7 +6945,7 @@
       "kind_refs": [
         {
           "name": "context",
-          "objects": 29
+          "objects": 31
         },
         {
           "name": "scope",
@@ -6797,11 +7225,11 @@
       "counts": {
         "capabilities": 7,
         "mcp_tools": 7,
-        "mcp_resources": 34,
+        "mcp_resources": 36,
         "http_routes": 7,
         "cli_paths": 4,
         "commands": 1,
-        "objects": 30,
+        "objects": 32,
         "rules": 6,
         "enforced_rules": 5,
         "docs": 2,
@@ -7552,7 +7980,9 @@
       "cockpit_refs": [],
       "web_refs": [],
       "moments": [],
-      "backlinks": [],
+      "backlinks": [
+        "economics"
+      ],
       "counts": {
         "capabilities": 4,
         "mcp_tools": 3,
@@ -8166,7 +8596,8 @@
       ],
       "audiences": [],
       "modules": [
-        "deploy"
+        "deploy",
+        "delivery"
       ],
       "commands": [],
       "kinds": [
@@ -8175,9 +8606,15 @@
       "rules": [
         "majordomus.deployment-contract"
       ],
-      "docs": [],
-      "adrs": [],
-      "claims": [],
+      "docs": [
+        "docs/DELIVERY.md"
+      ],
+      "adrs": [
+        "adr-0071"
+      ],
+      "claims": [
+        "deployment-contract-refuses-by-name"
+      ],
       "use_cases": [],
       "cockpit": [],
       "web": [],
@@ -8188,11 +8625,11 @@
       "route": "/features/deployments/",
       "source": ".ai/repo/features/deployments.md",
       "surfaces": {
-        "cli": false,
+        "cli": true,
         "api": true,
         "mcp": true,
         "cockpit": true,
-        "docs": false
+        "docs": true
       },
       "module_refs": [
         {
@@ -8228,6 +8665,33 @@
               "route": "GET /api/v1/deployments"
             }
           ]
+        },
+        {
+          "id": "delivery",
+          "title": "Delivery",
+          "description": "Whether each product feature exists, computed and never recorded: on the trunk, deployed, publicly verified, its required tests current, that evidence published and linked from the interface — each a verdict of pass, fail or unknown with the reason and the remediation, and unknown never a pass. A feature short of any of them is not delivered, and its development stage (implemented on a branch, on master, tested, deployed) is a different type from delivery.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/delivery.rs",
+          "capabilities": [
+            {
+              "id": "delivery.feature",
+              "title": "Does this feature exist",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_delivery_feature",
+              "route": "GET /api/v1/delivery/feature",
+              "cli": "majordomus delivery show"
+            },
+            {
+              "id": "delivery.report",
+              "title": "Does each feature exist",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_delivery",
+              "route": "GET /api/v1/delivery",
+              "cli": "majordomus delivery report"
+            }
+          ]
         }
       ],
       "command_refs": [],
@@ -8247,34 +8711,55 @@
           "path": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md"
         }
       ],
-      "doc_refs": [],
-      "adr_refs": [],
-      "claim_refs": [],
+      "doc_refs": [
+        {
+          "path": "docs/DELIVERY.md",
+          "title": "Delivery"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0071",
+          "title": "A feature exists only when its delivery is computed and every dimension passes",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0071-a-feature-exists-only-when-delivery-is-computed-and-every-dimension-passes.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "deployment-contract-refuses-by-name",
+          "claim": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+          "status": "guaranteed"
+        }
+      ],
       "use_case_refs": [],
       "cockpit_refs": [],
       "web_refs": [],
       "moments": [],
       "backlinks": [],
       "counts": {
-        "capabilities": 3,
-        "mcp_tools": 3,
+        "capabilities": 5,
+        "mcp_tools": 5,
         "mcp_resources": 2,
-        "http_routes": 3,
-        "cli_paths": 0,
+        "http_routes": 5,
+        "cli_paths": 2,
         "commands": 0,
         "objects": 1,
         "rules": 1,
         "enforced_rules": 1,
-        "docs": 0,
-        "adrs": 0,
-        "claims": 0,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 1,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
-        "claims": {},
+        "claims": {
+          "guaranteed": 1
+        },
         "modules": {
-          "behaviorally_verified": 1
+          "behaviorally_verified": 1,
+          "experimental": 1
         }
       }
     },
@@ -8313,7 +8798,9 @@
         "commit-scopes-are-learned",
         "commit-plan-is-refusable"
       ],
-      "use_cases": [],
+      "use_cases": [
+        "plan-a-commit-and-judge-its-message"
+      ],
       "cockpit": [],
       "web": [],
       "related": [
@@ -8443,7 +8930,13 @@
           "status": "guaranteed"
         }
       ],
-      "use_case_refs": [],
+      "use_case_refs": [
+        {
+          "id": "plan-a-commit-and-judge-its-message",
+          "title": "Divide a working tree into commits, and hold every message to a policy",
+          "category": "policy"
+        }
+      ],
       "cockpit_refs": [],
       "web_refs": [],
       "moments": [
@@ -8498,7 +8991,7 @@
         "docs": 1,
         "adrs": 1,
         "claims": 3,
-        "use_cases": 0,
+        "use_cases": 1,
         "moments": 6
       },
       "evidence": {
@@ -8617,6 +9110,26 @@
         "id": "models",
         "label": "Models",
         "route": "/features/models/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
+        "id": "economics",
+        "label": "Economics",
+        "route": "/features/economics/",
         "status": "stable",
         "surfaces": {
           "cli": true,
@@ -8964,16 +9477,18 @@
         "route": "/features/deployments/",
         "status": "draft",
         "surfaces": {
-          "cli": false,
+          "cli": true,
           "api": true,
           "mcp": true,
           "cockpit": true,
-          "docs": false
+          "docs": true
         },
         "exposed": [
+          "cli",
           "api",
           "mcp",
-          "cockpit"
+          "cockpit",
+          "docs"
         ]
       },
       {
@@ -9034,6 +9549,16 @@
         ]
       },
       {
+        "id": "dashboard",
+        "title": "Dashboards",
+        "features": []
+      },
+      {
+        "id": "delivery",
+        "title": "Delivery",
+        "features": []
+      },
+      {
         "id": "deploy",
         "title": "Deployment",
         "features": []
@@ -9071,6 +9596,13 @@
         "title": "Distribution",
         "features": [
           "install"
+        ]
+      },
+      {
+        "id": "economics",
+        "title": "Token economics",
+        "features": [
+          "economics"
         ]
       },
       {
@@ -9221,6 +9753,11 @@
         ]
       },
       {
+        "id": "served",
+        "title": "Served deployments",
+        "features": []
+      },
+      {
         "id": "server",
         "title": "Server",
         "features": [
@@ -9233,6 +9770,11 @@
         "features": [
           "continuity"
         ]
+      },
+      {
+        "id": "shell",
+        "title": "Shell automation",
+        "features": []
       },
       {
         "id": "trace",
@@ -9495,7 +10037,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (53)",
+        "title": "adr (62)",
         "features": [
           "knowledge"
         ]
@@ -9523,7 +10065,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (177)",
+        "title": "claim (195)",
         "features": [
           "declare-once"
         ]
@@ -9537,7 +10079,7 @@
       },
       {
         "id": "context",
-        "title": "context (29)",
+        "title": "context (31)",
         "features": [
           "context"
         ]
@@ -9556,14 +10098,14 @@
       },
       {
         "id": "feature",
-        "title": "feature (25)",
+        "title": "feature (26)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (216)",
+        "title": "issue (237)",
         "features": [
           "planning"
         ]
@@ -9584,7 +10126,7 @@
       },
       {
         "id": "milestone",
-        "title": "milestone (19)",
+        "title": "milestone (20)",
         "features": [
           "planning"
         ]
@@ -9619,14 +10161,14 @@
       },
       {
         "id": "release-record",
-        "title": "release-record (5)",
+        "title": "release-record (7)",
         "features": [
           "install"
         ]
       },
       {
         "id": "rule",
-        "title": "rule (138)",
+        "title": "rule (141)",
         "features": [
           "doctrine"
         ]
@@ -10172,6 +10714,14 @@
       "path": ".ai/repo/rules/project/interfaces-are-projections.v1.md"
     },
     {
+      "id": "project.mesh-cooperation-is-authenticated",
+      "identity": "project.mesh-cooperation-is-authenticated@1",
+      "title": "Mesh cooperation is admitted per link, replicated through one journal, and projected by every surface alike",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+    },
+    {
       "id": "project.mesh-is-observation-not-authority",
       "identity": "project.mesh-is-observation-not-authority@1",
       "title": "The mesh observes nodes; it authorizes nothing and holds one registry",
@@ -10424,6 +10974,11 @@
       "route": "/cockpit/models"
     },
     {
+      "id": "economics",
+      "title": "Economics",
+      "route": "/cockpit/economics"
+    },
+    {
       "id": "health",
       "title": "Health",
       "route": "/cockpit/health"
@@ -10450,51 +11005,51 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1492,
-    "builtin": 115,
-    "declarative": 1377,
-    "modules": 38,
-    "mcp_tools": 112,
-    "mcp_resources": 1418,
-    "http_routes": 114,
-    "cli_commands": 118,
+    "capabilities": 1629,
+    "builtin": 143,
+    "declarative": 1486,
+    "modules": 43,
+    "mcp_tools": 137,
+    "mcp_resources": 1531,
+    "http_routes": 141,
+    "cli_commands": 146,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1377,
+    "objects": 1486,
     "by_kind": {
-      "adr": 53,
+      "adr": 62,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 177,
+      "claim": 195,
       "command": 31,
-      "context": 29,
+      "context": 31,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 253,
-      "feature": 25,
+      "document": 275,
+      "feature": 26,
       "implementation": 49,
-      "issue": 216,
+      "issue": 237,
       "knowledge": 1,
       "mesh-declaration": 1,
-      "milestone": 19,
+      "milestone": 20,
       "moment": 38,
       "policy": 1,
       "profile": 4,
       "prompt": 4,
-      "release-record": 5,
-      "rule": 138,
+      "release-record": 7,
+      "rule": 141,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 226,
+      "test": 256,
       "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
-    "features": 24,
-    "web_surfaces": 9
+    "features": 25,
+    "web_surfaces": 10
   },
   "valid": true
 }

@@ -29,7 +29,12 @@ fresh() {
   printf '[[groups]]\nlabel = "Plan"\nhref = "/plan/"\n\n[indexing]\nunlisted = ["plan"]\n' > "$F/site/data/nav.toml"
   printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}]}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"install_command":"curl -fsSL https://x.test/install.sh | sh","next_command":"majordomus init","verify_command":"majordomus --version","latest":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/registry/distribution.json"
-  mkdir -p "$F/site/data/generated"
+  mkdir -p "$F/site/data/generated" "$F/docs/generated" "$F/site/public/ref/api"
+  # the topology: the app, and one surface site-build composes at /ref, whose pages are that
+  # surface's own and follow neither the story nor the indexing policy (ADR 0086)
+  printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"},{"id":"ref","kind":"static-directory","mount":"/ref","artifact":"target/web/ref","availability":"both"}]}' > "$F/docs/generated/web.json"
+  printf '<html><head><title>r</title><script src="https://x.test/js/mermaid.min.js"></script></head><body>r</body></html>\n' > "$F/site/public/ref/index.html"
+  printf '<html><head><title>a</title></head><body>a</body></html>\n' > "$F/site/public/ref/api/index.html"
   printf '%s\n' '{"use_cases":[{"id":"a"},{"id":"b"},{"id":"c"}],"categories":[{"id":"x"},{"id":"y"}]}' > "$F/site/data/generated/catalogue.json"
   printf '%s\n' '{"commit":"abcdef1234567890","dirty":false}' > "$F/site/data/build.json"
   cat > "$F/site/public/index.html" <<'HTML'
@@ -127,4 +132,18 @@ fresh; sed -i.bak 's#</urlset>#<url><loc>https://x.test/plan/i0001/</loc></url><
 expect_finding 10 '/plan/i0001/ is below an unlisted section and is in sitemap.xml' "an unlisted page in the sitemap"
 fresh; sed -i.bak 's#<url><loc>https://x.test/features/good/</loc></url>##' "$F/site/public/sitemap.xml"
 expect_finding 10 '/features/good/ is indexable and absent from sitemap.xml' "an indexable page missing from the sitemap"
+
+# --- the composed surface's pages are not the site's: the clean tree above carried /ref/ and
+#     /ref/api/, out of the sitemap, without noindex, one loading the Mermaid runtime with
+#     nothing to draw, and passed. The exemption is the topology's and nothing else's: the
+#     same tree with /ref no longer declared is judged like any other page, and a tree whose
+#     topology cannot be read is not judged at all rather than judged without it
+fresh; printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"}]}' > "$F/docs/generated/web.json"
+expect_finding 10 '/ref/api/ is indexable and absent from sitemap.xml' "a page under a mount the topology does not compose"
+grep -q 'load the Mermaid runtime with no diagram to render: .*/ref/' out.txt \
+  || { echo "    a page under an undeclared mount escaped the runtime check"; cat out.txt; exit 1; }
+fresh; printf '%s\n' '{"surfaces":[{"id":"ref","kind":"static-directory","mount":"/ref","artifact":"target/web/ref","availability":"served-only"}]}' > "$F/docs/generated/web.json"
+expect_finding 10 '/ref/ is indexable and absent from sitemap.xml' "a served-only surface is not composed into the publication"
+fresh; rm "$F/docs/generated/web.json"
+expect_finding 12 'web.json is missing' "a topology that cannot be read"
 exit 0

@@ -173,6 +173,12 @@ fn three_ensures_at_once_share_one_server() {
         !f.path(".ai/local/state/mcp/server.spawn").exists(),
         "the started process released its claim once it had elected"
     );
+    // Two of the three lost the election and may still be waiting in it, ready to take the
+    // lease the instant this stop frees it. That used to fail here — `stop` waited for the
+    // path to be absent and never saw it absent — and the wait was raised to sixty seconds
+    // on the theory that the runner was merely slow. It was not: the stop waited out the
+    // whole bound either way, which is what proved the theory wrong. `stop` now waits for
+    // the lease it read rather than for the path, so the default bound is honest again.
     let (code, out, err) = mj(&root, &["serve", "stop"]);
     assert_eq!(code, 0, "{out}{err}");
     assert!(out.starts_with("stopped "), "{out}");
@@ -233,6 +239,65 @@ fn a_start_in_progress_holds_another_start_off_and_a_dead_one_does_not() {
     assert!(!claim.exists(), "the new server released its own claim");
     let (code, _, _) = mj(&f.root(), &["serve", "stop"]);
     assert_eq!(code, 0);
+}
+
+/// `serve stop` ends the server the lease named, and says so even when the path it freed is
+/// taken again in the same instant.
+///
+/// That is not a contrived case. `serve ensure`, run by three shells at once, starts three
+/// `serve` processes; two of them lose the election and wait in it, polling the lease every
+/// hundred milliseconds, for as long as twenty seconds. A `serve stop` that lands in that
+/// window frees the path and a loser creates it again under a token of its own within
+/// milliseconds — so a `stop` that waits for the *path* to be absent waits out its whole
+/// bound and reports a server that would not stop, of a server that stopped at once. This is
+/// `three_ensures_at_once_share_one_server` failing on a loaded Linux runner, where three
+/// spawns of an executable that closes sixty-five thousand descriptors between fork and exec
+/// leave the losers far enough behind to still be electing when the stop arrives. What the
+/// competitor is, is not what this asserts: the fixture writes a foreign lease into the path
+/// the moment it is freed, because the timing then belongs to the test rather than to luck.
+#[test]
+fn stop_answers_for_the_server_it_named_even_when_the_lease_is_taken_again_at_once() {
+    let f = Fixture::new();
+    let lease = lease_path(&f);
+    let (code, a, err) = ensure(&f.root(), &["--idle", "120"]);
+    assert_eq!(code, 0, "{a}\n{err}");
+    let pid = a["pid"].as_u64().expect("a pid");
+
+    // a competitor that takes the path the instant the signalled server frees it, and holds
+    // it: what a `serve` still in the election does, without that process's own timing
+    let foreign = format!(
+        r#"{{"schema":"majordomus-mcp-lease/v1","pid":1,"token":"another-process","root":"{}","url":"http://127.0.0.1:1","started_at":"2026-09-10T00:00:00Z","version":"{}"}}"#,
+        f.root().display(),
+        majordomus_cli::VERSION
+    );
+    let path = lease.clone();
+    let taker = std::thread::spawn(move || {
+        let deadline = Instant::now() + Duration::from_secs(20);
+        while Instant::now() < deadline {
+            if !path.exists() {
+                // from here the path is never absent again: the signalled server's own
+                // handler may still unlink once, so it is rewritten until `stop` has read it
+                let hold = Instant::now() + Duration::from_secs(3);
+                while Instant::now() < hold {
+                    let _ = std::fs::write(&path, &foreign);
+                    std::thread::sleep(Duration::from_millis(1));
+                }
+                return true;
+            }
+            std::hint::spin_loop();
+        }
+        false
+    });
+
+    let (code, out, err) = mj(&f.root(), &["serve", "stop", "--wait", "10"]);
+    assert_eq!(code, 0, "stdout: {out}\nstderr: {err}");
+    assert!(out.starts_with("stopped "), "{out}");
+    assert!(
+        out.contains(&format!("pid {pid}")),
+        "it names the server it ended: {out}"
+    );
+    assert!(taker.join().unwrap(), "the path was freed and taken again");
+    let _ = std::fs::remove_file(&lease);
 }
 
 /// `serve ensure` bounded by `wait` seconds, for a call that is expected not to converge.

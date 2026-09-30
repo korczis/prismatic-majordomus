@@ -175,7 +175,26 @@ mod tests {
         )
         .unwrap();
         std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        // Linux refuses to exec a file that any process holds open for writing (ETXTBSY). A
+        // test thread that forks a child while the write above has the file open leaves that
+        // child holding the descriptor until it execs, so the first exec of this fake could
+        // fail, and `approve_with` read the failure as "direnv did not say" (master's rust job
+        // in run 36557029377). One exec that succeeds proves no writer is left: the write has
+        // closed, and no later fork can inherit it.
+        wait_until_executable(&script);
         (script, record)
+    }
+
+    fn wait_until_executable(script: &Path) {
+        for _ in 0..100 {
+            match Command::new(script).arg("probe").output() {
+                Err(e) if e.raw_os_error() == Some(libc::ETXTBSY) => {
+                    std::thread::sleep(std::time::Duration::from_millis(20))
+                }
+                _ => return,
+            }
+        }
+        panic!("{} stayed busy for writing", script.display());
     }
 
     fn checkout(root: &Path, name: &str, envrc: Option<&str>) -> PathBuf {
@@ -212,6 +231,32 @@ mod tests {
             EnvrcApproval::Differs
         );
         assert!(!record.exists(), "direnv allow must not have been run");
+    }
+
+    /// Linux alone refuses to exec a file held open for writing, so this holds there: the
+    /// fake is run only once no writer holds it, rather than failing on the first try.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_fake_still_open_for_writing_is_waited_for_before_it_is_run() {
+        let tmp = tempfile::tempdir().unwrap();
+        let (direnv, _) = fake_direnv(tmp.path(), 0, 0);
+        let held = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&direnv)
+            .unwrap();
+        let busy = Command::new(&direnv).arg("probe").output().unwrap_err();
+        assert_eq!(busy.raw_os_error(), Some(libc::ETXTBSY), "{busy}");
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            drop(held);
+        });
+        wait_until_executable(&direnv);
+        let after = Command::new(&direnv).arg("probe").output();
+        release.join().unwrap();
+        assert!(
+            after.is_ok(),
+            "the fake was handed on while still busy: {after:?}"
+        );
     }
 
     #[test]
