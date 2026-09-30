@@ -30798,7 +30798,6 @@
           "depends_on": [
             "majordomus.verify-outcomes@1"
           ],
-          "statement": "A completed outcome requires a verification command that ran and exited zero, with its exit code and duration recorded.",
           "tags": [
             "verification",
             "finish"
@@ -36009,6 +36008,13 @@
         "label": "test/cases/56_derived_current_gate.sh",
         "route": "/cockpit/objects/test/test-cases-56-derived-current-gate-sh",
         "source": "test/cases/56_derived_current_gate.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
+        "kind": "test",
+        "label": "test/cases/572_verification_records_the_tree_it_proved.sh",
+        "route": "/cockpit/objects/test/test-cases-572-verification-records-the-tree-it-proved-sh",
+        "source": "test/cases/572_verification_records_the_tree_it_proved.sh"
       },
       {
         "id": "majordomus://test/test/cases/57_derived_merge_driver.sh",
@@ -56742,6 +56748,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/572_verification_records_the_tree_it_proved.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/57_derived_merge_driver.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -60473,8 +60484,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1929,
-      "edges": 4356,
+      "nodes": 1930,
+      "edges": 4357,
       "acyclic": true,
       "truncated": false
     }
