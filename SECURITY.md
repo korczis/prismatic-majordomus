@@ -45,7 +45,26 @@ it is described as real.
   resolve outside the repository root.
 - **No silent overwrite.** Overwriting requires an explicit flag; the default is refusal
   naming the existing file. `state/` is never overwritten by any command.
-- **No recursive deletion.** Retention rotates to archived files; nothing is deleted.
+- **No recursive deletion, and every deletion is accounted for.** Retention rotates to
+  archived files rather than removing them. A directory tree is removed only when this tool
+  made it — its own temporary directories, and derived output it regenerates whole — or by
+  `majordomus worktree migrate`, and then only the original of a worktree whose copy was
+  fingerprinted identical and which git no longer registers. Otherwise it removes files it
+  writes and owns (its own locks, leases and caches), and one command removes a record:
+  `majordomus recover`, and only what it has accounted for:
+  - a duplicate closed record of one episode, once its `changed_files` and `commits` are
+    folded into the oldest record, which says so in a `## Recovery` section;
+  - the open-session file of an episode stranded past the `session.stranded_after`
+    threshold (or an explicit `--older-than`), once its closed record is published;
+  - through the `recover.orphans` capability, a regular file of the two temporary shapes
+    this tool writes (`.tmp.*` in a record store, `<target>.mj-tmp`), older than that same
+    threshold, that is empty, whose episode is already published, or whose target already
+    exists. A temp holding the only copy of a record is published, not removed; content
+    it cannot classify, a file whose age it cannot read, and every directory are reported
+    and left where they are.
+
+  A fold, a recovered episode and a published temp are written to the ledger as
+  `session.recovered`, and `--check` prints the plan with its evidence and writes nothing.
 - **Handovers are `0600`.**
 - **Authorisation is derived, not ambient.** Any input that could relax a rule is either
   computed by Majordomus from git or corroborated against a real git object. An
