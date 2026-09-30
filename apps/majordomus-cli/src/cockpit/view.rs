@@ -21,7 +21,7 @@ use crate::capability::CapabilityKind;
 use crate::design::DesignSystem;
 
 use super::html::{el, empty, El, Node};
-use super::nav::{Area, Navigation};
+use super::nav::{Area, Count, Navigation};
 
 /// The banner shown when the distribution has no `share/cockpit/` at all: the pages still
 /// render, and the reader is told why they look like 1993.
@@ -217,9 +217,18 @@ fn sidebar(shell: &Shell<'_>) -> El {
                         .attr_if("aria-current", current.then_some("page"))
                         .child(el("span").class("mj-nav-label").text(&item.label))
                         .node(match item.count {
-                            Some(n) => {
+                            Some(Count::Known(n)) => {
                                 Node::Element(el("span").class("mj-nav-count").text(n.to_string()))
                             }
+                            Some(Count::Unknown) => Node::Element(
+                                el("span")
+                                    .class("mj-nav-count")
+                                    .attr(
+                                        "title",
+                                        "the capability behind this count did not answer",
+                                    )
+                                    .text("unknown"),
+                            ),
                             None => empty(),
                         }),
                 ),

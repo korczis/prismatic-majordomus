@@ -81,7 +81,10 @@ use super::handler::Executable;
 use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
-pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
+pub use artifacts::{
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, ArtifactView, ArtifactsInput,
+    ARTIFACTS_URI,
+};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
