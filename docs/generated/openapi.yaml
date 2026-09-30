@@ -9475,6 +9475,24 @@ components:
         - scope
         - at
       description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
+    AnswerObservation:
+      type: object
+      properties:
+        observed_at:
+          type: string
+          description: "RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only\nin an answer from an index that was never built (a hand-made one in a test)."
+        source:
+          type: string
+          description: "What was read at that time: `index build` or `git read`."
+        stale_after:
+          type:
+            - string
+            - "null"
+          description: "RFC 3339 UTC: after this the answer is not to be trusted as current even though\nnothing announced a change. Absent when there is no known blind spot."
+      required:
+        - observed_at
+        - source
+      description: "When the state behind an answer was read: the freshness contract of a capability answer.\n\nDeclared once and carried in the output type of every answer that is a picture of\nstate, so that the output schema, OpenAPI, the MCP tool schemas and the command line's\nJSON all carry it without a transport of their own. It is set where the state is read —\nthe index build, the git read — never by the executor, which knows when a handler ran\nand not when the state it read was taken.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::AnswerObservation;\nlet at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);\nlet o = AnswerObservation::taken(\"git read\", at, Some(Duration::from_secs(120)));\nassert_eq!(o.observed_at, \"2026-08-29T10:40:00Z\");\nassert_eq!(o.stale_after.as_deref(), Some(\"2026-08-29T10:42:00Z\"));\nassert!(!o.is_stale_at(at + Duration::from_secs(120)));\nassert!(o.is_stale_at(at + Duration::from_secs(121)));\n```"
     AnswerView:
       type: object
       properties:
@@ -9642,6 +9660,9 @@ components:
         tallies:
           "$ref": "#/components/schemas/ArtifactTallies"
           description: The counts.
+        verdict:
+          "$ref": "#/components/schemas/ArtifactVerdict"
+          description: "Where the tree stands as a whole, decided from every tally."
         regenerate:
           type: string
           description: The command that rewrites every one of them.
@@ -9655,6 +9676,7 @@ components:
         - documents
         - artifacts
         - tallies
+        - verdict
         - regenerate
         - verify
       description: "The answer of `artifacts.list`."
@@ -9714,6 +9736,24 @@ components:
         - missing
         - present
       description: "How many of each, so a caller needs no arithmetic of its own."
+    ArtifactVerdict:
+      oneOf:
+        - type: string
+          const: current
+          description: Every file is there and hashes to what the manifest recorded.
+        - type: string
+          const: unverified
+          description: "Every file is there, none is stale, and some carry no recorded hash: their bytes\nwere not compared here, so the tree is not known to be current.\n`majordomus generate --check` is what decides them."
+        - type: string
+          const: stale
+          description: A file differs from what the manifest recorded.
+        - type: string
+          const: missing
+          description: A file the manifest names is not in the tree.
+        - type: string
+          const: not_generated
+          description: "No manifest is committed: the repository has never run `majordomus generate`."
+      description: "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.\n\n```\nuse majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;\nlet v: ArtifactVerdict = serde_json::from_str(\"\\\"unverified\\\"\").unwrap();\nassert_eq!(v, ArtifactVerdict::Unverified);\nassert!(ArtifactVerdict::Current < ArtifactVerdict::Unverified);\n```"
     ArtifactView:
       type: object
       properties:
@@ -18667,6 +18707,11 @@ components:
           items:
             "$ref": "#/components/schemas/HealthCheck"
           description: "Every dimension, in a stable order."
+        observed:
+          type: object
+          additionalProperties:
+            "$ref": "#/components/schemas/AnswerObservation"
+          description: "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
       required:
         - status
         - tallies
@@ -20481,9 +20526,10 @@ components:
           minimum: 0
           description: "The context window, tokens."
         status:
-          "$ref": "#/components/schemas/ModelStatus"
-          description: The lifecycle standing.
-          default: available
+          anyOf:
+            - "$ref": "#/components/schemas/ModelStatus"
+            - type: "null"
+          description: "The lifecycle standing, when the catalogue declares one. Absent is undeclared: the\ncatalogue admits only facts with provenance, and routing still considers the model,\nbut nothing may say it is available on the catalogue's behalf."
         note:
           type:
             - string
@@ -20508,7 +20554,7 @@ components:
         - type: string
           const: retired
           description: "Gone; kept so an old record's reference still resolves to a row with a story."
-      description: "A model's lifecycle standing, as the catalogue declares it."
+      description: "A model's lifecycle standing, as the catalogue declares it. There is no default: a\ncatalogue entry that declares none has an undeclared standing, which is not the same\nfact as \"available\", and no reader may render it as one."
     ModelsReport:
       type: object
       properties:
@@ -24817,6 +24863,16 @@ components:
         scope_path:
           type: string
           description: "The scope file: repository-relative for the repository's own, the share path for\nthe distribution's default."
+        observed:
+          "$ref": "#/components/schemas/RepositoryObservations"
+          description: "When the index and the git state it carries were read. Defaults to empty so that a\nrecord written before the freshness contract still reads."
+          default:
+            index:
+              observed_at: ""
+              source: ""
+            git:
+              observed_at: ""
+              source: ""
       required:
         - root
         - layer_schema
@@ -24828,6 +24884,19 @@ components:
         - scope_origin
         - scope_path
       description: What the index knows about the repository it was built from.
+    RepositoryObservations:
+      type: object
+      properties:
+        index:
+          "$ref": "#/components/schemas/AnswerObservation"
+          description: "When the index was built: the objects, the kinds, the diagnostics."
+        git:
+          "$ref": "#/components/schemas/AnswerObservation"
+          description: "When git was asked: the branch, the head, the working tree."
+      required:
+        - index
+        - git
+      description: "The two pictures a process takes of the repository, each with when it was taken.\n\nA picture without a window is never stale, and its window is not serialized.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::{AnswerObservation, RepositoryObservations};\nlet now = RepositoryObservations {\n    index: AnswerObservation::taken(\"index build\", UNIX_EPOCH, None),\n    git: AnswerObservation::taken(\"git read\", UNIX_EPOCH, Some(Duration::from_secs(120))),\n};\nlet json = serde_json::to_value(&now).unwrap();\nassert_eq!(json[\"git\"][\"stale_after\"], \"1970-01-01T00:02:00Z\");\nassert!(json[\"index\"].get(\"stale_after\").is_none());\nlet back: RepositoryObservations = serde_json::from_value(json).unwrap();\nassert_eq!(back, now);\n```"
     RepositoryRef:
       type: object
       properties:

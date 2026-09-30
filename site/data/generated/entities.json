@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 62,
+      "count": 63,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 141,
+      "count": 142,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 62
+      "count": 63
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 195
+      "count": 196
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 275
+      "count": 276
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 141
+      "count": 142
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 256
+      "count": 264
     },
     {
       "kind": "use-case",
@@ -678,6 +678,13 @@
           "label": "adr-0088",
           "kind": "adr",
           "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
           "external": false
         }
       ]
@@ -4322,6 +4329,131 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0089",
+      "identity": "adr-0089",
+      "slug": "adr-0089",
+      "cockpit": "/cockpit/objects/adr/adr-0089",
+      "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+      "status": "proposed",
+      "tags": [
+        "ui",
+        "cockpit",
+        "site",
+        "evidence",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/gates.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ui-integrity-baseline.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/health.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/pages.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/cockpit-projection-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.product-surface-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-product-surface-derived-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/389_cockpit_projection.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/547_the_ui_says_only_what_is_derived.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -7580,6 +7712,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
@@ -8132,6 +8271,20 @@
           "label": "adr-0066",
           "kind": "adr",
           "route": "/adrs/adr-0066/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         }
       ]
@@ -8796,6 +8949,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.a-diagram-is-drawn-not-typed@1",
           "kind": "rule",
@@ -8954,6 +9114,13 @@
           "label": "project.the-version-is-measured@2",
           "kind": "rule",
           "route": "/rules/project-the-version-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         },
         {
@@ -9861,6 +10028,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0023/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
         }
       ]
     },
@@ -10737,6 +10918,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.design-tokens-declared-once@2",
           "kind": "rule",
@@ -10748,6 +10936,63 @@
           "label": "project.every-link-and-control-is-tested@1",
           "kind": "rule",
           "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.ui-derived-state@1",
+      "identity": "project.ui-derived-state@1",
+      "slug": "project-ui-derived-state-1",
+      "cockpit": "/cockpit/objects/rule/project-ui-derived-state-1",
+      "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+      "status": "active",
+      "tags": [
+        "ui",
+        "cockpit",
+        "site",
+        "evidence",
+        "derivation",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/ui-derived-state.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.product-surface-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-product-surface-derived-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
           "external": false
         }
       ]
@@ -10838,6 +11083,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
           "edge": "defined_in",
           "label": "web-namespaces-reserved",
           "kind": "claim",
@@ -10849,6 +11101,13 @@
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         }
       ]

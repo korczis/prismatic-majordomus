@@ -2877,6 +2877,13 @@
         "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
       },
       {
+        "id": "mesh-compaction-keeps-what-is-live",
+        "implementation": "apps/majordomus-cli/src/mesh/journal.rs",
+        "route": "/guarantees/mesh-compaction-keeps-what-is-live/",
+        "status": "guaranteed",
+        "test": "test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+      },
+      {
         "id": "mesh-observation-not-authority",
         "implementation": "apps/majordomus-cli/src/mesh/trust.rs",
         "route": "/guarantees/mesh-observation-not-authority/",
@@ -2989,7 +2996,7 @@
   },
   "counts": {
     "capabilities": 143,
-    "claims": 62,
+    "claims": 63,
     "modules": 43
   },
   "generator": "majordomus-cli 0.11.0",

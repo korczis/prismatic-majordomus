@@ -1626,6 +1626,14 @@
         "external": true
       },
       {
+        "id": "file:.ai/repo/ui-integrity-baseline.txt",
+        "kind": "file",
+        "label": "ui-integrity-baseline.txt",
+        "summary": "named by the layer; not an object of this index",
+        "source": ".ai/repo/ui-integrity-baseline.txt",
+        "external": true
+      },
+      {
         "id": "file:.githooks/commit-msg",
         "kind": "file",
         "label": "commit-msg",
@@ -2511,6 +2519,14 @@
         "label": "ci-plan",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ci-plan",
+        "external": true
+      },
+      {
+        "id": "file:scripts/ci/cockpit-projection-check",
+        "kind": "file",
+        "label": "cockpit-projection-check",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/ci/cockpit-projection-check",
         "external": true
       },
       {
@@ -4814,6 +4830,42 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0089",
+        "kind": "adr",
+        "label": "adr-0089",
+        "summary": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "route": "/cockpit/objects/adr/adr-0089",
+        "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-29",
+          "related": [
+            "rule:project.ui-derived-state",
+            "rule:project.product-surface-derived",
+            "rule:project.derived-once",
+            "rule:project.ui-conformance",
+            "rule:project.web-surface-declared-once",
+            "rule:project.entry-reports-only-evidence",
+            "rule:project.interfaces-are-projections",
+            "file:.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md",
+            "file:scripts/ci/cockpit-projection-check",
+            "file:.ai/repo/ui-integrity-baseline.txt",
+            "file:.ai/repo/ci/gates.yaml",
+            "file:apps/majordomus-cli/src/cockpit/pages.rs",
+            "file:apps/majordomus-cli/src/capability/builtin/health.rs",
+            "test:test/cases/547_the_ui_says_only_what_is_derived.sh",
+            "test:test/cases/389_cockpit_projection.sh"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "site",
+            "evidence",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://application/ci-gated-project",
         "kind": "application",
         "label": "ci-gated-project",
@@ -6913,6 +6965,21 @@
           "responsibility": "none",
           "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-compaction-keeps-what-is-live",
+        "kind": "claim",
+        "label": "mesh-compaction-keeps-what-is-live",
+        "summary": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+        "route": "/cockpit/objects/claim/mesh-compaction-keeps-what-is-live",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/journal.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/493_mesh_compaction_keeps_what_is_live.sh"
         }
       },
       {
@@ -11792,6 +11859,14 @@
         "summary": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
         "route": "/cockpit/objects/document/docs-claims-mesh-claims-cross-runtime-md",
         "source": "docs/claims/mesh-claims-cross-runtime.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-compaction-keeps-what-is-live.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-compaction-keeps-what-is-live.md",
+        "summary": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+        "route": "/cockpit/objects/document/docs-claims-mesh-compaction-keeps-what-is-live-md",
+        "source": "docs/claims/mesh-compaction-keeps-what-is-live.md"
       },
       {
         "id": "majordomus://document/docs/claims/mesh-cooperation-links.md",
@@ -32433,6 +32508,32 @@
         }
       },
       {
+        "id": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "rule",
+        "label": "project.ui-derived-state@1",
+        "summary": "An interface shows only what is derived, and unknown is never drawn as healthy",
+        "route": "/cockpit/objects/rule/project-ui-derived-state-1",
+        "source": ".ai/repo/rules/project/ui-derived-state.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.product-surface-derived@1",
+            "project.entry-reports-only-evidence@1",
+            "project.web-surface-declared-once@1",
+            "project.interfaces-are-projections@1"
+          ],
+          "tags": [
+            "ui",
+            "cockpit",
+            "site",
+            "evidence",
+            "derivation",
+            "enforcement"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.unknown-keys-are-errors@1",
         "kind": "rule",
         "label": "project.unknown-keys-are-errors@1",
@@ -35885,6 +35986,13 @@
         "source": "test/cases/492_rustdoc_module_links.sh"
       },
       {
+        "id": "majordomus://test/test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+        "kind": "test",
+        "label": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+        "route": "/cockpit/objects/test/test-cases-493-mesh-compaction-keeps-what-is-live-sh",
+        "source": "test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "kind": "test",
         "label": "test/cases/49_roadmap_doctrine.sh",
@@ -35990,11 +36098,60 @@
         "source": "test/cases/53_status_vocabulary.sh"
       },
       {
+        "id": "majordomus://test/test/cases/540_the_cockpit_says_only_what_it_knows.sh",
+        "kind": "test",
+        "label": "test/cases/540_the_cockpit_says_only_what_it_knows.sh",
+        "route": "/cockpit/objects/test/test-cases-540-the-cockpit-says-only-what-it-knows-sh",
+        "source": "test/cases/540_the_cockpit_says_only_what_it_knows.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/543_a_declared_guarantee_is_not_coloured_as_proven.sh",
+        "kind": "test",
+        "label": "test/cases/543_a_declared_guarantee_is_not_coloured_as_proven.sh",
+        "route": "/cockpit/objects/test/test-cases-543-a-declared-guarantee-is-not-coloured-as-proven-sh",
+        "source": "test/cases/543_a_declared_guarantee_is_not_coloured_as_proven.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
+        "kind": "test",
+        "label": "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
+        "route": "/cockpit/objects/test/test-cases-544-the-homepage-counts-declared-apart-from-supported-sh",
+        "source": "test/cases/544_the_homepage_counts_declared_apart_from_supported.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/545_every_answer_says_when_it_was_observed.sh",
+        "kind": "test",
+        "label": "test/cases/545_every_answer_says_when_it_was_observed.sh",
+        "route": "/cockpit/objects/test/test-cases-545-every-answer-says-when-it-was-observed-sh",
+        "source": "test/cases/545_every_answer_says_when_it_was_observed.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/546_a_statistic_names_the_capability_it_asked.sh",
+        "kind": "test",
+        "label": "test/cases/546_a_statistic_names_the_capability_it_asked.sh",
+        "route": "/cockpit/objects/test/test-cases-546-a-statistic-names-the-capability-it-asked-sh",
+        "source": "test/cases/546_a_statistic_names_the_capability_it_asked.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "kind": "test",
+        "label": "test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "route": "/cockpit/objects/test/test-cases-547-the-ui-says-only-what-is-derived-sh",
+        "source": "test/cases/547_the_ui_says_only_what_is_derived.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
         "kind": "test",
         "label": "test/cases/54_session_lifecycle_hooks.sh",
         "route": "/cockpit/objects/test/test-cases-54-session-lifecycle-hooks-sh",
         "source": "test/cases/54_session_lifecycle_hooks.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/552_coverage_is_recorded_for_the_preflight.sh",
+        "kind": "test",
+        "label": "test/cases/552_coverage_is_recorded_for_the_preflight.sh",
+        "route": "/cockpit/objects/test/test-cases-552-coverage-is-recorded-for-the-preflight-sh",
+        "source": "test/cases/552_coverage_is_recorded_for_the_preflight.sh"
       },
       {
         "id": "majordomus://test/test/cases/55_session_context.sh",
@@ -43352,6 +43509,86 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:.ai/repo/ci/gates.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:.ai/repo/ui-integrity-baseline.txt",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:apps/majordomus-cli/src/capability/builtin/health.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:apps/majordomus-cli/src/cockpit/pages.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "file:scripts/ci/cockpit-projection-check",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://adr/adr-0012",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.derived-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.product-surface-derived@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.ui-conformance@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.ui-derived-state@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://test/test/cases/389_cockpit_projection.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0089",
+        "target": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://application/ci-gated-project",
         "target": "kind:application",
         "kind": "is_a"
@@ -45435,6 +45672,26 @@
         "source": "majordomus://claim/mesh-claims-cross-runtime",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
+        "target": "file:apps/majordomus-cli/src/mesh/journal.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-compaction-keeps-what-is-live",
+        "target": "majordomus://test/test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-cooperation-links",
@@ -48763,6 +49020,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mesh-claims-cross-runtime.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-compaction-keeps-what-is-live.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -55512,6 +55774,31 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.entry-reports-only-evidence@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.product-surface-derived@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.ui-derived-state@1",
+        "target": "majordomus://rule/project.web-surface-declared-once@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.unknown-keys-are-errors@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -56652,6 +56939,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -56727,7 +57019,42 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/540_the_cockpit_says_only_what_it_knows.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/543_a_declared_guarantee_is_not_coloured_as_proven.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/544_the_homepage_counts_declared_apart_from_supported.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/545_every_answer_says_when_it_was_observed.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/546_a_statistic_names_the_capability_it_asked.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/547_the_ui_says_only_what_is_derived.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/54_session_lifecycle_hooks.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/552_coverage_is_recorded_for_the_preflight.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60473,8 +60800,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1929,
-      "edges": 4356,
+      "nodes": 1943,
+      "edges": 4390,
       "acyclic": true,
       "truncated": false
     }

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "statuses": {
-    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "guaranteed": "Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.",
     "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
     "planned": "Specified and not implemented. Named so the omission is visible.",
     "rejected": "Considered and deliberately refused, with the reason recorded."
@@ -2417,6 +2417,19 @@
       "source_route": "/docs/mesh/",
       "command": null,
       "test_case": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+    },
+    {
+      "id": "mesh-compaction-keeps-what-is-live",
+      "claim": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+      "source": "docs/MESH.md",
+      "implementation": "apps/majordomus-cli/src/mesh/journal.rs",
+      "test": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "status": "guaranteed",
+      "note": "Case 493 runs tests/mesh_compaction.rs, two runtimes linked through the real signed protocol over an in-process transport, because no black-box knob reaches compaction in bounded time (a server compacts every sixty heartbeats and keeps a dead stream fifteen minutes; only the heartbeat and the expiry are declarable). The journal's unit tests reproduce each defect PR 588 recorded, and its property test holds that compaction changes no live claim, open session, handover taker or review answer over random histories. Not covered — two runtimes may print different digests while each compacts on its own schedule; what is live agrees, and docs/MESH.md says so.",
+      "responsibility": "none",
+      "source_route": "/docs/mesh/",
+      "command": null,
+      "test_case": "493_mesh_compaction_keeps_what_is_live"
     },
     {
       "id": "mesh-network-acceptance",

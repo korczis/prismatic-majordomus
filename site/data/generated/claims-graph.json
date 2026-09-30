@@ -3,7 +3,7 @@
   "source": "docs/CLAIMS.yaml",
   "generator": "scripts/generate-site-data",
   "statuses": {
-    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "guaranteed": "Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.",
     "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
     "planned": "Specified and not implemented. Named so the omission is visible.",
     "rejected": "Considered and deliberately refused, with the reason recorded."
@@ -1680,6 +1680,15 @@
       "note": "Three server processes in a line agree on the digest, hold the same event count, and carry no further events once converged; origin signatures survive the relay. Delivery is at-least-once with idempotent application, not exactly-once."
     },
     {
+      "id": "claim:mesh-compaction-keeps-what-is-live",
+      "kind": "claim",
+      "label": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-compaction-keeps-what-is-live/",
+      "external": false,
+      "note": "Case 493 runs tests/mesh_compaction.rs, two runtimes linked through the real signed protocol over an in-process transport, because no black-box knob reaches compaction in bounded time (a server compacts every sixty heartbeats and keeps a dead stream fifteen minutes; only the heartbeat and the expiry are declarable). The journal's unit tests reproduce each defect PR 588 recorded, and its property test holds that compaction changes no live claim, open session, handover taker or review answer over random histories. Not covered — two runtimes may print different digests while each compacts on its own schedule; what is live agrees, and docs/MESH.md says so."
+    },
+    {
       "id": "claim:mesh-network-acceptance",
       "kind": "claim",
       "label": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
@@ -3303,6 +3312,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/492_rustdoc_module_links.sh"
     },
     {
+      "id": "test:test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "kind": "test",
+      "label": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+    },
+    {
       "id": "test:test/cases/49_roadmap_doctrine.sh",
       "kind": "test",
       "label": "test/cases/49_roadmap_doctrine.sh",
@@ -4482,6 +4498,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mesh-network-acceptance",
       "target": "source:docs/MESH.md",
       "kind": "specified_by"
@@ -5403,6 +5424,11 @@
     },
     {
       "source": "claim:mesh-three-runtime-convergence",
+      "target": "impl:apps/majordomus-cli/src/mesh/journal.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
       "target": "impl:apps/majordomus-cli/src/mesh/journal.rs",
       "kind": "implemented_by"
     },
@@ -6329,6 +6355,11 @@
     {
       "source": "claim:mesh-three-runtime-convergence",
       "target": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "test:test/cases/493_mesh_compaction_keeps_what_is_live.sh",
       "kind": "proved_by"
     },
     {
