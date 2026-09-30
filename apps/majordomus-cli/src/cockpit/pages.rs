@@ -11,10 +11,10 @@ use serde_json::{json, Value};
 
 use crate::capability::builtin::dashboard::DashboardOverview;
 use crate::capability::builtin::{
-    ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
-    DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, NodeList, ObjectList, ObjectSummary, QualityAnswer, Record,
-    RepositoryReport, TokenList,
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, CheckState, CommandIndex,
+    CommandSummary, Continuity, DesignReport, DirectoryReport, DirectoryState, EventHistory,
+    ExecutionList, ExecutionView, GraphList, Health, HealthStatus, InstallabilityReport, NodeList,
+    ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport, TokenList,
 };
 use crate::capability::{
     Capability, CapabilityKind, Context, Effect as CapabilityEffect, Provenance,
@@ -27,7 +27,7 @@ use crate::http::router::percent_encode;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
-    WorktreeState,
+    UpstreamState, WorktreeState,
 };
 
 use crate::capability::builtin::lifecycle::{
@@ -111,6 +111,33 @@ fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) ->
     serde_json::from_value(value).map_err(|e| format!("{id} answered something unexpected: {e}"))
 }
 
+/// Every count of a capability's tallies, as a stat strip: iterated over the answer's own
+/// fields, so a tally the capability adds is a statistic the page shows, and none — the bad
+/// ones least of all — is left out by a hand-picked subset.
+fn tally_statistics(tallies: &impl serde::Serialize, source: &str) -> El {
+    tally_statistics_with(tallies, source, &[])
+}
+
+/// [`tally_statistics`], with the fields whose count is not known in this answer: those
+/// render "unknown" rather than a zero that reads as a measurement.
+fn tally_statistics_with(tallies: &impl serde::Serialize, source: &str, unknown: &[&str]) -> El {
+    let mut strip = el("div").class("mj-stats");
+    if let Ok(Value::Object(fields)) = serde_json::to_value(tallies) {
+        for (field, value) in fields {
+            let shown = if unknown.contains(&field.as_str()) {
+                "unknown".to_string()
+            } else {
+                match value {
+                    Value::Number(n) => n.to_string(),
+                    _ => continue,
+                }
+            };
+            strip = strip.child(statistic(shown, field.replace('_', " "), source));
+        }
+    }
+    strip
+}
+
 /// A page that says what went wrong instead of showing a blank one.
 fn failed(area: Area, title: &str, reason: String) -> Page {
     Page::new(
@@ -129,7 +156,10 @@ fn failed(area: Area, title: &str, reason: String) -> Page {
 
 /// The landing page: what this process is serving, and whether it is healthy.
 pub fn overview(ctx: &Context) -> Page {
-    let report: RepositoryReport = match ask(ctx, "repository.info", json!({})) {
+    // The capability every statistic below is read from, named once: what the page asks is
+    // what each statistic says it was asked of, so a label cannot name another capability.
+    const ASKED: &str = "repository.info";
+    let report: RepositoryReport = match ask(ctx, ASKED, json!({})) {
         Ok(r) => r,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
@@ -137,6 +167,7 @@ pub fn overview(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
+    let now = std::time::SystemTime::now();
 
     let git = match &report.repository.git {
         crate::git::GitState::Available(info) => {
@@ -151,38 +182,48 @@ pub fn overview(ctx: &Context) -> Page {
         crate::git::GitState::Unavailable { reason } => reason.clone(),
     };
 
+    let counted = &report.capabilities;
     let statistics = el("div")
         .class("mj-stats")
-        .child(statistic(
-            report.capabilities.total.to_string(),
+        .child(super::view::asked_statistic(
+            counted.total.to_string(),
             "capabilities",
-            "capabilities.list",
+            ASKED,
+            "capabilities.total",
         ))
-        .child(statistic(
+        .child(super::view::asked_statistic(
             report.objects.to_string(),
             "objects of the layer",
-            "repository.info",
+            ASKED,
+            "objects",
         ))
-        .child(statistic(
-            report.capabilities.http_routes.to_string(),
+        .child(super::view::asked_statistic(
+            counted.http_routes.to_string(),
             "HTTP routes",
-            "the registry's HTTP exposures",
+            ASKED,
+            "capabilities.http_routes",
         ))
-        .child(statistic(
-            report.capabilities.mcp_tools.to_string(),
+        .child(super::view::asked_statistic(
+            counted.mcp_tools.to_string(),
             "MCP tools",
-            "the registry's MCP exposures",
+            ASKED,
+            "capabilities.mcp_tools",
         ))
-        .child(statistic(
-            report.capabilities.modules.to_string(),
+        .child(super::view::asked_statistic(
+            counted.modules.to_string(),
             "modules",
-            "compose_modules! and the layer's kinds",
+            ASKED,
+            "capabilities.modules",
         ))
-        .child(statistic(
-            report.capabilities.cached.to_string(),
+        .child(super::view::asked_statistic(
+            counted.cached.to_string(),
             "cached capabilities",
-            "the descriptors' cache policies",
+            ASKED,
+            "capabilities.cached",
         ));
+    let statistics = el("div")
+        .child(statistics)
+        .child(super::view::as_of(&report.repository.observed.index, now));
 
     let identity = card(
         "This repository",
@@ -192,7 +233,15 @@ pub fn overview(ctx: &Context) -> Page {
                 "Layer schema",
                 Node::Element(mono(&report.repository.layer_schema)),
             ),
-            ("Version control", Node::Element(mono(git))),
+            (
+                "Version control",
+                Node::Element(
+                    el("span")
+                        .child(mono(git))
+                        .text(" ")
+                        .child(super::view::as_of(&report.repository.observed.git, now)),
+                ),
+            ),
             (
                 "Discovery",
                 Node::Element(mono(&report.repository.discovery)),
@@ -303,7 +352,7 @@ pub fn overview(ctx: &Context) -> Page {
             .child(identity)
             .child(health_card)
             .child(preflight_card(ctx))
-            .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
+            .child(distribution_card(ctx))
             .child(kinds)
             .child(diagnostics),
     )
@@ -369,13 +418,20 @@ fn four_questions(ctx: &Context) -> El {
                 )
         })
         .collect();
-    // the route the registry declares for the capability, not one written here
-    let route = ctx
-        .registry
-        .get("dashboard.overview")
-        .and_then(|c| c.exposure.http.as_ref())
-        .map(|h| h.path.clone())
-        .unwrap_or_default();
+    // the route the registry declares for the capability, not one written here: asked of
+    // `capabilities.describe`, so the page reads no registry of its own (ADR 0089)
+    let route = ask::<Value>(
+        ctx,
+        "capabilities.describe",
+        json!({ "id": "dashboard.overview" }),
+    )
+    .ok()
+    .and_then(|c| {
+        c.pointer("/exposure/http/path")
+            .and_then(Value::as_str)
+            .map(String::from)
+    })
+    .unwrap_or_default();
     card_with(
         "Four questions",
         link(route, "as JSON"),
@@ -425,12 +481,43 @@ fn preflight_card(ctx: &Context) -> El {
 ///
 /// It asks `distribution.status`, which is the same capability the command line, the HTTP
 /// route and the MCP tool answer from, so no number here is computed twice and none is
-/// written down. A repository that carries no distribution model gets no card rather than
-/// a card full of dashes.
-fn distribution_card(ctx: &Context) -> Option<El> {
-    let report: InstallabilityReport = ask(ctx, "distribution.status", json!({})).ok()?;
+/// written down. A capability that does not answer — no distribution model among them — is
+/// a card that says so, never a card that vanishes: an absent card and an unasked question
+/// look the same, and only one of them is true.
+///
+/// The verdict is worded as what it is. `distribution.status` reaches no network: it
+/// decides from the distribution model and the release records, so the card says
+/// "installable", decided from the release records, and not that the public install is healthy, which
+/// only the release pipeline's smoke phase has observed.
+fn distribution_card(ctx: &Context) -> El {
+    distribution_card_of(ask(ctx, "distribution.status", json!({})))
+}
+
+/// What `distribution.status` decides from, said beside its verdict.
+const RECORDS: &str = "the release records, with no network reached";
+
+fn distribution_card_of(answer: Result<InstallabilityReport, String>) -> El {
+    let report = match answer {
+        Ok(r) => r,
+        Err(e) => {
+            return card_with(
+                "Distribution",
+                badge("unknown", "unknown"),
+                el("div")
+                    .child(facts(vec![
+                        ("Installable", Node::Element(badge("unknown", "unknown"))),
+                        ("Decided from", Node::Element(el("span").text(RECORDS))),
+                    ]))
+                    .child(
+                        el("p")
+                            .class("mj-note")
+                            .text(format!("distribution.status did not answer: {e}")),
+                    ),
+            )
+        }
+    };
     let verdict = if report.installable {
-        badge("ok", "healthy")
+        badge("ok", "yes")
     } else {
         badge("fail", "blocked")
     };
@@ -452,7 +539,8 @@ fn distribution_card(ctx: &Context) -> Option<El> {
                 report.published_artifacts, report.required_targets
             ))),
         ),
-        ("Public install", Node::Element(verdict)),
+        ("Installable", Node::Element(verdict)),
+        ("Decided from", Node::Element(el("span").text(RECORDS))),
     ];
     // Why, and what to do about it — the same cause and next action every other projection
     // of this capability shows, rather than a second wording of them here.
@@ -466,7 +554,7 @@ fn distribution_card(ctx: &Context) -> Option<El> {
             }
         }
     }
-    Some(card_with(
+    card_with(
         "Distribution",
         link(
             "/cockpit/capabilities/distribution.status",
@@ -477,7 +565,7 @@ fn distribution_card(ctx: &Context) -> Option<El> {
                 .class("mj-note")
                 .child(mono(&report.install_command)),
         ),
-    ))
+    )
 }
 
 fn health_badge(status: HealthStatus) -> El {
@@ -490,6 +578,21 @@ fn health_badge(status: HealthStatus) -> El {
             HealthStatus::Unknown => "a dimension could not be decided",
         },
     ))
+}
+
+/// The badge for a model's declared standing. A catalogue entry that declares none is
+/// "undeclared", which wears the colour of not knowing, never the one of "available".
+fn model_status_badge(status: Option<crate::models::ModelStatus>) -> El {
+    use crate::models::ModelStatus;
+    match status {
+        None => badge("unknown", "undeclared"),
+        Some(s) => word_badge(match s {
+            ModelStatus::Available => "available",
+            ModelStatus::Preview => "preview",
+            ModelStatus::Deprecated => "deprecated",
+            ModelStatus::Retired => "retired",
+        }),
+    }
 }
 
 // --------------------------------------------------------------- capabilities
@@ -2952,15 +3055,9 @@ pub fn models(ctx: &Context) -> Page {
         .models
         .iter()
         .map(|m| {
-            let status = match m.status {
-                crate::models::ModelStatus::Available => "available",
-                crate::models::ModelStatus::Preview => "preview",
-                crate::models::ModelStatus::Deprecated => "deprecated",
-                crate::models::ModelStatus::Retired => "retired",
-            };
             card_with(
                 m.id.clone(),
-                word_badge(status),
+                model_status_badge(m.status),
                 el("div")
                     .child(facts(vec![
                         ("Vendor", Node::Element(el("span").text(&m.vendor))),
@@ -3572,19 +3669,23 @@ pub fn health(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Health, "Health", e),
     };
+    let now = std::time::SystemTime::now();
     let cards: Vec<El> = health
         .checks
         .iter()
         .map(|c| {
+            // a check that judged a picture says when the picture was taken; one that
+            // decided live, during this call, has nothing older than the page to show
+            let mut decided = vec![("Decided by", Node::Element(el("span").text(&c.decided_by)))];
+            if let Some(o) = health.observed.get(&c.id) {
+                decided.push(("Observed", Node::Element(super::view::as_of(o, now))));
+            }
             card_with(
                 c.title.clone(),
                 badge(c.status.as_str(), c.status.as_str()),
                 el("div")
                     .child(el("p").class("mj-prose").text(&c.detail))
-                    .child(facts(vec![(
-                        "Decided by",
-                        Node::Element(el("span").text(&c.decided_by)),
-                    )]))
+                    .child(facts(decided))
                     .when(!c.evidence.is_empty(), |d| {
                         d.child(
                             el("div")
@@ -3873,6 +3974,32 @@ pub fn release(ctx: &Context) -> Page {
 
 // --------------------------------------------------------------------- artifacts
 
+/// The badge for the verdict `artifacts.list` decided. An unverified set wears no colour of
+/// health: its unhashed files were not compared, and saying so is the whole point.
+fn artifact_verdict_badge(verdict: ArtifactVerdict, t: &ArtifactTallies) -> El {
+    match verdict {
+        ArtifactVerdict::Current => badge("ok", "current"),
+        ArtifactVerdict::Unverified => badge(
+            "unknown",
+            format!("unverified: {} file(s) carry no recorded hash", t.present),
+        ),
+        ArtifactVerdict::Stale => badge("warn", "stale"),
+        ArtifactVerdict::Missing => badge("fail", "missing"),
+        ArtifactVerdict::NotGenerated => badge("warn", "not generated"),
+    }
+}
+
+/// The badge status of one file's state: a file present without a recorded hash is not
+/// known to be current, so it is not coloured as if it were.
+fn artifact_state_status(state: ArtifactState) -> &'static str {
+    match state {
+        ArtifactState::Current => "ok",
+        ArtifactState::Stale => "warn",
+        ArtifactState::Missing => "fail",
+        ArtifactState::Present => "unknown",
+    }
+}
+
 /// What the generator writes: every document with the encodings it is committed in, and
 /// every file with its contract and its state against the working tree. Read through
 /// `artifacts.list`, which reads the generator's own manifest; this page keeps no list of
@@ -3882,16 +4009,9 @@ pub fn artifacts(ctx: &Context) -> Page {
         Ok(r) => r,
         Err(e) => return failed(Area::Artifacts, "Artifacts", e),
     };
-    let t = &report.tallies;
-    let overall = if !report.present {
-        ("warn", "not generated")
-    } else if t.missing > 0 {
-        ("fail", "missing")
-    } else if t.stale > 0 {
-        ("warn", "stale")
-    } else {
-        ("ok", "current")
-    };
+    // The verdict is the capability's: this page renders it and decides nothing from the
+    // tallies itself.
+    let overall = artifact_verdict_badge(report.verdict, &report.tallies);
 
     let documents = table(
         &["document", "encodings", "schema", "source"],
@@ -3932,7 +4052,7 @@ pub fn artifacts(ctx: &Context) -> Page {
                     cell(mono(a.document.clone())),
                     text_cell(a.format.suffix()),
                     text_cell(a.bytes.map(|b| b.to_string()).unwrap_or_else(|| "—".into())),
-                    cell(badge(a.state.as_str(), a.state.as_str())),
+                    cell(badge(artifact_state_status(a.state), a.state.as_str())),
                 ])
             })
             .collect(),
@@ -3945,25 +4065,9 @@ pub fn artifacts(ctx: &Context) -> Page {
             .class("mj-grid")
             .child(card_with(
                 "Where the generated tree stands",
-                badge(overall.0, overall.1),
+                overall,
                 el("div")
-                    .child(
-                        el("div")
-                            .class("mj-stats")
-                            .child(statistic(
-                                t.documents.to_string(),
-                                "documents",
-                                "the manifest",
-                            ))
-                            .child(statistic(
-                                t.artifacts.to_string(),
-                                "files",
-                                "the manifest",
-                            ))
-                            .child(statistic(t.current.to_string(), "current", "sha256"))
-                            .child(statistic(t.stale.to_string(), "stale", "sha256"))
-                            .child(statistic(t.missing.to_string(), "missing", "the tree")),
-                    )
+                    .child(tally_statistics(&report.tallies, "artifacts.list"))
                     .child(facts(vec![
                         ("Manifest", Node::Element(mono(report.manifest.clone()))),
                         ("Schema", Node::Element(mono(report.schema.clone()))),
@@ -4365,13 +4469,19 @@ fn upstream_cell(w: &WorktreeState) -> El {
     match &w.upstream {
         None => text_cell("-"),
         Some(u) if u.gone => cell(el("span").child(mono(&u.name)).text(" (gone)")),
-        Some(u) => text_cell(format!(
-            "{} +{} −{}",
-            u.name,
-            u.ahead.unwrap_or(0),
-            u.behind.unwrap_or(0)
-        )),
+        Some(u) => text_cell(upstream_text(u)),
     }
+}
+
+/// An upstream and how far this branch is from it. A count git did not answer is unknown,
+/// never zero: "+0 −0" says in sync, which nobody measured.
+fn upstream_text(u: &UpstreamState) -> String {
+    let count = |n: Option<usize>| n.map_or_else(|| "?".to_string(), |n| n.to_string());
+    let mut text = format!("{} +{} −{}", u.name, count(u.ahead), count(u.behind));
+    if u.ahead.is_none() || u.behind.is_none() {
+        text.push_str(" (unknown)");
+    }
+    text
 }
 
 fn diagnostics_table(diagnostics: &[TopologyDiagnostic]) -> El {
@@ -4443,49 +4553,16 @@ pub fn worktrees(ctx: &Context) -> Page {
         ]),
     );
 
-    let ta = &t.tallies;
-    let statistics = el("div")
-        .class("mj-stats")
-        .child(statistic(
-            ta.worktrees.to_string(),
-            "worktrees",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.canonical.to_string(),
-            "canonical",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.misplaced.to_string(),
-            "misplaced",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.ephemeral.to_string(),
-            "ephemeral",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.detached.to_string(),
-            "detached",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.dirty.to_string(),
-            "with uncommitted work",
-            "git status, one per worktree",
-        ))
-        .child(statistic(
-            ta.branches_without_worktree.to_string(),
-            "branches without a worktree",
-            "for-each-ref",
-        ))
-        .child(statistic(
-            ta.cleanup_eligible.to_string(),
-            "cleanup-eligible branches",
-            "merged into the trunk, clean or absent",
-        ));
+    // Every tally the capability answers, the bad ones included: a summary that showed the
+    // canonical count and not the missing one sat beside "valid" with 31 rows missing. The
+    // one count that is not always measured, uncommitted work, is "unknown" when no
+    // worktree in the answer was asked for it.
+    let dirty_unmeasured = t.worktrees.iter().all(|w| w.dirty.is_none());
+    let statistics = tally_statistics_with(
+        &t.tallies,
+        "worktree.topology",
+        if dirty_unmeasured { &["dirty"] } else { &[] },
+    );
 
     let worktree_rows: Vec<El> = t
         .worktrees
@@ -4595,7 +4672,10 @@ pub fn worktrees(ctx: &Context) -> Page {
             "Diagnostics",
             badge(
                 if t.valid { "ok" } else { "fail" },
-                format!("{} error(s), {} warning(s)", ta.errors, ta.warnings),
+                format!(
+                    "{} error(s), {} warning(s)",
+                    t.tallies.errors, t.tallies.warnings
+                ),
             ),
             diagnostics_table(&t.diagnostics),
         )
@@ -4951,47 +5031,37 @@ pub fn commands(ctx: &Context, query: &[(String, String)]) -> Page {
         }
     };
 
-    let programs = chips(
-        [
-            ("every program", None),
-            ("executable", Some("executable")),
-            ("shell tool", Some("tool")),
-            ("workflow", Some("workflow")),
-        ]
-        .into_iter()
-        .map(|(label, value)| {
-            (
-                label.to_string(),
-                here("origin", value),
-                index
-                    .commands
-                    .iter()
-                    .filter(|c| value.is_none_or(|v| c.origin == v))
-                    .count(),
-                origin.as_deref() == value,
-            )
-        })
-        .collect(),
-    );
-
-    let effects = chips(
-        [
-            ("any effect", None),
-            ("read-only", Some("read_only")),
-            ("up to local", Some("local_mutation")),
-            ("up to repository", Some("repository_mutation")),
-        ]
-        .into_iter()
-        .map(|(label, value)| {
-            (
-                label.to_string(),
-                here("effect", value),
-                0,
-                effect.as_deref() == value,
-            )
-        })
-        .collect(),
-    );
+    // The chips are facets: each one counts what choosing it would list, so each is
+    // counted over the answer with every other filter applied and its own left out. Both
+    // are `commands.list` answers — the set of chips is the set of values present in
+    // them, and no chip's count is anything but a count of that answer.
+    let facet = |drop: &str| -> Result<CommandIndex, String> {
+        let mut input = json!({});
+        for (k, v) in [
+            ("origin", origin.as_deref()),
+            ("effect", effect.as_deref()),
+            ("search", search.as_deref()),
+        ] {
+            if let (true, Some(v)) = (k != drop, v) {
+                input[k] = json!(v);
+            }
+        }
+        ask(ctx, "commands.list", input)
+    };
+    let by_origin = match facet("origin") {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+    let by_effect = match facet("effect") {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+    let programs = chips(program_chips(&by_origin.commands, origin.as_deref(), |v| {
+        here("origin", v)
+    }));
+    let effects = chips(effect_chips(&by_effect.commands, effect.as_deref(), |v| {
+        here("effect", v)
+    }));
 
     let rows = index
         .commands
@@ -5189,6 +5259,87 @@ pub fn command(ctx: &Context, id: &str) -> Page {
         ("Commands", Some("/cockpit/commands")),
         (node.id.as_str(), None),
     ])
+}
+
+/// One chip per program present in `commands`, in the program's own order, each counting
+/// the commands that program runs; the first chip is every program. The set of programs is
+/// the answer's, never a list here: a program the graph gains is a chip the page gains.
+fn program_chips(
+    commands: &[CommandSummary],
+    current: Option<&str>,
+    here: impl Fn(Option<&str>) -> String,
+) -> Vec<(String, String, usize, bool)> {
+    // In the program's own declared order, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<crate::command_graph::Origin>, String)> =
+        commands
+            .iter()
+            .map(|c| {
+                let typed = serde_json::from_value(json!(c.origin)).ok();
+                (typed, c.origin.clone())
+            })
+            .collect();
+    let mut chips = vec![(
+        "every program".to_string(),
+        here(None),
+        commands.len(),
+        current.is_none(),
+    )];
+    for (_, word) in present {
+        chips.push((
+            word.clone(),
+            here(Some(&word)),
+            commands.iter().filter(|c| c.origin == word).count(),
+            current == Some(word.as_str()),
+        ));
+    }
+    chips
+}
+
+/// One chip per effect present in `commands`, in the order of increasing consequence, each
+/// counting what its filter lists: the effect filter of `commands.list` is a ceiling, so a
+/// chip counts every command at or below its effect. The set of effects is the answer's —
+/// `network_mutation` is a chip the day a command has it, and not before.
+fn effect_chips(
+    commands: &[CommandSummary],
+    current: Option<&str>,
+    here: impl Fn(Option<&str>) -> String,
+) -> Vec<(String, String, usize, bool)> {
+    use crate::command_graph::Effect;
+    let typed = |word: &str| serde_json::from_value::<Effect>(json!(word)).ok();
+    // In the order of increasing consequence, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<Effect>, String)> = commands
+        .iter()
+        .map(|c| (typed(&c.effect), c.effect.clone()))
+        .collect();
+    let mut chips = vec![(
+        "any effect".to_string(),
+        here(None),
+        commands.len(),
+        current.is_none(),
+    )];
+    for (rank, word) in present {
+        let count = commands
+            .iter()
+            .filter(|c| match (typed(&c.effect), rank) {
+                (Some(e), Some(ceiling)) => e <= ceiling,
+                _ => c.effect == word,
+            })
+            .count();
+        let label = if rank.is_some_and(|e| e.is_read_only()) {
+            word.replace('_', " ")
+        } else {
+            format!("up to {}", word.replace('_', " "))
+        };
+        chips.push((
+            label,
+            here(Some(&word)),
+            count,
+            current == Some(word.as_str()),
+        ));
+    }
+    chips
 }
 
 /// The badge status for an effect: what a reader should feel about running it.
@@ -6244,6 +6395,191 @@ pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn command(origin: &str, effect: &str) -> CommandSummary {
+        serde_json::from_value(json!({
+            "id": format!("{origin}.x.{effect}"),
+            "invocation": "x",
+            "summary": "x",
+            "origin": origin,
+            "effect": effect,
+            "projections": { "docs": "" },
+        }))
+        .expect("a command summary")
+    }
+
+    /// The effect chips count what their filter lists — a ceiling, so each counts every
+    /// command at or below it — and exist for the effects present, `network_mutation`
+    /// included; before, every chip's count was a literal 0 and the list was written here.
+    #[test]
+    fn effect_chips_count_the_answer_and_come_from_the_effects_present() {
+        let commands = vec![
+            command("executable", "read_only"),
+            command("executable", "read_only"),
+            command("tool", "repository_mutation"),
+            command("workflow", "network_mutation"),
+        ];
+        let chips = effect_chips(&commands, None, |v| format!("{v:?}"));
+        let got: Vec<(&str, usize)> = chips.iter().map(|c| (c.0.as_str(), c.2)).collect();
+        assert_eq!(
+            got,
+            [
+                ("any effect", 4),
+                ("read only", 2),
+                ("up to repository mutation", 3),
+                ("up to network mutation", 4),
+            ]
+        );
+        assert!(chips[0].3, "no filter is the first chip, current");
+        let chips = effect_chips(&commands, Some("read_only"), |v| format!("{v:?}"));
+        assert!(chips[1].3 && !chips[0].3);
+    }
+
+    /// The program chips are the programs present, each counting its own commands.
+    #[test]
+    fn program_chips_come_from_the_programs_present() {
+        let commands = vec![
+            command("workflow", "read_only"),
+            command("executable", "read_only"),
+            command("executable", "local_mutation"),
+        ];
+        let chips = program_chips(&commands, None, |v| format!("{v:?}"));
+        let got: Vec<(&str, usize)> = chips.iter().map(|c| (c.0.as_str(), c.2)).collect();
+        assert_eq!(
+            got,
+            [("every program", 3), ("executable", 2), ("workflow", 1)]
+        );
+    }
+
+    /// Every numeric field of a tally is a statistic, and a field whose count is not known
+    /// renders "unknown" rather than a zero.
+    #[test]
+    fn a_tally_strip_renders_every_field() {
+        let t = crate::worktree::TopologyTallies {
+            missing: 31,
+            locked: 2,
+            errors: 1,
+            warnings: 4,
+            ..Default::default()
+        };
+        let html = tally_statistics_with(&t, "worktree.topology", &["dirty"]).render();
+        let fields = serde_json::to_value(&t).unwrap();
+        let fields = fields.as_object().unwrap();
+        assert_eq!(
+            html.matches("mj-stat-label").count(),
+            fields.len(),
+            "{html}"
+        );
+        for label in [
+            "missing",
+            "locked",
+            "errors",
+            "warnings",
+            "branches without worktree",
+        ] {
+            assert!(html.contains(&format!(">{label}<")), "{label}: {html}");
+        }
+        assert!(
+            html.contains(">31<") && html.contains(">unknown<"),
+            "{html}"
+        );
+
+        let a = ArtifactTallies {
+            documents: 1,
+            artifacts: 149,
+            current: 146,
+            stale: 0,
+            missing: 0,
+            present: 3,
+        };
+        let html = tally_statistics(&a, "artifacts.list").render();
+        assert!(html.contains(">present<") && html.contains(">3<"), "{html}");
+    }
+
+    /// An unverified tree is not rendered current, and not in a colour of health.
+    #[test]
+    fn an_unverified_artifact_tree_is_not_rendered_current() {
+        let t = ArtifactTallies {
+            documents: 1,
+            artifacts: 4,
+            current: 1,
+            stale: 0,
+            missing: 0,
+            present: 3,
+        };
+        let html = artifact_verdict_badge(ArtifactVerdict::Unverified, &t).render();
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+        assert!(html.contains("unverified: 3 file(s)"), "{html}");
+        assert_eq!(artifact_state_status(ArtifactState::Present), "unknown");
+    }
+
+    /// An ahead or behind count git did not answer is unknown, never "+0 −0".
+    #[test]
+    fn an_unknown_upstream_distance_is_not_rendered_as_in_sync() {
+        let u = UpstreamState {
+            name: "origin/x".into(),
+            ahead: None,
+            behind: None,
+            gone: false,
+        };
+        let text = upstream_text(&u);
+        assert!(!text.contains("+0") && !text.contains("−0"), "{text}");
+        assert!(text.contains("unknown"), "{text}");
+        let u = UpstreamState {
+            ahead: Some(2),
+            behind: Some(0),
+            ..u
+        };
+        assert_eq!(upstream_text(&u), "origin/x +2 −0");
+    }
+
+    /// A distribution capability that does not answer is a card that says so, and the
+    /// verdict is worded as the records it is decided from.
+    #[test]
+    fn a_failed_distribution_status_is_an_unknown_card_and_not_no_card() {
+        let html = distribution_card_of(Err("no distribution model".into())).render();
+        assert!(html.contains("Distribution"), "{html}");
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+        assert!(html.contains("no distribution model"), "{html}");
+        assert!(!html.contains("healthy"), "{html}");
+        assert!(html.contains(RECORDS), "{html}");
+    }
+
+    /// An installable answer is worded as what decided it — the release records — and not
+    /// as a public install observed to be healthy, which this capability never observes.
+    #[test]
+    fn an_installable_answer_says_per_release_records_and_not_healthy() {
+        let report: InstallabilityReport = serde_json::from_value(json!({
+            "installable": true,
+            "summary": "installable",
+            "local_version": "1.0.0",
+            "stable_tag": "v1.0.0",
+            "required_targets": 1,
+            "published_artifacts": 1,
+            "install_command": "curl | sh",
+            "installer_url": "https://example.test/install.sh",
+            "latest_url": "https://example.test/latest",
+            "checks": [],
+        }))
+        .expect("an installability report");
+        let html = distribution_card_of(Ok(report)).render();
+        assert!(html.contains(RECORDS), "{html}");
+        assert!(
+            !html.contains("healthy") && !html.contains("Public install"),
+            "{html}"
+        );
+    }
+
+    /// A model the catalogue declares no status for is "undeclared", never "available".
+    #[test]
+    fn an_undeclared_model_status_is_not_available() {
+        let html = model_status_badge(None).render();
+        assert!(
+            html.contains("undeclared") && !html.contains("available"),
+            "{html}"
+        );
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+    }
 
     #[test]
     fn a_nullable_integer_is_edited_as_a_number() {

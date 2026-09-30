@@ -68,6 +68,12 @@ work is an exclusion with a reason, not a silent selection. The decision:
   fixed check order (named-outright, lifecycle, vendor, locality, capabilities,
   context).
 
+A model's `status` is optional. An entry that declares none has an undeclared standing,
+which is not the same fact as `available`: the field is then absent from every output
+(`ModelEntry.status` carries no default), routing still considers the model, and no
+surface may render it as available on the catalogue's behalf. A reader that relied on
+`status` always being present treats its absence as undeclared.
+
 Deprecated and retired models are excluded unless named outright. There is no health,
 no load, no cost term — nothing this tool could not defend. Ask the same question
 twice, get the same answer twice; `--format json` is the same decision the HTTP route

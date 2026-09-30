@@ -172,6 +172,19 @@ included, and `test/cases/389_cockpit_projection.sh` drives it against fixture t
 object count and the kind catalogue come from `repository.info`, a listing from
 `objects.list`, one object from `objects.get`.
 
+**Unknown is never drawn as healthy.** ADR 0089 (`project.ui-derived-state`) widens the same
+checker. Its `--ui-integrity` gate (`ui-integrity`) refuses four things:
+
+- a direct `ctx.registry`, `ctx.product` or `ctx.why` read outside the navigation's
+  commented allow-list;
+- a health check given `HealthStatus::Ok` as a literal;
+- a `#[default]` on a healthy enum variant;
+- an absent count rendered as zero in `pages.rs`.
+
+A site that is right as written says why in a `// ui-integrity: <reason>` comment. The
+findings master already holds are a ratchet in `.ai/repo/ui-integrity-baseline.txt`, and
+`test/cases/547_the_ui_says_only_what_is_derived.sh` plants each violation in a fixture tree.
+
 **Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the kinds
 `repository.info` reports and the graph derivation table. The capability explorer is the
 registry filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,

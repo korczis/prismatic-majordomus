@@ -4,8 +4,8 @@
 schema: majordomus/design-system/v1
 generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`"
 generator: majordomus-cli 0.11.0
-fingerprint: 5513f7466963b9e89aa59a88dad266f6c8747bfeb13b7ceae530123ebda6e7f0
-design: 5513f7466963
+fingerprint: edc7bf48e646a4fb3713d1dea257c8b56e6220a05148a3d1a70ea8feed8ae482
+design: edc7bf48e646
 source: share/design/tokens.yaml
 projections:
   - share/design/theme.css
@@ -713,7 +713,6 @@ tokens:
       - current
       - declared
       - covered
-      - guaranteed
       - healthy
       - live
       - present
@@ -966,7 +965,7 @@ tokens:
       - docs/generated/design.md
   - name: neutral
     kind: status
-    about: "no meaning carried by colour; unknown, planned, external, draft"
+    about: "no meaning carried by colour; unknown, declared-only, planned, external, draft"
     css:
       - "--mj-neutral"
       - "--mj-neutral-bg"
@@ -1007,6 +1006,7 @@ tokens:
     states:
       - neutral
       - unknown
+      - guaranteed
       - external
       - planned
       - described
@@ -1144,20 +1144,6 @@ tokens:
     css:
       - .mj-badge--covered
       - .mj-status--covered
-    role: ok
-    projections:
-      - share/design/status.css
-      - site/data/registry/design.json
-      - apps/majordomus-cli/src/design/tokens.yaml
-      - docs/generated/design.json
-      - docs/generated/design.yaml
-      - docs/generated/design.md
-  - name: guaranteed
-    kind: state
-    about: "a state word filed under `ok`"
-    css:
-      - .mj-badge--guaranteed
-      - .mj-status--guaranteed
     role: ok
     projections:
       - share/design/status.css
@@ -2180,6 +2166,20 @@ tokens:
     css:
       - .mj-badge--unknown
       - .mj-status--unknown
+    role: neutral
+    projections:
+      - share/design/status.css
+      - site/data/registry/design.json
+      - apps/majordomus-cli/src/design/tokens.yaml
+      - docs/generated/design.json
+      - docs/generated/design.yaml
+      - docs/generated/design.md
+  - name: guaranteed
+    kind: state
+    about: "a state word filed under `neutral`"
+    css:
+      - .mj-badge--guaranteed
+      - .mj-status--guaranteed
     role: neutral
     projections:
       - share/design/status.css
@@ -3356,7 +3356,7 @@ declaration:
           light: blue-200
           dark: blue-900
       neutral:
-        about: "no meaning carried by colour; unknown, planned, external, draft"
+        about: "no meaning carried by colour; unknown, declared-only, planned, external, draft"
         fg:
           light: fg
           dark: fg
@@ -3377,7 +3377,6 @@ declaration:
         - current
         - declared
         - covered
-        - guaranteed
         - healthy
         - live
         - present
@@ -3459,6 +3458,7 @@ declaration:
       neutral:
         - neutral
         - unknown
+        - guaranteed
         - external
         - planned
         - described

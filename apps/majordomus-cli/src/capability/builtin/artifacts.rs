@@ -63,6 +63,76 @@ impl ArtifactState {
     }
 }
 
+/// Where the generated tree stands as a whole: the one verdict every surface renders,
+/// decided here so that no page decides it again from a subset of the tallies.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;
+/// let v: ArtifactVerdict = serde_json::from_str("\"unverified\"").unwrap();
+/// assert_eq!(v, ArtifactVerdict::Unverified);
+/// assert!(ArtifactVerdict::Current < ArtifactVerdict::Unverified);
+/// ```
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "snake_case")]
+pub enum ArtifactVerdict {
+    /// Every file is there and hashes to what the manifest recorded.
+    Current,
+    /// Every file is there, none is stale, and some carry no recorded hash: their bytes
+    /// were not compared here, so the tree is not known to be current.
+    /// `majordomus generate --check` is what decides them.
+    Unverified,
+    /// A file differs from what the manifest recorded.
+    Stale,
+    /// A file the manifest names is not in the tree.
+    Missing,
+    /// No manifest is committed: the repository has never run `majordomus generate`.
+    NotGenerated,
+}
+
+impl ArtifactVerdict {
+    /// The verdict over the tallies of a manifest that exists, or `NotGenerated` when none
+    /// does. Missing outranks stale, stale outranks unhashed, and a set is current only when
+    /// every file in it was hashed and matched.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::artifacts::{ArtifactTallies, ArtifactVerdict};
+    /// let t = ArtifactTallies { documents: 1, artifacts: 3, current: 2, stale: 0, missing: 0, present: 1 };
+    /// assert_eq!(ArtifactVerdict::of(true, &t), ArtifactVerdict::Unverified);
+    /// ```
+    pub fn of(generated: bool, t: &ArtifactTallies) -> Self {
+        if !generated {
+            ArtifactVerdict::NotGenerated
+        } else if t.missing > 0 {
+            ArtifactVerdict::Missing
+        } else if t.stale > 0 {
+            ArtifactVerdict::Stale
+        } else if t.present > 0 {
+            ArtifactVerdict::Unverified
+        } else {
+            ArtifactVerdict::Current
+        }
+    }
+
+    /// The word the verdict is serialised as, which is also the word every surface prints
+    /// for it: the Cockpit, the command line and the HTTP answer never spell it differently.
+    ///
+    /// ```
+    /// use majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;
+    /// assert_eq!(ArtifactVerdict::NotGenerated.as_str(), "not_generated");
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ArtifactVerdict::Current => "current",
+            ArtifactVerdict::Unverified => "unverified",
+            ArtifactVerdict::Stale => "stale",
+            ArtifactVerdict::Missing => "missing",
+            ArtifactVerdict::NotGenerated => "not_generated",
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 /// The input of `artifacts.list`: the whole manifest, or one slice of it.
@@ -168,6 +238,8 @@ pub struct ArtifactReport {
     pub artifacts: Vec<ArtifactView>,
     /// The counts.
     pub tallies: ArtifactTallies,
+    /// Where the tree stands as a whole, decided from every tally.
+    pub verdict: ArtifactVerdict,
     /// The command that rewrites every one of them.
     pub regenerate: String,
     /// The command that decides staleness byte for byte, which is stronger than the hash.
@@ -214,6 +286,7 @@ fn artifacts_list(ctx: &Context, input: ArtifactsInput) -> Result<ArtifactReport
                 missing: 0,
                 present: 0,
             },
+            verdict: ArtifactVerdict::NotGenerated,
             regenerate: "majordomus generate".into(),
             verify: "majordomus generate --check".into(),
         });
@@ -282,6 +355,7 @@ fn artifacts_list(ctx: &Context, input: ArtifactsInput) -> Result<ArtifactReport
         None => manifest.documents,
     };
     tallies.documents = documents.len();
+    let verdict = ArtifactVerdict::of(true, &tallies);
 
     Ok(ArtifactReport {
         manifest: rel,
@@ -290,6 +364,7 @@ fn artifacts_list(ctx: &Context, input: ArtifactsInput) -> Result<ArtifactReport
         documents,
         artifacts,
         tallies,
+        verdict,
         regenerate: "majordomus generate".into(),
         verify: "majordomus generate --check".into(),
     })
@@ -329,6 +404,49 @@ pub fn module() -> ModuleDescriptor {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn tallies(current: usize, stale: usize, missing: usize, present: usize) -> ArtifactTallies {
+        ArtifactTallies {
+            documents: 1,
+            artifacts: current + stale + missing + present,
+            current,
+            stale,
+            missing,
+            present,
+        }
+    }
+
+    /// A file with no recorded hash was not compared, so a set holding one is not current:
+    /// the verdict the Cockpit used to decide in the page, from missing and stale alone,
+    /// called 146 hashed and 3 unhashed files "current".
+    #[test]
+    fn an_unhashed_file_makes_the_tree_unverified_and_never_current() {
+        assert_eq!(
+            ArtifactVerdict::of(true, &tallies(146, 0, 0, 3)),
+            ArtifactVerdict::Unverified
+        );
+        assert_eq!(
+            ArtifactVerdict::of(true, &tallies(146, 0, 0, 0)),
+            ArtifactVerdict::Current
+        );
+    }
+
+    /// Missing outranks stale, stale outranks unhashed, and no manifest is its own word.
+    #[test]
+    fn the_verdict_ranks_what_is_worst() {
+        assert_eq!(
+            ArtifactVerdict::of(true, &tallies(1, 1, 1, 1)),
+            ArtifactVerdict::Missing
+        );
+        assert_eq!(
+            ArtifactVerdict::of(true, &tallies(1, 1, 0, 1)),
+            ArtifactVerdict::Stale
+        );
+        assert_eq!(
+            ArtifactVerdict::of(false, &tallies(0, 0, 0, 0)),
+            ArtifactVerdict::NotGenerated
+        );
+    }
 
     /// The declaration is the only place the id, the tool name, the resource URI and the
     /// route exist. A refactor that dropped one of them would still compile, and every
