@@ -434,18 +434,27 @@ installed_version() {
 
 # --------------------------------------------------------------------------- digests
 
+# sha256sum where the system has it (Linux, and macOS ships one), openssl otherwise, whose
+# "SHA256(file)= <hash>" and "SHA2-256(file)= <hash>" both end in the digest. Never shasum:
+# on macOS it is a Perl script, and this installer needs nothing but sh.
 sha256_of() {
   file=$1
   if have sha256sum; then sha256sum "$file" | cut -d' ' -f1; return; fi
-  if have shasum; then shasum -a 256 "$file" | cut -d' ' -f1; return; fi
-  if have openssl; then openssl dgst -sha256 "$file" | sed 's/.*= //'; return; fi
-  fail "no way to compute a SHA-256 digest" \
-       "This installer needs sha256sum, shasum or openssl. It will not install anything it cannot verify."
+  if have openssl; then openssl dgst -sha256 "$file" | sed 's/^.*= *//'; return; fi
+  return 1
 }
 
+# Fails closed: without a digest tool, or with a digest that is not one, nothing is installed.
+# The check is never skipped.
 verify_checksum() {
   file=$1 expected=$2
-  actual=$(sha256_of "$file")
+  have sha256sum || have openssl || fail "no way to compute a SHA-256 digest" \
+    "This installer needs sha256sum or openssl. It will not install anything it cannot verify."
+  actual=$(sha256_of "$file") || actual=""
+  case $actual in *[!0-9a-f]*) actual="" ;; esac
+  [ "${#actual}" -eq 64 ] || fail "the digest of the download could not be computed" \
+    "artifact: $MJ_ARTIFACT" \
+    "The digest tool printed no SHA-256. Nothing was installed."
   debug "sha256 expected $expected"
   debug "sha256 actual   $actual"
   [ "$actual" = "$expected" ] || fail "the downloaded archive does not match its digest" \

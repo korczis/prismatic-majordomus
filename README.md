@@ -116,7 +116,7 @@ majordomus check
 majordomus finish --outcome completed --verify-command "make test"
 ```
 
-Requirements: bash 3.2 or newer, git, and `sha256sum` or `shasum`. Nothing else.
+Requirements: bash 3.2 or newer, git, and `sha256sum` or `openssl`. Nothing else.
 Nothing is installed into your project except `.ai/` and the files the policy names. A
 repository set up before the `.ai/` layer, with its data under `.majordomus/`, is moved
 by `majordomus migrate` (preview with `--dry-run`); every other command refuses that
