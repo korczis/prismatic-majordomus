@@ -10,7 +10,10 @@
 //! argument the deployed process could only say `unknown`. `MAJORDOMUS_BUILD_DIRTY`
 //! (`true`/`false`) says whether that tree carried uncommitted changes; without it the flag
 //! is read from git when git named the commit, and is `unknown` otherwise, because a commit
-//! handed in from outside says nothing about the tree it was built from.
+//! handed in from outside says nothing about the tree it was built from. That decision is
+//! `src/build_identity.rs`, compiled in through `#[path]` like the generation below, so its
+//! table is unit-tested in the crate rather than trusted here. The flag covers the crate's
+//! directory as it stood when this script last ran, not the tree at the moment of asking.
 //!
 //! The generation is what `majordomus generate` compares against the tree it is asked to
 //! derive. `src/generation.rs` is compiled into this build script as well as into the
@@ -24,6 +27,9 @@ use std::process::Command;
 
 #[path = "src/generation.rs"]
 mod generation;
+
+#[path = "src/build_identity.rs"]
+mod build_identity;
 
 fn main() {
     // The default — rerun when any file in the package changes — is off the moment a build
@@ -53,30 +59,14 @@ fn main() {
             .filter(|o| o.status.success())
             .and_then(|o| String::from_utf8(o.stdout).ok())
     };
-    let declared = std::env::var("MAJORDOMUS_BUILD_COMMIT")
-        .ok()
-        .map(|c| c.trim().to_string())
-        .filter(|c| !c.is_empty() && c != "unknown");
-    let from_git = declared.is_none();
-    let commit = declared
-        .or_else(|| {
-            git(&["rev-parse", "HEAD"])
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-        })
-        .unwrap_or_else(|| "unknown".into());
-    let dirty = match std::env::var("MAJORDOMUS_BUILD_DIRTY").ok().as_deref() {
-        Some("true" | "1") => "true",
-        Some("false" | "0") => "false",
-        _ if from_git && commit != "unknown" => {
-            match git(&["status", "--porcelain", "--untracked-files=no"]) {
-                Some(out) if out.trim().is_empty() => "false",
-                Some(_) => "true",
-                None => "unknown",
-            }
-        }
-        _ => "unknown",
-    };
+    // The decision is build_identity's, compiled in here and tested there; this only reads
+    // what the build was handed and lends it git, from the crate's directory (cargo runs a
+    // build script there), so the dirty flag is the crate's and not the whole repository's.
+    let (commit, dirty) = build_identity::identify(
+        std::env::var("MAJORDOMUS_BUILD_COMMIT").ok().as_deref(),
+        std::env::var("MAJORDOMUS_BUILD_DIRTY").ok().as_deref(),
+        git,
+    );
     println!("cargo:rustc-env=MAJORDOMUS_DIRTY={dirty}");
     println!("cargo:rustc-env=MAJORDOMUS_COMMIT={commit}");
     let crate_dir =

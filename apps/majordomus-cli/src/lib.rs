@@ -15,6 +15,7 @@ pub mod about;
 pub mod app;
 pub(crate) mod automation;
 pub mod bench;
+pub mod build_identity;
 pub mod capability;
 pub mod cli;
 pub mod cockpit;
@@ -98,7 +99,8 @@ pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
 /// Whether the tree [`COMMIT`] names carried uncommitted changes when this executable was
 /// built: `Some(true)` or `Some(false)` when the build knew, `None` when it did not — a
 /// commit handed in through `MAJORDOMUS_BUILD_COMMIT` without `MAJORDOMUS_BUILD_DIRTY`, or
-/// a build outside a work tree.
+/// a build outside a work tree. It covers the crate's directory as the build script last saw
+/// it; [`build_identity::identify`] is the decision and holds its table.
 ///
 /// Read with `option_env!`: a build-script output that predates the flag (a target directory
 /// shared across checkouts reuses one) must still compile, and what it did not record is
