@@ -1531,13 +1531,13 @@ claims:
     note: The evidence job of validate.yml records the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment, and keeps them with the report and the coverage summary as the artifact `evidence`. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and never shows an ancestor's evidence as current. ADR 68.
 
   - id: rule-proof-is-named-and-resolves
-    claim: Every blocking rule names what proves it, and every path it names is in the tree
+    claim: Every rule names what proves it, and every path it names is in the tree
     source: docs/DOCTRINE.md
     implementation: scripts/ci/rule-proof-check
     test: test/cases/125_rule_proof.sh
     status: guaranteed
     responsibility: none
-    note: A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for.
+    note: A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A rule of either class naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for; advisory is not an exemption, and the one exemption is a vendored rule tagged `principle`, which the package pins by hash and which the gate counts on every run. `majordomus rules` reports the same `unproven` state for every class but calls it a finding only for a blocking rule; the gate is what refuses it for an advisory one.
 
   - id: rule-exemption-carries-its-reason
     claim: A rule that no program can express says so in its own front matter, with the reason, and is counted apart from every rule that has a gate

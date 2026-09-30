@@ -11,7 +11,7 @@ depends_on: [project.portable-shell@1, project.execution-state-is-authoritative@
 tags: [shell, process, agents]
 
 x-majordomus:
-  tests: [test/cases/08_no_forbidden_constructs.sh]
+  tests: [test/cases/08_no_forbidden_constructs.sh, test/cases/121_liveness_doctrine.sh, test/cases/122_liveness_gate.sh]
 ---
 
 # Rationale

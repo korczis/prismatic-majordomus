@@ -15,7 +15,8 @@
 # that prove it or give the reason nothing executable can; every depends_on reference
 # resolves to a rule that really exists at the version named, so the set loads instead of
 # erroring as a missing dependency; and the three rules `scripts/liveness-check` says it
-# enforces name this case and `test/cases/122_liveness_gate.sh` back.
+# enforces list this case and `test/cases/122_liveness_gate.sh` under their front matter's
+# `tests:`, where a typed reader sees them, not only in prose.
 #
 # Whether a rule is obliged to carry proof at all is not decided here. That is
 # scripts/ci/rule-proof-check, which asks it of every rule in the set rather than of these
@@ -118,9 +119,17 @@ for id in $served; do
   grep -q "$id" "$GATE" ||
     { echo "    scripts/liveness-check no longer names $id; this case and that header disagree"; exit 1; }
   f="$(grep -l "^id: $id\$" "$RULES"/*.v1.md)"
+  # The cases are read from the front matter's `tests:` list, the only place a typed reader
+  # (the proof graph, rule-proof-check) looks. Prose naming them is for a person; a rule
+  # whose prose names the gate while its front matter says review decides is the same
+  # one-way relation, moved from between the gate and the rule to inside the rule.
+  tests="$(awk '/^---$/ { n++; next } n == 1 && /^  tests:/ { print }' "$f")"
   for c in test/cases/121_liveness_doctrine.sh test/cases/122_liveness_gate.sh; do
-    grep -q "$c" "$f" ||
-      { echo "    $id does not name $c, so the gate that enforces it is claimed from one side only"; exit 1; }
+    case "$tests" in
+      *"$c"*) ;;
+      *) echo "    $id does not list $c under tests:, so its gate is claimed from one side"
+         exit 1 ;;
+    esac
   done
   grep -q 'scripts/liveness-check' "$f" ||
     { echo "    $id does not name scripts/liveness-check, the gate that decides it"; exit 1; }

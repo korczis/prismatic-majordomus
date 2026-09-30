@@ -1538,11 +1538,11 @@
     {
       "id": "claim:rule-proof-is-named-and-resolves",
       "kind": "claim",
-      "label": "Every blocking rule names what proves it, and every path it names is in the tree",
+      "label": "Every rule names what proves it, and every path it names is in the tree",
       "status": "guaranteed",
       "route": "/guarantees/rule-proof-is-named-and-resolves/",
       "external": false,
-      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A blocking rule naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for."
+      "note": "A rule could name a behavioural case in English prose, and nothing noticed when that case was renamed or deleted; the rule went on reading as enforced. The gate holds both halves of the relation. A named path that is not in the tree is `dangling` and is never ratcheted, because a proof that does not exist is worse than no proof. A rule of either class naming neither a validator nor a test nor a reason is `unproven`, which is the half no other check in this repository knows to look for; advisory is not an exemption, and the one exemption is a vendored rule tagged `principle`, which the package pins by hash and which the gate counts on every run. `majordomus rules` reports the same `unproven` state for every class but calls it a finding only for a blocking rule; the gate is what refuses it for an advisory one."
     },
     {
       "id": "claim:rule-exemption-carries-its-reason",
