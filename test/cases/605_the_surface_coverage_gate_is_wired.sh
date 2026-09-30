@@ -8,8 +8,8 @@
 #
 # Two claims, and they fail for different reasons:
 #
-#   1. the planner schedules it, on a change that plans nothing else: otherwise the paragraph
-#      above is true again tomorrow;
+#   1. the planner schedules it, on a change whose classes select no gate of its own: otherwise
+#      the paragraph above is true again tomorrow;
 #   2. it can still refuse: a wired check that cannot fail is a green tick with a schedule.
 #
 # §2 is asserted by mutation in a fixture rather than in the checkout, because its subject is
@@ -26,14 +26,16 @@ command -v jq >/dev/null 2>&1 || { echo "    jq is required: scripts/ci-plan can
 # --- 1. the planner schedules it
 # Asked of the planner rather than grepped from the model: the name appears in this case, in
 # the script and in prose, and a check that passes because its own name is mentioned somewhere
-# is the defect it was written to catch. README.md alone is a change no surface gate classes.
+# is the defect it was written to catch. README.md falls in class `docs`, whose gates
+# (shell-suite, rust-integration, worktree-topology) do not run surface-coverage, so only
+# `always: true` can schedule it for this change.
 rc=0; printf 'README.md\n' | "$PLAN" --files - > plan.json 2> plan.err || rc=$?
 [ "$rc" = 0 ] || { echo "    scripts/ci-plan refused (exit $rc):"; head -3 plan.err; exit 1; }
 sel="$(jq -r '[.gates[] | select(.runs == "scripts/ci/surface-coverage" and .selected == true) | .id] | join(",")' plan.json)"
 [ -n "$sel" ] || {
   echo "    no gate the plan selects for a README.md change runs scripts/ci/surface-coverage;"
   echo "    the check exists and nothing schedules it"; exit 1; }
-echo "    the plan for a change that touches no surface schedules surface-coverage ($sel)"
+echo "    the plan for a README.md change schedules surface-coverage through always ($sel)"
 
 # --- 2. and it still refuses when a surface loses the thing that covers it
 # The fixture is the smallest tree the script reads: itself, the gate model, and the case files

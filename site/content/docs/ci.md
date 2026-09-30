@@ -308,8 +308,9 @@ hook. The automation inventory recorded it as dead for want of a caller. It pass
 time anybody ran it by hand and protected nothing, and the surface it would have watched is
 the one nobody was watching: whether MCP, the CLI, Swagger, the library, the Cockpit and the
 published site each still have a mandatory test. It is an unconditional `structure` gate now,
-and `test/cases/605` holds both halves: that the planner schedules it on a change that plans
-nothing else, and that it can still refuse, naming the surface.
+and `test/cases/605` holds both halves: that the planner schedules it on a change whose
+classes select no gate of its own (`README.md`, class `docs`), so that only `always` can, and
+that it can still refuse, naming the surface.
 
 The general form is not the same as the three below: those are gates that exist in the model
 and cannot reach their subject. This one reached its subject perfectly and was in no model.
