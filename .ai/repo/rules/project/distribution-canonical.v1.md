@@ -67,7 +67,8 @@ invariants and every disagreement between a release record and the model.
 has fallen behind, and is reached by `just derive-check`, by the CI gate the `site` job
 runs and by the release pipeline before anything is built. `scripts/release-record` refuses
 to write a record that is missing a supported target. `scripts/release-version --check`
-refuses a tree in which the crate, the shell tool and the tag do not state one version.
+refuses a tree in which the authority — the crate manifest's version — what the shell tool
+prints, and the tag do not state one version.
 
 # Verification
 

@@ -1,7 +1,7 @@
 +++
 title = "majordomus evidence stamp"
 description = "Measure the checkout as a run left it, for `record --provenance`"
-weight = 124
+weight = 142
 [extra]
 route = "/docs/cli/evidence/stamp/"
 command = "majordomus evidence stamp"

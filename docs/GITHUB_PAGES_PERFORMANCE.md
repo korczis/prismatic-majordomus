@@ -46,7 +46,8 @@ flowchart LR
   plan --> macos["macos"]
   structure & suite & rust & coverage & bench & site & macos --> ci["ci<br>the status a branch<br>rule requires"]
   push --> pages["pages.yml<br>decides what the<br>public site shows"]
-  pages --> job["one job"]
+  pages --> rustdocjob["rustdoc job<br>the crate's reference"]
+  rustdocjob -->|"needs, the tree"| job["deploy job"]
   job --> checkout["checkout"] --> setup["setup"] --> build["build"] --> check["check"] --> ghpages["push gh-pages"] --> measure["measure publication"]
 ```
 
@@ -58,18 +59,21 @@ therefore went public tens of minutes after the push that changed it.
 What is on the publication path is everything that can make the published bytes wrong:
 
 - the committed derived data is current for this tree,
-- the site builds from it,
+- the crate's rustdoc reference is produced from this commit — it is part of the published
+  bytes and is never committed ([`RUSTDOC.md`](RUSTDOC.md)),
+- the site builds from both, with the reference composed at `/rustdoc`,
 - every static check over the output passes (`scripts/site-check`: metadata and landmarks on
   every route, no unrendered template delimiter, every internal link resolving, no remote
   asset, no credential, every tile a page, the graphs connected, the served provenance this
-  commit's).
+  commit's, every composed surface present and built from this commit).
 
-What is not, and why it is safe: the behavioural suite, the crate's gates, coverage, the
-macOS suite, the benchmark check and the browser probe. Each of those guards *the repository*
-rather than *the bytes*, each still runs on the same commit in `validate.yml`, and each still
-gates merging through the `ci` status. Moving a gate off the publication path is only sound
-while it is still somewhere; `test/cases/97_pages_fast_path.sh` fails if one of them appears
-in `pages.yml` or disappears from `validate.yml`.
+What is not, and why it is safe: the behavioural suite, the crate's gates other than the
+documentation step that produces the reference, coverage, the macOS suite, the benchmark check
+and the browser probe. Each of those guards *the repository* rather than *the bytes*, each
+still runs on the same commit in `validate.yml`, and each still gates merging through the `ci`
+status. Moving a gate off the publication path is only sound while it is still somewhere;
+`test/cases/97_pages_fast_path.sh` fails if one of them appears in `pages.yml` or disappears
+from `validate.yml`.
 
 The browser probe is the interesting case. It can find a real defect in the published bytes —
 a route that overflows at 320 px — and it costs minutes. It stays in `validate.yml`, where it
@@ -238,7 +242,17 @@ reached the publish step, 2026-09-10T22:56Z to 2026-09-12T06:38Z, read from
 | `check` | 30 | 38 | 46 | 47 | 60 |
 | `local-check` | 0 | 0 | 0 | 1 | 3 |
 | `publish` | 13 | 20 | 24 | 24 | 28 |
-| **controlled** | **60** | **75** | **84** | **86** | **120** |
+| `rustdoc` | — | — | — | — | 90 |
+| **controlled** | **60** | **75** | **84** | **86** | **210** |
+
+The `rustdoc` row is the job that produces the crate's reference (ADR 86), checkout to upload,
+and the download of its artifact in the deploy job. No run of it is in the window above, so its
+budget is provisional: `scripts/rust-check --doc` measured 12, 6 and 6 s warm and 34 s cold on
+an Apple M5 Pro on 2026-09-24, and 90 allows that step about three times over on a four-vCPU
+runner plus about 60 s of toolchain, cache, checkout and artifact transfer.
+`.ai/repo/ci/pages.yaml` says so beside the number, and the first twenty runs' timing rows
+replace it. The controlled budget is still the sum of its rows: 120 before the reference, 210
+with it.
 
 **Nothing had regressed.** Over those same runs `checkout-setup` held at 7–15 s and `build` at
 4–6 s, so both cache domains below restore; and `check` cost 41 ms per route at 896 routes on
@@ -247,7 +261,10 @@ the corpus it walks, not a defect in how it walks it. What had gone stale was th
 
 The cold bound moved with it. No cold run appears in that window, so it keeps the allowance the
 old pair expressed — 180 against a warm 75, i.e. 105 s for an uncached `npm ci` and Zola
-download — over the new warm budget: 120 + 105 = 225.
+download — over the new warm budget: 120 + 105 = 225. The rustdoc job adds its own cold cost,
+as provisional as its warm row — every dependency's metadata built before the crate is
+documented, about 100 s more on a runner and 150 with the toolchain download — so the cold
+bound is now 210 + 105 + 150 = 465.
 
 ## Caches
 
@@ -287,6 +304,15 @@ scripts/pages verify --commit "$(git rev-parse HEAD)"
 That wait is GitHub's own "pages build and deployment", which serves the branch. It is
 reported as external latency; it fails nothing, because GitHub being slow to serve is not this
 repository failing.
+
+What the site serves once it serves this commit is a different question, and it is enforced.
+`/build.json` names only the commit the site was built from, so a deployment that had lost the
+crate's reference, or carried one from an older build, would pass the wait above.
+`scripts/pages verify-rustdoc --commit "$(git rev-parse HEAD)"` reads the public reference
+itself — the composed surface recorded in `/build.json` and its own `/rustdoc/surface.json`,
+the landing page, the library's index with its stylesheets and scripts, a module page, the
+search index and the crate's `COMMIT` constant page — and the deploy fails when any of them is
+absent or names another commit ([`RUSTDOC.md`](RUSTDOC.md)).
 
 The job summary of every deployment therefore carries the phases against their budgets, the
 controlled total against its budget, the queue and the Pages build beside them, and one
@@ -359,6 +385,7 @@ The same commands CI runs. There is no GitHub-only build semantics.
 
 ```bash
 scripts/pages current            # is the committed derived data current for this tree?
+scripts/rust-check --doc         # the crate's reference, which the build composes at /rustdoc
 scripts/pages build              # render it
 scripts/pages check              # every static check over the output
 scripts/pages benchmark -n 5     # the controlled path, as JSON
@@ -434,6 +461,9 @@ trade is worth revisiting — with the measurement, not with the preference.
   that.
 - Nothing measured after the push to `gh-pages` may become the run's verdict. The run is red
   for a failed deployment and for nothing else; a latency finding is a `::warning`, a summary
-  and a machine-readable line.
+  and a machine-readable line. A public reference at `/rustdoc/` that is absent, broken or
+  built from another commit is a failed deployment rather than a measurement, which is why
+  `scripts/pages verify-rustdoc` is a hard step (ADR 86) while `scripts/pages verify`, whose
+  wait is GitHub's, stays a report.
 - A new check over the published bytes goes into `scripts/site-check`, which the publication
   path runs. A new check over the repository goes into the gate model, which it does not.

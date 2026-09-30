@@ -19,7 +19,7 @@
 # nobody's business. The two differ by one directory and by everything else.
 . "$ROOT/test/lib.sh"
 
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq is required"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq is required"
 S="$ROOT/site/data/generated/sessions.json"
 [ -f "$S" ] || { echo "    site/data/generated/sessions.json is missing; run scripts/derive"; exit 1; }
 INDEX="$ROOT/site/content/sessions/_index.md"

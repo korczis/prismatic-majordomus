@@ -1,7 +1,7 @@
 +++
 title = "A recording made with --ledger local writes only the ignored local ledger, changes no tracked file and moves no verdict"
 description = "majordomus evidence record --ledger local merges its executions into"
-weight = 198
+weight = 215
 [extra]
 claim_id = "evidence-local-recording-stays-local"
 status = "guaranteed"

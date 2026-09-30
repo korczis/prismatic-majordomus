@@ -12,7 +12,7 @@
 # manifest is data, and this case edits the data.
 # claims: executable-reference-derived
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip "jq absent"
 fixture_repo "$T" AGENTS.md docs site/data/marketing.toml site/content-src test/cases
 git -C "$T" add -A >/dev/null; git -C "$T" commit -qm fixture
 REG="$T/docs/generated/registry.json"; G="$T/site/data/generated"; C="$T/site/content/registry"
