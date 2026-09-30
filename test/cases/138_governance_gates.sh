@@ -13,7 +13,8 @@
 # undo, watch the gate go quiet.
 #
 # What it proves, in order:
-#   1  english-only: a Czech letter in an authored file is named, with the file and the line
+#   1  english-only: a Czech letter in an authored file is named, with the file and the line,
+#      under every locale the check can meet (C, C.UTF-8, en_US.UTF-8)
 #   2  ...and a whole other script is too — the check is not a list of one language
 #   3  ...and a declared proper noun is stripped, so English prose naming one is English
 #   4  ...and a declared fixture is exempt, but only with its reason: a fixture entry with
@@ -64,11 +65,36 @@ expect_exit 10 "$EN" --strict
 expect_grep 'FAIL english-only docs/ALPHA\.md:3'
 expect_grep 'which does not occur in English'
 
+# ...and it finds it wherever the check is run. A bracket range of multibyte letters in a
+# `grep -E` pattern is read through the locale's collation: GNU grep under C.UTF-8 (the CI
+# runner's locale) refused it with "Invalid collation character", matched nothing, and the
+# gate announced that every authored file is spelled in English, while this case passed on
+# macOS because it never asked the same question twice. A check whose verdict depends on the
+# machine has no verdict, so every locale the check can meet must give the same one.
+LOCALES="C C.UTF-8 en_US.UTF-8"
+every_locale_finds_alpha() {
+  local loc out rc
+  for loc in $LOCALES; do
+    rc=0; out="$(LC_ALL="$loc" "$EN" --strict 2>&1)" || rc=$?
+    [ "$rc" = 10 ] || { echo "    under LC_ALL=$loc the check exited $rc, not 10"; exit 1; }
+    printf '%s\n' "$out" | grep -q 'docs/ALPHA\.md' \
+      || { echo "    under LC_ALL=$loc the check exited 10 without naming docs/ALPHA.md"; exit 1; }
+    if printf '%s\n' "$out" | grep -qi 'collation\|invalid range\|unterminated'; then
+      echo "    under LC_ALL=$loc the check complained about its own pattern:"
+      printf '%s\n' "$out" | grep -i 'collation\|invalid range\|unterminated' | head -1
+      exit 1
+    fi
+  done
+}
+every_locale_finds_alpha
+
 # 2. and it is not a list of one language: a whole script is unambiguous on sight
 printf '# Alpha\n\nЭто не по-английски.\n' > docs/ALPHA.md
 git add -A >/dev/null && git commit -qm cyrillic
 expect_exit 10 "$EN" --strict
 expect_grep 'FAIL english-only docs/ALPHA\.md'
+# a whole script is the byte-range half of the pattern, the half the locale broke
+every_locale_finds_alpha
 
 # ...and typographic punctuation is not a finding. This repository's prose uses the em dash
 # and the curly apostrophe throughout; a check that flagged them would be turned off within
@@ -76,6 +102,13 @@ expect_grep 'FAIL english-only docs/ALPHA\.md'
 printf '# Alpha\n\nEnglish prose — with an em dash, an ellipsis … and a curly apostrophe.\n' > docs/ALPHA.md
 git add -A >/dev/null && git commit -qm punctuation
 expect_exit 0 "$EN" --strict
+# The same range read as bytes under C over-matched instead, and flagged exactly this
+# punctuation: the quiet verdict must hold in every locale too.
+for loc in $LOCALES; do
+  rc=0; out="$(LC_ALL="$loc" "$EN" --strict 2>&1)" || rc=$?
+  [ "$rc" = 0 ] \
+    || { echo "    under LC_ALL=$loc punctuation is a finding (exit $rc): $out"; exit 1; }
+done
 
 # ---------------------------------------------------------------- 5. what is out of scope
 # A generated tree is not authored. A projection carrying a foreign word carries it from its
