@@ -6,7 +6,7 @@ weight = 30
 id = "trace-a-change-to-the-context-it-affects"
 source = ".ai/repo/use-cases/trace-a-change-to-the-context-it-affects.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

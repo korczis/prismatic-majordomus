@@ -1,4 +1,5 @@
 # majordomus-covers: session
+# claims: session-records
 # A closed episode is a shared object of the layer: written into the tracked sessions
 # section against a contract that admits what the repository can prove and nothing else,
 # discovered by one source class, and refused by name when it carries what it may not.

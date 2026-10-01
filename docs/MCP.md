@@ -175,9 +175,12 @@ agent's entry is owed a server before its first attach, and a checkout nobody wo
 does not keep one.
 
 `serve stop` signals the server the lease names, when that server answers for this
-checkout, and waits for the lease to go. A lease that names a server of another checkout,
-or one that does not answer, is left alone and said so; nothing here kills a process that
-was not asked for by name.
+checkout, and waits for *that server's* lease to go — the document it read, by its token,
+not merely the path. A `serve ensure` still waiting in the election takes the freed path
+within milliseconds, so waiting for the path would report a server that would not stop
+when it had already stopped; the take-over is named in the answer instead. A lease that
+names a server of another checkout, or one that does not answer, is left alone and said
+so; nothing here kills a process that was not asked for by name.
 
 **Who calls `ensure`.** The provider's start event does (`session.ensure_server_on_start`
 in the policy, on by default): the one moment a server nobody has started yet is owed one is
@@ -304,8 +307,9 @@ given against every other announcement and returns the peers whose claims meet i
 the pairs of paths that meet: two claims meet when they are equal or one is inside the
 other (`apps` contains `apps/majordomus-cli`; `app` does not, because a claim is a path
 and not a prefix of a string). `peers.list` reports the same collisions across the whole
-board, each pair once. It is still not enforcement — the shell tool's `start --scope` and
-`check --overlap` do that, per worktree, and they are what refuses a commit — but a
+board, each pair once. It is still not enforcement, and neither is the shell tool's
+`check --overlap`, which reports other worktrees' task scopes and exits 0. What refuses is the
+task's own scope from `start --scope`, at `check`, at `finish` and in the pre-push hook — but a
 collision is now known at the moment it is created rather than discovered afterwards in
 the history of a branch.
 
@@ -373,6 +377,16 @@ as JSON text; read through `majordomus_get` it is the report as data (`answer`) 
 same text beside it (`content`). The registry refuses a query exposed as a resource whose
 input requires anything, because a read supplies none.
 
+An object also has an *address*, which the URI is not: `majordomus://rule/project.x@1` is an
+identity and `/cockpit/objects/rule/project-x-1` is where a reader is sent. The address is
+derived from the kind and the identity by one function, so it exists for every object and is
+the same on every surface; `majordomus_entity` answers to either spelling, and
+`majordomus_kinds` reports any two identities of one kind that reduce to one address.
+`majordomus_entity` also names the object's public documentation page (`documentation`:
+the projection, `route`, `url`, or the `reason` its kind is not published), read from the
+repository's `site/data/publication.toml` and the site's `base_url` — null when the
+repository declares no publication.
+
 Identity is the kind's identity fields joined with `@` — `majordomus.scope-integrity@1`
 for a rule, `continue` for a prompt, `implementation` for a profile, `M001` for a
 milestone — or, for a kind with no identity fields (policy, document), the
@@ -387,6 +401,8 @@ manifest section it falls under, and its size.
 | `majordomus_list` | `objects.list` | `kind?`, `tag?` | the objects, summarised |
 | `majordomus_get` | `objects.get` | `uri` | tagged by `source`: `declarative`, a file of the layer with metadata, provenance, media type and content; or `builtin`, a query the URI projects (`majordomus://repository`) with its `answer`, the capability's provenance and the same text as `content` |
 | `majordomus_search` | `objects.search` | `query`, `kind?`, `limit?` | case-insensitive substring hits with one snippet line each |
+| `majordomus_entity` | `entity.show` | `uri?`, `kind?` + `slug?` | one object as an addressable node: its derived route, the references it declares, the references that resolve to it, the surfaces that answer for it, the state of the executable artefacts it names, and its public documentation page |
+| `majordomus_kinds` | `entity.kinds` | none | every kind the index holds with the route of its listing, how many objects are addressable, and every route collision there is |
 | `majordomus_repository` | `repository.info` | none | the `majordomus://repository` document |
 | `majordomus_scope` | `repository.scope` | none | the `majordomus://scope` document: the declaration, its origin, the tally |
 | `majordomus_scope_classify` | `repository.scope_classify` | `path` | whether a repository-relative path is in or out of the scope, the reason, and the rule that decided |

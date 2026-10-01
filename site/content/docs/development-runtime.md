@@ -1,7 +1,7 @@
 +++
 title = "The development runtime"
 description = "the development runtime: which program owns the semantics of the plan, tasks, sessions, context, executions, peers, evidence and completion, the measured inventory of every one of them, the storage each is decided to keep, the two event tiers, the derivation chain anything exposed must follow, what each surface may and may not decide, and the ranked gaps between that boundary and the code"
-weight = 36
+weight = 38
 [extra]
 source = "docs/DEVELOPMENT_RUNTIME.md"
 +++
@@ -14,7 +14,7 @@ which surface may decide what, and how far the code is from that boundary today.
 The companion documents are [`DYNAMICITY.md`](@/docs/dynamicity.md), which decides where a *fact*
 lives, and [`CAPABILITIES.md`](@/docs/capabilities.md), which decides how an *operation* is
 declared. This document is the third of that set: it decides where a *semantic* lives. The
-decision is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md);
+decision is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md);
 the rule is `project.development-semantics-are-canonical@1`.
 
 Every count in this document was measured. The commands are in
@@ -399,8 +399,8 @@ Ranked by what blocks a development surface most.
    derive it.
 3. **Most lifecycle commands are interactive.** The graph withholds them as *"asks the person
    something; a request/response surface would hang"*. Interactivity is not a property a
-   surface can work around. *Closing it:* `project.commands-run-non-interactively@1`,
-   currently advisory.
+   surface can work around. *Closing it:* `project.commands-run-non-interactively@2`,
+   blocking since ADR 0039's amendment, decided by its scans.
 4. **Two disjoint event models.** A durable ledger vocabulary and a live stream
    vocabulary, with no bridge between them. A Cockpit cannot show one activity feed. *Closing it:* a mutating development
    capability appends a registered ledger event and publishes the same change to the

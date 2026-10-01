@@ -5,6 +5,7 @@
 //! in the Cockpit — in its listing, in its navigation, in its search, on a page of its own,
 //! with a form generated from its schema — without one line of the Cockpit being edited.
 //! `a_capability_the_repository_adds_reaches_every_cockpit_surface` is that claim, run.
+//! Claims: cockpit-is-a-projection-of-the-registry.
 
 mod common;
 
@@ -22,6 +23,7 @@ const PAGES: &[&str] = &[
     "/cockpit/continuity",
     "/cockpit/health",
     "/cockpit/artifacts",
+    "/cockpit/economics",
     "/cockpit/api",
     "/cockpit/search",
     "/cockpit/activity",
@@ -31,6 +33,9 @@ const PAGES: &[&str] = &[
     // renders only when a query string selects something is a page whose failure nobody
     // sees, and each of these is one arm of the same match.
     "/cockpit/worktrees",
+    // the integration queue: in the fixture nothing is observed, so this is the page's
+    // "no queue" arm, which must still render and still cost nothing canonical
+    "/cockpit/integration",
     "/cockpit/capabilities/repository.info",
     "/cockpit/capabilities?module=repository",
     "/cockpit/capabilities?kind=query",
@@ -42,6 +47,17 @@ const PAGES: &[&str] = &[
     "/cockpit/objects?page=2",
     "/cockpit/graphs/registry",
     "/cockpit/search?q=scope",
+    // The two route shapes an entity's own address adds: a kind's index and one object of
+    // it. They are the newest arms of the dispatcher and the only ones that resolve an
+    // identity out of the index per request, so they are exactly what the sweeps below are
+    // for — a page rendered from the layer must still cost no rebuild of anything canonical
+    // and must still leave `.git/index` alone. Named here rather than only in
+    // `a_capability_the_repository_adds_reaches_every_cockpit_surface`, because that test
+    // proves the entity page answers and these sweeps prove what answering it costs. The
+    // slug is `project.alpha@1`, the one rule of the base fixture, reduced by
+    // `entity::slug`; that test writes a rule of its own and so cannot be named here.
+    "/cockpit/objects/rule",
+    "/cockpit/objects/rule/project-alpha-1",
 ];
 
 fn html(s: &Served, target: &str) -> (u16, String) {
@@ -138,9 +154,36 @@ fn a_capability_the_repository_adds_reaches_every_cockpit_surface() {
     assert_eq!(status, 200);
     assert!(object.contains("project.cockpit-probe@1"), "{object}");
     assert!(
-        object.contains("/cockpit/objects?kind=rule"),
+        object.contains("/cockpit/objects/rule"),
         "the navigation offers the kind"
     );
+
+    // 3b. an address of its own, derived from its identity, and its kind's index —
+    // neither written in the router, both answering because the index holds the object
+    let route = "/cockpit/objects/rule/project-cockpit-probe-1";
+    let (status, entity) = html(&s, route);
+    assert_eq!(status, 200, "the entity route answers: {route}");
+    assert!(
+        entity.contains("A rule added after the Cockpit was written"),
+        "{entity}"
+    );
+    assert!(
+        entity.contains("What it is joined to"),
+        "the entity page carries its relations"
+    );
+    let (status, index) = html(&s, "/cockpit/objects/rule");
+    assert_eq!(status, 200);
+    assert!(index.contains(route), "the kind index links to the entity");
+    // an address the layer does not serve is a 404, never an empty page
+    assert_eq!(html(&s, "/cockpit/objects/rule/no-such-rule").0, 404);
+    assert_eq!(html(&s, "/cockpit/objects/no-such-kind").0, 404);
+
+    // 3c. and the same entity, by the same identity, through the typed API
+    let (status, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+    assert_eq!(status, 200);
+    assert_eq!(api["uri"], uri);
+    assert_eq!(api["route"], route);
+    assert_eq!(api["slug"], "project-cockpit-probe-1");
 
     // 4. the search
     let (status, found) = html(&s, "/cockpit/search?q=cockpit-probe");
@@ -158,6 +201,45 @@ fn a_capability_the_repository_adds_reaches_every_cockpit_surface() {
             .any(|c| c["id"] == id),
         "the capability listing the palette reads does not carry it"
     );
+}
+
+#[test]
+fn an_entity_page_names_its_public_page_from_the_repository_declaration() {
+    // the fixture has no site: the entity says so rather than inventing an address
+    let f = Fixture::new();
+    let route = "/cockpit/objects/rule/project-alpha-1";
+    let uri = "majordomus://rule/project.alpha@1";
+    {
+        let s = Served::start(&f.root(), &[]);
+        let (status, page) = html(&s, route);
+        assert_eq!(status, 200);
+        assert!(page.contains("Not published"), "{page}");
+        let (_, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+        assert!(api["documentation"].is_null(), "{api}");
+    }
+
+    // declare the kind as published one page per object, and the same entity names it
+    f.write(
+        "site/data/publication.toml",
+        "[[kinds]]\nkind = \"rule\"\nprojection = \"entity\"\nroute = \"/rules/\"\n",
+    );
+    f.write(
+        "site/config.toml",
+        "base_url = \"https://example.invalid\"\n",
+    );
+    f.commit("publish rules");
+    let s = Served::start(&f.root(), &[]);
+    let public = "https://example.invalid/rules/project-alpha-1/";
+    let (status, page) = html(&s, route);
+    assert_eq!(status, 200);
+    assert!(page.contains("Published at"), "{page}");
+    assert!(
+        page.contains(&format!("href=\"{public}\"")),
+        "the page links the public page: {page}"
+    );
+    let (_, api) = s.get(&format!("/api/v1/entity?uri={}", urlencode(uri)));
+    assert_eq!(api["documentation"]["url"], public);
+    assert_eq!(api["documentation"]["route"], "/rules/project-alpha-1/");
 }
 
 #[test]
@@ -215,14 +297,6 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
         page.contains("data-mj-graph=\"registry\""),
         "a frame for the drawing"
     );
-    assert!(
-        page.contains("capability:repository.info"),
-        "a node, as text"
-    );
-    assert!(
-        page.contains("projection:http"),
-        "a projection node, as text"
-    );
     assert!(page.contains("composes"), "an edge kind, with its meaning");
     assert!(
         page.contains("Nodes") && page.contains("Edges"),
@@ -235,6 +309,114 @@ fn a_graph_page_lists_every_node_and_edge_before_any_library_loads() {
     assert_eq!(data["id"], "registry");
     assert!(data["nodes"].as_array().unwrap().len() > 5);
     assert!(data["metadata"]["acyclic"].is_boolean());
+
+    // Every node and every edge is reachable as text, a window at a time: the tables are
+    // paged like every other listing, and paging must never lose a row. Walked by the query
+    // parameter each table owns, over as many pages as the graph's own data needs.
+    let nodes = data["nodes"].as_array().unwrap();
+    let edges = data["edges"].as_array().unwrap();
+    let walk = |key: &str, total: usize| -> String {
+        let mut seen = String::new();
+        for n in 1..=total.div_ceil(50).max(1) {
+            let (status, body) = html(&s, &format!("/cockpit/graphs/registry?{key}={n}"));
+            assert_eq!(status, 200);
+            seen.push_str(&body);
+        }
+        seen
+    };
+    // only identifiers HTML leaves as they are, so the check is not about escaping
+    let plain = |v: &str| {
+        v.chars()
+            .all(|c| c.is_ascii_alphanumeric() || ":._-/@".contains(c))
+    };
+    let every_node_page = walk("nodes", nodes.len());
+    for label in nodes
+        .iter()
+        .filter_map(|n| n["label"].as_str())
+        .filter(|l| plain(l))
+    {
+        assert!(
+            every_node_page.contains(label),
+            "node {label} is on no page of the node table"
+        );
+    }
+    let every_edge_page = walk("edges", edges.len());
+    for source in edges
+        .iter()
+        .filter_map(|e| e["source"].as_str())
+        .filter(|l| plain(l))
+    {
+        assert!(
+            every_edge_page.contains(source),
+            "an edge from {source} is on no page of the edge table"
+        );
+    }
+    // and the two identities this test always named are there, as text: the edge table
+    // names nodes by identity, the node table by label
+    assert!(
+        every_edge_page.contains("capability:repository.info"),
+        "a node, as text"
+    );
+    assert!(
+        every_edge_page.contains("projection:http"),
+        "a projection node, as text"
+    );
+    // one page is a window, not the whole graph: each table renders at most fifty rows
+    let body_rows = page.matches("<tr").count();
+    assert!(
+        body_rows <= 2 * (50 + 1),
+        "one page renders {body_rows} table rows; each table is a window of fifty"
+    );
+    assert!(
+        page.contains("mj-pagination-summary"),
+        "each table says which of its rows it shows"
+    );
+    // a page past the end is the last page, not an empty table
+    let (status, far) = html(&s, "/cockpit/graphs/registry?nodes=100000&edges=100000");
+    assert_eq!(status, 200);
+    assert!(far.contains("mj-pagination-summary"));
+
+    // The pager is a *window*: a table of a hundred pages renders a handful of links, not a
+    // hundred, or a crawler reading this page finds a route per page of every graph. That
+    // bound is only honest if every page is still reachable by following the links, so the
+    // walk above is repeated through the pager itself — starting at page one and taking
+    // whatever it offers — and must arrive at the same set of pages.
+    let node_pages = nodes.len().div_ceil(50).max(1);
+    // the node pager's own links on a page that asks for nothing else, so an edge link
+    // carrying the node position back is not counted as a way to another node page
+    let offers = |body: &str| -> std::collections::BTreeSet<usize> {
+        body.split("href=\"")
+            .skip(1)
+            .filter_map(|rest| rest.split('"').next())
+            .filter_map(|href| href.strip_prefix("/cockpit/graphs/registry?"))
+            .filter_map(|q| q.strip_prefix("nodes="))
+            .filter_map(|n| n.parse().ok())
+            .collect()
+    };
+    let mut reached = std::collections::BTreeSet::from([1usize]);
+    let mut widest = 0usize;
+    let mut queue = vec![1usize];
+    while let Some(n) = queue.pop() {
+        let (status, body) = html(&s, &format!("/cockpit/graphs/registry?nodes={n}"));
+        assert_eq!(status, 200);
+        let offered = offers(&body);
+        widest = widest.max(offered.len());
+        for to in offered {
+            if reached.insert(to) {
+                queue.push(to);
+            }
+        }
+    }
+    assert!(
+        widest <= 8,
+        "one page of the node pager offers {widest} links; a pager is a window, not a table of contents"
+    );
+    assert_eq!(
+        reached.len(),
+        node_pages,
+        "following the node pager reaches {} of {node_pages} page(s); a bounded window must still reach every one",
+        reached.len()
+    );
 
     let (status, missing) = s.get("/api/v1/graph?id=nope");
     assert_eq!(status, 404);
@@ -588,6 +770,24 @@ fn a_state_changing_request_from_another_origin_is_refused_and_a_read_is_not() {
         status, 403,
         "a same-origin call is not a cross-origin one: {body}"
     );
+
+    // a DNS-rebinding page names its own domain in both Origin and Host, so the two match;
+    // a domain is not this server's own origin, and the write is still refused
+    let rebound = {
+        use std::io::{Read, Write};
+        let mut stream = std::net::TcpStream::connect(&s.address).expect("connect");
+        let body = "{\"intent\":\"from a rebound page\"}";
+        write!(
+            stream,
+            "POST /api/v1/peers/announce HTTP/1.1\r\nHost: rebound.example:8742\r\nOrigin: http://rebound.example:8742\r\nConnection: close\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n{body}",
+            body.len()
+        )
+        .unwrap();
+        let mut raw = String::new();
+        stream.read_to_string(&mut raw).unwrap();
+        raw
+    };
+    assert!(rebound.starts_with("HTTP/1.1 403"), "{rebound}");
 
     // and a read from anywhere is untouched: a browser cannot see the answer anyway
     let (status, _, _) = s.request_with(

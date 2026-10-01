@@ -69,6 +69,7 @@ impl App {
             }
         }
         let sources = Sources::load(&repository)?;
+        let git_read_at = std::time::SystemTime::now();
         let git_state = git::inspect(repository.root());
         let source: Box<dyn DiscoverySource> = match args.discovery {
             DiscoveryMode::Vcs => {
@@ -85,7 +86,7 @@ impl App {
         };
         let scope = crate::scope::Scope::load(&share, &repository)?;
         tracing::info!(origin = ?scope.origin(), path = scope.path(), "scope");
-        let index = Index::build(
+        let mut index = Index::build(
             &repository,
             &sources,
             &schema,
@@ -93,6 +94,11 @@ impl App {
             git_state,
             scope,
         )?;
+        index.repository.observed.git = crate::index::AnswerObservation::taken(
+            "git read",
+            git_read_at,
+            Some(crate::index::STALE_AFTER),
+        );
         for d in &index.diagnostics {
             let path = d.path.as_deref().unwrap_or("-");
             match d.severity {

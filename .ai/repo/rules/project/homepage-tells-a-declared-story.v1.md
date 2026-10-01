@@ -39,6 +39,21 @@ least one link or one derived figure. The homepage links no feature whose status
 product model is not `stable`. Its install section carries the install, next-step and
 verification commands `data/registry/distribution.json` gives.
 
+The product inventories the homepage shows are the model's, both ways. The worker tools it
+names are exactly the providers of `data/registry/product.json`: one added to the model and not
+rendered is a stale page, and one rendered that the model does not name is a provider typed into
+a template. Each card of its trust strip carries the value its own dataset gives — the release
+the installer resolves and the command that confirms it from `data/registry/distribution.json`,
+the commit this build was made from as `build.json` serves it, the executed use cases from the
+catalogue — and reads `unknown` where a dataset carries nothing, so a card with nothing behind
+it cannot pass as a known one.
+
+What the homepage makes every visitor download is declared too, as `[budget]` in
+`site/data/homepage.toml`: the bytes of scripts and stylesheets it loads from the site, and the
+bytes of graph data it carries inline. A page over either budget, or linking an asset the build
+did not produce, is refused. No page of the site loads the Mermaid runtime without a diagram to
+render — the homepage did, for its whole life, and paid the heaviest file on the site for nothing.
+
 The sections whose detail pages are receipts are declared once, as `[indexing] unlisted` in
 `site/data/nav.toml`. Every page below such a section carries a robots `noindex` and is absent
 from `sitemap.xml`; every other page is indexable and present in it, unless its own front
@@ -55,7 +70,10 @@ declaration.
 # Verification
 
 `test/cases/333_homepage_narrative.sh` builds a small site tree and proves each check both ways:
-a clean tree passes, and an undeclared section, a declared section not rendered, sections out of
-order, an empty section, a draft feature linked, a missing install command, a receipt page
-without noindex, a receipt page in the sitemap and an indexable page missing from it each fail
-with a finding that names what is wrong.
+a clean tree passes, and a page loading Mermaid with no diagram, scripts or inline JSON over the
+declared budget, no budget declared, a linked asset missing, an undeclared section, a declared section not rendered, sections out of
+order, an empty section, a draft feature linked, a missing install command, a provider of the
+model the page does not name, a name the model does not carry, a trust card that disagrees with
+its dataset, a trust card missing altogether, a receipt page without noindex, a receipt page in
+the sitemap and an indexable page missing from it each fail with a finding that names what is
+wrong.

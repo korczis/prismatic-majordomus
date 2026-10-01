@@ -21,7 +21,7 @@ use crate::capability::CapabilityKind;
 use crate::design::DesignSystem;
 
 use super::html::{el, empty, El, Node};
-use super::nav::{Area, Navigation};
+use super::nav::{Area, Count, Navigation};
 
 /// The banner shown when the distribution has no `share/cockpit/` at all: the pages still
 /// render, and the reader is told why they look like 1993.
@@ -217,9 +217,18 @@ fn sidebar(shell: &Shell<'_>) -> El {
                         .attr_if("aria-current", current.then_some("page"))
                         .child(el("span").class("mj-nav-label").text(&item.label))
                         .node(match item.count {
-                            Some(n) => {
+                            Some(Count::Known(n)) => {
                                 Node::Element(el("span").class("mj-nav-count").text(n.to_string()))
                             }
+                            Some(Count::Unknown) => Node::Element(
+                                el("span")
+                                    .class("mj-nav-count")
+                                    .attr(
+                                        "title",
+                                        "the capability behind this count did not answer",
+                                    )
+                                    .text("unknown"),
+                            ),
                             None => empty(),
                         }),
                 ),
@@ -479,6 +488,94 @@ pub fn statistic(
         .child(el("span").class("mj-stat-value").text(value))
         .child(el("span").class("mj-stat-label").text(label))
         .child(el("span").class("mj-stat-source").text(source))
+}
+
+/// A statistic whose provenance is the capability the page asked and the field it read.
+///
+/// The label is not free text: the page passes the id it handed to `ask`, so a statistic
+/// cannot name a capability that was not called, and the name links to that capability's
+/// page, where what it answers is described.
+pub fn asked_statistic(
+    value: impl Into<String>,
+    label: impl Into<String>,
+    capability: &str,
+    field: &str,
+) -> El {
+    el("div")
+        .class("mj-stat")
+        .child(el("span").class("mj-stat-value").text(value))
+        .child(el("span").class("mj-stat-label").text(label))
+        .child(
+            el("a")
+                .class("mj-stat-source mj-link")
+                .attr("href", format!("/cockpit/capabilities/{capability}"))
+                .attr("data-capability", capability)
+                .attr("data-field", field)
+                .text(format!("{capability} · {field}")),
+        )
+}
+
+/// When the state behind what is shown was read, and — past its window — that it is stale.
+///
+/// The freshness contract rendered: the observation's own time, its age at `now`, and a
+/// `stale` badge once `now` is past `stale_after`. The attributes carry the machine values,
+/// so a probe reads the time the answer carried rather than parsing prose.
+pub fn as_of(o: &crate::index::AnswerObservation, now: std::time::SystemTime) -> El {
+    if o.observed_at.is_empty() {
+        return el("span")
+            .class("mj-note")
+            .attr("data-observed-at", "")
+            .text(format!("{}: time not recorded", o.source));
+    }
+    let age = observed_age(o, now);
+    let stale = o.is_stale_at(now);
+    el("span")
+        .class("mj-note")
+        .attr("data-observed-at", &o.observed_at)
+        .attr(
+            "data-stale-after",
+            o.stale_after.clone().unwrap_or_default(),
+        )
+        .attr("data-stale", if stale { "true" } else { "false" })
+        .text(format!("{} as of {}{}", o.source, o.observed_at, age))
+        .when(stale, |e| e.text(" ").child(badge("warn", "stale")))
+}
+
+/// " (N s ago)", from the observation's time; empty when the time does not parse.
+fn observed_age(o: &crate::index::AnswerObservation, now: std::time::SystemTime) -> String {
+    let Some(at) = parse_rfc3339(&o.observed_at) else {
+        return String::new();
+    };
+    let secs = now
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
+        .saturating_sub(at);
+    match secs {
+        0..=119 => format!(" ({secs} s ago)"),
+        120..=7199 => format!(" ({} min ago)", secs / 60),
+        _ => format!(" ({} h ago)", secs / 3600),
+    }
+}
+
+/// Seconds since the epoch of `YYYY-MM-DDTHH:MM:SSZ`, the one shape [`crate::peers::rfc3339`]
+/// writes.
+fn parse_rfc3339(s: &str) -> Option<u64> {
+    let b = s.as_bytes();
+    if b.len() != 20 || b[19] != b'Z' {
+        return None;
+    }
+    let n = |r: std::ops::Range<usize>| s.get(r)?.parse::<i64>().ok();
+    let (y, mo, d) = (n(0..4)?, n(5..7)?, n(8..10)?);
+    let (h, mi, se) = (n(11..13)?, n(14..16)?, n(17..19)?);
+    // days-from-civil, Howard Hinnant's algorithm: the inverse of the one peers::rfc3339 uses
+    let y = if mo <= 2 { y - 1 } else { y };
+    let era = y.div_euclid(400);
+    let yoe = y - era * 400;
+    let doy = (153 * (if mo > 2 { mo - 3 } else { mo + 9 }) + 2) / 5 + d - 1;
+    let doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    let days = era * 146_097 + doe - 719_468;
+    u64::try_from(days * 86_400 + h * 3600 + mi * 60 + se).ok()
 }
 
 /// The word for a capability kind, as a badge.
@@ -761,5 +858,44 @@ mod tests {
     fn repository_content_in_a_block_stays_text() {
         let rendered = pre("<script>alert(1)</script>").render();
         assert!(!rendered.contains("<script>alert"), "{rendered}");
+    }
+
+    #[test]
+    fn an_observation_renders_its_time_its_age_and_whether_it_is_stale() {
+        use crate::index::AnswerObservation;
+        use std::time::{Duration, UNIX_EPOCH};
+        let at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);
+        let o = AnswerObservation::taken("git read", at, Some(Duration::from_secs(120)));
+        let fresh = as_of(&o, at + Duration::from_secs(5)).render();
+        assert!(
+            fresh.contains("git read as of 2026-08-29T10:40:00Z (5 s ago)"),
+            "{fresh}"
+        );
+        assert!(fresh.contains(r#"data-stale="false""#), "{fresh}");
+        assert!(!fresh.contains(">stale<"), "{fresh}");
+        let old = as_of(&o, at + Duration::from_secs(600)).render();
+        assert!(old.contains("(10 min ago)"), "{old}");
+        assert!(
+            old.contains(r#"data-stale="true""#) && old.contains("stale"),
+            "{old}"
+        );
+        // the parser is the inverse of the writer, across a leap day and a year boundary
+        for t in [0u64, 951_782_400, 1_788_000_000, 1_893_455_999] {
+            let text = crate::peers::rfc3339(UNIX_EPOCH + Duration::from_secs(t));
+            assert_eq!(parse_rfc3339(&text), Some(t), "{text}");
+        }
+        // an observation nobody timed says so rather than showing an empty time as current
+        let untimed = as_of(&AnswerObservation::default(), at).render();
+        assert!(untimed.contains("time not recorded"), "{untimed}");
+    }
+
+    #[test]
+    fn a_statistic_names_and_links_the_capability_it_was_asked_of() {
+        let html = asked_statistic("12", "objects", "repository.info", "objects").render();
+        assert!(
+            html.contains(r#"href="/cockpit/capabilities/repository.info""#),
+            "{html}"
+        );
+        assert!(html.contains("repository.info · objects"), "{html}");
     }
 }

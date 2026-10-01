@@ -6,7 +6,7 @@ weight = 7
 id = "recover-an-episode-nobody-closed"
 source = ".ai/repo/use-cases/recover-an-episode-nobody-closed.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

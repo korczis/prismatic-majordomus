@@ -295,6 +295,11 @@ code="$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$PORT$PREFIX/in
 fails=0; ok() { printf 'OK   %-10s %s\n' "$1" "$2"; }; bad() { printf 'FAIL %-10s %s\n' "$1" "$2"; fails=$((fails+1)); }
 title_of() { dump_title "$1" 1400; }
 
+# The routes are the site's own by construction, and so take no scope from the topology the
+# other site checks read (lib/common.sh mj_web_composed): they come from the probe's own Zola
+# build above, which holds only what Zola renders. A surface scripts/site-build composes into
+# the published build at its mount (ADR 0086) is never in it — site-build refuses a Zola route
+# at a composed mount — so its pages are left to that surface's own check here as well.
 routes="$(cd "$WORK/out" && find . -name index.html | sed 's#^\.##; s#index.html$##' | LC_ALL=C sort)"
 # SITE_PROBE_ONLY='/plan/ /guarantees/guaranteed/' narrows the sweep to named routes while a
 # layout fix is iterated on; CI never sets it, so the deploy still waits for every route.

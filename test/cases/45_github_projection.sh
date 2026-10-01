@@ -1,4 +1,5 @@
 # majordomus-covers: plan
+# claims: github-projection
 # The GitHub projection, computed offline. No case here reaches the network: what is
 # proved is that the payload the adapter would post is derived from the canonical model
 # and from nothing else.
@@ -42,6 +43,27 @@ expect_grep '^# I0002 — Issue I0002$'
 "$MJ" plan body I0002 > /tmp/cli.$$
 diff -q /tmp/rendered.$$ /tmp/cli.$$ >/dev/null \
   || { echo "    the projection body and 'plan body' are two different renderings"; diff /tmp/rendered.$$ /tmp/cli.$$ | head; exit 1; }
+
+# --- the region is composed in one place, and the marker is always a whole line
+# The adapter needs the region's content twice: to print a body (--render) and to splice
+# one into an issue that already exists. While it composed that content twice, the two
+# compositions drifted — the splice wrote the marker with printf and no newline, so the
+# first line of the record was glued to the marker in every body it posted. region_intact()
+# drops the marker line before hashing, which took that first line with it, so the region
+# never hashed back to its own marker: every issue written through the splice was reported
+# `edited` for ever, and --force could not repair one because it rewrote it the same way.
+# Two things are asserted because the defect needed both to be false at once: the body is
+# rendered in one place, and no caller writes the marker without terminating its line.
+composers="$(grep -cE '^ *(if )?mj_pj_is_milestone .*mj_plan_body_milestone' "$SYNC")"
+[ "$composers" = 2 ] \
+  || { echo "    the region body is composed in $composers places, not 2 (one to render, one to hash)"; \
+       grep -nE '^ *(if )?mj_pj_is_milestone .*mj_plan_body_milestone' "$SYNC"; exit 1; }
+# `|| true`, because the passing shape of this search is no output, and a case runs under
+# set -e: without it a correct adapter killed the case silently and reported a bare FAIL.
+unterminated="$(grep -n 'record_marker "' "$SYNC" | grep -vF "printf -- '%s\\n' \"\$(record_marker" || true)"
+[ -z "$unterminated" ] \
+  || { echo "    record_marker is written without the newline that ends its line:"; \
+       printf '%s\n' "$unterminated"; exit 1; }
 
 # --- the marker hash is the hash of the record it was generated from, so a canonical
 #     change moves it and a GitHub-side edit does not

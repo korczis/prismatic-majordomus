@@ -1,0 +1,131 @@
+#!/usr/bin/env node
+// advisor-consult — ask the advisors a recorded plan selects about a recorded assessment,
+// and record what each one answered (ADR 0098, docs/REASONING.md).
+//
+//   scripts/advisor-consult --assessment <id> [--question "..."] [--timeout 90]
+//                           [--prior-opinion "..."]... [--adapters DIR] [--json]
+//
+// The crate decides and records; this script only carries the question. It records the
+// plan (computed by the crate from the availability of this moment), consults what the
+// plan selected concurrently, and records each outcome — an answer, or a typed failure —
+// in the plan's order. A plan that selects nobody is an ordinary answer: the script
+// prints the structured local review and exits 0, because a session with no advisor
+// still reasons, locally.
+//
+// Exit: 0 when the plan was carried out (whatever the advisors did), 2 on bad arguments,
+// 3 when the crate refused a record.
+
+import { execFileSync } from 'node:child_process';
+import path from 'node:path';
+import { buildPrompt } from './lib/advisors/contract.mjs';
+import { consultSelected, stepReport } from './lib/advisors/driver.mjs';
+
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const CLI = process.env.MAJORDOMUS_CLI || path.join(ROOT, 'bin', 'majordomus-cli');
+
+function parse(argv) {
+  const opts = { priorOpinions: [], timeout: 90, json: false };
+  for (let i = 0; i < argv.length; i += 1) {
+    const a = argv[i];
+    const next = () => {
+      if (i + 1 >= argv.length) usage(`${a} needs a value`);
+      i += 1;
+      return argv[i];
+    };
+    if (a === '--assessment') opts.assessment = next();
+    else if (a === '--question') opts.question = next();
+    else if (a === '--timeout') opts.timeout = Number(next());
+    else if (a === '--prior-opinion') opts.priorOpinions.push(next());
+    else if (a === '--adapters') opts.adapters = path.resolve(next());
+    else if (a === '--json') opts.json = true;
+    else if (a === '-h' || a === '--help') usage();
+    else usage(`unknown argument ${a}`);
+  }
+  if (!opts.assessment) usage('--assessment is required');
+  if (!Number.isFinite(opts.timeout) || opts.timeout <= 0) usage('--timeout takes seconds');
+  return opts;
+}
+
+function usage(error) {
+  const text = 'usage: scripts/advisor-consult --assessment <id> [--question TEXT] [--timeout SECONDS] [--prior-opinion TEXT]... [--adapters DIR] [--json]';
+  if (error) {
+    process.stderr.write(`advisor-consult: ${error}\n${text}\n`);
+    process.exit(2);
+  }
+  process.stdout.write(`${text}\n`);
+  process.exit(0);
+}
+
+function crate(args, input) {
+  try {
+    const out = execFileSync(CLI, [...args, '--format', 'json'], {
+      input: input === undefined ? undefined : JSON.stringify(input),
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return JSON.parse(out);
+  } catch (e) {
+    const reason = String(e.stderr || e.message).split('\n').filter((l) => l.startsWith('majordomus') || l.includes('refused')).pop()
+      || String(e.stderr || e.message).trim().split('\n').pop();
+    process.stderr.write(`advisor-consult: majordomus ${args.join(' ')}: ${reason}\n`);
+    process.exit(3);
+  }
+}
+
+const opts = parse(process.argv.slice(2));
+const explained = crate(['reasoning', 'explain', opts.assessment]);
+const body = explained.record?.body;
+if (body?.kind !== 'assessment') {
+  process.stderr.write(`advisor-consult: ${opts.assessment} is not an assessment\n`);
+  process.exit(2);
+}
+const planned = crate(['reasoning', 'record'], { kind: 'plan', assessment: opts.assessment });
+const planId = planned.record.id;
+const plan = planned.record.body.plan;
+const log = (s) => { if (!opts.json) process.stdout.write(`${s}\n`); };
+log(`[reasoning] plan ${planId}\n  outcome    ${plan.outcome}\n  reason     ${plan.reason}`);
+
+const summary = { plan: planId, outcome: plan.outcome, consultations: [], local_review: plan.local_review ?? [] };
+if (plan.outcome !== 'consult') {
+  for (const step of plan.local_review ?? []) log(`  local      ${step}`);
+  if (opts.json) process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
+  process.exit(0);
+}
+
+// The advisors as the plan saw them: the snapshot recorded with it.
+const advisors = planned.record.body.availability;
+const question = opts.question || `Is the hypothesis right, and what would falsify it?`;
+const prompt = buildPrompt({
+  subject: body.subject,
+  question,
+  hypothesis: body.hypothesis,
+  facts: body.facts ?? [],
+  assumptions: body.assumptions ?? [],
+  evidence: body.evidence ?? [],
+  priorOpinions: opts.priorOpinions,
+});
+
+const controller = new AbortController();
+for (const sig of ['SIGINT', 'SIGTERM']) process.once(sig, () => controller.abort(new Error(sig)));
+const results = await consultSelected({
+  plan,
+  advisors,
+  prompt,
+  adapterDir: opts.adapters,
+  io: { timeoutMs: opts.timeout * 1000, signal: controller.signal, env: process.env, cwd: ROOT },
+});
+
+for (const r of results) {
+  const record = { kind: 'consultation', plan: planId, advisor: r.advisor, status: r.status,
+    question, evidence: body.evidence ?? [] };
+  for (const k of ['conclusion', 'stance', 'assumptions', 'risks', 'actions', 'falsifiers',
+    'confidence', 'duration_ms', 'usage', 'diagnostic', 'retry_after_seconds']) {
+    if (r[k] !== undefined) record[k] = r[k];
+  }
+  const written = crate(['reasoning', 'record'], record);
+  summary.consultations.push({ id: written.record.id, ...r });
+  log(stepReport({ subject: body.subject, evidenceCount: (body.evidence ?? []).length, result: r,
+    recordId: written.record.id }));
+}
+if (opts.json) process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);

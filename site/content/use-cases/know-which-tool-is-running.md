@@ -6,7 +6,7 @@ weight = 39
 id = "know-which-tool-is-running"
 source = ".ai/repo/use-cases/know-which-tool-is-running.md"
 category = "adoption"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

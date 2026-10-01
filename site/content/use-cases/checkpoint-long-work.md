@@ -6,7 +6,7 @@ weight = 16
 id = "checkpoint-long-work"
 source = ".ai/repo/use-cases/checkpoint-long-work.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

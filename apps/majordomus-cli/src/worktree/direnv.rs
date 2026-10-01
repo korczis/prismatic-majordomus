@@ -74,6 +74,79 @@ impl EnvrcApproval {
     }
 }
 
+/// What became of the primary checkout's machine-local `.envrc.local` for a worktree.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case", tag = "outcome")]
+pub enum LocalOverrides {
+    /// Linked: the worktree's `.envrc.local` is a symlink to the primary checkout's, so the
+    /// person's machine-local exports (keychain-backed secrets among them) load here too.
+    Linked,
+    /// The worktree already has its own `.envrc.local`; it is left alone.
+    OwnKept,
+    /// The primary checkout has none; there is nothing to share.
+    NonePrimary,
+    /// Not linked, because git in the worktree does not ignore `.envrc.local` — a link a
+    /// commit could pick up is the one way this could leak.
+    NotIgnored,
+    /// The link could not be made; the error.
+    Failed {
+        /// Why.
+        message: String,
+    },
+}
+
+impl LocalOverrides {
+    /// One line for a person, after the envrc line.
+    pub fn describe(&self) -> String {
+        match self {
+            Self::Linked => "local   .envrc.local linked to the primary checkout's".into(),
+            Self::OwnKept => "local   .envrc.local of its own, kept".into(),
+            Self::NonePrimary => "local   no .envrc.local in the primary checkout to share".into(),
+            Self::NotIgnored => {
+                "local   .envrc.local is not ignored here, so it was not linked".into()
+            }
+            Self::Failed { message } => format!("local   .envrc.local not linked: {message}"),
+        }
+    }
+}
+
+/// Share the primary checkout's `.envrc.local` with `worktree` as a symlink, so the value
+/// lives in one file and a change there reaches every worktree. `.envrc` reads it relative
+/// to the directory it is entered from, and the adapter rule keeps that file free of the
+/// program a path lookup would need; a linked worktree therefore gets the link when it
+/// comes into being. Only when git ignores the name there: a symlink to secrets that a
+/// commit could add is refused rather than made.
+pub fn link_local(primary: &Path, worktree: &Path) -> LocalOverrides {
+    let source = primary.join(".envrc.local");
+    let target = worktree.join(".envrc.local");
+    if target.symlink_metadata().is_ok() {
+        return LocalOverrides::OwnKept;
+    }
+    if !source.is_file() {
+        return LocalOverrides::NonePrimary;
+    }
+    let ignored = Command::new("git")
+        .arg("-C")
+        .arg(worktree)
+        .args(["check-ignore", "-q", ".envrc.local"])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    if !ignored {
+        return LocalOverrides::NotIgnored;
+    }
+    #[cfg(unix)]
+    let made = std::os::unix::fs::symlink(&source, &target);
+    #[cfg(not(unix))]
+    let made: std::io::Result<()> = Err(std::io::Error::other("symlinks are unix-only here"));
+    match made {
+        Ok(()) => LocalOverrides::Linked,
+        Err(e) => LocalOverrides::Failed {
+            message: e.to_string(),
+        },
+    }
+}
+
 /// Carry the primary checkout's approval to the `.envrc` of `worktree`, with the direnv on
 /// the PATH. Never fails: the worst outcome is a worktree left as direnv left it, reported.
 pub fn approve(primary: &Path, worktree: &Path) -> EnvrcApproval {
@@ -175,7 +248,26 @@ mod tests {
         )
         .unwrap();
         std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+        // Linux refuses to exec a file that any process holds open for writing (ETXTBSY). A
+        // test thread that forks a child while the write above has the file open leaves that
+        // child holding the descriptor until it execs, so the first exec of this fake could
+        // fail, and `approve_with` read the failure as "direnv did not say" (master's rust job
+        // in run 36557029377). One exec that succeeds proves no writer is left: the write has
+        // closed, and no later fork can inherit it.
+        wait_until_executable(&script);
         (script, record)
+    }
+
+    fn wait_until_executable(script: &Path) {
+        for _ in 0..100 {
+            match Command::new(script).arg("probe").output() {
+                Err(e) if e.raw_os_error() == Some(libc::ETXTBSY) => {
+                    std::thread::sleep(std::time::Duration::from_millis(20))
+                }
+                _ => return,
+            }
+        }
+        panic!("{} stayed busy for writing", script.display());
     }
 
     fn checkout(root: &Path, name: &str, envrc: Option<&str>) -> PathBuf {
@@ -185,6 +277,42 @@ mod tests {
             std::fs::write(dir.join(".envrc"), text).unwrap();
         }
         dir
+    }
+
+    fn git_repo(dir: &Path, ignore: &str) {
+        std::fs::create_dir_all(dir).unwrap();
+        assert!(Command::new("git")
+            .arg("-C")
+            .arg(dir)
+            .args(["init", "-q"])
+            .status()
+            .unwrap()
+            .success());
+        std::fs::write(dir.join(".gitignore"), ignore).unwrap();
+    }
+
+    #[test]
+    fn the_primary_local_overrides_are_linked_only_where_git_ignores_them() {
+        let t = tempfile::tempdir().unwrap();
+        let primary = t.path().join("primary");
+        std::fs::create_dir_all(&primary).unwrap();
+        // nothing to share
+        let wt = t.path().join("wt-a");
+        git_repo(&wt, ".envrc.local\n");
+        assert_eq!(link_local(&primary, &wt), LocalOverrides::NonePrimary);
+        std::fs::write(primary.join(".envrc.local"), "export A=1\n").unwrap();
+        // linked, and the link reads the primary's file
+        assert_eq!(link_local(&primary, &wt), LocalOverrides::Linked);
+        let link = wt.join(".envrc.local");
+        assert!(link.symlink_metadata().unwrap().file_type().is_symlink());
+        assert_eq!(std::fs::read_to_string(&link).unwrap(), "export A=1\n");
+        // a second call keeps what is there
+        assert_eq!(link_local(&primary, &wt), LocalOverrides::OwnKept);
+        // a worktree whose git would track the file gets no link
+        let open = t.path().join("wt-b");
+        git_repo(&open, "");
+        assert_eq!(link_local(&primary, &open), LocalOverrides::NotIgnored);
+        assert!(open.join(".envrc.local").symlink_metadata().is_err());
     }
 
     #[test]
@@ -212,6 +340,32 @@ mod tests {
             EnvrcApproval::Differs
         );
         assert!(!record.exists(), "direnv allow must not have been run");
+    }
+
+    /// Linux alone refuses to exec a file held open for writing, so this holds there: the
+    /// fake is run only once no writer holds it, rather than failing on the first try.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_fake_still_open_for_writing_is_waited_for_before_it_is_run() {
+        let tmp = tempfile::tempdir().unwrap();
+        let (direnv, _) = fake_direnv(tmp.path(), 0, 0);
+        let held = std::fs::OpenOptions::new()
+            .write(true)
+            .open(&direnv)
+            .unwrap();
+        let busy = Command::new(&direnv).arg("probe").output().unwrap_err();
+        assert_eq!(busy.raw_os_error(), Some(libc::ETXTBSY), "{busy}");
+        let release = std::thread::spawn(move || {
+            std::thread::sleep(std::time::Duration::from_millis(200));
+            drop(held);
+        });
+        wait_until_executable(&direnv);
+        let after = Command::new(&direnv).arg("probe").output();
+        release.join().unwrap();
+        assert!(
+            after.is_ok(),
+            "the fake was handed on while still busy: {after:?}"
+        );
     }
 
     #[test]

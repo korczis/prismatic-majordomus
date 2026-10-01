@@ -100,11 +100,11 @@
           <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></p>
         <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs">
           <div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">defined in</dt>
-            <dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.source }}">{{ c.source }}</a></dd></div>
+            <dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ <source_blob path={c.source} /> }}">{{ c.source }}</a></dd></div>
           {%- if c.implementation %}<div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">implemented in</dt>
-            <dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.implementation }}">{{ c.implementation }}</a></dd></div>{% endif %}
+            <dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ <source_blob path={c.implementation} /> }}">{{ c.implementation }}</a></dd></div>{% endif %}
           {%- if c.test %}<div class="flex min-w-0 gap-1.5"><dt class="text-body-subtle">proved by</dt>
-            <dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></dd></div>
+            <dd class="min-w-0"><a class="inline-block break-all py-1 font-mono text-fg-brand hover:underline" href="{{ <source_blob path={c.test} /> }}">{{ c.test }}</a></dd></div>
           {%- else %}<div class="flex gap-1.5"><dt class="text-body-subtle">proved by</dt><dd class="text-body-subtle">no test — this is a target, not a guarantee</dd></div>{% endif %}
         </dl>
       </li>

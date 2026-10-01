@@ -2,6 +2,8 @@
 //! the statistics, the system targets, the result document, and the performance counters
 //! and phases behind `perf.counters`.
 
+// claims: benchmark-coverage-derived
+
 mod common;
 
 use std::time::Duration;
@@ -252,4 +254,183 @@ fn counters_and_phases_are_readable_and_the_startup_set_is_named() {
     assert!(json["executions"].is_u64());
     let back: perf::CounterSnapshot = serde_json::from_value(json).unwrap();
     assert_eq!(back, after);
+}
+
+#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+struct CasedIn {
+    text: String,
+}
+impl majordomus_cli::capability::BenchmarkCases for CasedIn {
+    fn benchmark_cases(
+        _: &majordomus_cli::capability::CaseContext<'_>,
+    ) -> Vec<majordomus_cli::capability::NamedCase<Self>> {
+        vec![majordomus_cli::capability::NamedCase::new(
+            "one",
+            CasedIn { text: "a".into() },
+        )]
+    }
+}
+#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema)]
+struct CaselessIn {
+    text: String,
+}
+impl majordomus_cli::capability::BenchmarkCases for CaselessIn {
+    fn benchmark_cases(
+        _: &majordomus_cli::capability::CaseContext<'_>,
+    ) -> Vec<majordomus_cli::capability::NamedCase<Self>> {
+        vec![]
+    }
+}
+
+/// A required query exposed on MCP and HTTP whose cases come from `I`.
+fn exposed<I>(id: &str) -> majordomus_cli::capability::Executable
+where
+    I: majordomus_cli::capability::BenchmarkCases
+        + serde::de::DeserializeOwned
+        + schemars::JsonSchema
+        + 'static,
+{
+    use majordomus_cli::capability::handler::handler;
+    use majordomus_cli::capability::{
+        Availability, BenchmarkCases, BenchmarkPolicy, CachePolicy, CanonicalSchema, Capability,
+        CapabilityId, CapabilityKind, Executable, ExecutionPolicy, Exposure, HttpExposure,
+        HttpMethod, McpExposure, ModuleId, Stability, Visibility,
+    };
+    let kind = CapabilityKind::Query;
+    let exposure = Exposure {
+        mcp: Some(McpExposure {
+            tool: Some(id.replace('.', "_")),
+            resource: None,
+        }),
+        http: Some(HttpExposure {
+            method: HttpMethod::Get,
+            path: format!("/api/v1/{}", id.replace('.', "-")),
+        }),
+        cli: None,
+    };
+    Executable {
+        capability: Capability {
+            availability: Availability::classify(kind, &exposure),
+            visibility: Visibility::classify(&exposure),
+            id: CapabilityId::parse(id).unwrap(),
+            module: ModuleId::unchecked(""),
+            kind,
+            title: format!("Fixture {id}"),
+            description: "A fixture.".into(),
+            input: CanonicalSchema::of::<I>(),
+            output: CanonicalSchema::empty(),
+            provenance: majordomus_cli::capability::Provenance::Builtin {
+                module: "fixture".into(),
+            },
+            exposure,
+            stability: Stability::Experimental,
+            tags: vec![],
+            benchmark: BenchmarkPolicy::Required,
+            cache: CachePolicy::Disabled,
+            execution: ExecutionPolicy::classify(kind),
+        },
+        handler: handler::<serde_json::Value, serde_json::Value, _>(|_, v| Ok(v)),
+        cases: <I as BenchmarkCases>::benchmark_cases_json,
+    }
+}
+
+/// The denominator is generated from the registry — every executable directly and on each
+/// transport it is exposed on, plus the system targets declared once — every required one
+/// is a target exactly there, and a required executable whose input yields no case is
+/// missing on every transport, which is the verdict `bench coverage --check` and
+/// `capabilities validate` fail on.
+#[test]
+fn the_denominator_is_generated_from_the_registry_and_a_missing_case_fails_the_check() {
+    use majordomus_cli::bench::{Coverage, CoverageState};
+    use majordomus_cli::capability::{BenchmarkPolicy, Capability, Context};
+    use std::sync::Arc;
+
+    let f = Fixture::new();
+    let app = common::load_app(&f);
+    let ctx = app.context.clone();
+    let projection = BenchmarkProjection::from_context(&ctx);
+    let coverage = Coverage::compute(&ctx, &projection);
+    let exposures = |c: &Capability| {
+        1 + usize::from(c.exposure.mcp.as_ref().is_some_and(|m| m.tool.is_some()))
+            + usize::from(c.exposure.http.is_some())
+    };
+    let executable = || {
+        ctx.registry
+            .iter()
+            .filter(|c| c.kind.is_executable() && c.stability.executable())
+    };
+    let total = &coverage.tallies["total"];
+    assert_eq!(
+        total.required,
+        executable().map(exposures).sum::<usize>() + SystemTarget::ALL.len(),
+        "the denominator is every exposure of every executable plus the system targets"
+    );
+    assert_eq!(total.missing, 0, "{}", coverage.render());
+    assert!(coverage.has_no_missing());
+    for c in executable().filter(|c| matches!(c.benchmark, BenchmarkPolicy::Required)) {
+        for t in Transport::ALL {
+            let exposed = match t {
+                Transport::Direct => true,
+                Transport::Mcp => c.exposure.mcp.as_ref().is_some_and(|m| m.tool.is_some()),
+                Transport::Http => c.exposure.http.is_some(),
+            };
+            assert_eq!(
+                projection.covers(c.id.as_str(), t),
+                exposed,
+                "{} on {}: a target exactly where it is exposed",
+                c.id,
+                t.name()
+            );
+        }
+    }
+    for s in SystemTarget::ALL {
+        assert!(
+            projection
+                .targets
+                .iter()
+                .any(|t| matches!(&t.kind, TargetKind::System { target } if *target == s)),
+            "{} is a target",
+            s.key()
+        );
+    }
+
+    // one more capability in the registry: the denominator follows with no other edit,
+    // covered when its input yields a case and missing on every transport when it does not
+    let with = |e| {
+        let registry = CapabilityRegistry::builder()
+            .with_builtin(vec![e])
+            .with_index(&ctx.index)
+            .build()
+            .unwrap();
+        let ctx = Arc::new(Context::new(ctx.index.clone(), Arc::new(registry)));
+        let p = BenchmarkProjection::from_context(&ctx);
+        Coverage::compute(&ctx, &p)
+    };
+    let covered = with(exposed::<CasedIn>("fixture.cased"));
+    let lines: Vec<_> = covered
+        .lines
+        .iter()
+        .filter(|l| l.subject == "fixture.cased")
+        .collect();
+    assert_eq!(lines.len(), 3, "required on all three transports");
+    assert!(lines.iter().all(|l| l.state == CoverageState::Covered));
+    assert!(covered.has_no_missing(), "{}", covered.render());
+
+    let missing = with(exposed::<CaselessIn>("fixture.caseless"));
+    let lines: Vec<_> = missing
+        .lines
+        .iter()
+        .filter(|l| l.subject == "fixture.caseless")
+        .collect();
+    assert_eq!(lines.len(), 3, "still required on all three transports");
+    assert!(lines.iter().all(|l| l.state == CoverageState::Missing));
+    assert_eq!(missing.tallies["total"].missing, 3);
+    assert!(
+        !missing.has_no_missing(),
+        "a missing case fails the check\n{}",
+        missing.render()
+    );
+    assert!(missing
+        .render()
+        .contains("MISSING  fixture.caseless on direct"));
 }

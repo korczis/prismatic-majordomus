@@ -9,7 +9,7 @@
 #
 # It reads; it writes nothing outside its own temporary repository.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null || { echo "    jq absent; skipping"; exit 0; }
+command -v jq >/dev/null || skip "jq absent"
 
 KINDS="$ROOT/share/kinds.yaml"
 SCHEMA="$ROOT/share/schemas/majordomus/workspace/workspace.v1.schema.json"
