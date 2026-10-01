@@ -2052,6 +2052,108 @@
       "tool": "majordomus_quality_rustdoc"
     },
     {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-advisors",
+      "claims": [],
+      "cli": "majordomus reasoning advisors",
+      "id": "reasoning.advisors",
+      "kind": "query",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": "majordomus://reasoning/advisors",
+      "route": "/registry/capabilities/reasoning-advisors/",
+      "slug": "reasoning-advisors",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "The advisors and what they can do now",
+      "tool": "majordomus_reasoning_advisors"
+    },
+    {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-check",
+      "claims": [],
+      "cli": "majordomus reasoning check",
+      "id": "reasoning.check",
+      "kind": "query",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": null,
+      "route": "/registry/capabilities/reasoning-check/",
+      "slug": "reasoning-check",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "Check that reasoning stays provider-independent",
+      "tool": "majordomus_reasoning_check"
+    },
+    {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-explain",
+      "claims": [],
+      "cli": "majordomus reasoning explain",
+      "id": "reasoning.explain",
+      "kind": "query",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": null,
+      "route": "/registry/capabilities/reasoning-explain/",
+      "slug": "reasoning-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "Why a decision was made",
+      "tool": "majordomus_reasoning_explain"
+    },
+    {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-plan",
+      "claims": [],
+      "cli": "majordomus reasoning plan",
+      "id": "reasoning.plan",
+      "kind": "query",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": null,
+      "route": "/registry/capabilities/reasoning-plan/",
+      "slug": "reasoning-plan",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "What an uncertainty calls for",
+      "tool": "majordomus_reasoning_plan"
+    },
+    {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-record",
+      "claims": [],
+      "cli": "majordomus reasoning record",
+      "id": "reasoning.record",
+      "kind": "command",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": null,
+      "route": "/registry/capabilities/reasoning-record/",
+      "slug": "reasoning-record",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "Record a reasoning step",
+      "tool": "majordomus_reasoning_record"
+    },
+    {
+      "api_anchor": "/docs/api/reasoning/#op-reasoning-status",
+      "claims": [],
+      "cli": "majordomus reasoning status",
+      "id": "reasoning.status",
+      "kind": "query",
+      "module": "reasoning",
+      "module_route": "/registry/modules/reasoning/",
+      "resource": "majordomus://reasoning",
+      "route": "/registry/capabilities/reasoning-status/",
+      "slug": "reasoning-status",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "tests": [],
+      "title": "The session's reasoning state",
+      "tool": "majordomus_reasoning"
+    },
+    {
       "api_anchor": "/docs/api/recover/#op-recover-orphans",
       "claims": [],
       "cli": null,
@@ -2931,6 +3033,41 @@
         "route": "/guarantees/commit-plan-is-refusable/",
         "status": "guaranteed",
         "test": "test/cases/274_commit_policy.sh"
+      },
+      {
+        "id": "reasoning-works-with-no-advisor",
+        "implementation": "apps/majordomus-cli/src/reasoning/policy.rs",
+        "route": "/guarantees/reasoning-works-with-no-advisor/",
+        "status": "guaranteed",
+        "test": "test/cases/730_reasoning_works_with_no_advisor.sh"
+      },
+      {
+        "id": "advice-is-weighed-not-counted",
+        "implementation": "apps/majordomus-cli/src/reasoning/store.rs",
+        "route": "/guarantees/advice-is-weighed-not-counted/",
+        "status": "guaranteed",
+        "test": "test/cases/732_disagreement_is_settled_by_evidence.sh"
+      },
+      {
+        "id": "advisor-failure-is-recorded-and-recovers",
+        "implementation": "apps/majordomus-cli/src/reasoning/availability.rs",
+        "route": "/guarantees/advisor-failure-is-recorded-and-recovers/",
+        "status": "guaranteed",
+        "test": "test/cases/733_advisor_failure_and_recovery.sh"
+      },
+      {
+        "id": "reasoning-survives-the-session",
+        "implementation": "apps/majordomus-cli/src/reasoning/state.rs",
+        "route": "/guarantees/reasoning-survives-the-session/",
+        "status": "guaranteed",
+        "test": "test/cases/734_reasoning_survives_the_session.sh"
+      },
+      {
+        "id": "review-is-never-fabricated",
+        "implementation": "apps/majordomus-cli/src/reasoning/check.rs",
+        "route": "/guarantees/review-is-never-fabricated/",
+        "status": "guaranteed",
+        "test": "test/cases/736_reasoning_check_refuses_drift.sh"
       }
     ],
     "http": [
@@ -2995,9 +3132,9 @@
     ]
   },
   "counts": {
-    "capabilities": 143,
-    "claims": 63,
-    "modules": 43
+    "capabilities": 149,
+    "claims": 68,
+    "modules": 44
   },
   "generator": "majordomus-cli 0.11.0",
   "modules": [
@@ -3930,6 +4067,47 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/quality.rs",
       "title": "Public API quality"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "reasoning.advisors",
+          "route": "/registry/capabilities/reasoning-advisors/",
+          "slug": "reasoning-advisors"
+        },
+        {
+          "id": "reasoning.check",
+          "route": "/registry/capabilities/reasoning-check/",
+          "slug": "reasoning-check"
+        },
+        {
+          "id": "reasoning.explain",
+          "route": "/registry/capabilities/reasoning-explain/",
+          "slug": "reasoning-explain"
+        },
+        {
+          "id": "reasoning.plan",
+          "route": "/registry/capabilities/reasoning-plan/",
+          "slug": "reasoning-plan"
+        },
+        {
+          "id": "reasoning.record",
+          "route": "/registry/capabilities/reasoning-record/",
+          "slug": "reasoning-record"
+        },
+        {
+          "id": "reasoning.status",
+          "route": "/registry/capabilities/reasoning-status/",
+          "slug": "reasoning-status"
+        }
+      ],
+      "claims": [],
+      "id": "reasoning",
+      "route": "/registry/modules/reasoning/",
+      "slug": "reasoning",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+      "title": "Reasoning"
     },
     {
       "capabilities": [

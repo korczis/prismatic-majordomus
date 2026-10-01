@@ -451,6 +451,7 @@ weakest evidence about the present.
 | `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
 | `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
+| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |

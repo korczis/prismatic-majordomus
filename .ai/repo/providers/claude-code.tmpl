@@ -30,6 +30,13 @@ semantic definition across projections is a design defect (`docs/CAPABILITIES.md
 New repository automation is a typed or scripted capability (ADR 0069), not shell;
 `majordomus shell check` refuses a shell unit `.ai/repo/automation/` does not exempt.
 
+Material engineering uncertainty is reasoned about through `majordomus reasoning` (ADR
+0098, `docs/REASONING.md`): record the assessment with its evidence, let
+`scripts/advisor-consult` ask whichever optional advisors the plan selects, settle a
+disagreement with an experiment rather than a count, record the conclusion, and continue.
+No advisor is needed; an absent one is reported state, never a reason to stop or to ask a
+person what to do.
+
 This repository is supervised by Majordomus. Run `majordomus context` before working;
 the task lifecycle is `.ai/repo/workflows/task-lifecycle.md`; the default profile is
 `{{DEFAULT_PROFILE}}`. `AGENTS.md` carries the same bootstrap for every

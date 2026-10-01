@@ -537,3 +537,54 @@ rustdoc_fixture_produce() {
     sed 's/^/    | /' "$log" >&2; rm -f "$log"; return 1; }
   rm -f "$log"
 }
+
+# ---------------------------------------------------------------- reasoning (ADR 0098)
+# A fixture repository for the reasoning cases, and a way to run the executable and the
+# transport in an environment that holds exactly what the case gives it: `env -i`, a PATH
+# with git, node and a directory of stubs the case fills ($RZ_BIN), and no credential. On a
+# machine where every advisor is installed the zero-advisor case must still be zero, so
+# nothing of the caller's PATH or environment leaks in.
+#   reasoning_fixture            R (the repository, committed), RZ_BIN (empty stub dir)
+#   rz <args>                    the executable in $R, with $RZ_ENV (space-separated
+#                                NAME=value words) added to the environment
+#   rz_consult <args>            scripts/advisor-consult in $R, the same environment, with
+#                                the fixture adapters of test/fixtures/advisors
+#   rz_stub <name>               an executable named <name> on the isolated PATH
+#   rz_record <json>             record one reasoning step; prints its id
+reasoning_fixture() {
+  R="$T/repo"
+  fixture_repo "$R" >/dev/null
+  git -C "$R" init -q .
+  git -C "$R" config user.email t@example.com
+  git -C "$R" config user.name t
+  git -C "$R" add -A >/dev/null
+  git -C "$R" commit -qm fixture >/dev/null
+  RZ_BIN="$T/rz-bin"; mkdir -p "$RZ_BIN"
+  ln -sf "$(command -v git)" "$RZ_BIN/git"
+  # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
+  local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
+    [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
+    skip "no node"; }
+  ln -sf "$node" "$RZ_BIN/node"
+  RZ_ENV=""
+}
+rz_env() {
+  # shellcheck disable=SC2086 # RZ_ENV is a list of NAME=value words by contract
+  env -i HOME="$T" TMPDIR="${TMPDIR:-/tmp}" PATH="$RZ_BIN:/usr/bin:/bin" LANG=C.UTF-8 \
+    MAJORDOMUS_SHARE="$R/share" MAJORDOMUS_CLI="$RB" $RZ_ENV "$@"
+}
+rz() { ( cd "$R" && rz_env "$RB" "$@" ); }
+rz_consult() { ( cd "$R" && rz_env node "$R/scripts/advisor-consult" --adapters "$ROOT/test/fixtures/advisors" "$@" ); }
+rz_stub() { printf '#!/bin/sh\nexit 0\n' > "$RZ_BIN/$1"; chmod +x "$RZ_BIN/$1"; }
+rz_record() {
+  local out err="$T/rz_record.err"
+  out="$(printf '%s' "$1" | rz reasoning record --format json 2> "$err")" \
+    || { printf '    the record was refused: %s\n    input: %s\n' "$(cat "$err")" "$1" >&2; return 1; }
+  printf '%s' "$out" | jq -r '.record.id'
+}
+#   rz_json <args>               the executable's JSON answer alone (stdout); its stderr is
+#                                shown, and the case fails, when it exits non-zero
+rz_json() {
+  local err="$T/rz_json.err"
+  rz "$@" --format json 2> "$err" || { printf '    rz %s failed:\n' "$*" >&2; cat "$err" >&2; return 1; }
+}

@@ -185,6 +185,7 @@ mj_context_sections() {
       printf 'effort       %s\n' "$(mj_pro effort)"
       printf 'verbosity    %s\n' "$(mj_pro verbosity)"
       printf 'presentation %s\n' "$(mj_pro presentation)"
+      [ -n "$(mj_pro reasoning)" ] && printf 'reasoning    %s\n' "$(mj_pro reasoning)"
       printf 'verification %s\n' "$(mj_ctx_verification)"
       printf 'output       %s\n' "$(mj_ylist "$MJ_PRO_FLAT" output_contract | paste -sd, - | sed 's/,/, /g')"
     } > "$MJ_CTX_TMP/30.profile"
@@ -239,6 +240,16 @@ mj_context_sections() {
     fi
   else
     mj_ctx_excl "decisions" "profile $profile sets context.decisions: false"
+  fi
+
+  # 5b. reasoning — the conclusions this task reached, who reviewed them, and what is still
+  #     unresolved (ADR 0098); the same report a derived handover carries. Toggled with the
+  #     decisions, because these are the task's decisions with their provenance.
+  if [ "$have_task" = 1 ] && [ -n "$profile" ] && [ "$(mj_pro context.decisions)" = true ]; then
+    # shellcheck source=rust_bin.sh
+    . "$MJ_LIB_DIR/rust_bin.sh"
+    local rreport; rreport="$(mj_rust_reasoning_report "$MJ_ROOT")"
+    [ -n "$rreport" ] && printf '## REASONING\n%s\n' "$rreport" > "$MJ_CTX_TMP/55.reasoning"
   fi
 
   # 6. newest checkpoint for this task
@@ -337,8 +348,8 @@ mj_ctx_verification() {
 # `15.peers` sits between git and the task on purpose: another worker holding your paths
 # right now outranks your own records the way git does, and it is dropped late for the same
 # reason — a collision in flight is worth more than history.
-MJ_CTX_DROP_ORDER="90.history 80.files 35.documents 50.decisions 60.checkpoint 70.handover 15.peers"
-MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
+MJ_CTX_DROP_ORDER="90.history 80.files 35.documents 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 50.decisions 55.reasoning 60.checkpoint 70.handover 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of

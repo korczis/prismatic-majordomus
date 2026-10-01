@@ -82,6 +82,8 @@ pub enum Command {
     Mesh(MeshArgs),
     /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
     Models(ModelsArgs),
+    /// Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor
+    Reasoning(ReasoningArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
@@ -207,6 +209,93 @@ pub enum ModelsCommand {
     List(ModelsListArgs),
     /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
     Route(ModelsRouteArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus reasoning`: the command-line projection of the `reasoning` capabilities.
+/// The repository arguments and the output shape are shared by every subcommand, and the
+/// shape is global, so `--format` reads the same before or after the subcommand.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ReasoningArgs, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan", "--materiality", "high", "--format", "json"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let args: ReasoningArgs = args;
+/// assert!(matches!(args.command, ReasoningCommand::Plan { .. }));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ReasoningArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `advisors`, `plan`, `record`, `status`, `explain`, `check`.
+    pub command: ReasoningCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `reasoning` subcommands, one per capability: `advisors`, `plan` and `status` read,
+/// `explain` traces one record, `check` gates, and `record` is the one that writes.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let ReasoningCommand::Plan { materiality, confidence, capabilities } = args.command else {
+///     panic!("not plan")
+/// };
+/// assert_eq!((materiality.as_str(), confidence.as_str()), ("material", "medium"));
+/// assert!(capabilities.is_none());
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "status", "--task", "all", "--report"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// assert!(matches!(args.command, ReasoningCommand::Status { report: true, .. }));
+/// ```
+pub enum ReasoningCommand {
+    /// Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer
+    Advisors,
+    /// Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing
+    Plan {
+        /// trivial, low, material, high or critical
+        #[arg(long, default_value = "material")]
+        materiality: String,
+        /// low, medium or high
+        #[arg(long, default_value = "medium")]
+        confidence: String,
+        /// Advisory capabilities review needs, comma-separated
+        #[arg(long)]
+        capabilities: Option<String>,
+    },
+    /// Record one reasoning step of the open task from JSON (`{"kind":"assessment",...}`) read from --file or standard input; a record that breaks a rule is refused and nothing is written
+    Record {
+        /// The JSON record; standard input when absent
+        #[arg(long)]
+        file: Option<std::path::PathBuf>,
+    },
+    /// The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries
+    Status {
+        /// A task id, or `all`
+        #[arg(long)]
+        task: Option<String>,
+        /// Print only the Markdown report (empty when there is nothing to report)
+        #[arg(long)]
+        report: bool,
+    },
+    /// One record with the whole chain of its assessment: why a decision was made
+    Explain {
+        /// The record id
+        id: String,
+    },
+    /// Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding
+    Check,
 }
 
 #[derive(Debug, Args)]
@@ -5160,6 +5249,72 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["models", "route", "--require", "text"],
             setup: &[],
             expect: Expect::StdoutContains(&["selected"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning advisors",
+        examples: &[ExampleDoc {
+            id: "reasoning-advisors",
+            title: "The advisors, and what they can do now",
+            description: "Every declared advisor with its status and why — available, unavailable, not_configured, disabled, temporarily_failed, rate_limited — from presence alone (an executable on PATH, a credential variable set, never a value), the mode in force and the recorded outcomes of earlier consultations; then who can provide each advisory capability now. Reasoning is operational whether or not any advisor is.",
+            argv: &["reasoning", "advisors"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["reasoning   operational"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning plan",
+        examples: &[ExampleDoc {
+            id: "reasoning-plan",
+            title: "What a material uncertainty calls for",
+            description: "Whether independent review is worth having, how many advisors the mode allows, which available advisors a capability-driven selection asks, and why every other advisor is left out. With no suitable advisor the plan is the structured local review. Nothing is recorded.",
+            argv: &["reasoning", "plan", "--materiality", "material"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["outcome", "budget"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning record",
+        examples: &[ExampleDoc {
+            id: "reasoning-record-refused",
+            title: "Input that is not a record is refused",
+            description: "The writer reads one JSON record (`{\"kind\":\"assessment\",...}`) from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and nothing is written; so is a record that breaks a rule, such as a plan for an assessment nobody recorded.",
+            argv: &["reasoning", "record", "--file", "share/advisors.yaml"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning status",
+        examples: &[ExampleDoc {
+            id: "reasoning-status",
+            title: "The reasoning state of the open task",
+            description: "Assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, and the timeline — derived from the records alone.",
+            argv: &["reasoning", "status", "--task", "all"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["records"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning explain",
+        examples: &[ExampleDoc {
+            id: "reasoning-explain-absent",
+            title: "Why a decision was made",
+            description: "One record with the whole chain of its assessment. An id nothing recorded is refused as not found.",
+            argv: &["reasoning", "explain", "conclusion-absent"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning check",
+        examples: &[ExampleDoc {
+            id: "reasoning-check",
+            title: "Check that reasoning stays provider-independent",
+            description: "The advisor catalogue's references, the transport adapters, the provider-independent sources, CI, the documents and every stored record; exit 10 on a finding.",
+            argv: &["reasoning", "check"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["checks"]),
         }],
     },
 ];

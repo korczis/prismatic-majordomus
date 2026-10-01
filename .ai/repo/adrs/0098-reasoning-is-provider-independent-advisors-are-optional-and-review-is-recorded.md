@@ -1,0 +1,121 @@
+---
+schema: adr/v1
+id: adr-0098
+kind: adr
+title: Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim
+status: proposed
+date: 2026-10-01
+tags: [reasoning, advisors, providers, sessions]
+related:
+  - "file:.ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md"
+  - "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md"
+  - "file:.ai/repo/adrs/0049-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md"
+  - "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md"
+  - "file:docs/REASONING.md"
+  - "file:share/advisors.yaml"
+provenance:
+  origin: authored
+---
+
+# 98. Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim
+
+## Context
+
+The owner's working protocol for material engineering uncertainty was "investigate locally,
+ask ChatGPT, then Gemini or Codex, synthesise, continue". It lived in one worker's private
+notes and a helper script in a session scratchpad: nothing in the repository knew it,
+nothing recorded what an advisor said, and nothing could tell a review that happened from
+one that was claimed. It was also written as a sequence of vendor names. That is the shape
+that breaks when a CLI is not installed, a key is missing or a daemon is not running: every
+step names something that may be absent.
+
+Four standing decisions constrain the answer. ADR 0024 spent the word *provider* on the
+client tools that work in this repository (`share/providers.yaml`). ADR 0049 made the model
+catalogue declarative and named its parties *vendors*. ADR 0032 keeps HTTP clients, TLS and
+async runtimes out of `majordomus-cli`; network transports live in the Node layer under
+`scripts/lib/`. ADR 0067 made linked mesh runtimes able to request and answer reviews.
+
+Two independent reviewers were consulted on the design before it was built (the records
+are in the session that built it). One answered generically; the other found the decisive
+flaw in the first draft: admitting a consultation only when its advisor was *available at
+record time* makes an answer that arrives after another failure opened the advisor's
+circuit inadmissible. Admission now reads the availability snapshot of the plan that
+dispatched the request.
+
+## Decision
+
+**Reasoning is not a provider.** A pure policy (`crate::reasoning::policy`) decides whether
+a stated uncertainty warrants independent review, how much the reasoning mode allows, and
+which *capabilities* review needs. It names no advisor. A test, and `reasoning.check` at
+every `doctor`, hold that no provider-independent source file names one.
+
+**Advisors are declared once, by reference.** `share/advisors.yaml` declares advisory roles:
+a transport (`api`, `cli`, `local_runtime`, `peer`), the adapter that speaks it, the
+executable whose presence says it is installed, and advisory capabilities. Provider, vendor
+and model are references into the two existing tables, and a reference that resolves to
+nothing is a finding. Declaration order is the preference order; "ChatGPT first" is data.
+Linked mesh runtimes carrying the `reviews` feature become advisors at run time from the
+same declaration.
+
+**Absence is a status.** Availability is derived from presence (an executable on `PATH`,
+a credential variable *set* — its value is never read by the crate), the mode (`offline`
+admits only advisors on this machine, `ci` none), an explicit disable list, and the recorded
+outcomes of earlier consultations: two transient failures open an advisor's circuit for a
+cooldown, a rate limit for its own, an authentication failure for an hour, and the advisor
+returns as `recovering` afterwards. No advisor at all is an ordinary plan: the policy then
+returns the structured local review a session performs instead, and reasoning reports
+itself operational. Nothing on the entry path, in `doctor`, in CI or in boot contacts a
+model.
+
+**Review is a record, admitted by rules.** One writer, `reasoning.record`, stores typed
+records under `.ai/local/state/reasoning/<task>/` (checkout state, ADR 0005): assessment,
+plan, consultation, disagreement, resolution, conclusion, validation, attempt. A material
+assessment must carry evidence. The writer computes a plan from the availability of that
+moment, never accepts one. A consultation must name an advisor its plan selected. A
+completed consultation carries a normalised conclusion and a failed one carries none. A
+disagreement is settled by a resolution that cites evidence; a conclusion is refused while
+one on its assessment is unsettled, must weigh every answer its assessment received, and
+has its review count computed. No field lets a caller assert that a review happened, and no
+path turns a count of agreeing advisors into a decision.
+
+**The transport is outside the crate.** `scripts/lib/advisors/` holds one adapter per
+transport behind one contract (typed failures: timeout, rate limit, authentication,
+malformed, empty, unavailable, cancelled), a driver that consults concurrently and returns
+results in plan order, and `scripts/advisor-consult`, which records the plan, consults and
+records each outcome through the crate. The contract suite runs every adapter against fakes.
+
+**The session carries it.** `reasoning.status` derives the state, timeline and report from
+the records alone. `majordomus context` shows that report, `handover --derive` carries it,
+and a later assessment of the same subject reuses the standing conclusion instead of asking
+again, unless it declares new evidence. The environment snapshot, `doctor`, the Cockpit's
+Reasoning page, HTTP and MCP project the same capabilities. Each execution profile declares
+its reasoning mode.
+
+## Alternatives rejected
+
+- **A provider switch in the workflow** (`if gemini … else if codex …`). This is the defect
+  being repaired: correctness would depend on cardinality and naming.
+- **Majority or quorum.** Agreement is evidence about agreement. A count that decides is the
+  failure mode the design exists to make unrepresentable.
+- **Network code in the crate.** It is refused by ADR 0032, and the reasons stand.
+- **Live probing at entry.** It would put network latency, and network failure, on every
+  `cd`. Presence is cheap and honest about what it measures, and a failure is learned by
+  asking and recorded.
+- **Storing transcripts.** They are large, possibly private, and not what a later session
+  needs. Normalised fields are kept; raw answers are not.
+- **Writing every conclusion as an ADR.** Most conclusions are task-scoped. One graduates
+  to an ADR when it changes architecture, by a person's act.
+
+## Consequences
+
+- Majordomus reasons, plans, records, implements and validates with no advisor installed;
+  the zero-advisor path is exercised by a test case, not asserted.
+- Adding an advisor is one entry in `share/advisors.yaml` and, for a new transport, one
+  adapter module; every surface follows, and nothing else is edited.
+- A credential that is present but wrong is learned at the first consultation, recorded as
+  `auth_failed`, and keeps that advisor out for an hour instead of being retried.
+- The review count of a decision is a fact about records. A session cannot claim review
+  from an advisor that was unavailable or never asked.
+- What remains outside: the crate cannot know whether an advisor *answers* until one is
+  asked, and the transport layer is a devDependency-free Node layer of this repository, not
+  part of the installed binary, as ADR 0032 already says of its sibling.
