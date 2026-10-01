@@ -83,8 +83,22 @@ fn gh(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> 
     ))
 }
 
+/// `gh`, asked again on a transient failure ([`super::retry`]): every call here is a read,
+/// so asking twice is harmless. A refusal is returned as it came, for the caller to read.
+fn gh_retrying(root: &Path, args: &[&str]) -> Result<(bool, String, String), ForgeError> {
+    super::retry::forge(|| {
+        let (ok, out, err) = gh(root, args).map_err(|e| e.0)?;
+        if !ok && super::retry::transient(&err) {
+            Err(format!("gh {} failed: {}", args.join(" "), err.trim()))
+        } else {
+            Ok((ok, out, err))
+        }
+    })
+    .map_err(ForgeError)
+}
+
 fn gh_json(root: &Path, args: &[&str]) -> Result<Value, ForgeError> {
-    let (ok, out, err) = gh(root, args)?;
+    let (ok, out, err) = gh_retrying(root, args)?;
     if !ok {
         return Err(ForgeError(format!(
             "gh {} failed: {}",
@@ -252,7 +266,7 @@ impl Forge for GhForge<'_> {
         .to_string();
         // an unprotected branch is a 404 whose message says so: nothing is required, which
         // is a reading, not a failure; any other refusal leaves the requirement unread
-        let (ok, out, err) = gh(
+        let (ok, out, err) = gh_retrying(
             root,
             &[
                 "api",
@@ -323,15 +337,20 @@ pub fn fetch(root: &Path, obs: &ForgeObservation) -> Result<(), ForgeError> {
     for p in &obs.pull_requests {
         args.push(format!("+refs/pull/{0}/head:{PR_REF_PREFIX}{0}", p.number));
     }
-    let out = Command::new("git")
-        .args(&args)
-        .output()
-        .map_err(|e| ForgeError(format!("git fetch could not run: {e}")))?;
-    if !out.status.success() {
-        return Err(ForgeError(format!(
-            "git fetch failed: {}",
-            String::from_utf8_lossy(&out.stderr).trim()
-        )));
-    }
-    Ok(())
+    // a fetch is a read: a dropped connection is asked again, a refusal is not
+    super::retry::forge(|| {
+        let out = Command::new("git")
+            .args(&args)
+            .output()
+            .map_err(|e| format!("git fetch could not run: {e}"))?;
+        if out.status.success() {
+            Ok(())
+        } else {
+            Err(format!(
+                "git fetch failed: {}",
+                String::from_utf8_lossy(&out.stderr).trim()
+            ))
+        }
+    })
+    .map_err(ForgeError)
 }

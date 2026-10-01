@@ -1,7 +1,7 @@
 +++
 title = "majordomus delivery show"
 description = "One feature: every dimension with its reason and remediation"
-weight = 159
+weight = 160
 [extra]
 route = "/docs/cli/delivery/show/"
 command = "majordomus delivery show"

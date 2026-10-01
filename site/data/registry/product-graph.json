@@ -840,6 +840,15 @@
       "status": "behaviorally_verified"
     },
     {
+      "id": "module:integration",
+      "kind": "module",
+      "label": "integration",
+      "summary": "Pull-request integration",
+      "route": "/registry/modules/integration/",
+      "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "status": "experimental"
+    },
+    {
       "id": "module:lifecycle",
       "kind": "module",
       "label": "lifecycle",
@@ -1455,6 +1464,11 @@
       "source": "feature:coordination",
       "target": "feature:worktrees",
       "kind": "related_to"
+    },
+    {
+      "source": "feature:coordination",
+      "target": "module:integration",
+      "kind": "made_of"
     },
     {
       "source": "feature:coordination",
@@ -2682,6 +2696,26 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:integration",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:integration",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:integration",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:integration",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:lifecycle",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -3028,8 +3062,8 @@
     }
   ],
   "metadata": {
-    "nodes": 122,
-    "edges": 395,
+    "nodes": 123,
+    "edges": 400,
     "acyclic": false,
     "truncated": false
   },

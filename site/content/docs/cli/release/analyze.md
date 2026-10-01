@@ -1,7 +1,7 @@
 +++
 title = "majordomus release analyze"
 description = "What the public contract did since the last release, and the smallest version this tree may therefore declare"
-weight = 105
+weight = 106
 [extra]
 route = "/docs/cli/release/analyze/"
 command = "majordomus release analyze"

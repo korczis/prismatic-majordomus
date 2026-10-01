@@ -18,7 +18,10 @@ use crate::capability::benchmark::{BenchmarkCases, CaseContext, NamedCase};
 use crate::capability::handler::{CapabilityError, Context};
 use crate::capability::model::{CachePolicy, CliExposure, Exposure, Stability};
 use crate::capability::module::ModuleDescriptor;
-use crate::integration::{drain::IntegrationEvent, IntegrationQueue, PullRequestAssessment};
+use crate::integration::{
+    drain::{IntegrationEvent, IntegrationLease, IntegrationLeaseState},
+    IntegrationQueue, PullRequestAssessment,
+};
 use crate::{capability, module};
 
 use super::{get, mcp, Empty};
@@ -32,6 +35,13 @@ pub struct IntegrationStatus {
     pub reason: Option<String>,
     /// The queue.
     pub queue: Option<IntegrationQueue>,
+    /// The base branch's integration lease as an observer reads it: `None` when nobody
+    /// holds it (or nothing is observed, so no base is known).
+    #[serde(default)]
+    pub lease: Option<IntegrationLeaseState>,
+    /// The last merge the executor recorded, from the audit trail.
+    #[serde(default)]
+    pub last_merge: Option<IntegrationEvent>,
 }
 
 /// One pull request to explain.
@@ -80,16 +90,25 @@ fn root(ctx: &Context) -> &Path {
 }
 
 fn integration_queue(ctx: &Context, _: Empty) -> Result<IntegrationStatus, CapabilityError> {
-    Ok(match crate::integration::queue_of(root(ctx)) {
+    let root = root(ctx);
+    let last_merge = crate::integration::drain::events(root)
+        .into_iter()
+        .rev()
+        .find(|e| e.action == "merge_succeeded");
+    Ok(match crate::integration::queue_of(root) {
         Ok(q) => IntegrationStatus {
             observed: true,
             reason: None,
+            lease: IntegrationLease::read(root, &q.base).ok().flatten(),
             queue: Some(q),
+            last_merge,
         },
         Err(reason) => IntegrationStatus {
             observed: false,
             reason: Some(reason),
             queue: None,
+            lease: None,
+            last_merge,
         },
     })
 }
@@ -148,7 +167,7 @@ pub fn module() -> ModuleDescriptor {
             capability! {
                 id: "integration.queue",
                 title: "The integration queue",
-                description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order, the next merge, the pull requests that need master brought in, the tallies by disposition and lane, and the diagnostics — a stale observation first. `observed: false` with the reason when this checkout has recorded no observation.",
+                description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
                 input: Empty,
                 output: IntegrationStatus,
                 stability: Stability::Experimental,

@@ -24898,7 +24898,7 @@
                 },
                 "action": {
                   "type": "string",
-                  "description": "What (`selected`, `stale_decision`, `merge_attempted`, `merge_succeeded`,\n`merge_failed`, `verification_failed`, `closed_superseded`, `idle`)."
+                  "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
                 },
                 "pr": {
                   "type": [
@@ -24940,6 +24940,15 @@
                 "detail": {
                   "type": "string",
                   "description": "What happened, for a person."
+                },
+                "passed_over": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0
+                  },
+                  "description": "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
                 }
               },
               "required": [
@@ -25182,6 +25191,17 @@
                 "created_at": {
                   "type": "string",
                   "description": "When it was opened."
+                },
+                "wait": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ExecutorWait"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
                 }
               },
               "required": [
@@ -25630,6 +25650,62 @@
                 "detail"
               ],
               "description": "One piece of evidence behind a disposition: what was read, and what it said."
+            },
+            "ExecutorWait": {
+              "type": "object",
+              "properties": {
+                "actionable_since": {
+                  "type": "string",
+                  "description": "When it was first observed ready or refreshable in its current run of being so,\nRFC 3339."
+                },
+                "passed_over": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "How many times the executor selected another pull request while this one was ready\nor refreshable."
+                },
+                "last_passed_over": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/PassedOver"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The last of those times."
+                }
+              },
+              "required": [
+                "actionable_since",
+                "passed_over"
+              ],
+              "description": "How long a pull request has waited for the executor, from the audit trail. Starvation is\nmade visible here, never resolved by changing the rank: the rank's age tie-break already\nprefers the older of two otherwise equal candidates, and a wait this long is a fact a\nperson reads, not a reason to merge anything less safe."
+            },
+            "PassedOver": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "When, RFC 3339."
+                },
+                "for_pr": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The pull request chosen instead."
+                },
+                "action": {
+                  "type": "string",
+                  "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
+                }
+              },
+              "required": [
+                "at",
+                "for_pr",
+                "action"
+              ],
+              "description": "One time the executor chose another pull request."
             }
           }
         }
@@ -25679,7 +25755,7 @@
       "module": "integration",
       "kind": "query",
       "title": "The integration queue",
-      "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order, the next merge, the pull requests that need master brought in, the tallies by disposition and lane, and the diagnostics — a stale observation first. `observed: false` with the reason when this checkout has recorded no observation.",
+      "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
       "input": {
         "name": "Empty",
         "schema": {
@@ -25715,6 +25791,30 @@
                 }
               ],
               "description": "The queue."
+            },
+            "lease": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IntegrationLeaseState"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The base branch's integration lease as an observer reads it: `None` when nobody\nholds it (or nothing is observed, so no base is known).",
+              "default": null
+            },
+            "last_merge": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/IntegrationEvent"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The last merge the executor recorded, from the audit trail.",
+              "default": null
             }
           },
           "required": [
@@ -25785,6 +25885,16 @@
                     "type": "string"
                   },
                   "description": "What makes this queue less than a full answer."
+                },
+                "starving": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0
+                  },
+                  "description": "The actionable pull requests the executor has passed over at least\n`wait::STARVING_AFTER` times in their current wait, in rank order. Visible, never\npromoted: see `wait`.",
+                  "default": []
                 }
               },
               "required": [
@@ -25949,6 +26059,17 @@
                 "created_at": {
                   "type": "string",
                   "description": "When it was opened."
+                },
+                "wait": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ExecutorWait"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
                 }
               },
               "required": [
@@ -26398,6 +26519,62 @@
               ],
               "description": "One piece of evidence behind a disposition: what was read, and what it said."
             },
+            "ExecutorWait": {
+              "type": "object",
+              "properties": {
+                "actionable_since": {
+                  "type": "string",
+                  "description": "When it was first observed ready or refreshable in its current run of being so,\nRFC 3339."
+                },
+                "passed_over": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "How many times the executor selected another pull request while this one was ready\nor refreshable."
+                },
+                "last_passed_over": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/PassedOver"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The last of those times."
+                }
+              },
+              "required": [
+                "actionable_since",
+                "passed_over"
+              ],
+              "description": "How long a pull request has waited for the executor, from the audit trail. Starvation is\nmade visible here, never resolved by changing the rank: the rank's age tie-break already\nprefers the older of two otherwise equal candidates, and a wait this long is a fact a\nperson reads, not a reason to merge anything less safe."
+            },
+            "PassedOver": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "When, RFC 3339."
+                },
+                "for_pr": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The pull request chosen instead."
+                },
+                "action": {
+                  "type": "string",
+                  "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
+                }
+              },
+              "required": [
+                "at",
+                "for_pr",
+                "action"
+              ],
+              "description": "One time the executor chose another pull request."
+            },
             "QueueTallies": {
               "type": "object",
               "properties": {
@@ -26432,6 +26609,144 @@
                 "by_lane"
               ],
               "description": "How many pull requests are in each disposition and lane."
+            },
+            "IntegrationLeaseState": {
+              "type": "object",
+              "properties": {
+                "holder": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/LeaseHolder"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Who holds it; `None` when the file does not say in a form this reads."
+                },
+                "renewed_seconds_ago": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "How long ago the holder last renewed it."
+                },
+                "stale": {
+                  "type": "boolean",
+                  "description": "Whether it is older than `LEASE_STALE_AFTER`: its holder stopped without releasing\nit, and the next executor takes it over."
+                }
+              },
+              "required": [
+                "renewed_seconds_ago",
+                "stale"
+              ],
+              "description": "The lease of a base as an observer reads it."
+            },
+            "LeaseHolder": {
+              "type": "object",
+              "properties": {
+                "pid": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The process."
+                },
+                "host": {
+                  "type": "string",
+                  "description": "The machine."
+                },
+                "base": {
+                  "type": "string",
+                  "description": "The base branch."
+                },
+                "since": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "When it was taken, seconds since the epoch."
+                }
+              },
+              "required": [
+                "pid",
+                "host",
+                "base",
+                "since"
+              ],
+              "description": "Who holds the lease."
+            },
+            "IntegrationEvent": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "When, RFC 3339."
+                },
+                "actor": {
+                  "type": "string",
+                  "description": "Who: the git identity, the process and the machine."
+                },
+                "action": {
+                  "type": "string",
+                  "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+                },
+                "pr": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "The pull request, when one."
+                },
+                "master_before": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Master before."
+                },
+                "head_sha": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The head acted on."
+                },
+                "master_after": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Master after."
+                },
+                "reasons": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The decision's reason codes."
+                },
+                "detail": {
+                  "type": "string",
+                  "description": "What happened, for a person."
+                },
+                "passed_over": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "uint64",
+                    "minimum": 0
+                  },
+                  "description": "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+                }
+              },
+              "required": [
+                "at",
+                "actor",
+                "action",
+                "reasons",
+                "detail"
+              ],
+              "description": "One entry of the audit trail."
             }
           }
         }
