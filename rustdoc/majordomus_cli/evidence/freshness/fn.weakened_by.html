@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The monotone rule: a supplementary record may withhold `proven` and never grant it."><title>weakened_by in majordomus_cli::evidence::freshness - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">weakened_by</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>evidence::<wbr>freshness</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">evidence</a>::<wbr><a href="index.html">freshness</a></div><h1>Function <span class="fn">weakened_<wbr>by</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/evidence/freshness.rs.html#842-871">Source</a> </span></div><pre class="rust item-decl"><code>pub fn weakened_by(
+    judgement: <a class="struct" href="struct.Judgement.html" title="struct majordomus_cli::evidence::freshness::Judgement">Judgement</a>,
+    records: &amp;[<a class="struct" href="struct.Supplementary.html" title="struct majordomus_cli::evidence::freshness::Supplementary">Supplementary</a>&lt;'_&gt;],
+) -&gt; <a class="struct" href="struct.Judgement.html" title="struct majordomus_cli::evidence::freshness::Judgement">Judgement</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The monotone rule: a supplementary record may withhold <code>proven</code> and never grant it.</p>
+<p>It changes a judgement only when the judgement is <code>proven</code> or <code>inputs_unchanged</code> and some
+record failed, timed out or errored on a clean tree, at a commit that contains the
+evidence commit and that the presented revision contains. Then the state becomes
+<code>stale</code>, naming the record. The cap is <code>stale</code> and not <code>failing</code>: a supplementary record
+withholds <code>proven</code> and never decides a verdict.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::freshness::{weakened_by, Judgement, Supplementary, UNCOMMITTED_RUN};
+<span class="kw">use </span>majordomus_cli::evidence::{Execution, ProofState};
+<span class="kw">use </span>majordomus_cli::git::Containment;
+
+<span class="kw">let </span>failed: Execution = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+    <span class="string">"test"</span>: <span class="string">"suite:07_scope"</span>, <span class="string">"runner"</span>: <span class="string">"suite"</span>, <span class="string">"source"</span>: <span class="string">"test/cases/07_scope.sh"</span>,
+    <span class="string">"outcome"</span>: <span class="string">"fail"</span>, <span class="string">"seconds"</span>: <span class="number">1</span>, <span class="string">"commit"</span>: <span class="string">"b"</span>.repeat(<span class="number">40</span>), <span class="string">"working_tree"</span>: <span class="string">"clean"</span>,
+    <span class="string">"digest"</span>: <span class="string">"sha256:0"</span>, <span class="string">"at"</span>: <span class="string">"2026-09-26T00:00:00Z"</span>, <span class="string">"origin"</span>: <span class="string">"local"</span>,
+    <span class="string">"command"</span>: <span class="string">"bash test/run.sh 07_scope"
+</span>}))
+.unwrap();
+<span class="kw">let </span>record = Supplementary {
+    execution: <span class="kw-2">&amp;</span>failed,
+    named: UNCOMMITTED_RUN,
+    after_evidence: Containment::Contains,
+    in_presented: Containment::Contains,
+};
+<span class="kw">let </span>proven = Judgement { state: ProofState::Proven, changed: <span class="macro">vec!</span>[], detail: <span class="prelude-val">None </span>};
+<span class="kw">let </span>j = weakened_by(proven, <span class="kw-2">&amp;</span>[record]);
+<span class="macro">assert_eq!</span>(j.state, ProofState::Stale);
+<span class="macro">assert!</span>(j.detail.unwrap().contains(<span class="kw-2">&amp;</span><span class="string">"b"</span>.repeat(<span class="number">12</span>)));
+
+<span class="comment">// and never the other way
+</span><span class="kw">let </span>failing = Judgement { state: ProofState::Failing, changed: <span class="macro">vec!</span>[], detail: <span class="prelude-val">None </span>};
+<span class="macro">assert_eq!</span>(weakened_by(failing.clone(), <span class="kw-2">&amp;</span>[record]), failing);</code></pre></div></div></details></section></div></main></body></html>

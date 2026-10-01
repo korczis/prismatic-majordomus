@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["DETECTORS","VERSION_TIMEOUT"],"enum":["Declares"],"fn":["declared","read_text","with_installed"],"struct":["Detector","Marker"]};
+window.SIDEBAR_ITEMS = {"constant":["DETECTORS","VERSION_TIMEOUT"],"enum":["Declares","Pin"],"fn":["declared","read_text","satisfies","with_installed"],"struct":["Detector","Marker"]};

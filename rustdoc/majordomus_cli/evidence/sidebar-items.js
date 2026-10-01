@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["Origin","Outcome","ProofState","Runner"],"fn":["capped_by_working_tree","digest_of","report"],"mod":["ledger","record"],"struct":["ClaimProof","EvidenceReport","Execution","Finding","LedgerSummary","RunRef","Subject","TestId"]};
+window.SIDEBAR_ITEMS = {"enum":["Origin","Outcome","ProofState","Runner"],"fn":["capped_by_working_tree","digest_of","report","report_at"],"mod":["freshness","ledger","record"],"struct":["ClaimProof","EvidenceReport","Execution","Finding","LedgerSummary","PresentedRevision","RunRef","Subject","TestId"]};

@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The one truth table: what a recorded run proves at the presented revision."><title>freshness in majordomus_cli::evidence::freshness - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">freshness</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>evidence::<wbr>freshness</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">evidence</a>::<wbr><a href="index.html">freshness</a></div><h1>Function <span class="fn">freshness</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/evidence/freshness.rs.html#665-762">Source</a> </span></div><pre class="rust item-decl"><code>pub fn freshness(
+    recorded: <a class="enum" href="enum.Recorded.html" title="enum majordomus_cli::evidence::freshness::Recorded">Recorded</a>&lt;'_&gt;,
+    inputs: <a class="enum" href="https://doc.rust-lang.org/1.98.1/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;[<a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>]&gt;,
+    test_source: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.98.1/std/primitive.str.html">str</a>,
+    test_moved: <a class="primitive" href="https://doc.rust-lang.org/1.98.1/std/primitive.bool.html">bool</a>,
+    comparison: <a class="enum" href="https://doc.rust-lang.org/1.98.1/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;&amp;<a class="struct" href="struct.Comparison.html" title="struct majordomus_cli::evidence::freshness::Comparison">Comparison</a>&gt;,
+    presented_tree: <a class="enum" href="enum.TreeState.html" title="enum majordomus_cli::evidence::freshness::TreeState">TreeState</a>,
+) -&gt; <a class="struct" href="struct.Judgement.html" title="struct majordomus_cli::evidence::freshness::Judgement">Judgement</a></code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The one truth table: what a recorded run proves at the presented revision.</p>
+<p>Pure: every fact it needs is an argument. <code>inputs</code> is what the route names — a claim’s
+source, implementation and test source, a rule’s test source and definition — or <code>None</code>
+for a route that declares none. <code>test_moved</code> is whether the test’s source no longer
+hashes to the recorded digest. <code>presented_tree</code> is <a href="enum.TreeState.html#variant.Clean" title="variant majordomus_cli::evidence::freshness::TreeState::Clean"><code>TreeState::Clean</code></a> for the working
+tree, whose changes are already in <code>comparison</code>, and the measured tree for a commit.</p>
+<p>Let <code>changed'</code> be the comparison’s paths without the ledger’s own. The first row that
+matches decides:</p>
+<div><table><thead><tr><th>#</th><th>condition</th><th>state</th></tr></thead><tbody>
+<tr><td>1–3</td><td>no test, unrunnable, nothing recorded</td><td><code>no_test</code>, <code>unrunnable</code>, <code>not_run</code></td></tr>
+<tr><td>4</td><td>the run was a skip</td><td><code>not_run</code></td></tr>
+<tr><td>5</td><td>it failed, timed out or errored</td><td><code>failing</code></td></tr>
+<tr><td>6</td><td>a pass git could not compare</td><td><code>stale</code></td></tr>
+<tr><td>7</td><td>a pass the presented revision does not contain</td><td><code>stale</code></td></tr>
+<tr><td>8</td><td>a pass whose test moved, no declared input changed</td><td><code>stale</code>, naming the test</td></tr>
+<tr><td>9</td><td>a pass, a declared input changed</td><td><code>stale</code>, naming those inputs</td></tr>
+<tr><td>10</td><td>a pass, <code>changed'</code> empty, both trees clean</td><td><code>proven</code></td></tr>
+<tr><td>11</td><td>as 10, the recorded tree not clean</td><td><code>inputs_unchanged</code></td></tr>
+<tr><td>12</td><td>as 10, the presented tree not clean</td><td><code>inputs_unchanged</code></td></tr>
+<tr><td>13</td><td>a pass, <code>changed'</code> not empty, no declared input among it</td><td><code>inputs_unchanged</code></td></tr>
+<tr><td>14</td><td>as 13, but the route declares no inputs</td><td><code>stale</code></td></tr>
+</tbody></table>
+</div>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::evidence::freshness::{freshness, Comparison, Recorded, TreeState};
+<span class="kw">use </span>majordomus_cli::evidence::{Execution, ProofState};
+<span class="kw">use </span>majordomus_cli::git::Containment;
+
+<span class="kw">let </span>e: Execution = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+    <span class="string">"test"</span>: <span class="string">"suite:07_scope"</span>, <span class="string">"runner"</span>: <span class="string">"suite"</span>, <span class="string">"source"</span>: <span class="string">"test/cases/07_scope.sh"</span>,
+    <span class="string">"outcome"</span>: <span class="string">"pass"</span>, <span class="string">"seconds"</span>: <span class="number">1</span>, <span class="string">"commit"</span>: <span class="string">"a"</span>.repeat(<span class="number">40</span>), <span class="string">"working_tree"</span>: <span class="string">"clean"</span>,
+    <span class="string">"digest"</span>: <span class="string">"sha256:0"</span>, <span class="string">"at"</span>: <span class="string">"2026-09-26T00:00:00Z"</span>, <span class="string">"origin"</span>: <span class="string">"local"</span>,
+    <span class="string">"command"</span>: <span class="string">"bash test/run.sh 07_scope"
+</span>}))
+.unwrap();
+<span class="kw">let </span>inputs = <span class="macro">vec!</span>[<span class="string">"docs/SCOPE.md"</span>.to_string()];
+<span class="kw">let </span>other_history = Comparison {
+    containment: Containment::DoesNotContain,
+    changed: <span class="prelude-val">Some</span>(Default::default()),
+};
+<span class="kw">let </span>j = freshness(
+    Recorded::Ran(<span class="kw-2">&amp;</span>e),
+    <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>inputs),
+    <span class="string">"test/cases/07_scope.sh"</span>,
+    <span class="bool-val">false</span>,
+    <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>other_history),
+    TreeState::Clean,
+);
+<span class="comment">// a run on a commit the presented revision does not contain proves some other history
+</span><span class="macro">assert_eq!</span>(j.state, ProofState::Stale);
+<span class="macro">assert!</span>(j.detail.unwrap().contains(<span class="string">"does not contain"</span>));</code></pre></div></div></details></section></div></main></body></html>

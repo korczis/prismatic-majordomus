@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/commands/worktree.rs`."><title>worktree.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/commands/</div>worktree.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `majordomus worktree`: the command line's rendering of the worktree service.
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/commands/worktree.rs`."><title>worktree.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/commands/</div>worktree.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `majordomus worktree`: the command line's rendering of the worktree service.
 <a href=#2 id=2 data-nosnippet>2</a>//!
 <a href=#3 id=3 data-nosnippet>3</a>//! Every subcommand calls [`crate::worktree::WorktreeService`] directly — the same service
 <a href=#4 id=4 data-nosnippet>4</a>//! the capability registry's `worktree.*` handlers call — and prints the same typed
@@ -85,7 +85,7 @@
 <a href=#85 id=85 data-nosnippet>85</a>        <span class="prelude-val">Some</span>(WorktreeCommand::Remove { selector, force }) =&gt; {
 <a href=#86 id=86 data-nosnippet>86</a>            remove(<span class="kw-2">&amp;</span>svc()<span class="question-mark">?</span>, <span class="kw-2">&amp;</span>selector, force, format, <span class="kw-2">&amp;mut </span>out)
 <a href=#87 id=87 data-nosnippet>87</a>        }
-<a href=#88 id=88 data-nosnippet>88</a>        <span class="prelude-val">Some</span>(WorktreeCommand::Cleanup) =&gt; cleanup(<span class="kw-2">&amp;</span>svc()<span class="question-mark">?</span>, format, <span class="kw-2">&amp;mut </span>out),
+<a href=#88 id=88 data-nosnippet>88</a>        <span class="prelude-val">Some</span>(WorktreeCommand::Cleanup { remove }) =&gt; cleanup(<span class="kw-2">&amp;</span>svc()<span class="question-mark">?</span>, format, remove, <span class="kw-2">&amp;mut </span>out),
 <a href=#89 id=89 data-nosnippet>89</a>        <span class="prelude-val">Some</span>(WorktreeCommand::Branches { without_worktree }) =&gt; {
 <a href=#90 id=90 data-nosnippet>90</a>            branches(<span class="kw-2">&amp;</span>svc()<span class="question-mark">?</span>, without_worktree, <span class="kw-2">&amp;mut </span>out)
 <a href=#91 id=91 data-nosnippet>91</a>        }
@@ -523,348 +523,603 @@
 <a href=#523 id=523 data-nosnippet>523</a>    <span class="prelude-val">Ok</span>(<span class="kw">if </span>v.ok { <span class="number">0 </span>} <span class="kw">else </span>{ EXIT_REFUSED })
 <a href=#524 id=524 data-nosnippet>524</a>}
 <a href=#525 id=525 data-nosnippet>525</a>
-<a href=#526 id=526 data-nosnippet>526</a><span class="kw">fn </span>cleanup(svc: <span class="kw-2">&amp;</span>WorktreeService, format: OutputFormat, out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#527 id=527 data-nosnippet>527</a>    <span class="kw">let </span>t = svc.topology(Detail::Full).map_err(refuse)<span class="question-mark">?</span>;
-<a href=#528 id=528 data-nosnippet>528</a>    <span class="kw">let </span>eligible: Vec&lt;<span class="kw-2">&amp;</span>BranchState&gt; = t.branches.iter().filter(|b| b.cleanup_eligible).collect();
-<a href=#529 id=529 data-nosnippet>529</a>    <span class="kw">match </span>format {
-<a href=#530 id=530 data-nosnippet>530</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>eligible)<span class="question-mark">?</span>,
-<a href=#531 id=531 data-nosnippet>531</a>        OutputFormat::Text =&gt; {
-<a href=#532 id=532 data-nosnippet>532</a>            <span class="kw">if </span>eligible.is_empty() {
-<a href=#533 id=533 data-nosnippet>533</a>                w(out, <span class="string">"nothing is cleanup-eligible: no branch is both merged into the trunk and clean or unchecked-out"</span>)<span class="question-mark">?</span>;
-<a href=#534 id=534 data-nosnippet>534</a>            } <span class="kw">else </span>{
-<a href=#535 id=535 data-nosnippet>535</a>                w(out, <span class="string">"merged into the trunk, and clean or not checked out — nothing is deleted here:"</span>)<span class="question-mark">?</span>;
-<a href=#536 id=536 data-nosnippet>536</a>                <span class="kw">for </span>b <span class="kw">in </span><span class="kw-2">&amp;</span>eligible {
-<a href=#537 id=537 data-nosnippet>537</a>                    w(
-<a href=#538 id=538 data-nosnippet>538</a>                        out,
-<a href=#539 id=539 data-nosnippet>539</a>                        <span class="macro">format!</span>(
-<a href=#540 id=540 data-nosnippet>540</a>                            <span class="string">"  {:&lt;44} {}"</span>,
-<a href=#541 id=541 data-nosnippet>541</a>                            b.name,
-<a href=#542 id=542 data-nosnippet>542</a>                            <span class="kw">match </span><span class="kw-2">&amp;</span>b.worktree {
-<a href=#543 id=543 data-nosnippet>543</a>                                <span class="prelude-val">Some</span>(p) =&gt; <span class="macro">format!</span>(
-<a href=#544 id=544 data-nosnippet>544</a>                                    <span class="string">"majordomus worktree remove {}; then git branch -d {}   ({p})"</span>,
-<a href=#545 id=545 data-nosnippet>545</a>                                    b.name, b.name
-<a href=#546 id=546 data-nosnippet>546</a>                                ),
-<a href=#547 id=547 data-nosnippet>547</a>                                <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"git branch -d {}"</span>, b.name),
-<a href=#548 id=548 data-nosnippet>548</a>                            }
-<a href=#549 id=549 data-nosnippet>549</a>                        ),
-<a href=#550 id=550 data-nosnippet>550</a>                    )<span class="question-mark">?</span>;
-<a href=#551 id=551 data-nosnippet>551</a>                }
-<a href=#552 id=552 data-nosnippet>552</a>            }
-<a href=#553 id=553 data-nosnippet>553</a>        }
-<a href=#554 id=554 data-nosnippet>554</a>    }
-<a href=#555 id=555 data-nosnippet>555</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
-<a href=#556 id=556 data-nosnippet>556</a>}
-<a href=#557 id=557 data-nosnippet>557</a>
-<a href=#558 id=558 data-nosnippet>558</a><span class="kw">fn </span>branches(svc: <span class="kw-2">&amp;</span>WorktreeService, without_worktree: bool, out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#559 id=559 data-nosnippet>559</a>    <span class="kw">let </span>t = svc.topology(Detail::Fast).map_err(refuse)<span class="question-mark">?</span>;
-<a href=#560 id=560 data-nosnippet>560</a>    <span class="kw">for </span>b <span class="kw">in </span>t
-<a href=#561 id=561 data-nosnippet>561</a>        .branches
-<a href=#562 id=562 data-nosnippet>562</a>        .iter()
-<a href=#563 id=563 data-nosnippet>563</a>        .filter(|b| !without_worktree || b.worktree.is_none())
-<a href=#564 id=564 data-nosnippet>564</a>    {
-<a href=#565 id=565 data-nosnippet>565</a>        w(out, <span class="kw-2">&amp;</span>b.name)<span class="question-mark">?</span>;
-<a href=#566 id=566 data-nosnippet>566</a>    }
-<a href=#567 id=567 data-nosnippet>567</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
-<a href=#568 id=568 data-nosnippet>568</a>}
-<a href=#569 id=569 data-nosnippet>569</a>
-<a href=#570 id=570 data-nosnippet>570</a><span class="comment">// ---------------------------------------------------------------- mutating
-<a href=#571 id=571 data-nosnippet>571</a>
-<a href=#572 id=572 data-nosnippet>572</a></span><span class="kw">fn </span>create(
-<a href=#573 id=573 data-nosnippet>573</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
-<a href=#574 id=574 data-nosnippet>574</a>    branch: <span class="kw-2">&amp;</span>str,
-<a href=#575 id=575 data-nosnippet>575</a>    base: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#576 id=576 data-nosnippet>576</a>    ensure: bool,
-<a href=#577 id=577 data-nosnippet>577</a>    format: OutputFormat,
-<a href=#578 id=578 data-nosnippet>578</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#579 id=579 data-nosnippet>579</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#580 id=580 data-nosnippet>580</a>    <span class="kw">let </span>request = CreateRequest {
-<a href=#581 id=581 data-nosnippet>581</a>        branch: branch.to_string(),
-<a href=#582 id=582 data-nosnippet>582</a>        base,
-<a href=#583 id=583 data-nosnippet>583</a>    };
-<a href=#584 id=584 data-nosnippet>584</a>    <span class="kw">let </span>report = <span class="kw">if </span>ensure {
-<a href=#585 id=585 data-nosnippet>585</a>        svc.ensure(<span class="kw-2">&amp;</span>request)
-<a href=#586 id=586 data-nosnippet>586</a>    } <span class="kw">else </span>{
-<a href=#587 id=587 data-nosnippet>587</a>        svc.create(<span class="kw-2">&amp;</span>request)
-<a href=#588 id=588 data-nosnippet>588</a>    }
-<a href=#589 id=589 data-nosnippet>589</a>    .map_err(refuse)<span class="question-mark">?</span>;
-<a href=#590 id=590 data-nosnippet>590</a>    <span class="kw">match </span>format {
-<a href=#591 id=591 data-nosnippet>591</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>report)<span class="question-mark">?</span>,
-<a href=#592 id=592 data-nosnippet>592</a>        OutputFormat::Text =&gt; {
-<a href=#593 id=593 data-nosnippet>593</a>            <span class="kw">if </span>report.container_created {
-<a href=#594 id=594 data-nosnippet>594</a>                w(out, <span class="macro">format!</span>(<span class="string">"created the container {}"</span>, report.container))<span class="question-mark">?</span>;
-<a href=#595 id=595 data-nosnippet>595</a>            }
-<a href=#596 id=596 data-nosnippet>596</a>            <span class="kw">if </span>report.existed {
-<a href=#597 id=597 data-nosnippet>597</a>                w(out, <span class="macro">format!</span>(<span class="string">"exists  {}"</span>, report.path))<span class="question-mark">?</span>;
-<a href=#598 id=598 data-nosnippet>598</a>            } <span class="kw">else </span>{
-<a href=#599 id=599 data-nosnippet>599</a>                w(out, <span class="macro">format!</span>(<span class="string">"created {}"</span>, report.path))<span class="question-mark">?</span>;
-<a href=#600 id=600 data-nosnippet>600</a>            }
-<a href=#601 id=601 data-nosnippet>601</a>            <span class="kw">match </span>(<span class="kw-2">&amp;</span>report.base, report.branch_created) {
-<a href=#602 id=602 data-nosnippet>602</a>                (<span class="prelude-val">Some</span>(b), <span class="bool-val">true</span>) =&gt; w(out, <span class="macro">format!</span>(<span class="string">"branch  {} (new, from {b})"</span>, report.branch))<span class="question-mark">?</span>,
-<a href=#603 id=603 data-nosnippet>603</a>                <span class="kw">_ </span>=&gt; w(out, <span class="macro">format!</span>(<span class="string">"branch  {}"</span>, report.branch))<span class="question-mark">?</span>,
-<a href=#604 id=604 data-nosnippet>604</a>            }
-<a href=#605 id=605 data-nosnippet>605</a>            w(out, report.envrc.describe())<span class="question-mark">?</span>;
-<a href=#606 id=606 data-nosnippet>606</a>            w(out, report.envrc_local.describe())<span class="question-mark">?</span>;
-<a href=#607 id=607 data-nosnippet>607</a>            w(
-<a href=#608 id=608 data-nosnippet>608</a>                out,
-<a href=#609 id=609 data-nosnippet>609</a>                <span class="macro">format!</span>(<span class="string">"cd \"$(majordomus worktree path {})\""</span>, report.branch),
-<a href=#610 id=610 data-nosnippet>610</a>            )<span class="question-mark">?</span>;
-<a href=#611 id=611 data-nosnippet>611</a>        }
-<a href=#612 id=612 data-nosnippet>612</a>    }
-<a href=#613 id=613 data-nosnippet>613</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
-<a href=#614 id=614 data-nosnippet>614</a>}
-<a href=#615 id=615 data-nosnippet>615</a>
-<a href=#616 id=616 data-nosnippet>616</a><span class="doccomment">/// The branch an issue's work happens on: `feature/&lt;id&gt;-&lt;slug&gt;`, from the issue record
-<a href=#617 id=617 data-nosnippet>617</a>/// this repository keeps. The id is the provable link the topology reads back.
-<a href=#618 id=618 data-nosnippet>618</a></span><span class="kw">fn </span>issue_branch(repo: <span class="kw-2">&amp;</span><span class="kw">crate</span>::cli::RepoArgs, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
-<a href=#619 id=619 data-nosnippet>619</a>    <span class="kw">let </span>app = <span class="kw">crate</span>::app::App::load(repo)<span class="question-mark">?</span>;
-<a href=#620 id=620 data-nosnippet>620</a>    <span class="kw">let </span>object = app
-<a href=#621 id=621 data-nosnippet>621</a>        .index()
-<a href=#622 id=622 data-nosnippet>622</a>        .objects
-<a href=#623 id=623 data-nosnippet>623</a>        .iter()
-<a href=#624 id=624 data-nosnippet>624</a>        .find(|o| o.kind == <span class="string">"issue" </span>&amp;&amp; o.identity == id)
-<a href=#625 id=625 data-nosnippet>625</a>        .ok_or_else(|| Error::Refused {
-<a href=#626 id=626 data-nosnippet>626</a>            code: <span class="kw">crate</span>::worktree::EXIT_MISSING,
-<a href=#627 id=627 data-nosnippet>627</a>            reason: <span class="macro">format!</span>(
-<a href=#628 id=628 data-nosnippet>628</a>                <span class="string">"no issue '{id}' in this repository's project model; nothing was created and no issue number was invented"
-<a href=#629 id=629 data-nosnippet>629</a>            </span>),
-<a href=#630 id=630 data-nosnippet>630</a>        })<span class="question-mark">?</span>;
-<a href=#631 id=631 data-nosnippet>631</a>    <span class="kw">let </span>slug = object
-<a href=#632 id=632 data-nosnippet>632</a>        .metadata
-<a href=#633 id=633 data-nosnippet>633</a>        .get(<span class="string">"slug"</span>)
-<a href=#634 id=634 data-nosnippet>634</a>        .and_then(Value::as_str)
-<a href=#635 id=635 data-nosnippet>635</a>        .map(str::to_string)
-<a href=#636 id=636 data-nosnippet>636</a>        .unwrap_or_else(|| id.to_lowercase());
-<a href=#637 id=637 data-nosnippet>637</a>    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">"feature/{id}-{slug}"</span>))
-<a href=#638 id=638 data-nosnippet>638</a>}
-<a href=#639 id=639 data-nosnippet>639</a>
-<a href=#640 id=640 data-nosnippet>640</a><span class="kw">fn </span>migrate_cmd(
-<a href=#641 id=641 data-nosnippet>641</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
-<a href=#642 id=642 data-nosnippet>642</a>    apply: bool,
-<a href=#643 id=643 data-nosnippet>643</a>    options: MigrationOptions,
-<a href=#644 id=644 data-nosnippet>644</a>    format: OutputFormat,
-<a href=#645 id=645 data-nosnippet>645</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#646 id=646 data-nosnippet>646</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#647 id=647 data-nosnippet>647</a>    <span class="kw">let </span>plan = <span class="kw">if </span>apply {
-<a href=#648 id=648 data-nosnippet>648</a>        migrate::apply(svc, <span class="kw-2">&amp;</span>options).map_err(refuse)<span class="question-mark">?
-<a href=#649 id=649 data-nosnippet>649</a>    </span>} <span class="kw">else </span>{
-<a href=#650 id=650 data-nosnippet>650</a>        migrate::plan_with(svc, options.include_ephemeral).map_err(refuse)<span class="question-mark">?
-<a href=#651 id=651 data-nosnippet>651</a>    </span>};
-<a href=#652 id=652 data-nosnippet>652</a>    <span class="kw">match </span>format {
-<a href=#653 id=653 data-nosnippet>653</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>plan)<span class="question-mark">?</span>,
-<a href=#654 id=654 data-nosnippet>654</a>        OutputFormat::Text =&gt; render_plan(<span class="kw-2">&amp;</span>plan, out)<span class="question-mark">?</span>,
-<a href=#655 id=655 data-nosnippet>655</a>    }
-<a href=#656 id=656 data-nosnippet>656</a>    <span class="comment">// A plan never fails for having found something to do. An apply that left a step
-<a href=#657 id=657 data-nosnippet>657</a>    // blocked or failed says so through its exit code.
-<a href=#658 id=658 data-nosnippet>658</a>    </span><span class="prelude-val">Ok</span>(<span class="kw">if </span>apply &amp;&amp; (plan.blocked &gt; <span class="number">0 </span>|| plan.failed &gt; <span class="number">0</span>) {
-<a href=#659 id=659 data-nosnippet>659</a>        EXIT_REFUSED
-<a href=#660 id=660 data-nosnippet>660</a>    } <span class="kw">else </span>{
-<a href=#661 id=661 data-nosnippet>661</a>        <span class="number">0
-<a href=#662 id=662 data-nosnippet>662</a>    </span>})
-<a href=#663 id=663 data-nosnippet>663</a>}
-<a href=#664 id=664 data-nosnippet>664</a>
-<a href=#665 id=665 data-nosnippet>665</a><span class="kw">fn </span>render_plan(plan: <span class="kw-2">&amp;</span>MigrationPlan, out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-<a href=#666 id=666 data-nosnippet>666</a>    <span class="kw">let </span>verb = <span class="kw">if </span>plan.applied {
-<a href=#667 id=667 data-nosnippet>667</a>        <span class="string">"migrated"
-<a href=#668 id=668 data-nosnippet>668</a>    </span>} <span class="kw">else </span>{
-<a href=#669 id=669 data-nosnippet>669</a>        <span class="string">"to migrate"
-<a href=#670 id=670 data-nosnippet>670</a>    </span>};
-<a href=#671 id=671 data-nosnippet>671</a>    <span class="kw">if </span>plan.steps.is_empty() {
-<a href=#672 id=672 data-nosnippet>672</a>        w(
-<a href=#673 id=673 data-nosnippet>673</a>            out,
-<a href=#674 id=674 data-nosnippet>674</a>            <span class="macro">format!</span>(
-<a href=#675 id=675 data-nosnippet>675</a>                <span class="string">"nothing {verb}: every worktree with a branch is at its canonical path under {}"</span>,
-<a href=#676 id=676 data-nosnippet>676</a>                plan.container
-<a href=#677 id=677 data-nosnippet>677</a>            ),
-<a href=#678 id=678 data-nosnippet>678</a>        )<span class="question-mark">?</span>;
-<a href=#679 id=679 data-nosnippet>679</a>    }
-<a href=#680 id=680 data-nosnippet>680</a>    <span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>plan.steps {
-<a href=#681 id=681 data-nosnippet>681</a>        w(out, <span class="string">""</span>)<span class="question-mark">?</span>;
-<a href=#682 id=682 data-nosnippet>682</a>        w(out, step.branch.as_str())<span class="question-mark">?</span>;
-<a href=#683 id=683 data-nosnippet>683</a>        w(out, <span class="macro">format!</span>(<span class="string">"  from    {}"</span>, step.from))<span class="question-mark">?</span>;
-<a href=#684 id=684 data-nosnippet>684</a>        w(out, <span class="macro">format!</span>(<span class="string">"  to      {}"</span>, step.to))<span class="question-mark">?</span>;
-<a href=#685 id=685 data-nosnippet>685</a>        w(out, <span class="macro">format!</span>(<span class="string">"  head    {}"</span>, short(<span class="kw-2">&amp;</span>step.head)))<span class="question-mark">?</span>;
-<a href=#686 id=686 data-nosnippet>686</a>        w(out, <span class="macro">format!</span>(<span class="string">"  state   {}"</span>, step.dirty.summary()))<span class="question-mark">?</span>;
-<a href=#687 id=687 data-nosnippet>687</a>        <span class="kw">let </span>action = <span class="kw">match </span>step.action {
-<a href=#688 id=688 data-nosnippet>688</a>            MigrationAction::Move =&gt; <span class="string">"move"</span>,
-<a href=#689 id=689 data-nosnippet>689</a>            MigrationAction::MoveViaStaging =&gt; <span class="string">"move out of the container path, then into it"</span>,
-<a href=#690 id=690 data-nosnippet>690</a>            MigrationAction::CopyAndRepair =&gt; {
-<a href=#691 id=691 data-nosnippet>691</a>                <span class="string">"copy across filesystems, repair, verify, remove the original"
-<a href=#692 id=692 data-nosnippet>692</a>            </span>}
-<a href=#693 id=693 data-nosnippet>693</a>            MigrationAction::None =&gt; <span class="string">"none"</span>,
-<a href=#694 id=694 data-nosnippet>694</a>        };
-<a href=#695 id=695 data-nosnippet>695</a>        <span class="kw">match </span>step.outcome {
-<a href=#696 id=696 data-nosnippet>696</a>            StepOutcome::Planned =&gt; w(out, <span class="macro">format!</span>(<span class="string">"  action  {action}"</span>))<span class="question-mark">?</span>,
-<a href=#697 id=697 data-nosnippet>697</a>            StepOutcome::Moved =&gt; {
-<a href=#698 id=698 data-nosnippet>698</a>                w(
-<a href=#699 id=699 data-nosnippet>699</a>                    out,
-<a href=#700 id=700 data-nosnippet>700</a>                    <span class="macro">format!</span>(
-<a href=#701 id=701 data-nosnippet>701</a>                        <span class="string">"  outcome moved and verified ({action}){}"</span>,
-<a href=#702 id=702 data-nosnippet>702</a>                        step.message
-<a href=#703 id=703 data-nosnippet>703</a>                            .as_deref()
-<a href=#704 id=704 data-nosnippet>704</a>                            .map(|m| <span class="macro">format!</span>(<span class="string">": {m}"</span>))
-<a href=#705 id=705 data-nosnippet>705</a>                            .unwrap_or_default()
-<a href=#706 id=706 data-nosnippet>706</a>                    ),
-<a href=#707 id=707 data-nosnippet>707</a>                )<span class="question-mark">?</span>;
-<a href=#708 id=708 data-nosnippet>708</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(envrc) = <span class="kw-2">&amp;</span>step.envrc {
-<a href=#709 id=709 data-nosnippet>709</a>                    w(out, <span class="macro">format!</span>(<span class="string">"  {}"</span>, envrc.describe()))<span class="question-mark">?</span>;
-<a href=#710 id=710 data-nosnippet>710</a>                }
-<a href=#711 id=711 data-nosnippet>711</a>            }
-<a href=#712 id=712 data-nosnippet>712</a>            StepOutcome::Blocked =&gt; {
-<a href=#713 id=713 data-nosnippet>713</a>                w(out, <span class="string">"  outcome BLOCKED"</span>)<span class="question-mark">?</span>;
-<a href=#714 id=714 data-nosnippet>714</a>                <span class="kw">for </span>b <span class="kw">in </span><span class="kw-2">&amp;</span>step.blockers {
-<a href=#715 id=715 data-nosnippet>715</a>                    w(
-<a href=#716 id=716 data-nosnippet>716</a>                        out,
-<a href=#717 id=717 data-nosnippet>717</a>                        <span class="macro">format!</span>(<span class="string">"    {}"</span>, render_diagnostic(b).replace(<span class="string">'\n'</span>, <span class="string">"\n    "</span>)),
-<a href=#718 id=718 data-nosnippet>718</a>                    )<span class="question-mark">?</span>;
-<a href=#719 id=719 data-nosnippet>719</a>                }
-<a href=#720 id=720 data-nosnippet>720</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(m) = <span class="kw-2">&amp;</span>step.message {
-<a href=#721 id=721 data-nosnippet>721</a>                    w(out, <span class="macro">format!</span>(<span class="string">"    {m}"</span>))<span class="question-mark">?</span>;
-<a href=#722 id=722 data-nosnippet>722</a>                }
-<a href=#723 id=723 data-nosnippet>723</a>            }
-<a href=#724 id=724 data-nosnippet>724</a>            StepOutcome::Failed =&gt; {
-<a href=#725 id=725 data-nosnippet>725</a>                w(
-<a href=#726 id=726 data-nosnippet>726</a>                    out,
-<a href=#727 id=727 data-nosnippet>727</a>                    <span class="macro">format!</span>(
-<a href=#728 id=728 data-nosnippet>728</a>                        <span class="string">"  outcome FAILED: {}"</span>,
-<a href=#729 id=729 data-nosnippet>729</a>                        step.message.as_deref().unwrap_or(<span class="string">"-"</span>)
-<a href=#730 id=730 data-nosnippet>730</a>                    ),
-<a href=#731 id=731 data-nosnippet>731</a>                )<span class="question-mark">?</span>;
-<a href=#732 id=732 data-nosnippet>732</a>                <span class="kw">for </span>d <span class="kw">in </span><span class="kw-2">&amp;</span>step.differences {
-<a href=#733 id=733 data-nosnippet>733</a>                    w(out, <span class="macro">format!</span>(<span class="string">"    {d}"</span>))<span class="question-mark">?</span>;
-<a href=#734 id=734 data-nosnippet>734</a>                }
-<a href=#735 id=735 data-nosnippet>735</a>            }
-<a href=#736 id=736 data-nosnippet>736</a>        }
-<a href=#737 id=737 data-nosnippet>737</a>    }
-<a href=#738 id=738 data-nosnippet>738</a>    <span class="kw">if </span>!plan.exceptions.is_empty() {
-<a href=#739 id=739 data-nosnippet>739</a>        w(out, <span class="string">""</span>)<span class="question-mark">?</span>;
-<a href=#740 id=740 data-nosnippet>740</a>        w(out, <span class="string">"not migrated by design"</span>)<span class="question-mark">?</span>;
-<a href=#741 id=741 data-nosnippet>741</a>        <span class="kw">for </span>d <span class="kw">in </span><span class="kw-2">&amp;</span>plan.exceptions {
-<a href=#742 id=742 data-nosnippet>742</a>            w(
-<a href=#743 id=743 data-nosnippet>743</a>                out,
-<a href=#744 id=744 data-nosnippet>744</a>                <span class="macro">format!</span>(<span class="string">"  {}"</span>, render_diagnostic(d).replace(<span class="string">'\n'</span>, <span class="string">"\n  "</span>)),
-<a href=#745 id=745 data-nosnippet>745</a>            )<span class="question-mark">?</span>;
-<a href=#746 id=746 data-nosnippet>746</a>        }
-<a href=#747 id=747 data-nosnippet>747</a>    }
-<a href=#748 id=748 data-nosnippet>748</a>    w(out, <span class="string">""</span>)<span class="question-mark">?</span>;
-<a href=#749 id=749 data-nosnippet>749</a>    <span class="kw">if </span>plan.applied {
-<a href=#750 id=750 data-nosnippet>750</a>        w(
-<a href=#751 id=751 data-nosnippet>751</a>            out,
-<a href=#752 id=752 data-nosnippet>752</a>            <span class="macro">format!</span>(
-<a href=#753 id=753 data-nosnippet>753</a>                <span class="string">"{} step(s): {} moved and verified, {} blocked, {} failed"</span>,
-<a href=#754 id=754 data-nosnippet>754</a>                plan.steps.len(),
-<a href=#755 id=755 data-nosnippet>755</a>                plan.moved,
-<a href=#756 id=756 data-nosnippet>756</a>                plan.blocked,
-<a href=#757 id=757 data-nosnippet>757</a>                plan.failed
-<a href=#758 id=758 data-nosnippet>758</a>            ),
-<a href=#759 id=759 data-nosnippet>759</a>        )<span class="question-mark">?</span>;
-<a href=#760 id=760 data-nosnippet>760</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = <span class="kw-2">&amp;</span>plan.moved_current {
-<a href=#761 id=761 data-nosnippet>761</a>            w(out, <span class="macro">format!</span>(<span class="string">"the worktree you were in moved: cd \"{p}\""</span>))<span class="question-mark">?</span>;
-<a href=#762 id=762 data-nosnippet>762</a>        }
-<a href=#763 id=763 data-nosnippet>763</a>    } <span class="kw">else </span>{
-<a href=#764 id=764 data-nosnippet>764</a>        w(
-<a href=#765 id=765 data-nosnippet>765</a>            out,
-<a href=#766 id=766 data-nosnippet>766</a>            <span class="macro">format!</span>(
-<a href=#767 id=767 data-nosnippet>767</a>                <span class="string">"{} step(s): {} movable, {} blocked; nothing was changed. `majordomus worktree migrate` applies the movable ones"</span>,
-<a href=#768 id=768 data-nosnippet>768</a>                plan.steps.len(),
-<a href=#769 id=769 data-nosnippet>769</a>                plan.movable,
-<a href=#770 id=770 data-nosnippet>770</a>                plan.blocked
-<a href=#771 id=771 data-nosnippet>771</a>            ),
-<a href=#772 id=772 data-nosnippet>772</a>        )<span class="question-mark">?</span>;
-<a href=#773 id=773 data-nosnippet>773</a>    }
-<a href=#774 id=774 data-nosnippet>774</a>    <span class="prelude-val">Ok</span>(())
-<a href=#775 id=775 data-nosnippet>775</a>}
-<a href=#776 id=776 data-nosnippet>776</a>
-<a href=#777 id=777 data-nosnippet>777</a><span class="kw">fn </span>repair(
-<a href=#778 id=778 data-nosnippet>778</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
-<a href=#779 id=779 data-nosnippet>779</a>    dry_run: bool,
-<a href=#780 id=780 data-nosnippet>780</a>    format: OutputFormat,
-<a href=#781 id=781 data-nosnippet>781</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#782 id=782 data-nosnippet>782</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#783 id=783 data-nosnippet>783</a>    <span class="kw">let </span>report = svc.repair(dry_run).map_err(refuse)<span class="question-mark">?</span>;
-<a href=#784 id=784 data-nosnippet>784</a>    <span class="kw">match </span>format {
-<a href=#785 id=785 data-nosnippet>785</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>report)<span class="question-mark">?</span>,
-<a href=#786 id=786 data-nosnippet>786</a>        OutputFormat::Text =&gt; {
-<a href=#787 id=787 data-nosnippet>787</a>            <span class="kw">if </span>report.pruned.is_empty() {
-<a href=#788 id=788 data-nosnippet>788</a>                w(
-<a href=#789 id=789 data-nosnippet>789</a>                    out,
-<a href=#790 id=790 data-nosnippet>790</a>                    <span class="string">"nothing to prune: every registered worktree still exists"</span>,
-<a href=#791 id=791 data-nosnippet>791</a>                )<span class="question-mark">?</span>;
-<a href=#792 id=792 data-nosnippet>792</a>            } <span class="kw">else </span>{
-<a href=#793 id=793 data-nosnippet>793</a>                <span class="kw">for </span>line <span class="kw">in </span><span class="kw-2">&amp;</span>report.pruned {
-<a href=#794 id=794 data-nosnippet>794</a>                    w(out, line)<span class="question-mark">?</span>;
-<a href=#795 id=795 data-nosnippet>795</a>                }
-<a href=#796 id=796 data-nosnippet>796</a>                w(
-<a href=#797 id=797 data-nosnippet>797</a>                    out,
-<a href=#798 id=798 data-nosnippet>798</a>                    <span class="macro">format!</span>(
-<a href=#799 id=799 data-nosnippet>799</a>                        <span class="string">"{} registration(s) {}"</span>,
-<a href=#800 id=800 data-nosnippet>800</a>                        report.pruned.len(),
-<a href=#801 id=801 data-nosnippet>801</a>                        <span class="kw">if </span>report.applied {
-<a href=#802 id=802 data-nosnippet>802</a>                            <span class="string">"dropped"
-<a href=#803 id=803 data-nosnippet>803</a>                        </span>} <span class="kw">else </span>{
-<a href=#804 id=804 data-nosnippet>804</a>                            <span class="string">"would be dropped; nothing was changed"
-<a href=#805 id=805 data-nosnippet>805</a>                        </span>}
-<a href=#806 id=806 data-nosnippet>806</a>                    ),
-<a href=#807 id=807 data-nosnippet>807</a>                )<span class="question-mark">?</span>;
-<a href=#808 id=808 data-nosnippet>808</a>            }
-<a href=#809 id=809 data-nosnippet>809</a>            <span class="kw">for </span>line <span class="kw">in </span><span class="kw-2">&amp;</span>report.repaired {
-<a href=#810 id=810 data-nosnippet>810</a>                w(out, line)<span class="question-mark">?</span>;
-<a href=#811 id=811 data-nosnippet>811</a>            }
-<a href=#812 id=812 data-nosnippet>812</a>            <span class="kw">if </span>report.applied {
-<a href=#813 id=813 data-nosnippet>813</a>                w(
-<a href=#814 id=814 data-nosnippet>814</a>                    out,
-<a href=#815 id=815 data-nosnippet>815</a>                    <span class="string">"administrative links repaired where git found them stale"</span>,
-<a href=#816 id=816 data-nosnippet>816</a>                )<span class="question-mark">?</span>;
-<a href=#817 id=817 data-nosnippet>817</a>            }
-<a href=#818 id=818 data-nosnippet>818</a>        }
-<a href=#819 id=819 data-nosnippet>819</a>    }
-<a href=#820 id=820 data-nosnippet>820</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
-<a href=#821 id=821 data-nosnippet>821</a>}
-<a href=#822 id=822 data-nosnippet>822</a>
-<a href=#823 id=823 data-nosnippet>823</a><span class="kw">fn </span>remove(
-<a href=#824 id=824 data-nosnippet>824</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
-<a href=#825 id=825 data-nosnippet>825</a>    selector: <span class="kw-2">&amp;</span>str,
-<a href=#826 id=826 data-nosnippet>826</a>    force: bool,
-<a href=#827 id=827 data-nosnippet>827</a>    format: OutputFormat,
-<a href=#828 id=828 data-nosnippet>828</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#829 id=829 data-nosnippet>829</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
-<a href=#830 id=830 data-nosnippet>830</a>    <span class="comment">// Say what is about to go, and what it holds, before it goes: a removal that prints its
-<a href=#831 id=831 data-nosnippet>831</a>    // subject only afterwards has taught its lesson too late. The service refuses dirty
-<a href=#832 id=832 data-nosnippet>832</a>    // work without `force` regardless; this line is for the person who typed `--force`.
-<a href=#833 id=833 data-nosnippet>833</a>    </span><span class="kw">if </span>format == OutputFormat::Text {
-<a href=#834 id=834 data-nosnippet>834</a>        <span class="kw">let </span>record = svc.resolve(selector).map_err(refuse)<span class="question-mark">?</span>;
-<a href=#835 id=835 data-nosnippet>835</a>        <span class="kw">let </span>held = record
-<a href=#836 id=836 data-nosnippet>836</a>            .branch
-<a href=#837 id=837 data-nosnippet>837</a>            .clone()
-<a href=#838 id=838 data-nosnippet>838</a>            .unwrap_or_else(|| <span class="string">"a detached HEAD"</span>.into());
-<a href=#839 id=839 data-nosnippet>839</a>        <span class="kw">let </span>dirty = <span class="kw">if </span>record.path.is_dir() {
-<a href=#840 id=840 data-nosnippet>840</a>            <span class="kw">crate</span>::worktree::state::dirty_state(<span class="kw-2">&amp;</span>record.path)
-<a href=#841 id=841 data-nosnippet>841</a>                .map(|d| d.summary())
-<a href=#842 id=842 data-nosnippet>842</a>                .unwrap_or_else(|<span class="kw">_</span>| <span class="string">"unknown"</span>.into())
-<a href=#843 id=843 data-nosnippet>843</a>        } <span class="kw">else </span>{
-<a href=#844 id=844 data-nosnippet>844</a>            <span class="string">"directory missing"</span>.into()
-<a href=#845 id=845 data-nosnippet>845</a>        };
-<a href=#846 id=846 data-nosnippet>846</a>        w(
-<a href=#847 id=847 data-nosnippet>847</a>            out,
-<a href=#848 id=848 data-nosnippet>848</a>            <span class="macro">format!</span>(
-<a href=#849 id=849 data-nosnippet>849</a>                <span class="string">"removing {} (holding {held}; {dirty}){}"</span>,
-<a href=#850 id=850 data-nosnippet>850</a>                record.path.display(),
-<a href=#851 id=851 data-nosnippet>851</a>                <span class="kw">if </span>force { <span class="string">"; forced" </span>} <span class="kw">else </span>{ <span class="string">"" </span>}
-<a href=#852 id=852 data-nosnippet>852</a>            ),
-<a href=#853 id=853 data-nosnippet>853</a>        )<span class="question-mark">?</span>;
-<a href=#854 id=854 data-nosnippet>854</a>    }
-<a href=#855 id=855 data-nosnippet>855</a>    <span class="kw">let </span>report = svc.remove(selector, force).map_err(refuse)<span class="question-mark">?</span>;
-<a href=#856 id=856 data-nosnippet>856</a>    <span class="kw">match </span>format {
-<a href=#857 id=857 data-nosnippet>857</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>report)<span class="question-mark">?</span>,
-<a href=#858 id=858 data-nosnippet>858</a>        OutputFormat::Text =&gt; {
-<a href=#859 id=859 data-nosnippet>859</a>            w(out, <span class="macro">format!</span>(<span class="string">"removed {}"</span>, report.path))<span class="question-mark">?</span>;
-<a href=#860 id=860 data-nosnippet>860</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(b) = <span class="kw-2">&amp;</span>report.branch {
-<a href=#861 id=861 data-nosnippet>861</a>                w(
-<a href=#862 id=862 data-nosnippet>862</a>                    out,
-<a href=#863 id=863 data-nosnippet>863</a>                    <span class="macro">format!</span>(<span class="string">"branch  {b} still exists (git branch -d {b} removes it)"</span>),
+<a href=#526 id=526 data-nosnippet>526</a><span class="kw">fn </span>cleanup(
+<a href=#527 id=527 data-nosnippet>527</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
+<a href=#528 id=528 data-nosnippet>528</a>    format: OutputFormat,
+<a href=#529 id=529 data-nosnippet>529</a>    remove: bool,
+<a href=#530 id=530 data-nosnippet>530</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#531 id=531 data-nosnippet>531</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#532 id=532 data-nosnippet>532</a>    <span class="kw">let </span>t = svc.topology(Detail::Full).map_err(refuse)<span class="question-mark">?</span>;
+<a href=#533 id=533 data-nosnippet>533</a>    <span class="kw">let </span>eligible: Vec&lt;<span class="kw-2">&amp;</span>BranchState&gt; = t.branches.iter().filter(|b| b.cleanup_eligible).collect();
+<a href=#534 id=534 data-nosnippet>534</a>
+<a href=#535 id=535 data-nosnippet>535</a>    <span class="kw">if </span>remove {
+<a href=#536 id=536 data-nosnippet>536</a>        <span class="kw">return </span>reclaim(svc, <span class="kw-2">&amp;</span>eligible, format, out);
+<a href=#537 id=537 data-nosnippet>537</a>    }
+<a href=#538 id=538 data-nosnippet>538</a>    <span class="kw">match </span>format {
+<a href=#539 id=539 data-nosnippet>539</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>eligible)<span class="question-mark">?</span>,
+<a href=#540 id=540 data-nosnippet>540</a>        OutputFormat::Text =&gt; {
+<a href=#541 id=541 data-nosnippet>541</a>            <span class="kw">if </span>eligible.is_empty() {
+<a href=#542 id=542 data-nosnippet>542</a>                w(out, <span class="string">"nothing is cleanup-eligible: no branch is both merged into the trunk and clean or unchecked-out"</span>)<span class="question-mark">?</span>;
+<a href=#543 id=543 data-nosnippet>543</a>            } <span class="kw">else </span>{
+<a href=#544 id=544 data-nosnippet>544</a>                w(out, <span class="string">"merged into the trunk, and clean or not checked out — nothing is deleted here:"</span>)<span class="question-mark">?</span>;
+<a href=#545 id=545 data-nosnippet>545</a>                <span class="kw">for </span>b <span class="kw">in </span><span class="kw-2">&amp;</span>eligible {
+<a href=#546 id=546 data-nosnippet>546</a>                    w(
+<a href=#547 id=547 data-nosnippet>547</a>                        out,
+<a href=#548 id=548 data-nosnippet>548</a>                        <span class="macro">format!</span>(
+<a href=#549 id=549 data-nosnippet>549</a>                            <span class="string">"  {:&lt;44} {}"</span>,
+<a href=#550 id=550 data-nosnippet>550</a>                            b.name,
+<a href=#551 id=551 data-nosnippet>551</a>                            <span class="kw">match </span><span class="kw-2">&amp;</span>b.worktree {
+<a href=#552 id=552 data-nosnippet>552</a>                                <span class="prelude-val">Some</span>(p) =&gt; <span class="macro">format!</span>(
+<a href=#553 id=553 data-nosnippet>553</a>                                    <span class="string">"majordomus worktree remove {}; then git branch -d {}   ({p})"</span>,
+<a href=#554 id=554 data-nosnippet>554</a>                                    b.name, b.name
+<a href=#555 id=555 data-nosnippet>555</a>                                ),
+<a href=#556 id=556 data-nosnippet>556</a>                                <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"git branch -d {}"</span>, b.name),
+<a href=#557 id=557 data-nosnippet>557</a>                            }
+<a href=#558 id=558 data-nosnippet>558</a>                        ),
+<a href=#559 id=559 data-nosnippet>559</a>                    )<span class="question-mark">?</span>;
+<a href=#560 id=560 data-nosnippet>560</a>                }
+<a href=#561 id=561 data-nosnippet>561</a>            }
+<a href=#562 id=562 data-nosnippet>562</a>        }
+<a href=#563 id=563 data-nosnippet>563</a>    }
+<a href=#564 id=564 data-nosnippet>564</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
+<a href=#565 id=565 data-nosnippet>565</a>}
+<a href=#566 id=566 data-nosnippet>566</a>
+<a href=#567 id=567 data-nosnippet>567</a><span class="doccomment">/// Is anything working inside this directory right now?
+<a href=#568 id=568 data-nosnippet>568</a>///
+<a href=#569 id=569 data-nosnippet>569</a>/// `lsof -a -d cwd` asks the kernel which processes have their working directory there, which
+<a href=#570 id=570 data-nosnippet>570</a>/// is the only reading that is true at the moment it is taken. The mtime of a worktree is not:
+<a href=#571 id=571 data-nosnippet>571</a>/// two of the four swept on 2026-09-15 looked untouched since the 12th and had live processes
+<a href=#572 id=572 data-nosnippet>572</a>/// inside them. A missing `lsof` is not "nothing is running" — it is not knowing, and the
+<a href=#573 id=573 data-nosnippet>573</a>/// caller refuses on `None` rather than removing.
+<a href=#574 id=574 data-nosnippet>574</a></span><span class="kw">fn </span>occupied(path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;bool&gt; {
+<a href=#575 id=575 data-nosnippet>575</a>    <span class="kw">let </span>real = std::fs::canonicalize(path).ok()<span class="question-mark">?</span>;
+<a href=#576 id=576 data-nosnippet>576</a>    <span class="kw">let </span>real = real.to_string_lossy().to_string();
+<a href=#577 id=577 data-nosnippet>577</a>    <span class="kw">let </span>out = std::process::Command::new(<span class="string">"lsof"</span>)
+<a href=#578 id=578 data-nosnippet>578</a>        .args([<span class="string">"-a"</span>, <span class="string">"-d"</span>, <span class="string">"cwd"</span>, <span class="string">"-Fn"</span>])
+<a href=#579 id=579 data-nosnippet>579</a>        .output()
+<a href=#580 id=580 data-nosnippet>580</a>        .ok()<span class="question-mark">?</span>;
+<a href=#581 id=581 data-nosnippet>581</a>    <span class="kw">let </span>text = String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout);
+<a href=#582 id=582 data-nosnippet>582</a>    <span class="prelude-val">Some</span>(text.lines().any(|l| {
+<a href=#583 id=583 data-nosnippet>583</a>        l.strip_prefix(<span class="string">'n'</span>)
+<a href=#584 id=584 data-nosnippet>584</a>            .is_some_and(|p| p == real || p.starts_with(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{real}/"</span>)))
+<a href=#585 id=585 data-nosnippet>585</a>    }))
+<a href=#586 id=586 data-nosnippet>586</a>}
+<a href=#587 id=587 data-nosnippet>587</a>
+<a href=#588 id=588 data-nosnippet>588</a><span class="doccomment">/// Remove the worktrees the listing offers, each re-measured immediately before it goes.
+<a href=#589 id=589 data-nosnippet>589</a>///
+<a href=#590 id=590 data-nosnippet>590</a>/// The listing and the removal are two moments, and everything that makes a worktree safe to
+<a href=#591 id=591 data-nosnippet>591</a>/// remove can change between them. So the listing only nominates: the branch's standing against
+<a href=#592 id=592 data-nosnippet>592</a>/// its remote, whether anything is running inside and the working tree's cleanliness are all
+<a href=#593 id=593 data-nosnippet>593</a>/// read again by [`refusal`], one worktree at a time, and a candidate that fails any of them is
+<a href=#594 id=594 data-nosnippet>594</a>/// named and skipped rather than removed.
+<a href=#595 id=595 data-nosnippet>595</a>///
+<a href=#596 id=596 data-nosnippet>596</a>/// Branches are never deleted. `git branch -d` refuses an unmerged branch on its own, but a
+<a href=#597 id=597 data-nosnippet>597</a>/// branch is the only durable name a piece of work has, and the disk is what was scarce.
+<a href=#598 id=598 data-nosnippet>598</a></span><span class="kw">fn </span>reclaim(
+<a href=#599 id=599 data-nosnippet>599</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
+<a href=#600 id=600 data-nosnippet>600</a>    eligible: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>BranchState],
+<a href=#601 id=601 data-nosnippet>601</a>    format: OutputFormat,
+<a href=#602 id=602 data-nosnippet>602</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#603 id=603 data-nosnippet>603</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#604 id=604 data-nosnippet>604</a>    <span class="kw">let </span><span class="kw-2">mut </span>removed: Vec&lt;String&gt; = Vec::new();
+<a href=#605 id=605 data-nosnippet>605</a>    <span class="kw">let </span><span class="kw-2">mut </span>refused: Vec&lt;(String, String)&gt; = Vec::new();
+<a href=#606 id=606 data-nosnippet>606</a>
+<a href=#607 id=607 data-nosnippet>607</a>    <span class="kw">for </span>b <span class="kw">in </span>eligible {
+<a href=#608 id=608 data-nosnippet>608</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(path) = b.worktree.clone() <span class="kw">else </span>{
+<a href=#609 id=609 data-nosnippet>609</a>            <span class="kw">continue</span>; <span class="comment">// no worktree to reclaim; the branch alone costs nothing
+<a href=#610 id=610 data-nosnippet>610</a>        </span>};
+<a href=#611 id=611 data-nosnippet>611</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(why) = refusal(svc, <span class="kw-2">&amp;</span>b.name, <span class="kw-2">&amp;</span>path) {
+<a href=#612 id=612 data-nosnippet>612</a>            refused.push((b.name.clone(), why));
+<a href=#613 id=613 data-nosnippet>613</a>            <span class="kw">continue</span>;
+<a href=#614 id=614 data-nosnippet>614</a>        }
+<a href=#615 id=615 data-nosnippet>615</a>        <span class="kw">match </span>svc.remove(<span class="kw-2">&amp;</span>b.name, <span class="bool-val">false</span>) {
+<a href=#616 id=616 data-nosnippet>616</a>            <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; removed.push(b.name.clone()),
+<a href=#617 id=617 data-nosnippet>617</a>            <span class="prelude-val">Err</span>(e) =&gt; refused.push((b.name.clone(), <span class="macro">format!</span>(<span class="string">"{e}"</span>))),
+<a href=#618 id=618 data-nosnippet>618</a>        }
+<a href=#619 id=619 data-nosnippet>619</a>    }
+<a href=#620 id=620 data-nosnippet>620</a>
+<a href=#621 id=621 data-nosnippet>621</a>    <span class="kw">match </span>format {
+<a href=#622 id=622 data-nosnippet>622</a>        OutputFormat::Json =&gt; json(
+<a href=#623 id=623 data-nosnippet>623</a>            out,
+<a href=#624 id=624 data-nosnippet>624</a>            <span class="kw-2">&amp;</span><span class="macro">serde_json::json!</span>({
+<a href=#625 id=625 data-nosnippet>625</a>                <span class="string">"removed"</span>: removed,
+<a href=#626 id=626 data-nosnippet>626</a>                <span class="string">"refused"</span>: refused
+<a href=#627 id=627 data-nosnippet>627</a>                    .iter()
+<a href=#628 id=628 data-nosnippet>628</a>                    .map(|(n, r)| <span class="macro">serde_json::json!</span>({ <span class="string">"branch"</span>: n, <span class="string">"reason"</span>: r }))
+<a href=#629 id=629 data-nosnippet>629</a>                    .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
+<a href=#630 id=630 data-nosnippet>630</a>            }),
+<a href=#631 id=631 data-nosnippet>631</a>        )<span class="question-mark">?</span>,
+<a href=#632 id=632 data-nosnippet>632</a>        OutputFormat::Text =&gt; {
+<a href=#633 id=633 data-nosnippet>633</a>            <span class="kw">for </span>n <span class="kw">in </span><span class="kw-2">&amp;</span>removed {
+<a href=#634 id=634 data-nosnippet>634</a>                w(out, <span class="macro">format!</span>(<span class="string">"removed   {n}"</span>))<span class="question-mark">?</span>;
+<a href=#635 id=635 data-nosnippet>635</a>            }
+<a href=#636 id=636 data-nosnippet>636</a>            <span class="kw">for </span>(n, r) <span class="kw">in </span><span class="kw-2">&amp;</span>refused {
+<a href=#637 id=637 data-nosnippet>637</a>                w(out, <span class="macro">format!</span>(<span class="string">"refused   {n:&lt;44} {r}"</span>))<span class="question-mark">?</span>;
+<a href=#638 id=638 data-nosnippet>638</a>            }
+<a href=#639 id=639 data-nosnippet>639</a>            w(
+<a href=#640 id=640 data-nosnippet>640</a>                out,
+<a href=#641 id=641 data-nosnippet>641</a>                <span class="macro">format!</span>(
+<a href=#642 id=642 data-nosnippet>642</a>                    <span class="string">"worktree cleanup: {} removed, {} refused; no branch was deleted"</span>,
+<a href=#643 id=643 data-nosnippet>643</a>                    removed.len(),
+<a href=#644 id=644 data-nosnippet>644</a>                    refused.len()
+<a href=#645 id=645 data-nosnippet>645</a>                ),
+<a href=#646 id=646 data-nosnippet>646</a>            )<span class="question-mark">?</span>;
+<a href=#647 id=647 data-nosnippet>647</a>        }
+<a href=#648 id=648 data-nosnippet>648</a>    }
+<a href=#649 id=649 data-nosnippet>649</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
+<a href=#650 id=650 data-nosnippet>650</a>}
+<a href=#651 id=651 data-nosnippet>651</a>
+<a href=#652 id=652 data-nosnippet>652</a><span class="doccomment">/// Why this worktree must not be removed now, or `None` when every reading says it is spare.
+<a href=#653 id=653 data-nosnippet>653</a>///
+<a href=#654 id=654 data-nosnippet>654</a>/// Each reading is taken here, at the moment of removal, and none comes from the listing that
+<a href=#655 id=655 data-nosnippet>655</a>/// nominated the branch: a commit made, a push deleted or a file written after the listing is
+<a href=#656 id=656 data-nosnippet>656</a>/// seen.
+<a href=#657 id=657 data-nosnippet>657</a></span><span class="kw">fn </span>refusal(svc: <span class="kw-2">&amp;</span>WorktreeService, branch: <span class="kw-2">&amp;</span>str, path: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<a href=#658 id=658 data-nosnippet>658</a>    <span class="kw">let </span>primary = <span class="kw-2">&amp;</span>svc.identity().primary_worktree().path;
+<a href=#659 id=659 data-nosnippet>659</a>    <span class="comment">// Commits that exist on one disk. `merged into the trunk` is about the branch's remote
+<a href=#660 id=660 data-nosnippet>660</a>    // history and says nothing about a local head that ran ahead of it.
+<a href=#661 id=661 data-nosnippet>661</a>    </span><span class="kw">let </span>now = <span class="kw">match </span><span class="kw">crate</span>::worktree::state::branch(primary, branch) {
+<a href=#662 id=662 data-nosnippet>662</a>        <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(now)) =&gt; now,
+<a href=#663 id=663 data-nosnippet>663</a>        <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="string">"the branch no longer exists"</span>.into()),
+<a href=#664 id=664 data-nosnippet>664</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"could not read the branch: {e}"</span>)),
+<a href=#665 id=665 data-nosnippet>665</a>    };
+<a href=#666 id=666 data-nosnippet>666</a>    <span class="kw">match </span><span class="kw-2">&amp;</span>now.upstream {
+<a href=#667 id=667 data-nosnippet>667</a>        <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="string">"no upstream: its commits are on this disk only"</span>.into()),
+<a href=#668 id=668 data-nosnippet>668</a>        <span class="prelude-val">Some</span>(u) <span class="kw">if </span>u.gone =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"its upstream {} is gone"</span>, u.name)),
+<a href=#669 id=669 data-nosnippet>669</a>        <span class="comment">// `ahead` is unknown rather than zero when git could not compare the two, and an
+<a href=#670 id=670 data-nosnippet>670</a>        // unknown count is not a reason to remove anything: it is refused with the others.
+<a href=#671 id=671 data-nosnippet>671</a>        </span><span class="prelude-val">Some</span>(u) <span class="kw">if </span>u.ahead.unwrap_or(<span class="number">1</span>) &gt; <span class="number">0 </span>=&gt; {
+<a href=#672 id=672 data-nosnippet>672</a>            <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="kw">match </span>u.ahead {
+<a href=#673 id=673 data-nosnippet>673</a>                <span class="prelude-val">Some</span>(n) =&gt; <span class="macro">format!</span>(<span class="string">"{n} commit(s) ahead of {}: they reach no remote"</span>, u.name),
+<a href=#674 id=674 data-nosnippet>674</a>                <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"cannot tell how far it is ahead of {}"</span>, u.name),
+<a href=#675 id=675 data-nosnippet>675</a>            })
+<a href=#676 id=676 data-nosnippet>676</a>        }
+<a href=#677 id=677 data-nosnippet>677</a>        <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {}
+<a href=#678 id=678 data-nosnippet>678</a>    }
+<a href=#679 id=679 data-nosnippet>679</a>    <span class="kw">match </span>occupied(path) {
+<a href=#680 id=680 data-nosnippet>680</a>        <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="string">"cannot tell whether anything is working inside it (no lsof)"</span>.into()),
+<a href=#681 id=681 data-nosnippet>681</a>        <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(<span class="string">"a process has its working directory inside it"</span>.into()),
+<a href=#682 id=682 data-nosnippet>682</a>        <span class="prelude-val">Some</span>(<span class="bool-val">false</span>) =&gt; {}
+<a href=#683 id=683 data-nosnippet>683</a>    }
+<a href=#684 id=684 data-nosnippet>684</a>    <span class="kw">match </span><span class="kw">crate</span>::worktree::state::dirty_state(std::path::Path::new(path)) {
+<a href=#685 id=685 data-nosnippet>685</a>        <span class="prelude-val">Ok</span>(d) <span class="kw">if </span>d.clean =&gt; <span class="prelude-val">None</span>,
+<a href=#686 id=686 data-nosnippet>686</a>        <span class="prelude-val">Ok</span>(d) =&gt; <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"uncommitted work: {}"</span>, d.summary())),
+<a href=#687 id=687 data-nosnippet>687</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"could not read its working tree: {e}"</span>)),
+<a href=#688 id=688 data-nosnippet>688</a>    }
+<a href=#689 id=689 data-nosnippet>689</a>}
+<a href=#690 id=690 data-nosnippet>690</a>
+<a href=#691 id=691 data-nosnippet>691</a><span class="kw">fn </span>branches(svc: <span class="kw-2">&amp;</span>WorktreeService, without_worktree: bool, out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#692 id=692 data-nosnippet>692</a>    <span class="kw">let </span>t = svc.topology(Detail::Fast).map_err(refuse)<span class="question-mark">?</span>;
+<a href=#693 id=693 data-nosnippet>693</a>    <span class="kw">for </span>b <span class="kw">in </span>t
+<a href=#694 id=694 data-nosnippet>694</a>        .branches
+<a href=#695 id=695 data-nosnippet>695</a>        .iter()
+<a href=#696 id=696 data-nosnippet>696</a>        .filter(|b| !without_worktree || b.worktree.is_none())
+<a href=#697 id=697 data-nosnippet>697</a>    {
+<a href=#698 id=698 data-nosnippet>698</a>        w(out, <span class="kw-2">&amp;</span>b.name)<span class="question-mark">?</span>;
+<a href=#699 id=699 data-nosnippet>699</a>    }
+<a href=#700 id=700 data-nosnippet>700</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
+<a href=#701 id=701 data-nosnippet>701</a>}
+<a href=#702 id=702 data-nosnippet>702</a>
+<a href=#703 id=703 data-nosnippet>703</a><span class="comment">// ---------------------------------------------------------------- mutating
+<a href=#704 id=704 data-nosnippet>704</a>
+<a href=#705 id=705 data-nosnippet>705</a></span><span class="kw">fn </span>create(
+<a href=#706 id=706 data-nosnippet>706</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
+<a href=#707 id=707 data-nosnippet>707</a>    branch: <span class="kw-2">&amp;</span>str,
+<a href=#708 id=708 data-nosnippet>708</a>    base: <span class="prelude-ty">Option</span>&lt;String&gt;,
+<a href=#709 id=709 data-nosnippet>709</a>    ensure: bool,
+<a href=#710 id=710 data-nosnippet>710</a>    format: OutputFormat,
+<a href=#711 id=711 data-nosnippet>711</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#712 id=712 data-nosnippet>712</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#713 id=713 data-nosnippet>713</a>    <span class="kw">let </span>request = CreateRequest {
+<a href=#714 id=714 data-nosnippet>714</a>        branch: branch.to_string(),
+<a href=#715 id=715 data-nosnippet>715</a>        base,
+<a href=#716 id=716 data-nosnippet>716</a>    };
+<a href=#717 id=717 data-nosnippet>717</a>    <span class="kw">let </span>report = <span class="kw">if </span>ensure {
+<a href=#718 id=718 data-nosnippet>718</a>        svc.ensure(<span class="kw-2">&amp;</span>request)
+<a href=#719 id=719 data-nosnippet>719</a>    } <span class="kw">else </span>{
+<a href=#720 id=720 data-nosnippet>720</a>        svc.create(<span class="kw-2">&amp;</span>request)
+<a href=#721 id=721 data-nosnippet>721</a>    }
+<a href=#722 id=722 data-nosnippet>722</a>    .map_err(refuse)<span class="question-mark">?</span>;
+<a href=#723 id=723 data-nosnippet>723</a>    <span class="kw">match </span>format {
+<a href=#724 id=724 data-nosnippet>724</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>report)<span class="question-mark">?</span>,
+<a href=#725 id=725 data-nosnippet>725</a>        OutputFormat::Text =&gt; {
+<a href=#726 id=726 data-nosnippet>726</a>            <span class="kw">if </span>report.container_created {
+<a href=#727 id=727 data-nosnippet>727</a>                w(out, <span class="macro">format!</span>(<span class="string">"created the container {}"</span>, report.container))<span class="question-mark">?</span>;
+<a href=#728 id=728 data-nosnippet>728</a>            }
+<a href=#729 id=729 data-nosnippet>729</a>            <span class="kw">if </span>report.existed {
+<a href=#730 id=730 data-nosnippet>730</a>                w(out, <span class="macro">format!</span>(<span class="string">"exists  {}"</span>, report.path))<span class="question-mark">?</span>;
+<a href=#731 id=731 data-nosnippet>731</a>            } <span class="kw">else </span>{
+<a href=#732 id=732 data-nosnippet>732</a>                w(out, <span class="macro">format!</span>(<span class="string">"created {}"</span>, report.path))<span class="question-mark">?</span>;
+<a href=#733 id=733 data-nosnippet>733</a>            }
+<a href=#734 id=734 data-nosnippet>734</a>            <span class="kw">match </span>(<span class="kw-2">&amp;</span>report.base, report.branch_created) {
+<a href=#735 id=735 data-nosnippet>735</a>                (<span class="prelude-val">Some</span>(b), <span class="bool-val">true</span>) =&gt; w(out, <span class="macro">format!</span>(<span class="string">"branch  {} (new, from {b})"</span>, report.branch))<span class="question-mark">?</span>,
+<a href=#736 id=736 data-nosnippet>736</a>                <span class="kw">_ </span>=&gt; w(out, <span class="macro">format!</span>(<span class="string">"branch  {}"</span>, report.branch))<span class="question-mark">?</span>,
+<a href=#737 id=737 data-nosnippet>737</a>            }
+<a href=#738 id=738 data-nosnippet>738</a>            w(out, report.envrc.describe())<span class="question-mark">?</span>;
+<a href=#739 id=739 data-nosnippet>739</a>            w(out, report.envrc_local.describe())<span class="question-mark">?</span>;
+<a href=#740 id=740 data-nosnippet>740</a>            w(
+<a href=#741 id=741 data-nosnippet>741</a>                out,
+<a href=#742 id=742 data-nosnippet>742</a>                <span class="macro">format!</span>(<span class="string">"cd \"$(majordomus worktree path {})\""</span>, report.branch),
+<a href=#743 id=743 data-nosnippet>743</a>            )<span class="question-mark">?</span>;
+<a href=#744 id=744 data-nosnippet>744</a>        }
+<a href=#745 id=745 data-nosnippet>745</a>    }
+<a href=#746 id=746 data-nosnippet>746</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
+<a href=#747 id=747 data-nosnippet>747</a>}
+<a href=#748 id=748 data-nosnippet>748</a>
+<a href=#749 id=749 data-nosnippet>749</a><span class="doccomment">/// The branch an issue's work happens on: `feature/&lt;id&gt;-&lt;slug&gt;`, from the issue record
+<a href=#750 id=750 data-nosnippet>750</a>/// this repository keeps. The id is the provable link the topology reads back.
+<a href=#751 id=751 data-nosnippet>751</a></span><span class="kw">fn </span>issue_branch(repo: <span class="kw-2">&amp;</span><span class="kw">crate</span>::cli::RepoArgs, id: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;String&gt; {
+<a href=#752 id=752 data-nosnippet>752</a>    <span class="kw">let </span>app = <span class="kw">crate</span>::app::App::load(repo)<span class="question-mark">?</span>;
+<a href=#753 id=753 data-nosnippet>753</a>    <span class="kw">let </span>object = app
+<a href=#754 id=754 data-nosnippet>754</a>        .index()
+<a href=#755 id=755 data-nosnippet>755</a>        .objects
+<a href=#756 id=756 data-nosnippet>756</a>        .iter()
+<a href=#757 id=757 data-nosnippet>757</a>        .find(|o| o.kind == <span class="string">"issue" </span>&amp;&amp; o.identity == id)
+<a href=#758 id=758 data-nosnippet>758</a>        .ok_or_else(|| Error::Refused {
+<a href=#759 id=759 data-nosnippet>759</a>            code: <span class="kw">crate</span>::worktree::EXIT_MISSING,
+<a href=#760 id=760 data-nosnippet>760</a>            reason: <span class="macro">format!</span>(
+<a href=#761 id=761 data-nosnippet>761</a>                <span class="string">"no issue '{id}' in this repository's project model; nothing was created and no issue number was invented"
+<a href=#762 id=762 data-nosnippet>762</a>            </span>),
+<a href=#763 id=763 data-nosnippet>763</a>        })<span class="question-mark">?</span>;
+<a href=#764 id=764 data-nosnippet>764</a>    <span class="kw">let </span>slug = object
+<a href=#765 id=765 data-nosnippet>765</a>        .metadata
+<a href=#766 id=766 data-nosnippet>766</a>        .get(<span class="string">"slug"</span>)
+<a href=#767 id=767 data-nosnippet>767</a>        .and_then(Value::as_str)
+<a href=#768 id=768 data-nosnippet>768</a>        .map(str::to_string)
+<a href=#769 id=769 data-nosnippet>769</a>        .unwrap_or_else(|| id.to_lowercase());
+<a href=#770 id=770 data-nosnippet>770</a>    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">"feature/{id}-{slug}"</span>))
+<a href=#771 id=771 data-nosnippet>771</a>}
+<a href=#772 id=772 data-nosnippet>772</a>
+<a href=#773 id=773 data-nosnippet>773</a><span class="kw">fn </span>migrate_cmd(
+<a href=#774 id=774 data-nosnippet>774</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
+<a href=#775 id=775 data-nosnippet>775</a>    apply: bool,
+<a href=#776 id=776 data-nosnippet>776</a>    options: MigrationOptions,
+<a href=#777 id=777 data-nosnippet>777</a>    format: OutputFormat,
+<a href=#778 id=778 data-nosnippet>778</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#779 id=779 data-nosnippet>779</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#780 id=780 data-nosnippet>780</a>    <span class="kw">let </span>plan = <span class="kw">if </span>apply {
+<a href=#781 id=781 data-nosnippet>781</a>        migrate::apply(svc, <span class="kw-2">&amp;</span>options).map_err(refuse)<span class="question-mark">?
+<a href=#782 id=782 data-nosnippet>782</a>    </span>} <span class="kw">else </span>{
+<a href=#783 id=783 data-nosnippet>783</a>        migrate::plan_with(svc, options.include_ephemeral).map_err(refuse)<span class="question-mark">?
+<a href=#784 id=784 data-nosnippet>784</a>    </span>};
+<a href=#785 id=785 data-nosnippet>785</a>    <span class="kw">match </span>format {
+<a href=#786 id=786 data-nosnippet>786</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>plan)<span class="question-mark">?</span>,
+<a href=#787 id=787 data-nosnippet>787</a>        OutputFormat::Text =&gt; render_plan(<span class="kw-2">&amp;</span>plan, out)<span class="question-mark">?</span>,
+<a href=#788 id=788 data-nosnippet>788</a>    }
+<a href=#789 id=789 data-nosnippet>789</a>    <span class="comment">// A plan never fails for having found something to do. An apply that left a step
+<a href=#790 id=790 data-nosnippet>790</a>    // blocked or failed says so through its exit code.
+<a href=#791 id=791 data-nosnippet>791</a>    </span><span class="prelude-val">Ok</span>(<span class="kw">if </span>apply &amp;&amp; (plan.blocked &gt; <span class="number">0 </span>|| plan.failed &gt; <span class="number">0</span>) {
+<a href=#792 id=792 data-nosnippet>792</a>        EXIT_REFUSED
+<a href=#793 id=793 data-nosnippet>793</a>    } <span class="kw">else </span>{
+<a href=#794 id=794 data-nosnippet>794</a>        <span class="number">0
+<a href=#795 id=795 data-nosnippet>795</a>    </span>})
+<a href=#796 id=796 data-nosnippet>796</a>}
+<a href=#797 id=797 data-nosnippet>797</a>
+<a href=#798 id=798 data-nosnippet>798</a><span class="kw">fn </span>render_plan(plan: <span class="kw-2">&amp;</span>MigrationPlan, out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<a href=#799 id=799 data-nosnippet>799</a>    <span class="kw">let </span>verb = <span class="kw">if </span>plan.applied {
+<a href=#800 id=800 data-nosnippet>800</a>        <span class="string">"migrated"
+<a href=#801 id=801 data-nosnippet>801</a>    </span>} <span class="kw">else </span>{
+<a href=#802 id=802 data-nosnippet>802</a>        <span class="string">"to migrate"
+<a href=#803 id=803 data-nosnippet>803</a>    </span>};
+<a href=#804 id=804 data-nosnippet>804</a>    <span class="kw">if </span>plan.steps.is_empty() {
+<a href=#805 id=805 data-nosnippet>805</a>        w(
+<a href=#806 id=806 data-nosnippet>806</a>            out,
+<a href=#807 id=807 data-nosnippet>807</a>            <span class="macro">format!</span>(
+<a href=#808 id=808 data-nosnippet>808</a>                <span class="string">"nothing {verb}: every worktree with a branch is at its canonical path under {}"</span>,
+<a href=#809 id=809 data-nosnippet>809</a>                plan.container
+<a href=#810 id=810 data-nosnippet>810</a>            ),
+<a href=#811 id=811 data-nosnippet>811</a>        )<span class="question-mark">?</span>;
+<a href=#812 id=812 data-nosnippet>812</a>    }
+<a href=#813 id=813 data-nosnippet>813</a>    <span class="kw">for </span>step <span class="kw">in </span><span class="kw-2">&amp;</span>plan.steps {
+<a href=#814 id=814 data-nosnippet>814</a>        w(out, <span class="string">""</span>)<span class="question-mark">?</span>;
+<a href=#815 id=815 data-nosnippet>815</a>        w(out, step.branch.as_str())<span class="question-mark">?</span>;
+<a href=#816 id=816 data-nosnippet>816</a>        w(out, <span class="macro">format!</span>(<span class="string">"  from    {}"</span>, step.from))<span class="question-mark">?</span>;
+<a href=#817 id=817 data-nosnippet>817</a>        w(out, <span class="macro">format!</span>(<span class="string">"  to      {}"</span>, step.to))<span class="question-mark">?</span>;
+<a href=#818 id=818 data-nosnippet>818</a>        w(out, <span class="macro">format!</span>(<span class="string">"  head    {}"</span>, short(<span class="kw-2">&amp;</span>step.head)))<span class="question-mark">?</span>;
+<a href=#819 id=819 data-nosnippet>819</a>        w(out, <span class="macro">format!</span>(<span class="string">"  state   {}"</span>, step.dirty.summary()))<span class="question-mark">?</span>;
+<a href=#820 id=820 data-nosnippet>820</a>        <span class="kw">let </span>action = <span class="kw">match </span>step.action {
+<a href=#821 id=821 data-nosnippet>821</a>            MigrationAction::Move =&gt; <span class="string">"move"</span>,
+<a href=#822 id=822 data-nosnippet>822</a>            MigrationAction::MoveViaStaging =&gt; <span class="string">"move out of the container path, then into it"</span>,
+<a href=#823 id=823 data-nosnippet>823</a>            MigrationAction::CopyAndRepair =&gt; {
+<a href=#824 id=824 data-nosnippet>824</a>                <span class="string">"copy across filesystems, repair, verify, remove the original"
+<a href=#825 id=825 data-nosnippet>825</a>            </span>}
+<a href=#826 id=826 data-nosnippet>826</a>            MigrationAction::None =&gt; <span class="string">"none"</span>,
+<a href=#827 id=827 data-nosnippet>827</a>        };
+<a href=#828 id=828 data-nosnippet>828</a>        <span class="kw">match </span>step.outcome {
+<a href=#829 id=829 data-nosnippet>829</a>            StepOutcome::Planned =&gt; w(out, <span class="macro">format!</span>(<span class="string">"  action  {action}"</span>))<span class="question-mark">?</span>,
+<a href=#830 id=830 data-nosnippet>830</a>            StepOutcome::Moved =&gt; {
+<a href=#831 id=831 data-nosnippet>831</a>                w(
+<a href=#832 id=832 data-nosnippet>832</a>                    out,
+<a href=#833 id=833 data-nosnippet>833</a>                    <span class="macro">format!</span>(
+<a href=#834 id=834 data-nosnippet>834</a>                        <span class="string">"  outcome moved and verified ({action}){}"</span>,
+<a href=#835 id=835 data-nosnippet>835</a>                        step.message
+<a href=#836 id=836 data-nosnippet>836</a>                            .as_deref()
+<a href=#837 id=837 data-nosnippet>837</a>                            .map(|m| <span class="macro">format!</span>(<span class="string">": {m}"</span>))
+<a href=#838 id=838 data-nosnippet>838</a>                            .unwrap_or_default()
+<a href=#839 id=839 data-nosnippet>839</a>                    ),
+<a href=#840 id=840 data-nosnippet>840</a>                )<span class="question-mark">?</span>;
+<a href=#841 id=841 data-nosnippet>841</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(envrc) = <span class="kw-2">&amp;</span>step.envrc {
+<a href=#842 id=842 data-nosnippet>842</a>                    w(out, <span class="macro">format!</span>(<span class="string">"  {}"</span>, envrc.describe()))<span class="question-mark">?</span>;
+<a href=#843 id=843 data-nosnippet>843</a>                }
+<a href=#844 id=844 data-nosnippet>844</a>            }
+<a href=#845 id=845 data-nosnippet>845</a>            StepOutcome::Blocked =&gt; {
+<a href=#846 id=846 data-nosnippet>846</a>                w(out, <span class="string">"  outcome BLOCKED"</span>)<span class="question-mark">?</span>;
+<a href=#847 id=847 data-nosnippet>847</a>                <span class="kw">for </span>b <span class="kw">in </span><span class="kw-2">&amp;</span>step.blockers {
+<a href=#848 id=848 data-nosnippet>848</a>                    w(
+<a href=#849 id=849 data-nosnippet>849</a>                        out,
+<a href=#850 id=850 data-nosnippet>850</a>                        <span class="macro">format!</span>(<span class="string">"    {}"</span>, render_diagnostic(b).replace(<span class="string">'\n'</span>, <span class="string">"\n    "</span>)),
+<a href=#851 id=851 data-nosnippet>851</a>                    )<span class="question-mark">?</span>;
+<a href=#852 id=852 data-nosnippet>852</a>                }
+<a href=#853 id=853 data-nosnippet>853</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(m) = <span class="kw-2">&amp;</span>step.message {
+<a href=#854 id=854 data-nosnippet>854</a>                    w(out, <span class="macro">format!</span>(<span class="string">"    {m}"</span>))<span class="question-mark">?</span>;
+<a href=#855 id=855 data-nosnippet>855</a>                }
+<a href=#856 id=856 data-nosnippet>856</a>            }
+<a href=#857 id=857 data-nosnippet>857</a>            StepOutcome::Failed =&gt; {
+<a href=#858 id=858 data-nosnippet>858</a>                w(
+<a href=#859 id=859 data-nosnippet>859</a>                    out,
+<a href=#860 id=860 data-nosnippet>860</a>                    <span class="macro">format!</span>(
+<a href=#861 id=861 data-nosnippet>861</a>                        <span class="string">"  outcome FAILED: {}"</span>,
+<a href=#862 id=862 data-nosnippet>862</a>                        step.message.as_deref().unwrap_or(<span class="string">"-"</span>)
+<a href=#863 id=863 data-nosnippet>863</a>                    ),
 <a href=#864 id=864 data-nosnippet>864</a>                )<span class="question-mark">?</span>;
-<a href=#865 id=865 data-nosnippet>865</a>            }
-<a href=#866 id=866 data-nosnippet>866</a>        }
-<a href=#867 id=867 data-nosnippet>867</a>    }
-<a href=#868 id=868 data-nosnippet>868</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
-<a href=#869 id=869 data-nosnippet>869</a>}
+<a href=#865 id=865 data-nosnippet>865</a>                <span class="kw">for </span>d <span class="kw">in </span><span class="kw-2">&amp;</span>step.differences {
+<a href=#866 id=866 data-nosnippet>866</a>                    w(out, <span class="macro">format!</span>(<span class="string">"    {d}"</span>))<span class="question-mark">?</span>;
+<a href=#867 id=867 data-nosnippet>867</a>                }
+<a href=#868 id=868 data-nosnippet>868</a>            }
+<a href=#869 id=869 data-nosnippet>869</a>        }
+<a href=#870 id=870 data-nosnippet>870</a>    }
+<a href=#871 id=871 data-nosnippet>871</a>    <span class="kw">if </span>!plan.exceptions.is_empty() {
+<a href=#872 id=872 data-nosnippet>872</a>        w(out, <span class="string">""</span>)<span class="question-mark">?</span>;
+<a href=#873 id=873 data-nosnippet>873</a>        w(out, <span class="string">"not migrated by design"</span>)<span class="question-mark">?</span>;
+<a href=#874 id=874 data-nosnippet>874</a>        <span class="kw">for </span>d <span class="kw">in </span><span class="kw-2">&amp;</span>plan.exceptions {
+<a href=#875 id=875 data-nosnippet>875</a>            w(
+<a href=#876 id=876 data-nosnippet>876</a>                out,
+<a href=#877 id=877 data-nosnippet>877</a>                <span class="macro">format!</span>(<span class="string">"  {}"</span>, render_diagnostic(d).replace(<span class="string">'\n'</span>, <span class="string">"\n  "</span>)),
+<a href=#878 id=878 data-nosnippet>878</a>            )<span class="question-mark">?</span>;
+<a href=#879 id=879 data-nosnippet>879</a>        }
+<a href=#880 id=880 data-nosnippet>880</a>    }
+<a href=#881 id=881 data-nosnippet>881</a>    w(out, <span class="string">""</span>)<span class="question-mark">?</span>;
+<a href=#882 id=882 data-nosnippet>882</a>    <span class="kw">if </span>plan.applied {
+<a href=#883 id=883 data-nosnippet>883</a>        w(
+<a href=#884 id=884 data-nosnippet>884</a>            out,
+<a href=#885 id=885 data-nosnippet>885</a>            <span class="macro">format!</span>(
+<a href=#886 id=886 data-nosnippet>886</a>                <span class="string">"{} step(s): {} moved and verified, {} blocked, {} failed"</span>,
+<a href=#887 id=887 data-nosnippet>887</a>                plan.steps.len(),
+<a href=#888 id=888 data-nosnippet>888</a>                plan.moved,
+<a href=#889 id=889 data-nosnippet>889</a>                plan.blocked,
+<a href=#890 id=890 data-nosnippet>890</a>                plan.failed
+<a href=#891 id=891 data-nosnippet>891</a>            ),
+<a href=#892 id=892 data-nosnippet>892</a>        )<span class="question-mark">?</span>;
+<a href=#893 id=893 data-nosnippet>893</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = <span class="kw-2">&amp;</span>plan.moved_current {
+<a href=#894 id=894 data-nosnippet>894</a>            w(out, <span class="macro">format!</span>(<span class="string">"the worktree you were in moved: cd \"{p}\""</span>))<span class="question-mark">?</span>;
+<a href=#895 id=895 data-nosnippet>895</a>        }
+<a href=#896 id=896 data-nosnippet>896</a>    } <span class="kw">else </span>{
+<a href=#897 id=897 data-nosnippet>897</a>        w(
+<a href=#898 id=898 data-nosnippet>898</a>            out,
+<a href=#899 id=899 data-nosnippet>899</a>            <span class="macro">format!</span>(
+<a href=#900 id=900 data-nosnippet>900</a>                <span class="string">"{} step(s): {} movable, {} blocked; nothing was changed. `majordomus worktree migrate` applies the movable ones"</span>,
+<a href=#901 id=901 data-nosnippet>901</a>                plan.steps.len(),
+<a href=#902 id=902 data-nosnippet>902</a>                plan.movable,
+<a href=#903 id=903 data-nosnippet>903</a>                plan.blocked
+<a href=#904 id=904 data-nosnippet>904</a>            ),
+<a href=#905 id=905 data-nosnippet>905</a>        )<span class="question-mark">?</span>;
+<a href=#906 id=906 data-nosnippet>906</a>    }
+<a href=#907 id=907 data-nosnippet>907</a>    <span class="prelude-val">Ok</span>(())
+<a href=#908 id=908 data-nosnippet>908</a>}
+<a href=#909 id=909 data-nosnippet>909</a>
+<a href=#910 id=910 data-nosnippet>910</a><span class="kw">fn </span>repair(
+<a href=#911 id=911 data-nosnippet>911</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
+<a href=#912 id=912 data-nosnippet>912</a>    dry_run: bool,
+<a href=#913 id=913 data-nosnippet>913</a>    format: OutputFormat,
+<a href=#914 id=914 data-nosnippet>914</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#915 id=915 data-nosnippet>915</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#916 id=916 data-nosnippet>916</a>    <span class="kw">let </span>report = svc.repair(dry_run).map_err(refuse)<span class="question-mark">?</span>;
+<a href=#917 id=917 data-nosnippet>917</a>    <span class="kw">match </span>format {
+<a href=#918 id=918 data-nosnippet>918</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>report)<span class="question-mark">?</span>,
+<a href=#919 id=919 data-nosnippet>919</a>        OutputFormat::Text =&gt; {
+<a href=#920 id=920 data-nosnippet>920</a>            <span class="kw">if </span>report.pruned.is_empty() {
+<a href=#921 id=921 data-nosnippet>921</a>                w(
+<a href=#922 id=922 data-nosnippet>922</a>                    out,
+<a href=#923 id=923 data-nosnippet>923</a>                    <span class="string">"nothing to prune: every registered worktree still exists"</span>,
+<a href=#924 id=924 data-nosnippet>924</a>                )<span class="question-mark">?</span>;
+<a href=#925 id=925 data-nosnippet>925</a>            } <span class="kw">else </span>{
+<a href=#926 id=926 data-nosnippet>926</a>                <span class="kw">for </span>line <span class="kw">in </span><span class="kw-2">&amp;</span>report.pruned {
+<a href=#927 id=927 data-nosnippet>927</a>                    w(out, line)<span class="question-mark">?</span>;
+<a href=#928 id=928 data-nosnippet>928</a>                }
+<a href=#929 id=929 data-nosnippet>929</a>                w(
+<a href=#930 id=930 data-nosnippet>930</a>                    out,
+<a href=#931 id=931 data-nosnippet>931</a>                    <span class="macro">format!</span>(
+<a href=#932 id=932 data-nosnippet>932</a>                        <span class="string">"{} registration(s) {}"</span>,
+<a href=#933 id=933 data-nosnippet>933</a>                        report.pruned.len(),
+<a href=#934 id=934 data-nosnippet>934</a>                        <span class="kw">if </span>report.applied {
+<a href=#935 id=935 data-nosnippet>935</a>                            <span class="string">"dropped"
+<a href=#936 id=936 data-nosnippet>936</a>                        </span>} <span class="kw">else </span>{
+<a href=#937 id=937 data-nosnippet>937</a>                            <span class="string">"would be dropped; nothing was changed"
+<a href=#938 id=938 data-nosnippet>938</a>                        </span>}
+<a href=#939 id=939 data-nosnippet>939</a>                    ),
+<a href=#940 id=940 data-nosnippet>940</a>                )<span class="question-mark">?</span>;
+<a href=#941 id=941 data-nosnippet>941</a>            }
+<a href=#942 id=942 data-nosnippet>942</a>            <span class="kw">for </span>line <span class="kw">in </span><span class="kw-2">&amp;</span>report.repaired {
+<a href=#943 id=943 data-nosnippet>943</a>                w(out, line)<span class="question-mark">?</span>;
+<a href=#944 id=944 data-nosnippet>944</a>            }
+<a href=#945 id=945 data-nosnippet>945</a>            <span class="kw">if </span>report.applied {
+<a href=#946 id=946 data-nosnippet>946</a>                w(
+<a href=#947 id=947 data-nosnippet>947</a>                    out,
+<a href=#948 id=948 data-nosnippet>948</a>                    <span class="string">"administrative links repaired where git found them stale"</span>,
+<a href=#949 id=949 data-nosnippet>949</a>                )<span class="question-mark">?</span>;
+<a href=#950 id=950 data-nosnippet>950</a>            }
+<a href=#951 id=951 data-nosnippet>951</a>        }
+<a href=#952 id=952 data-nosnippet>952</a>    }
+<a href=#953 id=953 data-nosnippet>953</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
+<a href=#954 id=954 data-nosnippet>954</a>}
+<a href=#955 id=955 data-nosnippet>955</a>
+<a href=#956 id=956 data-nosnippet>956</a><span class="kw">fn </span>remove(
+<a href=#957 id=957 data-nosnippet>957</a>    svc: <span class="kw-2">&amp;</span>WorktreeService,
+<a href=#958 id=958 data-nosnippet>958</a>    selector: <span class="kw-2">&amp;</span>str,
+<a href=#959 id=959 data-nosnippet>959</a>    force: bool,
+<a href=#960 id=960 data-nosnippet>960</a>    format: OutputFormat,
+<a href=#961 id=961 data-nosnippet>961</a>    out: <span class="kw-2">&amp;mut </span>Out&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#962 id=962 data-nosnippet>962</a>) -&gt; <span class="prelude-ty">Result</span>&lt;u8&gt; {
+<a href=#963 id=963 data-nosnippet>963</a>    <span class="comment">// Say what is about to go, and what it holds, before it goes: a removal that prints its
+<a href=#964 id=964 data-nosnippet>964</a>    // subject only afterwards has taught its lesson too late. The service refuses dirty
+<a href=#965 id=965 data-nosnippet>965</a>    // work without `force` regardless; this line is for the person who typed `--force`.
+<a href=#966 id=966 data-nosnippet>966</a>    </span><span class="kw">if </span>format == OutputFormat::Text {
+<a href=#967 id=967 data-nosnippet>967</a>        <span class="kw">let </span>record = svc.resolve(selector).map_err(refuse)<span class="question-mark">?</span>;
+<a href=#968 id=968 data-nosnippet>968</a>        <span class="kw">let </span>held = record
+<a href=#969 id=969 data-nosnippet>969</a>            .branch
+<a href=#970 id=970 data-nosnippet>970</a>            .clone()
+<a href=#971 id=971 data-nosnippet>971</a>            .unwrap_or_else(|| <span class="string">"a detached HEAD"</span>.into());
+<a href=#972 id=972 data-nosnippet>972</a>        <span class="kw">let </span>dirty = <span class="kw">if </span>record.path.is_dir() {
+<a href=#973 id=973 data-nosnippet>973</a>            <span class="kw">crate</span>::worktree::state::dirty_state(<span class="kw-2">&amp;</span>record.path)
+<a href=#974 id=974 data-nosnippet>974</a>                .map(|d| d.summary())
+<a href=#975 id=975 data-nosnippet>975</a>                .unwrap_or_else(|<span class="kw">_</span>| <span class="string">"unknown"</span>.into())
+<a href=#976 id=976 data-nosnippet>976</a>        } <span class="kw">else </span>{
+<a href=#977 id=977 data-nosnippet>977</a>            <span class="string">"directory missing"</span>.into()
+<a href=#978 id=978 data-nosnippet>978</a>        };
+<a href=#979 id=979 data-nosnippet>979</a>        w(
+<a href=#980 id=980 data-nosnippet>980</a>            out,
+<a href=#981 id=981 data-nosnippet>981</a>            <span class="macro">format!</span>(
+<a href=#982 id=982 data-nosnippet>982</a>                <span class="string">"removing {} (holding {held}; {dirty}){}"</span>,
+<a href=#983 id=983 data-nosnippet>983</a>                record.path.display(),
+<a href=#984 id=984 data-nosnippet>984</a>                <span class="kw">if </span>force { <span class="string">"; forced" </span>} <span class="kw">else </span>{ <span class="string">"" </span>}
+<a href=#985 id=985 data-nosnippet>985</a>            ),
+<a href=#986 id=986 data-nosnippet>986</a>        )<span class="question-mark">?</span>;
+<a href=#987 id=987 data-nosnippet>987</a>    }
+<a href=#988 id=988 data-nosnippet>988</a>    <span class="kw">let </span>report = svc.remove(selector, force).map_err(refuse)<span class="question-mark">?</span>;
+<a href=#989 id=989 data-nosnippet>989</a>    <span class="kw">match </span>format {
+<a href=#990 id=990 data-nosnippet>990</a>        OutputFormat::Json =&gt; json(out, <span class="kw-2">&amp;</span>report)<span class="question-mark">?</span>,
+<a href=#991 id=991 data-nosnippet>991</a>        OutputFormat::Text =&gt; {
+<a href=#992 id=992 data-nosnippet>992</a>            w(out, <span class="macro">format!</span>(<span class="string">"removed {}"</span>, report.path))<span class="question-mark">?</span>;
+<a href=#993 id=993 data-nosnippet>993</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(b) = <span class="kw-2">&amp;</span>report.branch {
+<a href=#994 id=994 data-nosnippet>994</a>                w(
+<a href=#995 id=995 data-nosnippet>995</a>                    out,
+<a href=#996 id=996 data-nosnippet>996</a>                    <span class="macro">format!</span>(<span class="string">"branch  {b} still exists (git branch -d {b} removes it)"</span>),
+<a href=#997 id=997 data-nosnippet>997</a>                )<span class="question-mark">?</span>;
+<a href=#998 id=998 data-nosnippet>998</a>            }
+<a href=#999 id=999 data-nosnippet>999</a>        }
+<a href=#1000 id=1000 data-nosnippet>1000</a>    }
+<a href=#1001 id=1001 data-nosnippet>1001</a>    <span class="prelude-val">Ok</span>(<span class="number">0</span>)
+<a href=#1002 id=1002 data-nosnippet>1002</a>}
+<a href=#1003 id=1003 data-nosnippet>1003</a>
+<a href=#1004 id=1004 data-nosnippet>1004</a><span class="attr">#[cfg(test)]
+<a href=#1005 id=1005 data-nosnippet>1005</a></span><span class="kw">mod </span>tests {
+<a href=#1006 id=1006 data-nosnippet>1006</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#1007 id=1007 data-nosnippet>1007</a>    <span class="kw">use </span>std::path::Path;
+<a href=#1008 id=1008 data-nosnippet>1008</a>
+<a href=#1009 id=1009 data-nosnippet>1009</a>    <span class="kw">fn </span>git(cwd: <span class="kw-2">&amp;</span>Path, args: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) {
+<a href=#1010 id=1010 data-nosnippet>1010</a>        <span class="kw">let </span>out = std::process::Command::new(<span class="string">"git"</span>)
+<a href=#1011 id=1011 data-nosnippet>1011</a>            .args([
+<a href=#1012 id=1012 data-nosnippet>1012</a>                <span class="string">"-c"</span>,
+<a href=#1013 id=1013 data-nosnippet>1013</a>                <span class="string">"user.email=t@t"</span>,
+<a href=#1014 id=1014 data-nosnippet>1014</a>                <span class="string">"-c"</span>,
+<a href=#1015 id=1015 data-nosnippet>1015</a>                <span class="string">"user.name=t"</span>,
+<a href=#1016 id=1016 data-nosnippet>1016</a>                <span class="string">"-c"</span>,
+<a href=#1017 id=1017 data-nosnippet>1017</a>                <span class="string">"commit.gpgsign=false"</span>,
+<a href=#1018 id=1018 data-nosnippet>1018</a>            ])
+<a href=#1019 id=1019 data-nosnippet>1019</a>            .args([
+<a href=#1020 id=1020 data-nosnippet>1020</a>                <span class="string">"-c"</span>,
+<a href=#1021 id=1021 data-nosnippet>1021</a>                <span class="string">"core.hooksPath=/dev/null"</span>,
+<a href=#1022 id=1022 data-nosnippet>1022</a>                <span class="string">"-c"</span>,
+<a href=#1023 id=1023 data-nosnippet>1023</a>                <span class="string">"init.defaultBranch=master"</span>,
+<a href=#1024 id=1024 data-nosnippet>1024</a>            ])
+<a href=#1025 id=1025 data-nosnippet>1025</a>            .args(args)
+<a href=#1026 id=1026 data-nosnippet>1026</a>            .current_dir(cwd)
+<a href=#1027 id=1027 data-nosnippet>1027</a>            .output()
+<a href=#1028 id=1028 data-nosnippet>1028</a>            .expect(<span class="string">"run git"</span>);
+<a href=#1029 id=1029 data-nosnippet>1029</a>        <span class="macro">assert!</span>(
+<a href=#1030 id=1030 data-nosnippet>1030</a>            out.status.success(),
+<a href=#1031 id=1031 data-nosnippet>1031</a>            <span class="string">"git {} failed: {}"</span>,
+<a href=#1032 id=1032 data-nosnippet>1032</a>            args.join(<span class="string">" "</span>),
+<a href=#1033 id=1033 data-nosnippet>1033</a>            String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stderr)
+<a href=#1034 id=1034 data-nosnippet>1034</a>        );
+<a href=#1035 id=1035 data-nosnippet>1035</a>    }
+<a href=#1036 id=1036 data-nosnippet>1036</a>
+<a href=#1037 id=1037 data-nosnippet>1037</a>    <span class="doccomment">/// A repository with its own remote and one worktree on `spare`: merged into the trunk,
+<a href=#1038 id=1038 data-nosnippet>1038</a>    /// pushed, clean, and therefore nominated by the listing.
+<a href=#1039 id=1039 data-nosnippet>1039</a>    </span><span class="kw">fn </span>nominated() -&gt; (tempfile::TempDir, WorktreeService, BranchState) {
+<a href=#1040 id=1040 data-nosnippet>1040</a>        <span class="kw">let </span>tmp = tempfile::tempdir().expect(<span class="string">"tempdir"</span>);
+<a href=#1041 id=1041 data-nosnippet>1041</a>        <span class="kw">let </span>root = tmp.path().canonicalize().expect(<span class="string">"canonical tempdir"</span>);
+<a href=#1042 id=1042 data-nosnippet>1042</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>, <span class="string">"--bare"</span>, <span class="string">"origin.git"</span>]);
+<a href=#1043 id=1043 data-nosnippet>1043</a>        git(<span class="kw-2">&amp;</span>root, <span class="kw-2">&amp;</span>[<span class="string">"init"</span>, <span class="string">"-q"</span>, <span class="string">"repo"</span>]);
+<a href=#1044 id=1044 data-nosnippet>1044</a>        <span class="kw">let </span>repo = root.join(<span class="string">"repo"</span>);
+<a href=#1045 id=1045 data-nosnippet>1045</a>        <span class="comment">// absolute, so a push from inside the worktree reaches the same remote
+<a href=#1046 id=1046 data-nosnippet>1046</a>        </span><span class="kw">let </span>origin = root.join(<span class="string">"origin.git"</span>).to_string_lossy().to_string();
+<a href=#1047 id=1047 data-nosnippet>1047</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"remote"</span>, <span class="string">"add"</span>, <span class="string">"origin"</span>, origin.as_str()]);
+<a href=#1048 id=1048 data-nosnippet>1048</a>        std::fs::write(repo.join(<span class="string">"one.txt"</span>), <span class="string">"one\n"</span>).expect(<span class="string">"write"</span>);
+<a href=#1049 id=1049 data-nosnippet>1049</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#1050 id=1050 data-nosnippet>1050</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"trunk"</span>]);
+<a href=#1051 id=1051 data-nosnippet>1051</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"push"</span>, <span class="string">"-q"</span>, <span class="string">"-u"</span>, <span class="string">"origin"</span>, <span class="string">"master"</span>]);
+<a href=#1052 id=1052 data-nosnippet>1052</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"switch"</span>, <span class="string">"-q"</span>, <span class="string">"-c"</span>, <span class="string">"spare"</span>]);
+<a href=#1053 id=1053 data-nosnippet>1053</a>        std::fs::write(repo.join(<span class="string">"spare.txt"</span>), <span class="string">"spare\n"</span>).expect(<span class="string">"write"</span>);
+<a href=#1054 id=1054 data-nosnippet>1054</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"add"</span>, <span class="string">"-A"</span>]);
+<a href=#1055 id=1055 data-nosnippet>1055</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-qm"</span>, <span class="string">"spare"</span>]);
+<a href=#1056 id=1056 data-nosnippet>1056</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"push"</span>, <span class="string">"-q"</span>, <span class="string">"-u"</span>, <span class="string">"origin"</span>, <span class="string">"spare"</span>]);
+<a href=#1057 id=1057 data-nosnippet>1057</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"switch"</span>, <span class="string">"-q"</span>, <span class="string">"master"</span>]);
+<a href=#1058 id=1058 data-nosnippet>1058</a>        git(
+<a href=#1059 id=1059 data-nosnippet>1059</a>            <span class="kw-2">&amp;</span>repo,
+<a href=#1060 id=1060 data-nosnippet>1060</a>            <span class="kw-2">&amp;</span>[<span class="string">"merge"</span>, <span class="string">"-q"</span>, <span class="string">"--no-ff"</span>, <span class="string">"-m"</span>, <span class="string">"merge spare"</span>, <span class="string">"spare"</span>],
+<a href=#1061 id=1061 data-nosnippet>1061</a>        );
+<a href=#1062 id=1062 data-nosnippet>1062</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"push"</span>, <span class="string">"-q"</span>, <span class="string">"origin"</span>, <span class="string">"master"</span>]);
+<a href=#1063 id=1063 data-nosnippet>1063</a>        <span class="kw">let </span>svc = WorktreeService::open(<span class="kw-2">&amp;</span>repo).expect(<span class="string">"open the service"</span>);
+<a href=#1064 id=1064 data-nosnippet>1064</a>        <span class="kw">let </span>at = svc.expected_path_of(<span class="string">"spare"</span>).expect(<span class="string">"the path of spare"</span>);
+<a href=#1065 id=1065 data-nosnippet>1065</a>        <span class="kw">let </span>at = at.to_string_lossy().to_string();
+<a href=#1066 id=1066 data-nosnippet>1066</a>        git(<span class="kw-2">&amp;</span>repo, <span class="kw-2">&amp;</span>[<span class="string">"worktree"</span>, <span class="string">"add"</span>, <span class="string">"-q"</span>, at.as_str(), <span class="string">"spare"</span>]);
+<a href=#1067 id=1067 data-nosnippet>1067</a>        <span class="kw">let </span>t = svc.topology(Detail::Full).expect(<span class="string">"topology"</span>);
+<a href=#1068 id=1068 data-nosnippet>1068</a>        <span class="kw">let </span>b = t
+<a href=#1069 id=1069 data-nosnippet>1069</a>            .branches
+<a href=#1070 id=1070 data-nosnippet>1070</a>            .into_iter()
+<a href=#1071 id=1071 data-nosnippet>1071</a>            .find(|b| b.name == <span class="string">"spare" </span>&amp;&amp; b.cleanup_eligible)
+<a href=#1072 id=1072 data-nosnippet>1072</a>            .expect(<span class="string">"the listing nominates spare"</span>);
+<a href=#1073 id=1073 data-nosnippet>1073</a>        (tmp, svc, b)
+<a href=#1074 id=1074 data-nosnippet>1074</a>    }
+<a href=#1075 id=1075 data-nosnippet>1075</a>
+<a href=#1076 id=1076 data-nosnippet>1076</a>    <span class="attr">#[test]
+<a href=#1077 id=1077 data-nosnippet>1077</a>    </span><span class="kw">fn </span>a_commit_made_after_the_listing_is_seen_by_the_reclaim() {
+<a href=#1078 id=1078 data-nosnippet>1078</a>        <span class="kw">let </span>(_tmp, svc, b) = nominated();
+<a href=#1079 id=1079 data-nosnippet>1079</a>        <span class="kw">let </span>path = b.worktree.clone().expect(<span class="string">"a worktree"</span>);
+<a href=#1080 id=1080 data-nosnippet>1080</a>        git(
+<a href=#1081 id=1081 data-nosnippet>1081</a>            Path::new(<span class="kw-2">&amp;</span>path),
+<a href=#1082 id=1082 data-nosnippet>1082</a>            <span class="kw-2">&amp;</span>[<span class="string">"commit"</span>, <span class="string">"-q"</span>, <span class="string">"--allow-empty"</span>, <span class="string">"-m"</span>, <span class="string">"on one disk only"</span>],
+<a href=#1083 id=1083 data-nosnippet>1083</a>        );
+<a href=#1084 id=1084 data-nosnippet>1084</a>        <span class="comment">// the listing still says zero ahead; the reading taken now does not
+<a href=#1085 id=1085 data-nosnippet>1085</a>        </span><span class="macro">assert_eq!</span>(b.upstream.as_ref().and_then(|u| u.ahead), <span class="prelude-val">Some</span>(<span class="number">0</span>));
+<a href=#1086 id=1086 data-nosnippet>1086</a>        <span class="kw">let </span>why = refusal(<span class="kw-2">&amp;</span>svc, <span class="kw-2">&amp;</span>b.name, <span class="kw-2">&amp;</span>path).expect(<span class="string">"refused"</span>);
+<a href=#1087 id=1087 data-nosnippet>1087</a>        <span class="macro">assert!</span>(why.contains(<span class="string">"1 commit(s) ahead"</span>), <span class="string">"{why}"</span>);
+<a href=#1088 id=1088 data-nosnippet>1088</a>    }
+<a href=#1089 id=1089 data-nosnippet>1089</a>
+<a href=#1090 id=1090 data-nosnippet>1090</a>    <span class="attr">#[test]
+<a href=#1091 id=1091 data-nosnippet>1091</a>    </span><span class="kw">fn </span>an_upstream_deleted_after_the_listing_is_seen_by_the_reclaim() {
+<a href=#1092 id=1092 data-nosnippet>1092</a>        <span class="kw">let </span>(_tmp, svc, b) = nominated();
+<a href=#1093 id=1093 data-nosnippet>1093</a>        <span class="kw">let </span>path = b.worktree.clone().expect(<span class="string">"a worktree"</span>);
+<a href=#1094 id=1094 data-nosnippet>1094</a>        git(
+<a href=#1095 id=1095 data-nosnippet>1095</a>            Path::new(<span class="kw-2">&amp;</span>path),
+<a href=#1096 id=1096 data-nosnippet>1096</a>            <span class="kw-2">&amp;</span>[<span class="string">"push"</span>, <span class="string">"-q"</span>, <span class="string">"origin"</span>, <span class="string">"--delete"</span>, <span class="string">"spare"</span>],
+<a href=#1097 id=1097 data-nosnippet>1097</a>        );
+<a href=#1098 id=1098 data-nosnippet>1098</a>        git(Path::new(<span class="kw-2">&amp;</span>path), <span class="kw-2">&amp;</span>[<span class="string">"fetch"</span>, <span class="string">"-q"</span>, <span class="string">"--prune"</span>, <span class="string">"origin"</span>]);
+<a href=#1099 id=1099 data-nosnippet>1099</a>        <span class="kw">let </span>why = refusal(<span class="kw-2">&amp;</span>svc, <span class="kw-2">&amp;</span>b.name, <span class="kw-2">&amp;</span>path).expect(<span class="string">"refused"</span>);
+<a href=#1100 id=1100 data-nosnippet>1100</a>        <span class="macro">assert!</span>(why.contains(<span class="string">"is gone"</span>), <span class="string">"{why}"</span>);
+<a href=#1101 id=1101 data-nosnippet>1101</a>    }
+<a href=#1102 id=1102 data-nosnippet>1102</a>
+<a href=#1103 id=1103 data-nosnippet>1103</a>    <span class="attr">#[test]
+<a href=#1104 id=1104 data-nosnippet>1104</a>    </span><span class="kw">fn </span>work_written_after_the_listing_is_seen_by_the_reclaim() {
+<a href=#1105 id=1105 data-nosnippet>1105</a>        <span class="kw">let </span>(_tmp, svc, b) = nominated();
+<a href=#1106 id=1106 data-nosnippet>1106</a>        <span class="kw">let </span>path = b.worktree.clone().expect(<span class="string">"a worktree"</span>);
+<a href=#1107 id=1107 data-nosnippet>1107</a>        <span class="kw">if </span>occupied(<span class="kw-2">&amp;</span>path).is_none() {
+<a href=#1108 id=1108 data-nosnippet>1108</a>            <span class="macro">eprintln!</span>(<span class="string">"no lsof: the occupancy reading refuses first, which is its own test"</span>);
+<a href=#1109 id=1109 data-nosnippet>1109</a>            <span class="kw">return</span>;
+<a href=#1110 id=1110 data-nosnippet>1110</a>        }
+<a href=#1111 id=1111 data-nosnippet>1111</a>        <span class="macro">assert_eq!</span>(
+<a href=#1112 id=1112 data-nosnippet>1112</a>            refusal(<span class="kw-2">&amp;</span>svc, <span class="kw-2">&amp;</span>b.name, <span class="kw-2">&amp;</span>path),
+<a href=#1113 id=1113 data-nosnippet>1113</a>            <span class="prelude-val">None</span>,
+<a href=#1114 id=1114 data-nosnippet>1114</a>            <span class="string">"nothing refuses a spare worktree"
+<a href=#1115 id=1115 data-nosnippet>1115</a>        </span>);
+<a href=#1116 id=1116 data-nosnippet>1116</a>        std::fs::write(
+<a href=#1117 id=1117 data-nosnippet>1117</a>            Path::new(<span class="kw-2">&amp;</span>path).join(<span class="string">"spare.txt"</span>),
+<a href=#1118 id=1118 data-nosnippet>1118</a>            <span class="string">"written after the listing\n"</span>,
+<a href=#1119 id=1119 data-nosnippet>1119</a>        )
+<a href=#1120 id=1120 data-nosnippet>1120</a>        .expect(<span class="string">"write"</span>);
+<a href=#1121 id=1121 data-nosnippet>1121</a>        <span class="kw">let </span>why = refusal(<span class="kw-2">&amp;</span>svc, <span class="kw-2">&amp;</span>b.name, <span class="kw-2">&amp;</span>path).expect(<span class="string">"refused"</span>);
+<a href=#1122 id=1122 data-nosnippet>1122</a>        <span class="macro">assert!</span>(why.contains(<span class="string">"uncommitted work"</span>), <span class="string">"{why}"</span>);
+<a href=#1123 id=1123 data-nosnippet>1123</a>    }
+<a href=#1124 id=1124 data-nosnippet>1124</a>}
 </code></pre></div></section></main></body></html>

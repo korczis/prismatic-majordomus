@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["APP_DIR","DOCKERFILE","DOCKERIGNORE","FLY_TOML","RUNTIME_IMAGE","RUN_USER","RUST_IMAGE"],"fn":["artifacts","dockerfile","dockerignore","fly_toml"]};
+window.SIDEBAR_ITEMS = {"constant":["APP_DIR","COMMIT_ARG","DIRTY_ARG","DOCKERFILE","DOCKERIGNORE","FLY_TOML","RUNTIME_IMAGE","RUN_USER","RUST_IMAGE"],"fn":["artifacts","dockerfile","dockerignore","fly_toml"]};

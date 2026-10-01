@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["UNCOMMITTED_RUN"],"enum":["Presented","Recorded","TreeState"],"fn":["aggregate","changed_between","compare","freshness","ledger_at","presented_commit","uncommitted","weakened_by"],"struct":["Comparison","Judgement","Supplementary"]};

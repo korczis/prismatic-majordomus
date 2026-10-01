@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["branches","dirty_state","issue_ids","issue_of","merged_into","merged_into_trunk","operation_in_progress","parse_branches","parse_status_z"],"struct":["BranchRef"]};
+window.SIDEBAR_ITEMS = {"fn":["branch","branches","dirty_state","dirty_states","gitdir_link","issue_ids","issue_of","merged_into","merged_into_trunk","operation_in_progress","parse_branches","parse_status_z"],"struct":["BranchRef"]};

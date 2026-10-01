@@ -2,17 +2,17 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "8e82a4abe1829fa34c645a797301fccae96f8021",
+  "commit": "c50c9d9d17f7c547b70bacf74bc5434425d705a4",
   "source_version": "0.11.0",
-  "registry_fingerprint": "9bc49171cd07ce2818f82a391e645fe078780e5363cbf3a7411b91da0c79ddbf"
+  "registry_fingerprint": "bb6c676b10f4a862e3e3ef65b0f62ae68cd4111ef26765e4b5a95c2101a5401c"
  },
  "counts": {
-  "pages": 1689,
-  "capabilities": 1704,
+  "pages": 1697,
+  "capabilities": 1729,
   "cli_commands": 74,
   "http_routes": 150,
   "mcp_tools": 146,
-  "mcp_resources": 1599,
+  "mcp_resources": 1624,
   "modules": 74
  },
  "kinds": [
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 70
+   "count": 71
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 204
+   "count": 207
   },
   {
    "kind": "command",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 286
+   "count": 290
   },
   {
    "kind": "feature",
@@ -190,7 +190,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 147
+   "count": 148
   },
   {
    "kind": "scope",
@@ -230,7 +230,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 286
+   "count": 302
   },
   {
    "kind": "use-case",
@@ -803,6 +803,14 @@
    "kind": "adr",
    "id": "majordomus://adr/adr-0089",
    "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md"
+  },
+  {
+   "route": "/adrs/adr-0097/",
+   "title": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
+   "description": "A plan stamp carries the seal of its event, because the ledger never leaves the checkout",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0097",
+   "source": ".ai/repo/adrs/0097-a-plan-stamp-carries-the-seal-of-its-event.md"
   },
   {
    "route": "/adrs/adr-0098/",
@@ -2143,7 +2151,7 @@
   {
    "route": "/docs/cli/worktree/cleanup/",
    "title": "majordomus worktree cleanup",
-   "description": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing"
+   "description": "The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove"
   },
   {
    "route": "/docs/cli/worktree/create/",
@@ -2451,6 +2459,11 @@
    "description": "route audit, ownership of site facts, validation performed"
   },
   {
+   "route": "/docs/surfaces/",
+   "title": "How Majordomus derives its surfaces",
+   "description": "how the system fits together: canonical state, discovery, typed registries, derived models, governance and evidence, and every surface projected from them — what is authored, discovered, derived, observed and inferred, a capability and a rule traced end to end, the generation matrix, a claim audit with file references, and the architecture debt that remains"
+  },
+  {
    "route": "/docs/two-folder-consolidation/",
    "title": "Two-folder consolidation",
    "description": "what the repository writes into a tree today, verified against the code and the running binary, and the ordered slices that reduce it to `.ai/**` and `.majordomus/**` with reversible bridges"
@@ -2713,7 +2726,7 @@
   {
    "route": "/doctrines/verification-integrity/",
    "title": "Verification integrity",
-   "description": "Completion requires a verification command that actually ran and exited 0; its exit code and duration are recorded."
+   "description": "Completion requires a verification command that actually ran and exited 0 over a tree that did not change under it; its exit code, duration and tree are recorded."
   },
   {
    "route": "/economics/",
@@ -3176,6 +3189,16 @@
    "description": "share/events.yaml declares every event name the ledger accepts, the command that writes"
   },
   {
+   "route": "/guarantees/evidence-a-failure-outranks-an-absence/",
+   "title": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+   "description": "A rule that names several tests takes one state from all of them. When any of those tests"
+  },
+  {
+   "route": "/guarantees/evidence-a-skip-is-not-run/",
+   "title": "A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing",
+   "description": "A recorded skip is a test that declined to run: it measured nothing, so it proves nothing,"
+  },
+  {
    "route": "/guarantees/evidence-currency-is-not-collapsed/",
    "title": "A run recorded against this commit and a run whose inputs merely have not changed since are reported as different states, never as one",
    "description": "Two passing runs can stand in very different relations to the tree in front of you, and"
@@ -3184,6 +3207,11 @@
    "route": "/guarantees/evidence-gates-done/",
    "title": "An issue cannot be completed while a required piece of evidence is missing",
    "description": "Each issue declares evidence_required: tokens naming the proofs its completion depends on. majordomus plan evidence attaches one piece of evidence against one of those tokens, and refuses a token the issue does not declare. majordomus plan done refuses while any token is uncovered. An issue whose completed_at is set but whose evidence is incomplete derives VERIFY, never DONE."
+  },
+  {
+   "route": "/guarantees/evidence-judged-at-the-presented-revision/",
+   "title": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+   "description": "Every verdict is a verdict at something. majordomus evidence show judges the working"
   },
   {
    "route": "/guarantees/evidence-navigates-both-ways/",
@@ -5513,7 +5541,7 @@
   {
    "route": "/registry/capabilities/evidence-report/",
    "title": "evidence.report",
-   "description": "The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process."
+   "description": "The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process."
   },
   {
    "route": "/registry/capabilities/evidence-test/",
@@ -5823,12 +5851,12 @@
   {
    "route": "/registry/capabilities/plan-transition/",
    "title": "plan.transition",
-   "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped and one event is appended to the ledger. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so."
+   "description": "Record that execution of an issue began (`start`), that implementation is complete with evidence outstanding (`verify`), or that it is finished (`done`). One field of the issue's own record is stamped, the seal of its event is written beside it, and the event is appended to the ledger; a stamp without that seal moves no status. The move is refused when the model says it is illegal — an issue that is not READY cannot start, one that was never ACTIVE cannot be verified, and one that was never started, whose dependencies are unfinished or whose required evidence is absent cannot be done — and the refusal names what is in the way. The status that comes back is derived from the record afterwards, not announced by the move: a `done` whose evidence is missing leaves the issue in VERIFY and says so."
   },
   {
    "route": "/registry/capabilities/plan-validate/",
    "title": "plan.validate",
-   "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading."
+   "description": "Every finding the derivation produced, in the order it produced them: a dependency on something that is not an issue, a cycle, an issue executing ahead of its dependencies or of its milestone's gate, an issue with no acceptance criteria, evidence missing under a completion date, a lifecycle stamp its transition did not write (no seal of its plan_* event beside it), a milestone whose graph contradicts itself, two issues of one wave sharing a path. A failure means the model is invalid; a warning means it is legal and worth reading."
   },
   {
    "route": "/registry/capabilities/plan-waves/",
@@ -7207,6 +7235,14 @@
    "source": ".ai/repo/rules/project/no-new-nouns.v1.md"
   },
   {
+   "route": "/rules/project-no-plan-stamp-without-its-event-1/",
+   "title": "No plan stamp without its event",
+   "description": "No plan stamp without its event",
+   "kind": "rule",
+   "id": "majordomus://rule/project.no-plan-stamp-without-its-event@1",
+   "source": ".ai/repo/rules/project/no-plan-stamp-without-its-event.v1.md"
+  },
+  {
    "route": "/rules/project-operation-transport-parity-1/",
    "title": "A command is the projection of a capability, or it says why it is not, and the reason is checked",
    "description": "A command is the projection of a capability, or it says why it is not, and the reason is checked",
@@ -7489,7 +7525,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.11.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 8e82a4abe1829fa34c645a797301fccae96f8021: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit c50c9d9d17f7c547b70bacf74bc5434425d705a4: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -7525,6 +7561,11 @@
    "route": "/rustdoc/majordomus_cli/bench/results/",
    "title": "majordomus_cli::bench::results - Rust",
    "description": "The result document: a versioned record of one benchmark run, with the provenance that makes it comparable (commit, dirty state, build profile, platform, registry fingerprint, profile) and, per target, the statistics of each cache mode measured. Local runs are written under the checkout’s local half; the accepted baseline is a tracked file of the same shape, minus the machine-local fields, promoted explicitly."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/build_identity/",
+   "title": "majordomus_cli::build_identity - Rust",
+   "description": "Which commit an executable was built from, and whether that tree was dirty: the decision `build.rs` makes once, at build time, and compiles in as `MAJORDOMUS_COMMIT` and `MAJORDOMUS_DIRTY` (read back as `crate::COMMIT` and `crate::DIRTY`)."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/",
@@ -8005,6 +8046,11 @@
    "route": "/rustdoc/majordomus_cli/evidence/",
    "title": "majordomus_cli::evidence - Rust",
    "description": "Evidence: what actually ran, against which commit, and whether it still proves anything."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/evidence/freshness/",
+   "title": "majordomus_cli::evidence::freshness - Rust",
+   "description": "Freshness: whether a recorded run still proves anything at the revision a reader is shown."
   },
   {
    "route": "/rustdoc/majordomus_cli/evidence/ledger/",
