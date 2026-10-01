@@ -14,6 +14,26 @@
 //! edit to documentation elsewhere in the repository does not mark the executable dirty, and
 //! a commit that touches no crate source does not rerun the build script, so the flag says
 //! what the build saw and not what the tree says now.
+//!
+//! ```
+//! use majordomus_cli::build_identity::{identify, HEAD_ARGS, STATUS_ARGS};
+//!
+//! // a plain `cargo build` in a checkout: git names the commit and reports a clean crate
+//! let sha = "0123456789abcdef0123456789abcdef01234567";
+//! let git = |args: &[&str]| match args {
+//!     a if a == HEAD_ARGS => Some(format!("{sha}\n")),
+//!     a if a == STATUS_ARGS => Some(String::new()),
+//!     _ => None,
+//! };
+//! assert_eq!(identify(None, None, git), (sha.to_string(), "false"));
+//!
+//! // a release build hands the commit and the flag in, and git is never asked
+//! let never = |args: &[&str]| -> Option<String> { panic!("git asked {args:?}") };
+//! assert_eq!(identify(Some(sha), Some("0"), never), (sha.to_string(), "false"));
+//!
+//! // a source tarball has neither git nor a declaration: both halves are `unknown`
+//! assert_eq!(identify(None, None, |_| None), ("unknown".to_string(), "unknown"));
+//! ```
 
 /// The arguments the build script hands git to learn the commit.
 pub const HEAD_ARGS: &[&str] = &["rev-parse", "HEAD"];
@@ -39,6 +59,20 @@ pub const STATUS_ARGS: &[&str] = &[
 /// declared (`true`/`1`, `false`/`0`); otherwise it is read from git only when git also named
 /// the commit — a commit handed in from outside says nothing about the tree it came from —
 /// and is `unknown` when neither said.
+///
+/// ```
+/// use majordomus_cli::build_identity::{identify, STATUS_ARGS};
+///
+/// // git names the commit and finds a tracked change in the crate: the build is dirty
+/// let git = |args: &[&str]| {
+///     Some(if args == STATUS_ARGS { " M src/lib.rs\n" } else { "abc123\n" }.to_string())
+/// };
+/// assert_eq!(identify(None, None, git), ("abc123".to_string(), "true"));
+///
+/// // a declared commit says nothing about the tree, so its dirtiness stays `unknown`
+/// let never = |args: &[&str]| -> Option<String> { panic!("git asked {args:?}") };
+/// assert_eq!(identify(Some(" def456 "), None, never), ("def456".to_string(), "unknown"));
+/// ```
 pub fn identify(
     declared_commit: Option<&str>,
     declared_dirty: Option<&str>,
