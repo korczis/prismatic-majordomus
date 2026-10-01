@@ -12377,8 +12377,8 @@ cli:
                 - text
           examples:
             - id: mesh-doctor
-              title: "Every mesh prerequisite, proved on this machine alone"
-              description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it."
+              title: "Every mesh prerequisite, and the server's verdict on the declaration"
+              description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory — then `runtime`: asked of this checkout's running server when one serves it, whether an enabled declaration actually activated the mesh. With no server, as here, the report is this process's and `runtime` says nothing was decided. Every check holds here, so the command exits 0; a failed check is a row that says why, and exits 10."
               argv:
                 - mesh
                 - doctor

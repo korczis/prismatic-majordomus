@@ -36,6 +36,9 @@ it is described as real.
   multicast on the local segment only, rendezvous hubs on the owner's private network and
   tailnet, and `deny_unknown` trust listing the owner's three machines' keys and no other
   (`docs/MESH.md`, "This repository's mesh"; `test/cases/491_the_mesh_is_on_here.sh`).
+  Every session start says whether this checkout's server holds that declaration: the hook
+  runs the executable's `mesh doctor`, which asks the server on loopback, so the hook library
+  itself still sends no request (ADR 0059; `test/cases/494_the_mesh_is_declared_and_held.sh`).
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.
