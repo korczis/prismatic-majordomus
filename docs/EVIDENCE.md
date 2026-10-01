@@ -479,8 +479,8 @@ as ADR 0087 amends it.
 
 ```mermaid
 flowchart LR
-  suite["suite job<br>suite.tsv · suite-tree.json"]
-  crate["rust job<br>cargo-test.txt · crate-tree.json"]
+  suite["suite job, four shards<br>suite.tsv · suite-tree.json, joined"]
+  crate["rust job, three lanes<br>cargo-test-1..3.txt · crate-tree.json, joined"]
   cov["coverage job<br>coverage.json"]
   collect["evidence job<br>scripts/ci/evidence-collect"]
   artifact["artifact `evidence`<br>report · ledger · coverage · manifest"]
@@ -574,6 +574,7 @@ newer run will refresh it.
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
 scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
   --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json
 ```

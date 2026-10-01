@@ -518,8 +518,8 @@ as ADR 0087 amends it.
 
 <pre class="mermaid">
 flowchart LR
-  suite["suite job&lt;br&gt;suite.tsv · suite-tree.json"]
-  crate["rust job&lt;br&gt;cargo-test.txt · crate-tree.json"]
+  suite["suite job, four shards&lt;br&gt;suite.tsv · suite-tree.json, joined"]
+  crate["rust job, three lanes&lt;br&gt;cargo-test-1..3.txt · crate-tree.json, joined"]
   cov["coverage job&lt;br&gt;coverage.json"]
   collect["evidence job&lt;br&gt;scripts/ci/evidence-collect"]
   artifact["artifact `evidence`&lt;br&gt;report · ledger · coverage · manifest"]
@@ -619,6 +619,7 @@ newer run will refresh it.
 ```sh
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
 scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
   --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json
 ```

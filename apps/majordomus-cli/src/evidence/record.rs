@@ -249,6 +249,15 @@ fn now_rfc3339() -> String {
 /// use majordomus_cli::evidence::parse_crate_binaries;
 /// assert!(parse_crate_binaries("nothing to see here").is_empty());
 /// ```
+/// The outputs of several lanes are joined end to end, so a binary whose run was cut short
+/// must not take the next result line, a doctest run's least of all:
+/// ```
+/// use majordomus_cli::evidence::parse_crate_binaries;
+/// let joined = "     Running tests/cut.rs (target/debug/deps/cut-1a2b)\n\
+///                  Doc-tests majordomus_cli\n\
+///               test result: ok. 900 passed; 0 failed; finished in 600.00s\n";
+/// assert!(parse_crate_binaries(joined).is_empty());
+/// ```
 pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
     let mut out = Vec::new();
     let mut pending: Option<String> = None;
@@ -262,6 +271,11 @@ pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
                 .strip_prefix("tests/")
                 .and_then(|p| p.strip_suffix(".rs"))
                 .map(str::to_string);
+            continue;
+        }
+        // a doctest run is not a test binary: its result belongs to nothing this records
+        if t.starts_with("Doc-tests ") {
+            pending = None;
             continue;
         }
         if let Some(rest) = t.strip_prefix("test result: ") {
