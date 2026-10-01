@@ -99,7 +99,9 @@ mj_validate_command_surface() {
 # Resolves one prefixed name of a `# majordomus-covers:` or `# majordomus-negative:` header
 # against the models under <root>. Exit 0: it names something that exists. Exit 1: it does
 # not, and stdout says why. Exit 2: it is a bare name, which the caller checks against the
-# public command surface. The doctor check and test/cases/31 both call this one function, so
+# public command surface. Exit 3: <root> does not carry the model that kind is resolved
+# against at all (an installed distribution ships bin/, lib/, share/ and test/, not scripts/
+# or .ai/), so the name can be neither confirmed nor refuted there, and stdout says which. The doctor check and test/cases/31 both call this one function, so
 # the rule cannot drift between them.
 #
 # Every match is literal. A name is data, not a pattern: `gate:.*` names no gate, and a
@@ -110,6 +112,7 @@ mj_covers_resolve() {
   case "$c" in
     gate:*)
       v="${c#gate:}"
+      [ -f "$root/.ai/repo/ci/gates.yaml" ] || { echo ".ai/repo/ci/gates.yaml"; return 3; }
       [ -n "$v" ] && grep -Fxq "  - id: $v" "$root/.ai/repo/ci/gates.yaml" 2>/dev/null && return 0
       echo "a test case declares coverage of gate '$v', which the model does not declare"
       return 1 ;;
@@ -117,16 +120,19 @@ mj_covers_resolve() {
       # The registry projection rather than the executable: this runs where the executable
       # may not be built, and the projection is committed and gate-held current.
       v="${c#capability:}"
+      [ -f "$root/docs/generated/registry.json" ] || { echo "docs/generated/registry.json"; return 3; }
       [ -n "$v" ] && grep -Fq "\"id\": \"$v\"" "$root/docs/generated/registry.json" 2>/dev/null && return 0
       echo "a test case declares coverage of capability '$v', which the registry does not carry"
       return 1 ;;
     workflow:*)
       v="${c#workflow:}"
+      [ -d "$root/.github/workflows" ] || { echo ".github/workflows/"; return 3; }
       case "$v" in ''|*/*|.*) ;; *) [ -f "$root/.github/workflows/$v" ] && return 0 ;; esac
       echo "a test case declares coverage of workflow '$v', which is not a file under .github/workflows/"
       return 1 ;;
     script:*)
       v="${c#script:}"
+      [ -d "$root/scripts" ] || { echo "scripts/"; return 3; }
       case "$v" in
         */../*|*/..|*/./*) ;;
         scripts/?*) [ -f "$root/$v" ] && [ -x "$root/$v" ] && return 0 ;;
@@ -193,7 +199,7 @@ mj_validate_command_coverage() {
   # loop above still requires every public command to be named by a bare one, so widening the
   # vocabulary cannot be used to satisfy the narrower obligation. mj_covers_resolve holds the
   # rule for the prefixed names; test/cases/31 calls the same function.
-  local why rc
+  local why rc undecided="" absent=""
   for c in $(printf '%s\n' $behaviour $negative | LC_ALL=C sort -u); do
     [ "$c" = none ] && continue
     rc=0; why="$(mj_covers_resolve "$root" "$c")" || rc=$?
@@ -201,10 +207,18 @@ mj_validate_command_coverage() {
       0) continue ;;
       1) mj_doctrine_fail command "$c" "$why" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1
          continue ;;
+      3) undecided="$undecided $c"
+         case " $absent " in *" $why "*) ;; *) absent="$absent $why" ;; esac
+         continue ;;
     esac
     grep -Fxq "$c" <<<"$public" || {
       mj_doctrine_fail command "$c" "a test case declares coverage of it, but it is not a public command" "grep -rn '$c' test/cases/ | grep majordomus-"; bad=1; }
   done
+  # A name this installation cannot resolve is reported as undecided, never as resolved and
+  # never as broken: the suite was copied without the models it names (case 28 and case 65
+  # run from such a copy), and the repository's own run of case 31 decides it.
+  [ -z "$undecided" ] || mj_doctrine_skip command "coverage" \
+    "not resolved here, this installation carries no${absent}:${undecided}" "bash test/run.sh 31_command_coverage"
 
   [ "$bad" = 0 ] && mj_doctrine_ok command "coverage" "every public command is exercised and refuted" "bash test/run.sh 31_command_coverage"
   return 0

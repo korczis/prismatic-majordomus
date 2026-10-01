@@ -83,6 +83,7 @@ for c in $(awk '$1 != "-" {print $1}' "$CLAIMS" | LC_ALL=C sort -u); do
   case "$rc" in
     0) continue ;;
     1) echo "    $why"; exit 1 ;;
+    3) echo "    '$c' cannot be resolved: this tree carries no $why"; exit 1 ;;
   esac
   printf '%s\n' $public | grep -qx "$c" || {
     echo "    a test case declares coverage of '$c', which is not a public command"

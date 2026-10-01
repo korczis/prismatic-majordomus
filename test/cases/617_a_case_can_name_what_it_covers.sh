@@ -154,6 +154,27 @@ rc31="$(case31_rc)"
   || { echo "    case 31 lets gate:$drop stand in for the command '$drop':"; sed 's/^/      /' "$T/c31.out"; exit 1; }
 echo "    a prefixed name does not count as command coverage; the older obligation is untouched"
 
+# ---- 4b. an installation without the model is undecided, not broken
+# An installed distribution (case 28, case 65) copies bin/, lib/, share/ and test/ but not
+# scripts/. There a script: name can be neither confirmed nor refuted: the doctor validator
+# must say so by name and must not fail, and case 31, which runs in the repository, refuses it.
+base_suite "$public"
+printf '# majordomus-covers: script:scripts/ci/real\n' > "$FX/test/cases/z_probe.sh"
+mv "$FX/scripts" "$T/scripts.held"
+doctor_says > "$T/d.out"
+rc31="$(case31_rc)"
+mv "$T/scripts.held" "$FX/scripts"
+if grep -q '^FAIL' "$T/d.out"; then
+  echo "    an installation without scripts/ fails a script: name it cannot decide:"
+  sed 's/^/      /' "$T/d.out"; exit 1
+fi
+grep -q '^OK coverage$' "$T/d.out" && grep -Fq 'script:scripts/ci/real' "$T/d.out" \
+  && grep -Fq 'carries no scripts/' "$T/d.out" \
+  || { echo "    the doctor validator does not name the undecided script: name:"; sed 's/^/      /' "$T/d.out"; exit 1; }
+[ "$rc31" = 1 ] && grep -Fq 'carries no scripts/' "$T/c31.out" \
+  || { echo "    case 31 accepts a script: name in a tree without scripts/ (rc $rc31):"; sed 's/^/      /' "$T/c31.out"; exit 1; }
+echo "    a tree without the model leaves the name undecided in the doctor and refused by case 31"
+
 # ---- 5. and it is used, not merely available
 # A vocabulary nobody speaks is a vocabulary nobody can be held to. This case declares none,
 # and is excluded anyway, so it can never count itself.
