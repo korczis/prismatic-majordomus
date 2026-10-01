@@ -20,7 +20,7 @@
 # reaches the timeout branch and the verdict comes from the build status alone.
 . "$ROOT/test/lib.sh"
 
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "no curl"
 
 TIP="$(git -C "$ROOT" rev-parse origin/gh-pages 2>/dev/null || echo 0000000000000000000000000000000000000000)"
 WANT=1234567890abcdef1234567890abcdef12345678   # a commit the site will never serve
@@ -56,7 +56,7 @@ echo "    a site that cannot be reached is not reported as a failed publication"
 # network, and a case that fails on connectivity teaches nobody anything.
 LIVE="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
 curl -fsS --max-time 10 "${LIVE%/}/build.json" >/dev/null 2>&1 || {
-  echo "    (the published site did not answer; the served-commit sections need it)"; exit 0; }
+  skip "the published site did not answer; the served-commit sections need it"; }
 
 verify_live() {
   rc=0
