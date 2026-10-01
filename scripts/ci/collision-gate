@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# collision-gate — the caller scripts/collision-check never had.
+#
+# CLAUDE.md told every worker to run `scripts/collision-check --new <paths>` before
+# implementing, and nothing ran it. On 2026-09-13 that cost, each caught by hand in messages
+# between sessions: three branches allocating one case number, three sessions starting one
+# fix, two pull requests making one identical workflow change, two branches fixing what had
+# already merged. A guard only
+# a person remembers to run is a habit, and a habit is what failed.
+#
+# So a pull request asks it: every path the pull request adds relative to its merge base
+# with the base branch, against every unmerged branch that is not the pull request's own.
+# It runs in the structure job, which checks out at fetch-depth 0 and so sees every pushed
+# branch; the detector says so and exits 12 when it cannot see them, rather than passing.
+#
+# What refuses and what only reports is scripts/collision-check's classification:
+#   collision  a branch neither built on this pull request nor under it added the same new
+#              path with different content — exit 11, refused, naming the branch;
+#   related    a branch sharing the commit that added the path (the pushed branch a
+#              follow-up is built on, or one built on this) — listed, passes;
+#   same       a branch carrying the same bytes (a rescue copy, a cherry-pick) — listed,
+#              passes;
+#   diverged   a branch byte-identical on some added paths and different on others: a copy
+#              of this work that moved on (a rescue, a re-cut) — listed, passes, one is stale.
+# A path the pull request's .gitattributes declares merge=derived is counted, not examined.
+# A person who has read a collision and decided to land anyway (the other branch is
+# abandoned and not theirs to delete, or two designs are meant to be compared) labels the
+# pull request `collision:accepted`. The collision is still printed, and the label is on
+# the pull request for a reviewer to see; the workflow runs again on `labeled`.
+#
+# The pull request's own branch is excluded by name. In CI `HEAD` is a detached merge
+# commit, so the detector cannot learn that name from the checkout: it is GITHUB_HEAD_REF,
+# and the head commit is the event's `pull_request.head.sha` (origin/GITHUB_HEAD_REF
+# without an event file).
+#
+#   scripts/ci/collision-gate          on a pull_request event: the pull request
+#                                      outside Actions: this checkout's HEAD against
+#                                      origin/master (MJ_COLLISION_BASE overrides)
+#   MJ_ROOT=<dir> scripts/ci/collision-gate      another checkout (the case does)
+#
+# Exit: 0 no collision, or accepted by label · 11 a collision · 12 could not measure · 2 usage.
+set -eu
+set -o pipefail
+HERE="$(cd "$(dirname "$0")" && pwd)"
+CHECK="$HERE/../collision-check"
+ROOT="${MJ_ROOT:-$(cd "$HERE/../.." && pwd)}"
+cd "$ROOT"
+ACCEPT="collision:accepted"
+
+[ $# = 0 ] || { printf 'collision-gate: takes no arguments (got %s)\n' "$1" >&2; exit 2; }
+
+args=(--added)
+labels=""
+event="${GITHUB_EVENT_NAME:-}"
+case "$event" in
+  pull_request|pull_request_target)
+    [ -n "${GITHUB_HEAD_REF:-}" ] && [ -n "${GITHUB_BASE_REF:-}" ] || {
+      printf 'collision-gate: CANNOT MEASURE  a %s event without GITHUB_HEAD_REF and GITHUB_BASE_REF names no branch to check\n' "$event" >&2
+      exit 12
+    }
+    head=""
+    if [ -n "${GITHUB_EVENT_PATH:-}" ] && [ -r "$GITHUB_EVENT_PATH" ]; then
+      command -v jq >/dev/null 2>&1 || { printf 'collision-gate: jq is required to read %s\n' "$GITHUB_EVENT_PATH" >&2; exit 12; }
+      head="$(jq -r '.pull_request.head.sha // empty' "$GITHUB_EVENT_PATH")"
+      labels="$(jq -r '.pull_request.labels[]?.name' "$GITHUB_EVENT_PATH")"
+    fi
+    # Not HEAD^2. Every merge commit has a second parent, and a checkout that happens to sit
+    # on one (master is a chain of them) would hand over some other pull request's head, which
+    # is merged and adds nothing: every run would pass having measured nothing. The event
+    # names the head; without an event, the pushed branch does; without either, the detector
+    # reports that the head does not resolve and exits 12.
+    [ -n "$head" ] || head="origin/$GITHUB_HEAD_REF"
+    args+=(--since "origin/$GITHUB_BASE_REF" --head "$head" --exclude "origin/$GITHUB_HEAD_REF")
+    printf 'collision-gate: pull request %s -> %s, head %s\n' "$GITHUB_HEAD_REF" "$GITHUB_BASE_REF" "$head"
+    ;;
+  "")
+    args+=(--since "${MJ_COLLISION_BASE:-origin/master}")
+    ;;
+  *)
+    printf 'collision-gate: a %s run, not a pull request: the tree under test is the base branch itself, which adds nothing for another branch to claim\n' "$event"
+    exit 0
+    ;;
+esac
+
+status=0
+"$CHECK" "${args[@]}" || status=$?
+[ "$status" = 11 ] || exit "$status"
+
+if printf '%s\n' "$labels" | grep -qxF "$ACCEPT"; then
+  printf '\ncollision-gate: ACCEPTED  the collision above is accepted by the label %s on this pull request; reported, not refused\n' "$ACCEPT"
+  exit 0
+fi
+cat >&2 <<WHY
+
+collision-gate: REFUSED  a path this pull request adds is being built, differently, on
+another unmerged branch named above. Read it, then one of:
+  - build on it instead: rebase onto that branch, and the claim becomes related work;
+  - rename your path, if the two are different things that happen to share a name;
+  - have its owner land it or delete it, if it is abandoned;
+  - label this pull request $ACCEPT, as a person, having read both.
+WHY
+exit 11

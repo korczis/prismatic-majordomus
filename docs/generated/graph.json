@@ -1841,14 +1841,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/economics",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/economics/claims.rs",
         "kind": "file",
         "label": "claims.rs",
@@ -2313,14 +2305,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "file",
-        "label": "model.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/model.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -2462,14 +2446,6 @@
         "label": "registry.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/registry.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/why.rs",
         "external": true
       },
       {
@@ -2926,14 +2902,6 @@
         "label": "index.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/index.html",
-        "external": true
-      },
-      {
-        "id": "file:test/fixtures/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/fixtures/economics",
         "external": true
       },
       {
@@ -13383,6 +13351,7 @@
           ],
           "cockpit": [
             "worktrees",
+            "peers",
             "integration"
           ],
           "commands": [
@@ -36471,6 +36440,13 @@
         "source": "test/cases/330_a_contract_is_the_kind_it_declares.sh"
       },
       {
+        "id": "majordomus://test/test/cases/331_knowledge_nodes_is_gated.sh",
+        "kind": "test",
+        "label": "test/cases/331_knowledge_nodes_is_gated.sh",
+        "route": "/cockpit/objects/test/test-cases-331-knowledge-nodes-is-gated-sh",
+        "source": "test/cases/331_knowledge_nodes_is_gated.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/333_homepage_narrative.sh",
         "kind": "test",
         "label": "test/cases/333_homepage_narrative.sh",
@@ -36518,6 +36494,13 @@
         "label": "test/cases/33_stale_executable.sh",
         "route": "/cockpit/objects/test/test-cases-33-stale-executable-sh",
         "source": "test/cases/33_stale_executable.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "kind": "test",
+        "label": "test/cases/343_the_cockpit_shows_who_else_is_here.sh",
+        "route": "/cockpit/objects/test/test-cases-343-the-cockpit-shows-who-else-is-here-sh",
+        "source": "test/cases/343_the_cockpit_shows_who_else_is_here.sh"
       },
       {
         "id": "majordomus://test/test/cases/349_a_step_reports_its_own_time.sh",
@@ -36686,6 +36669,13 @@
         "label": "test/cases/405_the_knowledge_reader_honours_the_schema.sh",
         "route": "/cockpit/objects/test/test-cases-405-the-knowledge-reader-honours-the-schema-sh",
         "source": "test/cases/405_the_knowledge_reader_honours_the_schema.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/406_one_declaration_every_surface.sh",
+        "kind": "test",
+        "label": "test/cases/406_one_declaration_every_surface.sh",
+        "route": "/cockpit/objects/test/test-cases-406-one-declaration-every-surface-sh",
+        "source": "test/cases/406_one_declaration_every_surface.sh"
       },
       {
         "id": "majordomus://test/test/cases/408_a_receipt_is_provider_neutral.sh",
@@ -37043,6 +37033,13 @@
         "label": "test/cases/560_a_case_number_names_one_case.sh",
         "route": "/cockpit/objects/test/test-cases-560-a-case-number-names-one-case-sh",
         "source": "test/cases/560_a_case_number_names_one_case.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/566_the_collision_guard_has_a_caller.sh",
+        "kind": "test",
+        "label": "test/cases/566_the_collision_guard_has_a_caller.sh",
+        "route": "/cockpit/objects/test/test-cases-566-the-collision-guard-has-a-caller-sh",
+        "source": "test/cases/566_the_collision_guard_has_a_caller.sh"
       },
       {
         "id": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
@@ -49116,11 +49113,6 @@
       },
       {
         "source": "majordomus://claim/web-surface-declared-once",
-        "target": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/web-surface-declared-once",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49141,11 +49133,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49161,11 +49148,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49178,11 +49160,6 @@
         "source": "majordomus://claim/why-references-resolve",
         "target": "file:apps/majordomus-cli/src/why.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -49458,16 +49435,6 @@
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:apps/majordomus-cli/src/economics",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:test/fixtures/economics",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.benchmarks.economics",
@@ -58440,6 +58407,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/331_knowledge_nodes_is_gated.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/333_homepage_narrative.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58471,6 +58443,11 @@
       },
       {
         "source": "majordomus://test/test/cases/33_stale_executable.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/343_the_cockpit_shows_who_else_is_here.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -58591,6 +58568,11 @@
       },
       {
         "source": "majordomus://test/test/cases/405_the_knowledge_reader_honours_the_schema.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/406_one_declaration_every_surface.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -58846,6 +58828,11 @@
       },
       {
         "source": "majordomus://test/test/cases/560_a_case_number_names_one_case.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/566_the_collision_guard_has_a_caller.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62182,7 +62169,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4451,
+      "edges": 4449,
       "acyclic": true,
       "truncated": true
     }
