@@ -8,6 +8,18 @@
       "route": "/docs/design/"
     },
     {
+      "path": "HOW_IT_WORKS.md",
+      "audience": "everyone, integrators, AI workers",
+      "summary": "how the tool works as one repository model with many projections: authored, discovered, derived, observed and inferred state; the capability declaration and every surface derived from it, including where the command line and the Cockpit are still written by hand; the rule proof ladder from declared to evidenced; sessions, context, handover, planning, the peer board and the mesh; publication and versions; and the architecture debt, measured",
+      "route": "/docs/how-it-works/"
+    },
+    {
+      "path": "GUIDE.md",
+      "audience": "everyone, teams, AI workers",
+      "summary": "what a team gets from the tool and why, then every part of it in turn: how it works, the commands to see it, the test cases that prove it and how finished it is; the first ten minutes; running the proof yourself and keeping the run as evidence; and what it does not do yet",
+      "route": "/docs/guide/"
+    },
+    {
       "path": "TWO_FOLDER_CONSOLIDATION.md",
       "audience": "humans and AI workers",
       "summary": "what the repository writes into a tree today, verified against the code and the running binary, and the ordered slices that reduce it to `.ai/**` and `.majordomus/**` with reversible bridges",
@@ -100,7 +112,7 @@
     {
       "path": "RELEASE.md",
       "audience": "everyone, maintainers",
-      "summary": "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the two statements of the version and the one command that writes them; the bump the commits imply and the evidence for it; and every surface derived from both",
+      "summary": "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version authored in one place, its projection for the shell tool, and the one command that writes it; the bump the commits imply and the evidence for it; and every surface derived from both",
       "route": "/docs/release/"
     },
     {
@@ -224,6 +236,12 @@
       "route": "/docs/environment/"
     },
     {
+      "path": "PREFLIGHT.md",
+      "audience": "everyone, AI workers",
+      "summary": "the preflight: what is proven about a checkout rather than what it is — a verdict per claim (git, episode, briefing, task, handover, policy, rules, ADRs, server and surfaces, peers, test runs, enforcement, projections, generated docs, deployment) with the evidence behind it; the nine verdicts, what entry reads and never reads, the measured cost, and what to run for each verdict",
+      "route": "/docs/preflight/"
+    },
+    {
       "path": "BACKLOG.md",
       "audience": "maintainers, AI workers",
       "summary": "the four quantities that grow on their own — open pull requests, worktrees, branches, running servers; why GitHub can never merge a pull request of this repository and what lands one instead; the commands that measure and reduce each",
@@ -284,16 +302,34 @@
       "route": "/docs/quality/"
     },
     {
+      "path": "RUSTDOC.md",
+      "audience": "everyone, contributors, integrators",
+      "summary": "the crate's rustdoc reference at `/rustdoc`: produced by the invocation its gate proves, declared as a web surface from the crate, served by `majordomus serve`, checked item by item against the crate's own inventory, composed into the site from the topology, deployed with it and verified at the public URL; local use, the gates and cases, and what to run when a page, a link, an asset or the source revision is wrong",
+      "route": "/docs/rustdoc/"
+    },
+    {
       "path": "EVIDENCE.md",
       "audience": "maintainers, contributors",
       "summary": "a claim's proof as a recorded execution rather than a test path that resolves: the test identity derived from the matrix, the seven proof states and how each is derived, why `proven` and `inputs unchanged` are never one state, the ledger's shape and its retention decision, recording a run, the four capabilities with their projections, both directions of the join, the gate and its ratchet, and the limits",
       "route": "/docs/evidence/"
     },
     {
+      "path": "DELIVERY.md",
+      "audience": "maintainers, contributors",
+      "summary": "whether a product feature exists, computed rather than recorded: the six dimensions of the delivery invariant, the three verdicts and why unknown is never pass, delivery and the development stage as two types, how each dimension is derived from git and the public identity, the reuse of `scripts/pages`, and what phase 1 leaves unknown",
+      "route": "/docs/delivery/"
+    },
+    {
       "path": "CI.md",
       "audience": "contributors, AI workers",
       "summary": "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live",
       "route": "/docs/ci/"
+    },
+    {
+      "path": "SHELL.md",
+      "audience": "contributors, AI workers",
+      "summary": "shell automation under migration: the inventory of every unit and its disposition, the `shell check` that refuses a shell unit no exemption declares and an exemption whose unit is gone, the exemption format, and how a unit is migrated out of the list",
+      "route": "/docs/shell/"
     },
     {
       "path": "GITHUB_PAGES_PERFORMANCE.md",

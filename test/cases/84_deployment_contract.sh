@@ -1,4 +1,5 @@
 # majordomus-covers: doctor
+# claims: deployment-contract-refuses-by-name
 # A deployment is described once, in the layer, against a closed contract.
 #
 # `init` seeds the section with its contract and nothing in it, so a repository that later

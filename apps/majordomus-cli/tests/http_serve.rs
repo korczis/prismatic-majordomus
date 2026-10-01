@@ -2,13 +2,15 @@
 //! requests, the OpenAPI document, the Swagger shell, capability operations, errors, and
 //! the same answer from HTTP and MCP for the same capability.
 
+// claims: mcp-uri-resolution
+
 mod common;
 
 use std::collections::BTreeSet;
 use std::io::{BufRead, Write};
 use std::process::{Command, Stdio};
 
-use common::{rule, Fixture, Served, BIN};
+use common::{rule, without_observation_times, Fixture, Served, BIN};
 use serde_json::{json, Value};
 
 #[test]
@@ -287,6 +289,117 @@ fn mcp_and_http_answer_the_same_capability_with_the_same_result() {
     assert_eq!(via_http, via_mcp);
 }
 
+/// One MCP session over stdio: every request in order, then end of input. The responses
+/// are returned keyed by their id.
+fn mcp_session(
+    cwd: &std::path::Path,
+    requests: &[Value],
+) -> std::collections::BTreeMap<u64, Value> {
+    let mut child = Command::new(BIN)
+        .args(["mcp", "--standalone"])
+        .env("MAJORDOMUS_SHARE", common::dist_share())
+        .current_dir(cwd)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .spawn()
+        .unwrap();
+    {
+        let mut stdin = child.stdin.take().unwrap();
+        writeln!(stdin, "{}", json!({ "jsonrpc": "2.0", "id": 0, "method": "initialize", "params": { "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": { "name": "t", "version": "0" } } })).unwrap();
+        for r in requests {
+            writeln!(stdin, "{r}").unwrap();
+        }
+    }
+    let out = child.wait_with_output().unwrap();
+    String::from_utf8(out.stdout)
+        .unwrap()
+        .lines()
+        .map(|l| serde_json::from_str::<Value>(l).expect("a JSON frame"))
+        .map(|v| (v["id"].as_u64().expect("a numbered response"), v))
+        .collect()
+}
+
+/// The claim `mcp-uri-resolution`, over the real executables: for a file of the layer, for
+/// `majordomus://repository` and for a URI nothing projects, the MCP resource read, the
+/// `majordomus_get` tool and `GET /api/v1/object` give the same answer — the same document
+/// from the tool and the route, the same text and media type from the read, and "not found"
+/// from all three for the unknown URI.
+#[test]
+fn a_uri_resolves_alike_through_the_resource_read_the_get_tool_and_the_object_route() {
+    let f = Fixture::new();
+    let s = Served::start(&f.root(), &[]);
+    let (_, report) = s.get("/api/v1/repository");
+    let uris = [
+        "majordomus://rule/project.alpha@1",
+        "majordomus://repository",
+        "majordomus://rule/none@1",
+    ];
+    let mut requests = Vec::new();
+    for (i, uri) in uris.iter().enumerate() {
+        let base = 10 * (i as u64 + 1);
+        requests.push(json!({ "jsonrpc": "2.0", "id": base + 1, "method": "resources/read", "params": { "uri": uri } }));
+        requests.push(json!({ "jsonrpc": "2.0", "id": base + 2, "method": "tools/call", "params": { "name": "majordomus_get", "arguments": { "uri": uri } } }));
+    }
+    let frames = mcp_session(&f.root(), &requests);
+
+    for (i, uri) in uris.iter().enumerate() {
+        let base = 10 * (i as u64 + 1);
+        let read = &frames[&(base + 1)];
+        let got = &frames[&(base + 2)]["result"];
+        let (status, routed) = s.get(&format!("/api/v1/object?uri={uri}"));
+        if *uri == "majordomus://rule/none@1" {
+            assert_eq!(
+                (status, routed["error"]["code"].as_str()),
+                (404, Some("not_found")),
+                "the object route: {routed}"
+            );
+            assert_eq!(read["error"]["code"], -32002, "resources/read: {read}");
+            assert_eq!(got["isError"], true, "majordomus_get: {got}");
+            assert!(
+                got["content"][0]["text"]
+                    .as_str()
+                    .unwrap_or_default()
+                    .contains(uri),
+                "majordomus_get names the URI it could not find: {got}"
+            );
+            continue;
+        }
+        assert_eq!(status, 200, "{uri}: {routed}");
+        assert_eq!(got["isError"], false, "{uri}: {got}");
+        // the MCP session is another process, which read the repository at its own time
+        let unobserved = |v: &Value| without_observation_times(&v.to_string());
+        assert_eq!(
+            unobserved(&got["structuredContent"]),
+            unobserved(&routed),
+            "{uri}: majordomus_get and the object route give different documents"
+        );
+        let contents = &read["result"]["contents"][0];
+        assert_eq!(contents["uri"], *uri);
+        assert_eq!(
+            unobserved(&contents["text"]),
+            unobserved(&routed["content"]),
+            "{uri}: resources/read returns other text than the object route"
+        );
+        assert_eq!(
+            contents["mimeType"], routed["media_type"],
+            "{uri}: resources/read and the object route disagree on the media type"
+        );
+        if *uri == "majordomus://repository" {
+            assert_eq!(routed["source"], "builtin");
+            assert_eq!(routed["id"], "repository.info");
+            assert_eq!(routed["media_type"], "application/json");
+            assert_eq!(routed["answer"], report, "the answer is repository.info's");
+            let text: Value = serde_json::from_str(contents["text"].as_str().unwrap())
+                .expect("resources/read returns the report as a JSON document");
+            assert_eq!(unobserved(&text), unobserved(&report));
+        } else {
+            assert_eq!(routed["source"], "declarative");
+            assert_eq!(contents["text"], rule("project.alpha", 1, "Alpha"));
+        }
+    }
+}
+
 #[test]
 fn a_declarative_object_added_to_the_repository_reaches_http_and_introspection_untouched() {
     let f = Fixture::new();
@@ -393,6 +506,112 @@ fn a_surface_answers_its_own_mount_and_nothing_invents_a_route_under_it() {
         !body.contains("swagger"),
         "/docs is documentation, never the viewer: {body}"
     );
+}
+
+/// The crate's rustdoc through the whole server: discovered because the crate exists,
+/// answered with what to run while it is not built, and once built served whole — the
+/// landing page, the crate's page, the hashed stylesheet, script and font under
+/// `static.files/`, and the redirect stub rustdoc names after a macro with its `!` —
+/// each with the content type a browser needs to use it.
+#[test]
+fn the_crates_rustdoc_is_served_whole_under_its_own_mount() {
+    let f = Fixture::new();
+    f.write(
+        "apps/majordomus-cli/Cargo.toml",
+        "[package]\nname = \"fixture\"\n",
+    );
+    f.write(
+        "apps/majordomus-cli/src/lib.rs",
+        "//! the fixture's crate\n",
+    );
+
+    {
+        let s = Served::start(&f.root(), &[]);
+        let (status, _, body) = s.request("GET", "/rustdoc/", None);
+        assert_eq!(status, 503, "an unbuilt reference says so: {body}");
+        assert!(body.contains("scripts/rust-check --doc"), "{body}");
+    }
+
+    let tree = [
+        ("index.html", "<!DOCTYPE html><title>landing</title>"),
+        ("static.files/a.css", "body{}"),
+        ("static.files/b.js", "var b;"),
+        ("static.files/c.woff2", "wOF2"),
+        (
+            "majordomus_cli/index.html",
+            "<!DOCTYPE html><title>majordomus_cli - Rust</title>",
+        ),
+        (
+            "majordomus_cli/macro.m!.html",
+            "<meta http-equiv=\"refresh\" content=\"0;URL=macro.m.html\">",
+        ),
+        (
+            "surface.json",
+            r#"{"schema":"web-surface/v1","id":"rustdoc","mount":"/rustdoc","built_from":"abc"}"#,
+        ),
+    ];
+    for (file, body) in tree {
+        f.write(&format!("target/web/rustdoc/{file}"), body);
+    }
+    let s = Served::start(&f.root(), &[]);
+    for (path, media, says) in [
+        ("/rustdoc/", "text/html; charset=utf-8", "landing"),
+        (
+            "/rustdoc/static.files/a.css",
+            "text/css; charset=utf-8",
+            "body{}",
+        ),
+        (
+            "/rustdoc/static.files/b.js",
+            "text/javascript; charset=utf-8",
+            "var b;",
+        ),
+        ("/rustdoc/static.files/c.woff2", "font/woff2", "wOF2"),
+        (
+            "/rustdoc/majordomus_cli/index.html",
+            "text/html; charset=utf-8",
+            "majordomus_cli - Rust",
+        ),
+        (
+            "/rustdoc/majordomus_cli/macro.m!.html",
+            "text/html; charset=utf-8",
+            "URL=macro.m.html",
+        ),
+    ] {
+        let (status, headers, body) = s.request("GET", path, None);
+        assert_eq!(status, 200, "GET {path}: {body}");
+        assert!(
+            headers
+                .iter()
+                .any(|(k, v)| k == "content-type" && v == media),
+            "GET {path} is not {media}: {headers:?}"
+        );
+        assert!(body.contains(says), "GET {path}: {body}");
+    }
+    // the mount without its slash would resolve every relative link one level too high
+    let (status, headers, _) = s.request("GET", "/rustdoc", None);
+    assert_eq!(status, 308);
+    assert!(
+        headers
+            .iter()
+            .any(|(k, v)| k == "location" && v == "/rustdoc/"),
+        "{headers:?}"
+    );
+    // and allowing `!` let nothing out of the directory
+    f.write("target/web/secret!.html", "<b>outside</b>");
+    for hostile in [
+        "/rustdoc/../secret!.html",
+        "/rustdoc/majordomus_cli/../../secret!.html",
+        "/rustdoc/%2e%2e/secret!.html",
+        "/rustdoc/!/../../secret!.html",
+    ] {
+        let (status, _, body) = s.request("GET", hostile, None);
+        assert!(
+            status == 400 || status == 404,
+            "GET {hostile} answered {status}: {body}"
+        );
+        assert!(!body.contains("outside"), "GET {hostile}: {body}");
+    }
 }
 
 #[test]

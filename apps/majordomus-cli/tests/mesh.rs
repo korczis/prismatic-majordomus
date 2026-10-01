@@ -9,9 +9,17 @@
 //! two runtimes exchange envelopes through `register` exactly as two servers would,
 //! and each converges on one record of the other.
 //!
-//! docs/CLAIMS.yaml marks `mesh-off-by-default` and `mesh-observation-not-authority` as
-//! guaranteed and names this file as the test that proves them; the ids are written here
-//! so the link reads from both ends. `a_disabled_declaration_opens_nothing_and_says_why`
+//! docs/CLAIMS.yaml marks `mesh-off-by-default`, `mesh-one-registry` and
+//! `mesh-observation-not-authority` as guaranteed and names this file as the test that
+//! proves them; the ids are written here so the link reads from both ends.
+//! `mesh-one-registry` is the registry half of
+//! `a_server_activates_the_mesh_and_registration_converges_to_one_record`: one canonical
+//! record per node and runtime however many envelopes arrive, a replay refused per
+//! instance, a restart that updates rather than duplicates, and every projection —
+//! `/api/v1/mesh`, `/api/v1/mesh/nodes` — reading that one registry and holding no peers
+//! of its own. (The claim named test/cases/130_mesh.sh until 2026-09-20; that case says in
+//! its own header that it runs without a network and covers the operator's path, so it
+//! carried no part of this claim.) `a_disabled_declaration_opens_nothing_and_says_why`
 //! is the first: no socket opens until an enabled declaration is committed, and the
 //! disabled declaration is reported as the reason rather than as an error. The trust
 //! assertions of `a_server_activates_the_mesh_and_registration_converges_to_one_record`
@@ -148,6 +156,26 @@ fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     );
     assert_eq!(nodes["nodes"][0]["restarts"], json!(1));
 
+    // Replay protection is per instance, so the pre-restart envelope is a fresh sequence
+    // of a past instance rather than a replay of the current one — and the registry is
+    // one record per node either way: whatever arrives, from whichever instance, in
+    // whichever order, this node is one row and never two.
+    post(
+        &s,
+        "/api/v1/mesh/register",
+        &json!({ "envelope": envelope }),
+    );
+    let (_, nodes) = s.get("/api/v1/mesh/nodes");
+    assert_eq!(
+        nodes["count"],
+        json!(1),
+        "one record per node, across instances and sources: {nodes}"
+    );
+    assert_eq!(
+        nodes["nodes"][0]["node_id"],
+        json!(caller.public.node_id.as_str())
+    );
+
     // The status tallies agree with the registry every surface reads.
     let (_, mesh) = s.get("/api/v1/mesh");
     assert_eq!(mesh["tallies"]["nodes"], json!(1));
@@ -227,6 +255,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         broadcast: Default::default(),
         rendezvous: Default::default(),
         trust: Default::default(),
+        cooperation: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();

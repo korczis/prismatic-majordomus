@@ -17,7 +17,7 @@
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as every Rust case does.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE

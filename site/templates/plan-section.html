@@ -9,7 +9,7 @@
 {% block content %}
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 {%- set plan = load_data(path="data/generated/plan.json") -%}
-{%- set repo = "https://github.com/korczis/prismatic-majordomus/blob/master/" -%}
+{%- set repo = <source_blob path="" /> -%}
 {%- set issues = plan.issues -%}
 {#- The vocabulary comes from the engine, not from this file: plan.json carries the statuses
     project.awk declares, so a status added there gets a tile here without an edit. -#}
@@ -22,7 +22,7 @@
     <div><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">{{ st | lower }}</dt><dd class="mt-1 text-2xl font-semibold text-heading">{{ [i for i in issues if i.status == st] | length }}</dd></div>
     {%- endfor %}
   </dl>
-  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="https://github.com/korczis/prismatic-majordomus/tree/master/.ai/repo/project" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">How that works</a>.</p>
+  <p class="mt-4 max-w-3xl text-sm text-body">Derived when this page was built, from <a href="{{ <source_tree path=".ai/repo/project" /> }}" class="text-fg-brand underline">the canonical model</a>. No status is stored: each one is computed from what an issue recorded about itself and from the state of its dependencies. <a href="{{ get_url(path="/docs/planning/", trailing_slash=true) }}" class="text-fg-brand underline">How that works</a>.</p>
 
   {%- if plan.next_ready %}
   {%- set nx = [i for i in issues if i.id == plan.next_ready] -%}

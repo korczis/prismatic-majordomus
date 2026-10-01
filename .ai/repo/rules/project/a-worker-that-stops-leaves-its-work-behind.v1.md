@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.work-is-claimed-before-it-is-built@1]
 tags: [process, integration]
+
+x-majordomus:
+  reviewed_because: doctor reports commits that reach no remote, which is the committed half; the uncommitted half is visible only to someone looking, which is why the responsibility is written rather than gated
 ---
 
 # Rationale

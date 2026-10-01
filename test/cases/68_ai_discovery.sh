@@ -59,7 +59,11 @@ grep -q '\.ai/local/state/checkpoints/' op.txt || { echo "    the checkpoint was
 "$MJ" knowledge sources > a.txt; "$MJ" knowledge sources > b.txt
 cmp -s a.txt b.txt || { echo "    two runs disagreed"; exit 1; }
 first="$(awk 'NR==1{print $1}' a.txt)"
-[ "$first" = policy ] || { echo "    the first class reported is $first, expected policy (the declared order)"; exit 1; }
+# the declared order is the one the repository's sources.yaml declares, read from it: naming a
+# class here went stale the day `init` declared the directory contracts ahead of the policy
+declared="$(sed -n 's/^  - id: //p' .ai/repo/knowledge/sources.yaml | head -n 1)"
+[ -n "$declared" ] || { echo "    the fixture's sources.yaml declares no class"; exit 1; }
+[ "$first" = "$declared" ] || { echo "    the first class reported is $first, expected $declared (the declared order)"; exit 1; }
 "$MJ" rules list > r1.txt; "$MJ" rules list > r2.txt
 cmp -s r1.txt r2.txt || { echo "    the rule order differed between two runs"; exit 1; }
 

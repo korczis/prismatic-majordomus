@@ -151,6 +151,7 @@ fn pretty_json(v: &Value) -> String {
 ///         sections: Default::default(), git: GitState::Unavailable { reason: "doc".into() },
 ///         discovery: "filesystem".into(), source_classes: vec![], kind_sources: vec![],
 ///         scope_origin: majordomus_cli::scope::Origin::Distribution, scope_path: String::new(),
+///         observed: Default::default(),
 ///     },
 ///     objects: vec![], diagnostics: vec![], state: State::Ok, fingerprint: String::new(),
 ///     scoped: Default::default(), distribution: None, providers: Default::default(),

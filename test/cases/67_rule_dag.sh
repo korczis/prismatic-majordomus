@@ -1,5 +1,6 @@
 # majordomus-covers: rules
 # majordomus-negative: rules
+# claims: rule-resolution, vendored-rule-package
 # The rule DAG. The effective rule set is the vendored baseline plus the project's own
 # rules, resolved as a dependency graph. Every guarantee below is proved by a mutation:
 # the set is green, one fact changes, the resolver goes red naming that fact, the change is

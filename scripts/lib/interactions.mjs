@@ -94,13 +94,20 @@ export async function loadSpecs(dir) {
 }
 
 // Every built page: route -> path of its index.html. Redirect stubs carry no controls of their own.
-export function pages(pub) {
+//
+// `composed` is the mounts of the surfaces scripts/site-build composes into the build ("/rustdoc"), which the
+// caller reads from the topology (lib/common.sh mj_web_composed). Their pages are another producer's — rustdoc's
+// search box and toggles are rustdoc's to exercise — and each is judged by that surface's own check, so the walk
+// does not descend into them. Nothing here names one.
+export function pages(pub, composed = []) {
   const out = [];
+  const skip = new Set(composed.map((m) => m.replace(/^\/+|\/+$/g, '')).filter(Boolean));
   const walk = (d) => {
     for (const n of readdirSync(d)) {
       const p = join(d, n);
-      if (statSync(p).isDirectory()) walk(p);
-      else if (n === 'index.html') {
+      if (statSync(p).isDirectory()) {
+        if (!skip.has(relative(pub, p).split(sep).join('/'))) walk(p);
+      } else if (n === 'index.html') {
         const rel = relative(pub, d).split(sep).join('/');
         out.push({ route: rel ? `/${rel}/` : '/', file: p });
       }
@@ -110,10 +117,10 @@ export function pages(pub) {
   return out.sort((x, y) => (x.route < y.route ? -1 : x.route > y.route ? 1 : 0));
 }
 
-// The claim of every control on every page: { route, el, specs: [ids] }.
-export function classify(pub, specs) {
+// The claim of every control on every page of the site's own: { route, el, specs: [ids] }.
+export function classify(pub, specs, composed = []) {
   const rows = [];
-  for (const { route, file } of pages(pub)) {
+  for (const { route, file } of pages(pub, composed)) {
     const html = readFileSync(file, 'utf8');
     if (/http-equiv="refresh"/.test(html)) continue;
     for (const el of discover(html)) {

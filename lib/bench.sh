@@ -252,6 +252,9 @@ mj_bench_check() {
 # ---------------------------------------------------------------- the command
 mj_cmd_bench() {
   local samples warmup mode=both format=text save=1 list=0 check=0 write=0 force=0 targets="" a t rc=0 failed=0
+  # usage is answered before the installation is required: help that refuses outside an
+  # initialised repository is help a newcomer cannot read
+  for a in "$@"; do case "$a" in --help|-h) mj_bench_usage; return 0 ;; esac; done
   mj_require_installed
   mj_load_policy || mj_die "$MJ_EX_CONTRACT" "bench: the policy does not parse"
   samples="$(mj_pol_req benchmark.samples)"; warmup="$(mj_pol_req benchmark.warmup)"

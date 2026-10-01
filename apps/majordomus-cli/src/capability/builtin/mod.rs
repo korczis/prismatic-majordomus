@@ -35,12 +35,16 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub mod dashboard;
+pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
 pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
+pub mod economics;
+pub mod entity;
 pub mod environment;
 pub mod evidence;
 pub(crate) mod executions;
@@ -62,8 +66,10 @@ pub mod release;
 pub mod repository;
 pub mod rules;
 mod scope;
+pub mod served;
 pub mod server;
 pub mod session_domain;
+pub(crate) mod shell;
 pub mod trace;
 mod views;
 pub mod web;
@@ -75,7 +81,10 @@ use super::handler::Executable;
 use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
-pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
+pub use artifacts::{
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, ArtifactView, ArtifactsInput,
+    ARTIFACTS_URI,
+};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
@@ -150,15 +159,19 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commit,
         repository,
         objects,
+        entity,
         capabilities,
         commands,
         graph,
         health,
+        dashboard,
         continuity,
         lifecycle,
         obligations,
         gates,
         deploy,
+        delivery,
+        served,
         evidence,
         rules,
         executions,
@@ -167,12 +180,14 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         peers,
         server,
         session_domain,
+        shell,
         perf,
         plan,
         recover,
         directories,
         devcontext,
         artifacts,
+        economics,
         environment,
         quality,
         distribution,

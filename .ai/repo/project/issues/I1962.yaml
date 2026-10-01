@@ -1,0 +1,51 @@
+id: I1962
+milestone: test-evidence
+title: The evidence gates read subject findings and widgets
+slug: evidence-check-reads-widgets
+priority: p1
+profile: implementation
+parallel_safe: false
+objective: "Make subject findings refusing, rewriting the evidence baseline in the same change, and make the evidence validator read every rendered widget, so that a widget without a subject or a count hard-coded into a template fails CI (ADR 0087 decision 10)."
+why: "Subject findings stay advisory until a gate reads them, and ADR 0087 names this validator as the mechanism against a widget without a subject and a hard-coded count."
+current_state: "scripts/evidence-check ratchets claims only; subject findings are advisory; no gate reads the site's widgets for a subject; lib/commands.sh and scripts/ci/command-furnished derive command coverage in shell."
+desired_state: "evidence-check refuses a subject finding beyond the rewritten baseline; a stable feature without evidence and a widget without a subject each fail a gate by name; the shell command-coverage readers read the index artifact or are held equal to it by a case."
+scope:
+  - scripts/evidence-check
+  - .ai/repo/evidence-baseline.txt
+  - scripts/rust-coverage
+  - lib/commands.sh
+  - scripts/ci/command-furnished
+  - scripts/ci/surface-coverage
+  - scripts/lib/evidence-widgets.mjs
+  - scripts/lib/interactions.mjs
+  - scripts/site-check
+  - .ai/repo/automation/inventory.jsonl
+  - .ai/repo/ci/gates.yaml
+  - .ai/repo/rules/project/no-stable-feature-without-a-test.v1.md
+  - .ai/repo/rules/project/a-widget-names-its-evidence-subject.v1.md
+  - .ai/repo/features/evidence.md
+  - .ai/repo/features/coverage.md
+  - docs/CLAIMS.yaml
+  - docs/claims
+  - test/cases/522_evidence_check_reads_widgets.sh
+  - test/cases/523_evidence_rules_are_gated.sh
+non_scope:
+  - "Weakening the baseline's ratchet"
+depends_on:
+  - I1960
+  - I1953
+  - I1952
+acceptance_criteria:
+  - "Subject findings refuse, and the baseline is rewritten in the same change, with its reason"
+  - "A rendered widget without a subject fails the validator, naming the widget"
+  - "A count or a percentage hard-coded into a template fails the validator"
+  - "The shell command-coverage readers agree with the subject index"
+validation:
+  - bash test/run.sh 522_evidence_check_reads_widgets
+  - bash test/run.sh 523_evidence_rules_are_gated
+  - scripts/evidence-check
+evidence_required:
+  - subject_findings_refuse
+  - widgets_name_subjects
+created_at: 2026-09-26
+updated_at: 2026-09-26

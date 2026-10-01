@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 57
+weight = 62
 [extra]
 source = "docs/CI.md"
 +++
@@ -27,8 +27,10 @@ flowchart LR
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
   plan --&gt; site["site"]
+  plan --&gt; interactions["interactions"]
+  plan --&gt; ui["ui"]
   plan --&gt; macos["macos"]
-  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
+  structure &amp; suite &amp; rust &amp; coverage &amp; bench &amp; site &amp; interactions &amp; ui &amp; macos --&gt; ci["ci&lt;br&gt;the verdict; the one&lt;br&gt;required status"]
 </pre>
 
 
@@ -181,7 +183,12 @@ lives in but must not write into it while other cases run;
 the parallel phase checks `git status` before and after and fails naming the paths when
 something changed. The cases that must write there (the two that build the site into
 `site/public`, the one that edits and regenerates a derived document) carry the exclusive
-header. The Rust cases drive the executable `MAJORDOMUS_BIN` names when it is set (CI
+header. A case never runs outside the fixture the runner made for it: every case writes
+into the directory it starts in, and started by hand from a checkout it would write its
+fixture there. So `test/lib.sh`, which every case sources first, refuses with `run this
+case through test/run.sh` unless `$T` and `$ROOT` are set, the case stands in `$T`, and
+`$T` is neither the checkout, nor inside it, nor another checkout of this repository. The
+Rust cases drive the executable `MAJORDOMUS_BIN` names when it is set (CI
 builds it once per job and hands it to every case), and build it once through cargo
 otherwise; the two whose assertions are cargo's own (the crate's HTTP and projection suites,
 the doc examples, the benchmark build) keep cargo.

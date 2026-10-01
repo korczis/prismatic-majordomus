@@ -63,9 +63,11 @@ for id in $ids; do
         if [ -n "$validator" ]; then
           grep -rq "mj_validate_$validator()" "$ROOT/lib" ||
             { echo "    $id: no mj_validate_$validator() in lib/"; exit 1; }
-        else
-          grep -q '^  tests:' "$f" ||
-            { echo "    $id: x-majordomus block names neither a validator nor a test"; exit 1; }
+        elif ! grep -q '^  tests:' "$f"; then
+          # the third mode (ADR 0048): the block declares that review decides, and says
+          # why. A reason must be written; an empty one is no declaration.
+          grep -qE '^  reviewed_because: *[^ ]' "$f" ||
+            { echo "    $id: x-majordomus block names no validator, no test and no reviewed_because"; exit 1; }
         fi
       fi
       ;;

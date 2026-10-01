@@ -6,7 +6,7 @@ weight = 2
 id = "hand-work-between-sessions"
 source = ".ai/repo/use-cases/hand-work-between-sessions.md"
 category = "continuity"
-maturity = "described"
+maturity = "verified"
 +++
 
 ## Situation

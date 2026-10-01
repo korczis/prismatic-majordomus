@@ -23,7 +23,7 @@
     </ul>
   </nav>
   <div class="min-w-0">
-    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ repo }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p>
+    <p class="mb-6 text-sm text-body-subtle">Rendered from <a href="{{ <source_blob path={page.extra.source} /> }}" class="font-mono underline">{{ page.extra.source }}</a>, which the executable generates from its capability registry and CI refuses stale. The raw document is at <a href="{{ get_url(path="/openapi.json") }}" class="font-mono text-fg-brand underline">/openapi.json</a>; a running server serves the same document at its own <code class="font-mono">/openapi.json</code> and Swagger UI at <code class="font-mono">/swagger</code>.</p>
 
     {#- About: the info block, in the words about.rs holds -#}
     <section id="about" class="scroll-mt-24">
@@ -80,7 +80,7 @@
         <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
           <a href="{{ api_root }}{{ t.slug }}/" class="font-mono text-base font-semibold text-fg-brand hover:underline">{{ t.name }}</a>
           <p class="mt-1 break-words text-sm text-body">{{ t.description }}</p>
-          <ul class="mt-2 space-y-1 text-xs">{% for o in t.operations %}{% if o.primary %}<li class="flex min-w-0 flex-wrap items-baseline gap-x-2"><span class="font-mono font-bold text-body-subtle">{{ o.method }}</span><a href="{{ api_root }}{{ o.home }}/#op-{{ o.id | replace(from=".", to="-") }}" class="min-w-0 break-all font-mono text-fg-brand hover:underline">{{ o.path }}</a></li>{% endif %}{% endfor %}</ul>
+          <ul class="mt-2 space-y-1 text-xs">{% for o in t.operations %}{% if o.primary %}<li class="flex min-w-0 flex-wrap items-baseline gap-x-2"><span class="font-mono font-bold text-body-subtle">{{ o.method }}</span><a href="{{ api_root }}{{ o.home }}/#op-{{ o.id | replace(from=".", to="-") }}" class="inline-block min-w-0 break-all py-1 font-mono text-fg-brand hover:underline">{{ o.path }}</a></li>{% endif %}{% endfor %}</ul>
         </li>
         {%- endfor -%}
       </ul>

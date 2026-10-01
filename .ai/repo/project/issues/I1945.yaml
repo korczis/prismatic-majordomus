@@ -1,0 +1,42 @@
+id: I1945
+milestone: test-evidence
+title: The test-evidence decision and its plan are recorded
+slug: evidence-subject-adr
+priority: p1
+profile: implementation
+parallel_safe: true
+objective: "Record the test-evidence design as ADR 0087 with status proposed, create the milestone test-evidence, and give every slice of the design one issue, so that `majordomus plan` tracks the work and each slice is held to one written definition."
+why: "The design reconciles two proposed decisions that disagree about where CI evidence goes (ADR 0068 and ADR 0080) and defines what every surface reads. Without a record, each slice would carry its own reading of it, and the reconciliation would live only in a gitignored plan."
+current_state: "The design exists only under tmp/plans, which is gitignored. No ADR, milestone or issue names the work."
+desired_state: "ADR 0087 is proposed on master, the milestone test-evidence exists, and I1945 to I1965 describe the slices with their dependencies, so that `majordomus plan waves` orders them."
+scope:
+  - .ai/repo/adrs/0087-evidence-is-indexed-by-subject-and-judged-at-the-presented-revision.md
+  - .ai/repo/project/milestones/test-evidence.yaml
+  - .ai/repo/project/issues
+  - site/content/adrs/adr-0087.md
+non_scope:
+  - "Any code, script or case"
+  - "docs/CLAIMS.yaml and docs/EVIDENCE.md"
+  - "Accepting any ADR, which is the owner's act"
+  - "A version bump"
+depends_on: []
+acceptance_criteria:
+  - "ADR 0087 has status proposed, cites ADR 0068, 0080 and 0071 by number and title only, and passes majordomus adr check"
+  - "Its Decision amends ADR 0068 sentence by sentence, quoting each sentence it changes and listing every sentence that stands"
+  - "The milestone and every issue pass majordomus plan validate with no failure"
+  - "No prose states a number a command can compute; where one matters, the command is named"
+validation:
+  - bin/majordomus adr check
+  - bin/majordomus plan validate
+  - bash test/run.sh 28_no_hardcoded_values
+  - bash test/run.sh 104_strict_derivation
+  - scripts/ci/english-only-check
+  - scripts/ci/diagram-check
+  - scripts/derive-check
+evidence_required:
+  - adr_proposed
+  - plan_valid
+risk: "The ADR names proposed pull requests (#577, #578, #597, #600, #629) whose content may still change. It cites them by number and quotes only what it amends, so a later change to one of them shows as a quotation that no longer matches."
+created_at: 2026-09-26
+updated_at: 2026-09-26
+started_at: 2026-09-26

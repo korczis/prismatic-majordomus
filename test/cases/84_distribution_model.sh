@@ -2,6 +2,7 @@
 # URL is written, and every projection of it agrees. This case proves the invariants the
 # rule project.distribution-canonical states, and it proves them by mutation: a target
 # added to a copy of the model must change the installer, the matrix and the guide.
+# claims: distribution-canonical-model, install-command-is-derived
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_SHARE="$ROOT/share"
@@ -50,6 +51,10 @@ count_matrix="$(grep -c '"target":' "$matrix")"
 cmd="$("$MJB" distribution --repo "$ROOT" show --format json 2>/dev/null \
        | sed -n 's/.*"install_command": "\(.*\)",*$/\1/p' | head -n 1)"
 [ -n "$cmd" ] || { echo "    the model states no install command"; exit 1; }
+# the command is the composition of the model's installer parts, not a string of its own
+part() { sed -n "s/^  $1: //p" "$ROOT/share/distribution.yaml" | head -n 1; }
+[ "$cmd" = "$(part download_command) $(part base_url)/$(part script) | $(part shell)" ] \
+  || { echo "    the install command '$cmd' is not composed from the model's installer parts"; exit 1; }
 for doc in "$ROOT/README.md" "$ROOT/docs/INSTALL.md"; do
   grep -qF "$cmd" "$doc" || { echo "    $doc does not carry the canonical install command: $cmd"; exit 1; }
 done

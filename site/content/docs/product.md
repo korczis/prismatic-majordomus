@@ -1,7 +1,7 @@
 +++
 title = "Product"
 description = "the product features as objects of the layer: what a feature file may hold, what every surface derives from it, the public projection boundary and its allow-list, what the homepage and the `/features/` pages render, and what is refused"
-weight = 39
+weight = 41
 [extra]
 source = "docs/PRODUCT.md"
 +++
@@ -15,9 +15,9 @@ layer holds, which operational moments a feature answers, what is guaranteed and
 only advisory. What a person writes is which parts of the product form one chapter, and in
 what order. Behaviour as implemented and tested; where this document and the executable
 disagree, the document is wrong and changes in the same commit. The decision is
-[ADR 23](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
+[ADR 23](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0023-product-features-are-objects-of-the-layer-and-the-landing-page-is-a-projection.md);
 the rule is `project.product-surface-derived`; the directory's own contract is
-[`.ai/repo/features/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/features/README.md).
+[`.ai/repo/features/README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/features/README.md).
 
 ## The kind
 
@@ -69,7 +69,7 @@ the only place any of this is decided.
 `apps/majordomus-cli/src/capability/builtin/product.rs` declares five capabilities over it
 with `capability!`, so the command line, the HTTP routes, the OpenAPI operations, the MCP
 tools and resources and the generated reference are projections of one declaration
-([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
+([ADR 2](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0002-canonical-capability-registry.md), `docs/CAPABILITIES.md`).
 
 <div class="overflow-x-auto" tabindex="0">
 
@@ -201,6 +201,13 @@ a robots `noindex` (`templates/base.html`) and are left out of `sitemap.xml`
 `project.homepage-tells-a-declared-story`, and `scripts/site-check` reports its findings, so a
 homepage or a sitemap that drifts from its declaration is refused before the Pages build
 publishes it. `test/cases/333_homepage_narrative.sh` proves each check by breaking it.
+
+The homepage's weight is declared in the same file, as `[budget]`: the scripts and stylesheets
+it loads from the site and the graph data it carries inline. The composed product graph is
+published at `/graphs/product.json` by `scripts/site-build` and fetched when the drawing first
+comes into view, with the node-by-node list one link away on `/features/`; and no page loads
+the Mermaid runtime unless it carries a diagram. The same check reports the current weight on
+every build, so raising a budget is a reviewed change to `homepage.toml`, never a silent one.
 
 To add a homepage section: write it in `index.html` with an `id`, put that id where it belongs
 in `homepage.toml`'s `order`, and give it a link or a derived figure. To unlist a section's

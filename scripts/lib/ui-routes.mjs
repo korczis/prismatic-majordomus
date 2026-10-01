@@ -117,6 +117,57 @@ export function family(route) {
   return `/${[...segments.slice(0, -1), '*'].join('/')}`;
 }
 
+/**
+ * The directories of a crawled set that hold *records*: the ones the crawl reached under
+ * more than one name, below the entry.
+ *
+ * A route carries its record identity in its query (`?uri=...`) or in its path
+ * (`/graphs/composed`), and [`family`] reads one route at a time, so it cannot tell the
+ * second from an area of the surface. The set can: an area is advertised once and has no
+ * siblings that are also records, while a collection is a directory many routes sit
+ * directly under. The entry's own children are never records — they are the surface's
+ * areas, which is why `/panel/list?page=2` keeps `list` while `/panel/item/i01?sort=x`
+ * loses `i01`. Nothing about any particular surface is named here.
+ */
+export function collections(routes, entry) {
+  const children = new Map();
+  for (const route of routes) {
+    const path = route.split('?')[0].replace(/\/+$/, '') || '/';
+    const cut = path.lastIndexOf('/');
+    if (cut <= 0) continue;
+    const parent = path.slice(0, cut);
+    if (parent === entry) continue;
+    if (!children.has(parent)) children.set(parent, new Set());
+    children.get(parent).add(path);
+  }
+  return new Set([...children].filter(([, seen]) => seen.size > 1).map(([parent]) => parent));
+}
+
+/**
+ * [`family`], told which directories of the crawled set hold records.
+ *
+ * A route that varies in its path *and* in its arguments matches the query rule first, so
+ * [`family`] leaves the record in the shape and files one family per record: eight graph
+ * pages that each page two tables became twenty-four families of one renderer, and the
+ * audit spent its per-family budget on every one of them. Given the collections the set
+ * reveals, the record collapses like any other and the renderer is one family again.
+ *
+ * ```
+ * shape('/panel/item/i01?sort=x', new Set(['/panel/item']))  // '/panel/item/*?sort'
+ * shape('/panel/list?page=2', new Set(['/panel/item']))      // '/panel/list?page'
+ * ```
+ */
+export function shape(route, records = new Set()) {
+  const [path, query = ''] = route.split('?');
+  if (!query) return family(route);
+  const clean = path.replace(/\/+$/, '') || '/';
+  const cut = clean.lastIndexOf('/');
+  const parent = cut > 0 ? clean.slice(0, cut) : '';
+  const shaped = records.has(parent) ? `${parent}/*` : clean;
+  const keys = [...new Set([...new URLSearchParams(query).keys()])].sort().join('&');
+  return `${shaped}?${keys}`;
+}
+
 /** `n` members of a list, evenly spread, keeping the first and the last. */
 export function spread(list, n) {
   if (list.length <= n) return [...list];
@@ -159,13 +210,20 @@ export async function crawl({
   // found none" and is reported as itself.
   let document = false;
 
+  // the record directories of what has been reached so far. Patience is spent per shape, so
+  // it has to be the same shape the sample will use: keyed on the one-route [`family`], a
+  // page that pages two tables independently is a fresh shape at every combination of the
+  // two, and the crawl walks the whole grid before any of them goes barren.
+  let records = new Set();
+
   while (queue.length) {
+    records = collections(seen, entry);
     // one batch, taken in discovery order and accounted after it: a fetch is waiting, and
     // taking a fixed slice keeps the crawl's decisions the same however fast each answered
     const batch = [];
     while (batch.length < jobs && queue.length) {
       const route = queue.shift();
-      if ((barren.get(family(route)) ?? 0) >= patience) continue;
+      if ((barren.get(shape(route, records)) ?? 0) >= patience) continue;
       batch.push(route);
     }
     if (batch.length === 0) continue;
@@ -191,14 +249,16 @@ export async function crawl({
         queue.push(link);
         fresh += 1;
       }
-      const shape = family(route);
-      barren.set(shape, fresh === 0 ? (barren.get(shape) ?? 0) + 1 : 0);
+      const of = shape(route, records);
+      barren.set(of, fresh === 0 ? (barren.get(of) ?? 0) + 1 : 0);
     }
   }
 
   const routes = document ? [...seen].sort() : [];
+  // over the finished set, so the families reported are the shapes of everything reached
+  const found = collections(routes, entry);
   const families = {};
-  for (const route of routes) (families[family(route)] ??= []).push(route);
+  for (const route of routes) (families[shape(route, found)] ??= []).push(route);
   return {
     entry,
     document,
@@ -223,10 +283,44 @@ export async function crawl({
 export function sample(derived, n = FAMILY_SAMPLE) {
   if (!derived.document) return [];
   const chosen = new Set([derived.entry, ...derived.navigation]);
-  for (const routes of Object.values(derived.families)) {
-    for (const route of spread(routes, n)) chosen.add(route);
+  for (const members of siblingFamilies(derived.families, n)) {
+    if (members.length === 1) {
+      for (const route of spread(members[0], n)) chosen.add(route);
+      continue;
+    }
+    // a data-driven dimension: one renderer across every sibling, so the budget is spent
+    // once over all of them, one route from each sibling in turn, spread across the siblings
+    const firsts = members.map((routes) => routes[0]);
+    for (const route of spread(firsts, 2 * n)) chosen.add(route);
   }
   return [...chosen].sort();
+}
+
+/**
+ * The families of a crawl, grouped where they are one renderer.
+ *
+ * `/cockpit/objects/adr/*` and `/cockpit/objects/rule/*` are two families by shape and one
+ * renderer in fact: the segment that differs is a value (a kind the index holds), not a
+ * route somebody wrote. That is recognisable without naming any route: siblings that differ
+ * only in their next-to-last segment, and more of them than twice the sample — hand-written
+ * routes under one parent do not come in dozens of the same shape, values do. Such a group
+ * is returned as one entry of its member families; every other family stands alone.
+ */
+export function siblingFamilies(families, n = FAMILY_SAMPLE) {
+  const groups = new Map();
+  for (const [key, routes] of Object.entries(families).sort(([a], [b]) => (a < b ? -1 : 1))) {
+    const parts = key.split('/');
+    const parent = parts.length >= 4 && parts[parts.length - 1] === '*'
+      ? [...parts.slice(0, -2), '*', '*'].join('/') : key;
+    if (!groups.has(parent)) groups.set(parent, []);
+    groups.get(parent).push(routes);
+  }
+  const out = [];
+  for (const members of groups.values()) {
+    if (members.length > 2 * n) out.push(members);
+    else for (const m of members) out.push([m]);
+  }
+  return out;
 }
 
 /**

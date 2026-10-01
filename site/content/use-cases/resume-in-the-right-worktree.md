@@ -6,7 +6,7 @@ weight = 19
 id = "resume-in-the-right-worktree"
 source = ".ai/repo/use-cases/resume-in-the-right-worktree.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

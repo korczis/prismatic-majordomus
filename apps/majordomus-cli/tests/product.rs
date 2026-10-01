@@ -6,6 +6,8 @@
 //! What is deliberately not here: any list of features. Every assertion below either
 //! counts what the fixture declares or names the one record the test itself wrote.
 
+// claims: product-projection-public-safe, product-references-resolve, product-surfaces-derived
+
 mod common;
 
 use common::Fixture;

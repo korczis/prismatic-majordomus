@@ -6,7 +6,7 @@ weight = 36
 id = "capture-the-prompts-that-started-the-work"
 source = ".ai/repo/use-cases/capture-the-prompts-that-started-the-work.md"
 category = "continuity"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

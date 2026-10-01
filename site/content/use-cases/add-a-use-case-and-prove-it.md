@@ -6,7 +6,7 @@ weight = 35
 id = "add-a-use-case-and-prove-it"
 source = ".ai/repo/use-cases/add-a-use-case-and-prove-it.md"
 category = "extension"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation
