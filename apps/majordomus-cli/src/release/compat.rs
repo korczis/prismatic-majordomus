@@ -1714,7 +1714,7 @@ mod tests {
     fn a_tag_older_than_the_practice_is_a_note_and_a_newer_one_is_a_defect() {
         let first = Version::parse("0.3.1").expect("a version");
 
-        // cut before anything was recorded: nothing was published, so nothing can be recorded
+        // cut before the record practice began (.ai/repo/release-record-baseline.txt): a note
         for tag in ["v0.1.0", "v0.2.0", "v0.3.0"] {
             let d = unrecorded_tag(tag, Some(&first));
             assert_eq!(d.severity, Severity::Note, "{tag}");
