@@ -102,6 +102,7 @@ fn a_criterion_is_met_only_by_a_recorded_passing_run_of_the_test_that_is_there()
         at: "2026-09-15T00:00:00Z".into(),
         origin: Origin::Local,
         command: id.reproduce(),
+        run: None,
     };
     let record = |e: Execution| {
         let mut ledger = Ledger::empty();

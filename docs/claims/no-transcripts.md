@@ -1,4 +1,4 @@
-# Handovers carry durable facts, never conversation transcripts
+# A handover is a state record, not a transcript
 
 ## What it means
 

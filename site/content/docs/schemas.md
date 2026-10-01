@@ -1,7 +1,7 @@
 +++
 title = "File schemas"
 description = "every file: schema, a concrete example, which command reads and writes it"
-weight = 12
+weight = 14
 [extra]
 source = "docs/SCHEMAS.md"
 +++
@@ -1190,7 +1190,7 @@ it. The container image definition, its ignore file and the provider configurati
 (`fly.toml`) are **generated** from this object; each carries a provenance header naming
 this file and the command that regenerates it, and `majordomus generate --check` fails
 when one is edited by hand. Contract:
-[`share/schemas/majordomus/deployment/deployment.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/deployment/deployment.v1.schema.json)
+[`share/schemas/majordomus/deployment/deployment.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/deployment/deployment.v1.schema.json)
 (`deployment/v1`); keys are closed by `share/allow/deployment.txt`, generated from it.
 
 ```yaml
@@ -1275,7 +1275,7 @@ which the operator is already authenticated. A workspace is **not** a provider: 
 is a tool that works *in* this repository (ADR 0024, `share/providers.yaml`), and a
 workspace is the arrow pointing the other way. Both are named after the same vendors, which
 is why the distinction is written down rather than inferred. Contract:
-[`share/schemas/majordomus/workspace/workspace.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/master/share/schemas/majordomus/workspace/workspace.v1.schema.json)
+[`share/schemas/majordomus/workspace/workspace.v1.schema.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/share/schemas/majordomus/workspace/workspace.v1.schema.json)
 (`workspace/v1`); keys are closed by `share/allow/workspace.txt`, generated from it.
 
 ```yaml
@@ -1411,6 +1411,7 @@ Events and their extra fields:
 | `task.checkpoint` | `checkpoint_path` when a body was written; absent when only `checkpoint_at` moved; `task_id` when a task was open, absent otherwise — a checkpoint is the episode's record and an episode need not have a task (ADR 0052) |
 | `task.evidence` | `task`, `covers` (the obligation token), `kind`, `inputs_hash` (over the obligation's declared inputs), and `command`, `artifact`, `result` when given |
 | `task.finished` | `outcome`, `contract` (object of doctrine id → `pass`/`fail`/`skipped`), `verify` (`command`, `exit`, `seconds`) or null, `checkpoints` (count) |
+| `task.refused` | `outcome` (the one claimed), `unmet` (count of failed contract lines), `refused[]` (the doctrines among them), `contract` (object of doctrine id → `pass`/`fail`/`skipped`); one line per refused `finish`, none for `finish --check` |
 | `task.handed_over` | `handover_path`, `closed` (true with `--close`); `task_id` when a task was open, absent otherwise |
 | `decision.recorded` | `decision` (the entry's title) |
 | `question.opened` | `question` |

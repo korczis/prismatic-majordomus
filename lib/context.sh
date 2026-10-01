@@ -157,6 +157,10 @@ mj_context_sections() {
   # 1b. peers — who else is in this repository right now, and what of it they claim.
   mj_context_peers "$have_task"
 
+  # 1c. integration — the pull-request queue as this checkout last built it, the lease, the
+  # last merge: what a session continuing drain work needs before its first command.
+  mj_context_integration
+
   # 2. task
   if [ "$have_task" = 0 ]; then
     printf '## TASK\nnone active — run: majordomus start "<task>" --scope <paths>\n' > "$MJ_CTX_TMP/20.task"
@@ -185,6 +189,7 @@ mj_context_sections() {
       printf 'effort       %s\n' "$(mj_pro effort)"
       printf 'verbosity    %s\n' "$(mj_pro verbosity)"
       printf 'presentation %s\n' "$(mj_pro presentation)"
+      [ -n "$(mj_pro reasoning)" ] && printf 'reasoning    %s\n' "$(mj_pro reasoning)"
       printf 'verification %s\n' "$(mj_ctx_verification)"
       printf 'output       %s\n' "$(mj_ylist "$MJ_PRO_FLAT" output_contract | paste -sd, - | sed 's/,/, /g')"
     } > "$MJ_CTX_TMP/30.profile"
@@ -239,6 +244,16 @@ mj_context_sections() {
     fi
   else
     mj_ctx_excl "decisions" "profile $profile sets context.decisions: false"
+  fi
+
+  # 5b. reasoning — the conclusions this task reached, who reviewed them, and what is still
+  #     unresolved (ADR 0098); the same report a derived handover carries. Toggled with the
+  #     decisions, because these are the task's decisions with their provenance.
+  if [ "$have_task" = 1 ] && [ -n "$profile" ] && [ "$(mj_pro context.decisions)" = true ]; then
+    # shellcheck source=rust_bin.sh
+    . "$MJ_LIB_DIR/rust_bin.sh"
+    local rreport; rreport="$(mj_rust_reasoning_report "$MJ_ROOT")"
+    [ -n "$rreport" ] && printf '## REASONING\n%s\n' "$rreport" > "$MJ_CTX_TMP/55.reasoning"
   fi
 
   # 6. newest checkpoint for this task
@@ -336,9 +351,10 @@ mj_ctx_verification() {
 # before any authored record body, and the worker is told the one command that rebuilds it.
 # `15.peers` sits between git and the task on purpose: another worker holding your paths
 # right now outranks your own records the way git does, and it is dropped late for the same
-# reason — a collision in flight is worth more than history.
-MJ_CTX_DROP_ORDER="90.history 80.files 35.documents 50.decisions 60.checkpoint 70.handover 15.peers"
-MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 50.decisions 60.checkpoint 70.handover 80.files 90.history 95.prompt"
+# reason — a collision in flight is worth more than history. `75.integration` is one line a
+# command away (`majordomus prs brief`), so it goes before any record body does.
+MJ_CTX_DROP_ORDER="90.history 75.integration 80.files 35.documents 55.reasoning 50.decisions 60.checkpoint 70.handover 15.peers"
+MJ_CTX_ORDER="10.git 15.peers 20.task 30.profile 35.documents 40.questions 50.decisions 55.reasoning 60.checkpoint 70.handover 75.integration 80.files 90.history 95.prompt"
 
 # Render the whole document, including its own header and trailer, into $1. The budget
 # governs what a worker actually receives, so the count must be of this file and not of
@@ -492,6 +508,30 @@ EOF
       printf '  (your own claim appears here too — the board answers sessions, not commands)\n'
     fi
   } > "$MJ_CTX_TMP/15.peers"
+  return 0
+}
+
+# The pull-request integration queue in one line, from what this checkout last recorded:
+# `majordomus prs brief` reads the queue summary, the lease and the audit trail, and decides
+# no relation and reaches no network. Like the board, it degrades to nothing: no executable,
+# or a checkout whose forge was never observed, and the section is not written — a
+# repository that does not integrate pull requests here must not grow a section about it.
+# Never a build, for the reason `mj_peer_board` gives.
+mj_context_integration() {
+  local bin share line
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  bin="$(mj_rust_bin "$MJ_HOME")"
+  [ -x "$bin" ] || return 0
+  share="$(mj_rust_share "$MJ_HOME")"
+  line="$( ( [ -z "$share" ] || export MAJORDOMUS_SHARE="$share"
+             "$bin" prs brief --repo "$MJ_ROOT" ) 2>/dev/null )" || return 0
+  [ -n "$line" ] || return 0
+  {
+    printf '## INTEGRATION\n'
+    printf '%s\n' "$line"
+    printf '# majordomus prs status for the queue, prs drain --dry-run for the next step\n'
+  } > "$MJ_CTX_TMP/75.integration"
   return 0
 }
 

@@ -3,6 +3,7 @@
 {%- set catalogue = load_data(path="data/registry/why.json") -%}
 {%- set roadmap = load_data(path="data/generated/roadmap.json") -%}
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set ev_model = load_data(path="data/registry/product.json") -%}{%- set ev = ev_model.evidence -%}
 {%- set readme = load_data(path="data/generated/readme.json") -%}
 {%- set c = [x for x in caps.claims if x.id == page.extra.claim_id][0] -%}
 {%- set why_base = config.base_url | trim_end(pat="/") -%}
@@ -12,15 +13,16 @@
 <div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
   <div class="min-w-0">
     <p class="flex flex-wrap items-center gap-3">{{ <badge status={c.status} /> }}<span class="text-sm text-body">{{ caps.statuses[c.status] }}</span></p>
+    <p class="mt-3 flex flex-wrap items-center gap-3"><span class="text-xs font-semibold uppercase tracking-wide text-body-subtle">recorded evidence</span>{{ <evidence claim={c.id} ev={ev} /> }}<span class="text-sm text-body">{% if not ev.available %}No evidence is recorded, so whether a run supports this claim is unknown.{% elif c.id in ev.claims and ev.claims[c.id].supported %}Supported by a recorded run whose inputs this claim names have not changed since.{% elif c.status == "guaranteed" %}Declared guaranteed, and not supported by a recorded run: the test is named, and no passing run of the current inputs is recorded.{% else %}Not judged: only a guaranteed claim is held to a recorded run.{% endif %} <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="text-fg-brand underline">how evidence is recorded</a></span></p>
     {% if c.note %}<p class="mt-6 max-w-3xl break-words text-base leading-relaxed text-heading">{{ c.note }}</p>{% endif %}
     <article class="format break-words [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal mt-8 max-w-none dark:format-invert lg:format-lg [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_table]:block [&_table]:overflow-x-auto [&_table]:max-w-full" tabindex="0">{{ page.content | safe }}</article>
-    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="{{ project.repository_url }}/blob/master/{{ page.extra.source }}" class="font-mono underline">{{ page.extra.source }}</a>.</p>
+    <p class="mt-2 text-xs text-body-subtle">Detail rendered from <a href="{{ <source_blob path={page.extra.source} /> }}" class="font-mono underline">{{ page.extra.source }}</a>.</p>
 
     <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Provenance</h2>
     <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-[auto_1fr]">
-      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all">{% if c.source_route %}<a href="{{ get_url(path=c.source_route, trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">read it on this site</a> · {% endif %}<a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></dd>
-      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all">{% if c.implementation %}<a href="{{ project.repository_url }}/blob/master/{{ c.implementation }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% if c.command %} · <a href="{{ get_url(path="/commands/" ~ c.command ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">majordomus {{ c.command }}</a>{% endif %}{% else %}<span class="font-mono text-body-subtle">nothing yet</span>{% endif %}</dd>
-      <dt class="text-body-subtle">proved by</dt><dd class="min-w-0 break-all">{% if c.test %}<a href="{{ project.repository_url }}/blob/master/{{ c.test }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">no test — which is why this is not marked guaranteed</span>{% endif %}</dd>
+      <dt class="text-body-subtle">defined in</dt><dd class="min-w-0 break-all">{% if c.source_route %}<a href="{{ get_url(path=c.source_route, trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">read it on this site</a> · {% endif %}<a href="{{ <source_blob path={c.source} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></dd>
+      <dt class="text-body-subtle">implemented in</dt><dd class="min-w-0 break-all">{% if c.implementation %}<a href="{{ <source_blob path={c.implementation} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% if c.command %} · <a href="{{ get_url(path="/commands/" ~ c.command ~ "/", trailing_slash=true) }}" class="font-medium text-fg-brand hover:underline">majordomus {{ c.command }}</a>{% endif %}{% else %}<span class="font-mono text-body-subtle">nothing yet</span>{% endif %}</dd>
+      <dt class="text-body-subtle">test it names</dt><dd class="min-w-0 break-all">{% if c.test %}<a href="{{ <source_blob path={c.test} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">no test — which is why this is not marked guaranteed</span>{% endif %}</dd>
       <dt class="text-body-subtle">claim id</dt><dd class="font-mono text-heading">{{ c.id }}</dd>
     </dl>
 

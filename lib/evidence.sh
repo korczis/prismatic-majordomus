@@ -210,10 +210,10 @@ usage: majordomus evidence --covers <token> [--type <kind>] (--command <cmd> | -
   --result    what it said, when a command's output is the point
   --gate      a validation gate of .ai/repo/ci/gates.yaml that has just reported, instead of
               an obligation. The line carries the hash of the files that select that gate, so
-              a run stops discharging it the moment one of them changes. `majordomus check`
+              a run stops discharging it the moment one of them changes. \`majordomus check\`
               reports every gate the task's change set selects; a gate that has never
-              reported is `queued` and never `pass`.
-  --exit      the gate's exit status; 0 is a pass and anything else refuses `completed`
+              reported is \`queued\` and never \`pass\`.
+  --exit      the gate's exit status; 0 is a pass and anything else refuses \`completed\`
 
   Some obligations are not recorded at all. A token whose established_by in
   share/obligations.yaml is not \`none\` — commit, push, target, pages — is settled live at

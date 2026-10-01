@@ -1,3 +1,4 @@
+# claims: release-archive-shape
 # The shape of a release archive, and the guard that refuses a malformed one.
 #
 # This case exists because of release v0.2.0, which was never published. scripts/release-package
@@ -14,7 +15,7 @@
 # and a packer that violates that is stopped where it packs rather than where it publishes.
 . "$ROOT/test/lib.sh"
 MJB="$(rust_bin)" || rust_bin_exit $?
-command -v tar >/dev/null 2>&1 || { echo "    skip: no tar"; exit 0; }
+command -v tar >/dev/null 2>&1 || skip "no tar"
 
 TAG="v$("$ROOT/scripts/release-version")"
 TARGET="$("$MJB" distribution --repo "$ROOT" build --format json 2>/dev/null \

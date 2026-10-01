@@ -6,7 +6,7 @@ weight = 22
 id = "trust-the-policy-before-reading-it"
 source = ".ai/repo/use-cases/trust-the-policy-before-reading-it.md"
 category = "policy"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

@@ -60,12 +60,13 @@ pub enum Inference {
     Local,
 }
 
-/// A model's lifecycle standing, as the catalogue declares it.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+/// A model's lifecycle standing, as the catalogue declares it. There is no default: a
+/// catalogue entry that declares none has an undeclared standing, which is not the same
+/// fact as "available", and no reader may render it as one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ModelStatus {
     /// Generally available.
-    #[default]
     Available,
     /// Usable, expected to change.
     Preview,
@@ -99,9 +100,11 @@ pub struct ModelEntry {
     /// The context window, tokens.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub context_window: Option<u64>,
-    /// The lifecycle standing.
-    #[serde(default)]
-    pub status: ModelStatus,
+    /// The lifecycle standing, when the catalogue declares one. Absent is undeclared: the
+    /// catalogue admits only facts with provenance, and routing still considers the model,
+    /// but nothing may say it is available on the catalogue's behalf.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub status: Option<ModelStatus>,
     /// One line a person needs when choosing; never pricing — a price the tool cannot
     /// verify is a fact it must not state (nothing here fabricates cost data).
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -260,16 +263,16 @@ fn disqualify(
             return Some(format!("not the model named outright ('{named}')"));
         }
     }
-    if matches!(model.status, ModelStatus::Deprecated | ModelStatus::Retired)
-        && needs.model.is_none()
-    {
-        return Some(format!(
-            "status is {}; routing only selects it when named outright",
-            match model.status {
-                ModelStatus::Deprecated => "deprecated",
-                _ => "retired",
-            }
-        ));
+    if let Some(status @ (ModelStatus::Deprecated | ModelStatus::Retired)) = model.status {
+        if needs.model.is_none() {
+            return Some(format!(
+                "status is {}; routing only selects it when named outright",
+                match status {
+                    ModelStatus::Deprecated => "deprecated",
+                    _ => "retired",
+                }
+            ));
+        }
     }
     if let Some(vendor) = &needs.vendor {
         if model.vendor != *vendor {
@@ -338,6 +341,18 @@ models:
 ",
         )
         .unwrap()
+    }
+
+    /// An entry that declares no status has none: it is not read as "available".
+    #[test]
+    fn an_undeclared_status_is_undeclared_and_not_available() {
+        let c = catalogue();
+        let large = c.models.iter().find(|m| m.id == "acme-large").unwrap();
+        assert_eq!(large.status, None);
+        let old = c.models.iter().find(|m| m.id == "acme-old").unwrap();
+        assert_eq!(old.status, Some(ModelStatus::Deprecated));
+        let json = serde_json::to_value(large).unwrap();
+        assert!(json.get("status").is_none(), "{json}");
     }
 
     #[test]

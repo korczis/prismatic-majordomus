@@ -1,0 +1,16 @@
+# The deterministic suite: no model is called. For every issue of this repository's plan,
+# the context compiler (majordomus devcontext) is asked for the context of that work under
+# its default budget, and what it considered and what it selected are counted in bytes and
+# in tokens of a named tokenizer.
+schema: economics-suite/v1
+id: context
+version: 1
+kind: context
+title: Context selection, counted
+seeds: .ai/repo/project/issues
+tokenizer: o200k_base
+freshness_inputs:
+  - .ai/repo/benchmarks/economics/methodology.yaml
+  - .ai/repo/benchmarks/economics/suites/context.yaml
+  - apps/majordomus-cli/src/devcontext
+  - .ai/repo/knowledge/sources.yaml

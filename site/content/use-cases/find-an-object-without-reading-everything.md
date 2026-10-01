@@ -6,7 +6,7 @@ weight = 34
 id = "find-an-object-without-reading-everything"
 source = ".ai/repo/use-cases/find-an-object-without-reading-everything.md"
 category = "mcp"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

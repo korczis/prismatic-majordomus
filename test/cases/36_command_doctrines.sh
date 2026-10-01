@@ -30,7 +30,7 @@ expect_exit 0 "$MJC" doctrine show majordomus.command-coverage
 expect_grep 'command_coverage'
 
 # ---- 1. a command the binary dispatches that the registry does not describe -------------
-python3 - "$W/share/commands.yaml" <<'PY' 2>/dev/null || { echo "    python3 absent; skipping"; exit 0; }
+python3 - "$W/share/commands.yaml" <<'PY' 2>/dev/null || skip "python3 absent"
 import sys
 p = sys.argv[1]
 s = open(p).read()

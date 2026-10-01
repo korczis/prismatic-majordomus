@@ -35,18 +35,23 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub mod dashboard;
+pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
 pub(crate) mod devcontext;
 pub mod devtask;
 pub(crate) mod directories;
 pub(crate) mod distribution;
+pub mod economics;
+pub mod entity;
 pub mod environment;
 pub mod evidence;
 pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub(crate) mod integration;
 pub mod intents;
 pub mod lifecycle;
 pub(crate) mod mesh;
@@ -58,13 +63,16 @@ pub(crate) mod perf;
 pub mod plan;
 pub(crate) mod product;
 pub mod quality;
+pub mod reasoning;
 pub mod recover;
 pub mod release;
 pub mod repository;
 pub mod rules;
 mod scope;
+pub mod served;
 pub mod server;
 pub mod session_domain;
+pub(crate) mod shell;
 pub mod trace;
 mod views;
 pub mod web;
@@ -76,7 +84,10 @@ use super::handler::Executable;
 use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
-pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
+pub use artifacts::{
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, ArtifactView, ArtifactsInput,
+    ARTIFACTS_URI,
+};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
@@ -151,29 +162,36 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commit,
         repository,
         objects,
+        entity,
         capabilities,
         commands,
         graph,
         health,
+        dashboard,
         continuity,
         lifecycle,
         obligations,
         gates,
         deploy,
+        delivery,
+        served,
         evidence,
         rules,
         executions,
         mesh,
         models,
+        reasoning,
         peers,
         server,
         session_domain,
+        shell,
         perf,
         plan,
         recover,
         directories,
         devcontext,
         artifacts,
+        economics,
         environment,
         quality,
         distribution,
@@ -183,6 +201,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         design,
         devtask,
         worktree,
+        integration,
         trace,
         product
     ]
@@ -274,7 +293,9 @@ mod tests {
             .collect();
         assert_eq!(
             writers.into_iter().collect::<Vec<_>>(),
-            ["plan.transition", "recover.orphans"]
+            // reasoning.record writes checkout state under .ai/local, never a tracked file,
+            // and is classified with the writers so that every surface asks before it runs.
+            ["plan.transition", "reasoning.record", "recover.orphans"]
         );
     }
 }

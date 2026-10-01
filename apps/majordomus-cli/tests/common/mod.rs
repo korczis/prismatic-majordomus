@@ -912,3 +912,30 @@ pub fn dist_scope(repo: &majordomus_cli::Repository) -> majordomus_cli::scope::S
         majordomus_cli::share::Share::locate(Some(&dist_share()), repo.root()).expect("share");
     majordomus_cli::scope::Scope::load(&share, repo).expect("scope")
 }
+
+/// `answer` with every `observed_at` and `stale_after` timestamp replaced by a placeholder,
+/// wherever it sits: in a structured result or in JSON carried as escaped text.
+pub fn without_observation_times(answer: &str) -> String {
+    const SHAPE: &[u8] = b"dddd-dd-ddTdd:dd:ddZ";
+    let fits = |b: &[u8]| {
+        b.len() >= SHAPE.len()
+            && SHAPE.iter().zip(b).all(|(s, c)| match s {
+                b'd' => c.is_ascii_digit(),
+                s => s == c,
+            })
+    };
+    let mut out = answer.to_string();
+    for key in ["observed_at", "stale_after"] {
+        let mut from = 0;
+        while let Some(at) = out[from..].find(key).map(|i| from + i + key.len()) {
+            from = at;
+            // past the closing quote, the colon and the opening quote, escaped or not
+            let end = (at + 8).min(out.len());
+            let Some(start) = (at..end).find(|&i| fits(&out.as_bytes()[i..])) else {
+                continue;
+            };
+            out.replace_range(start..start + SHAPE.len(), "<observed>");
+        }
+    }
+    out
+}

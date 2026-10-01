@@ -33,21 +33,23 @@ claims_bytes="$(jq -c '.claims' "$CAPS" | wc -c | tr -d ' ')"
 [ "$claims_bytes" -gt 1000 ] || { echo "    the claims payload measured $claims_bytes bytes, which means this case is reading the wrong file"; exit 1; }
 printf '    tracked listing %s bytes, claims %s bytes, cap %s\n' "$tracked_bytes" "$claims_bytes" "$CAP"
 
-# --- the tracked listing is read, never passed
-grep -q -- '--rawfile files' "$G" \
+# --- the tracked listing is read, never passed: forge_paths reads the file $LINK_TRACKED
+#     already holds (the listing the link projection wrote), with --rawfile
+grep -q -- '--rawfile files "$LINK_TRACKED"' "$G" \
   || { echo "    forge_paths no longer reads the tracked listing with --rawfile; over $CAP bytes it dies on Linux only"; exit 1; }
 if grep -q -- '--arg files "$(git' "$G"; then
   echo "    the tracked listing is passed through argv again (--arg files \"\$(git ...)\"); Linux caps one argument at $CAP bytes"; exit 1
 fi
 
-# --- the claims array is read, never passed
-grep -q -- '--slurpfile claims "$CLAIMS_TMP"' "$G" \
+# --- the claims array is read, never passed: the executable projection slurps the whole
+#     capabilities file and executable-site.jq reads .claims from it
+grep -q -- '--slurpfile caps "$OUT/capabilities.json" -f "$ROOT/scripts/lib/executable-site.jq"' "$G" \
   || { echo "    the executable projection no longer reads the claims with --slurpfile"; exit 1; }
 if grep -q -- '--argjson claims "$(' "$G"; then
   echo "    the claims array is passed through argv again (--argjson claims \"\$(...)\"); Linux caps one argument at $CAP bytes"; exit 1
 fi
-grep -q '\$claims\[0\]' "$J" \
-  || { echo "    executable-site.jq does not read \$claims[0]; --slurpfile wraps the array in one"; exit 1; }
+grep -q '\$caps\[0\]\.claims' "$J" \
+  || { echo "    executable-site.jq does not read \$caps[0].claims; --slurpfile wraps the file in an array"; exit 1; }
 
 # --- a payload that has crossed the cap and is still passed through argv is the failure this
 #     case exists to name. Both are read from files now, so the sizes are reported, not refused.
@@ -58,6 +60,6 @@ if [ "$claims_bytes" -gt "$CAP" ]; then
   printf '    the claims array is over the cap (%s > %s) and is read from a file: correct\n' "$claims_bytes" "$CAP"
 fi
 
-# --- the temporary files the two sites create are removed again
-grep -q 'rm -f "$tracked"' "$G" || { echo "    forge_paths leaks its temporary file"; exit 1; }
-grep -q 'rm -f "$CLAIMS_TMP"' "$G" || { echo "    the claims temporary file is not removed"; exit 1; }
+# --- the temporary listing is removed again, on exit and at the end
+grep -q 'trap .*"${LINK_TRACKED:-}"' "$G" || { echo "    the tracked listing's temporary file is not removed on exit"; exit 1; }
+grep -q 'rm -f "$LINK_TRACKED"' "$G" || { echo "    the tracked listing's temporary file is not removed"; exit 1; }

@@ -191,9 +191,14 @@
       <div class="rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs text-body">{{ label }}</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ model.telemetry[key] }}</dd></div>
       {%- endfor %}
     </dl>
-    <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    {#- A status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
+        evidence verdict `majordomus evidence show` derives (product.json `evidence`), counted
+        apart and never folded into the declared figure. No dataset reads as unknown. -#}
+    <dl class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" data-claims-proof>
       {%- for sid in caps.status_order %}
-      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle">{{ sid }} claims</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading">{{ [c for c in caps.claims if c.status == sid] | length }}</dd><dd class="mt-2 text-xs leading-relaxed text-body">{{ caps.statuses[sid] }}</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4"><dt class="text-xs font-semibold uppercase tracking-wide text-body-subtle">{{ sid }} claims, declared</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading" data-declared="{{ sid }}">{{ [c for c in caps.claims if c.status == sid] | length }}</dd>
+        {%- if sid == "guaranteed" %}<dd class="mt-2 text-xs text-body" data-supported="{% if model.evidence.available %}{{ model.evidence.supported }}{% else %}unknown{% endif %}">{% if model.evidence.available %}<span class="font-mono font-bold text-heading">{{ model.evidence.supported }}</span> supported by a recorded run{% else %}{{ <badge status="unknown" /> }} support by a recorded run: no evidence is recorded{% endif %} · <a href="{{ get_url(path="/guarantees/", trailing_slash=true) }}#guaranteed" class="text-fg-brand underline">per claim</a></dd>{% endif %}
+        <dd class="mt-2 text-xs leading-relaxed text-body">{{ caps.statuses[sid] }}</dd></div>
       {%- endfor %}
     </dl>
     {#- where this page came from, and what a reader can check for themselves: the release the
@@ -206,7 +211,7 @@
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="verify"><dt class="text-xs text-body">confirm what you installed</dt><dd class="mt-2 break-all font-mono text-sm text-heading">{{ dist.verify_command }}</dd></div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="commit"><dt class="text-xs text-body">commit this page was built from</dt>
-        {%- if build and build.commit and build.commit != "unknown" %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="hover:underline">{{ build.commit | truncate(length=7, end="") }}</a></dd><dd class="mt-1 text-xs text-body">{% if build.dirty %}with uncommitted changes · {% endif %}<a href="{{ get_url(path="build.json") }}" class="text-fg-brand hover:underline">served as build.json</a></dd>
+        {%- if build and build.commit and build.commit != "unknown" %}<dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ project.repository_url }}/commit/{{ build.commit }}" class="hover:underline">{{ build.commit | truncate(length=7, end="") }}</a></dd><dd class="mt-1 text-xs text-body">{% if build.dirty %}with uncommitted changes · {% endif %}<a href="{{ get_url(path="build.json") }}" class="text-fg-brand underline">served as build.json</a></dd>
         {%- else %}<dd class="mt-1 font-mono text-2xl font-bold text-body-subtle">unknown</dd>{% endif %}</div>
       <div class="min-w-0 rounded-base border border-default bg-neutral-primary p-4" data-trust-key="use-cases"><dt class="text-xs text-body">executable use cases, across areas of work</dt><dd class="mt-1 font-mono text-2xl font-bold text-heading"><a href="{{ get_url(path="/use-cases/", trailing_slash=true) }}" class="hover:underline">{{ cat.use_cases | length }}</a></dd><dd class="mt-1 text-xs text-body">{{ cat.categories | length }} areas</dd></div>
     </dl>

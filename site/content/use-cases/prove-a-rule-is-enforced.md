@@ -6,7 +6,7 @@ weight = 4
 id = "prove-a-rule-is-enforced"
 source = ".ai/repo/use-cases/prove-a-rule-is-enforced.md"
 category = "policy"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

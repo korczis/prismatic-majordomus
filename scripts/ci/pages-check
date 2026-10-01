@@ -36,7 +36,8 @@
 #
 # So: the branch says which commit it was built from, and this asserts that commit is on
 # master; that master has not moved past it beyond the deploy window; that the live site is
-# serving it; and that GitHub's own build of it did not error.
+# serving it, the crate's rustdoc reference composed into it included (ADR 0086); and that
+# GitHub's own build of it did not error.
 #
 #   scripts/ci/pages-check                 every check; needs network for two of them
 #   scripts/ci/pages-check --offline       the two decidable from the clone alone
@@ -183,6 +184,47 @@ else
       ok "the pages agree with $identity (${footer:0:12})"
     fi
   fi
+fi
+
+# ------------------------------------------------------- 2b. the crate's reference, as served
+#
+# Since ADR 0086 the published site carries a second surface beside its own pages: the crate's
+# rustdoc, composed at its mount by the build and verified by the deploy that published it. A
+# publication that served the right /build.json and a stale, half-copied or missing reference
+# would pass every question above, so this asks it — once, with no wait, because the wait for
+# a deploy in flight is section 2's and this runs only when section 2 found the published
+# commit served. Whether there is a reference to ask about is the published commit's own
+# topology: a site published before the reference existed has none, and that is not a finding.
+# The question itself is `scripts/pages verify-rustdoc`, the probe the deploy runs; one probe,
+# two callers, as with `scripts/pages built` below.
+rustdoc_live() {
+  local declared out rc=0
+  declared="$(git show "$source_sha:docs/generated/web.json" 2>/dev/null \
+    | jq -r '[.surfaces[]? | select(.id == "rustdoc")] | length' 2>/dev/null || true)"
+  if [ -z "$declared" ]; then
+    note "the published commit's docs/generated/web.json could not be read; its rustdoc reference was not judged"
+    return 0
+  fi
+  if [ "$declared" = 0 ]; then
+    ok "the published commit ${source_sha:0:12} composes no rustdoc reference; there is none to verify"
+    return 0
+  fi
+  out="$(scripts/pages verify-rustdoc --url "$URL" --commit "$source_sha" --timeout 0 2>&1)" || rc=$?
+  case "$rc" in
+    0)  ok "the live rustdoc reference is the one ${source_sha:0:12} built, and it is whole" ;;
+    10) bad "the live rustdoc reference is not the one ${source_sha:0:12} built, or not all of it is served"
+        # awk, not grep: under pipefail a filter that matched nothing would end this gate
+        printf '%s\n' "$out" | awk '/ fail$|^pages verify-rustdoc/ { print "      " $0 }' ;;
+    *)  note "the live rustdoc reference could not be judged (verify-rustdoc exit $rc); not measured"
+        printf '%s\n' "$out" | tail -n 2 | awk '{ print "      " $0 }' ;;
+  esac
+}
+if [ "$OFFLINE" = 1 ]; then
+  ok "the live rustdoc reference was not asked (--offline)"
+elif [ -n "${served:-}" ] && [ "${served#"$source_sha"}" != "$served" ]; then
+  rustdoc_live
+else
+  note "the live site does not serve ${source_sha:0:12}, so its rustdoc reference cannot be judged against it"
 fi
 
 # ------------------------------------------------------- 3. is the publication still current

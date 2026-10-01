@@ -247,6 +247,16 @@ pub enum Error {
         reason: String,
     },
 
+    /// The layer names something this repository does not hold, so the graph composed from
+    /// it would carry a reference to nothing. Nothing is written: a published graph whose
+    /// reference resolves to no node is a naming defect a reader cannot see, and every
+    /// regeneration would reproduce it.
+    #[error("the composed graph would name what this repository does not hold:\n{}", findings.join("\n"))]
+    UnresolvedRelation {
+        /// One line per finding: the file, the key, what was named, and the correction.
+        findings: Vec<String>,
+    },
+
     /// `generate --check` found committed projections that differ from the registry, or are missing.
     #[error("generated artifact(s) stale: {} (run: majordomus generate)", files.join(", "))]
     Stale {
@@ -278,6 +288,7 @@ impl Error {
             | Error::InvalidRelease { .. }
             | Error::InvalidDesign { .. }
             | Error::InvalidSource { .. }
+            | Error::UnresolvedRelation { .. }
             | Error::Stale { .. } => 10,
             Error::CapabilityNotFound { .. }
             | Error::NotFound { .. }

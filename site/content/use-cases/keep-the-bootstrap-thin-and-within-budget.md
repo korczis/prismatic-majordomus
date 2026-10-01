@@ -6,7 +6,7 @@ weight = 23
 id = "keep-the-bootstrap-thin-and-within-budget"
 source = ".ai/repo/use-cases/keep-the-bootstrap-thin-and-within-budget.md"
 category = "drift"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

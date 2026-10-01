@@ -1,5 +1,6 @@
 # majordomus-covers: history start checkpoint decision question handover finish update
 # majordomus-negative: history
+# claims: event-vocabulary
 #
 # The ledger is append-only and canonical, so every line written into it is permanent. An
 # event name no reader recognises is therefore a durable record that is silently ignored,

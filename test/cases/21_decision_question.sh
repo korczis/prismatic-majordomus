@@ -1,5 +1,6 @@
 # majordomus-covers: decision question
 # majordomus-negative: decision question check finish watch doctor
+# claims: blocker-store, decision-record, open-question-gate
 # Decisions and open questions: the two stores the finish contract reads. Both must be
 # written by a command, validated by the gates, and impossible to corrupt silently.
 . "$ROOT/test/lib.sh"
@@ -121,3 +122,7 @@ expect_exit 10 "$MJ" doctor
 expect_grep 'FAIL records +open-questions.md'
 expect_exit 11 "$MJ" watch
 expect_grep 'DRIFT records +open-questions.md'
+# ... and blocks acceptance exactly as an unresolved question does: a completed finish is refused
+printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
+expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_grep 'FAIL blockers +open-questions.md .* do not parse'

@@ -1,5 +1,6 @@
 # majordomus-covers: handover
 # majordomus-negative: handover start
+# claims: handover-record, no-transcripts
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
@@ -35,6 +36,18 @@ expect_exit 0 "$MJ" handover --resolve
 expect_grep '^Match: same_worktree_same_branch'
 expect_grep '^Git state: exact'
 expect_grep '^# Objective'
+# the verdict, not only the age: a record written a moment ago is fresh and is not history...
+expect_grep '^Freshness: fresh'
+expect_no_grep '^History:'
+# ...and the same record, aged past the policy's stale threshold, is said to be history
+expect_exit 0 "$MJ" handover --resolve --path
+rec="$LAST_OUT"
+cp "$rec" "$T/record.keep"
+sed 's/^created_at: .*/created_at: 2020-01-01T00:00:00Z/' "$T/record.keep" > "$rec"
+expect_exit 0 "$MJ" handover --resolve
+expect_grep '^Freshness: stale — .*past the .* this repository calls stale'
+expect_grep '^History: read this record as context'
+cp "$T/record.keep" "$rec"
 git commit -qam more
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^Git state: advanced'
@@ -47,6 +60,10 @@ git checkout -q -
 # newest wins within the same tier
 sleep 1
 expect_exit 0 bash -c "printf '# Objective\nsecond\n# Current State\ns\n# Next Action\ns\n' | '$MJ' handover --close"
+# append-only: the second handover is a new record, and the first is still there, byte for byte
+[ "$(ls .ai/local/state/handovers/*.md | wc -l | tr -d ' ')" = 2 ] \
+  || { echo "    a second handover did not add a record beside the first"; ls .ai/local/state/handovers; exit 1; }
+cmp -s "$rec" "$T/record.keep" || { echo "    a second handover changed or removed the first record"; exit 1; }
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^second$'
 # --close lets a new task start; old one is archived, not lost

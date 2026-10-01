@@ -6,7 +6,7 @@ weight = 29
 id = "document-every-directory-of-the-layer"
 source = ".ai/repo/use-cases/document-every-directory-of-the-layer.md"
 category = "knowledge"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation
