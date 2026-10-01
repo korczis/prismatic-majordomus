@@ -11,6 +11,20 @@
 #                                       the verdicts are rendered in name order at the end
 #   MJ_TEST_REPORT=<file>               also write one TSV row per case:
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
+#   MJ_TEST_SHARD=<i>/<n>               run only the i-th of n shards (with MJ_TEST_JOBS > 1):
+#                                       cases are dealt longest-first over n x MJ_TEST_JOBS
+#                                       worker slots by the seconds MJ_TEST_DURATIONS records,
+#                                       the exclusive ones to the least-loaded shard, so every
+#                                       shard computes the same deal and the union is the suite
+#   MJ_TEST_DURATIONS=<file>            name<TAB>seconds per case (default
+#                                       .ai/repo/ci/suite-durations.tsv); an unknown case
+#                                       weighs 300 s. Stale numbers unbalance shards, never
+#                                       drop a case
+#   MJ_TEST_LIST=1                      print the cases this invocation would run and run none
+#   bash test/run.sh --verify-report <file>
+#                                       exit 1 unless the report has exactly one row for every
+#                                       case under test/cases/ and no other: what proves that a
+#                                       sharded run left nothing out and ran nothing twice
 #   MAJORDOMUS_BIN=<path>               the Rust cases drive this prebuilt executable instead
 #                                       of building the crate (see rust_bin in test/lib.sh)
 #   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 3600). A
@@ -163,6 +177,22 @@ fi
 # Every argument names one case. Only the first was ever read, so `run.sh a b c` ran `a`,
 # reported one pass and exited 0 as if `b` and `c` had passed too. A name that matches nothing
 # is still a usage error, for each name rather than for the set.
+if [ "${1:-}" = --verify-report ]; then
+  rep="${2:-}"
+  [ -f "$rep" ] || { echo "run.sh: --verify-report needs a report file, got '$rep'" >&2; exit 2; }
+  want="$(for c in "$ROOT"/test/cases/*.sh; do basename "$c" .sh; done | LC_ALL=C sort)"
+  have="$(cut -f1 "$rep" | LC_ALL=C sort)"
+  missing="$(printf '%s\n' "$want" | LC_ALL=C comm -23 - <(printf '%s\n' "$have" | LC_ALL=C sort -u))"
+  twice="$(printf '%s\n' "$have" | uniq -d)"
+  unknown="$(printf '%s\n' "$have" | LC_ALL=C sort -u | LC_ALL=C comm -13 <(printf '%s\n' "$want") -)"
+  bad=0
+  [ -z "$missing" ] || { echo "run.sh: no row for: $(printf '%s ' $missing)"; bad=1; }
+  [ -z "$twice" ] || { echo "run.sh: more than one row for: $(printf '%s ' $twice)"; bad=1; }
+  [ -z "$unknown" ] || { echo "run.sh: rows for no case under test/cases/: $(printf '%s ' $unknown)"; bad=1; }
+  [ "$bad" = 0 ] && echo "run.sh: the report has exactly one row for each of the $(printf '%s\n' "$want" | wc -l | tr -d ' ') cases"
+  exit "$bad"
+fi
+
 only=""
 for n in "$@"; do
   [ -f "$ROOT/test/cases/$n.sh" ] || { echo "run.sh: no case matches '$n' (test/cases/$n.sh does not exist)" >&2; exit 2; }
@@ -181,6 +211,46 @@ for case in "$ROOT"/test/cases/*.sh; do
   if grep -q '^# majordomus-exclusive:' "$case"; then exclusive_names="$exclusive_names $name"
   else parallel_names="$parallel_names $name"; fi
 done
+
+# ---------------------------------------------------------------- one shard
+# Longest-processing-time first: cases sorted by their recorded seconds, each dealt to the
+# least-loaded of n x jobs worker slots; then the exclusive ones, each to the shard whose
+# busiest worker finishes first. Pure arithmetic over one committed file, ties broken by
+# name, so every shard of a run deals the same hand and their union is the whole suite.
+if [ -n "${MJ_TEST_SHARD:-}" ]; then
+  me="${MJ_TEST_SHARD%%/*}"; of="${MJ_TEST_SHARD##*/}"
+  case "$me/$of" in *[!0-9/]*|/*|*/) echo "run.sh: MJ_TEST_SHARD must be <i>/<n>, got '$MJ_TEST_SHARD'" >&2; exit 2 ;; esac
+  [ "$me" -ge 1 ] && [ "$me" -le "$of" ] || { echo "run.sh: MJ_TEST_SHARD $MJ_TEST_SHARD is out of range" >&2; exit 2; }
+  [ "$jobs" -gt 1 ] || { echo "run.sh: MJ_TEST_SHARD needs MJ_TEST_JOBS > 1" >&2; exit 2; }
+  durations="${MJ_TEST_DURATIONS:-$ROOT/.ai/repo/ci/suite-durations.tsv}"
+  [ -f "$durations" ] || durations=/dev/null
+  tab="$(printf '\t')"
+  dealt="$( { for n in $parallel_names; do printf '%s\tp\n' "$n"; done
+              for n in $exclusive_names; do printf '%s\te\n' "$n"; done; } |
+    awk -F'\t' -v OFS='\t' -v dur="$durations" '
+      BEGIN { while ((getline l < dur) > 0) { split(l, f, "\t"); if (f[2] ~ /^[0-9]+$/) d[f[1]] = f[2] } }
+      { print (($1 in d) ? d[$1] : 300), $1, $2 }' |
+    LC_ALL=C sort -t "$tab" -k3,3r -k1,1nr -k2,2 |
+    awk -F'\t' -v N="$of" -v J="$jobs" -v me="$me" '
+      $3 == "p" { b = 0; for (s = 1; s < N * J; s++) if (slot[s] < slot[b]) b = s
+                  slot[b] += $1; if (int(b / J) == me - 1) print $2; next }
+      { if (!ready) { for (k = 0; k < N; k++) { m = 0; for (w = 0; w < J; w++) if (slot[k * J + w] > m) m = slot[k * J + w]; load[k] = m }; ready = 1 }
+        b = 0; for (k = 1; k < N; k++) if (load[k] < load[b]) b = k
+        load[b] += $1; if (b == me - 1) print $2 }')"
+  keep_p=""; keep_e=""
+  for n in $dealt; do
+    case " $exclusive_names " in *" $n "*) keep_e="$keep_e $n" ;; *) keep_p="$keep_p $n" ;; esac
+  done
+  # longest first within the shard, so the deal's arithmetic is also the start order
+  parallel_names="$keep_p"; exclusive_names="$keep_e"
+  [ -n "${MJ_TEST_LIST:-}" ] || echo "run.sh: shard $me of $of: $(printf '%s\n' $keep_p $keep_e | grep -c .) of the suite's cases"
+fi
+
+# MJ_TEST_LIST=1: the cases this invocation would run, one per line, and nothing run
+if [ -n "${MJ_TEST_LIST:-}" ]; then
+  printf '%s\n' $parallel_names $exclusive_names
+  exit 0
+fi
 
 if [ "$jobs" = 1 ]; then
   # ---------------------------------------------------------------- serial
