@@ -1110,6 +1110,69 @@ fn records(objects: &[Object]) -> Vec<(Version, String, Option<String>, Option<S
     list
 }
 
+/// The release a version is measured from, named without reading its surface.
+///
+/// ```
+/// use majordomus_cli::release::compat::LastRelease;
+/// let tagged = LastRelease {
+///     version: "0.5.0".into(),
+///     reference: "v0.5.0".into(),
+///     read_at: "v0.5.0".into(),
+///     recorded: false,
+/// };
+/// // a release known only from its tag is read at the tag itself
+/// assert_eq!(tagged.read_at, tagged.reference);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LastRelease {
+    /// `0.5.0`.
+    pub version: String,
+    /// `v0.5.0`: the release, as a reader recognises it.
+    pub reference: String,
+    /// The ref its tree is read from: the commit its record names, else its tag.
+    pub read_at: String,
+    /// Whether the layer holds a record for it, rather than only a tag.
+    pub recorded: bool,
+}
+
+/// The newest release by version: the highest the layer records, else the highest version
+/// tag. The one selection — [`analyze`]'s baseline and the version report's last release
+/// are both this, so the contract and the commit evidence always measure the same window.
+fn latest(
+    records: &[(Version, String, Option<String>, Option<String>)],
+    tags: &[String],
+) -> Option<LastRelease> {
+    match records.last() {
+        Some((_, raw, tag, commit)) => Some(LastRelease {
+            version: raw.clone(),
+            reference: tag.clone().unwrap_or_else(|| format!("v{raw}")),
+            read_at: commit
+                .clone()
+                .or_else(|| tag.clone())
+                .unwrap_or_else(|| format!("v{raw}")),
+            recorded: true,
+        }),
+        None => tags.last().map(|t| LastRelease {
+            version: t.trim_start_matches('v').to_string(),
+            reference: t.clone(),
+            read_at: t.clone(),
+            recorded: false,
+        }),
+    }
+}
+
+/// The release [`analyze`] measures from when no `--since` is given, named without reading
+/// its surface — `None` when nothing was published.
+///
+/// ```
+/// use majordomus_cli::release::compat::last_release;
+/// let dir = tempfile::tempdir().unwrap();
+/// assert_eq!(last_release(dir.path(), &[]), None);
+/// ```
+pub fn last_release(root: &Path, objects: &[Object]) -> Option<LastRelease> {
+    latest(&records(objects), &tags(root))
+}
+
 /// Find the release to measure against, and say what is incoherent about the release state
 /// on the way.
 ///
@@ -1165,28 +1228,21 @@ fn resolve_baseline(
             r.to_string(),
             r.to_string(),
         ),
-        None => match records.last() {
-            Some((_, raw, tag, commit)) => (
-                raw.clone(),
-                tag.clone().unwrap_or_else(|| format!("v{raw}")),
-                commit
-                    .clone()
-                    .or_else(|| tag.clone())
-                    .unwrap_or_else(|| format!("v{raw}")),
-            ),
-            None => match tags.last() {
-                Some(t) => {
+        None => match latest(&records, &tags) {
+            Some(last) => {
+                if !last.recorded {
                     diagnostics.push(Diagnostic {
                         id: "baseline-from-tag".into(),
                         severity: Severity::Warning,
                         message: format!(
-                            "the layer records no release, so {t} was taken as the baseline from git's tags alone"
+                            "the layer records no release, so {} was taken as the baseline from git's tags alone",
+                            last.reference
                         ),
                     });
-                    (t.trim_start_matches('v').to_string(), t.clone(), t.clone())
                 }
-                None => return Err(SurfaceError::NothingPublished),
-            },
+                (last.version, last.reference, last.read_at)
+            }
+            None => return Err(SurfaceError::NothingPublished),
         },
     };
 
@@ -1351,6 +1407,72 @@ pub struct VersionPlan {
 }
 
 impl VersionPlan {
+    /// The version the contract requires, when the analysis could measure one.
+    ///
+    /// The analysis still returns a plan when a fact it rests on is untrustworthy — a version
+    /// that is not three numbers (`baseline-version-malformed`, `declared-version-malformed`,
+    /// then a guess), a baseline whose record and tag name different commits
+    /// (`tag-commit-mismatch`), a version stated by hand (`writers-disagree`,
+    /// `version-stated-by-hand`) — so a caller that takes `required_version` as the
+    /// contract's answer must ask this instead. It is sound exactly when `release bump` would
+    /// write from it: any [`Severity::Error`] diagnostic ([`VersionPlan::has_errors`]) refuses,
+    /// with every error's message, one per line, as `bump` prints them.
+    ///
+    /// ```
+    /// # use majordomus_cli::release::compat::*;
+    /// # use majordomus_cli::release::version::Version;
+    /// # fn plan(required_version: &str, diagnostics: Vec<Diagnostic>) -> VersionPlan {
+    /// #   VersionPlan { policy: Policy::for_version(Version::parse("0.5.0").unwrap()),
+    /// #     baseline: Baseline { version: "0.5.0".into(), reference: "v0.5.0".into(),
+    /// #       read_at: "c".into(), commit: "c".into(), recorded: true, atoms: 1,
+    /// #       fingerprint: "sha256:a".into() },
+    /// #     declared_version: required_version.into(), tool_version: "0.5.0".into(),
+    /// #     writers_agree: true, atoms: 1, fingerprint: "sha256:b".into(),
+    /// #     implied: Impact::Minor, required: Impact::Minor, declared: Impact::None,
+    /// #     required_version: required_version.into(), status: Status::Blocked,
+    /// #     breaking: false, changes: Vec::new(),
+    /// #     commits: CommitEvidence { commits: 0, implied: Impact::None, breaking: Vec::new() },
+    /// #     understated: false, diagnostics }
+    /// # }
+    /// assert_eq!(plan("0.6.0", Vec::new()).measured_version(), Ok("0.6.0".into()));
+    /// // no version line in the manifest: the analysis echoes "", which is no answer
+    /// assert!(plan("", Vec::new()).measured_version().is_err());
+    /// let guessed = Diagnostic { id: "baseline-version-malformed".into(),
+    ///     severity: Severity::Error, message: "the baseline is not three numbers".into() };
+    /// assert_eq!(plan("0.6.0", vec![guessed]).measured_version(),
+    ///     Err("the baseline is not three numbers".into()));
+    /// // any error refuses, not only a malformed version: the plan bump would not write from
+    /// let moved = Diagnostic { id: "tag-commit-mismatch".into(),
+    ///     severity: Severity::Error, message: "the tag moved".into() };
+    /// let stale = Diagnostic { id: "projection-stale".into(),
+    ///     severity: Severity::Warning, message: "run scripts/derive".into() };
+    /// assert_eq!(plan("0.6.0", vec![stale.clone()]).measured_version(), Ok("0.6.0".into()));
+    /// let unsound = plan("0.6.0", vec![moved.clone(), stale, moved]);
+    /// assert!(unsound.has_errors());
+    /// assert_eq!(unsound.measured_version(), Err("the tag moved\nthe tag moved".into()));
+    /// ```
+    pub fn measured_version(&self) -> Result<String, String> {
+        // One soundness test with `release bump`: the plan it refuses to write from is the
+        // plan the report refuses to decide from, for the same reasons.
+        if self.has_errors() {
+            let errors: Vec<&str> = self
+                .diagnostics
+                .iter()
+                .filter(|d| d.severity == Severity::Error)
+                .map(|d| d.message.as_str())
+                .collect();
+            return Err(errors.join("\n"));
+        }
+        Version::parse(&self.required_version)
+            .map(|v| v.to_string())
+            .ok_or_else(|| {
+                format!(
+                    "the contract's required version '{}' is not three numbers",
+                    self.required_version
+                )
+            })
+    }
+
     /// How many changes moved the contract in each direction.
     ///
     /// ```

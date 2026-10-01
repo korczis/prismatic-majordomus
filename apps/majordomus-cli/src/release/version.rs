@@ -1,5 +1,6 @@
 //! The version: the one place it is authored, what is derived from that place, what the
-//! commits imply, and the one writer that raises it.
+//! contract requires next and what the commits imply as evidence, and the one writer that
+//! raises it.
 //!
 //! The product version is authored in exactly one place, the `[package] version` line of
 //! the crate manifest ([`MANIFEST`]). Every other statement of it is derived from that line
@@ -35,7 +36,7 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use super::compat::{Diagnostic, Severity};
-use super::model::{Change, ChangeKind, VersionReport};
+use super::model::{Change, ChangeKind, DecidedBy, VersionReport};
 use crate::model::Object;
 
 /// The crate manifest: the one place the version is authored.
@@ -897,46 +898,204 @@ pub fn write(root: &Path, to: &str) -> std::io::Result<Vec<String>> {
     Ok(written)
 }
 
-/// The whole version answer: what is declared, whether the projection the shell tool reads
-/// states it, and what the commits since the last release imply.
+/// The version the commit subjects imply: the last release raised by their bump — from the
+/// declared version only when nothing was released. Evidence, never the answer on its own.
 ///
-/// The last release is the newest record the layer holds, which is the same source the
-/// changelog uses — so the two never disagree about where "since" begins.
-pub fn report(root: &Path, objects: &[Object]) -> VersionReport {
+/// It raises the last release and not the declared version, because a declared version
+/// already raised for the window must not be raised again by the same commits.
+///
+/// ```
+/// use majordomus_cli::release::version::{commits_imply, Bump};
+/// // released 0.10.0, already declared 0.11.0, only features since: 0.11.0, not 0.12.0
+/// assert_eq!(commits_imply(Some("0.10.0"), "0.11.0", Bump::Minor).as_deref(), Some("0.11.0"));
+/// // nothing released: the declared version is the only base there is
+/// assert_eq!(commits_imply(None, "0.3.0", Bump::Patch).as_deref(), Some("0.3.1"));
+/// ```
+pub fn commits_imply(last: Option<&str>, declared: &str, bump: Bump) -> Option<String> {
+    last.and_then(Version::parse)
+        .or_else(|| Version::parse(declared))
+        .map(|v| v.raised(bump).to_string())
+}
+
+/// Who answers `next`, and with what: the contract when it could be measured, and no one
+/// when it could not.
+///
+/// `contract` is the analysis' measured version ([`crate::release::compat::VersionPlan::
+/// measured_version`]), or why none could be measured. ADR 0051 refuses an unmeasurable
+/// baseline rather than guessing one, so an `Err` leaves `next` absent, [`DecidedBy::
+/// Undecided`] and the reason carried — the commit inference stays evidence beside it and
+/// never stands in for the measurement. The contract's answer is a minimum: when it is no
+/// greater than `last` — only behaviour behind the public boundary changed, so the contract
+/// requires no release — it is the release already made, never the next one. Then the
+/// commits decide whether anything is released at all, and the contract decides how much:
+/// the smallest release above the last, a patch, labelled [`DecidedBy::ContractAndCommits`].
+/// The commits never raise `next` beyond what the contract requires.
+///
+/// ```
+/// use majordomus_cli::release::model::DecidedBy;
+/// use majordomus_cli::release::version::{decide, Bump};
+/// // the commits say BREAKING, the contract only grew: below 1.0 that owes a minor
+/// let (next, by, why) = decide(Some("0.10.0"), Bump::Major, Ok("0.11.0".into()));
+/// assert_eq!((next.as_deref(), by, why), (Some("0.11.0"), DecidedBy::Contract, None));
+/// // only fixes, the surface unchanged: the contract's minimum is the release already made
+/// let (next, by, _) = decide(Some("0.10.0"), Bump::Patch, Ok("0.10.0".into()));
+/// assert_eq!((next.as_deref(), by), (Some("0.10.1"), DecidedBy::ContractAndCommits));
+/// // no published baseline: no one decides, and the reason is carried
+/// let (next, by, why) = decide(None, Bump::Minor, Err("no release".into()));
+/// assert_eq!((next, by), (None, DecidedBy::Undecided));
+/// assert_eq!(why.as_deref(), Some("no release"));
+/// ```
+pub fn decide(
+    last: Option<&str>,
+    bump: Bump,
+    contract: Result<String, String>,
+) -> (Option<String>, DecidedBy, Option<String>) {
+    let required = match contract {
+        Ok(required) => required,
+        Err(why) => return (None, DecidedBy::Undecided, Some(why)),
+    };
+    match (Version::parse(&required), last.and_then(Version::parse)) {
+        (Some(r), Some(l)) if r <= l => match bump {
+            Bump::None => (None, DecidedBy::Contract, None),
+            _ => (
+                Some(l.raised(Bump::Patch).to_string()),
+                DecidedBy::ContractAndCommits,
+                None,
+            ),
+        },
+        _ => (Some(required), DecidedBy::Contract, None),
+    }
+}
+
+/// The whole version answer: what is declared, whether the projection the shell tool reads
+/// states it, what the public contract requires next, and what the commits since the last
+/// release imply — as evidence.
+///
+/// `contract` is the analysis' answer ([`decide`] says how it is used); [`select`] is the
+/// caller that asks it, and the one every surface goes through. The last release is
+/// [`crate::release::compat::last_release`] — the same baseline `release analyze` measures
+/// from, the highest version the layer records — so the contract and the commit evidence
+/// always measure one window. The commit inference raises that release ([`commits_imply`]).
+pub fn report(root: &Path, objects: &[Object], contract: Result<String, String>) -> VersionReport {
     let declared = declared(root).unwrap_or_else(|| "unknown".into());
     let tool_version = tool(root).unwrap_or_else(|| "unknown".into());
 
-    let last = objects
-        .iter()
-        .filter(|o| o.kind == super::changelog::RELEASE_KIND)
-        .filter_map(|o| {
-            let v = o.metadata.get("version")?.as_str()?.to_string();
-            let c = o.metadata.get("commit")?.as_str()?.to_string();
-            let d = o
-                .metadata
-                .get("published_at")
-                .and_then(|v| v.as_str())
-                .unwrap_or_default()
-                .to_string();
-            Some((d, v, c))
-        })
-        .max_by(|a, b| a.0.cmp(&b.0));
-
+    let last = super::compat::last_release(root, objects);
     let changes = match &last {
-        Some((_, _, commit)) => super::commits::in_range(root, &format!("{commit}..HEAD"), objects),
+        Some(l) => super::commits::in_range(root, &format!("{}..HEAD", l.read_at), objects),
         None => super::commits::in_range(root, "HEAD", objects),
     };
     let bump = bump_of(&changes);
-    let next = Version::parse(&declared).map(|v| v.raised(bump).to_string());
+    let last_version = last.map(|l| l.version);
+    let commits_imply = commits_imply(last_version.as_deref(), &declared, bump);
+    let (next, decided_by, contract_unreadable) = decide(last_version.as_deref(), bump, contract);
 
     VersionReport {
         agree: projection_current(root),
         declared,
         tool: tool_version,
-        last_release: last.map(|(_, v, _)| v),
+        last_release: last_version,
         bump: bump.as_str().to_string(),
+        commits_imply,
         next,
+        decided_by,
+        contract_unreadable,
         changes,
+    }
+}
+
+/// The release selection: the contract's analysis against the last release, and the version
+/// report decided from it — made once, by one function.
+///
+/// `release version` (the capability, and every surface that renders it) and `release bump`
+/// without an explicit target both take their answer from here, so the report and the writer
+/// cannot disagree about what the next version is: the report's `next` is the version the
+/// writer raises to ([`default_target`]).
+///
+/// ```
+/// use majordomus_cli::capability::registry::CapabilityRegistry;
+/// use majordomus_cli::release::model::DecidedBy;
+/// use majordomus_cli::release::version::{select, Selection};
+/// let dir = tempfile::tempdir().unwrap();
+/// let registry = CapabilityRegistry::builder().build().unwrap();
+/// let selection: Selection = select(dir.path(), &registry, &[]);
+/// // nothing published: no plan, and so a report that decides nothing — with the same reason
+/// let why = selection.plan.as_ref().unwrap_err();
+/// assert_eq!(selection.report.decided_by, DecidedBy::Undecided);
+/// assert_eq!(selection.report.contract_unreadable.as_ref(), Some(why));
+/// assert_eq!(selection.report.next, None);
+/// ```
+#[derive(Debug)]
+pub struct Selection {
+    /// The analysis `release analyze` makes against the last release, or why it could not be
+    /// made at all (no release to compare with, a baseline whose registry is not committed).
+    pub plan: Result<super::compat::VersionPlan, String>,
+    /// The version report decided from that analysis.
+    pub report: VersionReport,
+}
+
+/// Make the release selection ([`Selection`]): analyse the contract against the last
+/// release, refuse a guess ([`crate::release::compat::VersionPlan::measured_version`]), and
+/// decide the report from what is left ([`report`]).
+///
+/// ```
+/// use majordomus_cli::capability::registry::CapabilityRegistry;
+/// use majordomus_cli::release::version::{default_target, select, Version};
+/// let dir = tempfile::tempdir().unwrap();
+/// let registry = CapabilityRegistry::builder().build().unwrap();
+/// let selection = select(dir.path(), &registry, &[]);
+/// // the writer's default target is read from this report, so it refuses with its reason
+/// let current = Version::parse("0.1.0").unwrap();
+/// assert_eq!(
+///     default_target(&selection.report, current).unwrap_err(),
+///     selection.report.contract_unreadable.clone().unwrap()
+/// );
+/// ```
+pub fn select(
+    root: &Path,
+    registry: &crate::capability::registry::CapabilityRegistry,
+    objects: &[Object],
+) -> Selection {
+    let plan = super::compat::analyze(root, registry, objects, None).map_err(|e| e.to_string());
+    let contract = match &plan {
+        Ok(p) => p.measured_version(),
+        Err(why) => Err(why.clone()),
+    };
+    Selection {
+        report: report(root, objects, contract),
+        plan,
+    }
+}
+
+/// The version `release bump` raises to when no target is named: the report's `next`, the
+/// declared version when nothing would be released — and a refusal, with the report's
+/// reason, when the contract could not be measured and so no one decided.
+///
+/// ```
+/// use majordomus_cli::release::model::{DecidedBy, VersionReport};
+/// use majordomus_cli::release::version::{default_target, Version};
+/// let report = |next: Option<&str>, decided_by, why: Option<&str>| VersionReport {
+///     declared: "0.11.0".into(), tool: "0.11.0".into(), agree: true,
+///     last_release: Some("0.11.0".into()), bump: "patch".into(),
+///     commits_imply: Some("0.11.1".into()), next: next.map(Into::into), decided_by,
+///     contract_unreadable: why.map(Into::into), changes: Vec::new() };
+/// let current = Version::parse("0.11.0").unwrap();
+/// let fix = report(Some("0.11.1"), DecidedBy::ContractAndCommits, None);
+/// assert_eq!(default_target(&fix, current).unwrap().to_string(), "0.11.1");
+/// let nothing = report(None, DecidedBy::Contract, None);
+/// assert_eq!(default_target(&nothing, current), Ok(current));
+/// let unread = report(None, DecidedBy::Undecided, Some("no release"));
+/// assert_eq!(default_target(&unread, current), Err("no release".into()));
+/// ```
+pub fn default_target(report: &VersionReport, current: Version) -> Result<Version, String> {
+    match (&report.next, report.decided_by) {
+        (_, DecidedBy::Undecided) => Err(report
+            .contract_unreadable
+            .clone()
+            .unwrap_or_else(|| "the public contract could not be measured".into())),
+        (Some(next), _) => Version::parse(next)
+            .ok_or_else(|| format!("the selected version '{next}' is not three numbers")),
+        (None, _) => Ok(current),
     }
 }
 
@@ -975,6 +1134,119 @@ mod tests {
             ]),
             Bump::Major
         );
+    }
+
+    /// ADR 0051: the contract decides `next`, and an unmeasurable contract is refused, not
+    /// guessed — `next` is absent, `undecided`, with the reason, whatever the commits say. The
+    /// case this was written for: commits saying BREAKING (1.0.0 from 0.10.0) against a
+    /// contract that only grew (0.11.0).
+    #[test]
+    fn the_contract_decides_next_and_an_unreadable_one_decides_nothing() {
+        let last = Some("0.10.0");
+        assert_eq!(
+            decide(last, Bump::Major, Ok("0.11.0".into())),
+            (Some("0.11.0".into()), DecidedBy::Contract, None)
+        );
+        assert_eq!(
+            decide(last, Bump::Major, Err("no baseline".into())),
+            (None, DecidedBy::Undecided, Some("no baseline".into()))
+        );
+        assert_eq!(
+            decide(None, Bump::None, Err("no baseline".into())),
+            (None, DecidedBy::Undecided, Some("no baseline".into()))
+        );
+    }
+
+    /// The contract's answer is a minimum, and the minimum of an unchanged surface is the
+    /// release already made: `next` must never be the last release.
+    #[test]
+    fn a_contract_that_requires_no_release_never_answers_the_last_one() {
+        let last = Some("0.10.0");
+        // only fixes: the smallest release above the last, a patch
+        assert_eq!(
+            decide(last, Bump::Patch, Ok("0.10.0".into())),
+            (Some("0.10.1".into()), DecidedBy::ContractAndCommits, None)
+        );
+        // a feature the contract cannot see is behind the boundary: a patch, not a minor
+        assert_eq!(
+            decide(last, Bump::Minor, Ok("0.10.0".into())),
+            (Some("0.10.1".into()), DecidedBy::ContractAndCommits, None)
+        );
+        // nothing at all since the last release: nothing to release
+        assert_eq!(
+            decide(last, Bump::None, Ok("0.10.0".into())),
+            (None, DecidedBy::Contract, None)
+        );
+        // a declared version already above the minimum is the contract's answer as it stands
+        assert_eq!(
+            decide(last, Bump::Patch, Ok("0.12.0".into())),
+            (Some("0.12.0".into()), DecidedBy::Contract, None)
+        );
+    }
+
+    /// The report and the writer answer one question with one function: whatever `next` the
+    /// selection reports, `release bump` with no target raises to exactly that — the two
+    /// Codex found apart (report 0.11.1, writer 0.11.0) on an unchanged contract and a fix.
+    #[test]
+    fn the_report_and_the_writer_select_the_same_version() {
+        let current = Version::parse("0.11.0").unwrap();
+        let report_of = |last: &str, declared: &str, bump: Bump, contract| {
+            let (next, decided_by, contract_unreadable) = decide(Some(last), bump, contract);
+            VersionReport {
+                declared: declared.into(),
+                tool: declared.into(),
+                agree: true,
+                last_release: Some(last.into()),
+                bump: bump.as_str().into(),
+                commits_imply: commits_imply(Some(last), declared, bump),
+                next,
+                decided_by,
+                contract_unreadable,
+                changes: Vec::new(),
+            }
+        };
+        // released and declared 0.11.0, the contract unchanged, a fix since: 0.11.1 for both
+        let fix = report_of("0.11.0", "0.11.0", Bump::Patch, Ok("0.11.0".into()));
+        assert_eq!(fix.next.as_deref(), Some("0.11.1"));
+        assert_eq!(
+            default_target(&fix, current).map(|v| v.to_string()),
+            Ok("0.11.1".to_string())
+        );
+        // released 0.10.0, declared 0.10.0, the contract requires a minor: 0.11.0 for both
+        let minor = report_of("0.10.0", "0.10.0", Bump::Major, Ok("0.11.0".into()));
+        assert_eq!(minor.next.as_deref(), Some("0.11.0"));
+        assert_eq!(
+            default_target(&minor, Version::parse("0.10.0").unwrap()).map(|v| v.to_string()),
+            Ok("0.11.0".to_string())
+        );
+        // the contract unreadable: the report decides nothing and the writer refuses, with
+        // the report's reason — the commit inference answers neither
+        let unread = report_of("0.10.0", "0.10.0", Bump::Major, Err("no baseline".into()));
+        assert_eq!(unread.next, None);
+        assert_eq!(unread.commits_imply.as_deref(), Some("1.0.0"));
+        assert_eq!(
+            default_target(&unread, current),
+            Err("no baseline".to_string())
+        );
+    }
+
+    /// The commit inference raises the last release, not the declared version — a minor
+    /// bump tells the two apart, where a major (which resets) would not.
+    #[test]
+    fn the_commit_inference_raises_the_last_release_not_the_declared_version() {
+        assert_eq!(
+            commits_imply(Some("0.10.0"), "0.11.0", Bump::Minor).as_deref(),
+            Some("0.11.0")
+        );
+        assert_eq!(
+            commits_imply(Some("0.10.0"), "0.11.0", Bump::Patch).as_deref(),
+            Some("0.10.1")
+        );
+        assert_eq!(
+            commits_imply(None, "0.11.0", Bump::Minor).as_deref(),
+            Some("0.12.0")
+        );
+        assert_eq!(commits_imply(None, "unknown", Bump::Minor), None);
     }
 
     #[test]
