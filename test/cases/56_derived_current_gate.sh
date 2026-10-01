@@ -1,3 +1,4 @@
+# majordomus-exclusive: times a gate, and three neighbours' load would be measured instead
 # majordomus-covers: none
 # majordomus-negative: doctor
 # claims: derived-data-current
@@ -51,9 +52,17 @@ field() { jq -r ".$1" "$rec"; }
 case "$(field outcome)" in pass|partial) ;; *) echo "    a current tree was recorded $(field outcome)"; exit 1 ;; esac
 [ -z "$(git -C "$W" status --porcelain)" ] || { echo "    recording dirtied the tree"; git -C "$W" status --porcelain; exit 1; }
 
-# it is fast enough to sit in front of every commit — the whole point of the fingerprint
-t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)
-[ "$((t1 - t0))" -le 20 ] || { echo "    the gate took $((t1 - t0))s; it runs on every commit and must not"; exit 1; }
+# it is fast enough to sit in front of every commit — the whole point of the fingerprint.
+# The case runs exclusive, alone on its runner: among three parallel neighbours it measured
+# their load (21 s on #702, 51 s on a shard of #698) rather than the gate. The faster of two
+# runs is judged as well, against noise on a quiet runner. A gate that is slow is slow twice;
+# the bound is unchanged.
+best=""
+for _ in 1 2; do
+  t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)
+  took=$((t1 - t0)); { [ -z "$best" ] || [ "$took" -lt "$best" ]; } && best=$took
+done
+[ "$best" -le 20 ] || { echo "    the gate took ${best}s at best of two; it runs on every commit and must not"; exit 1; }
 
 # ---------------------------------------------------------------- a moved input is refused
 # An input is moved in that same export and it is asked again. A canonical input is one the
