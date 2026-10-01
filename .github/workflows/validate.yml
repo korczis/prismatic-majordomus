@@ -287,7 +287,7 @@ jobs:
       - name: every case, exactly once
         run: |
           cat shards/*/suite.tsv > suite.tsv
-          bash test/run.sh --verify-report suite.tsv
+          test/run.sh --verify-report suite.tsv
       - if: always()
         run: scripts/ci/summary --job suite --report suite.tsv
       # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost: the whole
