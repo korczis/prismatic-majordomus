@@ -333,7 +333,7 @@ mj_report_reasoning() {
   # shellcheck source=rust_bin.sh
   . "$MJ_LIB_DIR/rust_bin.sh"
   local bin share advisors check
-  bin="$(mj_rust_bin "$MJ_ROOT")"
+  bin="$(mj_rust_bin "$MJ_HOME")"
   if [ ! -x "$bin" ]; then
     mj_info reasoning "-" "the executable is not built, so advisor availability is not reported here (bin/majordomus-cli reasoning advisors)"
     return 0

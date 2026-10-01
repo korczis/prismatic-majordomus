@@ -252,7 +252,7 @@ mj_context_sections() {
   if [ "$have_task" = 1 ] && [ -n "$profile" ] && [ "$(mj_pro context.decisions)" = true ]; then
     # shellcheck source=rust_bin.sh
     . "$MJ_LIB_DIR/rust_bin.sh"
-    local rreport; rreport="$(mj_rust_reasoning_report "$MJ_ROOT")"
+    local rreport; rreport="$(mj_rust_reasoning_report "$MJ_ROOT" "$MJ_HOME")"
     [ -n "$rreport" ] && printf '## REASONING\n%s\n' "$rreport" > "$MJ_CTX_TMP/55.reasoning"
   fi
 
