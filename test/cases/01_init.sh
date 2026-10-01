@@ -3,6 +3,7 @@
 # init creates the repository's AI layer and nothing else: no tool installation, no hook,
 # no shell file, no .majordomus/. What it seeds under .ai/repo/ belongs to the repository
 # from then on; what it seeds under .ai/local/ is this checkout's own and ignored.
+# claims: ai-layer-manifest, init-refuses, local-state-ignored
 . "$ROOT/test/lib.sh"
 expect_exit 0 "$MJ" init
 expect_grep 'next: majordomus update'

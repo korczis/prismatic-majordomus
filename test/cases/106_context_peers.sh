@@ -16,9 +16,9 @@
 # by that reader rather than by the shell. Everything asserted below is asserted about the
 # same contract as before the move, which is the point of leaving the assertions alone.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null 2>&1 || { echo "    jq absent; skipping"; exit 0; }
-command -v curl >/dev/null 2>&1 || { echo "    curl absent; skipping"; exit 0; }
-command -v python3 >/dev/null 2>&1 || { echo "    python3 absent; skipping"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq absent"
+command -v curl >/dev/null 2>&1 || skip "curl absent"
+command -v python3 >/dev/null 2>&1 || skip "python3 absent"
 
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib site && echo a > lib/a && echo s > site/s && git add . && git commit -qm base
@@ -35,7 +35,7 @@ case "$order" in "## GIT ## TASK"*) ;; *) echo "    a repository with one worker
 # exactly what it was. That half of the contract is what a tree without a build can hold;
 # the board itself needs the reader, so the rest is a skip rather than a failure.
 BIN="${MAJORDOMUS_BIN:-$ROOT/apps/majordomus-cli/target/debug/majordomus}"
-[ -x "$BIN" ] || { echo "    no built executable to read the lease with; the never-load-bearing half is proved above"; exit 0; }
+[ -x "$BIN" ] || skip "no built executable to read the lease with; the never-load-bearing half is proved above"
 
 # --- a board with one peer whose claim is inside this task's scope
 board="$T/board.json"

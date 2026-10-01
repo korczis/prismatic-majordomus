@@ -5,12 +5,14 @@
 //! What is deliberately not here: any list of moments. Every assertion below either counts
 //! what the fixture declares or names the one record the test itself wrote.
 
+// claims: why-diagnosis-explainable, why-references-resolve, why-catalogue-discovered
+
 mod common;
 
-use common::Fixture;
+use common::{Fixture, Served};
 use majordomus_cli::model::Severity;
 use majordomus_cli::why::{Catalogue, Query};
-use serde_json::json;
+use serde_json::{json, Value};
 
 fn catalogue(f: &Fixture) -> (majordomus_cli::app::App, Catalogue) {
     let app = common::load_app(f);
@@ -359,6 +361,76 @@ fn a_diagnosis_counts_and_says_which_moment_produced_each_row() {
 
 // ---------------------------------------------------------------- the projections
 
+/// Whether the built executable answers the moment `id` — or, with `present` false, answers
+/// that it is gone — on the command line, over the HTTP API and in the OpenAPI document.
+fn answered_by_the_executable(f: &Fixture, id: &str, present: bool) {
+    // the command line
+    let (code, out, err) = common::run_in(&f.root(), &["why", "list", "--format", "json"], "");
+    assert_eq!(code, 0, "why list:\n{err}");
+    let listed: Value = serde_json::from_str(&out).expect("why list prints JSON");
+    let in_list = |v: &Value| {
+        v["moments"]
+            .as_array()
+            .expect("a moments array")
+            .iter()
+            .any(|m| m["id"] == id)
+    };
+    assert_eq!(in_list(&listed), present, "why list: {out}");
+    let (code, out, err) = common::run_in(&f.root(), &["why", "show", id], "");
+    if present {
+        assert_eq!(code, 0, "why show {id}:\n{err}");
+        assert!(out.contains(id), "why show {id}:\n{out}");
+    } else {
+        assert_eq!(code, 12, "why show {id} of a removed moment:\n{out}{err}");
+    }
+
+    // the HTTP API
+    let s = Served::start(&f.root(), &[]);
+    let (status, via_http) = s.get("/api/v1/why");
+    assert_eq!(status, 200, "{via_http}");
+    assert_eq!(in_list(&via_http), present, "GET /api/v1/why: {via_http}");
+    let (status, one) = s.get(&format!("/api/v1/why/moment?id={id}"));
+    if present {
+        assert_eq!(status, 200, "{one}");
+        assert_eq!(one["id"], id);
+        assert_eq!(one["route"], format!("/why/{id}/"));
+    } else {
+        assert_eq!(
+            (status, one["error"]["code"].as_str()),
+            (404, Some("not_found")),
+            "{one}"
+        );
+    }
+
+    // the OpenAPI document: the moment's type is described, and the example the diagnosis
+    // operation carries is drawn from the moments the index holds, this one among them
+    let (status, doc) = s.get("/openapi.json");
+    assert_eq!(status, 200);
+    let moment = &doc["paths"]["/api/v1/why/moment"]["get"];
+    assert_eq!(moment["x-majordomus-id"], "why.moment", "{moment}");
+    let schema = moment["responses"]["200"]["content"]["application/json"]["schema"]["$ref"]
+        .as_str()
+        .expect("the moment's response is a described type");
+    let name = schema.rsplit('/').next().unwrap();
+    assert!(
+        doc["components"]["schemas"][name]["properties"]["route"].is_object(),
+        "{name} describes a moment: {}",
+        doc["components"]["schemas"][name]
+    );
+    let diagnose = doc["paths"]["/api/v1/why/diagnose"]["get"]["parameters"]
+        .as_array()
+        .expect("the diagnosis takes parameters")
+        .iter()
+        .find(|p| p["name"] == "signals")
+        .expect("the signals parameter")
+        .to_string();
+    assert_eq!(
+        diagnose.contains(&format!("\"{id}")) || diagnose.contains(&format!(",{id}")),
+        present,
+        "the OpenAPI example of the diagnosis: {diagnose}"
+    );
+}
+
 #[test]
 fn one_file_added_is_answered_by_every_projection_and_removing_it_removes_it_from_all() {
     let f = Fixture::new();
@@ -370,7 +442,15 @@ fn one_file_added_is_answered_by_every_projection_and_removing_it_removes_it_fro
         )
         .replace("featured: true", "featured: false");
     f.write(".ai/repo/why/moments/probe.md", &probe);
+    assert_eq!(
+        f.git(&["status", "--porcelain", "--untracked-files=all"])
+            .trim(),
+        "?? .ai/repo/why/moments/probe.md",
+        "the one file is the whole change"
+    );
     f.commit("one file");
+    // the executable's own projections: the command line, the HTTP API, the OpenAPI document
+    answered_by_the_executable(&f, "probe", true);
 
     // the domain
     let (app, c) = catalogue(&f);
@@ -411,6 +491,7 @@ fn one_file_added_is_answered_by_every_projection_and_removing_it_removes_it_fro
     // ---- and now it is removed, with nothing else changed
     std::fs::remove_file(f.root().join(".ai/repo/why/moments/probe.md")).unwrap();
     f.commit("one file removed");
+    answered_by_the_executable(&f, "probe", false);
     let (app, c) = catalogue(&f);
     assert!(c.moment("probe").is_none());
     let listed = app.context.execute("why.list", json!({})).unwrap();

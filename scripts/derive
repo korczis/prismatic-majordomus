@@ -58,7 +58,10 @@ step_done() { printf '==> derive: %s: %ss\n' "$STAGE" "$(( $(now) - STAGE_T0 ))"
 if [ -n "${MAJORDOMUS_BIN:-}" ]; then RB="$MAJORDOMUS_BIN"
   printf '==> derive: MAJORDOMUS_BIN=%s (not building; it must be of this tree'"'"'s generation)\n' "$RB" >&2
 else
-  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none
+  # a machine-wide rustflags profile can make a dev build refuse to link; the crate sets none.
+  # Not --locked: after `release bump` the manifest is the one authored change, the bump has
+  # kept the lock's own entry in step, and this build is what re-derives anything else cargo
+  # records from it. Stage A then projects share/version.txt and every generator stamp.
   mj_rust_space_check "$ROOT" "the build this derivation needs" || exit 12
   step "building the Rust executable ($PROFILE)"
   release=(); [ "$PROFILE" = release ] && release=(--release)
@@ -69,6 +72,11 @@ else
   RB="$(mj_cargo_target_dir "$CRATE" ask-cargo)/$PROFILE/majordomus"
   step_done
 fi
+# Every later stage uses this executable, including the use-case scenarios stage B runs
+# through the shell tool: without the export a scenario finds an executable only when the
+# caller happened to set MAJORDOMUS_BIN (CI does, a laptop does not), and the evidence it
+# publishes would differ between the two.
+MAJORDOMUS_BIN="$RB"; export MAJORDOMUS_BIN
 step "stage A: majordomus generate (code-only projections)"
 # --strict: an error diagnostic must not pass for success. A duplicate identity excludes
 # every claimant and the index goes on without them, so without this a derivation writes

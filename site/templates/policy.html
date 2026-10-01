@@ -34,4 +34,6 @@
   <div class="border-t border-default"><div class="overflow-x-auto" tabindex="0"><pre class="m-0 p-5 font-mono text-xs leading-relaxed text-heading"><code class="language-yaml">{{ policy.raw }}</code></pre></div></div>
 </details>
 {% endblock body %}
-{% block scripts %}{% include "partials/mermaid.html" %}{% endblock scripts %}
+{#- the runtime only where the Markdown projected a diagram: most of these pages have none, and
+    homepage-check fails a page that loads it for nothing -#}
+{% block scripts %}{% if 'class="mermaid"' in page.content %}{% include "partials/mermaid.html" %}{% endif %}{% endblock scripts %}

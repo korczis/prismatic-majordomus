@@ -7,12 +7,13 @@
 {%- set crumb_title = section.title -%}{%- set crumb_parent = false -%}
 <div class="border-b border-default bg-neutral-primary-soft"><div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">{% include "partials/breadcrumb.html" %}<h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">{{ section.title }}</h1><p class="mt-3 max-w-3xl break-words text-lg text-body">{{ section.description }}</p></div></div>
 <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
-<p class="max-w-3xl text-body">A supervisory tool that overstates itself is the thing it was built to prevent. This page is generated from <code>docs/CLAIMS.yaml</code>; the build fails if any source, implementation or test path in it does not exist, or if a guaranteed claim names no test.</p>
+<p class="max-w-3xl text-body">A supervisory tool that overstates itself is the thing it was built to prevent. This page is generated from <code>docs/CLAIMS.yaml</code>; the build fails if any source, implementation or test path in it does not exist, or if a guaranteed claim names no test. A status is what the file declares; the recorded evidence column is what <code>majordomus evidence show</code> derives from the runs actually recorded, and only a supported verdict is coloured as one.</p>
 <p class="mt-3 max-w-3xl text-body">The same data, drawn as the graph it is: <a href="{{ get_url(path="/evidence/", trailing_slash=true) }}" class="font-medium text-fg-brand underline">every claim wired to the document, the implementation and the test behind it &rarr;</a></p>
 {%- set caps = load_data(path="data/generated/capabilities.json") -%}
+{%- set ev_model = load_data(path="data/registry/product.json") -%}{%- set ev = ev_model.evidence -%}
 <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
   {%- for status in ["guaranteed", "advisory", "planned", "rejected"] -%}
-  <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><div class="mb-2 flex items-center justify-between">{{ <badge status={status} /> }}<span class="font-mono text-sm text-body-subtle">{{ [c for c in caps.claims if c.status == status] | length }}</span></div><p class="text-sm text-body">{{ caps.statuses[status] }}</p></a>
+  <a href="{{ get_url(path="/guarantees/" ~ status ~ "/", trailing_slash=true) }}" class="block rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium"><div class="mb-2 flex items-center justify-between">{{ <badge status={status} /> }}<span class="font-mono text-sm text-body-subtle">{{ [c for c in caps.claims if c.status == status] | length }} declared</span></div>{% if status == "guaranteed" %}<p class="mb-2 text-sm text-heading">{% if ev.available %}<span class="font-mono font-bold">{{ ev.supported }}</span> supported by a recorded run{% else %}support by a recorded run: unknown, no evidence is recorded{% endif %}</p>{% endif %}<p class="text-sm text-body">{{ caps.statuses[status] }}</p></a>
   {%- endfor -%}
 </div>
 {%- for status in ["guaranteed", "advisory", "planned", "rejected"] -%}
@@ -20,14 +21,15 @@
   <h2 class="mb-4 flex items-center gap-3 text-2xl font-bold tracking-tight text-heading">{{ <badge status={status} /> }} <span class="capitalize">{{ status }}</span></h2>
   <div class="overflow-x-auto rounded-base border border-default" tabindex="0">
     <table class="w-full min-w-[40rem] text-left text-sm">
-      <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-3">claim</th><th scope="col" class="px-4 py-3">source</th><th scope="col" class="px-4 py-3">implementation</th><th scope="col" class="px-4 py-3">test</th></tr></thead>
+      <thead class="bg-neutral-secondary-soft font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th scope="col" class="px-4 py-3">claim</th><th scope="col" class="px-4 py-3">source</th><th scope="col" class="px-4 py-3">implementation</th><th scope="col" class="px-4 py-3">test</th><th scope="col" class="px-4 py-3">recorded evidence</th></tr></thead>
       <tbody class="divide-y divide-default bg-neutral-primary-soft">
         {%- for c in [c for c in caps.claims if c.status == status] -%}
         <tr class="align-top">
           <td class="px-4 py-3 text-heading"><a href="{{ get_url(path="/guarantees/" ~ c.id ~ "/", trailing_slash=true) }}" class="hover:underline">{{ c.claim }}</a>{% if c.note %}<p class="mt-1 text-body-subtle">{{ c.note }}</p>{% endif %}</td>
-          <td class="px-4 py-3"><a href="{{ project.repository_url }}/blob/master/{{ c.source }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></td>
-          <td class="px-4 py-3">{% if c.implementation %}<a href="{{ project.repository_url }}/blob/master/{{ c.implementation }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
-          <td class="px-4 py-3">{% if c.test %}<a href="{{ project.repository_url }}/blob/master/{{ c.test }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
+          <td class="px-4 py-3"><a href="{{ <source_blob path={c.source} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.source }}</a></td>
+          <td class="px-4 py-3">{% if c.implementation %}<a href="{{ <source_blob path={c.implementation} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.implementation }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
+          <td class="px-4 py-3">{% if c.test %}<a href="{{ <source_blob path={c.test} /> }}" class="font-mono text-fg-brand hover:underline">{{ c.test }}</a>{% else %}<span class="font-mono text-body-subtle">—</span>{% endif %}</td>
+          <td class="px-4 py-3">{{ <evidence claim={c.id} ev={ev} /> }}</td>
         </tr>
         {%- endfor -%}
       </tbody>

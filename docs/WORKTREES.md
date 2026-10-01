@@ -97,8 +97,10 @@ of the registry (`worktree.topology`, `worktree.status`, `worktree.inspect`,
 `worktree.migration_plan`), which is what puts them on MCP, HTTP, OpenAPI, the Swagger UI,
 the Cockpit and the generated reference without any of those carrying a route or a schema
 of their own. Creating, migrating, repairing and removing are command-line operations of
-the same service: a capability of the registry never writes to the repository, which is the
-contract the shared MCP server rests on, and the Cockpit names the exact command for each.
+the same service. A capability that writes the repository must declare the effect
+`repository_mutation`, be a command and be reached by `POST` — a unit test pins the set of
+such capabilities, so adding one is a visible decision — and moving worktrees on disk is not
+something the shared MCP server takes on; the Cockpit names the exact command for each.
 
 ## Standings and diagnostics
 
@@ -176,7 +178,7 @@ majordomus worktree cleanup                    # what is merged and clean; delet
 | `worktree guard [--quiet]` | may a commit proceed from here | no |
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
-| `worktree cleanup` | branches merged into the trunk whose worktree is clean or absent, with the commands that would remove them | |
+| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 `wt` is an alias for `worktree`. `--format json` is available everywhere and is the same
@@ -236,6 +238,15 @@ the report says which (`differs`, `not_approved_in_primary`). A branch with an `
 its own is a file the person has not read, and approving it for them is the one thing
 `direnv allow` exists to prevent. Without direnv on the PATH the outcome is
 `direnv_absent` and nothing is blocked, because nothing would load the file.
+
+The primary checkout's machine-local `.envrc.local` is shared in the same moment. The
+repository's `.envrc` sources `.envrc.local` from the directory it is entered from, and
+the adapter rule keeps that file free of the program a lookup of the primary checkout
+would need. So a new worktree gets a symlink to the primary checkout's `.envrc.local`, and
+the person's own exports, including keychain-backed secrets such as `OPENAI_API_KEY`, load
+there too, from one file. The link is made only where git ignores the name
+(`not_ignored` otherwise), and a worktree with an `.envrc.local` of its own keeps it
+(`own_kept`).
 
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes

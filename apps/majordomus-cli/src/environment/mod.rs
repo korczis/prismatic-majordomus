@@ -41,6 +41,7 @@
 //! opens a socket to anything but the loopback address the lease names.
 
 pub mod cache;
+pub mod preflight;
 pub mod probe;
 pub mod render;
 pub mod resolve;
@@ -245,6 +246,12 @@ pub struct LayerSummary {
     /// How many files the layer declared that did not become objects.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub invalid: Option<usize>,
+    /// Which ones, and what decided it: the index's own error diagnostics, each naming the
+    /// file, the code and the constraint it failed. A count says something is wrong; only
+    /// this says what and where, and a reader that has the count and not the list has to go
+    /// looking through a log for the answer the index already produced.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub refused: Vec<crate::model::Diagnostic>,
     /// Whether the layer read cleanly.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub degraded: Option<bool>,
@@ -259,6 +266,7 @@ impl LayerSummary {
             objects: None,
             capabilities: None,
             invalid: None,
+            refused: Vec::new(),
             degraded: None,
         }
     }
@@ -372,6 +380,31 @@ pub struct WorkflowEntrypoint {
     /// The workflow's description, when it has one.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
+}
+
+/// Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the
+/// same derivation, never a provider list of its own.
+///
+/// ```
+/// use majordomus_cli::environment::ReasoningSummary;
+///
+/// let summary: ReasoningSummary = serde_json::from_value(serde_json::json!({
+///     "operational": true, "mode": "offline", "available": ["local"], "unavailable": 2,
+/// })).unwrap();
+/// assert!(summary.operational);
+/// assert_eq!(summary.available, ["local"]);
+/// assert_eq!(serde_json::to_value(&summary).unwrap()["unavailable"], 2);
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+pub struct ReasoningSummary {
+    /// Reasoning works with no advisor at all; always `true`.
+    pub operational: bool,
+    /// The mode in force: `offline`, `ci`, `fast`, `standard`, `strict`.
+    pub mode: String,
+    /// The advisors that may be asked now, in preference order.
+    pub available: Vec<String>,
+    /// How many declared advisors may not, each optional.
+    pub unavailable: usize,
 }
 
 /// One provider projection the policy declares, and whether the file on disk still matches
@@ -551,6 +584,10 @@ pub struct RepositoryEnvironment {
     pub providers: Vec<ProviderState>,
     /// The local services, in the order the service table declares them.
     pub services: Vec<ServiceState>,
+    /// Reasoning (ADR 0098): operational whatever the advisors, the mode in force, and how
+    /// many optional advisors can be asked. Absent when the distribution declares none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reasoning: Option<ReasoningSummary>,
     /// Everything that went wrong or is worth knowing, in the order it was found.
     pub diagnostics: Vec<Diagnostic>,
     /// Where every field came from.

@@ -10,14 +10,14 @@ status: stable
 weight: 120
 featured: false
 areas: [verification, documentation]
-modules: [distribution]
-commands: [init, migrate, version]
-kinds: [distribution-model]
+modules: [distribution, release]
+commands: [init, migrate, version, archive]
+kinds: [distribution-model, release-record]
 rules: [project.distribution-canonical, project.portable-shell, project.no-network-no-eval]
 docs: [docs/INSTALL.md, docs/DISTRIBUTION.md]
 adrs: [adr-0019]
 claims: [distribution-canonical-model, install-command-is-derived, installer-verifies-before-installing, release-is-complete-or-absent, legacy-migration, tool-location-independent, no-network, rust-binary-artifact]
-use_cases: [install-the-tool-in-one-command, migrate-from-the-old-layout, know-which-tool-is-running]
+use_cases: [install-the-tool-in-one-command, migrate-from-the-old-layout, know-which-tool-is-running, hand-the-repository-to-a-reader]
 related: [policy]
 tags: [install, distribution, releases]
 ---

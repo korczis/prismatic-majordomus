@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 53
+weight = 58
 [extra]
 source = "docs/UI.md"
 +++
@@ -94,8 +94,14 @@ it compiles.
 desktop end; one page per section takes the full sweep across every boundary. On a built
 surface a section is the first path segment, because that is where templates change; on a
 crawled surface it is the *family* — the shape a route shares with its siblings, `?`-keys
-when it has a query and the parent path when it does not. Both are where a renderer changes,
-so the sweep buys structural coverage without anybody naming a page.
+when it has a query and the parent path when it does not. A route can vary in both at once —
+`/cockpit/graphs/composed?nodes=3` is a record in its path and a view in its query — and the
+crawled set is what settles it: a directory the crawl reached under more than one name, below
+the entry, holds records, and its children collapse to `*` like any other. The entry's own
+children are the surface's areas and never collapse, so `/cockpit/objects?page` and
+`/cockpit/capabilities?page` stay two renderers while eight graph pages each paging two
+tables stay one family instead of twenty-four. Both are where a renderer changes, so the
+sweep buys structural coverage without anybody naming a page.
 
 **The sample** is derived as well, and only a crawled surface has one. Every route the
 surface advertises is visited, because each of those is its own page; of every family the
@@ -295,7 +301,13 @@ A projected document's relative links are resolved at their source by `scripts/l
 the directory of the file they came from:
 - A document with a page becomes its route.
 - A claim document becomes its guarantee page.
-- A tracked file or directory becomes its `blob` or `tree` on GitHub.
+- A tracked file or directory becomes its `blob` or `tree` on GitHub, at the commit the site was built from.
+  What the projection writes is committed, and a committed file cannot name the commit it is in, so it
+  writes a placeholder ref that `scripts/site-build` pins in the built pages to the commit
+  `data/build.json` records (`master` for a dirty build), the ref `site/templates/source-links.html` gives
+  template-made links. A placeholder left in a built page refuses the build, and `scripts/ci/link-check`
+  refuses a link that carries one. The pin runs on built files only, so a plain `zola serve` shows the
+  placeholder; the local preview, `scripts/site-serve`, serves the pinned build instead.
 - A path git does not track, such as checkout-local state under `.ai/local`, keeps its text and loses its link.
 
 **Controls.** A control is anything a reader can operate:

@@ -1,5 +1,6 @@
 # majordomus-exclusive: reads the derived API page the site cases generate into this checkout
 # majordomus-covers: none
+# claims: openapi-inferred
 # The OpenAPI document is inferred, not written: the tags are the modules, the examples are
 # the capabilities' benchmark cases, the responses are the statuses the router answers for
 # the capability's kind, the prose is the one text every projection shares, and the site's
@@ -12,13 +13,12 @@
 #
 # Skips itself when cargo is absent, as the site cases do for zola.
 . "$ROOT/test/lib.sh"
-command -v cargo >/dev/null 2>&1 || { echo "    skip: cargo not installed"; exit 0; }
+command -v cargo >/dev/null 2>&1 || skip "cargo not installed"
 MANIFEST="$ROOT/apps/majordomus-cli/Cargo.toml"
 S="$(mktemp -d "${TMPDIR:-/tmp}/mj92.XXXXXX")"; trap 'rm -rf "$S"' EXIT
-RUSTFLAGS='' cargo build -q --manifest-path "$MANIFEST" 2>"$S/build.log" || { cat "$S/build.log"; echo "    cargo build failed"; exit 1; }
-# where cargo just put it: CARGO_TARGET_DIR is how worktrees share one build
-# directory, and the composed path then names a file that was never written
-RB="${CARGO_TARGET_DIR:-$ROOT/apps/majordomus-cli/target}/debug/majordomus"
+# the executable MAJORDOMUS_BIN names, or the one rust_bin builds; cargo itself is still
+# required below, for the crate's route replay
+RB="$(rust_bin)" || rust_bin_exit $?
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
 
 "$MJ" init >/dev/null
@@ -114,5 +114,5 @@ grep -q 'template = "api.html"' "$ROOT/site/content/docs/api.md" || { echo "    
 
 # --- every route answers its own cases over a real socket, and the document shows them: the crate's suite
 RUSTFLAGS='' cargo test -q --manifest-path "$MANIFEST" --test http_serve every_route_answers_its_benchmark_cases 2>"$S/cargo.log" >"$S/cargo.out" \
-  || { tail -40 "$S/cargo.log" "$S/cargo.out"; echo "    the route replay failed"; exit 1; }
+  || { tail -n 40 "$S/cargo.log" "$S/cargo.out"; echo "    the route replay failed"; exit 1; }
 grep -q 'test result: ok. 1 passed' "$S/cargo.out" || { cat "$S/cargo.out"; echo "    the replay test did not run"; exit 1; }

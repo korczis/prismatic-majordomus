@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit as a development surface: baseline, archaeology and gap matrix"
 description = "forensic finding, 2026-09-10: what the Cockpit would need in order to become a development surface — the governance preflight and its two defects, the two-program split, the system run end to end with every command and response recorded, the gap matrix, the drift audit, and the phased plan with the failures that must be fixed first"
-weight = 35
+weight = 37
 [extra]
 source = "docs/COCKPIT_IDE_AUDIT.md"
 +++
@@ -14,7 +14,7 @@ a server this worktree built and started itself. It is phase 01 of the Cockpit I
 control-plane pack and it implements nothing: it establishes what exists, proves it by
 running it, and says what the smallest safe next phase is.
 
-The architecture it measures against is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md)
+The architecture it measures against is [ADR 0040](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md)
 and [`DEVELOPMENT_RUNTIME.md`](@/docs/development-runtime.md): one canonical runtime — the
 capability registry of the Rust executable — and every surface a consumer of it. This
 document is the evidence behind that decision and the plan that follows from it.
@@ -473,7 +473,8 @@ mean when they say `planned`. §7 records which row each one answers.
 The repository reconciles most of its mirrors, and that is the finding as much as the
 drift is: the CLI against the registry, every generated artifact against its source, the
 plan's two status engines against each other by byte equality, the dispatch table against
-the command registry, providers against templates, the version against its two writers.
+the command registry, providers against templates, the version's projection against the one
+place it is authored.
 `docs/HARDCODING_LEDGER.yaml` is the honest register of what remains. What follows is only
 what is **not** reconciled, by the classes the pack names.
 

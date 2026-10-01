@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: mcp-peers
 # The peer board, across the worktrees a branch is actually worked on in. ADR 0044.
 #
 # Every worker of this repository is bootstrapped with the sentence "one shared server
@@ -31,7 +32,7 @@
 # is ended through the lease of its own checkout.
 . "$ROOT/test/lib.sh"
 RB="$(rust_bin)" || rust_bin_exit $?
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
 LAUNCHER="$ROOT/bin/majordomus-mcp"
 [ -x "$LAUNCHER" ] || { echo "    bin/majordomus-mcp is missing or not executable"; exit 1; }
 
