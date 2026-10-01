@@ -68,10 +68,14 @@ ATTR
 }
 
 # The gate reads the tracked document set, so a fixture that adds a document stages it.
+# The fixture's providers.json is written by hand to the shape the gate reads, not by the
+# generator, so the gate's fourth check — `generate --check providers`, which runs only when
+# MAJORDOMUS_BIN is set, as it is on CI — is kept out of these runs; the stub steps below
+# exercise that check on purpose.
 gate() {   # gate <tree> [env assignments handled by caller]
   local f="$1"
   ( cd "$f" && git add -A >/dev/null 2>&1 ) || true
-  env MJ_ROOT="$f" "$GATE"
+  env -u MAJORDOMUS_BIN MJ_ROOT="$f" "$GATE"
 }
 
 # ---------------------------------------------------------------- the tree it accepts
