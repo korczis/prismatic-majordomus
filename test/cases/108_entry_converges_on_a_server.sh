@@ -8,7 +8,7 @@
 # claim is that nobody has to. The executable is the one every Rust case drives (MAJORDOMUS_BIN
 # or a build of the crate); the hook finds it the way the launcher does and never builds it.
 . "$ROOT/test/lib.sh"
-command -v curl >/dev/null 2>&1 || { echo "    curl absent; skipping"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "curl absent"
 RB="$(rust_bin)" || rust_bin_exit $?
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base

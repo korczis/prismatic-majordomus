@@ -6,11 +6,12 @@
 #
 # Nothing here reaches the internet: the fixture release and the origin are local, and the
 # gate is pointed at them with --base.
+# claims: advertised-install-command-works
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/install-check"
 expect_file "$GATE"
 MJB="$(rust_bin)" || rust_bin_exit $?
-command -v curl >/dev/null 2>&1 || { echo "    skip: no curl"; exit 0; }
+command -v curl >/dev/null 2>&1 || skip "no curl"
 
 # --- it states no address of its own ------------------------------------------------------
 # The projection it reads holds every URL this project publishes at; a literal here would be
@@ -30,7 +31,7 @@ fi
 
 # --- an origin that serves a complete release: the gate is green ---------------------------
 FIX="$T/fixture"; mkdir -p "$FIX/releases"
-start_http "$FIX" || { echo "    skip: no python3 or node to serve a fixture release"; exit 0; }
+start_http "$FIX" || skip "no python3 or node to serve a fixture release"
 trap 'stop_http' EXIT INT TERM HUP
 
 VERSION="$("$ROOT/scripts/release-version")"
@@ -98,6 +99,14 @@ W="$ROOT/.github/workflows/validate.yml"
 grep -q "^  $job:" "$W" || { echo "    validate.yml has no $job job for the installer-live gate"; exit 1; }
 grep -q "needs.plan.outputs.installer_live" "$W" || { echo "    the $job job is not gated on the plan's decision"; exit 1; }
 grep -q "scripts/ci/install-check" "$W" || { echo "    the $job job does not run the gate"; exit 1; }
+# every night and on request: the workflow is scheduled and dispatchable, those two events
+# plan with the on-demand gates, and installer-live is one of them
+grep -qE "^    - cron: '" "$W" || { echo "    validate.yml has no nightly schedule"; exit 1; }
+grep -q '^  workflow_dispatch:' "$W" || { echo "    validate.yml cannot be run on request"; exit 1; }
+grep -qE 'schedule\|workflow_dispatch\) .*--on-demand' "$W" \
+  || { echo "    a scheduled or dispatched run does not plan the on-demand gates"; exit 1; }
+awk '/^  - id: installer-live$/{f=1;next} f&&/^  - id: /{exit} f&&/^    on-demand: true$/{print;exit}' "$MODEL_CI" | grep -q . \
+  || { echo "    installer-live is not an on-demand gate, so the nightly run does not carry it"; exit 1; }
 # CI gives the deployment a window; a person does not. A gate that waits by default would
 # make `just install-check` hang for minutes on a site that is simply broken.
 grep -q 'scripts/ci/install-check --wait ' "$W" \

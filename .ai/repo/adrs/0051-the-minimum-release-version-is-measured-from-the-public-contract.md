@@ -34,6 +34,13 @@ provenance:
 > The subsystem below is implemented, gated and tested; whether the *decision* stands is not
 > something this record may assert about itself.
 
+> **Amended by [ADR 0085](0085-the-version-is-authored-once-and-shipped-as-a-projection.md) (proposed), 2026-09-24.**
+> Where this record says the version "is stated in two files" and "keeps two statements and
+> one writer", read *one authored, one projected*: the crate manifest is the one place the
+> version is written, and `share/version.txt` is its generated projection for the shell tool.
+> The measurement, the policy and the writer's floor below are unchanged. The closing remark
+> that ADR 0029 "stays `accepted`" is a slip — ADR 0029 is `proposed`, and stays so.
+
 ## Context
 
 ADR 0029 gave the version one *writer*, which it had never had, and that half of it stands:
@@ -187,7 +194,7 @@ as a refusal rather than absorbed as an empty diff.
 What holds it: the compatibility matrix and the policy tables in
 `apps/majordomus-cli/src/release/compat.rs`, including both policy modes and the
 determinism invariants; the surface reader's own tests over the fingerprint, the
-normalisation and every way a baseline can be unreadable; `test/cases/251_version_is_measured.sh`
+normalisation and every way a baseline can be unreadable; `test/cases/112_version_matches_surface.sh`
 over the whole subsystem against the real executable in a repository built for the purpose —
 an additive change, a breaking change, an internal refactor, an override that undershoots and
 one that overshoots; and `scripts/ci/version-matches-surface`, which is now the gate and the

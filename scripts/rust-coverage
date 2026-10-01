@@ -13,6 +13,10 @@
 #                                         BASE must be covered. Exit 0 clean, 10 on an
 #                                         uncovered changed item, 13 when git cannot resolve
 #                                         BASE (UNKNOWN — never a silent pass).
+#   scripts/rust-coverage --summary-json FILE
+#                                         also write the measurement as JSON: the crate, the
+#                                         domain and every source file, covered/total per
+#                                         dimension (with --report or a gate; ignored by --changed)
 #
 # WHY THIS EXISTS.
 #
@@ -68,6 +72,8 @@ while [ $# -gt 0 ]; do
     --export) EXPORT="$2"; shift 2 ;;
     --export=*) EXPORT="${1#--export=}"; shift ;;
     --domain) ONLY=domain; shift ;;
+    --summary-json) SUMMARY_JSON="$2"; export SUMMARY_JSON; shift 2 ;;
+    --summary-json=*) SUMMARY_JSON="${1#--summary-json=}"; export SUMMARY_JSON; shift ;;
     --changed) MODE=changed; CHANGED="$2"; shift 2 ;;
     --changed=*) MODE=changed; CHANGED="${1#--changed=}"; shift ;;
     -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
@@ -102,22 +108,111 @@ if [ "$MODE" = changed ]; then
       ' > "$CHANGED_FILE"
 fi
 
+# THE RECORD. A measurement this script makes itself, of the whole crate, is recorded at
+# .ai/local/state/coverage/rust.json, which the preflight's `verification.coverage` check
+# reads (apps/majordomus-cli/src/environment/preflight.rs, COVERAGE_RECORD). An export
+# passed with --from is of a tree this script never saw, and --changed and --domain measure
+# part of the crate, so none of them is recorded. The commit and tree are read before the
+# suite runs and again after it: a tree that was edited, or a HEAD that moved, while the
+# instrumented suite was running is recorded as `dirty`, which that check calls stale.
+RECORD="" TREE_BEFORE="" TREE_AFTER=""
+tree_state() {
+  # --no-optional-locks: a read must not refresh the index under another session's feet.
+  head="$(git -C "$ROOT" rev-parse --verify --quiet HEAD 2>/dev/null)" || return 1
+  if [ -z "$(git -C "$ROOT" --no-optional-locks status --porcelain 2>/dev/null)" ]; then
+    printf '%s clean\n' "$head"
+  else
+    printf '%s dirty\n' "$head"
+  fi
+}
+if [ -z "$FROM" ] && [ "$MODE" != changed ] && [ "$ONLY" != domain ] \
+    && command -v git >/dev/null 2>&1; then
+  RECORD="$ROOT/.ai/local/state/coverage/rust.json"
+  TREE_BEFORE="$(tree_state)" || RECORD=""
+fi
+
+cov_status=0
 if [ -z "$FROM" ]; then
   command -v cargo >/dev/null 2>&1 || { echo "rust-coverage: cargo is not installed" >&2; exit 12; }
   cargo llvm-cov --version >/dev/null 2>&1 || {
     printf 'rust-coverage: cargo-llvm-cov is not installed (cargo install cargo-llvm-cov; rustup component add llvm-tools-preview)\n' >&2
     exit 12; }
-  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX.json")"
-  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
-  # measurement. The suite's own verdict is `cargo test`'s; this command's is the coverage.
-  # --no-fail-fast: a failing test is a failure of the suite, not a reason to have no
-  # measurement. But cargo exits 101 when a test fails, and under `set -e` that status
-  # would escape this script, which answers only 0/10/12/13 and whose caller
-  # scripts/ci/coverage-differential declares the same four. A raw 101 is not a verdict in
-  # that vocabulary; it is cargo's own error wearing this gate's name. So the failure is
-  # caught here, and the export is judged on whether it exists and parses.
+  # The X's end the template, with no suffix after them. GNU mktemp accepts a template with
+  # one; BSD mktemp (macOS) replaces only trailing X's, so `mj-cov.XXXXXX.json` named one
+  # literal file that every run shared, and the run after it died with "mkstemp failed ...
+  # File exists": this script measured nothing at all on a Mac while CI was unaffected. The
+  # name only has to be unique — cargo-llvm-cov is told the format by --json, never by the
+  # extension, and writes --output-path as given. Case 132 holds every template to this.
+  FROM="$(mktemp "${TMPDIR:-/tmp}/mj-cov.XXXXXX")"
+  # --no-fail-fast: every test binary runs, so one failure does not hide another. It does not
+  # buy a measurement: cargo-llvm-cov writes no export for a suite that failed, so a failing
+  # test ends in the "wrote no export" refusal below. cargo exits 101 when a test fails, and
+  # under `set -e` that status would escape this script, which answers only 0/10/12/13 and
+  # whose caller scripts/ci/coverage-differential declares the same four. A raw 101 is not a
+  # verdict in that vocabulary; it is cargo's own error wearing this gate's name. So the
+  # failure is caught here, and the export is judged on whether it exists and parses.
   cov_status=0
-  ( cd "$CRATE" && RUSTFLAGS='' cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) >/dev/null || cov_status=$?
+  # The test harness writes its verdicts to stdout (`test ... FAILED`, the `---- <name> stdout
+  # ----` section and the panic), and stdout used to go to /dev/null because the export goes to
+  # --output-path. What reached the job log was cargo's stderr line naming a binary, `to rerun
+  # pass --test bench`, and never the test or its panic, so an intermittent failure could not
+  # be told from a real one. stdout is kept in a file. A green run prints none of it: the
+  # thousands of `ok` lines an --all-targets run writes would bury the job's own report. A red
+  # run prints the harness's failure sections (see coverage_failures below).
+  COV_OUT="$(mktemp "${TMPDIR:-/tmp}/mj-cov-out.XXXXXX")"
+  # Instrumented binaries run several times slower, and the suite's networked tests are
+  # bounded by the wall clock: a bound that is generous uninstrumented expires here, and the
+  # run then reports a coverage failure for what is really a stopwatch. The tests read this
+  # and stretch their own bounds rather than every bound being written for the slowest case.
+  ( cd "$CRATE" && RUSTFLAGS='' MAJORDOMUS_TEST_PATIENCE="${MAJORDOMUS_TEST_PATIENCE:-4}" \
+      cargo llvm-cov --all-targets --no-fail-fast --json --output-path "$FROM" ) > "$COV_OUT" || cov_status=$?
+  if [ "$cov_status" != 0 ]; then
+    # Two things the harness leaves on stdout name a failure, and both are printed, capped
+    # together at 400 lines (counted in awk rather than by `| head`, which under pipefail would
+    # end this script on SIGPIPE):
+    #  - every `failures:` ... `test result:` section, one per binary whose tests completed
+    #    and failed, with each failing test's name and panic;
+    #  - every `running N tests` block that never reached its `test result:` line: a binary
+    #    killed by a signal or aborted. libtest runs tests in parallel and writes a test's line
+    #    only when it completes, so such a binary's unfinished test cannot be named from stdout;
+    #    the block's header, how many tests completed and its last lines are what there is, and
+    #    cargo's own `process didn't exit successfully ... (signal: N)` on stderr names the
+    #    binary. Later binaries still run under --no-fail-fast, so the end of the whole output
+    #    would show their `ok` lines, not this one's.
+    # Only when neither exists (a build error, nothing ran) is the end of the output printed.
+    printf 'rust-coverage: cargo llvm-cov exited %s; what the test harness reported:\n' "$cov_status" >&2
+    awk '
+      function out(s) { if (n < 400) print s; else cut = 1; n++ }
+      function unfinished(   i, from) {
+        if (!open) return
+        out("rust-coverage: a test binary ended without a `test result:` line (killed or aborted):")
+        out(header)
+        out(sprintf("rust-coverage: %d test(s) of that binary completed before it ended; its last line(s):", done))
+        from = (seen > 5 ? seen - 4 : 1)
+        for (i = from; i <= seen; i++) out(last[i % 5])
+        open = 0
+      }
+      /^running [0-9]+ tests?$/ { unfinished(); open = 1; header = $0; done = 0; seen = 0; next }
+      /^failures:$/ { p = 1 }
+      p { out($0) }
+      /^test result: / { p = 0; open = 0 }
+      open && !p {
+        if ($0 ~ /^test .* \.\.\. /) done++
+        if ($0 != "") { seen++; last[seen % 5] = $0 }
+      }
+      END {
+        unfinished()
+        if (cut) printf "rust-coverage: ... %d more line(s) of failure output not shown\n", n - 400
+      }
+    ' "$COV_OUT" > "$COV_OUT.failures"
+    if [ -s "$COV_OUT.failures" ]; then
+      cat "$COV_OUT.failures" >&2
+    else
+      tail -n 40 "$COV_OUT" >&2
+    fi
+    rm -f "$COV_OUT.failures"
+  fi
+  rm -f "$COV_OUT"
   if [ ! -s "$FROM" ]; then
     printf 'rust-coverage: the measurement could not be trusted: cargo llvm-cov exited %s and wrote no export\n' "$cov_status" >&2
     exit 12
@@ -128,9 +223,12 @@ if [ -z "$FROM" ]; then
   [ "$cov_status" = 0 ] || printf 'rust-coverage: the suite failed (cargo exit %s); the coverage below is measured from the export it still wrote\n' "$cov_status" >&2
 fi
 [ -z "$EXPORT" ] || cp "$FROM" "$EXPORT"
+[ -z "$RECORD" ] || TREE_AFTER="$(tree_state)" || TREE_AFTER=""
 
 status=0
-CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" CHANGED_FILE="$CHANGED_FILE" CHANGED_BASE="$CHANGED" python3 - "$FROM" <<'PY' || status=$?
+CRATE="$CRATE" ROOT="$ROOT" ONLY="$ONLY" MODE="$MODE" CHANGED_FILE="$CHANGED_FILE" CHANGED_BASE="$CHANGED" \
+  RECORD="$RECORD" TREE_BEFORE="$TREE_BEFORE" TREE_AFTER="$TREE_AFTER" SUITE_EXIT="$cov_status" \
+  python3 - "$FROM" <<'PY' || status=$?
 import json, os, re, sys
 
 # normpath so a root or an export filename carrying a doubled slash (a $TMPDIR ending in
@@ -434,6 +532,34 @@ for rel, t in files.items():
         domain_total.add(t)
 missing = [d for d in domain if d not in files]
 
+# ------------------------------------------------------------------ the summary, as data
+# The same tallies the report below prints, written for a program: the crate, the domain and
+# every source file that holds executable code under test, each as covered/total per
+# dimension. It is the only machine-readable form of this measurement, so an evidence page
+# or a per-subject attribution reads these numbers rather than a second parser of the export.
+def dims(t):
+    out = {}
+    for what in ("lines", "functions", "regions"):
+        got, of = getattr(t, what)
+        out[what] = {"covered": got, "total": of, "percent": round(pct((got, of)), 2)}
+    return out
+
+summary_json = os.environ.get("SUMMARY_JSON", "")
+if summary_json:
+    doc = {
+        "schema": 1,
+        "measurement": "scripts/rust-coverage",
+        "test_code": "excluded",
+        "crate": dims(crate_total),
+        "domain": dict(dims(domain_total),
+                       files=sorted(d for d in domain if d in files), missing=sorted(missing)),
+        "files": {rel: dims(t) for rel, t in sorted(files.items())
+                  if t.lines[1] or t.functions[1] or t.regions[1]},
+    }
+    with open(summary_json, "w", encoding="utf-8") as fh:
+        json.dump(doc, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+
 def row(label, t):
     return ("%-56s %7.2f%%  %8.2f%%  %7.2f%%   %6d/%-6d lines"
             % (label, pct(t.lines), pct(t.functions), pct(t.regions), t.lines[0], t.lines[1]))
@@ -480,6 +606,40 @@ if mode == "gate":
                       "threshold of %.2f%% (scripts/session-coverage-threshold)"
                       % (got, what, want_dom))
                 rc = 10
+
+# ------------------------------------------------------------------ the record
+# What the preflight reads (see THE RECORD above): the crate and domain totals, the verdict
+# this run reached, and the commit and tree it measured. Written through a temporary file and
+# a rename, so a reader never sees half a record.
+record = os.environ.get("RECORD", "")
+if record:
+    before = os.environ.get("TREE_BEFORE", "").split()
+    after = os.environ.get("TREE_AFTER", "").split()
+    commit = before[0] if len(before) == 2 else ""
+    clean = len(before) == 2 and before == after and before[1] == "clean"
+    import datetime
+    doc = {
+        "schema": 1,
+        "measurement": "scripts/rust-coverage",
+        "commit": commit,
+        "working_tree": "clean" if clean else "dirty",
+        "at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "mode": mode,
+        "outcome": "report" if mode == "report" else ("fail" if rc else "pass"),
+        "suite_exit": int(os.environ.get("SUITE_EXIT", "0") or 0),
+        "crate": dims(crate_total),
+        "domain": dims(domain_total),
+    }
+    try:
+        os.makedirs(os.path.dirname(record), exist_ok=True)
+        tmp = record + ".tmp.%d" % os.getpid()
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+        os.replace(tmp, record)
+    except OSError as e:
+        print("rust-coverage: the measurement could not be recorded at %s: %s" % (record, e),
+              file=sys.stderr)
 sys.exit(rc)
 PY
 [ -n "$CHANGED_FILE" ] && rm -f "$CHANGED_FILE"

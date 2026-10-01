@@ -1,5 +1,6 @@
 # majordomus-covers: context
 # majordomus-negative: context
+# claims: context-assembly, context-selection-budget, record-resolution
 # The context builder: authority order, what each profile's context block selects, the
 # budget and its named exclusions, resolution of the right records, and determinism.
 . "$ROOT/test/lib.sh"

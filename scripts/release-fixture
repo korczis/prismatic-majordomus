@@ -81,15 +81,19 @@ host_archive="$out/$("$mj" distribution --repo "$ROOT" artifact --target "$host"
 # A fixture that claims another version must be told by the tool it packs, or the
 # installer's own "does this executable report the version I resolved?" check would refuse
 # it — which is the check working, not a fixture problem.
+# The shell tool reads its version from share/version.txt beside it — the projection of the
+# crate manifest, which an archive carries in place of the manifest — so that projection is
+# what the fixture restates. The tool itself is not touched: it states no version.
 real="$("$ROOT/scripts/release-version")"
 if [ "$version" != "$real" ]; then
   rm -rf "${work:?}/repack"; mkdir -p "$work/repack"
   tar -xzf "$host_archive" -C "$work/repack"
-  entry="$(find "$work/repack" -maxdepth 3 -name majordomus -path '*/bin/*' | head -n 1)"
-  [ -n "$entry" ] || die "the packed archive holds no bin/majordomus" 10
-  sed "s/^MJ_VERSION=\"$real\"/MJ_VERSION=\"$version\"/" "$entry" > "$entry.new"
-  mv "$entry.new" "$entry"; chmod 0755 "$entry"
-  root="$(basename "$(dirname "$(dirname "$entry")")")"
+  projected="$(find "$work/repack" -maxdepth 3 -name version.txt -path '*/share/*' | head -n 1)"
+  [ -n "$projected" ] || die "the packed archive holds no share/version.txt" 10
+  sed "s/^version=$real\$/version=$version/" "$projected" > "$projected.new"
+  mv "$projected.new" "$projected"
+  grep -qx "version=$version" "$projected" || die "the fixture could not restate the version in $projected" 10
+  root="$(basename "$(dirname "$(dirname "$projected")")")"
   ( cd "$work/repack" && tar -czf "$host_archive" "$root" )
 fi
 

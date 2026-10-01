@@ -92,10 +92,10 @@ wired the same way in the script, the workflow and the justfile (rule
 
 The binary shares its name with the shell tool on purpose. Put one or the other on `PATH`,
 or call this one by path. An MCP client is configured once, at the repository root, and
-this repository ships those files: [`.mcp.json`](https://github.com/korczis/prismatic-majordomus/blob/master/.mcp.json) for Claude Code,
-[`.gemini/settings.json`](https://github.com/korczis/prismatic-majordomus/blob/master/.gemini/settings.json) for Gemini CLI and
-[`.codex/config.toml`](https://github.com/korczis/prismatic-majordomus/blob/master/.codex/config.toml) for Codex all start
-[`bin/majordomus-mcp`](https://github.com/korczis/prismatic-majordomus/blob/master/bin/majordomus-mcp), which builds this crate when the
+this repository ships those files: [`.mcp.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.mcp.json) for Claude Code,
+[`.gemini/settings.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.gemini/settings.json) for Gemini CLI and
+[`.codex/config.toml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.codex/config.toml) for Codex all start
+[`bin/majordomus-mcp`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/bin/majordomus-mcp), which builds this crate when the
 executable is missing or older than its sources, sets `MAJORDOMUS_SHARE`, and `exec`s
 `majordomus mcp`. To name the executable directly:
 
@@ -129,15 +129,15 @@ distribution already declares is an error naming both files.
 The command line is declared once, in `src/cli.rs`: clap for the structure, and typed
 Rust metadata beside it (`EXAMPLES`) for the examples clap cannot carry. Every reference is
 generated from that one declaration and never written by hand — `majordomus --help` at a
-terminal, [`docs/generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.md) for a reader on GitHub,
-[`docs/generated/cli.json`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/cli.json) and its YAML sibling for the website's generator and for a reader of configuration, the
+terminal, [`docs/generated/cli.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/cli.md) for a reader on GitHub,
+[`docs/generated/cli.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/cli.json) and its YAML sibling for the website's generator and for a reader of configuration, the
 site's [reference under `/docs/cli/`](https://majordomus.dev/docs/cli/)
 with one page per command, and the [command line page](https://majordomus.dev/registry/cli/)
 of the registry. `majordomus generate` writes the files and `majordomus generate --check`
 refuses a stale one in CI. Every artifact it writes declares the document it projects, its
 encoding, the schema its content satisfies and its source, and a structured document is
 written in every encoding it is committed in from one value;
-[`docs/generated/artifacts.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/artifacts.md) is the generated index
+[`docs/generated/artifacts.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/artifacts.md) is the generated index
 of the whole set, and `artifacts.list` reads it back reconciled with the working tree. Every command starts from the same options (`--repo`,
 `--discovery`, `--strict`, `--share`); the reference lists them on each command that
 accepts them.

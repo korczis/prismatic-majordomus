@@ -6,7 +6,7 @@ weight = 6
 id = "accept-or-refuse-finished-work"
 source = ".ai/repo/use-cases/accept-or-refuse-finished-work.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

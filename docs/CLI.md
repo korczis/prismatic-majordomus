@@ -451,6 +451,7 @@ weakest evidence about the present.
 | `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
 | `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
+| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
@@ -776,9 +777,13 @@ doctrine `majordomus.completion-gates`, and report each in one vocabulary:
 | `blocked` | something it cannot run without has not passed |
 | `queued` | the plan selects it and no run has ever reported |
 | `exempt` | nothing this change did can make it true or false |
-| `unknown` | it cannot be judged here at all — no model, no reader |
+| `unknown` | it cannot be judged here at all — a model that does not parse, a reader that is not built, errors or answers nothing, no `jq` |
 
-Only `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by
+`fail`, `stale`, `blocked` and `unknown` refuse the outcome `completed`: `completed` is a
+claim that the verdict is known, and a verdict that could not be read cannot back it. Every
+other outcome is still accepted over any of them, named "not refused", and `check` reports
+without refusing. A repository that declares no CI model at all has no gate to be unknown
+about and refuses nothing. `queued` is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
@@ -1447,6 +1452,19 @@ which `*` does not cross a directory separator. That is not tidiness: without it
 `docs/*.md` also matches `docs/claims/*.md`, two classes silently overlap, and one file
 becomes two nodes. `test/cases/64_knowledge_discovery.sh` fails on that mutation.
 
+One overlap is settled by the file rather than by the classes. A section's `README.md` matches
+both `.ai/**/README.md`, the `context` class, and its section's own pathspec
+(`.ai/repo/features/*.md`, `.ai/repo/rules/**/*.md`, and so on). It declares `kind: context`, so
+it is a `context` node, once: a second class discovering it adds nothing. The index applies the
+same precedence in `apps/majordomus-cli/src/discovery/mod.rs`, and
+`test/cases/330_a_contract_is_the_kind_it_declares.sh` proves it for `knowledge nodes`. Where no
+file declares a kind, two classes over one path remain a refusal (case 73's `twin`).
+
+`init` declares the `context` class first, so a new repository's contracts are objects of its
+index from the start. Without it `context resolve`, which reads the files, and every capability
+that reads the index disagreed about what applies to a path;
+`test/cases/130_context_compiler.sh` fails without the class.
+
 A class marked `required` that discovers nothing is reported as a `WARN`. The cost of a
 curated list is that a path can be forgotten, and a forgotten path is indistinguishable
 from a repository that does not have that file unless something says so.
@@ -1978,13 +1996,15 @@ when the container could not be written or does not read back as what went in.
 Print the version and exit. `--version` is accepted as a synonym, and `version` works
 without an installation: it never reads `.ai/`.
 
-**Reads:** nothing.
+**Reads:** `share/version.txt` beside the tool — never the one `MAJORDOMUS_SHARE` names.
 **Writes:** nothing.
 
 **Behaviour:**
 - Prints `majordomus <version>` on stdout and exits `0`.
-- The same string is the single source of the version everywhere else, including the
-  public site's footer.
+- The version is authored in `apps/majordomus-cli/Cargo.toml`; `share/version.txt` is its
+  generated projection, shipped in every archive, and this command prints it. The public
+  site's footer reads the same answer.
+- Exits `12`, naming the file, when the distribution carries no `share/version.txt`.
 
 ## Hook integration (target)
 

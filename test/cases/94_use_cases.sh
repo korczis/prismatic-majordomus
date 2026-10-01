@@ -1,5 +1,6 @@
 # majordomus-covers: usecase
 # majordomus-negative: usecase
+# claims: use-case-coverage, use-case-evidence, use-case-impact
 # The executable use-case system, in a repository `init` wrote: the sections exist with the
 # taxonomy; a use case is one file, discovered, validated against everything it names, run
 # against the real tool with the evidence recorded and normalised; coverage is computed
@@ -80,6 +81,16 @@ MD
 # file and let the distribution's fixtures (setup scripts) serve the scenario
 mkdir -p docs
 printf 'version: 1\nstatuses:\n  - id: guaranteed\n    meaning: Deterministic.\nclaims:\n  - id: exit-code-contract\n    claim: Exit codes mean one thing\n    source: docs/CLI.md\n    implementation: bin/majordomus\n    test: test/cases/00.sh\n    status: guaranteed\n    responsibility: none\n' > docs/CLAIMS.yaml
+# a guaranteed claim of one of the tool's responsibilities, and an MCP tool the executable's
+# registry projects: coverage counts both, and neither is named by any use case yet
+printf '  - id: health-is-reported\n    claim: Doctor reports the health\n    source: docs/CLI.md\n    implementation: lib/doctor.sh\n    test: test/cases/00.sh\n    status: guaranteed\n    responsibility: doctor\n' >> docs/CLAIMS.yaml
+mkdir -p docs/generated
+printf '{"capabilities":[{"id":"status.read","tool": "majordomus_status"}]}\n' > docs/generated/registry.json
+expect_exit 0 "$MJ" usecase coverage
+expect_grep '^claim +health-is-reported +0 +0 +0 +gap +advisory$'
+expect_grep '^mcp_tool +majordomus_status +0 +0 +0 +gap +advisory$'
+# the claim with responsibility none is not a coverage target at all
+expect_no_grep 'exit-code-contract'
 git add -A >/dev/null && git commit -qm "one use case"
 expect_exit 0 "$MJ" usecase validate
 expect_grep 'usecase validate: 0 failure'
@@ -210,6 +221,9 @@ sed -i.bak 's/^    - note_present$/    - note_present\n    - use_cases_covered/'
 "$MJ" update >/dev/null
 git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm "require coverage"
 "$MJ" start "cover it" --scope lib >/dev/null
+# check applies the same gate as doctor: a required gap fails it with the scaffold named
+expect_exit 10 "$MJ" check
+expect_grep 'FAIL use-case +command doctor — gap: 0 use case\(s\) name it, 0 run it; the policy requires an executable use case'
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
 expect_exit 10 "$MJ" finish --outcome completed --verify-command true
 expect_grep 'FAIL use-case'
@@ -239,6 +253,27 @@ sed -i.bak 's/^claims: \[.*\]$/claims: []/; s/^responsibilities: \[.*\]$/respons
 expect_exit 0 "$MJ" usecase validate
 expect_exit 0 "$MJ" usecase coverage
 expect_grep '^command +doctor +1 +1 +1 +covered +required'
+# the claim and the MCP tool are still named gaps: nothing active names them
+expect_grep '^claim +health-is-reported +0 +0 +0 +gap +advisory$'
+expect_grep '^mcp_tool +majordomus_status +0 +0 +0 +gap +advisory$'
+# naming them from the executable use case closes both, and the tally says so
+sed -i.bak 's/^claims: \[\]$/claims: [health-is-reported]\nmcp_tools: [majordomus_status]/' "$UC/doctor-draft.md"; rm -f "$UC/doctor-draft.md.bak"
+expect_exit 0 "$MJ" usecase validate
+expect_exit 0 "$MJ" usecase coverage
+expect_grep '^claim +health-is-reported +1 +1 +1 +covered +advisory$'
+expect_grep '^mcp_tool +majordomus_status +1 +1 +1 +covered +advisory$'
+# the policy gates the other classes too: a claim gap under claims: required fails --check
+sed -i.bak 's/^claims: \[health-is-reported\]$/claims: []/' "$UC/doctor-draft.md"; rm -f "$UC/doctor-draft.md.bak"
+cp .ai/repo/policy.yaml "$T/policy.required"
+sed -i.bak 's/^    commands: required$/    commands: advisory/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+expect_exit 0 "$MJ" usecase coverage --check
+expect_grep '^claim +health-is-reported +0 +0 +0 +gap +advisory$'
+sed -i.bak 's/^    claims: advisory$/    claims: required/' .ai/repo/policy.yaml; rm -f .ai/repo/policy.yaml.bak
+expect_exit 10 "$MJ" usecase coverage --check
+expect_grep '^claim +health-is-reported +0 +0 +0 +gap +required$'
+expect_grep ', 1 required gap\(s\)'
+cp "$T/policy.required" .ai/repo/policy.yaml
+sed -i.bak 's/^claims: \[\]$/claims: [health-is-reported]/' "$UC/doctor-draft.md"; rm -f "$UC/doctor-draft.md.bak"
 
 # --- impact: a changed file names the use cases, scenarios and cases it reaches
 git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm "doctor use case"
@@ -250,6 +285,78 @@ expect_grep '^next: majordomus usecase run see-the-version'
 git checkout -q -- "$UC/see-the-version.md"
 expect_exit 0 "$MJ" usecase impact --base HEAD --json
 expect_grep '"use_cases":\[\]'
+# an implementation file names its command, the behavioural cases that declare they cover
+# it, and through the command the use cases and scenarios that run it
+mkdir -p lib test/cases
+printf '# the doctor implementation of this fixture\n' > lib/doctor.sh
+printf '# majordomus-covers: doctor\n' > test/cases/01_doctor.sh
+printf '# majordomus-covers: version\n' > test/cases/02_version.sh
+git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm "an implementation and its cases"
+printf '# touched\n' >> lib/doctor.sh
+expect_exit 0 "$MJ" usecase impact --base HEAD
+expect_grep '^  commands   doctor$'
+expect_grep '^  cases      test/cases/01_doctor\.sh$'
+expect_grep '^  use cases  doctor-draft$'
+expect_grep '^  scenarios  doctor-draft$'
+expect_exit 0 "$MJ" usecase impact --base HEAD --json
+expect_grep '"commands":\["doctor"\],"rules":\[\],"use_cases":\["doctor-draft"\],"scenarios":\["doctor-draft"\],"cases":\["test/cases/01_doctor\.sh"\]'
+git checkout -q -- lib/doctor.sh
+# a rule file names the rule by its identity, read from its front matter, not its path
+RULE=.ai/repo/rules/vendor/majordomus/rules/use-case-coverage.v1.md
+[ -f "$RULE" ] || { echo "    the fixture has no vendored use-case-coverage rule"; exit 1; }
+printf '\n' >> "$RULE"
+expect_exit 0 "$MJ" usecase impact --base HEAD
+expect_grep '^  rules      majordomus\.use-case-coverage$'
+expect_grep '^  commands   none$'
+# ...and the behavioural case the rule names as its proof is affected by changing the rule
+expect_grep '^  cases      test/cases/94_use_cases\.sh$'
+git checkout -q -- "$RULE"
+
+# --- the evidence the site shows is the evidence the tool recorded. The site generator runs
+#     in a scratch copy of this tool's tree (never the real site/), with the catalogue pruned
+#     to the use cases whose scenarios walk the lifecycle and refuse something, which is the
+#     least the generator accepts; it executes them itself and embeds what they recorded.
+command -v jq >/dev/null || { echo "    jq absent; the site half is not asserted"; exit 1; }
+SF="$T/site-fixture"
+fixture_repo "$SF" AGENTS.md docs site/data/marketing.toml site/content-src
+KEEP='know-which-tool-is-running hand-work-between-sessions run-several-workers-at-once carry-a-blocker-across-a-handover'
+for f in "$SF"/.ai/repo/use-cases/*.md "$SF"/.ai/repo/applications/*.md; do
+  grep -q '^kind: context$' "$f" && continue
+  case " $KEEP " in *" $(basename "$f" .md) "*) sed -i.bak 's/^applications: \[.*\]$/applications: []/' "$f"; rm -f "$f.bak" ;; *) rm -f "$f" ;; esac
+done
+# the identity is the fixture's own: a runner has no global git identity, and a commit that
+# borrows the developer's passes on a laptop and fails on CI
+( cd "$SF" && git init -q && git config user.email case94@example.com && git config user.name case94 \
+    && git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm fixture ) || exit 1
+expect_exit 0 "$SF/scripts/generate-site-data" --out "$T/site-data" \
+  || { echo "    the site generator refused the pruned catalogue"; exit 1; }
+CAT="$T/site-data/catalogue.json"
+expect_file "$CAT"
+for u in $KEEP; do
+  EVF="$SF/.ai/local/evidence/use-cases/$u.json"
+  expect_file "$EVF" || { echo "    the generator did not execute the scenario of $u"; exit 1; }
+  jq -S --arg u "$u" '.use_cases[] | select(.id == $u) | .evidence' "$CAT" > "$T/shown.json"
+  jq -S 'del(.steps[].timing)' "$EVF" > "$T/recorded.json"
+  cmp -s "$T/shown.json" "$T/recorded.json" \
+    || { echo "    the site does not show the evidence the tool recorded for $u"; diff "$T/recorded.json" "$T/shown.json" | head -20; exit 1; }
+done
+# and that evidence is the executed scenario, step by step: exit and output as observed
+jq -e '.use_cases[] | select(.id == "know-which-tool-is-running") | .evidence
+       | .result == "pass" and (.steps | length) == 2
+         and .steps[0].exit == 0 and (.steps[0].output | test("^majordomus [0-9]+\\.[0-9]+\\.[0-9]+$"))
+         and .steps[1].exit == 2 and .steps[1].expected_exit == 2 and (.steps[1].output | test("unknown option"))
+         and all(.steps[]; .result == "pass" and (.assertions | length) > 0)' "$CAT" >/dev/null \
+  || { echo "    the site's evidence is not the executed scenario"; jq '.use_cases[] | select(.id == "know-which-tool-is-running") | .evidence' "$CAT"; exit 1; }
+grep -q "$T" "$CAT" && { echo "    the site data leaks the case directory path"; exit 1; }
+# the page carries the scenario it demonstrates, and maturity is observed from it: the scenario
+# lives in the body's `# Scenario` section, and a generator that read only the front matter
+# showed every use case of this repository as `described`, with no steps, while
+# `usecase run` executed the same scenarios and passed them
+for u in $KEEP; do
+  jq -e --arg u "$u" '.use_cases[] | select(.id == $u)
+         | (.scenario.steps | length) > 0 and .maturity != "described"' "$CAT" >/dev/null \
+    || { echo "    the site shows $u without the scenario it runs"; jq --arg u "$u" '.use_cases[] | select(.id == $u) | {maturity, scenario}' "$CAT"; exit 1; }
+done
 
 # --- every reference the migrated catalogue of this tree makes resolves, and its scenarios run:
 #     the repository's own use cases against its own tool (dogfooding), one of them at least

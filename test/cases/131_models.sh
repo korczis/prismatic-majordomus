@@ -1,4 +1,5 @@
 # majordomus-covers: doctor
+# claims: models-no-secret-fields
 # The model catalogue through the command line: one declaration in share/models.yaml,
 # rendered by `models list` with credential presence (never a value), and routed by
 # `models route` with the reasons attached — the selected model's why, and the first
@@ -54,6 +55,14 @@ expect_grep "credential configured"
 if printf '%s' "$LAST_OUT" | grep -q "a-secret-value"; then
   echo "    the credential value leaked into the listing"; exit 1
 fi
+# Proves `models-no-secret-fields` on the machine-readable answer too, which is what an agent
+# reads: presence is reported, and the value appears nowhere in the document.
+CASE_ACME_KEY="a-secret-value" expect_exit 0 mj "$R" models list --format json
+if printf '%s' "$LAST_OUT" | grep -q "a-secret-value"; then
+  echo "    the credential value leaked into the JSON listing"; exit 1
+fi
+printf '%s' "$LAST_OUT" | grep -q '"credential' \
+  || { echo "    the JSON listing does not report credential presence"; exit 1; }
 
 # ---------------------------------------------------------------- 2. routing explains itself
 # Proves `models-routing-explains-itself`: the selected model carries why it was

@@ -14,13 +14,21 @@ source = ".ai/repo/features/finish-contract.md"
 The outcome of a task is a typed field with a closed vocabulary, never a sentence.
 `majordomus finish --outcome completed` runs the verification command the profile requires,
 walks every line the policy selects, prints each as pass or fail with the command that
-reproduces a failure, and writes nothing when any line fails; the task stays open. An open
+reproduces a failure, and accepts nothing when any line fails; the task stays open. An open
 question that names the task blocks acceptance until it is resolved, and a blocker survives
 a handover rather than being lost with the conversation.
 
 `no_match` and `failed` are different facts: the thing sought does not exist, or the work
 could not be done. A supervisor that cannot tell them apart cannot decide whether to retry,
 escalate or accept, so the field decides and prose never does.
+
+Every refusal is recorded. Each refused `finish` appends a `task.refused` line to the ledger
+with the outcome that was claimed, how many contract lines were unmet and which doctrines
+refused, and `majordomus history --event task.refused` lists them. A task accepted after
+four refusals and one accepted first time used to leave the same record; now the four false
+claims of *done* are there, in order, before the one that held. That is what makes the
+contract's value countable rather than asserted: each refusal later satisfied is a false
+*done* the tool caught. `finish --check` asks without claiming, and records nothing.
 
 ## What it does not do
 

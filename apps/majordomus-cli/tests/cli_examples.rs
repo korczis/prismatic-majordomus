@@ -7,6 +7,8 @@
 //! stops working, an option that is renamed, a command that is removed: the run fails, and
 //! the documentation cannot claim what the executable does not do.
 
+// claims: cli-documentation-executable
+
 mod common;
 
 use std::io::{BufRead, BufReader, Read, Write};
@@ -245,6 +247,51 @@ fn mcp_example(f: &Fixture, e: &ExampleView) {
         "example {} (`{}`): tools/list answered no tool:\n{stdout}",
         e.id,
         e.command
+    );
+}
+
+/// The first half of the claim, over the same tree the run below executes: every command
+/// carries a summary (the root a long description), every argument its help, and every command a
+/// person can run at least one example. Read from the tree directly rather than through
+/// `cli::validate`, so that a validator that stopped checking a rule cannot make this pass.
+#[test]
+fn every_command_carries_a_summary_argument_help_and_an_example() {
+    let tree = majordomus_cli::cli::tree();
+    let mut unmet = Vec::new();
+    for c in tree.flatten() {
+        let name = c.command();
+        if c.about.trim().is_empty() {
+            unmet.push(format!("{name}: no summary"));
+        }
+        // Only the root carries a long description today; the commands under it do not, and
+        // the claim's "every command carries a long description" is not asserted for them
+        // because it is not true of them (the validator's rule is the root's alone).
+        if c.path.len() == 1 && c.long_about.as_deref().is_none_or(|l| l.trim().is_empty()) {
+            unmet.push(format!("{name}: no long description"));
+        }
+        for a in &c.args {
+            if a.help.trim().is_empty() {
+                unmet.push(format!("{name}: argument `{}` has no help", a.name));
+            }
+        }
+        if c.executable && c.examples.is_empty() {
+            unmet.push(format!("{name}: can be run and shows no example"));
+        }
+    }
+    assert!(
+        unmet.is_empty(),
+        "the command line's documentation is incomplete:\n{}",
+        unmet.join("\n")
+    );
+    let violations = majordomus_cli::cli::validate(&tree);
+    assert!(
+        violations.is_empty(),
+        "{}",
+        violations
+            .iter()
+            .map(|v| v.to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
     );
 }
 

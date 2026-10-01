@@ -55,6 +55,17 @@
         "summary"
       ]
     },
+    "reasoning": {
+      "type": "string",
+      "enum": [
+        "offline",
+        "ci",
+        "fast",
+        "standard",
+        "strict"
+      ],
+      "description": "How much independent review a session under this profile may use (ADR 0098): offline admits only advisors on this machine, ci none, fast reviews only high blast radius, standard reviews material uncertainty, strict reviews wider. Advisors stay optional in every mode; MAJORDOMUS_REASONING_MODE and a CI runner outrank it."
+    },
     "checkpoint_interval": {
       "type": "string",
       "pattern": "^[0-9]+[smh]$"

@@ -27,7 +27,7 @@
 //! `plan evidence` stays a command-line operation for now: it appends a block rather than
 //! setting a field, and it is the next transition to converge, not this one.
 //!
-//! [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+//! [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
 
 use std::path::Path;
 
@@ -506,7 +506,7 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "plan",
         title: "The plan and its derivations",
-        description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. The four operations that write a lifecycle marker into a record stay on the command line: a capability of this registry never writes to the repository.",
+        description: "The milestone and issue model of this repository, and everything derived from it that nobody authored: the status of each record, the dependency graphs above and below the milestone boundary, the topological execution waves, the roadmap order, the milestone being executed and the one issue to take next. Status is never stored — a record says what happened to it and the status follows from that and from the state of its dependencies — so no file can contradict the graph. This capability reads; writing a lifecycle marker into a record is `plan.transition`, which declares that it writes the repository.",
         stability: Stability::BehaviorallyVerified,
         capabilities: [
             capability! {
@@ -976,7 +976,7 @@ mod tests {
     /// the plan and one that changes it are different things to depend on, and the next
     /// capability to gain a write should have to say so here.
     ///
-    /// [ADR 0040]: ../../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+    /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     #[test]
     fn only_the_transition_writes() {
         let m = module();

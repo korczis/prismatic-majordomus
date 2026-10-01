@@ -1,3 +1,4 @@
+# claims: derived-not-declared
 # Nothing the tool knows about itself may be written down twice.
 #
 # Every list in this case is derived — from the dispatch table, from the registries, from

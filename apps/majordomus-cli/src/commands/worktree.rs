@@ -603,6 +603,7 @@ fn create(
                 _ => w(out, format!("branch  {}", report.branch))?,
             }
             w(out, report.envrc.describe())?;
+            w(out, report.envrc_local.describe())?;
             w(
                 out,
                 format!("cd \"$(majordomus worktree path {})\"", report.branch),

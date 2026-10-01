@@ -15,12 +15,19 @@ command -v node >/dev/null 2>&1 || { echo "interaction-check: node is required" 
 MODE=check
 for a in "$@"; do case "$a" in --inventory) MODE=inventory ;; *) echo "interaction-check: unknown option $a" >&2; exit 2 ;; esac; done
 SPECS="${MJ_INTERACTION_SPECS:-$LIB/interaction-specs}"
-exec node --input-type=module - "$ROOT/site/public" "$SPECS" "$MODE" "$LIB/interactions.mjs" <<'JS'
-const [pub, specDir, mode, lib] = process.argv.slice(2);
+# The controls judged are the site's own. A surface scripts/site-build composes into the build at its mount
+# (ADR 0086) carries another producer's controls — rustdoc's search box and toggles — which that surface's own
+# check answers for; its mounts come from the tree's topology through lib/common.sh, so nothing here names one.
+# shellcheck source=../../lib/common.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/common.sh"
+COMPOSED="$(mj_web_composed "$ROOT" mounts)" || exit 12
+exec node --input-type=module - "$ROOT/site/public" "$SPECS" "$MODE" "$LIB/interactions.mjs" "$COMPOSED" <<'JS'
+const [pub, specDir, mode, lib, composedArg] = process.argv.slice(2);
+const composed = (composedArg || '').split(/\s+/).filter(Boolean);
 const { classify, loadSpecs, signature, brokenExpressions, pages } = await import(lib);
 const { readFileSync } = await import('node:fs');
 const specs = await loadSpecs(specDir);
-const rows = classify(pub, specs);
+const rows = classify(pub, specs, composed);
 const groups = new Map();
 for (const r of rows) {
   const key = `${signature(r.el)}\t${r.specs.join(',') || '-'}`;
@@ -44,7 +51,7 @@ for (const g of groups.values()) {
 }
 // every Alpine expression compiles: a broken one turns its control off without a sound
 let exprs = 0;
-for (const { route, file } of pages(pub)) {
+for (const { route, file } of pages(pub, composed)) {
   const html = readFileSync(file, 'utf8');
   if (/http-equiv="refresh"/.test(html)) continue;
   for (const b of brokenExpressions(html)) {
