@@ -8,7 +8,7 @@
 //! the same state on every surface, which is what lets the CLI, HTTP, MCP, the Cockpit,
 //! `majordomus context` and a handover all say the same thing.
 //!
-//! The lifecycle: records are admitted and stored, [`derive`] turns them into a
+//! The lifecycle: records are admitted and stored, [`derive()`] turns them into a
 //! [`ReasoningState`], and [`render_markdown`] turns that state into the paragraph a
 //! handover carries. [`explain`] answers for one record with its whole chain.
 //!
@@ -499,7 +499,7 @@ pub struct ReasoningTotals {
 ///
 /// It is what every surface reports: the assessments, consultations, disagreements and
 /// conclusions of the task, the timeline of every record, the totals, and the store
-/// files that could not be read. Derived by [`derive`], never stored.
+/// files that could not be read. Derived by [`derive()`], never stored.
 ///
 /// ```
 /// # use majordomus_cli::reasoning::record::ReasoningRecord;

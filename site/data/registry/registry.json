@@ -6,7 +6,7 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "5e4b41cc4a48dd6ab5c353742116638ff44525b0b41eec09dd3710953c19010d",
+    "fingerprint": "c3d8efb35a364011d7e3a8fb374d4a4bba29c260c3bc7819cd15dd798cb3590e",
     "summary": {
       "total": 1673,
       "builtin": 149,
@@ -44576,7 +44576,7 @@
                   "timeline",
                   "totals"
                 ],
-                "description": "The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, task: &str, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": task,\n#         \"recorded_at\": \"2026-10-01T00:00:00Z\", \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &str| json!({ \"kind\": \"assessment\", \"subject\": subject });\nloaded.records.push(rec(\"assessment-1\", \"t1\", assessment(\"a\")));\nloaded.records.push(rec(\"assessment-2\", \"t2\", assessment(\"b\")));\nloaded.unreadable.push(\"t2/broken.json\".into());\n\nlet one: ReasoningState = derive(&loaded, Some(\"t1\"));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\"t1\", 1));\nlet all = derive(&loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\"all\", 2));\nassert_eq!(all.unreadable, [\"t2/broken.json\"]);\n```"
+                "description": "The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive()`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, task: &str, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": task,\n#         \"recorded_at\": \"2026-10-01T00:00:00Z\", \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &str| json!({ \"kind\": \"assessment\", \"subject\": subject });\nloaded.records.push(rec(\"assessment-1\", \"t1\", assessment(\"a\")));\nloaded.records.push(rec(\"assessment-2\", \"t2\", assessment(\"b\")));\nloaded.unreadable.push(\"t2/broken.json\".into());\n\nlet one: ReasoningState = derive(&loaded, Some(\"t1\"));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\"t1\", 1));\nlet all = derive(&loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\"all\", 2));\nassert_eq!(all.unreadable, [\"t2/broken.json\"]);\n```"
               },
               "AssessmentView": {
                 "type": "object",
@@ -57823,7 +57823,7 @@
     ]
   },
   "index": {
-    "fingerprint": "5362e76254fb9972cd2195a89c2752035001f6106d696dfbdda06c792822b704",
+    "fingerprint": "a729800c585d5111b4e6720c8c7839f57e25cdb94d42862dbe17e7983bb09028",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
