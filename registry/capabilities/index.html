@@ -847,6 +847,40 @@
       
       <span class="rounded border border-default px-1 text-body">cached</span>
     </span>
+  </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/registry/modules/integration/" class="font-mono hover:underline">integration</a> <span class="text-base font-normal text-body">Pull-request integration</span></h2>
+<ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/registry/capabilities/integration-events/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">integration.events</code>
+    <span class="mt-1 break-words text-sm text-body">Every action this checkout&#39;s executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision&#39;s reasons.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">experimental</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      
+    </span>
+  </a></li><li><a href="https://majordomus.dev/registry/capabilities/integration-explain/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">integration.explain</code>
+    <span class="mt-1 break-words text-sm text-body">One pull request&#39;s assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">experimental</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      
+    </span>
+  </a></li><li><a href="https://majordomus.dev/registry/capabilities/integration-queue/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
+    <code class="break-all font-mono font-semibold text-heading">integration.queue</code>
+    <span class="mt-1 break-words text-sm text-body">The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection&#39;s required checks and reviews, the blocking labels, the merge method), every open pull request&#39;s assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch&#39;s integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.</span>
+    <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
+      <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
+      <span class="rounded border border-default px-1 text-body">experimental</span>
+      <span class="rounded border border-default px-1 text-body">mcp</span>
+      <span class="rounded border border-default px-1 text-body">http</span>
+      <span class="rounded border border-default px-1 text-body">cli</span>
+      
+    </span>
   </a></li></ul><h2 class="mt-8 text-xl font-semibold tracking-tight text-heading"><a href="https://majordomus.dev/registry/modules/lifecycle/" class="font-mono hover:underline">lifecycle</a> <span class="text-base font-normal text-body">Session lifecycle</span></h2>
 <ul class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3"><li><a href="https://majordomus.dev/registry/capabilities/lifecycle-closed/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">lifecycle.closed</code>
@@ -928,7 +962,7 @@
     </span>
   </a></li><li><a href="https://majordomus.dev/registry/capabilities/mesh-doctor/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-4 hover:bg-neutral-secondary-medium">
     <code class="break-all font-mono font-semibold text-heading">mesh.doctor</code>
-    <span class="mt-1 break-words text-sm text-body">Every prerequisite proved on this machine alone: the declaration parses, the identity loads, the repository has a mesh identity, the advertised endpoints are reachable from beyond this machine, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory. Each failed check names its impact and its remedy. Deterministic, no second node required.</span>
+    <span class="mt-1 break-words text-sm text-body">Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server&#39;s own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server&#39;s reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.</span>
     <span class="mt-3 flex flex-wrap gap-1 font-mono text-xs">
       <span class="rounded border border-default bg-neutral-secondary-medium px-1 text-heading">query</span>
       <span class="rounded border border-default px-1 text-body">experimental</span>
@@ -1911,7 +1945,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0258e440d4a2ab4bb6e44610b9b30fa217a786c8" class="font-mono underline">0258e44</a> · inputs <span class="font-mono">ecf125b98915</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8e82a4abe1829fa34c645a797301fccae96f8021" class="font-mono underline">8e82a4a</a> · inputs <span class="font-mono">a924773401f3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

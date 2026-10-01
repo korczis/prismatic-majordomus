@@ -1,0 +1,461 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/integration/mod.rs`."><title>mod.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/integration/</div>mod.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Pull-request integration: the next provably safe change, onto the current master, one
+<a href=#2 id=2 data-nosnippet>2</a>//! at a time (ADR 0101).
+<a href=#3 id=3 data-nosnippet>3</a>//!
+<a href=#4 id=4 data-nosnippet>4</a>//! # The pipeline
+<a href=#5 id=5 data-nosnippet>5</a>//!
+<a href=#6 id=6 data-nosnippet>6</a>//! ```text
+<a href=#7 id=7 data-nosnippet>7</a>//! forge (gh) ──► ForgeObservation ──► relation to master (git merge-tree, cached by SHA pair)
+<a href=#8 id=8 data-nosnippet>8</a>//!                (recorded locally)            │
+<a href=#9 id=9 data-nosnippet>9</a>//!                                              ▼
+<a href=#10 id=10 data-nosnippet>10</a>//!                               classify ──► PullRequestAssessment (one per PR, with evidence)
+<a href=#11 id=11 data-nosnippet>11</a>//!                                              │
+<a href=#12 id=12 data-nosnippet>12</a>//!                                              ▼
+<a href=#13 id=13 data-nosnippet>13</a>//!                                 plan ──► IntegrationQueue (ranked, deterministic)
+<a href=#14 id=14 data-nosnippet>14</a>//!                                              │
+<a href=#15 id=15 data-nosnippet>15</a>//!           CLI · HTTP · MCP · Cockpit ◄───────┤
+<a href=#16 id=16 data-nosnippet>16</a>//!                                              ▼
+<a href=#17 id=17 data-nosnippet>17</a>//!                           drain: lease ► re-observe ► re-decide ► act ► verify ► re-plan
+<a href=#18 id=18 data-nosnippet>18</a>//! ```text
+<a href=#19 id=19 data-nosnippet>19</a>//!
+<a href=#20 id=20 data-nosnippet>20</a>//! The observation is the only network product and it is recorded with its moment; every
+<a href=#21 id=21 data-nosnippet>21</a>//! read surface renders it offline. A decision names the master and head it was taken
+<a href=#22 id=22 data-nosnippet>22</a>//! against ([`EvaluatedAgainst`]), and the executor acts only when a fresh observation
+<a href=#23 id=23 data-nosnippet>23</a>//! still says the same — a merge invalidates every earlier plan by construction, because
+<a href=#24 id=24 data-nosnippet>24</a>//! the next step starts from a new observation of a new master.
+<a href=#25 id=25 data-nosnippet>25</a>//!
+<a href=#26 id=26 data-nosnippet>26</a>//! # Why this module is not public
+<a href=#27 id=27 data-nosnippet>27</a>//!
+<a href=#28 id=28 data-nosnippet>28</a>//! It is `pub(crate)`. Integration is an operation of this executable, reached through its
+<a href=#29 id=29 data-nosnippet>29</a>//! command line (`majordomus prs`) and its capability registry (`integration.*` on HTTP, MCP
+<a href=#30 id=30 data-nosnippet>30</a>//! and OpenAPI), and not a library other crates link against, so it is not part of the
+<a href=#31 id=31 data-nosnippet>31</a>//! crate's exported API and the exported-surface gate (`quality report`) does not cover it.
+<a href=#32 id=32 data-nosnippet>32</a>//! What covers it instead: the unit tests beside it (`tests.rs`: every disposition, the
+<a href=#33 id=33 data-nosnippet>33</a>//! stale-decision refusal, the re-plan after every merge, the cleanup threshold, relations
+<a href=#34 id=34 data-nosnippet>34</a>//! computed by real git, and two properties), and
+<a href=#35 id=35 data-nosnippet>35</a>//! `test/cases/720_integration_follows_the_current_master.sh`, which drives the real
+<a href=#36 id=36 data-nosnippet>36</a>//! command line against a scripted forge.
+<a href=#37 id=37 data-nosnippet>37</a>//!
+<a href=#38 id=38 data-nosnippet>38</a>//! # Why the forge's `mergeable` is not read
+<a href=#39 id=39 data-nosnippet>39</a>//!
+<a href=#40 id=40 data-nosnippet>40</a>//! This repository resolves derived files with a per-clone merge driver the forge cannot
+<a href=#41 id=41 data-nosnippet>41</a>//! run, so the forge calls nearly every pull request conflicting. The relation to master is
+<a href=#42 id=42 data-nosnippet>42</a>//! decided here, by git, with the drivers ([`relation`]).
+<a href=#43 id=43 data-nosnippet>43</a>
+<a href=#44 id=44 data-nosnippet>44</a></span><span class="kw">pub mod </span>classify;
+<a href=#45 id=45 data-nosnippet>45</a><span class="kw">pub mod </span>drain;
+<a href=#46 id=46 data-nosnippet>46</a><span class="kw">pub mod </span>forge;
+<a href=#47 id=47 data-nosnippet>47</a><span class="kw">pub mod </span>model;
+<a href=#48 id=48 data-nosnippet>48</a><span class="kw">pub mod </span>relation;
+<a href=#49 id=49 data-nosnippet>49</a><span class="kw">pub mod </span>retry;
+<a href=#50 id=50 data-nosnippet>50</a><span class="attr">#[cfg(test)]
+<a href=#51 id=51 data-nosnippet>51</a></span><span class="kw">mod </span>tests;
+<a href=#52 id=52 data-nosnippet>52</a><span class="kw">pub mod </span>wait;
+<a href=#53 id=53 data-nosnippet>53</a>
+<a href=#54 id=54 data-nosnippet>54</a><span class="kw">use </span>std::collections::{BTreeMap, BTreeSet};
+<a href=#55 id=55 data-nosnippet>55</a><span class="kw">use </span>std::path::{Path, PathBuf};
+<a href=#56 id=56 data-nosnippet>56</a>
+<a href=#57 id=57 data-nosnippet>57</a><span class="kw">use </span>schemars::JsonSchema;
+<a href=#58 id=58 data-nosnippet>58</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#59 id=59 data-nosnippet>59</a>
+<a href=#60 id=60 data-nosnippet>60</a><span class="attr">#[cfg(test)]
+<a href=#61 id=61 data-nosnippet>61</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>classify::declared_dependencies;
+<a href=#62 id=62 data-nosnippet>62</a><span class="kw">pub use </span>classify::{classify, IntegrationPolicy, QueueContext, BLOCKING_LABELS};
+<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub use </span>forge::{ForgeObservation, OBSERVATION_SCHEMA, PR_REF_PREFIX};
+<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub use </span>model::<span class="kw-2">*</span>;
+<a href=#65 id=65 data-nosnippet>65</a><span class="attr">#[cfg(test)]
+<a href=#66 id=66 data-nosnippet>66</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">use </span>relation::relation_to_master;
+<a href=#67 id=67 data-nosnippet>67</a>
+<a href=#68 id=68 data-nosnippet>68</a><span class="doccomment">/// Where this checkout's integration state lives, relative to the repository root.
+<a href=#69 id=69 data-nosnippet>69</a></span><span class="kw">pub const </span>STATE_DIR: <span class="kw-2">&amp;</span>str = <span class="string">".ai/local/state/integration"</span>;
+<a href=#70 id=70 data-nosnippet>70</a><span class="doccomment">/// The last forge observation.
+<a href=#71 id=71 data-nosnippet>71</a></span><span class="kw">pub const </span>OBSERVATION_FILE: <span class="kw-2">&amp;</span>str = <span class="string">"observation.json"</span>;
+<a href=#72 id=72 data-nosnippet>72</a><span class="doccomment">/// Relations already computed, keyed by `master..head`: immutable, so never invalidated.
+<a href=#73 id=73 data-nosnippet>73</a></span><span class="kw">pub const </span>RELATIONS_FILE: <span class="kw-2">&amp;</span>str = <span class="string">"relations.json"</span>;
+<a href=#74 id=74 data-nosnippet>74</a><span class="doccomment">/// The audit trail of every integration action.
+<a href=#75 id=75 data-nosnippet>75</a></span><span class="kw">pub const </span>EVENTS_FILE: <span class="kw-2">&amp;</span>str = <span class="string">"events.jsonl"</span>;
+<a href=#76 id=76 data-nosnippet>76</a>
+<a href=#77 id=77 data-nosnippet>77</a><span class="doccomment">/// The path of one state file.
+<a href=#78 id=78 data-nosnippet>78</a></span><span class="kw">pub fn </span>state_path(root: <span class="kw-2">&amp;</span>Path, file: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+<a href=#79 id=79 data-nosnippet>79</a>    root.join(STATE_DIR).join(file)
+<a href=#80 id=80 data-nosnippet>80</a>}
+<a href=#81 id=81 data-nosnippet>81</a>
+<a href=#82 id=82 data-nosnippet>82</a><span class="doccomment">/// The last recorded observation, if any.
+<a href=#83 id=83 data-nosnippet>83</a></span><span class="kw">pub fn </span>load_observation(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;ForgeObservation&gt;, String&gt; {
+<a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">let </span>path = state_path(root, OBSERVATION_FILE);
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span>text = <span class="kw">match </span>std::fs::read_to_string(<span class="kw-2">&amp;</span>path) {
+<a href=#86 id=86 data-nosnippet>86</a>        <span class="prelude-val">Ok</span>(t) =&gt; t,
+<a href=#87 id=87 data-nosnippet>87</a>        <span class="prelude-val">Err</span>(e) <span class="kw">if </span>e.kind() == std::io::ErrorKind::NotFound =&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>),
+<a href=#88 id=88 data-nosnippet>88</a>        <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, path.display())),
+<a href=#89 id=89 data-nosnippet>89</a>    };
+<a href=#90 id=90 data-nosnippet>90</a>    <span class="kw">let </span>obs: ForgeObservation =
+<a href=#91 id=91 data-nosnippet>91</a>        serde_json::from_str(<span class="kw-2">&amp;</span>text).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, path.display()))<span class="question-mark">?</span>;
+<a href=#92 id=92 data-nosnippet>92</a>    <span class="kw">if </span>obs.schema != OBSERVATION_SCHEMA {
+<a href=#93 id=93 data-nosnippet>93</a>        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
+<a href=#94 id=94 data-nosnippet>94</a>            <span class="string">"{}: schema {}, this reads {OBSERVATION_SCHEMA}"</span>,
+<a href=#95 id=95 data-nosnippet>95</a>            path.display(),
+<a href=#96 id=96 data-nosnippet>96</a>            obs.schema
+<a href=#97 id=97 data-nosnippet>97</a>        ));
+<a href=#98 id=98 data-nosnippet>98</a>    }
+<a href=#99 id=99 data-nosnippet>99</a>    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(obs))
+<a href=#100 id=100 data-nosnippet>100</a>}
+<a href=#101 id=101 data-nosnippet>101</a>
+<a href=#102 id=102 data-nosnippet>102</a><span class="kw">fn </span>write_atomic(path: <span class="kw-2">&amp;</span>Path, text: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<a href=#103 id=103 data-nosnippet>103</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(dir) = path.parent() {
+<a href=#104 id=104 data-nosnippet>104</a>        std::fs::create_dir_all(dir).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, dir.display()))<span class="question-mark">?</span>;
+<a href=#105 id=105 data-nosnippet>105</a>    }
+<a href=#106 id=106 data-nosnippet>106</a>    <span class="kw">let </span>tmp = path.with_extension(<span class="macro">format!</span>(<span class="string">"tmp.{}"</span>, std::process::id()));
+<a href=#107 id=107 data-nosnippet>107</a>    std::fs::write(<span class="kw-2">&amp;</span>tmp, text).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, tmp.display()))<span class="question-mark">?</span>;
+<a href=#108 id=108 data-nosnippet>108</a>    std::fs::rename(<span class="kw-2">&amp;</span>tmp, path).map_err(|e| <span class="macro">format!</span>(<span class="string">"{}: {e}"</span>, path.display()))
+<a href=#109 id=109 data-nosnippet>109</a>}
+<a href=#110 id=110 data-nosnippet>110</a>
+<a href=#111 id=111 data-nosnippet>111</a><span class="doccomment">/// Record an observation.
+<a href=#112 id=112 data-nosnippet>112</a></span><span class="kw">pub fn </span>store_observation(root: <span class="kw-2">&amp;</span>Path, obs: <span class="kw-2">&amp;</span>ForgeObservation) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+<a href=#113 id=113 data-nosnippet>113</a>    <span class="kw">let </span>text = serde_json::to_string_pretty(obs).map_err(|e| e.to_string())<span class="question-mark">?</span>;
+<a href=#114 id=114 data-nosnippet>114</a>    write_atomic(<span class="kw-2">&amp;</span>state_path(root, OBSERVATION_FILE), <span class="kw-2">&amp;</span>(text + <span class="string">"\n"</span>))
+<a href=#115 id=115 data-nosnippet>115</a>}
+<a href=#116 id=116 data-nosnippet>116</a>
+<a href=#117 id=117 data-nosnippet>117</a><span class="doccomment">/// The relation cache: `master..head` → relation. Both SHAs are immutable, so an entry is
+<a href=#118 id=118 data-nosnippet>118</a>/// true forever; the file is bounded by dropping entries whose master is not the current.
+<a href=#119 id=119 data-nosnippet>119</a></span><span class="attr">#[derive(Debug, Default, Serialize, Deserialize)]
+<a href=#120 id=120 data-nosnippet>120</a></span><span class="kw">struct </span>RelationCache {
+<a href=#121 id=121 data-nosnippet>121</a>    entries: BTreeMap&lt;String, RelationToMaster&gt;,
+<a href=#122 id=122 data-nosnippet>122</a>}
+<a href=#123 id=123 data-nosnippet>123</a>
+<a href=#124 id=124 data-nosnippet>124</a><span class="kw">fn </span>relation_cached(
+<a href=#125 id=125 data-nosnippet>125</a>    root: <span class="kw-2">&amp;</span>Path,
+<a href=#126 id=126 data-nosnippet>126</a>    cache: <span class="kw-2">&amp;mut </span>RelationCache,
+<a href=#127 id=127 data-nosnippet>127</a>    master: <span class="kw-2">&amp;</span>str,
+<a href=#128 id=128 data-nosnippet>128</a>    head: <span class="kw-2">&amp;</span>str,
+<a href=#129 id=129 data-nosnippet>129</a>) -&gt; RelationToMaster {
+<a href=#130 id=130 data-nosnippet>130</a>    <span class="kw">let </span>key = <span class="macro">format!</span>(<span class="string">"{master}..{head}"</span>);
+<a href=#131 id=131 data-nosnippet>131</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(r) = cache.entries.get(<span class="kw-2">&amp;</span>key) {
+<a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">return </span>r.clone();
+<a href=#133 id=133 data-nosnippet>133</a>    }
+<a href=#134 id=134 data-nosnippet>134</a>    <span class="kw">let </span>r = relation::relation_to_master(root, master, head);
+<a href=#135 id=135 data-nosnippet>135</a>    <span class="comment">// an unknown is not a fact about the SHAs; it is not cached
+<a href=#136 id=136 data-nosnippet>136</a>    </span><span class="kw">if </span>!<span class="macro">matches!</span>(r, RelationToMaster::Unknown { .. }) {
+<a href=#137 id=137 data-nosnippet>137</a>        cache.entries.insert(key, r.clone());
+<a href=#138 id=138 data-nosnippet>138</a>    }
+<a href=#139 id=139 data-nosnippet>139</a>    r
+<a href=#140 id=140 data-nosnippet>140</a>}
+<a href=#141 id=141 data-nosnippet>141</a>
+<a href=#142 id=142 data-nosnippet>142</a><span class="doccomment">/// The master commit this clone has for `base`, as fetched.
+<a href=#143 id=143 data-nosnippet>143</a></span><span class="kw">pub fn </span>local_master(root: <span class="kw-2">&amp;</span>Path, base: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
+<a href=#144 id=144 data-nosnippet>144</a>    <span class="kw">let </span>out = std::process::Command::new(<span class="string">"git"</span>)
+<a href=#145 id=145 data-nosnippet>145</a>        .arg(<span class="string">"-C"</span>)
+<a href=#146 id=146 data-nosnippet>146</a>        .arg(root)
+<a href=#147 id=147 data-nosnippet>147</a>        .args([
+<a href=#148 id=148 data-nosnippet>148</a>            <span class="string">"rev-parse"</span>,
+<a href=#149 id=149 data-nosnippet>149</a>            <span class="string">"--verify"</span>,
+<a href=#150 id=150 data-nosnippet>150</a>            <span class="string">"--quiet"</span>,
+<a href=#151 id=151 data-nosnippet>151</a>            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"refs/remotes/origin/{base}^{{commit}}"</span>),
+<a href=#152 id=152 data-nosnippet>152</a>        ])
+<a href=#153 id=153 data-nosnippet>153</a>        .output()
+<a href=#154 id=154 data-nosnippet>154</a>        .ok()<span class="question-mark">?</span>;
+<a href=#155 id=155 data-nosnippet>155</a>    out.status
+<a href=#156 id=156 data-nosnippet>156</a>        .success()
+<a href=#157 id=157 data-nosnippet>157</a>        .then(|| String::from_utf8_lossy(<span class="kw-2">&amp;</span>out.stdout).trim().to_string())
+<a href=#158 id=158 data-nosnippet>158</a>        .filter(|s| !s.is_empty())
+<a href=#159 id=159 data-nosnippet>159</a>}
+<a href=#160 id=160 data-nosnippet>160</a>
+<a href=#161 id=161 data-nosnippet>161</a><span class="doccomment">/// How many pull requests are in each disposition and lane.
+<a href=#162 id=162 data-nosnippet>162</a></span><span class="attr">#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#163 id=163 data-nosnippet>163</a></span><span class="kw">pub struct </span>QueueTallies {
+<a href=#164 id=164 data-nosnippet>164</a>    <span class="doccomment">/// Open pull requests.
+<a href=#165 id=165 data-nosnippet>165</a>    </span><span class="kw">pub </span>open: usize,
+<a href=#166 id=166 data-nosnippet>166</a>    <span class="doccomment">/// By disposition word.
+<a href=#167 id=167 data-nosnippet>167</a>    </span><span class="kw">pub </span>by_disposition: BTreeMap&lt;String, usize&gt;,
+<a href=#168 id=168 data-nosnippet>168</a>    <span class="doccomment">/// By lane word.
+<a href=#169 id=169 data-nosnippet>169</a>    </span><span class="kw">pub </span>by_lane: BTreeMap&lt;String, usize&gt;,
+<a href=#170 id=170 data-nosnippet>170</a>}
+<a href=#171 id=171 data-nosnippet>171</a>
+<a href=#172 id=172 data-nosnippet>172</a><span class="doccomment">/// The integration queue: every open pull request assessed against one master, ranked.
+<a href=#173 id=173 data-nosnippet>173</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#174 id=174 data-nosnippet>174</a></span><span class="kw">pub struct </span>IntegrationQueue {
+<a href=#175 id=175 data-nosnippet>175</a>    <span class="doccomment">/// `owner/name`.
+<a href=#176 id=176 data-nosnippet>176</a>    </span><span class="kw">pub </span>repository: String,
+<a href=#177 id=177 data-nosnippet>177</a>    <span class="doccomment">/// The integration base.
+<a href=#178 id=178 data-nosnippet>178</a>    </span><span class="kw">pub </span>base: String,
+<a href=#179 id=179 data-nosnippet>179</a>    <span class="doccomment">/// The master commit every assessment was decided against (this clone's fetched ref).
+<a href=#180 id=180 data-nosnippet>180</a>    </span><span class="kw">pub </span>master_sha: String,
+<a href=#181 id=181 data-nosnippet>181</a>    <span class="doccomment">/// When the forge was observed.
+<a href=#182 id=182 data-nosnippet>182</a>    </span><span class="kw">pub </span>observed_at: String,
+<a href=#183 id=183 data-nosnippet>183</a>    <span class="doccomment">/// The base commit the forge reported at that moment.
+<a href=#184 id=184 data-nosnippet>184</a>    </span><span class="kw">pub </span>observed_base_sha: String,
+<a href=#185 id=185 data-nosnippet>185</a>    <span class="doccomment">/// The policy in force.
+<a href=#186 id=186 data-nosnippet>186</a>    </span><span class="kw">pub </span>policy: IntegrationPolicy,
+<a href=#187 id=187 data-nosnippet>187</a>    <span class="doccomment">/// Every open pull request, in rank order: the first `ready` one is the next merge.
+<a href=#188 id=188 data-nosnippet>188</a>    </span><span class="kw">pub </span>assessments: Vec&lt;PullRequestAssessment&gt;,
+<a href=#189 id=189 data-nosnippet>189</a>    <span class="doccomment">/// The next merge, when anything is ready.
+<a href=#190 id=190 data-nosnippet>190</a>    </span><span class="kw">pub </span>next_merge: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#191 id=191 data-nosnippet>191</a>    <span class="doccomment">/// The pull requests the executor could refresh (bring master in), in rank order.
+<a href=#192 id=192 data-nosnippet>192</a>    </span><span class="kw">pub </span>next_refresh: Vec&lt;u64&gt;,
+<a href=#193 id=193 data-nosnippet>193</a>    <span class="doccomment">/// Counts.
+<a href=#194 id=194 data-nosnippet>194</a>    </span><span class="kw">pub </span>tallies: QueueTallies,
+<a href=#195 id=195 data-nosnippet>195</a>    <span class="doccomment">/// What makes this queue less than a full answer.
+<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="kw">pub </span>diagnostics: Vec&lt;String&gt;,
+<a href=#197 id=197 data-nosnippet>197</a>    <span class="doccomment">/// The actionable pull requests the executor has passed over at least
+<a href=#198 id=198 data-nosnippet>198</a>    /// [`wait::STARVING_AFTER`] times in their current wait, in rank order. Visible, never
+<a href=#199 id=199 data-nosnippet>199</a>    /// promoted: see [`wait`].
+<a href=#200 id=200 data-nosnippet>200</a>    </span><span class="attr">#[serde(default)]
+<a href=#201 id=201 data-nosnippet>201</a>    </span><span class="kw">pub </span>starving: Vec&lt;u64&gt;,
+<a href=#202 id=202 data-nosnippet>202</a>}
+<a href=#203 id=203 data-nosnippet>203</a>
+<a href=#204 id=204 data-nosnippet>204</a><span class="kw">impl </span>IntegrationQueue {
+<a href=#205 id=205 data-nosnippet>205</a>    <span class="doccomment">/// One assessment by number.
+<a href=#206 id=206 data-nosnippet>206</a>    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, number: u64) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>PullRequestAssessment&gt; {
+<a href=#207 id=207 data-nosnippet>207</a>        <span class="self">self</span>.assessments.iter().find(|a| a.number == number)
+<a href=#208 id=208 data-nosnippet>208</a>    }
+<a href=#209 id=209 data-nosnippet>209</a>}
+<a href=#210 id=210 data-nosnippet>210</a>
+<a href=#211 id=211 data-nosnippet>211</a><span class="doccomment">/// The policy of an observation: required checks and reviews as the forge reported them,
+<a href=#212 id=212 data-nosnippet>212</a>/// the blocking labels declared once in [`BLOCKING_LABELS`], and the merge method the
+<a href=#213 id=213 data-nosnippet>213</a>/// repository allows — a merge commit when it allows one, because the derived-file driver
+<a href=#214 id=214 data-nosnippet>214</a>/// resolves merges and a squash or rebase would replay commits it never saw.
+<a href=#215 id=215 data-nosnippet>215</a></span><span class="kw">pub fn </span>policy_of(obs: <span class="kw-2">&amp;</span>ForgeObservation) -&gt; IntegrationPolicy {
+<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">let </span>merge_method = [<span class="string">"merge"</span>, <span class="string">"squash"</span>, <span class="string">"rebase"</span>]
+<a href=#217 id=217 data-nosnippet>217</a>        .iter()
+<a href=#218 id=218 data-nosnippet>218</a>        .find(|m| obs.merge_methods.iter().any(|x| x == <span class="kw-2">*</span>m))
+<a href=#219 id=219 data-nosnippet>219</a>        .unwrap_or(<span class="kw-2">&amp;</span><span class="string">"merge"</span>)
+<a href=#220 id=220 data-nosnippet>220</a>        .to_string();
+<a href=#221 id=221 data-nosnippet>221</a>    IntegrationPolicy {
+<a href=#222 id=222 data-nosnippet>222</a>        base: obs.base.clone(),
+<a href=#223 id=223 data-nosnippet>223</a>        required_checks: obs.required_checks.clone(),
+<a href=#224 id=224 data-nosnippet>224</a>        reviews_required: obs.reviews_required,
+<a href=#225 id=225 data-nosnippet>225</a>        blocking_labels: BLOCKING_LABELS.iter().map(|s| s.to_string()).collect(),
+<a href=#226 id=226 data-nosnippet>226</a>        merge_method,
+<a href=#227 id=227 data-nosnippet>227</a>    }
+<a href=#228 id=228 data-nosnippet>228</a>}
+<a href=#229 id=229 data-nosnippet>229</a>
+<a href=#230 id=230 data-nosnippet>230</a><span class="doccomment">/// The rank key: lane, then disposition, then risk, then how many other *ready or
+<a href=#231 id=231 data-nosnippet>231</a>/// refreshable* pull requests share an authored path (fewer first: landing it invalidates
+<a href=#232 id=232 data-nosnippet>232</a>/// less), then age (older first, so easy new work cannot starve old work), then number.
+<a href=#233 id=233 data-nosnippet>233</a>/// Every component is a value of the assessment; the order is total and input-order free.
+<a href=#234 id=234 data-nosnippet>234</a></span><span class="kw">fn </span>rank_key(
+<a href=#235 id=235 data-nosnippet>235</a>    a: <span class="kw-2">&amp;</span>PullRequestAssessment,
+<a href=#236 id=236 data-nosnippet>236</a>    contenders: <span class="kw-2">&amp;</span>BTreeSet&lt;u64&gt;,
+<a href=#237 id=237 data-nosnippet>237</a>) -&gt; (u8, u8, u8, usize, String, u64) {
+<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">let </span>lane = a.lane <span class="kw">as </span>u8;
+<a href=#239 id=239 data-nosnippet>239</a>    <span class="kw">let </span>disposition = a.disposition <span class="kw">as </span>u8;
+<a href=#240 id=240 data-nosnippet>240</a>    <span class="kw">let </span>risk = a.risk <span class="kw">as </span>u8;
+<a href=#241 id=241 data-nosnippet>241</a>    <span class="kw">let </span>contention = a
+<a href=#242 id=242 data-nosnippet>242</a>        .overlaps
+<a href=#243 id=243 data-nosnippet>243</a>        .iter()
+<a href=#244 id=244 data-nosnippet>244</a>        .filter(|o| contenders.contains(<span class="kw-2">&amp;</span>o.number))
+<a href=#245 id=245 data-nosnippet>245</a>        .count();
+<a href=#246 id=246 data-nosnippet>246</a>    (
+<a href=#247 id=247 data-nosnippet>247</a>        lane,
+<a href=#248 id=248 data-nosnippet>248</a>        disposition,
+<a href=#249 id=249 data-nosnippet>249</a>        risk,
+<a href=#250 id=250 data-nosnippet>250</a>        contention,
+<a href=#251 id=251 data-nosnippet>251</a>        a.created_at.clone(),
+<a href=#252 id=252 data-nosnippet>252</a>        a.number,
+<a href=#253 id=253 data-nosnippet>253</a>    )
+<a href=#254 id=254 data-nosnippet>254</a>}
+<a href=#255 id=255 data-nosnippet>255</a>
+<a href=#256 id=256 data-nosnippet>256</a><span class="doccomment">/// Rank assessments. Deterministic whatever order they arrive in.
+<a href=#257 id=257 data-nosnippet>257</a></span><span class="kw">pub fn </span>rank(<span class="kw-2">mut </span>assessments: Vec&lt;PullRequestAssessment&gt;) -&gt; Vec&lt;PullRequestAssessment&gt; {
+<a href=#258 id=258 data-nosnippet>258</a>    <span class="kw">let </span>contenders: BTreeSet&lt;u64&gt; = assessments
+<a href=#259 id=259 data-nosnippet>259</a>        .iter()
+<a href=#260 id=260 data-nosnippet>260</a>        .filter(|a| {
+<a href=#261 id=261 data-nosnippet>261</a>            <span class="macro">matches!</span>(
+<a href=#262 id=262 data-nosnippet>262</a>                a.disposition,
+<a href=#263 id=263 data-nosnippet>263</a>                PullRequestDisposition::Ready | PullRequestDisposition::NeedsRefresh
+<a href=#264 id=264 data-nosnippet>264</a>            )
+<a href=#265 id=265 data-nosnippet>265</a>        })
+<a href=#266 id=266 data-nosnippet>266</a>        .map(|a| a.number)
+<a href=#267 id=267 data-nosnippet>267</a>        .collect();
+<a href=#268 id=268 data-nosnippet>268</a>    assessments.sort_by_cached_key(|a| rank_key(a, <span class="kw-2">&amp;</span>contenders));
+<a href=#269 id=269 data-nosnippet>269</a>    assessments
+<a href=#270 id=270 data-nosnippet>270</a>}
+<a href=#271 id=271 data-nosnippet>271</a>
+<a href=#272 id=272 data-nosnippet>272</a><span class="doccomment">/// Build the queue from an observation, against `master_sha`. `relation` answers what a
+<a href=#273 id=273 data-nosnippet>273</a>/// head is to master; the command line passes git, a test passes a table.
+<a href=#274 id=274 data-nosnippet>274</a></span><span class="kw">pub fn </span>build_queue(
+<a href=#275 id=275 data-nosnippet>275</a>    obs: <span class="kw-2">&amp;</span>ForgeObservation,
+<a href=#276 id=276 data-nosnippet>276</a>    master_sha: <span class="kw-2">&amp;</span>str,
+<a href=#277 id=277 data-nosnippet>277</a>    relation: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>PullRequestObservation) -&gt; RelationToMaster,
+<a href=#278 id=278 data-nosnippet>278</a>) -&gt; IntegrationQueue {
+<a href=#279 id=279 data-nosnippet>279</a>    <span class="kw">let </span>policy = policy_of(obs);
+<a href=#280 id=280 data-nosnippet>280</a>    <span class="kw">let </span><span class="kw-2">mut </span>diagnostics = Vec::new();
+<a href=#281 id=281 data-nosnippet>281</a>    <span class="kw">if </span>!obs.base_sha.is_empty() &amp;&amp; obs.base_sha != master_sha {
+<a href=#282 id=282 data-nosnippet>282</a>        diagnostics.push(<span class="macro">format!</span>(
+<a href=#283 id=283 data-nosnippet>283</a>            <span class="string">"stale observation: the forge reported {} at {} but this clone's master is {}; majordomus prs refresh"</span>,
+<a href=#284 id=284 data-nosnippet>284</a>            short(<span class="kw-2">&amp;</span>obs.base_sha),
+<a href=#285 id=285 data-nosnippet>285</a>            obs.observed_at,
+<a href=#286 id=286 data-nosnippet>286</a>            short(master_sha)
+<a href=#287 id=287 data-nosnippet>287</a>        ));
+<a href=#288 id=288 data-nosnippet>288</a>    }
+<a href=#289 id=289 data-nosnippet>289</a>    <span class="kw">if </span>policy.required_checks.is_none() {
+<a href=#290 id=290 data-nosnippet>290</a>        diagnostics
+<a href=#291 id=291 data-nosnippet>291</a>            .push(<span class="string">"the branch protection could not be read: no pull request can be ready"</span>.into());
+<a href=#292 id=292 data-nosnippet>292</a>    }
+<a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">let </span>relations: Vec&lt;RelationToMaster&gt; = obs.pull_requests.iter().map(relation).collect();
+<a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">let </span><span class="kw-2">mut </span>queue = QueueContext {
+<a href=#295 id=295 data-nosnippet>295</a>        open: obs.pull_requests.iter().map(|p| p.number).collect(),
+<a href=#296 id=296 data-nosnippet>296</a>        heads: obs
+<a href=#297 id=297 data-nosnippet>297</a>            .pull_requests
+<a href=#298 id=298 data-nosnippet>298</a>            .iter()
+<a href=#299 id=299 data-nosnippet>299</a>            .map(|p| (p.head_ref.clone(), p.number))
+<a href=#300 id=300 data-nosnippet>300</a>            .collect(),
+<a href=#301 id=301 data-nosnippet>301</a>        authored: BTreeMap::new(),
+<a href=#302 id=302 data-nosnippet>302</a>    };
+<a href=#303 id=303 data-nosnippet>303</a>    <span class="kw">for </span>(p, r) <span class="kw">in </span>obs.pull_requests.iter().zip(<span class="kw-2">&amp;</span>relations) {
+<a href=#304 id=304 data-nosnippet>304</a>        <span class="kw">let </span>authored = <span class="kw">match </span>r {
+<a href=#305 id=305 data-nosnippet>305</a>            RelationToMaster::UpToDate { authored } | RelationToMaster::Behind { authored, .. } =&gt; {
+<a href=#306 id=306 data-nosnippet>306</a>                authored.clone()
+<a href=#307 id=307 data-nosnippet>307</a>            }
+<a href=#308 id=308 data-nosnippet>308</a>            RelationToMaster::Conflicting { paths } =&gt; paths.clone(),
+<a href=#309 id=309 data-nosnippet>309</a>            <span class="kw">_ </span>=&gt; Vec::new(),
+<a href=#310 id=310 data-nosnippet>310</a>        };
+<a href=#311 id=311 data-nosnippet>311</a>        queue.authored.insert(p.number, authored);
+<a href=#312 id=312 data-nosnippet>312</a>    }
+<a href=#313 id=313 data-nosnippet>313</a>    <span class="kw">let </span>assessments: Vec&lt;PullRequestAssessment&gt; = obs
+<a href=#314 id=314 data-nosnippet>314</a>        .pull_requests
+<a href=#315 id=315 data-nosnippet>315</a>        .iter()
+<a href=#316 id=316 data-nosnippet>316</a>        .zip(<span class="kw-2">&amp;</span>relations)
+<a href=#317 id=317 data-nosnippet>317</a>        .map(|(p, r)| classify(p, r, master_sha, <span class="kw-2">&amp;</span>policy, <span class="kw-2">&amp;</span>queue))
+<a href=#318 id=318 data-nosnippet>318</a>        .collect();
+<a href=#319 id=319 data-nosnippet>319</a>    <span class="kw">let </span>assessments = rank(assessments);
+<a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">let </span><span class="kw-2">mut </span>tallies = QueueTallies {
+<a href=#321 id=321 data-nosnippet>321</a>        open: assessments.len(),
+<a href=#322 id=322 data-nosnippet>322</a>        ..Default::default()
+<a href=#323 id=323 data-nosnippet>323</a>    };
+<a href=#324 id=324 data-nosnippet>324</a>    <span class="kw">for </span>a <span class="kw">in </span><span class="kw-2">&amp;</span>assessments {
+<a href=#325 id=325 data-nosnippet>325</a>        <span class="kw-2">*</span>tallies
+<a href=#326 id=326 data-nosnippet>326</a>            .by_disposition
+<a href=#327 id=327 data-nosnippet>327</a>            .entry(a.disposition.as_str().to_string())
+<a href=#328 id=328 data-nosnippet>328</a>            .or_default() += <span class="number">1</span>;
+<a href=#329 id=329 data-nosnippet>329</a>        <span class="kw-2">*</span>tallies.by_lane.entry(classify::word(<span class="kw-2">&amp;</span>a.lane)).or_default() += <span class="number">1</span>;
+<a href=#330 id=330 data-nosnippet>330</a>    }
+<a href=#331 id=331 data-nosnippet>331</a>    IntegrationQueue {
+<a href=#332 id=332 data-nosnippet>332</a>        repository: obs.repository.clone(),
+<a href=#333 id=333 data-nosnippet>333</a>        base: obs.base.clone(),
+<a href=#334 id=334 data-nosnippet>334</a>        master_sha: master_sha.to_string(),
+<a href=#335 id=335 data-nosnippet>335</a>        observed_at: obs.observed_at.clone(),
+<a href=#336 id=336 data-nosnippet>336</a>        observed_base_sha: obs.base_sha.clone(),
+<a href=#337 id=337 data-nosnippet>337</a>        next_merge: assessments
+<a href=#338 id=338 data-nosnippet>338</a>            .iter()
+<a href=#339 id=339 data-nosnippet>339</a>            .find(|a| a.disposition == PullRequestDisposition::Ready)
+<a href=#340 id=340 data-nosnippet>340</a>            .map(|a| a.number),
+<a href=#341 id=341 data-nosnippet>341</a>        next_refresh: assessments
+<a href=#342 id=342 data-nosnippet>342</a>            .iter()
+<a href=#343 id=343 data-nosnippet>343</a>            .filter(|a| a.disposition == PullRequestDisposition::NeedsRefresh)
+<a href=#344 id=344 data-nosnippet>344</a>            .map(|a| a.number)
+<a href=#345 id=345 data-nosnippet>345</a>            .collect(),
+<a href=#346 id=346 data-nosnippet>346</a>        policy,
+<a href=#347 id=347 data-nosnippet>347</a>        assessments,
+<a href=#348 id=348 data-nosnippet>348</a>        tallies,
+<a href=#349 id=349 data-nosnippet>349</a>        diagnostics,
+<a href=#350 id=350 data-nosnippet>350</a>        starving: Vec::new(),
+<a href=#351 id=351 data-nosnippet>351</a>    }
+<a href=#352 id=352 data-nosnippet>352</a>}
+<a href=#353 id=353 data-nosnippet>353</a>
+<a href=#354 id=354 data-nosnippet>354</a><span class="doccomment">/// The queue of this checkout, from the last recorded observation, with relations decided
+<a href=#355 id=355 data-nosnippet>355</a>/// by git against this clone's fetched master. Offline: it reads the network's last answer
+<a href=#356 id=356 data-nosnippet>356</a>/// and never asks it again.
+<a href=#357 id=357 data-nosnippet>357</a></span><span class="kw">pub fn </span>queue_of(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;IntegrationQueue, String&gt; {
+<a href=#358 id=358 data-nosnippet>358</a>    <span class="kw">let </span>obs = load_observation(root)<span class="question-mark">?</span>.ok_or_else(|| {
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="string">"no forge observation is recorded in this checkout; majordomus prs refresh"</span>.to_string()
+<a href=#360 id=360 data-nosnippet>360</a>    })<span class="question-mark">?</span>;
+<a href=#361 id=361 data-nosnippet>361</a>    <span class="kw">let </span>master = local_master(root, <span class="kw-2">&amp;</span>obs.base).ok_or_else(|| {
+<a href=#362 id=362 data-nosnippet>362</a>        <span class="macro">format!</span>(
+<a href=#363 id=363 data-nosnippet>363</a>            <span class="string">"this clone has no refs/remotes/origin/{}; majordomus prs refresh fetches it"</span>,
+<a href=#364 id=364 data-nosnippet>364</a>            obs.base
+<a href=#365 id=365 data-nosnippet>365</a>        )
+<a href=#366 id=366 data-nosnippet>366</a>    })<span class="question-mark">?</span>;
+<a href=#367 id=367 data-nosnippet>367</a>    <span class="kw">let </span>cache_path = state_path(root, RELATIONS_FILE);
+<a href=#368 id=368 data-nosnippet>368</a>    <span class="kw">let </span><span class="kw-2">mut </span>cache: RelationCache = std::fs::read_to_string(<span class="kw-2">&amp;</span>cache_path)
+<a href=#369 id=369 data-nosnippet>369</a>        .ok()
+<a href=#370 id=370 data-nosnippet>370</a>        .and_then(|t| serde_json::from_str(<span class="kw-2">&amp;</span>t).ok())
+<a href=#371 id=371 data-nosnippet>371</a>        .unwrap_or_default();
+<a href=#372 id=372 data-nosnippet>372</a>    <span class="comment">// bounded: only the current master's entries are worth keeping
+<a href=#373 id=373 data-nosnippet>373</a>    </span>cache
+<a href=#374 id=374 data-nosnippet>374</a>        .entries
+<a href=#375 id=375 data-nosnippet>375</a>        .retain(|k, <span class="kw">_</span>| k.starts_with(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{master}.."</span>)));
+<a href=#376 id=376 data-nosnippet>376</a>    <span class="kw">let </span><span class="kw-2">mut </span>queue = build_queue(<span class="kw-2">&amp;</span>obs, <span class="kw-2">&amp;</span>master, |p| {
+<a href=#377 id=377 data-nosnippet>377</a>        <span class="kw">let </span>head = <span class="macro">format!</span>(<span class="string">"{PR_REF_PREFIX}{}"</span>, p.number);
+<a href=#378 id=378 data-nosnippet>378</a>        <span class="comment">// the fetched ref must still be the observed head: a head that moved since is
+<a href=#379 id=379 data-nosnippet>379</a>        // decided against the SHA the forge reported, which the fetch brought in
+<a href=#380 id=380 data-nosnippet>380</a>        </span><span class="kw">let </span>sha = <span class="kw">if </span>relation::has_commit(root, <span class="kw-2">&amp;</span>p.head_sha) {
+<a href=#381 id=381 data-nosnippet>381</a>            p.head_sha.clone()
+<a href=#382 id=382 data-nosnippet>382</a>        } <span class="kw">else </span>{
+<a href=#383 id=383 data-nosnippet>383</a>            head
+<a href=#384 id=384 data-nosnippet>384</a>        };
+<a href=#385 id=385 data-nosnippet>385</a>        relation_cached(root, <span class="kw-2">&amp;mut </span>cache, <span class="kw-2">&amp;</span>master, <span class="kw-2">&amp;</span>sha)
+<a href=#386 id=386 data-nosnippet>386</a>    });
+<a href=#387 id=387 data-nosnippet>387</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(text) = serde_json::to_string(<span class="kw-2">&amp;</span>cache) {
+<a href=#388 id=388 data-nosnippet>388</a>        <span class="kw">let _ </span>= write_atomic(<span class="kw-2">&amp;</span>cache_path, <span class="kw-2">&amp;</span>text);
+<a href=#389 id=389 data-nosnippet>389</a>    }
+<a href=#390 id=390 data-nosnippet>390</a>    wait::annotate(<span class="kw-2">&amp;mut </span>queue, <span class="kw-2">&amp;</span>drain::events(root));
+<a href=#391 id=391 data-nosnippet>391</a>    <span class="comment">// the summary a briefing reads without deciding a single relation (QueueSummary)
+<a href=#392 id=392 data-nosnippet>392</a>    </span><span class="kw">if let </span><span class="prelude-val">Ok</span>(text) = serde_json::to_string_pretty(<span class="kw-2">&amp;</span>QueueSummary::of(<span class="kw-2">&amp;</span>queue)) {
+<a href=#393 id=393 data-nosnippet>393</a>        <span class="kw">let _ </span>= write_atomic(<span class="kw-2">&amp;</span>state_path(root, SUMMARY_FILE), <span class="kw-2">&amp;</span>(text + <span class="string">"\n"</span>));
+<a href=#394 id=394 data-nosnippet>394</a>    }
+<a href=#395 id=395 data-nosnippet>395</a>    <span class="prelude-val">Ok</span>(queue)
+<a href=#396 id=396 data-nosnippet>396</a>}
+<a href=#397 id=397 data-nosnippet>397</a>
+<a href=#398 id=398 data-nosnippet>398</a><span class="doccomment">/// The last queue built in this checkout, summarised.
+<a href=#399 id=399 data-nosnippet>399</a></span><span class="kw">pub const </span>SUMMARY_FILE: <span class="kw-2">&amp;</span>str = <span class="string">"summary.json"</span>;
+<a href=#400 id=400 data-nosnippet>400</a>
+<a href=#401 id=401 data-nosnippet>401</a><span class="doccomment">/// What the last queue built said, in a few numbers: what a session briefing prints without
+<a href=#402 id=402 data-nosnippet>402</a>/// building a queue, which would decide every relation again. Written by [`queue_of`] every
+<a href=#403 id=403 data-nosnippet>403</a>/// time it builds one, so it is exactly as current as the last read of the queue, and says
+<a href=#404 id=404 data-nosnippet>404</a>/// when that was.
+<a href=#405 id=405 data-nosnippet>405</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#406 id=406 data-nosnippet>406</a></span><span class="kw">pub struct </span>QueueSummary {
+<a href=#407 id=407 data-nosnippet>407</a>    <span class="doccomment">/// The integration base.
+<a href=#408 id=408 data-nosnippet>408</a>    </span><span class="kw">pub </span>base: String,
+<a href=#409 id=409 data-nosnippet>409</a>    <span class="doccomment">/// The master commit the queue was decided against.
+<a href=#410 id=410 data-nosnippet>410</a>    </span><span class="kw">pub </span>master_sha: String,
+<a href=#411 id=411 data-nosnippet>411</a>    <span class="doccomment">/// When the forge was observed.
+<a href=#412 id=412 data-nosnippet>412</a>    </span><span class="kw">pub </span>observed_at: String,
+<a href=#413 id=413 data-nosnippet>413</a>    <span class="doccomment">/// When the queue was built, RFC 3339.
+<a href=#414 id=414 data-nosnippet>414</a>    </span><span class="kw">pub </span>built_at: String,
+<a href=#415 id=415 data-nosnippet>415</a>    <span class="doccomment">/// The counts.
+<a href=#416 id=416 data-nosnippet>416</a>    </span><span class="kw">pub </span>tallies: QueueTallies,
+<a href=#417 id=417 data-nosnippet>417</a>    <span class="doccomment">/// The next merge, when anything was ready.
+<a href=#418 id=418 data-nosnippet>418</a>    </span><span class="kw">pub </span>next_merge: <span class="prelude-ty">Option</span>&lt;u64&gt;,
+<a href=#419 id=419 data-nosnippet>419</a>    <span class="doccomment">/// The starving pull requests.
+<a href=#420 id=420 data-nosnippet>420</a>    </span><span class="kw">pub </span>starving: Vec&lt;u64&gt;,
+<a href=#421 id=421 data-nosnippet>421</a>    <span class="doccomment">/// Whether the queue carried diagnostics (a stale observation first).
+<a href=#422 id=422 data-nosnippet>422</a>    </span><span class="kw">pub </span>diagnostics: usize,
+<a href=#423 id=423 data-nosnippet>423</a>}
+<a href=#424 id=424 data-nosnippet>424</a>
+<a href=#425 id=425 data-nosnippet>425</a><span class="kw">impl </span>QueueSummary {
+<a href=#426 id=426 data-nosnippet>426</a>    <span class="doccomment">/// The summary of a queue, built now.
+<a href=#427 id=427 data-nosnippet>427</a>    </span><span class="kw">pub fn </span>of(q: <span class="kw-2">&amp;</span>IntegrationQueue) -&gt; <span class="self">Self </span>{
+<a href=#428 id=428 data-nosnippet>428</a>        QueueSummary {
+<a href=#429 id=429 data-nosnippet>429</a>            base: q.base.clone(),
+<a href=#430 id=430 data-nosnippet>430</a>            master_sha: q.master_sha.clone(),
+<a href=#431 id=431 data-nosnippet>431</a>            observed_at: q.observed_at.clone(),
+<a href=#432 id=432 data-nosnippet>432</a>            built_at: <span class="kw">crate</span>::peers::rfc3339(std::time::SystemTime::now()),
+<a href=#433 id=433 data-nosnippet>433</a>            tallies: q.tallies.clone(),
+<a href=#434 id=434 data-nosnippet>434</a>            next_merge: q.next_merge,
+<a href=#435 id=435 data-nosnippet>435</a>            starving: q.starving.clone(),
+<a href=#436 id=436 data-nosnippet>436</a>            diagnostics: q.diagnostics.len(),
+<a href=#437 id=437 data-nosnippet>437</a>        }
+<a href=#438 id=438 data-nosnippet>438</a>    }
+<a href=#439 id=439 data-nosnippet>439</a>
+<a href=#440 id=440 data-nosnippet>440</a>    <span class="doccomment">/// The summary recorded in this checkout, if any.
+<a href=#441 id=441 data-nosnippet>441</a>    </span><span class="kw">pub fn </span>load(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+<a href=#442 id=442 data-nosnippet>442</a>        std::fs::read_to_string(state_path(root, SUMMARY_FILE))
+<a href=#443 id=443 data-nosnippet>443</a>            .ok()
+<a href=#444 id=444 data-nosnippet>444</a>            .and_then(|t| serde_json::from_str(<span class="kw-2">&amp;</span>t).ok())
+<a href=#445 id=445 data-nosnippet>445</a>    }
+<a href=#446 id=446 data-nosnippet>446</a>}
+<a href=#447 id=447 data-nosnippet>447</a>
+<a href=#448 id=448 data-nosnippet>448</a><span class="doccomment">/// Observe the forge, fetch what it names, and record the observation. The network step;
+<a href=#449 id=449 data-nosnippet>449</a>/// the only one outside the executor.
+<a href=#450 id=450 data-nosnippet>450</a></span><span class="kw">pub fn </span>refresh(root: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;ForgeObservation, String&gt; {
+<a href=#451 id=451 data-nosnippet>451</a>    <span class="kw">use </span>forge::Forge;
+<a href=#452 id=452 data-nosnippet>452</a>    <span class="kw">let </span>obs = forge::GhForge { root }.observe().map_err(|e| e.<span class="number">0</span>)<span class="question-mark">?</span>;
+<a href=#453 id=453 data-nosnippet>453</a>    forge::fetch(root, <span class="kw-2">&amp;</span>obs).map_err(|e| e.<span class="number">0</span>)<span class="question-mark">?</span>;
+<a href=#454 id=454 data-nosnippet>454</a>    store_observation(root, <span class="kw-2">&amp;</span>obs)<span class="question-mark">?</span>;
+<a href=#455 id=455 data-nosnippet>455</a>    <span class="prelude-val">Ok</span>(obs)
+<a href=#456 id=456 data-nosnippet>456</a>}
+<a href=#457 id=457 data-nosnippet>457</a>
+<a href=#458 id=458 data-nosnippet>458</a><span class="kw">fn </span>short(sha: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span>str {
+<a href=#459 id=459 data-nosnippet>459</a>    <span class="kw-2">&amp;</span>sha[..sha.len().min(<span class="number">12</span>)]
+<a href=#460 id=460 data-nosnippet>460</a>}
+</code></pre></div></section></main></body></html>

@@ -369,9 +369,13 @@ doctrine <code>majordomus.completion-gates</code>, and report each in one vocabu
 <tr><td><code>blocked</code></td><td>something it cannot run without has not passed</td></tr>
 <tr><td><code>queued</code></td><td>the plan selects it and no run has ever reported</td></tr>
 <tr><td><code>exempt</code></td><td>nothing this change did can make it true or false</td></tr>
-<tr><td><code>unknown</code></td><td>it cannot be judged here at all — no model, no reader</td></tr>
+<tr><td><code>unknown</code></td><td>it cannot be judged here at all — a model that does not parse, a reader that is not built, errors or answers nothing, no <code>jq</code></td></tr>
 </tbody></table>
-<p>Only <code>fail</code>, <code>stale</code> and <code>blocked</code> refuse the outcome <code>completed</code>. <code>queued</code> is reported by
+<p><code>fail</code>, <code>stale</code>, <code>blocked</code> and <code>unknown</code> refuse the outcome <code>completed</code>: <code>completed</code> is a
+claim that the verdict is known, and a verdict that could not be read cannot back it. Every
+other outcome is still accepted over any of them, named "not refused", and <code>check</code> reports
+without refusing. A repository that declares no CI model at all has no gate to be unknown
+about and refuses nothing. <code>queued</code> is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
@@ -482,7 +486,7 @@ MCP and the Cockpit:</p>
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0258e440d4a2ab4bb6e44610b9b30fa217a786c8" class="font-mono underline">0258e44</a> · inputs <span class="font-mono">ecf125b98915</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/8e82a4abe1829fa34c645a797301fccae96f8021" class="font-mono underline">8e82a4a</a> · inputs <span class="font-mono">a924773401f3</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>
