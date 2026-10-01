@@ -1,5 +1,6 @@
 # majordomus-covers: watch
 # majordomus-negative: watch
+# claims: drift-watch
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 expect_exit 11 "$MJ" watch
@@ -42,3 +43,7 @@ sed -i.bak 's/retention_max_lines: 5000/retention_max_lines: 1/' .ai/repo/policy
 "$MJ" update >/dev/null
 expect_exit 11 "$MJ" watch
 expect_grep 'DRIFT retention +ledger'
+# a task in an outcome the lifecycle does not know is state drift
+sed -i.bak 's/^outcome: handed_over/outcome: nonsense/' .ai/local/state/current.yaml; rm -f .ai/local/state/current.yaml.bak
+expect_exit 11 "$MJ" watch
+expect_grep "DRIFT state .* unknown outcome 'nonsense'"

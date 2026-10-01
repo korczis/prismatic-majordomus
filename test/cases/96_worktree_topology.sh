@@ -1,4 +1,5 @@
 # majordomus-covers: doctor
+# claims: worktree-migration-lossless, worktree-topology-derived
 # The branch-to-worktree topology, end to end, against real git and through the wiring the
 # shell tool verifies: the container and every path derive from git identity alone, a
 # misplaced dirty worktree migrates with its work and its fingerprint equal, the pre-commit

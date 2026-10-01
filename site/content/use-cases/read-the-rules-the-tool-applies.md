@@ -6,7 +6,7 @@ weight = 44
 id = "read-the-rules-the-tool-applies"
 source = ".ai/repo/use-cases/read-the-rules-the-tool-applies.md"
 category = "policy"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

@@ -4,16 +4,30 @@
 # Helpers come from test/lib.sh, which every case sources first.
 #
 #   bash test/run.sh                    every case, one after the other, output streamed
-#   bash test/run.sh <name>             one case (a name that matches nothing is exit 2)
+#   bash test/run.sh <name>...          only these cases (any name that matches nothing is exit 2)
 #   MJ_TEST_JOBS=4 bash test/run.sh     bounded parallel run: four cases at a time, each
 #                                       with its own log; then the cases that declare
 #                                       "# majordomus-exclusive: <reason>" one at a time;
 #                                       the verdicts are rendered in name order at the end
 #   MJ_TEST_REPORT=<file>               also write one TSV row per case:
 #                                       name, result, seconds, phase (parallel|exclusive|serial)
+#   MJ_TEST_SHARD=<i>/<n>               run only the i-th of n shards (with MJ_TEST_JOBS > 1):
+#                                       cases are dealt longest-first over n x MJ_TEST_JOBS
+#                                       worker slots by the seconds MJ_TEST_DURATIONS records,
+#                                       the exclusive ones to the least-loaded shard, so every
+#                                       shard computes the same deal and the union is the suite
+#   MJ_TEST_DURATIONS=<file>            name<TAB>seconds per case (default
+#                                       .ai/repo/ci/suite-durations.tsv); an unknown case
+#                                       weighs 300 s. Stale numbers unbalance shards, never
+#                                       drop a case
+#   MJ_TEST_LIST=1                      print the cases this invocation would run and run none
+#   bash test/run.sh --verify-report <file>
+#                                       exit 1 unless the report has exactly one row for every
+#                                       case under test/cases/ and no other: what proves that a
+#                                       sharded run left nothing out and ran nothing twice
 #   MAJORDOMUS_BIN=<path>               the Rust cases drive this prebuilt executable instead
 #                                       of building the crate (see rust_bin in test/lib.sh)
-#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 2400). A
+#   MJ_TEST_CASE_TIMEOUT=<seconds>      the bound every case runs under (default 3600). A
 #                                       case that needs longer declares it itself with
 #                                       "# majordomus-timeout: <seconds>"; 0 disables the
 #                                       bound for a deliberate, supervised run
@@ -31,15 +45,26 @@
 set -u
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 MJ="$ROOT/bin/majordomus"; export MJ ROOT
-pass=0; fail=0; failed_names=""
+pass=0; fail=0; skipped=0; failed_names=""
+# The status a case exits with to say it declined to run; test/lib.sh's `skip` uses it.
+# Read here rather than sourced: run.sh is the runner, not a case, and the two agree on one
+# number whose only job is to be neither 0 nor a failure. The number is not the declaration
+# on its own: `skip` also writes the file run_case names in MJ_SKIP_MARK, because a case
+# under `set -e` ends with the status of whatever command failed, and `jq -e` fails with 4.
+MJ_SKIP_STATUS=4
 
 # ---------------------------------------------------------------- one case
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up.
 # The bound one case runs under: its own "# majordomus-timeout:" header when it declares
-# one, else MJ_TEST_CASE_TIMEOUT, else 2400 seconds. The site cases legitimately take about
-# half an hour, so the default is generous; the point of the bound is that a wedged case
-# ends, not that a slow one is rushed.
+# one, else MJ_TEST_CASE_TIMEOUT, else 3600 seconds. The slowest cases legitimately take
+# about forty minutes — on CI 95_executable_reference was killed at 2415-2418 s, the 2400 this
+# default used to be plus its grace, in four runs between 2026-09-20 and 2026-09-24, so what it
+# costs there is at least that and not yet measured — so the default is generous; the point of
+# the bound is that a wedged case ends, not that a slow one is rushed. The number is declared
+# in .ai/repo/ci/suite.yaml as case_bound_seconds, and test/cases/417 holds the two together.
+# It is where a case is killed, not what it may cost: on CI the suite job fails any case over
+# budget.slowest_case_seconds in that file, which sits below this bound.
 # Only the header block is read -- the leading run of comments, up to the first line of
 # actual script. A case that builds another case in a heredoc has the header's own text in
 # its body, and scanning the whole file made such a case inherit the bound it was writing
@@ -52,14 +77,17 @@ case_timeout() {
                             v = $0; sub(/^# majordomus-timeout: */, "", v); sub(/[^0-9].*$/, "", v)
                             print v; exit } ; next }
                    { exit }' "$1" 2>/dev/null | head -n 1)"
-  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-2400}"; fi
+  if [ -n "$declared" ]; then printf '%s\n' "$declared"; else printf '%s\n' "${MJ_TEST_CASE_TIMEOUT:-3600}"; fi
 }
 
 # Runs one case in a fresh repository. The case's output streams through; the status is
 # 0 passed, 1 failed, 2 the fixture could not be set up, 3 the bound fired.
 run_case() {
-  local case="$1" T rc=0 limit pid waited grace
+  local case="$1" T rc=0 limit pid waited grace mark declined=0
   T="$(mktemp -d "${TMPDIR:-/tmp}/mj-test.XXXXXX")"
+  # where `skip` says it was called: beside the fixture rather than in it, so a case that
+  # empties its own directory cannot erase the declaration, and unique because $T is
+  mark="$T.skip"
   ( cd "$T" && git init -q . && git config user.email t@example.com && git config user.name t \
     && git commit -q --allow-empty -m init ) || { rm -rf "$T"; return 2; }
   limit="$(case_timeout "$case")"
@@ -72,11 +100,15 @@ run_case() {
   # is too late -- the subshell is already in this shell's group by then, and a killed case
   # leaves its background server holding a port for the next one.
   set -m
-  ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT && T="$T" bash -eu "$case" ) &
+  # the runner's own selection never reaches a case: a case that runs test/run.sh itself
+  # (123, 413, 26, 94 do) would otherwise run its own shard of a suite it did not choose
+  ( cd "$T" && unset MJ_TEST_WORKER MJ_TEST_LOGDIR MJ_TEST_JOBS MJ_TEST_REPORT \
+      MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST \
+    && T="$T" MJ_SKIP_MARK="$mark" bash -eu "$case" ) &
   pid=$!
   set +m
   if [ "$limit" = 0 ]; then
-    wait "$pid" || rc=1
+    wait "$pid" || rc=$?
   else
     waited=0
     while kill -0 "$pid" 2>/dev/null; do
@@ -89,15 +121,25 @@ run_case() {
         kill -KILL "-$pid" 2>/dev/null || kill -KILL "$pid" 2>/dev/null || true
         wait "$pid" 2>/dev/null || true
         echo "    the case did not finish within ${limit}s and was terminated" >&2
-        rm -rf "$T"
+        rm -rf "$T" "$mark"
         return 3
       fi
       sleep 1; waited=$((waited+1))
     done
-    wait "$pid" || rc=1
+    wait "$pid" || rc=$?
   fi
-  rm -rf "$T"
-  return "$rc"
+  [ -f "$mark" ] && declined=1
+  rm -rf "$T" "$mark"
+  # Only two statuses mean anything to the caller besides 0: the skip the case declared, and
+  # failure. A case's own exit 2 or 3 is a failure of that case and must not be read as this
+  # function's "the fixture could not be set up" or "the bound fired", which are the
+  # runner's own words and are returned above. A 4 is a skip only when `skip` wrote the
+  # mark; a 4 without it is a command that failed with that status, and a failure.
+  case "$rc" in
+    0) return 0 ;;
+    "$MJ_SKIP_STATUS") [ "$declined" = 1 ] && return 4; return 1 ;;
+    *) return 1 ;;
+  esac
 }
 verdict() {   # name status seconds phase -> counts it, prints its line, records it
   local name="$1" rc="$2" sec="$3" phase="$4"
@@ -105,9 +147,13 @@ verdict() {   # name status seconds phase -> counts it, prints its line, records
     0) pass=$((pass+1)); echo "ok   $name" ;;
     2) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name (setup)" ;;
     3) fail=$((fail+1)); failed_names="$failed_names $name"; echo "TIMEOUT $name" ;;
+    4) skipped=$((skipped+1)); echo "skip $name" ;;
     *) fail=$((fail+1)); failed_names="$failed_names $name"; echo "FAIL $name" ;;
   esac
-  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; *) word=FAIL ;; esac
+  # The word the ledger reads back. A skip is written as a skip: `majordomus evidence
+  # record` maps it to an outcome that does not prove, so a case that declined can never
+  # enter the ledger as the proof of the claim it names.
+  local word; case "$rc" in 0) word=ok ;; 3) word=TIMEOUT ;; 4) word=SKIP ;; *) word=FAIL ;; esac
   [ -n "${report:-}" ] && printf '%s\t%s\t%s\t%s\n' "$name" "$word" "$sec" "$phase" >> "$report"
   return 0
 }
@@ -125,12 +171,36 @@ if [ "${MJ_TEST_WORKER:-}" = 1 ]; then
   case "$rc" in
     0) printf 'ok      %s  %ss\n' "$name" "$sec" ;;
     3) printf 'TIMEOUT %s  %ss\n' "$name" "$sec" ;;
+    4) printf 'skip    %s  %ss\n' "$name" "$sec" ;;
     *) printf 'FAIL    %s  %ss\n' "$name" "$sec" ;;
   esac
   exit 0
 fi
 
-only="${1:-}"
+# Every argument names one case. Only the first was ever read, so `run.sh a b c` ran `a`,
+# reported one pass and exited 0 as if `b` and `c` had passed too. A name that matches nothing
+# is still a usage error, for each name rather than for the set.
+if [ "${1:-}" = --verify-report ]; then
+  rep="${2:-}"
+  [ -f "$rep" ] || { echo "run.sh: --verify-report needs a report file, got '$rep'" >&2; exit 2; }
+  want="$(for c in "$ROOT"/test/cases/*.sh; do basename "$c" .sh; done | LC_ALL=C sort)"
+  have="$(cut -f1 "$rep" | LC_ALL=C sort)"
+  missing="$(printf '%s\n' "$want" | LC_ALL=C comm -23 - <(printf '%s\n' "$have" | LC_ALL=C sort -u))"
+  twice="$(printf '%s\n' "$have" | uniq -d)"
+  unknown="$(printf '%s\n' "$have" | LC_ALL=C sort -u | LC_ALL=C comm -13 <(printf '%s\n' "$want") -)"
+  bad=0
+  [ -z "$missing" ] || { echo "run.sh: no row for: $(printf '%s ' $missing)"; bad=1; }
+  [ -z "$twice" ] || { echo "run.sh: more than one row for: $(printf '%s ' $twice)"; bad=1; }
+  [ -z "$unknown" ] || { echo "run.sh: rows for no case under test/cases/: $(printf '%s ' $unknown)"; bad=1; }
+  [ "$bad" = 0 ] && echo "run.sh: the report has exactly one row for each of the $(printf '%s\n' "$want" | wc -l | tr -d ' ') cases"
+  exit "$bad"
+fi
+
+only=""
+for n in "$@"; do
+  [ -f "$ROOT/test/cases/$n.sh" ] || { echo "run.sh: no case matches '$n' (test/cases/$n.sh does not exist)" >&2; exit 2; }
+  only="$only $n "
+done
 jobs="${MJ_TEST_JOBS:-1}"
 case "$jobs" in ''|*[!0-9]*|0) echo "run.sh: MJ_TEST_JOBS must be a positive integer, got '$jobs'" >&2; exit 2 ;; esac
 report="${MJ_TEST_REPORT:-}"
@@ -140,10 +210,52 @@ report="${MJ_TEST_REPORT:-}"
 parallel_names=""; exclusive_names=""
 for case in "$ROOT"/test/cases/*.sh; do
   name="$(basename "$case" .sh)"
-  [ -n "$only" ] && [ "$name" != "$only" ] && continue
+  if [ -n "$only" ]; then case "$only" in *" $name "*) ;; *) continue ;; esac; fi
   if grep -q '^# majordomus-exclusive:' "$case"; then exclusive_names="$exclusive_names $name"
   else parallel_names="$parallel_names $name"; fi
 done
+
+# ---------------------------------------------------------------- one shard
+# Longest-processing-time first: cases sorted by their recorded seconds, each dealt to the
+# least-loaded of n x jobs worker slots, slot s belonging to shard s mod n so that the
+# heaviest cases open one per shard rather than all on the first (four 35-minute cases on one
+# runner starve each other past their timeout); then the exclusive ones, each to the shard whose
+# busiest worker finishes first. Pure arithmetic over one committed file, ties broken by
+# name, so every shard of a run deals the same hand and their union is the whole suite.
+if [ -n "${MJ_TEST_SHARD:-}" ]; then
+  me="${MJ_TEST_SHARD%%/*}"; of="${MJ_TEST_SHARD##*/}"
+  case "$me/$of" in *[!0-9/]*|/*|*/) echo "run.sh: MJ_TEST_SHARD must be <i>/<n>, got '$MJ_TEST_SHARD'" >&2; exit 2 ;; esac
+  [ "$me" -ge 1 ] && [ "$me" -le "$of" ] || { echo "run.sh: MJ_TEST_SHARD $MJ_TEST_SHARD is out of range" >&2; exit 2; }
+  [ "$jobs" -gt 1 ] || { echo "run.sh: MJ_TEST_SHARD needs MJ_TEST_JOBS > 1" >&2; exit 2; }
+  durations="${MJ_TEST_DURATIONS:-$ROOT/.ai/repo/ci/suite-durations.tsv}"
+  [ -f "$durations" ] || durations=/dev/null
+  tab="$(printf '\t')"
+  dealt="$( { for n in $parallel_names; do printf '%s\tp\n' "$n"; done
+              for n in $exclusive_names; do printf '%s\te\n' "$n"; done; } |
+    awk -F'\t' -v OFS='\t' -v dur="$durations" '
+      BEGIN { while ((getline l < dur) > 0) { split(l, f, "\t"); if (f[2] ~ /^[0-9]+$/) d[f[1]] = f[2] } }
+      { print (($1 in d) ? d[$1] : 300), $1, $2 }' |
+    LC_ALL=C sort -t "$tab" -k3,3r -k1,1nr -k2,2 |
+    awk -F'\t' -v N="$of" -v J="$jobs" -v me="$me" '
+      $3 == "p" { b = 0; for (s = 1; s < N * J; s++) if (slot[s] < slot[b]) b = s
+                  slot[b] += $1; if (b % N == me - 1) print $2; next }
+      { if (!ready) { for (k = 0; k < N; k++) { m = 0; for (w = 0; w < J; w++) if (slot[w * N + k] > m) m = slot[w * N + k]; load[k] = m }; ready = 1 }
+        b = 0; for (k = 1; k < N; k++) if (load[k] < load[b]) b = k
+        load[b] += $1; if (b == me - 1) print $2 }')"
+  keep_p=""; keep_e=""
+  for n in $dealt; do
+    case " $exclusive_names " in *" $n "*) keep_e="$keep_e $n" ;; *) keep_p="$keep_p $n" ;; esac
+  done
+  # longest first within the shard, so the deal's arithmetic is also the start order
+  parallel_names="$keep_p"; exclusive_names="$keep_e"
+  [ -n "${MJ_TEST_LIST:-}" ] || echo "run.sh: shard $me of $of: $(printf '%s\n' $keep_p $keep_e | grep -c .) of the suite's cases"
+fi
+
+# MJ_TEST_LIST=1: the cases this invocation would run, one per line, and nothing run
+if [ -n "${MJ_TEST_LIST:-}" ]; then
+  printf '%s\n' $parallel_names $exclusive_names
+  exit 0
+fi
 
 if [ "$jobs" = 1 ]; then
   # ---------------------------------------------------------------- serial
@@ -176,7 +288,7 @@ else
   for name in $(printf '%s\n' $parallel_names $exclusive_names | LC_ALL=C sort); do
     phase=parallel; case " $exclusive_names " in *" $name "*) phase=exclusive ;; esac
     rc="$(cat "$L/$name.rc" 2>/dev/null || echo 2)"; sec="$(cat "$L/$name.sec" 2>/dev/null || echo 0)"
-    [ "$rc" = 0 ] || [ "$rc" = 2 ] || cat "$L/$name.log" 2>/dev/null
+    [ "$rc" = 0 ] || [ "$rc" = 2 ] || [ "$rc" = 4 ] || cat "$L/$name.log" 2>/dev/null
     verdict "$name" "$rc" "$sec" "$phase"
   done
   rm -rf "$L"
@@ -185,15 +297,18 @@ else
     echo "FAIL run.sh: the checkout changed during the parallel phase: ${dirtied}— a case that writes into the checkout declares '# majordomus-exclusive: <reason>' and runs alone (or something else edited the checkout while the suite ran)"
   fi
 fi
-echo "tests: $pass passed, $fail failed"
+echo "tests: $pass passed, $fail failed, $skipped skipped"
 [ -n "$failed_names" ] && echo "failed:$failed_names"
 # A filter that matched nothing is not a pass. `run.sh 51_something` on a repository
 # without that case printed "0 passed, 0 failed" and exited 0, and that zero was read as
 # success — the same shape as a green CI that never ran the suite. Selecting a case that
 # does not exist is a usage error, not an empty success.
-if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ]; then
+# A case that declined counts as having run, here and below: `run.sh 09_site_mobile_first`
+# on a machine without zola selects a case that exists and declines, which is neither a
+# filter that matched nothing nor an empty suite.
+if [ -n "$only" ] && [ "$pass" = 0 ] && [ "$fail" = 0 ] && [ "$skipped" = 0 ]; then
   echo "run.sh: no case matches '$only' (test/cases/$only.sh does not exist)" >&2
   exit 2
 fi
-[ "$pass" = 0 ] && [ "$fail" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
+[ "$pass" = 0 ] && [ "$fail" = 0 ] && [ "$skipped" = 0 ] && { echo "run.sh: no cases found in $ROOT/test/cases" >&2; exit 2; }
 [ "$fail" = 0 ]

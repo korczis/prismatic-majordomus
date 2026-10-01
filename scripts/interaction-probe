@@ -33,7 +33,13 @@ command -v node >/dev/null 2>&1 || { echo "interaction-probe: node is required" 
 # playwright belongs to the tool, not to the site under test: MJ_ROOT may name a site with no node_modules at all
 TOOL="$(cd "$LIB/../.." && pwd)"
 [ -d "$TOOL/node_modules/playwright" ] || { echo "interaction-probe: playwright is not installed in $TOOL (npm ci)" >&2; [ "${CI:-}" = true ] && exit 12; echo "SKIP interaction-probe: no playwright"; exit 0; }
-export MJ_PROBE_ROOT="$ROOT" MJ_PROBE_LIB="$LIB" MJ_PROBE_ONLY="$ONLY" MJ_PROBE_SPEC="$SPEC"
+# The pages driven are the site's own: a surface scripts/site-build composes into the build at its mount (ADR
+# 0086) is another producer's, with controls its own check answers for. The mounts are the tree's topology, read
+# through lib/common.sh as every site check reads them, so nothing here names one.
+# shellcheck source=../lib/common.sh
+. "$(cd "$(dirname "$0")/.." && pwd)/lib/common.sh"
+MJ_PROBE_COMPOSED="$(mj_web_composed "$ROOT" mounts)" || exit 12
+export MJ_PROBE_ROOT="$ROOT" MJ_PROBE_LIB="$LIB" MJ_PROBE_ONLY="$ONLY" MJ_PROBE_SPEC="$SPEC" MJ_PROBE_COMPOSED
 export MJ_PROBE_SPECS="${MJ_INTERACTION_SPECS:-$LIB/interaction-specs}"
 cd "$ROOT" && exec node --input-type=module - <<'JS'
 const env = process.env;
@@ -47,7 +53,7 @@ const only = env.MJ_PROBE_ONLY ? new Set(env.MJ_PROBE_ONLY.split(/\s+/).filter(B
 
 // what the markup declares, per page and spec: the live counts must agree with it
 const plan = new Map();
-for (const r of classify(pub, specs)) {
+for (const r of classify(pub, specs, (env.MJ_PROBE_COMPOSED || '').split(/\s+/).filter(Boolean))) {
   if (r.specs.length !== 1) continue;              // interaction-check owns unclaimed and doubly claimed controls
   if (only && !only.has(r.route)) continue;
   const byspec = plan.get(r.route) || new Map();

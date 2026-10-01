@@ -1,12 +1,16 @@
 //! Navigation, derived. The sidebar's catalogues are not a list in this file: the
-//! capability modules come from the registry, the object kinds come from the index, and
-//! the graphs come from the derivations. A module added to `compose_modules!`, a kind
+//! capability modules come from the registry, the object kinds come from `repository.info`,
+//! and the graphs come from the derivations. A module added to `compose_modules!`, a kind
 //! added to `share/kinds.yaml`, a graph added to the derivation table — each appears here
 //! with no edit to the Cockpit.
 //!
+//! The kinds are *asked for* rather than read: ADR 0012 says no page reads the index
+//! directly, because a reader that steps around the executor is outside the cache, the
+//! counters and the validation every other caller passes through.
+//!
 //! What *is* written here is the areas: Overview, Capabilities, Commands, Executions,
-//! Objects, Directories, Graphs, Continuity, Worktrees, Health, Quality, Artifacts,
-//! Design, API. Those are concepts rather than
+//! Objects, Directories, Graphs, Continuity, Worktrees, Integration, Health, Quality,
+//! Artifacts, Design, API. Those are concepts rather than
 //! entities, they change when the Cockpit's own shape changes, and deriving them from
 //! anything would be deriving them from a list of exactly themselves.
 //!
@@ -49,10 +53,16 @@ pub enum Area {
     Continuity,
     /// The branch-to-worktree topology of the repository.
     Worktrees,
+    /// The pull-request integration queue and its executor.
+    Integration,
     /// The discovered nodes of the mesh, and the machinery that observes them.
     Mesh,
     /// The declared model catalogue and its routing.
     Models,
+    /// Reasoning: the optional advisors, and the session's uncertainties and conclusions.
+    Reasoning,
+    /// Token economics, measured.
+    Economics,
     /// The health report.
     Health,
     /// What the crate's own public surface is held to.
@@ -141,6 +151,12 @@ pub fn areas() -> &'static [AreaInfo] {
             area: Area::Worktrees,
         },
         AreaInfo {
+            id: "integration",
+            label: "Integration",
+            href: "/cockpit/integration",
+            area: Area::Integration,
+        },
+        AreaInfo {
             id: "mesh",
             label: "Mesh",
             href: "/cockpit/mesh",
@@ -151,6 +167,18 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Models",
             href: "/cockpit/models",
             area: Area::Models,
+        },
+        AreaInfo {
+            id: "reasoning",
+            label: "Reasoning",
+            href: "/cockpit/reasoning",
+            area: Area::Reasoning,
+        },
+        AreaInfo {
+            id: "economics",
+            label: "Economics",
+            href: "/cockpit/economics",
+            area: Area::Economics,
         },
         AreaInfo {
             id: "health",
@@ -198,10 +226,22 @@ pub struct Item {
     /// never written here: the capability modules are grouped by the operational area the
     /// features that name them serve.
     pub group: Option<String>,
-    /// How many things are behind it, when the number is a fact and not decoration.
-    pub count: Option<usize>,
+    /// How many things are behind it, when the number is a fact and not decoration: `None`
+    /// for an entry that carries no count, and [`Count::Unknown`] for one whose count the
+    /// capability asked for it did not answer.
+    pub count: Option<Count>,
     /// Whether this is the page being shown.
     pub current: bool,
+}
+
+/// A count an entry shows: a number the capability answered, or the fact that it did not.
+/// A capability that failed is never a count of zero.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Count {
+    /// The number.
+    Known(usize),
+    /// The capability behind it did not answer.
+    Unknown,
 }
 
 /// A heading and its entries.
@@ -226,19 +266,56 @@ impl Navigation {
     }
 }
 
+/// What the layer holds, as `repository.info` answers it: the object count and the kinds
+/// with theirs.
+///
+/// A capability that cannot answer leaves the navigation without its object counts rather
+/// than without a navigation: the sidebar is how a person reaches the page that would say
+/// what went wrong, so it is the last thing that should fail with the thing it reports on.
+/// The two fields of `repository.info` this file reads; the rest of the report is the
+/// health page's subject, and taking only these keeps the navigation's dependency on the
+/// capability to what it actually shows.
+#[derive(serde::Deserialize)]
+struct Held {
+    objects: usize,
+    kinds: std::collections::BTreeMap<String, usize>,
+}
+
+/// `None` when `repository.info` did not answer, or answered something this file cannot
+/// read: the object count is then unknown, never zero.
+fn held(ctx: &Context) -> Option<Held> {
+    let value = ctx.execute("repository.info", serde_json::json!({})).ok()?;
+    serde_json::from_value::<Held>(value).ok()
+}
+
 /// Build the navigation for a request: the areas, then the catalogues derived from the
 /// registry, the index and the graph derivations. `here` is the request path, so the
 /// current entry can be marked without a page saying which it is.
 pub fn build(ctx: &Context, here: &str) -> Navigation {
     let summary = ctx.registry.summary();
+    // What the layer holds is asked for, not opened. `repository.info` answers how many
+    // objects there are and which kinds they have, and asking it is what keeps the
+    // navigation a projection instead of a second reader of the index (ADR 0012). One
+    // call answers both catalogues below.
+    let held = held(ctx);
+    build_with(ctx, here, held.as_ref(), &summary)
+}
+
+/// [`build`], over what `repository.info` answered (`None`: it did not).
+fn build_with(
+    ctx: &Context,
+    here: &str,
+    held: Option<&Held>,
+    summary: &crate::capability::registry::Summary,
+) -> Navigation {
     // the counts are facts of this context, decided per area: how many things are behind
     // an entry is not part of what an area is
-    let count = |a: Area| -> Option<usize> {
+    let count = |a: Area| -> Option<Count> {
         match a {
-            Area::Capabilities => Some(summary.total),
-            Area::Objects => Some(ctx.index.objects.len()),
-            Area::Graphs => Some(graph::ids().len()),
-            Area::Api => Some(summary.http_routes),
+            Area::Capabilities => Some(Count::Known(summary.total)),
+            Area::Objects => Some(held.map_or(Count::Unknown, |h| Count::Known(h.objects))),
+            Area::Graphs => Some(Count::Known(graph::ids().len())),
+            Area::Api => Some(Count::Known(summary.http_routes)),
             _ => None,
         }
     };
@@ -272,7 +349,7 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
                     .module_area(m.id.as_str())
                     .and_then(|id| ctx.why.areas().iter().find(|a| a.id == id))
                     .map(|a| a.title.clone()),
-                count: Some(m.capabilities),
+                count: Some(Count::Known(m.capabilities)),
                 current: false,
             })
             .collect(),
@@ -281,16 +358,15 @@ pub fn build(ctx: &Context, here: &str) -> Navigation {
     // the kinds of the layer: what the repository declares, not what this code knows
     let kinds = Section {
         title: "Object kinds".into(),
-        items: ctx
-            .index
-            .kinds()
+        items: held
             .into_iter()
+            .flat_map(|h| &h.kinds)
             .map(|(kind, count)| Item {
                 label: kind.to_string(),
-                href: format!("/cockpit/objects?kind={}", percent_encode(kind)),
+                href: crate::entity::kind_route(kind),
                 area: Area::Objects,
                 group: None,
-                count: Some(count),
+                count: Some(Count::Known(*count)),
                 current: false,
             })
             .collect(),
@@ -340,7 +416,7 @@ impl crate::order::Ordered for Item {
     }
 }
 
-fn item(label: &str, href: &str, area: Area, count: Option<usize>, here: &str) -> Item {
+fn item(label: &str, href: &str, area: Area, count: Option<Count>, here: &str) -> Item {
     Item {
         label: label.into(),
         href: href.into(),
@@ -461,6 +537,39 @@ mod tests {
         assert_eq!(labels.last(), Some(&"Worktrees"));
     }
 
+    /// A `repository.info` that did not answer leaves the object count unknown and the kind
+    /// catalogue empty: never a count of zero, which reads as a repository that holds nothing.
+    #[test]
+    fn a_failed_repository_info_is_an_unknown_count_and_not_zero() {
+        let repo = repository();
+        let ctx = repo.context().expect("a context");
+        let nav = build_with(&ctx, "/cockpit", None, &ctx.registry.summary());
+        let objects = nav
+            .sections()
+            .iter()
+            .flat_map(|s| &s.items)
+            .find(|i| i.area == Area::Objects && i.href == "/cockpit/objects")
+            .expect("the Objects entry");
+        assert_eq!(objects.count, Some(Count::Unknown));
+        assert!(
+            nav.sections().iter().all(|s| s.title != "Object kinds"),
+            "no kind is listed from an answer that did not come"
+        );
+        // and the answer, when it comes, is the number
+        let nav = build(&ctx, "/cockpit");
+        let objects = nav
+            .sections()
+            .iter()
+            .flat_map(|s| &s.items)
+            .find(|i| i.area == Area::Objects && i.href == "/cockpit/objects")
+            .expect("the Objects entry");
+        assert!(
+            matches!(objects.count, Some(Count::Known(_))),
+            "{:?}",
+            objects.count
+        );
+    }
+
     #[test]
     fn the_kind_catalogue_is_the_indexs_and_not_a_list_here() {
         let repo = repository();
@@ -472,7 +581,17 @@ mod tests {
             .find(|s| s.title == "Object kinds")
             .expect("a kind section");
         let labels: Vec<&str> = kinds.items.iter().map(|i| i.label.as_str()).collect();
-        let expected: Vec<&str> = ctx.index.kinds().into_keys().collect();
+        // asked for the same way the navigation asks, so that the assertion cannot pass
+        // by reading a source the page is not allowed to read (ADR 0012)
+        let reported = ctx
+            .execute("repository.info", serde_json::json!({}))
+            .expect("repository.info answers");
+        let expected: Vec<&str> = reported["kinds"]
+            .as_object()
+            .expect("kinds")
+            .keys()
+            .map(String::as_str)
+            .collect();
         assert_eq!(labels, expected);
     }
 }

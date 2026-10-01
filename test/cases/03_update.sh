@@ -1,5 +1,6 @@
 # majordomus-covers: update
 # majordomus-negative: update doctor
+# claims: bootstrap-chain, context-budget, exit-code-contract, no-counts-in-context, no-silent-overwrite, pointer-integrity, projection-fingerprint, projection-generation, wiring-reconciliation
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null
 expect_exit 0 "$MJ" update
@@ -71,6 +72,16 @@ expect_exit 0 "$MJ" update --diff CLAUDE.md
 expect_grep '^-my own rule'
 expect_exit 0 "$MJ" update --force
 expect_no_grep 'my own rule' CLAUDE.md
+expect_exit 0 "$MJ" doctor
+expect_grep 'OK +links +AGENTS.md — all references resolve'
+expect_grep 'OK +counts +AGENTS.md — no hardcoded counts'
+# pointer-integrity and no-counts-in-context: a reference that does not resolve and a
+# hardcoded count in the always-loaded file are each a failure named by doctor
+printf '\nSee [the guide](docs/no-such-guide.md).\nThis repository has 42 agents.\n' >> AGENTS.md
+expect_exit 10 "$MJ" doctor
+expect_grep 'FAIL links +AGENTS.md — reference docs/no-such-guide.md does not resolve'
+expect_grep 'FAIL counts +AGENTS.md — hardcoded count in always-loaded context'
+expect_exit 0 "$MJ" update --force
 expect_exit 0 "$MJ" doctor
 # a fresh clone carries the stamps inside the targets, so doctor judges it exactly as here:
 # no provenance file, nothing to regenerate, and a hand edit there is caught the same way

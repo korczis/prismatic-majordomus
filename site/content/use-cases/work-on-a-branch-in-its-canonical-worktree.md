@@ -6,7 +6,7 @@ weight = 12
 id = "work-on-a-branch-in-its-canonical-worktree"
 source = ".ai/repo/use-cases/work-on-a-branch-in-its-canonical-worktree.md"
 category = "workers"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

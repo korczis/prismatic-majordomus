@@ -9,9 +9,21 @@
 //! two runtimes exchange envelopes through `register` exactly as two servers would,
 //! and each converges on one record of the other.
 //!
-//! docs/CLAIMS.yaml marks `mesh-off-by-default` and `mesh-observation-not-authority` as
-//! guaranteed and names this file as the test that proves them; the ids are written here
-//! so the link reads from both ends. `a_disabled_declaration_opens_nothing_and_says_why`
+//! docs/CLAIMS.yaml marks `mesh-off-by-default`, `mesh-one-registry` and
+//! `mesh-observation-not-authority` as guaranteed and names this file as the test that
+//! proves them; the ids are written here so the link reads from both ends. The server half
+//! of `mesh-declared-is-held` is here too — the `runtime` check of `/api/v1/mesh/doctor` is
+//! the server's own verdict on its declaration, active, off as declared, or failed with the
+//! reason — and test/cases/494_the_mesh_is_declared_and_held.sh, the test that claim names,
+//! carries it through the command line and the session-start briefing.
+//! `mesh-one-registry` is the registry half of
+//! `a_server_activates_the_mesh_and_registration_converges_to_one_record`: one canonical
+//! record per node and runtime however many envelopes arrive, a replay refused per
+//! instance, a restart that updates rather than duplicates, and every projection —
+//! `/api/v1/mesh`, `/api/v1/mesh/nodes` — reading that one registry and holding no peers
+//! of its own. (The claim named test/cases/130_mesh.sh until 2026-09-20; that case says in
+//! its own header that it runs without a network and covers the operator's path, so it
+//! carried no part of this claim.) `a_disabled_declaration_opens_nothing_and_says_why`
 //! is the first: no socket opens until an enabled declaration is committed, and the
 //! disabled declaration is reported as the reason rather than as an error. The trust
 //! assertions of `a_server_activates_the_mesh_and_registration_converges_to_one_record`
@@ -35,6 +47,19 @@ const ENABLED_QUIET: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majord
 
 const DISABLED: &str = "schema: mesh/v1\nkind: mesh-declaration\nid: majordomus\nenabled: false\n";
 
+/// The `runtime` check of the server's own `mesh doctor` report.
+fn runtime_check(s: &Served) -> Value {
+    let (status, report) = s.get("/api/v1/mesh/doctor");
+    assert_eq!(status, 200, "{report}");
+    report["checks"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .find(|c| c["check"] == json!("runtime"))
+        .cloned()
+        .unwrap_or_else(|| panic!("the server's doctor has no runtime check: {report}"))
+}
+
 fn post(s: &Served, path: &str, body: &Value) -> (u16, Value) {
     let (status, _, text) = s.request("POST", path, Some(&body.to_string()));
     let value = serde_json::from_str(&text).unwrap_or(Value::Null);
@@ -57,6 +82,17 @@ fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     let (status, mesh) = s.get("/api/v1/mesh");
     assert_eq!(status, 200);
     assert_eq!(mesh["active"], json!(true), "{mesh}");
+    // The doctor of a server that activated its mesh says so on its `runtime` check: the
+    // server's own verdict, which is what `majordomus mesh doctor` asks it for.
+    let runtime = runtime_check(&s);
+    assert_eq!(runtime["ok"], json!(true), "{runtime}");
+    assert!(
+        runtime["detail"]
+            .as_str()
+            .unwrap_or_default()
+            .starts_with("active as "),
+        "{runtime}"
+    );
     let own = mesh["identity"]["node_id"]
         .as_str()
         .expect("a node id")
@@ -148,6 +184,26 @@ fn a_server_activates_the_mesh_and_registration_converges_to_one_record() {
     );
     assert_eq!(nodes["nodes"][0]["restarts"], json!(1));
 
+    // Replay protection is per instance, so the pre-restart envelope is a fresh sequence
+    // of a past instance rather than a replay of the current one — and the registry is
+    // one record per node either way: whatever arrives, from whichever instance, in
+    // whichever order, this node is one row and never two.
+    post(
+        &s,
+        "/api/v1/mesh/register",
+        &json!({ "envelope": envelope }),
+    );
+    let (_, nodes) = s.get("/api/v1/mesh/nodes");
+    assert_eq!(
+        nodes["count"],
+        json!(1),
+        "one record per node, across instances and sources: {nodes}"
+    );
+    assert_eq!(
+        nodes["nodes"][0]["node_id"],
+        json!(caller.public.node_id.as_str())
+    );
+
     // The status tallies agree with the registry every surface reads.
     let (_, mesh) = s.get("/api/v1/mesh");
     assert_eq!(mesh["tallies"]["nodes"], json!(1));
@@ -193,6 +249,16 @@ fn a_disabled_declaration_opens_nothing_and_says_why() {
         !state.join("majordomus").join("node.json").exists(),
         "a disabled mesh creates no identity"
     );
+    // Off is the declaration's answer, not a failure: the doctor holds and says why.
+    let runtime = runtime_check(&s);
+    assert_eq!(runtime["ok"], json!(true), "{runtime}");
+    assert!(
+        runtime["detail"]
+            .as_str()
+            .unwrap_or_default()
+            .starts_with("off, as declared"),
+        "{runtime}"
+    );
     let caller = NodeIdentity::ephemeral().expect("an identity");
     let envelope = advertise(&caller, 1, &[], &[], &[], "test");
     let (status, answer) = post(
@@ -227,6 +293,7 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
         broadcast: Default::default(),
         rendezvous: Default::default(),
         trust: Default::default(),
+        cooperation: Default::default(),
     };
     let a_id = NodeIdentity::load_or_create(&dir.path().join("a.json")).unwrap();
     let b_id = NodeIdentity::load_or_create(&dir.path().join("b.json")).unwrap();
@@ -275,4 +342,54 @@ fn two_runtimes_discover_each_other_through_the_rendezvous_handshake() {
 
     a.stop();
     b.stop();
+}
+
+/// `mesh-declared-is-held`: an enabled declaration the server could not activate is a
+/// failed `runtime` check carrying the server's reason and the remedy — never a quiet off.
+/// The identity cannot be created when a directory sits where `node.json` must be written,
+/// which is one of the ways activation fails; the server serves regardless (a mesh that
+/// cannot start is a reason, never a failed server), and its doctor says why the mesh does
+/// not run.
+#[test]
+fn an_enabled_declaration_the_server_could_not_activate_fails_the_doctor_and_names_why() {
+    let f = Fixture::new();
+    f.write(".ai/repo/mesh/majordomus.yaml", ENABLED_QUIET);
+    let state = f.root().join("xdg-state");
+    std::fs::create_dir_all(state.join("majordomus").join("node.json")).unwrap();
+    let mut s = Served::start_with_env(
+        &f.root(),
+        &["--discovery", "filesystem"],
+        &[("XDG_STATE_HOME", state.to_str().unwrap())],
+    );
+    let (status, mesh) = s.get("/api/v1/mesh");
+    assert_eq!(
+        status, 200,
+        "a mesh that cannot start is a reason, not a failed server"
+    );
+    assert_eq!(mesh["active"], json!(false), "{mesh}");
+    let (status, report) = s.get("/api/v1/mesh/doctor");
+    assert_eq!(status, 200);
+    assert_eq!(report["ok"], json!(false), "{report}");
+    let runtime = runtime_check(&s);
+    assert_eq!(runtime["ok"], json!(false), "{runtime}");
+    let detail = runtime["detail"].as_str().unwrap_or_default();
+    assert!(
+        detail.starts_with("the declaration is enabled and this server's mesh is not active"),
+        "{detail}"
+    );
+    // The server's own reason, without the "not active" the verdict has already said.
+    let reason = mesh["reason"].as_str().unwrap_or_default();
+    let why = reason.strip_prefix("not active: ").unwrap_or(reason);
+    assert!(
+        !why.is_empty() && detail.ends_with(why),
+        "the verdict carries the server's own reason '{why}': {detail}"
+    );
+    assert!(
+        runtime["remediation"]
+            .as_str()
+            .unwrap_or_default()
+            .contains("serve ensure"),
+        "{runtime}"
+    );
+    assert_eq!(s.stop(), 0);
 }

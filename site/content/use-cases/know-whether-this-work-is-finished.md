@@ -6,7 +6,7 @@ weight = 10
 id = "know-whether-this-work-is-finished"
 source = ".ai/repo/use-cases/know-whether-this-work-is-finished.md"
 category = "completion"
-maturity = "described"
+maturity = "executable"
 +++
 
 ## Situation

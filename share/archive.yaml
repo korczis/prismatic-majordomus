@@ -45,7 +45,10 @@ profiles:
     derived: drop
     binary: drop
     exclude: ["package-lock.json", ".ai/repo/*-baseline.txt"]
-    include: ["AGENTS.md", "CLAUDE.md", "docs/INSTALL.md"]
+    # share/version.txt is a projection and is kept anyway: bin/majordomus reads its version
+    # from it at start-up and refuses to run without it, and the restored copy is promised to
+    # run the repository's own checks.
+    include: ["AGENTS.md", "CLAUDE.md", "docs/INSTALL.md", "share/version.txt"]
     format: zip
     manifest: true
     restore: true

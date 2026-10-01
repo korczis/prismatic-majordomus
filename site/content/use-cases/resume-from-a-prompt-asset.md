@@ -6,7 +6,7 @@ weight = 46
 id = "resume-from-a-prompt-asset"
 source = ".ai/repo/use-cases/resume-from-a-prompt-asset.md"
 category = "continuity"
-maturity = "described"
+maturity = "verified"
 +++
 
 ## Situation

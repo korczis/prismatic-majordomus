@@ -41,6 +41,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 CSS="$ROOT/site/static/app.css"
 # shellcheck source=../lib/rust_bin.sh
 . "$ROOT/lib/rust_bin.sh"
+# for mj_web_composed, the one reading of which surfaces are composed into a static build.
+# Sourced here, before this script sets its own EXIT trap: the library installs one of its
+# own, and sourcing it later would replace the trap that stops the server this script starts.
+# shellcheck source=../lib/common.sh
+. "$ROOT/lib/common.sh"
 # cargo does not necessarily build into apps/majordomus-cli/target; ask it where
 MJ="${MAJORDOMUS_BIN:-$(mj_cargo_target_dir "$ROOT/apps/majordomus-cli" ask-cargo)/debug/majordomus}"
 
@@ -83,10 +88,21 @@ esac
 # written in awk, Rust or shell is covered through its output rather than through a scan of
 # its source, where a tag inside a regex is indistinguishable from a tag being written.
 # The stylesheets are read for a second, weaker question: which classes scroll at all.
+#
+# A rendered page of the site's is one this repository's markup produced. The trees another
+# producer's surface is composed into — its own artifact, and its mount inside every static
+# build scripts/site-build composes it into (ADR 0086) — are that producer's markup, judged
+# by that surface's own check (`majordomus quality rustdoc` for the crate's reference). Which
+# trees they are is the topology's answer, through lib/common.sh, and nothing here names one.
 if [ "$sub" = check ]; then
+  composed_trees="$(mj_web_composed "$ROOT" trees)" || exit 12
+  prune=()
+  for t in $composed_trees; do prune+=(-path "$t" -prune -o); done
   files="$( cd "$ROOT" && {
     git ls-files -- '*.html' '*.css' ':!site/public' ':!node_modules' 2>/dev/null || true
-    for d in site/public target/web; do [ -d "$d" ] && find "$d" -name '*.html' -type f; done
+    for d in site/public target/web; do
+      [ -d "$d" ] && find "$d" ${prune[@]+"${prune[@]}"} -name '*.html' -type f -print
+    done
   } | LC_ALL=C sort -u )"
   [ -n "$files" ] || { echo "ui check: no markup in the work tree"; exit 0; }
   ( cd "$ROOT" && printf '%s\n' "$files" | node --input-type=module -e '
@@ -161,15 +177,26 @@ start_server() {
 # it is rendered into, a rendered one with the routes crawled out of it. The topology is the
 # one place a mount is written and the server is the one place a native route exists, so
 # neither is asked twice.
+#
+# Less the surfaces scripts/site-build composes into a static build (ADR 0086): those are
+# another producer's pages, audited by that surface's own check, and each is dropped twice —
+# as a surface of its own, and as the copy at its mount inside every built directory that
+# carries one (the served documentation holds it at /docs/<mount>). The mounts are the
+# committed topology's, read through lib/common.sh as every site check reads them.
 write_surfaces() {
+  local composed
+  composed="$(mj_web_composed "$ROOT" mounts)" || exit 12
   "$MJ" web list --format json --repo "$ROOT" | node --input-type=module -e '
 import { statSync } from "node:fs";
 import { servedSurfaces } from "'"$ROOT"'/scripts/lib/ui-routes.mjs";
 const topology = JSON.parse(await new Promise((r) => { let s = ""; process.stdin.on("data", (d) => (s += d)); process.stdin.on("end", () => r(s)); }));
 const isDirectory = (p) => { try { return statSync(p).isDirectory(); } catch { return false; } };
-const surfaces = await servedSurfaces(topology, { origin: "'"$origin"'", root: "'"$ROOT"'", isDirectory });
+const composed = process.argv[1].split(/\s+/).filter(Boolean);
+const surfaces = (await servedSurfaces(topology, { origin: "'"$origin"'", root: "'"$ROOT"'", isDirectory }))
+  .filter((s) => !composed.includes(s.mount))
+  .map((s) => (s.kind === "static-directory" && composed.length ? { ...s, composed } : s));
 console.log(JSON.stringify(surfaces));
-' > "$1"
+' "$composed" > "$1"
 }
 
 if [ "$build" = 1 ]; then

@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.worktree-topology@1]
 tags: [process, worktrees]
+
+x-majordomus:
+  reviewed_because: no gate can tell a deliberate reclamation from a careless one without forbidding a worker from cleaning its own tree; scripts/reap-orphans classifies what may go, and the choice to run it is reviewed on the shared board
 ---
 
 # Rationale

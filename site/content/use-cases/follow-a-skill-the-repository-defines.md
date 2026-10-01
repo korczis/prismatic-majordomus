@@ -6,7 +6,7 @@ weight = 37
 id = "follow-a-skill-the-repository-defines"
 source = ".ai/repo/use-cases/follow-a-skill-the-repository-defines.md"
 category = "extension"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

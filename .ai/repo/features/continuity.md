@@ -10,14 +10,14 @@ status: stable
 weight: 50
 featured: true
 areas: [context, coordination]
-modules: [continuity]
-commands: [context, checkpoint, handover, session, capture, prompt]
+modules: [continuity, lifecycle, session_domain, recover]
+commands: [context, checkpoint, handover, session, capture, prompt, recover]
 kinds: [session, prompt]
 rules: [majordomus.handover-integrity, majordomus.session-lifecycle, majordomus.session-records, majordomus.prompt-capture, majordomus.task-continuity, majordomus.checkpoint-freshness, project.never-store-transcripts, majordomus.handovers-carry-state]
 docs: [docs/CONTINUITY.md, docs/CONTEXT.md]
 adrs: [adr-0009, adr-0014, adr-0015, adr-0017]
 claims: [handover-record, no-transcripts, checkpoint-record, record-resolution, context-assembly, divergence-label, session-records, session-lifecycle, prompt-capture, prompt-assets, continuity-reachable]
-use_cases: [hand-work-between-sessions, checkpoint-long-work, open-and-close-a-session, capture-the-prompts-that-started-the-work, let-the-provider-draw-the-episode-boundary]
+use_cases: [hand-work-between-sessions, checkpoint-long-work, open-and-close-a-session, capture-the-prompts-that-started-the-work, let-the-provider-draw-the-episode-boundary, recover-an-episode-nobody-closed, resume-from-a-prompt-asset]
 cockpit: [continuity]
 related: [knowledge, provenance, coordination]
 tags: [sessions, handover, prompts]

@@ -6,7 +6,7 @@ weight = 1
 id = "adopt-an-existing-repository"
 source = ".ai/repo/use-cases/adopt-an-existing-repository.md"
 category = "adoption"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

@@ -163,6 +163,57 @@ pub fn parse_branches(text: &str) -> Vec<BranchRef> {
     out
 }
 
+/// Every local branch reachable from `trunk` or from the remote-tracking branch `trunk`
+/// follows. A local trunk that has fallen behind its remote — a primary checkout nobody has
+/// pulled, because a session holds uncommitted work in it — would otherwise call every branch
+/// that landed since unmerged, and cleanup would offer nothing; a branch the remote trunk
+/// contains is published and integrated, which is the safety cleanup asks for.
+///
+/// ```
+/// use majordomus_cli::worktree::state::merged_into_trunk;
+/// use std::process::Command;
+/// let dir = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let ok = Command::new("git")
+///         .arg("-C")
+///         .arg(dir.path())
+///         .args(args)
+///         .env("GIT_AUTHOR_NAME", "t")
+///         .env("GIT_AUTHOR_EMAIL", "t@example.com")
+///         .env("GIT_COMMITTER_NAME", "t")
+///         .env("GIT_COMMITTER_EMAIL", "t@example.com")
+///         .status()
+///         .unwrap()
+///         .success();
+///     assert!(ok, "git {args:?}");
+/// };
+/// git(&["init", "-q", "-b", "main"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+/// git(&["branch", "landed"]);
+/// // no upstream here: the local trunk alone decides, and it contains `landed`
+/// let merged = merged_into_trunk(dir.path(), "main").unwrap();
+/// assert!(merged.contains("landed"));
+/// ```
+pub fn merged_into_trunk(primary: &Path, trunk: &str) -> Result<BTreeSet<String>> {
+    let mut merged = merged_into(primary, trunk)?;
+    let upstream = format!("{trunk}@{{upstream}}");
+    if let Ok(out) = git::run(
+        primary,
+        &[
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            &upstream,
+        ],
+    ) {
+        let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if !name.is_empty() {
+            merged.extend(merged_into(primary, &name)?);
+        }
+    }
+    Ok(merged)
+}
+
 /// Every local branch reachable from `trunk`, in one subprocess.
 pub fn merged_into(primary: &Path, trunk: &str) -> Result<BTreeSet<String>> {
     let out = git::run(

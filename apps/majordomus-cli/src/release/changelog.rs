@@ -14,6 +14,7 @@
 //! two vocabularies the two sources have — an ADR carries a date and no commit, and a commit
 //! carries no date the layer indexes.
 
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
 use serde_json::Value;
@@ -97,6 +98,9 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
     records.sort_by(|a, b| b.date.cmp(&a.date));
 
     let decisions = decisions_of(root, objects);
+    // Which commits each release's tree holds, read once per release for every decision
+    // asked about it (see `Ancestry`).
+    let mut ancestry = Ancestry::new(root);
 
     let mut sections = Vec::new();
 
@@ -129,7 +133,11 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
                 .zip(newest)
                 .map(|(base, r)| format!("{base}/compare/{}...master", r.tag)),
             tree_url: forge().map(|base| format!("{base}/tree/master")),
-            decisions: decisions_after(root, &decisions, newest.map(|r| r.commit.as_str())),
+            decisions: decisions_after(
+                &mut ancestry,
+                &decisions,
+                newest.map(|r| r.commit.as_str()),
+            ),
             groups: grouped(unreleased_changes),
             artifacts: Vec::new(),
         });
@@ -168,7 +176,7 @@ fn compose_with(root: &Path, objects: &[Object], unreleased: bool) -> Changelog 
             }),
             tree_url: forge().map(|base| format!("{base}/tree/{}", r.tag)),
             decisions: decisions_between(
-                root,
+                &mut ancestry,
                 &decisions,
                 previous.map(|p| p.commit.as_str()),
                 &r.commit,
@@ -303,15 +311,59 @@ fn added_at(root: &Path, path: &str) -> Option<String> {
     }
 }
 
-/// Whether `commit` is an ancestor of `of` — that is, whether it was already in that tree.
-fn is_in(root: &Path, commit: &str, of: &str) -> bool {
-    std::process::Command::new("git")
+/// Which commits a tree already holds, asked of git once per tree.
+///
+/// The question the two window functions ask is "was the commit that added this decision
+/// already in that release's tree?", for every decision against every release, twice for
+/// most. Asked as `git merge-base --is-ancestor` it was one process per pair: some six hundred
+/// at 62 decisions and six releases, about 6.5 of the 13.7 seconds an unoptimised
+/// `generate --check` spent, and so of the pre-commit gate that runs it on every commit, and
+/// it grows with the product of the two. Here each tree's history is listed once
+/// (`git rev-list <tree>`) and every question about it is a lookup: the same answer, since a
+/// commit is an ancestor of a tree exactly when that list names it (the tree's own commit
+/// included, as `--is-ancestor` includes it), and a name git cannot resolve holds nothing,
+/// as `--is-ancestor` refuses it.
+struct Ancestry<'a> {
+    root: &'a Path,
+    held: HashMap<String, HashSet<String>>,
+}
+
+impl<'a> Ancestry<'a> {
+    fn new(root: &'a Path) -> Self {
+        Ancestry {
+            root,
+            held: HashMap::new(),
+        }
+    }
+
+    /// Whether `commit` — a full commit name, as [`added_at`] gives it — was already in the
+    /// tree `of`: whether it is `of` or one of its ancestors.
+    fn holds(&mut self, of: &str, commit: &str) -> bool {
+        let root = self.root;
+        self.held
+            .entry(of.to_string())
+            .or_insert_with(|| history(root, of))
+            .contains(commit)
+    }
+}
+
+/// Every commit `of` reaches, by full name; nothing when git cannot resolve it.
+fn history(root: &Path, of: &str) -> HashSet<String> {
+    let Ok(out) = std::process::Command::new("git")
         .arg("-C")
         .arg(root)
-        .args(["merge-base", "--is-ancestor", commit, of])
-        .status()
-        .map(|s| s.success())
-        .unwrap_or(false)
+        .args(["rev-list", of, "--"])
+        .output()
+    else {
+        return HashSet::new();
+    };
+    if !out.status.success() {
+        return HashSet::new();
+    }
+    String::from_utf8_lossy(&out.stdout)
+        .lines()
+        .map(str::to_string)
+        .collect()
 }
 
 /// Every decision the layer holds, newest first.
@@ -358,12 +410,16 @@ fn decisions_of(root: &Path, objects: &[Object]) -> Vec<Decision> {
 }
 
 /// The decisions not yet in any release: their file was added after the newest release's tree.
-fn decisions_after(root: &Path, decisions: &[Decision], newest: Option<&str>) -> Vec<Decision> {
+fn decisions_after(
+    ancestry: &mut Ancestry<'_>,
+    decisions: &[Decision],
+    newest: Option<&str>,
+) -> Vec<Decision> {
     decisions
         .iter()
         .filter(|d| match (newest, d.added.as_deref()) {
             // added, and not already in the last release's tree
-            (Some(rel), Some(added)) => !is_in(root, added, rel),
+            (Some(rel), Some(added)) => !ancestry.holds(rel, added),
             // nothing released yet, or git could not say when it was added: an unreleased
             // section that omits a decision is worse than one that shows an early arrival
             _ => true,
@@ -374,7 +430,7 @@ fn decisions_after(root: &Path, decisions: &[Decision], newest: Option<&str>) ->
 
 /// The decisions this release carried: in its tree, and not in the one before it.
 fn decisions_between(
-    root: &Path,
+    ancestry: &mut Ancestry<'_>,
     decisions: &[Decision],
     previous: Option<&str>,
     release: &str,
@@ -385,7 +441,7 @@ fn decisions_between(
             let Some(added) = d.added.as_deref() else {
                 return false;
             };
-            is_in(root, added, release) && previous.is_none_or(|p| !is_in(root, added, p))
+            ancestry.holds(release, added) && previous.is_none_or(|p| !ancestry.holds(p, added))
         })
         .cloned()
         .collect()
@@ -576,12 +632,13 @@ mod tests {
             all.iter().all(|d| d.added.is_some()),
             "git says when each file was added"
         );
+        let mut ancestry = Ancestry::new(dir.path());
         // (first tree, second tree] — the second only, whatever its front matter is dated.
-        let between = decisions_between(dir.path(), &all, Some(&at[0]), &at[1]);
+        let between = decisions_between(&mut ancestry, &all, Some(&at[0]), &at[1]);
         assert_eq!(between.len(), 1);
         assert_eq!(between[0].id, "adr-0002");
         // The first release has no predecessor, so it carries everything its tree holds.
-        let first = decisions_between(dir.path(), &all, None, &at[0]);
+        let first = decisions_between(&mut ancestry, &all, None, &at[0]);
         assert_eq!(first.len(), 1);
         assert_eq!(first[0].id, "adr-0001");
     }
@@ -593,11 +650,59 @@ mod tests {
             dir.path(),
             &[adr_object("adr-0001"), adr_object("adr-0003")],
         );
-        let after = decisions_after(dir.path(), &all, Some(&at[0]));
+        let mut ancestry = Ancestry::new(dir.path());
+        let after = decisions_after(&mut ancestry, &all, Some(&at[0]));
         assert_eq!(after.len(), 1);
         assert_eq!(after[0].id, "adr-0003");
         // No release at all: everything is unreleased.
-        assert_eq!(decisions_after(dir.path(), &all, None).len(), 2);
+        assert_eq!(decisions_after(&mut ancestry, &all, None).len(), 2);
+    }
+
+    /// Listing a tree's history once answers what `git merge-base --is-ancestor` answered one
+    /// process per question: for every pair of commits of a history with a branch and a merge
+    /// in it — a commit holds itself, a side branch's commit is held from the merge on and not
+    /// before — and a tree git cannot resolve, which is what a clone without that history
+    /// has, holds nothing. And each tree is listed once however often it is asked about, which
+    /// is the whole of the change.
+    #[test]
+    fn a_tree_holds_exactly_the_commits_merge_base_calls_its_ancestors() {
+        let dir = tempfile::tempdir().expect("a temp dir");
+        let root = dir.path();
+        git(root, &["init", "-q", "-b", "main"]);
+        let step = |message: &str| {
+            git(root, &["commit", "-q", "--allow-empty", "-m", message]);
+            git(root, &["rev-parse", "HEAD"])
+        };
+        let a = step("a");
+        git(root, &["checkout", "-q", "-b", "side"]);
+        let s = step("s");
+        git(root, &["checkout", "-q", "main"]);
+        let b = step("b");
+        git(root, &["merge", "-q", "--no-ff", "-m", "m", "side"]);
+        let m = git(root, &["rev-parse", "HEAD"]);
+        let c = step("c");
+        let all = [a, s, b, m, c];
+
+        let mut ancestry = Ancestry::new(root);
+        let mut held = 0;
+        for of in &all {
+            for commit in &all {
+                let asked = std::process::Command::new("git")
+                    .arg("-C")
+                    .arg(root)
+                    .args(["merge-base", "--is-ancestor", commit, of])
+                    .status()
+                    .expect("git runs")
+                    .success();
+                assert_eq!(ancestry.holds(of, commit), asked, "is {commit} in {of}?");
+                held += usize::from(asked);
+            }
+        }
+        // both answers occur, so the agreement is not vacuous
+        assert!(held > 0 && held < all.len() * all.len(), "{held} held");
+        let unknown = "0".repeat(40);
+        assert!(!ancestry.holds(&unknown, &all[0]));
+        assert_eq!(ancestry.held.len(), all.len() + 1, "one listing per tree");
     }
 
     /// A throwaway repository with `n` commits, the first of them tagged as a release the

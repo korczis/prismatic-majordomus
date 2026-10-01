@@ -22,6 +22,9 @@
       {% endfor %}
       <div class="min-w-0">
         <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2>
+        {#- These three follow master deliberately, unlike the source links of source-links.html:
+            they are not what a page was rendered from but the policy a reader acts on today —
+            the licence that applies, where to report a vulnerability now, how to contribute now. -#}
         <ul class="space-y-2 text-sm font-medium text-body">
           <li><a href="{{ project.repository_url }}" class="hover:text-heading hover:underline">GitHub</a></li>
           <li><a href="{{ project.repository_url }}/blob/master/LICENSE" class="hover:text-heading hover:underline">{{ project.license }} licence</a></li>

@@ -6,10 +6,11 @@
 //! the Swagger UI, in the Cockpit and in the generated reference, without any of those
 //! carrying a route, a schema or a sentence of their own.
 //!
-//! Creating, migrating, repairing and removing are deliberately *not* here. A capability of
-//! this registry never writes to the repository — that is the registry's contract, and the
-//! shared MCP server rests on it — and those write to the filesystem. They are command-line
-//! operations, they call the same service, and the Cockpit names the exact command for each.
+//! Creating, migrating, repairing and removing are deliberately *not* here. A capability that
+//! writes the repository must declare `Effect::RepositoryMutation`, and the set of those is
+//! pinned by a test in `builtin`; moving worktrees on disk is not a thing the shared MCP
+//! server takes on. They are command-line operations, they call the same service, and the
+//! Cockpit names the exact command for each.
 
 use std::path::Path;
 

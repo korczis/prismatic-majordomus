@@ -15,6 +15,7 @@ rules: [project.conventional-commits, project.derived-files-regenerated, project
 docs: [docs/COMMIT.md]
 adrs: [adr-0054]
 claims: [commit-message-is-judged, commit-scopes-are-learned, commit-plan-is-refusable]
+use_cases: [plan-a-commit-and-judge-its-message]
 related: [doctrine, declare-once, provenance]
 tags: [git, commit, governance]
 ---

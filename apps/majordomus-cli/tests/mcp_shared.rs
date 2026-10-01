@@ -7,6 +7,8 @@
 //! clients released in the same instant still leaves one server, one board and a
 //! repository nobody wrote to.
 
+// claims: mcp-lease-resilience
+
 mod common;
 
 use std::io::{BufRead, BufReader, Read, Write};
@@ -16,7 +18,7 @@ use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver};
 use std::time::{Duration, Instant};
 
-use common::{Fixture, BIN};
+use common::{without_observation_times, Fixture, BIN};
 use serde_json::{json, Value};
 
 const WAIT: Duration = Duration::from_secs(20);
@@ -612,6 +614,7 @@ fn a_stale_lease_is_taken_over() {
     let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
     let line = a.wait_log("stale lease");
     assert!(line.contains(&format!("127.0.0.1:{port}")), "{line}");
+    assert!(line.contains("taking it over"), "{line}");
     let url = Mcp::url_in(&a.wait_log("listening on http://"));
     let lease: Value =
         serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
@@ -883,7 +886,11 @@ fn an_abandoned_lease_is_taken_over_without_waiting_when_it_is_old() {
     let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
     let line = a.wait_log("abandoned lease");
     assert!(line.contains("never published a URL"), "{line}");
-    a.wait_log("listening on http://");
+    assert!(line.contains("taking it over"), "{line}");
+    let url = Mcp::url_in(&a.wait_log("listening on http://"));
+    let lease: Value =
+        serde_json::from_str(&std::fs::read_to_string(lease_path(&f)).unwrap()).unwrap();
+    assert_eq!(lease["url"], url, "the lease is now the live server's");
     assert!(
         started.elapsed() < Duration::from_secs(10),
         "{:?}",
@@ -968,6 +975,37 @@ fn sigterm_removes_the_lease_before_the_process_dies() {
         "{log}"
     );
     assert_eq!(b.close(), 0);
+}
+
+/// Ctrl-C and a closing terminal are the other two ways a client's server dies, and the
+/// claim is that a signal removes the lease, not that SIGTERM does.
+#[test]
+fn sigint_and_sighup_remove_the_lease_before_the_process_dies() {
+    use std::os::unix::process::ExitStatusExt;
+    let f = Fixture::new();
+    for (name, number) in [("INT", 2), ("HUP", 1)] {
+        let mut a = Mcp::spawn(&f.root(), &["--http-port", "0"]);
+        a.wait_log("listening on http://");
+        assert!(
+            lease_path(&f).exists(),
+            "SIG{name}: the server holds a lease"
+        );
+        let sent = Command::new("kill")
+            .args([&format!("-{name}"), &a.child.id().to_string()])
+            .status()
+            .unwrap();
+        assert!(sent.success(), "kill -{name}");
+        let status = a.child.wait().unwrap();
+        assert_eq!(
+            status.signal(),
+            Some(number),
+            "died of SIG{name}: {status:?}"
+        );
+        assert!(
+            !lease_path(&f).exists(),
+            "SIG{name}: the handler removed the lease before the process died"
+        );
+    }
 }
 
 #[test]
@@ -1163,16 +1201,39 @@ fn a_bridge_is_transparent_and_a_restarted_server_answers_the_same_bytes() {
     );
     assert_eq!(b.close(), 0);
     assert_eq!(a.close(), 0);
-    // a fresh server in the same repository answers byte for byte the same
+    // a fresh server in the same repository answers byte for byte the same, except for when
+    // it read the repository: the freshness contract says so, and a restart reads again
     let mut c = Mcp::spawn(&f.root(), &["--http-port", "0"]);
     c.wait_log("listening on http://");
     c.initialize("third");
     let again = answers(&mut c);
+    let unobserved = |v: &[String]| v.iter().map(|s| without_observation_times(s)).collect();
+    let (direct, again): (Vec<String>, Vec<String>) = (unobserved(&direct), unobserved(&again));
     assert_eq!(
         direct, again,
         "the same repository yields the same projection after a restart"
     );
     assert_eq!(c.close(), 0);
+}
+
+#[test]
+fn an_observation_time_is_masked_wherever_the_answer_carries_it() {
+    let plain = r#"{"observed_at":"2026-09-29T10:40:00Z","stale_after":"2026-09-29T10:42:00Z"}"#;
+    let escaped = r#"{"text":"{\"observed_at\":\"2027-01-01T00:00:00Z\"}"}"#;
+    assert_eq!(
+        without_observation_times(plain),
+        r#"{"observed_at":"<observed>","stale_after":"<observed>"}"#
+    );
+    assert_eq!(
+        without_observation_times(escaped),
+        r#"{"text":"{\"observed_at\":\"<observed>\"}"}"#
+    );
+    let other = r#"{"committed_at":"2026-09-29T10:40:00Z"}"#;
+    assert_eq!(
+        without_observation_times(other),
+        other,
+        "only an observation is masked"
+    );
 }
 
 #[test]

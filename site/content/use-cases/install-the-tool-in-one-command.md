@@ -6,7 +6,7 @@ weight = 3
 id = "install-the-tool-in-one-command"
 source = ".ai/repo/use-cases/install-the-tool-in-one-command.md"
 category = "adoption"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

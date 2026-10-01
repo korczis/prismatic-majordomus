@@ -154,6 +154,7 @@ pub fn document(
         op.insert("x-majordomus-provenance".into(), json!(c.provenance));
         op.insert("x-majordomus-benchmark".into(), json!(c.benchmark));
         op.insert("x-majordomus-cache".into(), json!(c.cache));
+        op.insert("x-majordomus-effect".into(), json!(c.execution.effect));
         if let Some(mcp) = &c.exposure.mcp {
             op.insert("x-majordomus-mcp".into(), json!(mcp));
         }
