@@ -40,9 +40,9 @@ supposed to remove.
 
 `majordomus finish` evaluates a contract, line by line, and prints each line as pass or
 fail: touched files within the declared scope; the project's own verification command ran
-and exited zero, with its command, exit code and duration recorded; the task record still
-describes this checkout; no open question for this task is unresolved; a handover or
-completion note with the required sections exists. If any line fails, nothing is written.
+and exited zero over a tree that did not move under it, with its command, exit code,
+duration and tree recorded; the task record still describes this checkout; no open question
+for this task is unresolved; a handover or completion note with the required sections exists. If any line fails, nothing is written.
 
 The outcome is a value from a closed vocabulary — `completed`, `partial`, `blocked`,
 `no_match`, `failed` — not prose. `no_match` means the work was done and the thing sought
@@ -64,7 +64,7 @@ after    majordomus finish --outcome completed --verify-command "make test"
 
 Run `finish` with a verification command that fails. Nothing is written, the failing line is
 named, and the reproduce command is printed. Then fix it and run again; the ledger carries
-the exit code and duration that were actually observed.
+the exit code, duration and tree that were actually observed.
 
 ## What it does not do
 

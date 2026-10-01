@@ -15,7 +15,7 @@ source = "docs/claims/telemetry.md"
 
 ## How it works
 
-Nothing is implemented. The ledger already records per task the session count, handovers, workers, verification command with exit code and duration, and outcome; the provider-side numbers are the missing half. Any `estimated_` field, when it appears, is excluded from enforcement and from comparisons.
+Nothing is implemented. The ledger already records per task the session count, handovers, workers, verification command with exit code, duration and the tree it ran over, and outcome; the provider-side numbers are the missing half. Any `estimated_` field, when it appears, is excluded from enforcement and from comparisons.
 
 ## How to see it
 

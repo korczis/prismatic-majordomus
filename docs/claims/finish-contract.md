@@ -6,7 +6,7 @@
 
 ## How it works
 
-`lib/finish.sh` reads `verification.finish_requires` from the policy and evaluates each named line, running `--verify-command` through `sh -c` in the repository root and recording its command, exit code and duration. Profile requirements are added for `completed`: a regression test path when the profile requires one (a path heuristic that says so), a decision record when required. On success it sets the outcome, appends `task.finished` with the evaluated contract and the verification result to the ledger, and copies a `--note` file under `state/completed/`. `--check` evaluates scope and state without writing, exits 0 with no active task, and is what a pre-push hook runs.
+`lib/finish.sh` reads `verification.finish_requires` from the policy and evaluates each named line, running `--verify-command` through `sh -c` in the repository root and recording its command, exit code, duration and the git tree id it ran over; the tree is read on both sides of the run and one that changed under it fails the line rather than passing it. Profile requirements are added for `completed`: a regression test path when the profile requires one (a path heuristic that says so), a decision record when required. On success it sets the outcome, appends `task.finished` with the evaluated contract and the verification result to the ledger, and copies a `--note` file under `state/completed/`. `--check` evaluates scope and state without writing, exits 0 with no active task, and is what a pre-push hook runs.
 
 ## How to see it
 
