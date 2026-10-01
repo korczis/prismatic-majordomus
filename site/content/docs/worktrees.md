@@ -1,7 +1,7 @@
 +++
 title = "Worktrees"
 description = "the branch-to-worktree topology: `<repo>-wt/<branch>` derived from git identity and never registered, the standings and diagnostic codes, the commands, the lifecycle, the layered enforcement, the fingerprint-verified migration, failure modes and recovery"
-weight = 50
+weight = 51
 [extra]
 source = "docs/WORKTREES.md"
 +++
@@ -11,7 +11,7 @@ source = "docs/WORKTREES.md"
 Where every linked git worktree of this repository belongs, how that is decided, and what
 the tool does about one that is somewhere else. Behaviour as implemented and tested; where
 this document and the executable disagree, the document is wrong and changes in the same
-commit. The decision is [ADR 21](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md);
+commit. The decision is [ADR 21](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0021-the-branch-to-worktree-topology-is-derived-from-git-identity-and-enfor.md);
 the rule is `project.worktree-topology`.
 
 ```text
@@ -199,7 +199,7 @@ majordomus worktree cleanup                    # what is merged and clean; delet
 | `worktree guard [--quiet]` | may a commit proceed from here | no |
 | `worktree repair [--dry-run]` | drop stale registrations, repair git's links; deletes no directory | |
 | `worktree remove <branch\|path> [--force]` | remove one linked worktree; never the primary, never a branch, never dirty work unforced | refused |
-| `worktree cleanup` | branches merged into the trunk whose worktree is clean or absent, with the commands that would remove them | |
+| `worktree cleanup` | branches merged into the trunk, or into the remote-tracking branch the trunk follows, whose worktree is clean or absent, with the commands that would remove them. A primary checkout nobody has pulled does not hide what has already landed. | |
 | `worktree branches [--without-worktree]` | every local branch, one per line | |
 
 </div>
@@ -263,6 +263,15 @@ the report says which (`differs`, `not_approved_in_primary`). A branch with an `
 its own is a file the person has not read, and approving it for them is the one thing
 `direnv allow` exists to prevent. Without direnv on the PATH the outcome is
 `direnv_absent` and nothing is blocked, because nothing would load the file.
+
+The primary checkout's machine-local `.envrc.local` is shared in the same moment. The
+repository's `.envrc` sources `.envrc.local` from the directory it is entered from, and
+the adapter rule keeps that file free of the program a lookup of the primary checkout
+would need. So a new worktree gets a symlink to the primary checkout's `.envrc.local`, and
+the person's own exports, including keychain-backed secrets such as `OPENAI_API_KEY`, load
+there too, from one file. The link is made only where git ignores the name
+(`not_ignored` otherwise), and a worktree with an `.envrc.local` of its own keeps it
+(`own_kept`).
 
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes

@@ -35,6 +35,7 @@ pub(crate) mod capabilities;
 pub mod commands;
 pub mod commit;
 pub mod continuity;
+pub mod dashboard;
 pub(crate) mod delivery;
 pub(crate) mod deploy;
 pub(crate) mod design;
@@ -50,6 +51,7 @@ pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub(crate) mod integration;
 pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -60,6 +62,7 @@ pub(crate) mod perf;
 pub mod plan;
 pub(crate) mod product;
 pub mod quality;
+pub mod reasoning;
 pub mod recover;
 pub mod release;
 pub mod repository;
@@ -80,7 +83,10 @@ use super::handler::Executable;
 use super::model::{HttpExposure, HttpMethod, McpExposure};
 use super::module::ModuleDescriptor;
 
-pub use artifacts::{ArtifactReport, ArtifactState, ArtifactView, ArtifactsInput, ARTIFACTS_URI};
+pub use artifacts::{
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, ArtifactView, ArtifactsInput,
+    ARTIFACTS_URI,
+};
 pub use capabilities::{CapabilitiesInput, CapabilityList, CapabilitySummary, DescribeInput};
 pub use continuity::{ActiveTask, Continuity, Divergence, OpenSession, Record, CONTINUITY_URI};
 pub use deploy::{
@@ -160,6 +166,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         commands,
         graph,
         health,
+        dashboard,
         continuity,
         lifecycle,
         obligations,
@@ -172,6 +179,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         executions,
         mesh,
         models,
+        reasoning,
         peers,
         server,
         session_domain,
@@ -191,6 +199,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         design,
         devtask,
         worktree,
+        integration,
         trace,
         product
     ]
@@ -282,7 +291,9 @@ mod tests {
             .collect();
         assert_eq!(
             writers.into_iter().collect::<Vec<_>>(),
-            ["plan.transition", "recover.orphans"]
+            // reasoning.record writes checkout state under .ai/local, never a tracked file,
+            // and is classified with the writers so that every surface asks before it runs.
+            ["plan.transition", "reasoning.record", "recover.orphans"]
         );
     }
 }

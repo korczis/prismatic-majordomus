@@ -3,17 +3,17 @@
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the product features of this repository's layer, resolved against the registry, the index, the catalogue and the topology; regenerate with `majordomus generate`",
   "generator": {
     "id": "majordomus-cli",
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
-  "fingerprint": "f0e4341e0a0ca92592f5f774e59f9a3903736766c22ee9375fdb9c8ba6e046fe",
+  "fingerprint": "4400bfab76dfd5406276d0de86d61f7c9357d65610274360c9f93a0348283f6b",
   "route": "/features/",
   "counts": {
-    "features": 25,
-    "features_all": 26,
-    "featured": 13,
+    "features": 26,
+    "features_all": 27,
+    "featured": 14,
     "providers": 6,
-    "modules": 42,
-    "modules_covered": 37,
+    "modules": 45,
+    "modules_covered": 39,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 26,
@@ -24,31 +24,31 @@
       "id": "cli",
       "title": "Command line",
       "route": "/docs/cli/",
-      "features": 23
+      "features": 24
     },
     {
       "id": "api",
       "title": "HTTP API",
       "route": "/docs/api/",
-      "features": 19
+      "features": 20
     },
     {
       "id": "mcp",
       "title": "MCP",
       "route": "/registry/mcp/",
-      "features": 23
+      "features": 24
     },
     {
       "id": "cockpit",
       "title": "Cockpit",
       "route": "/docs/cockpit/",
-      "features": 20
+      "features": 21
     },
     {
       "id": "docs",
       "title": "Documentation",
       "route": "/docs/",
-      "features": 25
+      "features": 26
     }
   ],
   "features": [
@@ -296,7 +296,7 @@
       "kind_refs": [
         {
           "name": "feature",
-          "objects": 26
+          "objects": 27
         },
         {
           "name": "command",
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 194
+          "objects": 204
         }
       ],
       "rule_refs": [
@@ -568,11 +568,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 257,
+        "mcp_resources": 268,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 251,
+        "objects": 262,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -1344,7 +1344,8 @@
       "modules": [
         "peers",
         "server",
-        "worktree"
+        "worktree",
+        "integration"
       ],
       "commands": [
         "start",
@@ -1362,7 +1363,8 @@
       "docs": [
         "docs/WORKTREES.md",
         "docs/MCP.md",
-        "docs/ADOPTION.md"
+        "docs/ADOPTION.md",
+        "docs/INTEGRATION.md"
       ],
       "adrs": [
         "adr-0003",
@@ -1380,7 +1382,8 @@
         "work-on-a-branch-in-its-canonical-worktree"
       ],
       "cockpit": [
-        "worktrees"
+        "worktrees",
+        "integration"
       ],
       "web": [
         "mcp"
@@ -1493,6 +1496,42 @@
               "cli": "majordomus worktree topology"
             }
           ]
+        },
+        {
+          "id": "integration",
+          "title": "Pull-request integration",
+          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+          "capabilities": [
+            {
+              "id": "integration.events",
+              "title": "The integration audit trail",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_integration_events",
+              "route": "GET /api/v1/pull-requests/events",
+              "cli": "majordomus prs events"
+            },
+            {
+              "id": "integration.explain",
+              "title": "Why one pull request is where it is",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_request_explain",
+              "route": "GET /api/v1/pull-requests/explain",
+              "cli": "majordomus prs explain"
+            },
+            {
+              "id": "integration.queue",
+              "title": "The integration queue",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests",
+              "route": "GET /api/v1/pull-requests",
+              "cli": "majordomus prs status"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -1570,6 +1609,10 @@
         {
           "path": "docs/ADOPTION.md",
           "title": "Adoption"
+        },
+        {
+          "path": "docs/INTEGRATION.md",
+          "title": "Pull-request integration"
         }
       ],
       "adr_refs": [
@@ -1630,6 +1673,11 @@
           "id": "worktrees",
           "title": "Worktrees",
           "route": "/cockpit/worktrees"
+        },
+        {
+          "id": "integration",
+          "title": "Integration",
+          "route": "/cockpit/integration"
         }
       ],
       "web_refs": [
@@ -1734,16 +1782,16 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 10,
+        "mcp_tools": 10,
         "mcp_resources": 2,
-        "http_routes": 7,
-        "cli_paths": 5,
+        "http_routes": 10,
+        "cli_paths": 8,
         "commands": 3,
         "objects": 0,
         "rules": 5,
         "enforced_rules": 3,
-        "docs": 3,
+        "docs": 4,
         "adrs": 2,
         "claims": 5,
         "use_cases": 2,
@@ -1754,7 +1802,8 @@
           "guaranteed": 5
         },
         "modules": {
-          "behaviorally_verified": 3
+          "behaviorally_verified": 3,
+          "experimental": 1
         }
       }
     },
@@ -2335,7 +2384,8 @@
       "web_refs": [],
       "moments": [],
       "backlinks": [
-        "models"
+        "models",
+        "reasoning"
       ],
       "counts": {
         "capabilities": 21,
@@ -2489,7 +2539,8 @@
       "web_refs": [],
       "moments": [],
       "backlinks": [
-        "economics"
+        "economics",
+        "reasoning"
       ],
       "counts": {
         "capabilities": 2,
@@ -2687,6 +2738,240 @@
         },
         "modules": {
           "behaviorally_verified": 1
+        }
+      }
+    },
+    {
+      "id": "reasoning",
+      "title": "Reasoning that works with or without advisors, and review that is recorded rather than claimed",
+      "short_title": "Reasoning",
+      "headline": "Material uncertainty becomes an evidence-backed decision — reviewed by whichever optional advisors are available, decided locally when none are, and carried to the next session as a record.",
+      "summary": "share/advisors.yaml declares advisory roles by reference to the provider table and the model catalogue; availability is derived from presence and recorded outcomes, with no network; a pure policy plans review by capability and treats no advisor as a structured local review; one writer records assessments, consultations, disagreements settled by experiment, conclusions with computed review counts, and validations; and the state reaches the command line, HTTP, MCP, the Cockpit, the environment banner, doctor, the context briefing and the derived handover.",
+      "status": "stable",
+      "weight": 47,
+      "featured": true,
+      "areas": [
+        "coordination"
+      ],
+      "audiences": [],
+      "modules": [
+        "reasoning"
+      ],
+      "commands": [],
+      "kinds": [],
+      "rules": [
+        "project.advisors-are-optional",
+        "project.review-is-recorded-not-claimed"
+      ],
+      "docs": [
+        "docs/REASONING.md"
+      ],
+      "adrs": [
+        "adr-0098"
+      ],
+      "claims": [
+        "reasoning-works-with-no-advisor",
+        "advisor-transports-share-one-contract",
+        "advice-is-weighed-not-counted",
+        "advisor-failure-is-recorded-and-recovers",
+        "reasoning-survives-the-session",
+        "advisors-are-declared-once",
+        "review-is-never-fabricated"
+      ],
+      "use_cases": [],
+      "cockpit": [
+        "reasoning"
+      ],
+      "web": [],
+      "related": [
+        "models",
+        "mesh"
+      ],
+      "tags": [
+        "reasoning",
+        "advisors",
+        "review"
+      ],
+      "route": "/features/reasoning/",
+      "source": ".ai/repo/features/reasoning.md",
+      "surfaces": {
+        "cli": true,
+        "api": true,
+        "mcp": true,
+        "cockpit": true,
+        "docs": true
+      },
+      "module_refs": [
+        {
+          "id": "reasoning",
+          "title": "Reasoning",
+          "description": "Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+          "capabilities": [
+            {
+              "id": "reasoning.advisors",
+              "title": "The advisors and what they can do now",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning_advisors",
+              "resource": "majordomus://reasoning/advisors",
+              "route": "GET /api/v1/reasoning/advisors",
+              "cli": "majordomus reasoning advisors"
+            },
+            {
+              "id": "reasoning.check",
+              "title": "Check that reasoning stays provider-independent",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning_check",
+              "route": "GET /api/v1/reasoning/check",
+              "cli": "majordomus reasoning check"
+            },
+            {
+              "id": "reasoning.explain",
+              "title": "Why a decision was made",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning_explain",
+              "route": "GET /api/v1/reasoning/explain",
+              "cli": "majordomus reasoning explain"
+            },
+            {
+              "id": "reasoning.plan",
+              "title": "What an uncertainty calls for",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning_plan",
+              "route": "GET /api/v1/reasoning/plan",
+              "cli": "majordomus reasoning plan"
+            },
+            {
+              "id": "reasoning.record",
+              "title": "Record a reasoning step",
+              "kind": "command",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning_record",
+              "route": "POST /api/v1/reasoning/records",
+              "cli": "majordomus reasoning record"
+            },
+            {
+              "id": "reasoning.status",
+              "title": "The session's reasoning state",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_reasoning",
+              "resource": "majordomus://reasoning",
+              "route": "GET /api/v1/reasoning",
+              "cli": "majordomus reasoning status"
+            }
+          ]
+        }
+      ],
+      "command_refs": [],
+      "kind_refs": [],
+      "rule_refs": [
+        {
+          "id": "project.advisors-are-optional",
+          "identity": "project.advisors-are-optional@1",
+          "title": "Advisors are optional; reasoning, governance and CI never depend on one",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/advisors-are-optional.v1.md"
+        },
+        {
+          "id": "project.review-is-recorded-not-claimed",
+          "identity": "project.review-is-recorded-not-claimed@1",
+          "title": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+          "class": "blocking",
+          "enforced": true,
+          "path": ".ai/repo/rules/project/review-is-recorded-not-claimed.v1.md"
+        }
+      ],
+      "doc_refs": [
+        {
+          "path": "docs/REASONING.md",
+          "title": "Reasoning"
+        }
+      ],
+      "adr_refs": [
+        {
+          "id": "adr-0098",
+          "title": "Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim",
+          "status": "proposed",
+          "path": ".ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md"
+        }
+      ],
+      "claim_refs": [
+        {
+          "id": "reasoning-works-with-no-advisor",
+          "claim": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+          "status": "guaranteed"
+        },
+        {
+          "id": "advisor-transports-share-one-contract",
+          "claim": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+          "status": "guaranteed"
+        },
+        {
+          "id": "advice-is-weighed-not-counted",
+          "claim": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+          "status": "guaranteed"
+        },
+        {
+          "id": "advisor-failure-is-recorded-and-recovers",
+          "claim": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+          "status": "guaranteed"
+        },
+        {
+          "id": "reasoning-survives-the-session",
+          "claim": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+          "status": "guaranteed"
+        },
+        {
+          "id": "advisors-are-declared-once",
+          "claim": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+          "status": "guaranteed"
+        },
+        {
+          "id": "review-is-never-fabricated",
+          "claim": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+          "status": "guaranteed"
+        }
+      ],
+      "use_case_refs": [],
+      "cockpit_refs": [
+        {
+          "id": "reasoning",
+          "title": "Reasoning",
+          "route": "/cockpit/reasoning"
+        }
+      ],
+      "web_refs": [],
+      "moments": [],
+      "backlinks": [],
+      "counts": {
+        "capabilities": 6,
+        "mcp_tools": 6,
+        "mcp_resources": 2,
+        "http_routes": 6,
+        "cli_paths": 6,
+        "commands": 0,
+        "objects": 0,
+        "rules": 2,
+        "enforced_rules": 2,
+        "docs": 1,
+        "adrs": 1,
+        "claims": 7,
+        "use_cases": 0,
+        "moments": 0
+      },
+      "evidence": {
+        "claims": {
+          "guaranteed": 7
+        },
+        "modules": {
+          "experimental": 1
         }
       }
     },
@@ -3467,7 +3752,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 61
+          "objects": 70
         },
         {
           "name": "knowledge",
@@ -3475,7 +3760,7 @@
         },
         {
           "name": "document",
-          "objects": 274
+          "objects": 286
         }
       ],
       "rule_refs": [
@@ -3724,11 +4009,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 337,
+        "mcp_resources": 358,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 336,
+        "objects": 357,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -3938,7 +4223,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 141
+          "objects": 147
         }
       ],
       "rule_refs": [
@@ -4302,11 +4587,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 143,
+        "mcp_resources": 149,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 141,
+        "objects": 147,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -6597,7 +6882,7 @@
         },
         {
           "name": "issue",
-          "objects": 237
+          "objects": 238
         }
       ],
       "rule_refs": [
@@ -6740,11 +7025,11 @@
       "counts": {
         "capabilities": 14,
         "mcp_tools": 14,
-        "mcp_resources": 259,
+        "mcp_resources": 260,
         "http_routes": 14,
         "cli_paths": 2,
         "commands": 1,
-        "objects": 257,
+        "objects": 258,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -9147,6 +9432,26 @@
         ]
       },
       {
+        "id": "reasoning",
+        "label": "Reasoning",
+        "route": "/features/reasoning/",
+        "status": "stable",
+        "surfaces": {
+          "cli": true,
+          "api": true,
+          "mcp": true,
+          "cockpit": true,
+          "docs": true
+        },
+        "exposed": [
+          "cli",
+          "api",
+          "mcp",
+          "cockpit",
+          "docs"
+        ]
+      },
+      {
         "id": "continuity",
         "label": "Continuity",
         "route": "/features/continuity/",
@@ -9549,6 +9854,11 @@
         ]
       },
       {
+        "id": "dashboard",
+        "title": "Dashboards",
+        "features": []
+      },
+      {
         "id": "delivery",
         "title": "Delivery",
         "features": []
@@ -9649,6 +9959,13 @@
         ]
       },
       {
+        "id": "integration",
+        "title": "Pull-request integration",
+        "features": [
+          "coordination"
+        ]
+      },
+      {
         "id": "lifecycle",
         "title": "Session lifecycle",
         "features": [
@@ -9716,6 +10033,13 @@
         "title": "Public API quality",
         "features": [
           "declare-once"
+        ]
+      },
+      {
+        "id": "reasoning",
+        "title": "Reasoning",
+        "features": [
+          "reasoning"
         ]
       },
       {
@@ -10032,7 +10356,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (61)",
+        "title": "adr (70)",
         "features": [
           "knowledge"
         ]
@@ -10060,7 +10384,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (194)",
+        "title": "claim (204)",
         "features": [
           "declare-once"
         ]
@@ -10093,14 +10417,14 @@
       },
       {
         "id": "feature",
-        "title": "feature (26)",
+        "title": "feature (27)",
         "features": [
           "declare-once"
         ]
       },
       {
         "id": "issue",
-        "title": "issue (237)",
+        "title": "issue (238)",
         "features": [
           "planning"
         ]
@@ -10163,7 +10487,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (141)",
+        "title": "rule (147)",
         "features": [
           "doctrine"
         ]
@@ -10613,6 +10937,14 @@
       "path": ".ai/repo/rules/vendor/majordomus/rules/principle-08-verify-outcomes.v1.md"
     },
     {
+      "id": "project.advisors-are-optional",
+      "identity": "project.advisors-are-optional@1",
+      "title": "Advisors are optional; reasoning, governance and CI never depend on one",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/advisors-are-optional.v1.md"
+    },
+    {
       "id": "project.benchmarkable-commands",
       "identity": "project.benchmarkable-commands@1",
       "title": "Every public command is benchmarkable from the registry",
@@ -10797,6 +11129,14 @@
       "path": ".ai/repo/rules/project/portable-shell.v1.md"
     },
     {
+      "id": "project.review-is-recorded-not-claimed",
+      "identity": "project.review-is-recorded-not-claimed@1",
+      "title": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+      "class": "blocking",
+      "enforced": true,
+      "path": ".ai/repo/rules/project/review-is-recorded-not-claimed.v1.md"
+    },
+    {
       "id": "project.rule-is-a-doctrine",
       "identity": "project.rule-is-a-doctrine@1",
       "title": "A new enforced rule is a doctrine, not an inline check",
@@ -10959,6 +11299,11 @@
       "route": "/cockpit/worktrees"
     },
     {
+      "id": "integration",
+      "title": "Integration",
+      "route": "/cockpit/integration"
+    },
+    {
       "id": "mesh",
       "title": "Mesh",
       "route": "/cockpit/mesh"
@@ -10967,6 +11312,11 @@
       "id": "models",
       "title": "Models",
       "route": "/cockpit/models"
+    },
+    {
+      "id": "reasoning",
+      "title": "Reasoning",
+      "route": "/cockpit/reasoning"
     },
     {
       "id": "economics",
@@ -11000,31 +11350,31 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1621,
-    "builtin": 142,
-    "declarative": 1479,
-    "modules": 42,
-    "mcp_tools": 136,
-    "mcp_resources": 1524,
-    "http_routes": 140,
-    "cli_commands": 145,
+    "capabilities": 1705,
+    "builtin": 152,
+    "declarative": 1553,
+    "modules": 45,
+    "mcp_tools": 146,
+    "mcp_resources": 1600,
+    "http_routes": 150,
+    "cli_commands": 161,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1479,
+    "objects": 1553,
     "by_kind": {
-      "adr": 61,
+      "adr": 70,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 194,
+      "claim": 204,
       "command": 31,
       "context": 31,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 274,
-      "feature": 26,
+      "document": 286,
+      "feature": 27,
       "implementation": 49,
-      "issue": 237,
+      "issue": 238,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 20,
@@ -11033,18 +11383,1256 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 141,
+      "rule": 147,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 252,
+      "test": 287,
       "use-case": 46,
       "workspace": 1
     },
     "providers": 6,
-    "features": 25,
+    "features": 26,
     "web_surfaces": 10
+  },
+  "evidence": {
+    "producer": "majordomus evidence show",
+    "available": true,
+    "complete": true,
+    "ledger": {
+      "path": ".ai/repo/evidence/ledger.json",
+      "executions": 6,
+      "newest": "2026-09-12T10:36:18Z"
+    },
+    "declared": 188,
+    "supported": 0,
+    "claims": {
+      "a-finding-names-how-to-see-it-again": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "a-skipped-case-is-not-a-proof": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "adr-catalogue": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "adr-propose": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "adr-traceability": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "advertised-install-command-works": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "advice-is-weighed-not-counted": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "advisor-failure-is-recorded-and-recovers": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "advisor-transports-share-one-contract": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "advisors-are-declared-once": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "ai-layer-manifest": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "archive-fidelity": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "authored-files-are-english": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "benchmark-coverage-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "blocker-store": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "blocker-survives-handover": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "bootstrap-chain": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "capability-class": {
+        "status": "advisory",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "capability-modules": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "capability-registry": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "catalogue-resolves": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "checkpoint-interval": {
+        "status": "advisory",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "checkpoint-record": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "ci-planned-gates": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "ci-verdict": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "ci-verdict-is-required": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "cli-documentation-executable": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "cockpit-is-a-projection-of-the-registry": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "command-coverage": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "command-surface": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "commit-message-is-judged": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "commit-plan-is-refusable": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "commit-scopes-are-learned": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "consistency-check": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-assembly": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-budget": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-coverage": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-documents": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-impact": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-selection-budget": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "context-selection-counted": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "continuity-reachable": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "cost-per-outcome": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "dag-validation": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "decision-attribution": {
+        "status": "advisory",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "decision-record": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "deployment-contract-refuses-by-name": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "derivation-one-graph": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "derived-data-current": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "derived-not-declared": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "dispatcher-wiring": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "distribution-canonical-model": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "divergence-label": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "doctrine-class-decides": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "doctrine-registry": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "drift-watch": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "economics-claims-gated": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "effort-escalation": {
+        "status": "advisory",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "event-vocabulary": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-currency-is-not-collapsed": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "evidence-gates-done": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-navigates-both-ways": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "evidence-partial-run-preserves-the-rest": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "evidence-proof-is-an-execution": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "evidence-recorded-in-ci": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-unsupported-guarantee-is-reported": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "executable-reference-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "execution-cache-equivalence": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "execution-waves": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "exit-code-contract": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "finish-contract": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "finish-refusal-is-recorded": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "generated-artifacts-typed": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "generated-projections-checked": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "git-identity": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "github-projection": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "github-projection-gated": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "handover-record": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "history-ledger-read": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "hot-path-no-rebuild": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "init-refuses": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "install-command-is-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "installer-verifies-before-installing": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "interfaces-are-projections": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "landing-page-is-a-projection": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "ledger-integrity": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "legacy-migration": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "live-scenario-evidence-is-local": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "live-scenario-is-read-only": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "local-state-ignored": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-client-autostart": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-data-driven": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-degraded-not-silent": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-lease-lost": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-lease-resilience": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-peers": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-shared-server": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-stdio-surface": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mcp-uri-resolution": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-claims-cross-runtime": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-compaction-keeps-what-is-live": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-cooperation-links": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-declared-is-held": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-liveness-expiry": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-network-acceptance": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-observation-not-authority": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-off-by-default": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-one-registry": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-repository-isolation": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-three-runtime-convergence": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "minimum-context": {
+        "status": "advisory",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "models-no-secret-fields": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "models-one-declaration": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "models-routing-explains-itself": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "new-code-is-covered": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "no-counts-in-context": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "no-network": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "no-silent-overwrite": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "no-transcripts": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "obligation-closure": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "obligation-establishment": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "open-question-gate": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "openapi-inferred": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "overlap-report": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "pointer-integrity": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "policy-parse": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "product-features-discovered": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "product-projection-public-safe": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "product-references-resolve": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "product-surfaces-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "profile-axes": {
+        "status": "advisory",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "profile-validate": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "project-schema": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "project-status-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "projection-fingerprint": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "projection-generation": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "prompt-asset": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "prompt-assets": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "prompt-capture": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "prompt-continuity": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "provider-projections-one-renderer": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "reasoning-survives-the-session": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "reasoning-works-with-no-advisor": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "record-resolution": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "record-retention": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "record-search": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "region-projection": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "release-archive-shape": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "release-is-complete-or-absent": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "reproduce-command": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "retention-caps": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "review-is-never-fabricated": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "roadmap-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "routing": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "rule-exemption-carries-its-reason": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "rule-proof-is-named-and-resolves": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "rule-resolution": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rule-state-is-derived-from-what-ran": {
+        "status": "guaranteed",
+        "state": "stale",
+        "label": "stale",
+        "supported": false
+      },
+      "runtime-adapters": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "rust-binary-artifact": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rust-coverage-floor": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rust-evidence-gates": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rust-hot-path-benchmarks": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rustdoc-complete": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rustdoc-composed-from-the-topology": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rustdoc-discoverable": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rustdoc-published": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rustdoc-referenced": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "rustdoc-verified-live": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "schema-driven-kinds": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "scope-declared": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "scope-enforcement": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "scoped-task": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "semantic-retrieval": {
+        "status": "rejected",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "session-lifecycle": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "session-observability": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "session-records": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "shared-policy": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "site-deploy-one-path": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "site-deploys-from-verified-run": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "site-registry-dataset": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "skill-catalogue": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "skill-check": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "skill-site-projection": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "suite-parallel": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "task-commit-attribution": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "task-dependencies": {
+        "status": "rejected",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "telemetry": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "token-savings-measured": {
+        "status": "planned",
+        "state": "no-test",
+        "label": "no test",
+        "supported": false
+      },
+      "tool-location-independent": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "typed-outcome": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "use-case-coverage": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "use-case-evidence": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "use-case-impact": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "vendored-rule-package": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "web-namespaces-reserved": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "web-surface-declared-once": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "why-catalogue-discovered": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "why-diagnosis-explainable": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "why-references-resolve": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "wiring-reconciliation": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "worktree-migration-lossless": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "worktree-ownership": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "worktree-topology-derived": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      }
+    }
   },
   "valid": true
 }

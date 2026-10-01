@@ -16,9 +16,11 @@ use common::{run_in, Fixture, Served};
 use majordomus_cli::capability::builtin::continuity::Freshness;
 use majordomus_cli::capability::builtin::server::ServerStanding;
 use majordomus_cli::environment::preflight::{
-    derive, observe, Check, DeploymentObservation, EpisodeObservation, GitObservation,
+    derive, observe, observe_coverage, Check, CoverageObservation, DeploymentObservation,
+    EpisodeObservation, GenerationObservation, GenerationRecord, GitObservation,
     HandoverObservation, LedgerObservation, Observations, Preflight, Probe, RulesObservation,
-    RulesTally, ServerObservation, TaskObservation, Verdict, PAGES_REF,
+    RulesTally, ServerObservation, TaskObservation, Verdict, COVERAGE_RECORD, GENERATION_RECORD,
+    PAGES_REF,
 };
 use majordomus_cli::environment::{resolve, EnvironmentQuery, Inputs};
 use majordomus_cli::Repository;
@@ -350,6 +352,152 @@ fn a_deployment_of_another_commit_is_stale_and_of_this_one_verified() {
     assert_eq!(verdict(&o, "verification.deployment"), Verdict::Unavailable);
 }
 
+/// A record as `scripts/rust-coverage` writes it, at `commit`, on a tree it calls `tree`.
+fn coverage_record(commit: &str, tree: &str, outcome: &str, suite_exit: i32) -> String {
+    json!({
+        "schema": 1,
+        "measurement": "scripts/rust-coverage",
+        "commit": commit,
+        "working_tree": tree,
+        "at": "2026-09-29T20:00:00Z",
+        "mode": "gate",
+        "outcome": outcome,
+        "suite_exit": suite_exit,
+        "crate": {
+            "lines": {"covered": 90, "total": 100, "percent": 90.0},
+            "functions": {"covered": 8, "total": 10, "percent": 80.0},
+            "regions": {"covered": 7, "total": 10, "percent": 70.0}
+        },
+        "domain": {
+            "lines": {"covered": 1, "total": 1, "percent": 100.0},
+            "functions": {"covered": 1, "total": 1, "percent": 100.0},
+            "regions": {"covered": 1, "total": 1, "percent": 100.0}
+        }
+    })
+    .to_string()
+}
+
+/// The verdict of the coverage check over a record written to a real directory and read back
+/// by the same function `observe` calls.
+fn coverage_verdict(head: &str, record: Option<&str>) -> (Verdict, CoverageObservation) {
+    let dir = std::env::temp_dir().join(format!(
+        "mj-preflight-coverage-{}-{}",
+        std::process::id(),
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_nanos()
+    ));
+    let path = dir.join(COVERAGE_RECORD);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    if let Some(text) = record {
+        std::fs::write(&path, text).unwrap();
+    }
+    let mut o = at(head);
+    o.coverage = observe_coverage(&dir);
+    let _ = std::fs::remove_dir_all(&dir);
+    (verdict(&o, "verification.coverage"), o.coverage)
+}
+
+#[test]
+fn coverage_is_judged_by_the_record_the_measurement_left() {
+    let (v, c) = coverage_verdict(HEAD, None);
+    assert_eq!((v, c), (Verdict::Unavailable, CoverageObservation::Absent));
+    let pass = coverage_record(HEAD, "clean", "pass", 0);
+    assert_eq!(coverage_verdict(HEAD, Some(&pass)).0, Verdict::Verified);
+    // another commit, or a tree that moved during the run, proves nothing about this one
+    assert_eq!(coverage_verdict(OLD, Some(&pass)).0, Verdict::Stale);
+    let dirty = coverage_record(HEAD, "dirty", "pass", 0);
+    assert_eq!(coverage_verdict(HEAD, Some(&dirty)).0, Verdict::Stale);
+    let fail = coverage_record(HEAD, "clean", "fail", 0);
+    assert_eq!(coverage_verdict(HEAD, Some(&fail)).0, Verdict::Failed);
+    // thresholds that hold over a suite that failed are not a verified measurement
+    let broken = coverage_record(HEAD, "clean", "pass", 101);
+    assert_eq!(coverage_verdict(HEAD, Some(&broken)).0, Verdict::Failed);
+    let report = coverage_record(HEAD, "clean", "report", 0);
+    assert_eq!(coverage_verdict(HEAD, Some(&report)).0, Verdict::Active);
+    let (v, c) = coverage_verdict(HEAD, Some("{\"schema\": 2}"));
+    assert_eq!(v, Verdict::Unknown);
+    assert!(matches!(c, CoverageObservation::Unreadable(_)));
+}
+
+#[test]
+fn a_verified_coverage_check_names_its_record() {
+    let mut o = at(HEAD);
+    o.coverage = CoverageObservation::Read(
+        serde_json::from_str(&coverage_record(HEAD, "clean", "pass", 0)).unwrap(),
+    );
+    let p = derive(&o);
+    let c = p.check("verification.coverage").unwrap();
+    assert_eq!(c.verdict, Verdict::Verified);
+    assert!(c.summary.contains("lines 90.00% (90/100)"), "{}", c.summary);
+    assert!(
+        c.evidence.iter().any(|e| e.source == COVERAGE_RECORD),
+        "{c:?}"
+    );
+}
+
+const TREE: &str = "3333333333333333333333333333333333333333";
+
+/// The generation check's verdict when the record says `outcome` about `tree`, HEAD's tree is
+/// `head_tree`, and the working tree is `clean`.
+fn generation_verdict(outcome: &str, tree: &str, head_tree: Option<&str>, clean: bool) -> Check {
+    let mut o = at(HEAD);
+    o.git.as_mut().unwrap().clean = clean;
+    o.generation = GenerationObservation::Read {
+        record: GenerationRecord {
+            schema: 1,
+            commit: OLD.into(),
+            tree: tree.into(),
+            at: "2026-09-30T00:00:00Z".into(),
+            outcome: outcome.into(),
+        },
+        head_tree: head_tree.map(str::to_string),
+    };
+    derive(&o).check("verification.docs").unwrap().clone()
+}
+
+#[test]
+fn generated_docs_are_judged_by_the_tree_the_check_measured() {
+    // the hook checks the index before the commit exists: the record names the parent commit,
+    // and it is the tree that must match
+    let c = generation_verdict("pass", TREE, Some(TREE), true);
+    assert_eq!(c.verdict, Verdict::Verified, "{}", c.summary);
+    assert!(
+        c.evidence.iter().any(|e| e.source == GENERATION_RECORD),
+        "{c:?}"
+    );
+    assert_eq!(
+        generation_verdict("fail", TREE, Some(TREE), true).verdict,
+        Verdict::Failed
+    );
+    // the registry half skipped is a check that did not finish
+    assert_eq!(
+        generation_verdict("partial", TREE, Some(TREE), true).verdict,
+        Verdict::Unknown
+    );
+    // another tree, a working tree that was not its index, or edits since: nothing about HEAD
+    assert_eq!(
+        generation_verdict("pass", OLD, Some(TREE), true).verdict,
+        Verdict::Stale
+    );
+    assert_eq!(
+        generation_verdict("pass", "", Some(TREE), true).verdict,
+        Verdict::Stale
+    );
+    assert_eq!(
+        generation_verdict("pass", TREE, Some(TREE), false).verdict,
+        Verdict::Stale
+    );
+    assert_eq!(
+        generation_verdict("pass", TREE, None, true).verdict,
+        Verdict::Stale
+    );
+    let mut o = at(HEAD);
+    o.generation = GenerationObservation::Unreadable("schema 2".into());
+    assert_eq!(verdict(&o, "verification.docs"), Verdict::Unknown);
+}
+
 #[test]
 fn coverage_and_generated_docs_are_never_claimed_on_nothing() {
     let p = derive(&at(HEAD));
@@ -425,6 +573,38 @@ fn the_deployment_ref_is_read_and_judged_against_head() {
     let c = p.check("verification.deployment").unwrap();
     assert_eq!(c.verdict, Verdict::Stale, "{c:?}");
     assert!(c.summary.contains(&deployed[..12]), "{}", c.summary);
+}
+
+#[test]
+fn the_generation_record_is_read_against_heads_tree() {
+    let (f, parent) = fixture_with_evidence();
+    // what the pre-commit hook records: the parent commit, and the tree the commit then has
+    let record = |tree: &str, outcome: &str| {
+        f.write(
+            GENERATION_RECORD,
+            &json!({ "schema": 1, "check": "scripts/pages current", "commit": parent,
+                     "tree": tree, "at": "2026-09-30T10:00:00Z", "outcome": outcome })
+            .to_string(),
+        );
+    };
+    let head_tree = f.git(&["rev-parse", "HEAD^{tree}"]).trim().to_string();
+    record(&head_tree, "pass");
+    let p = observed(&f);
+    let c = p.check("verification.docs").unwrap();
+    assert_eq!(c.verdict, Verdict::Verified, "{c:?}");
+    // a later commit has another tree, and the record says nothing about it
+    f.write("more.md", "# more\n");
+    f.commit("later");
+    assert_eq!(
+        observed(&f).check("verification.docs").unwrap().verdict,
+        Verdict::Stale
+    );
+    let head_tree = f.git(&["rev-parse", "HEAD^{tree}"]).trim().to_string();
+    record(&head_tree, "fail");
+    assert_eq!(
+        observed(&f).check("verification.docs").unwrap().verdict,
+        Verdict::Failed
+    );
 }
 
 #[test]

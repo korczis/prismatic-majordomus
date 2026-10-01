@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# prismatic-independence-check — Majordomus builds, runs and deploys without Prismatic.
+#
+# `project.independent-of-prismatic` says the tool never depends on Prismatic: no import, no
+# package or repository dependency, no submodule, no shared storage, no internal interface, no
+# running service, no deployment that assumes one. `project.clean-room` keeps Prismatic's
+# vocabulary out of what is written here; nothing kept its code, services and topology out of
+# what runs, and a dependency that exists only on the author's machine is found by the first
+# person who does not have it.
+#
+# What a tree can show. A submodule or a gitlink naming a Prismatic project, and a reference to
+# one in the surfaces that build, run or deploy the tool: bin/, lib/, share/, apps/, scripts/,
+# the hooks, the workflows, the dependency manifests and lock files, and the client and
+# deployment configuration. Documents are not in the subject: design notes may record where an
+# idea came from, and provenance is history, not a dependency.
+#
+# What counts as a reference is a shape, not a word:
+#
+#   prismatic-platform, prismatic_platform   the name of the Prismatic repository
+#   prismatic_<name>                         an application or package of it
+#   Prismatic.<Module>                       a module of it
+#   apps/prismatic...                        a path into its umbrella
+#   :prismatic                               a dependency atom naming it
+#   /prismatic.git, /prismatic/              a clone path or a remote
+#
+# The bare word Prismatic is not a reference — it is the one name `project.clean-room` allows,
+# and the brand carries it — and the project's own identity (Prismatic Majordomus,
+# prismatic-majordomus, prismatic_majordomus) is removed before looking, so naming this
+# repository is never mistaken for naming another.
+#
+# The check is deliberately partial and says so: it cannot see a service reached through a
+# hostname nothing names, or a port that copied code without redesigning it. The rule is wider
+# than the gate; the rest is review, against the exit test the rule states.
+#
+# This script is excluded from its own subject, because the shapes above are prose about the
+# patterns it looks for, not references.
+#
+#   scripts/ci/prismatic-independence-check                 report; exit 10 on any finding
+#   MJ_ROOT=<dir> scripts/ci/prismatic-independence-check   measure another tree (the case does)
+#
+# Exit: 0 clean, 10 a reference found, 12 unusable. There is no baseline: the tree carried no
+# reference when the rule was written, so any finding is new.
+set -eu
+set -o pipefail
+ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$ROOT"
+SELF="scripts/ci/prismatic-independence-check"
+
+[ $# -eq 0 ] || { echo "prismatic-independence-check: unknown option $1" >&2; exit 2; }
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+  || { echo "prismatic-independence-check: $ROOT is not a git work tree; nothing to measure" >&2; exit 12; }
+
+# How many non-blank lines a list holds; `grep -c` exits 1 when it counts none.
+count_lines() { printf '%s\n' "${1:-}" | grep -c '[^[:space:]]' || true; }
+
+# The project's own identity, in every spelling, written as byte classes so the scan never
+# depends on the machine's locale.
+OWN='[Pp][Rr][Ii][Ss][Mm][Aa][Tt][Ii][Cc]([-_ ]|%20)?[Mm][Aa][Jj][Oo][Rr][Dd][Oo][Mm][Uu][Ss]'
+# The shapes, case-insensitive, and the one shape whose case is the evidence.
+SHAPES='prismatic[-_.]?platform|prismatic_[a-z0-9]|apps/prismatic|:prismatic([^a-z0-9_]|$)|/prismatic(\.git|/|$)'
+MODULE='Prismatic\.[A-Z]'
+
+# The subject: what a person committed to the surfaces that build, run or deploy the tool.
+files="$(git ls-files -- bin lib share apps scripts .github .githooks deploy \
+    .envrc justfile fly.toml 'Dockerfile*' package.json package-lock.json \
+    '*Cargo.toml' '*Cargo.lock' .mcp.json .gemini .codex \
+  | grep -vxF "$SELF" | LC_ALL=C sort -u || true)"
+[ -n "$files" ] || { echo "prismatic-independence-check: no build, run or deploy surface is tracked here; nothing to measure" >&2; exit 12; }
+
+findings=""
+add() { findings="$findings$1	$2
+"; }
+
+# Submodules, counted as what they are: a declaration in .gitmodules is one `path` entry, and a
+# gitlink is one index entry of mode 160000. A declared submodule has both, and the two are
+# reported apart rather than summed into a number that means neither.
+declared_n=0
+if [ -f .gitmodules ]; then
+  declared="$(git config -f .gitmodules --get-regexp '^submodule\..*\.(url|path)$' 2>/dev/null || true)"
+  declared_n="$(count_lines "$(printf '%s\n' "$declared" | grep -E '^submodule\..*\.path ' || true)")"
+  while IFS= read -r entry; do
+    [ -n "$entry" ] || continue
+    add ".gitmodules" "${entry#* }"
+  done <<EOF
+$(printf '%s\n' "$declared" | LC_ALL=C sed -E "s/$OWN//g" | LC_ALL=C grep -iE "$SHAPES" || true)
+EOF
+fi
+gitlinks="$(git ls-files -s | awk '$1 == "160000" { sub(/^[^\t]*\t/, ""); print }')"
+gitlink_n="$(count_lines "$gitlinks")"
+while IFS= read -r link; do
+  [ -n "$link" ] || continue
+  add "$link" "a gitlink to $link"
+done <<EOF
+$(printf '%s\n' "$gitlinks" | LC_ALL=C sed -E "s/$OWN//g" | LC_ALL=C grep -iE "$SHAPES" || true)
+EOF
+
+# The surfaces: the first reference in each file, with its line and the shape it matched.
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  LC_ALL=C grep -Iq . "$f" 2>/dev/null || continue   # binary or empty: no text to reference anything
+  text="$(LC_ALL=C sed -E "s/$OWN//g" "$f")"
+  hit="$( { printf '%s\n' "$text" | LC_ALL=C grep -niE "$SHAPES" || true
+            printf '%s\n' "$text" | LC_ALL=C grep -nE "$MODULE" || true
+          } | LC_ALL=C sort -t: -k1,1n | head -1)"
+  [ -n "$hit" ] || continue
+  line="${hit%%:*}"
+  shape="$(printf '%s' "${hit#*:}" | LC_ALL=C grep -oiE "$SHAPES" | head -1 || true)"
+  [ -n "$shape" ] || shape="$(printf '%s' "${hit#*:}" | LC_ALL=C grep -oE "$MODULE" | head -1 || true)"
+  add "$f:$line" "$shape"
+done <<EOF
+$files
+EOF
+
+measured="$(count_lines "$files")"
+count="$(count_lines "$findings")"
+population="$measured file(s) measured, $declared_n submodule declaration(s) and $gitlink_n gitlink(s) examined"
+
+[ -n "$findings" ] && printf '%s' "$findings" | grep -v '^$' | while IFS="	" read -r where what; do
+  # shellcheck disable=SC2016 # the backticks quote the shape in the finding; nothing expands
+  printf 'FAIL prismatic-independence %-46s names a Prismatic project: `%s`  [reproduce: scripts/ci/prismatic-independence-check]\n' \
+    "$where" "$what"
+done
+
+if [ "$count" -eq 0 ]; then
+  echo "prismatic-independence-check: no file names a Prismatic project ($population)"
+  exit 0
+fi
+echo "prismatic-independence-check: $count reference(s) to a Prismatic project ($population)" >&2
+echo "  Majordomus builds, runs and deploys without Prismatic (project.independent-of-prismatic)." >&2
+echo "  Port what is useful into a Majordomus-native design; never link to it." >&2
+exit 10

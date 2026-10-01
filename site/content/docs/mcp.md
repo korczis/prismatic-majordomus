@@ -1,19 +1,19 @@
 +++
 title = "MCP surface"
 description = "the read-only MCP surface of the Rust executable: what it serves, what decides that, how it fails, what it refuses to serve"
-weight = 51
+weight = 52
 [extra]
 source = "docs/MCP.md"
 +++
 
 {% raw %}
 
-What the Rust executable under [`apps/majordomus-cli/`](https://github.com/korczis/prismatic-majordomus/tree/master/apps/majordomus-cli) serves
+What the Rust executable under [`apps/majordomus-cli/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/apps/majordomus-cli) serves
 to an MCP client, where it comes from, and what it refuses. Behaviour as implemented and
 tested; where implementation and this document disagree, the document is wrong and
 changes in the same commit as the fix. The developer-facing detail (architecture, every
 option, the kind schema) is in the application's own
-[`README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/README.md).
+[`README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/README.md).
 
 ## What it is
 
@@ -45,7 +45,7 @@ removed when the server stops. It is one projection of the executable's capabili
 registry ([`CAPABILITIES.md`](@/docs/capabilities.md)): the same capabilities are the HTTP routes
 and the `capabilities` commands, and every tool and resource here is derived from a
 registry entry, none declared in the MCP code. The decision is
-[`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
+[`.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0003-shared-mcp-server-peers-and-client-autostart.md).
 
 ## One server per checkout
 
@@ -252,9 +252,9 @@ others attach:
 
 | client | file | what it names |
 |---|---|---|
-| Claude Code | [`.mcp.json`](https://github.com/korczis/prismatic-majordomus/blob/master/.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
-| Gemini CLI | [`.gemini/settings.json`](https://github.com/korczis/prismatic-majordomus/blob/master/.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
-| Codex | [`.codex/config.toml`](https://github.com/korczis/prismatic-majordomus/blob/master/.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
+| Claude Code | [`.mcp.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.mcp.json) | a stdio server, `bin/majordomus-mcp`; Claude Code asks once whether to trust a project server |
+| Gemini CLI | [`.gemini/settings.json`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.gemini/settings.json) | the same launcher under `mcpServers.majordomus` |
+| Codex | [`.codex/config.toml`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.codex/config.toml) | `[mcp_servers.majordomus]`, loaded when the project is trusted |
 | bb | nothing of its own | an orchestrator: the agent it starts (Claude Code, Codex, an ACP agent) reads its own file above, so a bb thread attaches through the agent, not through bb (ADR 0024). Claude Code under bb runs with `settingSources: project`, which loads `.mcp.json`; a server loaded from a settings file gets two seconds before the first turn, so a cold checkout that has to build the executable shows it `pending` at init and connected afterwards |
 
 </div>
@@ -262,7 +262,7 @@ others attach:
 
 The rows are the providers whose declaration names a client configuration; the whole set,
 with what each reads and where it keeps its scratch checkouts, is
-[`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/master/docs/generated/providers.md), generated from the same declaration.
+[`docs/generated/providers.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/docs/generated/providers.md), generated from the same declaration.
 <div class="overflow-x-auto" tabindex="0">
 
 | anything speaking Streamable HTTP | the running server's `/mcp` | `initialize` answers with an `Mcp-Session-Id`; every later request carries it; `DELETE /mcp` ends the session; an idle session expires and the client re-initialises on the 404, as the transport prescribes |
@@ -555,7 +555,7 @@ rules contract requires. Nothing is repaired, defaulted or rewritten.
 - **The hierarchy of bootstrap files.** Root `README.md`, `AGENTS.md` and the other
   provider files are served as documents with their directory recorded; nothing merges
   or ranks them, because the repository defines no merge semantics. Recorded in
-  [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
+  [`.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0001-rust-cli-and-stdio-mcp.md).
 - **Any mutation of the repository**, subscriptions, list-change notifications, and a
   server-initiated stream on `/mcp` (this server sends nothing unasked). The HTTP
   projection of the same registry is served by the shared server and by `majordomus

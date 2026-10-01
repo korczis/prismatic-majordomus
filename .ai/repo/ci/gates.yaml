@@ -122,6 +122,15 @@ gates:
     runs: scripts/ci/collision-gate
     summary: no path this pull request adds is added independently, with different content, by another unmerged branch; related work and same-bytes copies are listed, and a checkout that cannot see the other branches says so instead of passing
 
+  # The second identifier this repository allocates by hand: a behavioural case's number. Two
+  # files of one identity in one tree is the defect this refuses; the collisions of the day it
+  # was written sit on the baseline, because they are spread across other sessions' branches
+  # and renumbering them would break those. File reads only, no build, no git.
+  - id: case-numbers
+    job: structure
+    runs: scripts/case-numbers check
+    summary: no file under test/cases/ shares its identity with another, beyond the collisions recorded on the baseline
+
   - id: shell-suite
     job: suite
     runs: MJ_TEST_JOBS=4 bash test/run.sh
@@ -164,6 +173,15 @@ gates:
     always: true
     runs: scripts/ci/english-only-check
     summary: every authored file is spelled in English; a letter that occurs in Czech, Slovak or Polish and never in English, or a whole other script, fails — proper nouns and files that use a foreign string as test data are declared with their reason beside the check
+
+  # File reads only, under a second, so it is unconditional rather than classed: the dependency
+  # it refuses can arrive through any manifest, script or configuration file, and a class list
+  # that forgot one would be the gap.
+  - id: prismatic-independence
+    job: structure
+    always: true
+    runs: scripts/ci/prismatic-independence-check
+    summary: no submodule, gitlink, dependency manifest, script, hook, workflow or configuration file names a Prismatic project; the project's own name and the bare brand word are not references, and documents are out of scope
 
   - id: finding-reproduce
     job: structure
@@ -217,6 +235,19 @@ gates:
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- economics check
     summary: no quantity about tokens, context or cost is typed into hand-written prose, and every claim bound to an economics metric is guaranteed only while its evidence is current and meets the binding
 
+  # The third population. A public command must have an executable use case and doctor fails
+  # without one; a guaranteed claim is held by claim-proof above. The tools the registry
+  # projects over MCP were held by nothing: `use_cases.coverage.mcp_tools` is advisory, and
+  # for that class `covered` means NAMED, because no use-case scenario can reach an MCP tool.
+  # Greps over the generated registry and the files that send a tools/call, so it costs
+  # nothing and needs no build. The debt is ratcheted in .ai/repo/mcp-tool-run-baseline.txt;
+  # the gate fails on a tool that arrives unexercised, not on the known ones.
+  - id: mcp-tool-run
+    job: structure
+    always: true
+    runs: scripts/ci/mcp-tool-run-check
+    summary: every MCP tool the registry projects is sent a tools/call by a case or an integration test of this repository; the verdict states its denominator and the populations it is not about, and the uninvoked set may not grow
+
   - id: rust-quality
     job: structure
     runs: cargo run --quiet --manifest-path apps/majordomus-cli/Cargo.toml -- quality report --summary
@@ -269,6 +300,18 @@ gates:
     always: true
     runs: scripts/ci/cockpit-projection-check
     summary: no Cockpit page reads the index directly; every fact a page shows is what a capability answered through Context::execute (ADR 0012)
+
+  # The same scan widened to what ADR 0089 (project.ui-derived-state) asks of an interface:
+  # no Cockpit page reads the registry, the product model or the Why catalogue itself outside
+  # the navigation's declared allow-list, no health check is ok by literal, no enum defaults
+  # to a healthy variant, and no page turns an absent count into zero. Line scans of the
+  # crate's sources, so it costs nothing and runs in every plan; the known findings are a
+  # ratchet in .ai/repo/ui-integrity-baseline.txt, and a new one fails.
+  - id: ui-integrity
+    job: structure
+    always: true
+    runs: scripts/ci/cockpit-projection-check --ui-integrity
+    summary: what an interface shows is derived and unknown is never drawn as healthy — no direct registry, product or Why read in a Cockpit page outside the navigation's allow-list, no health check ok by literal, no healthy #[default], no absent count rendered as zero, beyond the baseline (ADR 0089)
 
   # Needs no browser, no built site and no node: it reads one YAML file, regenerates three
   # greps the tree for a design decision made outside share/design/tokens.yaml: a colour
@@ -602,6 +645,14 @@ classes:
     paths: [.ai/repo/rules/**, .ai/repo/rule-proof-baseline.txt, share/standard/majordomus/rules/**, scripts/ci/rule-proof-check, scripts/ci/claim-proof-check, .ai/repo/claim-proof-baseline.txt, scripts/ci/english-only-check, scripts/ci/english-only-allow.txt, scripts/ci/finding-reproduce-check, test/cases/125_rule_proof.sh, test/cases/133_rule_graph.sh, test/cases/138_governance_gates.sh, test/cases/230_verdict_states_its_subject.sh, apps/majordomus-cli/src/rules/**, site/data/publication.toml, scripts/ci/entity-check, test/cases/277_entities_are_routable.sh]
     gates: [rule-proof, claim-proof, english-only, finding-reproduce, entity-check, shell-suite, rust-integration]
 
+  # the MCP surface as a population: the ratchet that holds every projected tool to being
+  # invoked by something, its baseline, and the case that both invokes a sample and proves
+  # the ratchet by mutation. The denominator is the generated registry, which `rust-generated`
+  # already selects; this class is what selects the gate itself when its own files move.
+  - id: mcp-surface
+    paths: [scripts/ci/mcp-tool-run-check, .ai/repo/mcp-tool-run-baseline.txt, test/cases/620_mcp_tools_are_invoked_and_answer.sh]
+    gates: [mcp-tool-run, shell-suite]
+
   # the commit policy: the subsystem that judges a message, the gate that reads the history
   # through it, the hook that refuses with it, and the baseline of the commits that predate
   # it. A change to the grammar, the policy or the vocabulary changes what every commit made
@@ -666,6 +717,13 @@ classes:
     paths: [scripts/collision-check, test/cases/566_the_collision_guard_has_a_caller.sh]
     gates: [collision-check, shell-lint, shell-suite]
 
+  # the case identities and the allocator that surveys them. `shell` already selects the suite
+  # for anything under test/; this class adds the one gate that reads the cases as a set of
+  # identities, and names the allocator, whose edits would otherwise escalate the whole plan.
+  - id: cases
+    paths: [test/cases/**, scripts/case-numbers, .ai/repo/ci/case-numbers-baseline.txt, .ai/repo/rules/project/a-number-names-one-case.v1.md]
+    gates: [case-numbers, shell-lint, shell-suite]
+
   # documents and the files the site generator reads at the root; documents are index objects
   - id: docs
     paths: [docs/**, README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, examples/**]
@@ -715,7 +773,7 @@ classes:
   # project.accumulation-is-measured). Narrow on purpose: the rule's own file is named here
   # rather than the whole rules tree, so a change to one rule does not escalate every plan.
   - id: backlog
-    paths: [scripts/reap-orphans, scripts/land, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
+    paths: [scripts/reap-orphans, apps/majordomus-cli/src/integration, lib/rust_bin.sh, .ai/repo/rules/project/accumulation-is-measured.v2.md, test/cases/131_backlog_hygiene.sh, test/cases/276_disk_is_bounded.sh, test/cases/318_a_partial_sweep_says_so.sh]
     gates: [backlog-hygiene, shell-lint, shell-suite]
 
   # Shell automation against its migration inventory: a unit added, changed or deleted under

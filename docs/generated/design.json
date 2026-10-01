@@ -1,9 +1,9 @@
 {
   "schema": "majordomus/design-system/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.10.0",
-  "fingerprint": "5513f7466963b9e89aa59a88dad266f6c8747bfeb13b7ceae530123ebda6e7f0",
-  "design": "5513f7466963",
+  "generator": "majordomus-cli 0.11.0",
+  "fingerprint": "edc7bf48e646a4fb3713d1dea257c8b56e6220a05148a3d1a70ea8feed8ae482",
+  "design": "edc7bf48e646",
   "source": "share/design/tokens.yaml",
   "projections": [
     "share/design/theme.css",
@@ -946,7 +946,6 @@
         "current",
         "declared",
         "covered",
-        "guaranteed",
         "healthy",
         "live",
         "present",
@@ -1260,7 +1259,7 @@
     {
       "name": "neutral",
       "kind": "status",
-      "about": "no meaning carried by colour; unknown, planned, external, draft",
+      "about": "no meaning carried by colour; unknown, declared-only, planned, external, draft",
       "css": [
         "--mj-neutral",
         "--mj-neutral-bg",
@@ -1315,6 +1314,7 @@
       "states": [
         "neutral",
         "unknown",
+        "guaranteed",
         "external",
         "planned",
         "described",
@@ -1484,24 +1484,6 @@
       "css": [
         ".mj-badge--covered",
         ".mj-status--covered"
-      ],
-      "role": "ok",
-      "projections": [
-        "share/design/status.css",
-        "site/data/registry/design.json",
-        "apps/majordomus-cli/src/design/tokens.yaml",
-        "docs/generated/design.json",
-        "docs/generated/design.yaml",
-        "docs/generated/design.md"
-      ]
-    },
-    {
-      "name": "guaranteed",
-      "kind": "state",
-      "about": "a state word filed under `ok`",
-      "css": [
-        ".mj-badge--guaranteed",
-        ".mj-status--guaranteed"
       ],
       "role": "ok",
       "projections": [
@@ -2816,6 +2798,24 @@
       "css": [
         ".mj-badge--unknown",
         ".mj-status--unknown"
+      ],
+      "role": "neutral",
+      "projections": [
+        "share/design/status.css",
+        "site/data/registry/design.json",
+        "apps/majordomus-cli/src/design/tokens.yaml",
+        "docs/generated/design.json",
+        "docs/generated/design.yaml",
+        "docs/generated/design.md"
+      ]
+    },
+    {
+      "name": "guaranteed",
+      "kind": "state",
+      "about": "a state word filed under `neutral`",
+      "css": [
+        ".mj-badge--guaranteed",
+        ".mj-status--guaranteed"
       ],
       "role": "neutral",
       "projections": [
@@ -4323,7 +4323,7 @@
           }
         },
         "neutral": {
-          "about": "no meaning carried by colour; unknown, planned, external, draft",
+          "about": "no meaning carried by colour; unknown, declared-only, planned, external, draft",
           "fg": {
             "light": "fg",
             "dark": "fg"
@@ -4349,7 +4349,6 @@
           "current",
           "declared",
           "covered",
-          "guaranteed",
           "healthy",
           "live",
           "present",
@@ -4435,6 +4434,7 @@
         "neutral": [
           "neutral",
           "unknown",
+          "guaranteed",
           "external",
           "planned",
           "described",

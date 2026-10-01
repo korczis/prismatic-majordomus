@@ -12,12 +12,12 @@ Entering a Majordomus repository answers one question within the time a `cd` tak
 Majordomus actually in force here, what context am I working in, what integrations are alive,
 and which claims are currently proven?* The answer is one typed value,
 `environment::preflight::Preflight`, built under
-[`apps/majordomus-cli/src/environment/preflight.rs`](https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/environment/preflight.rs).
+[`apps/majordomus-cli/src/environment/preflight.rs`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/apps/majordomus-cli/src/environment/preflight.rs).
 Every surface renders that value and none computes a status of its own. Behaviour as implemented
 and tested; where this document and the executable disagree, the document is wrong.
 
 The rule is `project.entry-reports-only-evidence`
-([`.ai/repo/rules/project/entry-reports-only-evidence.v1.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/rules/project/entry-reports-only-evidence.v1.md));
+([`.ai/repo/rules/project/entry-reports-only-evidence.v1.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/rules/project/entry-reports-only-evidence.v1.md));
 the decision is ADR 0066.
 
 ## Architecture
@@ -93,10 +93,10 @@ that needs a look, the most urgent first: failed, degraded, stale, unavailable, 
 | `integration.mcp` / `api` / `cockpit` | the surfaces `GET /` lists with `ready` | verified, degraded, failed, unavailable, unknown |
 | `integration.peers` | this checkout's peer board (`checkouts=this`), the same board a served request reads | active, degraded, unavailable, unknown (not asked on entry) |
 | `verification.tests` | `.ai/repo/evidence/ledger.json`, each run judged by the evidence module's own tree comparison and the test's digest | verified, stale, failed, unavailable |
-| `verification.coverage` | nothing is recorded | unavailable |
+| `verification.coverage` | `.ai/local/state/coverage/rust.json`, the last whole-crate measurement `scripts/rust-coverage` ran itself, with the commit and tree it measured | verified (thresholds hold at HEAD), active (`--report`: measured at HEAD, nothing held), stale (another commit, or a tree that was not clean for the whole run), failed (a threshold, or the suite), unavailable (no record), unknown (unreadable) |
 | `verification.enforcement` | the rule proofs of `rules.report` | verified, degraded, stale (another commit, or a tree that is not clean — checked before a failure), failed, not_applicable (nothing owes a proof), unknown |
 | `verification.projections` | provider projections against their templates | verified, stale, unknown, not_applicable |
-| `verification.docs` | no recorded generation check | unknown |
+| `verification.docs` | `.ai/local/state/generation/check.json`, the last verdict of `scripts/pages current` (the pre-commit hook's generation check: site data by input hash, registry projections by `generate --check`), recorded with the tree it checked | verified (that tree is HEAD's, the working tree clean, both halves current), failed (derived data was stale), stale (another tree, or a working tree that was not its index), unknown (no record, an unreadable one, or the registry half skipped) |
 | `verification.deployment` | `refs/remotes/origin/gh-pages`, whose commits name `source: <sha>` | verified (source is HEAD, or a prefix of it), stale, unknown, unavailable |
 
 </div>

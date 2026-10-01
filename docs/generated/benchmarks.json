@@ -1,30 +1,30 @@
 {
   "schema": "majordomus/benchmark-matrix/v1",
   "generated": "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark projection of the canonical capability registry; regenerate with `majordomus generate`",
-  "generator": "majordomus-cli 0.10.0",
+  "generator": "majordomus-cli 0.11.0",
   "coverage": [
     {
       "scope": "direct",
-      "required": 142,
-      "covered": 125,
+      "required": 152,
+      "covered": 134,
       "missing": 0,
-      "waived": 17,
+      "waived": 18,
       "inapplicable": 0
     },
     {
       "scope": "http",
-      "required": 140,
-      "covered": 125,
+      "required": 150,
+      "covered": 134,
       "missing": 0,
-      "waived": 15,
+      "waived": 16,
       "inapplicable": 0
     },
     {
       "scope": "mcp",
-      "required": 136,
-      "covered": 121,
+      "required": 146,
+      "covered": 130,
       "missing": 0,
-      "waived": 15,
+      "waived": 16,
       "inapplicable": 0
     },
     {
@@ -37,10 +37,10 @@
     },
     {
       "scope": "total",
-      "required": 431,
-      "covered": 384,
+      "required": 461,
+      "covered": 411,
       "missing": 0,
-      "waived": 47,
+      "waived": 50,
       "inapplicable": 0
     }
   ],
@@ -189,6 +189,18 @@
       "module": "continuity",
       "kind": "query",
       "cache": "process, 2 entries, 2s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "dashboard.overview",
+      "module": "dashboard",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -765,6 +777,42 @@
       "module": "health",
       "kind": "query",
       "cache": "process, 4 entries, 5s",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "integration.events",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "integration.explain",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "a-number"
+      ]
+    },
+    {
+      "id": "integration.queue",
+      "module": "integration",
+      "kind": "query",
+      "cache": "—",
       "direct": "covered",
       "mcp": "covered",
       "http": "covered",
@@ -1401,6 +1449,77 @@
       "cases": [
         "default",
         "missing-pages-summary"
+      ]
+    },
+    {
+      "id": "reasoning.advisors",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "reasoning.check",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "default"
+      ]
+    },
+    {
+      "id": "reasoning.explain",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "waived",
+      "mcp": "waived",
+      "http": "waived",
+      "cases": []
+    },
+    {
+      "id": "reasoning.plan",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "material"
+      ]
+    },
+    {
+      "id": "reasoning.record",
+      "module": "reasoning",
+      "kind": "command",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "refused"
+      ]
+    },
+    {
+      "id": "reasoning.status",
+      "module": "reasoning",
+      "kind": "query",
+      "cache": "—",
+      "direct": "covered",
+      "mcp": "covered",
+      "http": "covered",
+      "cases": [
+        "current",
+        "all"
       ]
     },
     {

@@ -1,3 +1,4 @@
+# majordomus-exclusive: times a gate, and three neighbours' load would be measured instead
 # majordomus-covers: none
 # majordomus-negative: doctor
 # claims: derived-data-current
@@ -40,9 +41,28 @@ case "$out" in
   *) echo "    pages current did not report the tree as current: $out"; exit 1 ;;
 esac
 
-# it is fast enough to sit in front of every commit — the whole point of the fingerprint
-t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)
-[ "$((t1 - t0))" -le 20 ] || { echo "    the gate took $((t1 - t0))s; it runs on every commit and must not"; exit 1; }
+# The verdict is recorded for the preflight's `verification.docs` check, by the tree it
+# checked: the clone is clean, so that tree is HEAD's. Where the executable is absent the
+# registry half is skipped, and the record says partial rather than pass.
+rec="$W/.ai/local/state/generation/check.json"
+field() { jq -r ".$1" "$rec"; }
+[ -f "$rec" ] || { echo "    pages current recorded nothing at .ai/local/state/generation/check.json"; exit 1; }
+[ "$(field tree)" = "$(git -C "$W" rev-parse 'HEAD^{tree}')" ] || {
+  echo "    the record names tree $(field tree), not HEAD's"; cat "$rec"; exit 1; }
+case "$(field outcome)" in pass|partial) ;; *) echo "    a current tree was recorded $(field outcome)"; exit 1 ;; esac
+[ -z "$(git -C "$W" status --porcelain)" ] || { echo "    recording dirtied the tree"; git -C "$W" status --porcelain; exit 1; }
+
+# it is fast enough to sit in front of every commit — the whole point of the fingerprint.
+# The case runs exclusive, alone on its runner: among three parallel neighbours it measured
+# their load (21 s on #702, 51 s on a shard of #698) rather than the gate. The faster of two
+# runs is judged as well, against noise on a quiet runner. A gate that is slow is slow twice;
+# the bound is unchanged.
+best=""
+for _ in 1 2; do
+  t0=$(date +%s); (cd "$W" && scripts/pages current >/dev/null 2>&1); t1=$(date +%s)
+  took=$((t1 - t0)); { [ -z "$best" ] || [ "$took" -lt "$best" ]; } && best=$took
+done
+[ "$best" -le 20 ] || { echo "    the gate took ${best}s at best of two; it runs on every commit and must not"; exit 1; }
 
 # ---------------------------------------------------------------- a moved input is refused
 # An input is moved in that same export and it is asked again. A canonical input is one the
@@ -58,6 +78,9 @@ case "$out" in
   *"is stale"*"input hash"*) ;;
   *) echo "    the refusal does not name the hashes: $out"; exit 1 ;;
 esac
+# the refusal is recorded too, and of no tree: the edit is in the working tree, not the index
+[ "$(field outcome)" = fail ] || { echo "    a refused tree was recorded $(field outcome)"; exit 1; }
+[ -z "$(field tree)" ] || { echo "    an unstaged edit was recorded as tree $(field tree)"; exit 1; }
 # a refusal that does not say what to run is a dead end, and what repairs it is the script
 # that runs both generators — naming only one of them is how a tree gets half regenerated
 case "$out" in
