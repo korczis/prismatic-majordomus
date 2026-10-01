@@ -264,6 +264,15 @@ its own is a file the person has not read, and approving it for them is the one 
 `direnv allow` exists to prevent. Without direnv on the PATH the outcome is
 `direnv_absent` and nothing is blocked, because nothing would load the file.
 
+The primary checkout's machine-local `.envrc.local` is shared in the same moment. The
+repository's `.envrc` sources `.envrc.local` from the directory it is entered from, and
+the adapter rule keeps that file free of the program a lookup of the primary checkout
+would need. So a new worktree gets a symlink to the primary checkout's `.envrc.local`, and
+the person's own exports, including keychain-backed secrets such as `OPENAI_API_KEY`, load
+there too, from one file. The link is made only where git ignores the name
+(`not_ignored` otherwise), and a worktree with an `.envrc.local` of its own keeps it
+(`own_kept`).
+
 The last step is the one with no mechanism behind it. Creating a worktree is one command;
 removing one is a decision nobody is prompted to make, and `cleanup` deliberately deletes
 nothing — it names what is merged and clean and leaves the act to a person, because a tool
