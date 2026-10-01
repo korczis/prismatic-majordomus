@@ -9,11 +9,12 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::dashboard::DashboardOverview;
 use crate::capability::builtin::{
-    ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
-    DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
-    InstallabilityReport, NodeList, ObjectList, ObjectSummary, QualityAnswer, Record,
-    RepositoryReport, TokenList,
+    ArtifactReport, ArtifactState, ArtifactTallies, ArtifactVerdict, CheckState, CommandIndex,
+    CommandSummary, Continuity, DesignReport, DirectoryReport, DirectoryState, EventHistory,
+    ExecutionList, ExecutionView, GraphList, Health, HealthStatus, InstallabilityReport, NodeList,
+    ObjectList, ObjectSummary, QualityAnswer, Record, RepositoryReport, TokenList,
 };
 use crate::capability::{
     Capability, CapabilityKind, Context, Effect as CapabilityEffect, Provenance,
@@ -26,7 +27,7 @@ use crate::http::router::percent_encode;
 use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
-    WorktreeState,
+    UpstreamState, WorktreeState,
 };
 
 use crate::capability::builtin::lifecycle::{
@@ -62,7 +63,7 @@ pub struct Page {
 }
 
 impl Page {
-    fn new(area: Area, title: impl Into<String>, main: El) -> Self {
+    pub(crate) fn new(area: Area, title: impl Into<String>, main: El) -> Self {
         Page {
             area,
             title: title.into(),
@@ -73,7 +74,7 @@ impl Page {
             scripts: Vec::new(),
         }
     }
-    fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
+    pub(crate) fn subtitle(mut self, subtitle: impl Into<String>) -> Self {
         self.subtitle = Some(subtitle.into());
         self
     }
@@ -105,13 +106,44 @@ fn word<T: serde::Serialize>(value: &T) -> String {
 }
 
 /// Ask the executor for a capability's output, typed.
-fn ask<T: serde::de::DeserializeOwned>(ctx: &Context, id: &str, input: Value) -> Result<T, String> {
+pub(crate) fn ask<T: serde::de::DeserializeOwned>(
+    ctx: &Context,
+    id: &str,
+    input: Value,
+) -> Result<T, String> {
     let value = ctx.execute(id, input).map_err(|e| e.to_string())?;
     serde_json::from_value(value).map_err(|e| format!("{id} answered something unexpected: {e}"))
 }
 
+/// Every count of a capability's tallies, as a stat strip: iterated over the answer's own
+/// fields, so a tally the capability adds is a statistic the page shows, and none — the bad
+/// ones least of all — is left out by a hand-picked subset.
+fn tally_statistics(tallies: &impl serde::Serialize, source: &str) -> El {
+    tally_statistics_with(tallies, source, &[])
+}
+
+/// [`tally_statistics`], with the fields whose count is not known in this answer: those
+/// render "unknown" rather than a zero that reads as a measurement.
+fn tally_statistics_with(tallies: &impl serde::Serialize, source: &str, unknown: &[&str]) -> El {
+    let mut strip = el("div").class("mj-stats");
+    if let Ok(Value::Object(fields)) = serde_json::to_value(tallies) {
+        for (field, value) in fields {
+            let shown = if unknown.contains(&field.as_str()) {
+                "unknown".to_string()
+            } else {
+                match value {
+                    Value::Number(n) => n.to_string(),
+                    _ => continue,
+                }
+            };
+            strip = strip.child(statistic(shown, field.replace('_', " "), source));
+        }
+    }
+    strip
+}
+
 /// A page that says what went wrong instead of showing a blank one.
-fn failed(area: Area, title: &str, reason: String) -> Page {
+pub(crate) fn failed(area: Area, title: &str, reason: String) -> Page {
     Page::new(
         area,
         title,
@@ -128,7 +160,10 @@ fn failed(area: Area, title: &str, reason: String) -> Page {
 
 /// The landing page: what this process is serving, and whether it is healthy.
 pub fn overview(ctx: &Context) -> Page {
-    let report: RepositoryReport = match ask(ctx, "repository.info", json!({})) {
+    // The capability every statistic below is read from, named once: what the page asks is
+    // what each statistic says it was asked of, so a label cannot name another capability.
+    const ASKED: &str = "repository.info";
+    let report: RepositoryReport = match ask(ctx, ASKED, json!({})) {
         Ok(r) => r,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
@@ -136,6 +171,7 @@ pub fn overview(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Overview, "Overview", e),
     };
+    let now = std::time::SystemTime::now();
 
     let git = match &report.repository.git {
         crate::git::GitState::Available(info) => {
@@ -150,38 +186,48 @@ pub fn overview(ctx: &Context) -> Page {
         crate::git::GitState::Unavailable { reason } => reason.clone(),
     };
 
+    let counted = &report.capabilities;
     let statistics = el("div")
         .class("mj-stats")
-        .child(statistic(
-            report.capabilities.total.to_string(),
+        .child(super::view::asked_statistic(
+            counted.total.to_string(),
             "capabilities",
-            "capabilities.list",
+            ASKED,
+            "capabilities.total",
         ))
-        .child(statistic(
+        .child(super::view::asked_statistic(
             report.objects.to_string(),
             "objects of the layer",
-            "repository.info",
+            ASKED,
+            "objects",
         ))
-        .child(statistic(
-            report.capabilities.http_routes.to_string(),
+        .child(super::view::asked_statistic(
+            counted.http_routes.to_string(),
             "HTTP routes",
-            "the registry's HTTP exposures",
+            ASKED,
+            "capabilities.http_routes",
         ))
-        .child(statistic(
-            report.capabilities.mcp_tools.to_string(),
+        .child(super::view::asked_statistic(
+            counted.mcp_tools.to_string(),
             "MCP tools",
-            "the registry's MCP exposures",
+            ASKED,
+            "capabilities.mcp_tools",
         ))
-        .child(statistic(
-            report.capabilities.modules.to_string(),
+        .child(super::view::asked_statistic(
+            counted.modules.to_string(),
             "modules",
-            "compose_modules! and the layer's kinds",
+            ASKED,
+            "capabilities.modules",
         ))
-        .child(statistic(
-            report.capabilities.cached.to_string(),
+        .child(super::view::asked_statistic(
+            counted.cached.to_string(),
             "cached capabilities",
-            "the descriptors' cache policies",
+            ASKED,
+            "capabilities.cached",
         ));
+    let statistics = el("div")
+        .child(statistics)
+        .child(super::view::as_of(&report.repository.observed.index, now));
 
     let identity = card(
         "This repository",
@@ -191,7 +237,15 @@ pub fn overview(ctx: &Context) -> Page {
                 "Layer schema",
                 Node::Element(mono(&report.repository.layer_schema)),
             ),
-            ("Version control", Node::Element(mono(git))),
+            (
+                "Version control",
+                Node::Element(
+                    el("span")
+                        .child(mono(git))
+                        .text(" ")
+                        .child(super::view::as_of(&report.repository.observed.git, now)),
+                ),
+            ),
             (
                 "Discovery",
                 Node::Element(mono(&report.repository.discovery)),
@@ -249,10 +303,10 @@ pub fn overview(ctx: &Context) -> Page {
                     row(vec![
                         cell(mono(kind)),
                         text_cell(count.to_string()),
-                        cell(link(
-                            format!("/cockpit/objects?kind={}", percent_encode(kind)),
-                            "browse",
-                        )),
+                        // the kind's own address, from the function the router resolves
+                        // with — not `?kind=`, which still answers and is the spelling
+                        // this page was written against before a kind had an address
+                        cell(link(crate::entity::kind_route(kind), "browse")),
                     ])
                 })
                 .collect(),
@@ -297,26 +351,177 @@ pub fn overview(ctx: &Context) -> Page {
         "Overview",
         el("div")
             .class("mj-grid")
+            .child(four_questions(ctx))
             .child(statistics)
             .child(identity)
             .child(health_card)
-            .children(distribution_card(ctx).into_iter().collect::<Vec<_>>())
+            .child(preflight_card(ctx))
+            .child(distribution_card(ctx))
             .child(kinds)
             .child(diagnostics),
     )
     .subtitle(crate::about::SUMMARY)
 }
 
+/// The four questions, first on the overview: `dashboard.overview` laid out, card by card.
+///
+/// Nothing here reads a fact of its own. Each card shows the value the capability carried,
+/// the status word its source gave it, the capability and pointer it was read from, and a
+/// link to the page holding the evidence. The value is also written as data
+/// (`data-value`, the card's JSON), so a test compares this page with the route byte for
+/// byte rather than parsing a rendering. A capability that fails is a failure on the page,
+/// never an empty card.
+fn four_questions(ctx: &Context) -> El {
+    let o: DashboardOverview = match ask(ctx, "dashboard.overview", json!({})) {
+        Ok(o) => o,
+        Err(e) => return card("Four questions", alert("fail", e)),
+    };
+    let shown = |v: &Value| match v {
+        Value::String(s) => s.clone(),
+        Value::Null => "none".into(),
+        other => other.to_string(),
+    };
+    let questions: Vec<El> = o
+        .questions
+        .iter()
+        .map(|q| {
+            el("div")
+                .attr("data-question", q.id.as_str())
+                .child(
+                    el("h3")
+                        .class("mj-card-title")
+                        .text(&q.title)
+                        .text(" ")
+                        .child(badge(q.status.as_str(), q.status.as_str())),
+                )
+                .child(
+                    el("ul").class("mj-checklist").children(
+                        q.cards
+                            .iter()
+                            .map(|c| {
+                                el("li")
+                                    .class("mj-checklist-item")
+                                    .attr("data-card", c.id.as_str())
+                                    .attr("data-value", c.value.to_string())
+                                    .attr("data-status", c.status.as_str())
+                                    .child(badge(c.status.as_str(), c.status.as_str()))
+                                    .child(
+                                        el("a")
+                                            .class("mj-link mj-checklist-title")
+                                            .attr("href", c.route.as_str())
+                                            .text(&c.title),
+                                    )
+                                    .child(mono(shown(&c.value)))
+                                    .child(el("span").class("mj-checklist-detail").text(format!(
+                                        "{} — from {} {}",
+                                        c.detail, c.source.capability, c.source.pointer
+                                    )))
+                            })
+                            .collect::<Vec<_>>(),
+                    ),
+                )
+        })
+        .collect();
+    // the route the registry declares for the capability, not one written here: asked of
+    // `capabilities.describe`, so the page reads no registry of its own (ADR 0089)
+    let route = ask::<Value>(
+        ctx,
+        "capabilities.describe",
+        json!({ "id": "dashboard.overview" }),
+    )
+    .ok()
+    .and_then(|c| {
+        c.pointer("/exposure/http/path")
+            .and_then(Value::as_str)
+            .map(String::from)
+    })
+    .unwrap_or_default();
+    card_with(
+        "Four questions",
+        link(route, "as JSON"),
+        el("div").children(questions),
+    )
+    .attr("data-overview-status", o.status.as_str())
+}
+
+/// The preflight card: whether Majordomus is in force here, claim by claim.
+///
+/// It asks `environment.preflight` — the value the command line prints and the entry banner
+/// summarises — and lays out each check with its verdict word as data (`data-check`,
+/// `data-verdict`), so that a test reads the same verdicts from this page that it reads
+/// from the route. A capability that fails is shown as a failure, never as an empty card.
+fn preflight_card(ctx: &Context) -> El {
+    let p: crate::environment::preflight::Preflight =
+        match ask(ctx, "environment.preflight", json!({})) {
+            Ok(p) => p,
+            Err(e) => return card("Preflight", alert("fail", e)),
+        };
+    let items: Vec<El> = p
+        .sections
+        .iter()
+        .flat_map(|s| s.checks.iter().map(move |c| (s, c)))
+        .map(|(s, c)| {
+            el("li")
+                .class("mj-checklist-item")
+                .attr("data-check", c.id.as_str())
+                .attr("data-verdict", c.verdict.as_str())
+                .child(badge(c.verdict.status(), c.verdict.as_str()))
+                .child(
+                    el("span")
+                        .class("mj-checklist-title")
+                        .text(format!("{} · {}", s.title, c.title)),
+                )
+                .child(el("span").class("mj-checklist-detail").text(&c.summary))
+        })
+        .collect();
+    card_with(
+        "Preflight",
+        link("/api/v1/environment/preflight", "Evidence"),
+        el("ul").class("mj-checklist").children(items),
+    )
+}
+
 /// The distribution card: whether the command the README advertises works right now.
 ///
 /// It asks `distribution.status`, which is the same capability the command line, the HTTP
 /// route and the MCP tool answer from, so no number here is computed twice and none is
-/// written down. A repository that carries no distribution model gets no card rather than
-/// a card full of dashes.
-fn distribution_card(ctx: &Context) -> Option<El> {
-    let report: InstallabilityReport = ask(ctx, "distribution.status", json!({})).ok()?;
+/// written down. A capability that does not answer — no distribution model among them — is
+/// a card that says so, never a card that vanishes: an absent card and an unasked question
+/// look the same, and only one of them is true.
+///
+/// The verdict is worded as what it is. `distribution.status` reaches no network: it
+/// decides from the distribution model and the release records, so the card says
+/// "installable", decided from the release records, and not that the public install is healthy, which
+/// only the release pipeline's smoke phase has observed.
+fn distribution_card(ctx: &Context) -> El {
+    distribution_card_of(ask(ctx, "distribution.status", json!({})))
+}
+
+/// What `distribution.status` decides from, said beside its verdict.
+const RECORDS: &str = "the release records, with no network reached";
+
+fn distribution_card_of(answer: Result<InstallabilityReport, String>) -> El {
+    let report = match answer {
+        Ok(r) => r,
+        Err(e) => {
+            return card_with(
+                "Distribution",
+                badge("unknown", "unknown"),
+                el("div")
+                    .child(facts(vec![
+                        ("Installable", Node::Element(badge("unknown", "unknown"))),
+                        ("Decided from", Node::Element(el("span").text(RECORDS))),
+                    ]))
+                    .child(
+                        el("p")
+                            .class("mj-note")
+                            .text(format!("distribution.status did not answer: {e}")),
+                    ),
+            )
+        }
+    };
     let verdict = if report.installable {
-        badge("ok", "healthy")
+        badge("ok", "yes")
     } else {
         badge("fail", "blocked")
     };
@@ -338,7 +543,8 @@ fn distribution_card(ctx: &Context) -> Option<El> {
                 report.published_artifacts, report.required_targets
             ))),
         ),
-        ("Public install", Node::Element(verdict)),
+        ("Installable", Node::Element(verdict)),
+        ("Decided from", Node::Element(el("span").text(RECORDS))),
     ];
     // Why, and what to do about it — the same cause and next action every other projection
     // of this capability shows, rather than a second wording of them here.
@@ -352,7 +558,7 @@ fn distribution_card(ctx: &Context) -> Option<El> {
             }
         }
     }
-    Some(card_with(
+    card_with(
         "Distribution",
         link(
             "/cockpit/capabilities/distribution.status",
@@ -363,7 +569,7 @@ fn distribution_card(ctx: &Context) -> Option<El> {
                 .class("mj-note")
                 .child(mono(&report.install_command)),
         ),
-    ))
+    )
 }
 
 fn health_badge(status: HealthStatus) -> El {
@@ -376,6 +582,21 @@ fn health_badge(status: HealthStatus) -> El {
             HealthStatus::Unknown => "a dimension could not be decided",
         },
     ))
+}
+
+/// The badge for a model's declared standing. A catalogue entry that declares none is
+/// "undeclared", which wears the colour of not knowing, never the one of "available".
+fn model_status_badge(status: Option<crate::models::ModelStatus>) -> El {
+    use crate::models::ModelStatus;
+    match status {
+        None => badge("unknown", "undeclared"),
+        Some(s) => word_badge(match s {
+            ModelStatus::Available => "available",
+            ModelStatus::Preview => "preview",
+            ModelStatus::Deprecated => "deprecated",
+            ModelStatus::Retired => "retired",
+        }),
+    }
 }
 
 // --------------------------------------------------------------- capabilities
@@ -2550,6 +2771,262 @@ pub fn directories(ctx: &Context, query: &[(String, String)]) -> Page {
         ])
 }
 
+/// Token economics: the verdict the evidence allows, every metric with its measurement
+/// class, the state of each suite's evidence, the pairs (valid or not), the segments and
+/// the records that could not be read — all from `economics.summary`, so the page shows
+/// what the CLI, the API and MCP show. Every token figure is a reduction spelled by
+/// `economics::report::amount`, the same function the report and the CLI use, and every
+/// state is spelled as it serialises.
+pub fn economics(ctx: &Context) -> Page {
+    let s: crate::economics::model::EconomicsSummary =
+        match ask(ctx, "economics.summary", json!({})) {
+            Ok(r) => r,
+            Err(e) => return failed(Area::Economics, "Economics", e),
+        };
+    use crate::economics::model::{EconomicsFreshness, EconomicsMetricStatus, EconomicsPairStatus};
+    use crate::economics::report::{amount, interval_text, words};
+    use crate::economics::stats::percent_text;
+    let status_badge = |st: EconomicsMetricStatus| {
+        let look = match st {
+            EconomicsMetricStatus::Verified => "verified",
+            EconomicsMetricStatus::Preliminary => "partial",
+            EconomicsMetricStatus::Measured => "ok",
+            EconomicsMetricStatus::NotMeasured => "missing",
+        };
+        badge(look, words(&st))
+    };
+    let verdict = el("div")
+        .child(alert(
+            if s.verdict.publishable { "ok" } else { "warn" },
+            s.verdict.statement.clone(),
+        ))
+        .when(!s.verdict.unmet.is_empty(), |d| {
+            let mut list = el("ul").class("mj-list");
+            for u in &s.verdict.unmet {
+                list = list.child(el("li").text(u));
+            }
+            d.child(
+                el("p")
+                    .class("mj-prose")
+                    .text("The publication rule is not met:"),
+            )
+            .child(list)
+        });
+    let primary = s
+        .metrics
+        .iter()
+        .find(|m| Some(&m.id) == s.primary_metric.as_ref());
+    let context = s
+        .metrics
+        .iter()
+        .find(|m| m.id == crate::economics::CONTEXT_REDUCTION);
+    let stat = |m: Option<&crate::economics::model::EconomicsMetric>, label: &str| {
+        let (v, src) = match m {
+            Some(m) => (
+                m.value
+                    .map(|v| amount(v, &m.unit))
+                    .unwrap_or_else(|| "—".into()),
+                format!(
+                    "{} · {} from {} · n={}",
+                    m.id,
+                    m.class.word(),
+                    m.inputs.map(|i| i.word()).unwrap_or("-"),
+                    m.n
+                ),
+            ),
+            None => ("—".into(), "not declared".into()),
+        };
+        statistic(v, label, src)
+    };
+    let headline = el("div")
+        .class("mj-grid")
+        .child(stat(
+            primary,
+            "Total-token reduction with Majordomus (median over valid pairs)",
+        ))
+        .child(stat(
+            context,
+            "Context selection by the compiler (not total savings)",
+        ));
+    let suites = table(
+        &[
+            "Suite",
+            "Kind",
+            "Evidence",
+            "Runs",
+            "Valid pairs",
+            "Control failed",
+            "Treatment failed",
+            "Both failed",
+            "Other",
+            "Detail",
+        ],
+        s.suites
+            .iter()
+            .map(|v| {
+                let look = match v.freshness {
+                    EconomicsFreshness::Current => "current",
+                    EconomicsFreshness::Stale => "stale",
+                    EconomicsFreshness::Incompatible => "fail",
+                    EconomicsFreshness::NoEvidence => "missing",
+                };
+                let fresh = badge(look, words(&v.freshness));
+                row(vec![
+                    cell(mono(v.id.clone())),
+                    text_cell(v.kind.clone()),
+                    cell(fresh),
+                    text_cell(v.runs.to_string()),
+                    text_cell(format!("{}/{}", v.pairs.valid, v.pairs.attempted)),
+                    text_cell(v.pairs.control_failed.to_string()),
+                    text_cell(v.pairs.treatment_failed.to_string()),
+                    text_cell(v.pairs.both_failed.to_string()),
+                    text_cell(v.pairs.other.to_string()),
+                    text_cell(v.freshness_detail.clone().unwrap_or_default()),
+                ])
+            })
+            .collect(),
+    );
+    let metrics = table(
+        &[
+            "Metric",
+            "Value",
+            "Status",
+            "Class",
+            "n",
+            "Interval",
+            "What it is not",
+        ],
+        s.metrics
+            .iter()
+            .map(|m| {
+                let value = m
+                    .value
+                    .map(|v| amount(v, &m.unit))
+                    .unwrap_or_else(|| "—".into());
+                let class = match m.inputs {
+                    Some(i) => format!("{} from {}", m.class.word(), i.word()),
+                    None => m.class.word().to_string(),
+                };
+                row(vec![
+                    cell(link(
+                        format!("/api/v1/economics/explain?metric={}", percent_encode(&m.id)),
+                        m.id.clone(),
+                    )),
+                    text_cell(value),
+                    cell(status_badge(m.status)),
+                    cell(tag(class)),
+                    text_cell(m.n.to_string()),
+                    text_cell(
+                        m.interval
+                            .as_ref()
+                            .map(|i| interval_text(i, &m.unit))
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(m.not.clone().unwrap_or_default()),
+                ])
+            })
+            .collect(),
+    );
+    let pairs = table(
+        &[
+            "Task",
+            "Category",
+            "Rep",
+            "Status",
+            "Control tokens",
+            "Treatment tokens",
+            "Token reduction",
+            "Reasons",
+        ],
+        s.pairs
+            .iter()
+            .map(|p| {
+                let look = match p.status {
+                    EconomicsPairStatus::Valid => "valid",
+                    EconomicsPairStatus::Missing => "missing",
+                    _ => "failed",
+                };
+                let status = badge(look, words(&p.status));
+                row(vec![
+                    cell(mono(p.task.clone())),
+                    text_cell(p.category.clone()),
+                    text_cell(p.repetition.to_string()),
+                    cell(status),
+                    text_cell(
+                        p.control_usage
+                            .as_ref()
+                            .map(|u| u.total.to_string())
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(
+                        p.treatment_usage
+                            .as_ref()
+                            .map(|u| u.total.to_string())
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(
+                        p.token_reduction
+                            .map(percent_text)
+                            .unwrap_or_else(|| "—".into()),
+                    ),
+                    text_cell(p.reasons.join("; ")),
+                ])
+            })
+            .collect(),
+    );
+    let segments = table(
+        &[
+            "Dimension",
+            "Segment",
+            "Valid pairs",
+            "Median reduction",
+            "Min",
+            "Max",
+        ],
+        s.segments
+            .iter()
+            .filter_map(|g| {
+                let d = g.token_reduction.as_ref()?;
+                Some(row(vec![
+                    text_cell(g.dimension.clone()),
+                    text_cell(g.value.clone()),
+                    text_cell(g.n.to_string()),
+                    text_cell(percent_text(d.median)),
+                    text_cell(percent_text(d.min)),
+                    text_cell(percent_text(d.max)),
+                ]))
+            })
+            .collect(),
+    );
+    let mut unread = el("ul").class("mj-list");
+    for d in &s.diagnostics {
+        unread = unread.child(el("li").text(d));
+    }
+    let mut hypotheses = el("ul").class("mj-list");
+    for h in &s.hypotheses {
+        hypotheses =
+            hypotheses.child(el("li").text(format!("{} ({}): {}", h.id, h.status, h.statement)));
+    }
+    Page::new(
+        Area::Economics,
+        "Economics",
+        el("div")
+            .class("mj-grid")
+            .child(card("Verdict", verdict))
+            .when(!s.diagnostics.is_empty(), |g| {
+                g.child(card("Records that could not be read", unread))
+            })
+            .child(card("Headline", headline))
+            .child(card("Evidence", suites))
+            .child(card(format!("Metrics ({})", s.metrics.len()), metrics))
+            .child(card("Segments", segments))
+            .child(card(format!("Pairs ({})", s.pairs.len()), pairs))
+            .child(card("Hypotheses — stated before the evidence, not results", hypotheses)),
+    )
+    .subtitle("What a coding session consumes with Majordomus and without it, from matched runs judged by the same hidden tests. Observed, counted, derived, estimated and counterfactual numbers are labelled as such. Every token figure is a reduction, 1 - treatment / control: a negative reduction means Majordomus used more tokens.")
+    .trail(vec![("Cockpit", Some("/cockpit")), ("Economics", None)])
+}
+
 /// The model catalogue and its routing: the vendors and models `share/models.yaml`
 /// declares, with each vendor's credential *presence* (never a value), rendered from
 /// the same `models.list` every other surface reads. No model name lives in this page.
@@ -2582,15 +3059,9 @@ pub fn models(ctx: &Context) -> Page {
         .models
         .iter()
         .map(|m| {
-            let status = match m.status {
-                crate::models::ModelStatus::Available => "available",
-                crate::models::ModelStatus::Preview => "preview",
-                crate::models::ModelStatus::Deprecated => "deprecated",
-                crate::models::ModelStatus::Retired => "retired",
-            };
             card_with(
                 m.id.clone(),
-                word_badge(status),
+                model_status_badge(m.status),
                 el("div")
                     .child(facts(vec![
                         ("Vendor", Node::Element(el("span").text(&m.vendor))),
@@ -2811,12 +3282,372 @@ pub fn mesh(ctx: &Context) -> Page {
         })
         .collect();
 
+    let cooperation: crate::mesh::cooperation::CooperationStatus =
+        match ask(ctx, "mesh.cooperation", json!({})) {
+            Ok(c) => c,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
+    let tree: crate::capability::builtin::mesh::PeerTree = match ask(ctx, "mesh.peers", json!({})) {
+        Ok(t) => t,
+        Err(e) => return failed(Area::Mesh, "Mesh", e),
+    };
+    let folded: crate::capability::builtin::mesh::MeshStateAnswer =
+        match ask(ctx, "mesh.state", json!({})) {
+            Ok(s) => s,
+            Err(e) => return failed(Area::Mesh, "Mesh", e),
+        };
+
+    // Cooperation: this runtime, its repository identity, its link protocol and counters.
+    let mut coop = el("div").child(facts(vec![(
+        "Cooperation",
+        Node::Element(word_badge(if cooperation.active {
+            "active"
+        } else {
+            "inactive"
+        })),
+    )]));
+    if let Some(reason) = &cooperation.reason {
+        coop = coop.child(el("p").class("mj-prose").text(reason));
+    }
+    if let Some(runtime) = &cooperation.runtime {
+        let repository = cooperation
+            .repository
+            .as_ref()
+            .map(|r| format!("{} ({})", r.id, r.detail))
+            .unwrap_or_default();
+        coop = coop.child(facts(vec![
+            ("Runtime", Node::Element(mono(runtime.clone()))),
+            ("Repository", Node::Element(mono(repository))),
+            (
+                "Endpoints",
+                Node::Element(el("span").text(cooperation.endpoints.join(", "))),
+            ),
+            (
+                "Heartbeat / expiry",
+                Node::Element(el("span").text(format!(
+                    "{}s / {}s",
+                    cooperation.heartbeat_seconds, cooperation.expiry_seconds
+                ))),
+            ),
+            (
+                "Link protocol",
+                Node::Element(el("span").text(format!(
+                    "{}..{} — {}",
+                    cooperation.protocol.0,
+                    cooperation.protocol.1,
+                    cooperation.features.join(", ")
+                ))),
+            ),
+        ]));
+        let k = &cooperation.counters;
+        let j = &cooperation.journal;
+        coop = coop.child(facts(vec![
+            (
+                "Handshakes",
+                Node::Element(el("span").text(format!(
+                    "{} out, {} in; {} reconnects, {} restarts seen, {} links expired",
+                    k.handshakes_out, k.handshakes_in, k.reconnects, k.restarts, k.peers_expired
+                ))),
+            ),
+            (
+                "Syncs",
+                Node::Element(el("span").text(format!(
+                    "{} out ({} failed), {} in; {} events sent, {} served",
+                    k.syncs_out, k.syncs_failed, k.syncs_in, k.events_sent, k.events_served
+                ))),
+            ),
+            (
+                "Journal",
+                Node::Element(el("span").text(format!(
+                    "{} events in {} streams; {} received, {} duplicates absorbed, {} rejected, {} pending",
+                    j.events, j.streams, j.received, j.duplicates, j.rejected, j.pending
+                ))),
+            ),
+            (
+                "Claims refused",
+                Node::Element(el("span").text(k.claims_refused.to_string())),
+            ),
+        ]));
+    }
+    if let Some(digest) = &tree.digest {
+        coop = coop.child(facts(vec![(
+            "State digest",
+            Node::Element(mono(digest.clone())),
+        )]));
+    }
+    coop = coop.child(el("p").class("mj-prose").text(
+        "Actions run the same capabilities every surface runs: mesh.verify, mesh.claim, mesh.release, mesh.handover.publish, mesh.handover.consume, mesh.review.request — each on its page under Capabilities.",
+    ));
+
+    // Machine → runtime → session → claim, local first; a runtime that stopped beating
+    // says so and says when it last did, instead of keeping a green dot.
+    let machine_cards: Vec<El> = tree
+        .machines
+        .iter()
+        .map(|m| {
+            let runtimes: Vec<El> = m
+                .runtimes
+                .iter()
+                .map(|r| {
+                    let liveness = match r.liveness {
+                        crate::mesh::journal::StreamLiveness::Own => "this runtime",
+                        crate::mesh::journal::StreamLiveness::Live => "live",
+                        crate::mesh::journal::StreamLiveness::Expired => "expired",
+                    };
+                    let badge = r
+                        .link
+                        .as_ref()
+                        .map(|l| match l.state {
+                            crate::mesh::cooperation::LinkState::Connecting => "connecting",
+                            crate::mesh::cooperation::LinkState::Connected => "connected",
+                            crate::mesh::cooperation::LinkState::Degraded => "degraded",
+                            crate::mesh::cooperation::LinkState::Unreachable => "unreachable",
+                            crate::mesh::cooperation::LinkState::Expired => "expired",
+                        })
+                        .unwrap_or(liveness);
+                    let beat = r
+                        .last_beat_ms
+                        .map(|ms| format!("last heartbeat {}s ago", ms / 1000))
+                        .unwrap_or_else(|| "no heartbeat heard".into());
+                    let active_sessions = r
+                        .sessions
+                        .iter()
+                        .filter(|s| s.state == crate::mesh::state::SessionState::Active)
+                        .count();
+                    let live_claims = r
+                        .sessions
+                        .iter()
+                        .flat_map(|s| s.claims.iter())
+                        .filter(|c| c.state.is_live())
+                        .count();
+                    let link = r
+                        .link
+                        .as_ref()
+                        .map(|l| {
+                            format!(
+                                "{}{}, {} handshake(s), {} reconnect(s), {} restart(s){}{}",
+                                if l.outbound { "dialed" } else { "dials this runtime" },
+                                l.endpoint.as_ref().map(|e| format!(" at {e}")).unwrap_or_default(),
+                                l.handshakes,
+                                l.reconnects,
+                                l.restarts,
+                                l.rtt_ms.map(|ms| format!(", rtt {ms}ms")).unwrap_or_default(),
+                                l.last_error.as_ref().map(|e| format!(", last error: {e}")).unwrap_or_default(),
+                            )
+                        })
+                        .unwrap_or_else(|| "no link from this runtime".into());
+                    let sessions: Vec<El> = r
+                        .sessions
+                        .iter()
+                        .map(|s| {
+                            let state = match s.state {
+                                crate::mesh::state::SessionState::Active => "active",
+                                crate::mesh::state::SessionState::Closed => "closed",
+                                crate::mesh::state::SessionState::Expired => "expired",
+                            };
+                            let who = format!(
+                                "{}{}",
+                                s.info.client,
+                                s.info.worker.as_ref().map(|w| format!(" ({w})")).unwrap_or_default()
+                            );
+                            let claims = s
+                                .claims
+                                .iter()
+                                .map(|c| {
+                                    let st = match &c.state {
+                                        crate::mesh::state::ClaimState::Held => "held".to_string(),
+                                        crate::mesh::state::ClaimState::Released => "released".to_string(),
+                                        crate::mesh::state::ClaimState::Expired(why) => format!("expired: {why}"),
+                                        crate::mesh::state::ClaimState::Conflicted(w) => format!("conflicted with {w}"),
+                                    };
+                                    format!("{} [{:?}, {st}]", c.scope.join(", "), c.mode).to_lowercase()
+                                })
+                                .collect::<Vec<_>>()
+                                .join("; ");
+                            card_with(
+                                who,
+                                word_badge(state),
+                                el("div").child(facts(vec![
+                                    (
+                                        "Intent",
+                                        Node::Element(el("span").text(s.info.intent.clone().unwrap_or_else(|| "—".into()))),
+                                    ),
+                                    (
+                                        "Issue / task",
+                                        Node::Element(el("span").text(format!(
+                                            "{} / {}",
+                                            s.info.issue.as_deref().unwrap_or("—"),
+                                            s.info.task.as_deref().unwrap_or("—")
+                                        ))),
+                                    ),
+                                    (
+                                        "Branch",
+                                        Node::Element(mono(format!(
+                                            "{}{}",
+                                            s.info.branch.as_deref().unwrap_or("—"),
+                                            s.info.head.as_ref().map(|h| format!(" @ {}", &h[..h.len().min(8)])).unwrap_or_default()
+                                        ))),
+                                    ),
+                                    (
+                                        "Claims",
+                                        Node::Element(el("span").text(if claims.is_empty() { "none".to_string() } else { claims })),
+                                    ),
+                                ])),
+                            )
+                        })
+                        .collect();
+                    card_with(
+                        format!("Runtime {}", r.runtime),
+                        word_badge(badge),
+                        el("div")
+                            .child(facts(vec![
+                                ("Liveness", Node::Element(el("span").text(format!("{liveness}, {beat}")))),
+                                ("Link", Node::Element(el("span").text(link))),
+                                (
+                                    "Work",
+                                    Node::Element(el("span").text(format!(
+                                        "{active_sessions} active session(s), {live_claims} live claim(s)"
+                                    ))),
+                                ),
+                            ]))
+                            .when(!sessions.is_empty(), |d| {
+                                d.child(el("div").class("mj-grid").children(sessions))
+                            }),
+                    )
+                })
+                .collect();
+            card_with(
+                format!("{} — {}", m.name, m.node),
+                word_badge(if m.local { "local" } else { "remote" }),
+                el("div").class("mj-grid").children(runtimes),
+            )
+        })
+        .collect();
+
+    // Claims in conflict, handovers and reviews, from the one folded state.
+    let state = folded.state.clone().unwrap_or_default();
+    let conflicts: Vec<El> = state
+        .claims
+        .iter()
+        .filter_map(|c| match &c.state {
+            crate::mesh::state::ClaimState::Conflicted(winner) => {
+                Some(el("p").class("mj-prose").text(format!(
+                    "{} ({}) lost to {winner}",
+                    c.key,
+                    c.scope.join(", ")
+                )))
+            }
+            _ => None,
+        })
+        .collect();
+    let handovers: Vec<El> = state
+        .handovers
+        .iter()
+        .map(|h| {
+            card_with(
+                format!("Handover {}", h.id),
+                word_badge(if h.consumed_by.is_empty() {
+                    "published"
+                } else {
+                    "consumed"
+                }),
+                el("div").child(facts(vec![
+                    ("From", Node::Element(mono(h.runtime.clone()))),
+                    (
+                        "Task / issue",
+                        Node::Element(el("span").text(format!(
+                            "{} / {}",
+                            h.handover.task.as_deref().unwrap_or("—"),
+                            h.handover.issue.as_deref().unwrap_or("—")
+                        ))),
+                    ),
+                    (
+                        "Branch",
+                        Node::Element(mono(
+                            h.handover.branch.clone().unwrap_or_else(|| "—".into()),
+                        )),
+                    ),
+                    (
+                        "Consumed by",
+                        Node::Element(el("span").text(if h.consumed_by.is_empty() {
+                            "nobody yet".to_string()
+                        } else {
+                            h.consumed_by.join(", ")
+                        })),
+                    ),
+                ])),
+            )
+        })
+        .collect();
+    let reviews: Vec<El> = state
+        .reviews
+        .iter()
+        .map(|r| {
+            let answers = r
+                .answers
+                .iter()
+                .map(|a| format!("{}: {}", a.session, a.verdict))
+                .collect::<Vec<_>>()
+                .join("; ");
+            card_with(
+                format!("Review of {}", r.subject),
+                word_badge(match r.state {
+                    crate::mesh::state::ReviewState::Open => "open",
+                    crate::mesh::state::ReviewState::Answered => "answered",
+                }),
+                el("div").child(facts(vec![
+                    ("Requested by", Node::Element(mono(r.session.clone()))),
+                    (
+                        "Issue",
+                        Node::Element(
+                            el("span").text(r.issue.clone().unwrap_or_else(|| "—".into())),
+                        ),
+                    ),
+                    (
+                        "Answers",
+                        Node::Element(el("span").text(if answers.is_empty() {
+                            "none".to_string()
+                        } else {
+                            answers
+                        })),
+                    ),
+                ])),
+            )
+        })
+        .collect();
+    let refused: Vec<El> = tree
+        .refused
+        .iter()
+        .map(|r| {
+            el("p").class("mj-prose").text(format!(
+                "{} ({}): {} — {}",
+                r.endpoint,
+                r.direction,
+                r.refusal.code.as_str(),
+                r.refusal.detail
+            ))
+        })
+        .collect();
+
     Page::new(
         Area::Mesh,
         "Mesh",
         el("div")
             .class("mj-grid")
             .child(card("This node", overview))
+            .child(card("Cooperation", coop))
+            .child(card(
+                format!("Machines ({})", tree.machines.len()),
+                if machine_cards.is_empty() {
+                    el("p").class("mj-prose").text("No runtime cooperates here yet. A runtime links to trusted runtimes of the same repository as discovery or a declared seed finds them; `majordomus mesh verify` says what is missing.")
+                } else {
+                    el("div").class("mj-grid").children(machine_cards)
+                },
+            ))
+            .when(!conflicts.is_empty(), |d| d.child(card("Claim conflicts", el("div").children(conflicts))))
+            .when(!handovers.is_empty(), |d| d.child(card("Handovers", el("div").class("mj-grid").children(handovers))))
+            .when(!reviews.is_empty(), |d| d.child(card("Reviews", el("div").class("mj-grid").children(reviews))))
+            .when(!refused.is_empty(), |d| d.child(card("Refused candidates", el("div").children(refused))))
             .when(!providers.is_empty(), |d| {
                 d.child(card(
                     "Discovery providers",
@@ -2842,19 +3673,23 @@ pub fn health(ctx: &Context) -> Page {
         Ok(h) => h,
         Err(e) => return failed(Area::Health, "Health", e),
     };
+    let now = std::time::SystemTime::now();
     let cards: Vec<El> = health
         .checks
         .iter()
         .map(|c| {
+            // a check that judged a picture says when the picture was taken; one that
+            // decided live, during this call, has nothing older than the page to show
+            let mut decided = vec![("Decided by", Node::Element(el("span").text(&c.decided_by)))];
+            if let Some(o) = health.observed.get(&c.id) {
+                decided.push(("Observed", Node::Element(super::view::as_of(o, now))));
+            }
             card_with(
                 c.title.clone(),
                 badge(c.status.as_str(), c.status.as_str()),
                 el("div")
                     .child(el("p").class("mj-prose").text(&c.detail))
-                    .child(facts(vec![(
-                        "Decided by",
-                        Node::Element(el("span").text(&c.decided_by)),
-                    )]))
+                    .child(facts(decided))
                     .when(!c.evidence.is_empty(), |d| {
                         d.child(
                             el("div")
@@ -3127,7 +3962,7 @@ pub fn release(ctx: &Context) -> Page {
                 Node::Element(mono(short_digest(&plan.fingerprint))),
             ),
             (
-                "Writers agree",
+                "Projection current",
                 Node::Element(badge(
                     if plan.writers_agree { "ok" } else { "fail" },
                     if plan.writers_agree { "yes" } else { "no" },
@@ -3143,6 +3978,32 @@ pub fn release(ctx: &Context) -> Page {
 
 // --------------------------------------------------------------------- artifacts
 
+/// The badge for the verdict `artifacts.list` decided. An unverified set wears no colour of
+/// health: its unhashed files were not compared, and saying so is the whole point.
+fn artifact_verdict_badge(verdict: ArtifactVerdict, t: &ArtifactTallies) -> El {
+    match verdict {
+        ArtifactVerdict::Current => badge("ok", "current"),
+        ArtifactVerdict::Unverified => badge(
+            "unknown",
+            format!("unverified: {} file(s) carry no recorded hash", t.present),
+        ),
+        ArtifactVerdict::Stale => badge("warn", "stale"),
+        ArtifactVerdict::Missing => badge("fail", "missing"),
+        ArtifactVerdict::NotGenerated => badge("warn", "not generated"),
+    }
+}
+
+/// The badge status of one file's state: a file present without a recorded hash is not
+/// known to be current, so it is not coloured as if it were.
+fn artifact_state_status(state: ArtifactState) -> &'static str {
+    match state {
+        ArtifactState::Current => "ok",
+        ArtifactState::Stale => "warn",
+        ArtifactState::Missing => "fail",
+        ArtifactState::Present => "unknown",
+    }
+}
+
 /// What the generator writes: every document with the encodings it is committed in, and
 /// every file with its contract and its state against the working tree. Read through
 /// `artifacts.list`, which reads the generator's own manifest; this page keeps no list of
@@ -3152,16 +4013,9 @@ pub fn artifacts(ctx: &Context) -> Page {
         Ok(r) => r,
         Err(e) => return failed(Area::Artifacts, "Artifacts", e),
     };
-    let t = &report.tallies;
-    let overall = if !report.present {
-        ("warn", "not generated")
-    } else if t.missing > 0 {
-        ("fail", "missing")
-    } else if t.stale > 0 {
-        ("warn", "stale")
-    } else {
-        ("ok", "current")
-    };
+    // The verdict is the capability's: this page renders it and decides nothing from the
+    // tallies itself.
+    let overall = artifact_verdict_badge(report.verdict, &report.tallies);
 
     let documents = table(
         &["document", "encodings", "schema", "source"],
@@ -3202,7 +4056,7 @@ pub fn artifacts(ctx: &Context) -> Page {
                     cell(mono(a.document.clone())),
                     text_cell(a.format.suffix()),
                     text_cell(a.bytes.map(|b| b.to_string()).unwrap_or_else(|| "—".into())),
-                    cell(badge(a.state.as_str(), a.state.as_str())),
+                    cell(badge(artifact_state_status(a.state), a.state.as_str())),
                 ])
             })
             .collect(),
@@ -3215,25 +4069,9 @@ pub fn artifacts(ctx: &Context) -> Page {
             .class("mj-grid")
             .child(card_with(
                 "Where the generated tree stands",
-                badge(overall.0, overall.1),
+                overall,
                 el("div")
-                    .child(
-                        el("div")
-                            .class("mj-stats")
-                            .child(statistic(
-                                t.documents.to_string(),
-                                "documents",
-                                "the manifest",
-                            ))
-                            .child(statistic(
-                                t.artifacts.to_string(),
-                                "files",
-                                "the manifest",
-                            ))
-                            .child(statistic(t.current.to_string(), "current", "sha256"))
-                            .child(statistic(t.stale.to_string(), "stale", "sha256"))
-                            .child(statistic(t.missing.to_string(), "missing", "the tree")),
-                    )
+                    .child(tally_statistics(&report.tallies, "artifacts.list"))
                     .child(facts(vec![
                         ("Manifest", Node::Element(mono(report.manifest.clone()))),
                         ("Schema", Node::Element(mono(report.schema.clone()))),
@@ -3635,13 +4473,19 @@ fn upstream_cell(w: &WorktreeState) -> El {
     match &w.upstream {
         None => text_cell("-"),
         Some(u) if u.gone => cell(el("span").child(mono(&u.name)).text(" (gone)")),
-        Some(u) => text_cell(format!(
-            "{} +{} −{}",
-            u.name,
-            u.ahead.unwrap_or(0),
-            u.behind.unwrap_or(0)
-        )),
+        Some(u) => text_cell(upstream_text(u)),
     }
+}
+
+/// An upstream and how far this branch is from it. A count git did not answer is unknown,
+/// never zero: "+0 −0" says in sync, which nobody measured.
+fn upstream_text(u: &UpstreamState) -> String {
+    let count = |n: Option<usize>| n.map_or_else(|| "?".to_string(), |n| n.to_string());
+    let mut text = format!("{} +{} −{}", u.name, count(u.ahead), count(u.behind));
+    if u.ahead.is_none() || u.behind.is_none() {
+        text.push_str(" (unknown)");
+    }
+    text
 }
 
 fn diagnostics_table(diagnostics: &[TopologyDiagnostic]) -> El {
@@ -3713,49 +4557,16 @@ pub fn worktrees(ctx: &Context) -> Page {
         ]),
     );
 
-    let ta = &t.tallies;
-    let statistics = el("div")
-        .class("mj-stats")
-        .child(statistic(
-            ta.worktrees.to_string(),
-            "worktrees",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.canonical.to_string(),
-            "canonical",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.misplaced.to_string(),
-            "misplaced",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.ephemeral.to_string(),
-            "ephemeral",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.detached.to_string(),
-            "detached",
-            "worktree.topology",
-        ))
-        .child(statistic(
-            ta.dirty.to_string(),
-            "with uncommitted work",
-            "git status, one per worktree",
-        ))
-        .child(statistic(
-            ta.branches_without_worktree.to_string(),
-            "branches without a worktree",
-            "for-each-ref",
-        ))
-        .child(statistic(
-            ta.cleanup_eligible.to_string(),
-            "cleanup-eligible branches",
-            "merged into the trunk, clean or absent",
-        ));
+    // Every tally the capability answers, the bad ones included: a summary that showed the
+    // canonical count and not the missing one sat beside "valid" with 31 rows missing. The
+    // one count that is not always measured, uncommitted work, is "unknown" when no
+    // worktree in the answer was asked for it.
+    let dirty_unmeasured = t.worktrees.iter().all(|w| w.dirty.is_none());
+    let statistics = tally_statistics_with(
+        &t.tallies,
+        "worktree.topology",
+        if dirty_unmeasured { &["dirty"] } else { &[] },
+    );
 
     let worktree_rows: Vec<El> = t
         .worktrees
@@ -3865,7 +4676,10 @@ pub fn worktrees(ctx: &Context) -> Page {
             "Diagnostics",
             badge(
                 if t.valid { "ok" } else { "fail" },
-                format!("{} error(s), {} warning(s)", ta.errors, ta.warnings),
+                format!(
+                    "{} error(s), {} warning(s)",
+                    t.tallies.errors, t.tallies.warnings
+                ),
             ),
             diagnostics_table(&t.diagnostics),
         )
@@ -3962,6 +4776,338 @@ pub fn worktrees(ctx: &Context) -> Page {
     .subtitle("Where every branch's worktree belongs and where each one is: <repo>-wt/<branch>, derived from git and registered nowhere.")
     .trail(vec![("Cockpit", Some("/cockpit")), ("Worktrees", None)])
     .script("worktrees.js")
+}
+
+// ---------------------------------------------------------------- integration
+
+/// The badge status of a disposition: what the reader should feel about it.
+fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
+    use crate::integration::IntegrationLane as L;
+    match d.lane() {
+        L::Ready => "ok",
+        L::Waiting => "info",
+        L::Repair => "fail",
+        L::Cleanup => "warn",
+        L::Held => "unknown",
+    }
+}
+
+/// The pull-request integration queue (ADR 0101): the lanes, the master every decision was
+/// taken against, the lease, the starving, and the executor's recent actions — all of it
+/// `integration.queue` and `integration.events`, the answers the command line and MCP give.
+/// Read from the last recorded observation, so a page load never reaches the forge.
+pub fn integration(ctx: &Context) -> Page {
+    use crate::capability::builtin::integration::{IntegrationEvents, IntegrationStatus};
+    use crate::integration::IntegrationLane;
+
+    let status: IntegrationStatus = match ask(ctx, "integration.queue", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Integration, "Integration", e),
+    };
+    let trail = vec![("Cockpit", Some("/cockpit")), ("Integration", None)];
+    let commands = card(
+        "Commands",
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "The Cockpit reads; the command line acts, one merge at a time, each against a master observed a moment before, under the base branch's lease. Nothing here reaches the forge.",
+            ))
+            .child(pre(
+                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
+            )),
+    );
+    let Some(q) = status.queue else {
+        return Page::new(
+            Area::Integration,
+            "Integration",
+            el("div")
+                .class("mj-grid")
+                .child(card(
+                    "No queue",
+                    el("div")
+                        .child(alert(
+                            "info",
+                            status
+                                .reason
+                                .unwrap_or_else(|| "nothing is observed".into()),
+                        ))
+                        .child(nothing(
+                            "The queue is built from a recorded forge observation, and this checkout has none. `majordomus prs refresh` records one.",
+                        )),
+                ))
+                .child(commands),
+        )
+        .subtitle("Every open pull request classified against the current master, and the executor that merges the next provably safe one.")
+        .trail(trail);
+    };
+
+    // Reached only with a recorded observation (the early return above handles none).
+    // ui-integrity: tallies count every observed assessment, so an absent lane holds none
+    let lane = |name: &str| q.tallies.by_lane.get(name).copied().unwrap_or(0);
+    let statistics = tally_statistics(
+        &serde_json::json!({
+            "open": q.tallies.open,
+            "ready": lane("ready"),
+            "waiting": lane("waiting"),
+            "repair": lane("repair"),
+            "cleanup": lane("cleanup"),
+            "held": lane("held"),
+            "starving": q.starving.len(),
+        }),
+        "integration.queue",
+    );
+
+    let lease = match &status.lease {
+        None => badge("ok", "free"),
+        Some(l) if l.stale => badge(
+            "warn",
+            format!(
+                "stale — renewed {} s ago; the next executor takes it over",
+                l.renewed_seconds_ago
+            ),
+        ),
+        Some(l) => match &l.holder {
+            Some(h) => badge(
+                "info",
+                format!(
+                    "held by pid {} on {}, renewed {} s ago",
+                    h.pid, h.host, l.renewed_seconds_ago
+                ),
+            ),
+            None => badge("info", "held (holder unreadable)"),
+        },
+    };
+    let last_merge = match &status.last_merge {
+        Some(e) => Node::Element(
+            el("span")
+                .child(mono(format!("#{}", e.pr.unwrap_or_default())))
+                .text(format!(
+                    " at {} — master {}",
+                    e.at,
+                    e.master_after.clone().unwrap_or_else(|| "?".into())
+                )),
+        ),
+        None => Node::Element(el("span").text("none recorded in this checkout")),
+    };
+    let identity = card_with(
+        "This queue",
+        link(
+            "/cockpit/capabilities/integration.queue",
+            "integration.queue",
+        ),
+        facts(vec![
+            ("Repository", Node::Element(mono(&q.repository))),
+            (
+                "Base",
+                Node::Element(
+                    el("span")
+                        .child(mono(&q.base))
+                        .text(" at ")
+                        .child(mono(&q.master_sha)),
+                ),
+            ),
+            (
+                "Observed",
+                Node::Element(el("span").text(format!(
+                    "{} — the forge then said {} is {}",
+                    q.observed_at, q.base, q.observed_base_sha
+                ))),
+            ),
+            (
+                "Next merge",
+                Node::Element(match q.next_merge {
+                    Some(n) => badge("ok", format!("#{n}")),
+                    None => badge("info", "nothing is ready"),
+                }),
+            ),
+            ("Lease", Node::Element(lease)),
+            ("Last merge", last_merge),
+            (
+                "Policy",
+                Node::Element(el("span").text(format!(
+                    "required checks: {}; review required: {}; merge method: {}",
+                    q.policy
+                        .required_checks
+                        .as_ref()
+                        .map(|c| if c.is_empty() { "none".to_string() } else { c.join(", ") })
+                        .unwrap_or_else(|| "unread — nothing can be ready".into()),
+                    q.policy
+                        .reviews_required
+                        .map(|r| r.to_string())
+                        .unwrap_or_else(|| "unread".into()),
+                    q.policy.merge_method
+                ))),
+            ),
+        ]),
+    );
+
+    let diagnostics = if q.diagnostics.is_empty() {
+        card(
+            "Diagnostics",
+            nothing("The observation is current for this clone's master."),
+        )
+    } else {
+        card_with(
+            "Diagnostics",
+            badge("warn", format!("{}", q.diagnostics.len())),
+            el("div").children(
+                q.diagnostics
+                    .iter()
+                    .map(|d| alert("warn", d.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+        )
+    };
+
+    // one card per lane, in the lanes' own order; an empty lane says so rather than vanishing
+    let lanes = [
+        (
+            IntegrationLane::Ready,
+            "Ready",
+            "Nothing is ready: the executor has nothing to merge.",
+        ),
+        (
+            IntegrationLane::Waiting,
+            "Waiting",
+            "Nothing is waiting on a refresh, a check, a review or a dependency.",
+        ),
+        (
+            IntegrationLane::Repair,
+            "Needs repair",
+            "No pull request needs a person to change its branch.",
+        ),
+        (
+            IntegrationLane::Cleanup,
+            "Cleanup",
+            "No open pull request's work is on master already.",
+        ),
+        (
+            IntegrationLane::Held,
+            "Held",
+            "Nothing is held: no draft, blocking label, other base or unknown.",
+        ),
+    ];
+    let mut lane_cards = Vec::new();
+    for (lane, title, empty_note) in lanes {
+        let rows: Vec<El> = q
+            .assessments
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.lane == lane)
+            .map(|(i, a)| {
+                let waited = a.wait.as_ref().map(|w| {
+                    let mut s = format!("since {}", w.actionable_since);
+                    if w.passed_over > 0 {
+                        s.push_str(&format!(", passed over {}×", w.passed_over));
+                    }
+                    s
+                });
+                row(vec![
+                    text_cell((i + 1).to_string()),
+                    cell(
+                        el("span")
+                            .child(link(
+                                format!(
+                                    "/cockpit/capabilities/integration.explain?number={}",
+                                    a.number
+                                ),
+                                format!("#{}", a.number),
+                            ))
+                            .when(q.starving.contains(&a.number), |e| {
+                                e.text(" ").child(tag("starving"))
+                            }),
+                    ),
+                    cell(badge(
+                        disposition_status(a.disposition),
+                        a.disposition.as_str(),
+                    )),
+                    text_cell(word(&a.risk)),
+                    text_cell(a.reasons.join(", ")),
+                    text_cell(a.next_action.clone().unwrap_or_default()),
+                    text_cell(waited.unwrap_or_default()),
+                    text_cell(a.title.clone()),
+                ])
+            })
+            .collect();
+        let n = rows.len();
+        lane_cards.push(if rows.is_empty() {
+            card(title, nothing(empty_note))
+        } else {
+            card_with(
+                title,
+                badge(
+                    if lane == IntegrationLane::Repair {
+                        "fail"
+                    } else {
+                        "info"
+                    },
+                    n.to_string(),
+                ),
+                table(
+                    &[
+                        "Rank",
+                        "PR",
+                        "Disposition",
+                        "Risk",
+                        "Reasons",
+                        "Next",
+                        "Waiting",
+                        "Title",
+                    ],
+                    rows,
+                ),
+            )
+        });
+    }
+
+    let events: Vec<crate::integration::drain::IntegrationEvent> =
+        ask::<IntegrationEvents>(ctx, "integration.events", json!({}))
+            .map(|e| e.events)
+            .unwrap_or_default();
+    let recent: Vec<El> = events
+        .iter()
+        .rev()
+        .take(20)
+        .map(|e| {
+            row(vec![
+                text_cell(e.at.clone()),
+                cell(mono(&e.action)),
+                text_cell(e.pr.map(|n| format!("#{n}")).unwrap_or_else(|| "-".into())),
+                text_cell(e.detail.clone()),
+                text_cell(e.actor.clone()),
+            ])
+        })
+        .collect();
+    let history = if recent.is_empty() {
+        card(
+            "Recent actions",
+            nothing("The executor has recorded nothing in this checkout."),
+        )
+    } else {
+        card_with(
+            "Recent actions",
+            link(
+                "/cockpit/capabilities/integration.events",
+                "integration.events",
+            ),
+            table(&["When", "Action", "PR", "Detail", "Actor"], recent),
+        )
+    };
+
+    let mut grid = el("div")
+        .class("mj-grid")
+        .child(statistics)
+        .child(identity)
+        .child(diagnostics);
+    for c in lane_cards {
+        grid = grid.child(c);
+    }
+    Page::new(
+        Area::Integration,
+        "Integration",
+        grid.child(history).child(commands),
+    )
+    .subtitle("Every open pull request classified against the current master, and the executor that merges the next provably safe one — one at a time, re-planning after every merge.")
+    .trail(trail)
 }
 
 // ------------------------------------------------------------------ not found
@@ -4221,47 +5367,37 @@ pub fn commands(ctx: &Context, query: &[(String, String)]) -> Page {
         }
     };
 
-    let programs = chips(
-        [
-            ("every program", None),
-            ("executable", Some("executable")),
-            ("shell tool", Some("tool")),
-            ("workflow", Some("workflow")),
-        ]
-        .into_iter()
-        .map(|(label, value)| {
-            (
-                label.to_string(),
-                here("origin", value),
-                index
-                    .commands
-                    .iter()
-                    .filter(|c| value.is_none_or(|v| c.origin == v))
-                    .count(),
-                origin.as_deref() == value,
-            )
-        })
-        .collect(),
-    );
-
-    let effects = chips(
-        [
-            ("any effect", None),
-            ("read-only", Some("read_only")),
-            ("up to local", Some("local_mutation")),
-            ("up to repository", Some("repository_mutation")),
-        ]
-        .into_iter()
-        .map(|(label, value)| {
-            (
-                label.to_string(),
-                here("effect", value),
-                0,
-                effect.as_deref() == value,
-            )
-        })
-        .collect(),
-    );
+    // The chips are facets: each one counts what choosing it would list, so each is
+    // counted over the answer with every other filter applied and its own left out. Both
+    // are `commands.list` answers — the set of chips is the set of values present in
+    // them, and no chip's count is anything but a count of that answer.
+    let facet = |drop: &str| -> Result<CommandIndex, String> {
+        let mut input = json!({});
+        for (k, v) in [
+            ("origin", origin.as_deref()),
+            ("effect", effect.as_deref()),
+            ("search", search.as_deref()),
+        ] {
+            if let (true, Some(v)) = (k != drop, v) {
+                input[k] = json!(v);
+            }
+        }
+        ask(ctx, "commands.list", input)
+    };
+    let by_origin = match facet("origin") {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+    let by_effect = match facet("effect") {
+        Ok(v) => v,
+        Err(e) => return failed(Area::Commands, "Commands", e),
+    };
+    let programs = chips(program_chips(&by_origin.commands, origin.as_deref(), |v| {
+        here("origin", v)
+    }));
+    let effects = chips(effect_chips(&by_effect.commands, effect.as_deref(), |v| {
+        here("effect", v)
+    }));
 
     let rows = index
         .commands
@@ -4459,6 +5595,87 @@ pub fn command(ctx: &Context, id: &str) -> Page {
         ("Commands", Some("/cockpit/commands")),
         (node.id.as_str(), None),
     ])
+}
+
+/// One chip per program present in `commands`, in the program's own order, each counting
+/// the commands that program runs; the first chip is every program. The set of programs is
+/// the answer's, never a list here: a program the graph gains is a chip the page gains.
+fn program_chips(
+    commands: &[CommandSummary],
+    current: Option<&str>,
+    here: impl Fn(Option<&str>) -> String,
+) -> Vec<(String, String, usize, bool)> {
+    // In the program's own declared order, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<crate::command_graph::Origin>, String)> =
+        commands
+            .iter()
+            .map(|c| {
+                let typed = serde_json::from_value(json!(c.origin)).ok();
+                (typed, c.origin.clone())
+            })
+            .collect();
+    let mut chips = vec![(
+        "every program".to_string(),
+        here(None),
+        commands.len(),
+        current.is_none(),
+    )];
+    for (_, word) in present {
+        chips.push((
+            word.clone(),
+            here(Some(&word)),
+            commands.iter().filter(|c| c.origin == word).count(),
+            current == Some(word.as_str()),
+        ));
+    }
+    chips
+}
+
+/// One chip per effect present in `commands`, in the order of increasing consequence, each
+/// counting what its filter lists: the effect filter of `commands.list` is a ceiling, so a
+/// chip counts every command at or below its effect. The set of effects is the answer's —
+/// `network_mutation` is a chip the day a command has it, and not before.
+fn effect_chips(
+    commands: &[CommandSummary],
+    current: Option<&str>,
+    here: impl Fn(Option<&str>) -> String,
+) -> Vec<(String, String, usize, bool)> {
+    use crate::command_graph::Effect;
+    let typed = |word: &str| serde_json::from_value::<Effect>(json!(word)).ok();
+    // In the order of increasing consequence, which is the enum's: a set keyed by the typed
+    // value, not a display ordering.
+    let present: std::collections::BTreeSet<(Option<Effect>, String)> = commands
+        .iter()
+        .map(|c| (typed(&c.effect), c.effect.clone()))
+        .collect();
+    let mut chips = vec![(
+        "any effect".to_string(),
+        here(None),
+        commands.len(),
+        current.is_none(),
+    )];
+    for (rank, word) in present {
+        let count = commands
+            .iter()
+            .filter(|c| match (typed(&c.effect), rank) {
+                (Some(e), Some(ceiling)) => e <= ceiling,
+                _ => c.effect == word,
+            })
+            .count();
+        let label = if rank.is_some_and(|e| e.is_read_only()) {
+            word.replace('_', " ")
+        } else {
+            format!("up to {}", word.replace('_', " "))
+        };
+        chips.push((
+            label,
+            here(Some(&word)),
+            count,
+            current == Some(word.as_str()),
+        ));
+    }
+    chips
 }
 
 /// The badge status for an effect: what a reader should feel about running it.
@@ -5190,9 +6407,515 @@ pub fn design(ctx: &Context) -> Page {
     .trail(vec![("Cockpit", Some("/cockpit")), ("Design", None)])
 }
 
+// --------------------------------------------------------------------- entities
+
+/// One kind's index: every object of it, at the kind's own address.
+///
+/// Not a page per kind. The kind is a path segment, the listing is `objects.list` narrowed
+/// by it, and a kind the layer stops holding stops having an index — which is the whole
+/// reason a kind never appears in this file by name.
+pub fn objects_of_kind(ctx: &Context, kind: &str, query: &[(String, String)]) -> Page {
+    let kinds: crate::capability::builtin::entity::KindList =
+        match ask(ctx, "entity.kinds", json!({})) {
+            Ok(k) => k,
+            Err(e) => return failed(Area::Objects, "Objects", e),
+        };
+    let Some(entry) = kinds.kinds.iter().find(|k| k.kind == kind) else {
+        return Page::new(
+            Area::Objects,
+            "No such kind",
+            el("div")
+                .child(alert(
+                    "fail",
+                    format!(
+                        "This layer holds no kind '{kind}'. The kinds it holds are listed under Objects."
+                    ),
+                ))
+                .child(link("/cockpit/objects", "Every object")),
+        )
+        .status(404);
+    };
+
+    let list: ObjectList = match ask(ctx, "objects.list", json!({ "kind": kind })) {
+        Ok(l) => l,
+        Err(e) => return failed(Area::Objects, "Objects", e),
+    };
+    let needle = query
+        .iter()
+        .find(|(k, _)| k == "q")
+        .map(|(_, v)| v.to_lowercase())
+        .filter(|v| !v.is_empty());
+    let matching: Vec<&ObjectSummary> = list
+        .objects
+        .iter()
+        .filter(|o| {
+            needle.as_deref().is_none_or(|n| {
+                o.identity.to_lowercase().contains(n)
+                    || o.title
+                        .as_deref()
+                        .unwrap_or_default()
+                        .to_lowercase()
+                        .contains(n)
+                    || o.path.to_lowercase().contains(n)
+            })
+        })
+        .collect();
+    let base = crate::entity::kind_route(kind);
+    let window = Window::new(asked_page(query), PER_PAGE, matching.len());
+    let rows: Vec<El> = matching[window.range()]
+        .iter()
+        .map(|o| {
+            row(vec![
+                id_cell(crate::entity::route(&o.kind, &o.identity), &o.identity),
+                text_cell(o.title.clone().unwrap_or_default()),
+                cell(mono(&o.path)),
+            ])
+        })
+        .collect();
+
+    let filters = el("form")
+        .class("mj-filters")
+        .attr("method", "get")
+        .attr("action", &base)
+        .attr("role", "search")
+        .child(
+            el("label")
+                .class("mj-field")
+                .child(el("span").class("mj-field-label").text("Filter"))
+                .child(
+                    el("input")
+                        .class("mj-input")
+                        .attr("type", "search")
+                        .attr("name", "q")
+                        .attr("value", needle.clone().unwrap_or_default())
+                        .attr("placeholder", "identity, title or path"),
+                ),
+        )
+        .child(
+            el("button")
+                .class("mj-button")
+                .attr("type", "submit")
+                .text("Apply"),
+        )
+        .child(link(&base, "Clear").class("mj-link mj-clear"))
+        .child(link("/cockpit/objects", "Every kind").class("mj-link mj-clear"));
+
+    Page::new(
+        Area::Objects,
+        kind.to_string(),
+        el("div").child(filters).child(if rows.is_empty() {
+            nothing("No object matches.")
+        } else {
+            el("div")
+                .child(table(&["Identity", "Title", "Source"], rows))
+                .child(pagination(window, |n| {
+                    href_with(&base, query, &[("page", Some(&n.to_string()))])
+                }))
+        }),
+    )
+    .subtitle(format!(
+        "{} of the {} object(s) of kind {kind}. Each has an address of its own, derived from its identity.",
+        matching.len(),
+        entry.count
+    ))
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Objects", Some("/cockpit/objects")),
+        (kind, None),
+    ])
+}
+
+/// One entity: what it is, what it is joined to, what can be said about what it names, and
+/// where else it is answered.
+///
+/// The order of the sections is the order a governance object is read in: what it is, then
+/// whether to believe it, then what it is joined to, then where it came from, and the file
+/// itself last. Raw Markdown first would be the page a directory listing already gives.
+pub fn entity(ctx: &Context, kind: &str, slug: &str) -> Page {
+    use crate::capability::builtin::entity::{EntityView, EvidenceState};
+    let view: EntityView = match ask(ctx, "entity.show", json!({ "kind": kind, "slug": slug })) {
+        Ok(v) => v,
+        Err(e) => {
+            return Page::new(
+                Area::Objects,
+                "No such entity",
+                el("div")
+                    .child(alert("fail", e))
+                    .child(link(
+                        crate::entity::kind_route(kind),
+                        format!("Every {kind}"),
+                    ))
+                    .child(link("/cockpit/objects", "Every object")),
+            )
+            .status(404)
+        }
+    };
+
+    let generated = view.content.contains(generate::HEADER)
+        || view.provenance.path.starts_with(generate::OUT_DIR);
+    // the public page is the capability's answer, rendered; this page derives no address
+    let published = match &view.documentation {
+        Some(d) => match (&d.url, &d.route) {
+            (Some(url), _) => el("span").text("Published at ").child(link(url, url)),
+            (None, Some(route)) => el("span").text("Published at ").child(mono(route)),
+            (None, None) => el("span").text(format!(
+                "Not published: {}",
+                d.reason.as_deref().unwrap_or("no reason is declared")
+            )),
+        },
+        None => el("span").text(format!(
+            "Not published: this repository's {} declares no public page for kind {}",
+            crate::entity::PUBLICATION,
+            view.kind
+        )),
+    };
+    let identity_card = card(
+        "What it is",
+        facts(vec![
+            ("Kind", Node::Element(link(&view.kind_route, &view.kind))),
+            ("Identity", Node::Element(mono(&view.identity))),
+            ("URI", Node::Element(mono(&view.uri))),
+            ("Source", Node::Element(mono(&view.provenance.path))),
+            (
+                "Provenance",
+                Node::Element(if generated {
+                    badge("generated", "generated")
+                } else {
+                    badge("declared", "declared")
+                }),
+            ),
+            ("Public page", Node::Element(published)),
+        ]),
+    );
+
+    // the state is the word the capability answered with; this page may not round it up
+    let ev = &view.evidence;
+    let mut evidence_body = el("div").child(
+        el("p")
+            .class("mj-lede")
+            .child(word_badge(match ev.state {
+                EvidenceState::Unclaimed => "unclaimed",
+                EvidenceState::Dangling => "dangling",
+                EvidenceState::Resolved => "resolved",
+            }))
+            .child(el("span").text(format!(" {}", ev.meaning))),
+    );
+    if !ev.artifacts.is_empty() {
+        evidence_body = evidence_body.child(table(
+            &["Named under", "Artefact", "In the tree"],
+            ev.artifacts
+                .iter()
+                .map(|a| {
+                    row(vec![
+                        cell(mono(&a.field)),
+                        cell(mono(&a.path)),
+                        cell(if a.present {
+                            badge("present", "yes")
+                        } else {
+                            badge("fail", "no")
+                        }),
+                    ])
+                })
+                .collect(),
+        ));
+    }
+    if let Some(p) = &ev.proof {
+        evidence_body = evidence_body.child(
+            el("p")
+                .class("mj-note")
+                .text(format!(
+                    "Whether any of it ever ran is a different question, and {} answers it: ",
+                    p.capability
+                ))
+                .child(mono(&p.address)),
+        );
+    }
+
+    let edge_rows = |outgoing: bool| -> Vec<El> {
+        view.relations
+            .iter()
+            .filter(|e| (e.direction == crate::entity::Direction::Outgoing) == outgoing)
+            .map(|e| {
+                row(vec![
+                    cell(mono(&e.edge)),
+                    cell(mono(&e.kind)),
+                    match &e.route {
+                        Some(r) => id_cell(r.clone(), &e.label),
+                        None => text_cell(&e.label),
+                    },
+                    if e.external {
+                        cell(badge("external", "outside the layer"))
+                    } else {
+                        text_cell("")
+                    },
+                ])
+            })
+            .collect()
+    };
+    let references = edge_rows(true);
+    let referenced_by = edge_rows(false);
+    let relations_card = card(
+        "What it is joined to",
+        el("div")
+            .child(el("h3").class("mj-subheading").text("References"))
+            .child(if references.is_empty() {
+                nothing("This entity declares no reference.")
+            } else {
+                table(&["Relation", "Kind", "Target", ""], references)
+            })
+            .child(el("h3").class("mj-subheading").text("Referenced by"))
+            .child(if referenced_by.is_empty() {
+                nothing("Nothing in this layer names it. Backlinks are derived, never declared.")
+            } else {
+                table(&["Relation", "Kind", "Declared by", ""], referenced_by)
+            }),
+    );
+
+    let surfaces_card = card(
+        "Where else it is answered",
+        table(
+            &["Surface", "Address", "What it gives"],
+            view.surfaces
+                .iter()
+                .map(|s| {
+                    row(vec![
+                        cell(mono(&s.surface)),
+                        cell(mono(&s.address)),
+                        text_cell(&s.detail),
+                    ])
+                })
+                .collect(),
+        ),
+    );
+
+    let metadata = match &view.metadata {
+        Value::Null => card("Front matter", nothing("This object carries none.")),
+        m => card(
+            "Front matter",
+            pre(serde_json::to_string_pretty(m).unwrap_or_default()),
+        ),
+    };
+
+    Page::new(
+        Area::Objects,
+        view.identity.clone(),
+        el("div")
+            .class("mj-grid")
+            .child(identity_card)
+            .when(generated, |d| {
+                d.child(alert(
+                    "info",
+                    "This file is generated. Editing it is pointless: the generator overwrites it, and `majordomus generate --check` fails while it differs.",
+                ))
+            })
+            .child(card("What can be said about it", evidence_body))
+            .child(relations_card)
+            .child(surfaces_card)
+            .child(metadata)
+            .child(details("The file as it is", pre(&view.content))),
+    )
+    .subtitle(
+        view.title
+            .clone()
+            .or_else(|| view.description.clone())
+            .unwrap_or_else(|| format!("An object of kind {}", view.kind)),
+    )
+    .trail(vec![
+        ("Cockpit", Some("/cockpit")),
+        ("Objects", Some("/cockpit/objects")),
+        (&view.kind, Some(&view.kind_route)),
+        (&view.identity, None),
+    ])
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn command(origin: &str, effect: &str) -> CommandSummary {
+        serde_json::from_value(json!({
+            "id": format!("{origin}.x.{effect}"),
+            "invocation": "x",
+            "summary": "x",
+            "origin": origin,
+            "effect": effect,
+            "projections": { "docs": "" },
+        }))
+        .expect("a command summary")
+    }
+
+    /// The effect chips count what their filter lists — a ceiling, so each counts every
+    /// command at or below it — and exist for the effects present, `network_mutation`
+    /// included; before, every chip's count was a literal 0 and the list was written here.
+    #[test]
+    fn effect_chips_count_the_answer_and_come_from_the_effects_present() {
+        let commands = vec![
+            command("executable", "read_only"),
+            command("executable", "read_only"),
+            command("tool", "repository_mutation"),
+            command("workflow", "network_mutation"),
+        ];
+        let chips = effect_chips(&commands, None, |v| format!("{v:?}"));
+        let got: Vec<(&str, usize)> = chips.iter().map(|c| (c.0.as_str(), c.2)).collect();
+        assert_eq!(
+            got,
+            [
+                ("any effect", 4),
+                ("read only", 2),
+                ("up to repository mutation", 3),
+                ("up to network mutation", 4),
+            ]
+        );
+        assert!(chips[0].3, "no filter is the first chip, current");
+        let chips = effect_chips(&commands, Some("read_only"), |v| format!("{v:?}"));
+        assert!(chips[1].3 && !chips[0].3);
+    }
+
+    /// The program chips are the programs present, each counting its own commands.
+    #[test]
+    fn program_chips_come_from_the_programs_present() {
+        let commands = vec![
+            command("workflow", "read_only"),
+            command("executable", "read_only"),
+            command("executable", "local_mutation"),
+        ];
+        let chips = program_chips(&commands, None, |v| format!("{v:?}"));
+        let got: Vec<(&str, usize)> = chips.iter().map(|c| (c.0.as_str(), c.2)).collect();
+        assert_eq!(
+            got,
+            [("every program", 3), ("executable", 2), ("workflow", 1)]
+        );
+    }
+
+    /// Every numeric field of a tally is a statistic, and a field whose count is not known
+    /// renders "unknown" rather than a zero.
+    #[test]
+    fn a_tally_strip_renders_every_field() {
+        let t = crate::worktree::TopologyTallies {
+            missing: 31,
+            locked: 2,
+            errors: 1,
+            warnings: 4,
+            ..Default::default()
+        };
+        let html = tally_statistics_with(&t, "worktree.topology", &["dirty"]).render();
+        let fields = serde_json::to_value(&t).unwrap();
+        let fields = fields.as_object().unwrap();
+        assert_eq!(
+            html.matches("mj-stat-label").count(),
+            fields.len(),
+            "{html}"
+        );
+        for label in [
+            "missing",
+            "locked",
+            "errors",
+            "warnings",
+            "branches without worktree",
+        ] {
+            assert!(html.contains(&format!(">{label}<")), "{label}: {html}");
+        }
+        assert!(
+            html.contains(">31<") && html.contains(">unknown<"),
+            "{html}"
+        );
+
+        let a = ArtifactTallies {
+            documents: 1,
+            artifacts: 149,
+            current: 146,
+            stale: 0,
+            missing: 0,
+            present: 3,
+        };
+        let html = tally_statistics(&a, "artifacts.list").render();
+        assert!(html.contains(">present<") && html.contains(">3<"), "{html}");
+    }
+
+    /// An unverified tree is not rendered current, and not in a colour of health.
+    #[test]
+    fn an_unverified_artifact_tree_is_not_rendered_current() {
+        let t = ArtifactTallies {
+            documents: 1,
+            artifacts: 4,
+            current: 1,
+            stale: 0,
+            missing: 0,
+            present: 3,
+        };
+        let html = artifact_verdict_badge(ArtifactVerdict::Unverified, &t).render();
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+        assert!(html.contains("unverified: 3 file(s)"), "{html}");
+        assert_eq!(artifact_state_status(ArtifactState::Present), "unknown");
+    }
+
+    /// An ahead or behind count git did not answer is unknown, never "+0 −0".
+    #[test]
+    fn an_unknown_upstream_distance_is_not_rendered_as_in_sync() {
+        let u = UpstreamState {
+            name: "origin/x".into(),
+            ahead: None,
+            behind: None,
+            gone: false,
+        };
+        let text = upstream_text(&u);
+        assert!(!text.contains("+0") && !text.contains("−0"), "{text}");
+        assert!(text.contains("unknown"), "{text}");
+        let u = UpstreamState {
+            ahead: Some(2),
+            behind: Some(0),
+            ..u
+        };
+        assert_eq!(upstream_text(&u), "origin/x +2 −0");
+    }
+
+    /// A distribution capability that does not answer is a card that says so, and the
+    /// verdict is worded as the records it is decided from.
+    #[test]
+    fn a_failed_distribution_status_is_an_unknown_card_and_not_no_card() {
+        let html = distribution_card_of(Err("no distribution model".into())).render();
+        assert!(html.contains("Distribution"), "{html}");
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+        assert!(html.contains("no distribution model"), "{html}");
+        assert!(!html.contains("healthy"), "{html}");
+        assert!(html.contains(RECORDS), "{html}");
+    }
+
+    /// An installable answer is worded as what decided it — the release records — and not
+    /// as a public install observed to be healthy, which this capability never observes.
+    #[test]
+    fn an_installable_answer_says_per_release_records_and_not_healthy() {
+        let report: InstallabilityReport = serde_json::from_value(json!({
+            "installable": true,
+            "summary": "installable",
+            "local_version": "1.0.0",
+            "stable_tag": "v1.0.0",
+            "required_targets": 1,
+            "published_artifacts": 1,
+            "install_command": "curl | sh",
+            "installer_url": "https://example.test/install.sh",
+            "latest_url": "https://example.test/latest",
+            "checks": [],
+        }))
+        .expect("an installability report");
+        let html = distribution_card_of(Ok(report)).render();
+        assert!(html.contains(RECORDS), "{html}");
+        assert!(
+            !html.contains("healthy") && !html.contains("Public install"),
+            "{html}"
+        );
+    }
+
+    /// A model the catalogue declares no status for is "undeclared", never "available".
+    #[test]
+    fn an_undeclared_model_status_is_not_available() {
+        let html = model_status_badge(None).render();
+        assert!(
+            html.contains("undeclared") && !html.contains("available"),
+            "{html}"
+        );
+        assert!(html.contains("mj-badge--unknown"), "{html}");
+    }
 
     #[test]
     fn a_nullable_integer_is_edited_as_a_number() {
@@ -5231,5 +6954,127 @@ mod tests {
         assert!(rendered.contains("required"), "{rendered}");
         assert!(rendered.contains("max=\"50\""), "{rendered}");
         assert!(rendered.contains("data-mj-type=\"integer\""), "{rendered}");
+    }
+
+    /// A git repository with an origin/master and one commit, for the integration page.
+    fn integration_repository() -> (crate::synthetic::SyntheticRepository, String) {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}: {:?}", out);
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "master"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        let sha = git(&["rev-parse", "HEAD"]);
+        git(&["update-ref", "refs/remotes/origin/master", &sha]);
+        (repo, sha)
+    }
+
+    fn observed_pr(
+        number: u64,
+        head_sha: &str,
+        state: crate::integration::CheckRunState,
+    ) -> crate::integration::PullRequestObservation {
+        crate::integration::PullRequestObservation {
+            number,
+            title: format!("change {number}"),
+            author: "someone".into(),
+            head_ref: format!("feature/{number}"),
+            head_sha: head_sha.into(),
+            base_ref: "master".into(),
+            draft: false,
+            labels: vec![],
+            created_at: format!("2026-09-0{number}T00:00:00Z"),
+            updated_at: format!("2026-09-0{number}T00:00:00Z"),
+            body: String::new(),
+            checks: vec![crate::integration::CheckObservation {
+                name: "ci".into(),
+                state,
+            }],
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+        }
+    }
+
+    /// With nothing observed the page says so and names the command that observes; with an
+    /// observation it renders the lanes, the base, the lease and the recent actions, every
+    /// figure from the same queue the command line and MCP answer.
+    #[test]
+    fn the_integration_page_renders_the_observed_queue_and_says_when_there_is_none() {
+        use crate::integration::{
+            drain, store_observation, CheckRunState, ForgeObservation, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+
+        let ctx = repo.context().expect("a context");
+        let empty = integration(&ctx).main.render();
+        assert!(empty.contains("prs refresh"), "{empty}");
+
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: sha.clone(),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                reviews_required: Some(false),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    observed_pr(1, &sha, CheckRunState::Passed),
+                    observed_pr(2, &sha, CheckRunState::Failed),
+                    observed_pr(3, &sha, CheckRunState::Pending),
+                ],
+            },
+        )
+        .expect("an observation");
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                at: "2026-10-01T00:01:00Z".into(),
+                actor: "test".into(),
+                action: "merge_succeeded".into(),
+                pr: Some(9),
+                master_before: Some(sha.clone()),
+                head_sha: Some(sha.clone()),
+                master_after: Some(sha.clone()),
+                reasons: vec![],
+                detail: "merged #9".into(),
+                passed_over: vec![],
+            },
+        );
+        let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");
+
+        let ctx = repo.context().expect("a context");
+        let page = integration(&ctx);
+        let html = page.main.render();
+        assert_eq!(page.status, 200);
+        for n in ["#1", "#2", "#3"] {
+            assert!(html.contains(n), "{n} is not on the page: {html}");
+        }
+        assert!(html.contains(&sha[..10]), "the base master is not named");
+        assert!(
+            html.contains("merged #9") || html.contains("#9"),
+            "the last merge is missing"
+        );
+        assert!(
+            !html.contains("prs refresh records one"),
+            "an observed queue says nothing is observed"
+        );
+        drop(lease);
     }
 }

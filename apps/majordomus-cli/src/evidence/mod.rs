@@ -59,6 +59,7 @@
 //!     at: "2026-09-11T00:00:00Z".into(),
 //!     origin: Origin::Local,
 //!     command: id.reproduce(),
+//!     run: None,
 //! };
 //! assert!(run.outcome.proves());
 //!
@@ -526,6 +527,7 @@ impl TestId {
 ///     at: "2026-09-11T00:00:00Z".into(),
 ///     origin: Origin::Ci,
 ///     command: id.reproduce(),
+///     run: None,
 /// };
 ///
 /// // it is a value in a tracked JSON file, so it has to survive the file unchanged
@@ -555,6 +557,7 @@ impl TestId {
 ///     at: "2026-09-11T00:00:00Z".into(),
 ///     origin: Origin::Local,
 ///     command: "bash test/run.sh 07_scope".into(),
+///     run: None,
 /// };
 /// assert!(e.outcome.proves());
 /// ```
@@ -582,6 +585,97 @@ pub struct Execution {
     pub origin: Origin,
     /// The exact command that runs this one test again.
     pub command: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The continuous-integration run the execution was recorded in, when it was recorded in
+    /// one that could name itself. Absent for a local run, and absent from every row recorded
+    /// before runs were named, which is why the ledger's version did not change.
+    pub run: Option<RunRef>,
+}
+
+/// The continuous-integration run an execution was recorded in: enough to navigate back to
+/// the run that produced it.
+///
+/// [`Origin`] says what kind of run it was and deliberately names no provider. This names the
+/// one run, in the words the provider addressed it with when it happened — its identifier,
+/// its attempt, the workflow and job, and the address a reader follows — because a link built
+/// later from a template would point wherever the template's idea of the provider had drifted
+/// to. Only an adapter constructs it; nothing in the model reads the provider's name.
+///
+/// ```
+/// use majordomus_cli::evidence::RunRef;
+///
+/// let actions = |k: &str| {
+///     let v = match k {
+///         "GITHUB_ACTIONS" => "true",
+///         "GITHUB_SERVER_URL" => "https://github.com",
+///         "GITHUB_REPOSITORY" => "owner/repo",
+///         "GITHUB_RUN_ID" => "42",
+///         "GITHUB_RUN_ATTEMPT" => "2",
+///         "GITHUB_WORKFLOW" => "validate",
+///         "GITHUB_JOB" => "evidence",
+///         _ => return None,
+///     };
+///     Some(v.to_string())
+/// };
+/// let run = RunRef::from_env(actions).unwrap();
+/// assert_eq!(run.id, "42");
+/// assert_eq!(run.attempt, 2);
+/// assert_eq!(run.url, "https://github.com/owner/repo/actions/runs/42/attempts/2");
+///
+/// // outside a run there is nothing to name, and a half-described run is not a run
+/// assert!(RunRef::from_env(|_| None).is_none());
+/// assert!(RunRef::from_env(|k| (k == "GITHUB_ACTIONS").then(|| "true".to_string())).is_none());
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[schemars(rename = "EvidenceRun")]
+pub struct RunRef {
+    /// The provider that ran it, as the adapter that recorded it names it.
+    pub provider: String,
+    /// The provider's identifier of the run.
+    pub id: String,
+    /// Which attempt of the run, counted from 1.
+    pub attempt: u32,
+    /// The workflow the run belongs to.
+    pub workflow: String,
+    /// The job within the run that recorded the execution.
+    pub job: String,
+    /// Where a reader finds the run, as the provider addressed it at the time.
+    pub url: String,
+}
+
+impl RunRef {
+    /// The run described by a GitHub Actions environment, read through `var`, or `None` when
+    /// the environment is not one or leaves out any part a reader would need to find it.
+    ///
+    /// The variable reader is a parameter so the adapter can be exercised without mutating
+    /// the process environment, which other threads of a test binary share.
+    ///
+    /// ```
+    /// use majordomus_cli::evidence::RunRef;
+    /// assert!(RunRef::from_env(|k| (k == "GITHUB_RUN_ID").then(|| "1".to_string())).is_none());
+    /// ```
+    pub fn from_env(var: impl Fn(&str) -> Option<String>) -> Option<RunRef> {
+        if var("GITHUB_ACTIONS").as_deref() != Some("true") {
+            return None;
+        }
+        let server = var("GITHUB_SERVER_URL")?;
+        let repository = var("GITHUB_REPOSITORY")?;
+        let id = var("GITHUB_RUN_ID")?;
+        let attempt: u32 = var("GITHUB_RUN_ATTEMPT")
+            .and_then(|a| a.parse().ok())
+            .unwrap_or(1);
+        Some(RunRef {
+            provider: "github_actions".into(),
+            url: format!(
+                "{}/{repository}/actions/runs/{id}/attempts/{attempt}",
+                server.trim_end_matches('/')
+            ),
+            id,
+            attempt,
+            workflow: var("GITHUB_WORKFLOW")?,
+            job: var("GITHUB_JOB")?,
+        })
+    }
 }
 
 /// A ledger holds one execution per test, so the test identifies it; the label and the
@@ -622,6 +716,7 @@ impl Execution {
     ///     at: "2026-09-11T00:00:00Z".into(),
     ///     origin: Origin::Local,
     ///     command: id.reproduce(),
+    ///     run: None,
     /// };
     /// assert_eq!(run.digest_matches(repo.path()), Some(true));
     ///
@@ -799,6 +894,45 @@ impl ProofState {
             self,
             ProofState::Proven | ProofState::InputsUnchanged | ProofState::Stale
         )
+    }
+}
+
+/// What a state may still be once the tree the run measured is taken into account.
+///
+/// `proven` is "a passing run recorded against this exact commit with a clean tree"
+/// (ADR 0041), and docs/EVIDENCE.md says why the tree is half of that: "A dirty tree is
+/// recorded as `dirty` for exactly this reason: it is the one case where the commit does
+/// not describe what ran." A run measured against a tree that was not its commit is
+/// therefore capped at `inputs_unchanged`: a pass, joined to a commit, with no claim that
+/// the commit is what it saw. A weaker state is never strengthened here, and `unknown` —
+/// git could not be asked — is treated as not clean, because not knowing is not proof.
+///
+/// ```
+/// use majordomus_cli::evidence::{capped_by_working_tree, ProofState};
+///
+/// // a clean tree changes nothing
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Proven, "clean"),
+///     ProofState::Proven
+/// );
+/// // a dirty one costs the strongest state, and only that one
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Proven, "dirty"),
+///     ProofState::InputsUnchanged
+/// );
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Proven, "unknown"),
+///     ProofState::InputsUnchanged
+/// );
+/// assert_eq!(
+///     capped_by_working_tree(ProofState::Stale, "dirty"),
+///     ProofState::Stale
+/// );
+/// ```
+pub fn capped_by_working_tree(state: ProofState, working_tree: &str) -> ProofState {
+    match (state, working_tree) {
+        (ProofState::Proven, t) if t != "clean" => ProofState::InputsUnchanged,
+        (s, _) => s,
     }
 }
 
@@ -1174,7 +1308,10 @@ fn claims_of(index: &Index) -> Vec<IndexedClaim> {
 ///
 /// `None` when git could not answer, which the caller must not read as "nothing changed":
 /// an unanswerable comparison is why [`ProofState`] has to be able to say it does not know.
-fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
+///
+/// Shared with the preflight (`environment::preflight`), whose verdict about recorded test
+/// runs must mean what `proven` means here and nothing looser.
+pub(crate) fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
     let git = |args: &[&str]| -> Option<Vec<String>> {
         let out = crate::git::read_only(root).args(args).output().ok()?;
         if !out.status.success() {
@@ -1253,6 +1390,7 @@ fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
 ///         kind_sources: vec![],
 ///         scope_origin: majordomus_cli::scope::Origin::Distribution,
 ///         scope_path: String::new(),
+///         observed: Default::default(),
 ///     },
 ///     objects: vec![claim],
 ///     diagnostics: vec![],
@@ -1346,7 +1484,13 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
                             } else if !changed.is_empty() {
                                 (ProofState::Stale, changed)
                             } else if changed_at_all.is_empty() {
-                                (ProofState::Proven, Vec::new())
+                                // The diff says the commit is the tree in front of us; the
+                                // execution's own `working_tree` says whether that commit
+                                // was the tree the run measured. Both, or it is not proven.
+                                (
+                                    capped_by_working_tree(ProofState::Proven, &e.working_tree),
+                                    Vec::new(),
+                                )
                             } else {
                                 (ProofState::InputsUnchanged, Vec::new())
                             }
@@ -1420,12 +1564,26 @@ pub fn report(index: &Index, ledger: &Ledger) -> EvidenceReport {
 /// outside, `planned` states that nothing implements it and `rejected` that nothing will;
 /// demanding a current proof of those would be demanding proof of a thing the claim already
 /// says is not there.
+///
+/// Three states pass and three do not, and [`ProofState::Stale`] is the line between them.
+/// A stale run is a pass — [`ProofState::passing`] says so, and the summary keeps it apart
+/// from a failure for good reason — but it is a pass of a subject that has since moved: the
+/// claim's own implementation or its test changed after the run offered as its proof.
+/// Accepting it here made the gate accept, as support for a guarantee, a measurement of
+/// something else. What is left is [`ProofState::InputsUnchanged`], weaker than `proven`
+/// but at least a pass of *this* subject, and that is the floor.
 fn unsupported(status: &str, state: ProofState) -> Option<String> {
     if status != "guaranteed" {
         return None;
     }
     match state {
-        ProofState::Proven | ProofState::InputsUnchanged | ProofState::Stale => None,
+        ProofState::Proven | ProofState::InputsUnchanged => None,
+        ProofState::Stale => Some(
+            "the claim guarantees a behaviour whose only recorded run is older than what it is \
+             about: the implementation or the test changed after that run, so the pass measured \
+             a subject this claim no longer names"
+                .into(),
+        ),
         ProofState::Failing => {
             Some("the claim guarantees a behaviour whose test most recently failed".into())
         }
@@ -1548,14 +1706,73 @@ mod tests {
         assert!(unsupported("guaranteed", ProofState::Failing).is_some());
         assert!(unsupported("guaranteed", ProofState::NoTest).is_some());
         assert!(unsupported("guaranteed", ProofState::Unrunnable).is_some());
-        assert!(unsupported("guaranteed", ProofState::Stale).is_none());
+        assert!(unsupported("guaranteed", ProofState::Stale).is_some());
         assert!(unsupported("guaranteed", ProofState::Proven).is_none());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
         for status in ["advisory", "planned", "rejected"] {
-            for state in [ProofState::NotRun, ProofState::NoTest, ProofState::Failing] {
+            for state in [
+                ProofState::NotRun,
+                ProofState::NoTest,
+                ProofState::Failing,
+                ProofState::Stale,
+            ] {
                 assert!(
                     unsupported(status, state).is_none(),
                     "{status} must not be held to a current proof"
                 );
+            }
+        }
+    }
+
+    /// A stale run is a pass, and it is not support for a guarantee. The pass is real —
+    /// `passing()` keeps saying so, and the summary must keep it apart from a failure — but
+    /// its subject moved after it: a guarantee whose implementation or test changed since
+    /// the only run recorded for it is a guarantee nothing current has measured, and
+    /// reporting that as supported is the gate accepting a measurement of something else.
+    #[test]
+    fn a_guarantee_whose_proof_is_older_than_its_subject_is_not_supported() {
+        let reason = unsupported("guaranteed", ProofState::Stale)
+            .expect("a stale proof was accepted as support for a guarantee");
+        assert!(
+            reason.contains("older than what it is about"),
+            "the reason must say the proof is older than its subject, not merely that it is \
+             stale: {reason}"
+        );
+        // the pass is still a pass, and the two passing-but-weaker states are not the same
+        assert!(ProofState::Stale.passing());
+        assert!(unsupported("guaranteed", ProofState::InputsUnchanged).is_none());
+    }
+
+    /// `proven` is a passing run recorded against this exact commit *with a clean tree*
+    /// (ADR 0041). The tree the run measured is recorded per execution, so a run made on a
+    /// dirty tree is capped at `inputs_unchanged` however empty the diff since its commit
+    /// is — and no weaker state is moved by the cap in either direction.
+    #[test]
+    fn a_run_recorded_on_a_dirty_tree_is_never_proven() {
+        // positive: a run whose tree was the commit keeps the strongest state
+        assert_eq!(
+            capped_by_working_tree(ProofState::Proven, "clean"),
+            ProofState::Proven
+        );
+        // negative: the commit did not describe what ran, so it is not proof of the commit
+        for tree in ["dirty", "unknown", ""] {
+            assert_eq!(
+                capped_by_working_tree(ProofState::Proven, tree),
+                ProofState::InputsUnchanged,
+                "a run recorded on a {tree} tree read as proven"
+            );
+        }
+        // and nothing else moves: the cap only ever takes the one claim it is about
+        for state in [
+            ProofState::InputsUnchanged,
+            ProofState::Stale,
+            ProofState::Failing,
+            ProofState::NotRun,
+            ProofState::Unrunnable,
+            ProofState::NoTest,
+        ] {
+            for tree in ["clean", "dirty", "unknown"] {
+                assert_eq!(capped_by_working_tree(state, tree), state);
             }
         }
     }

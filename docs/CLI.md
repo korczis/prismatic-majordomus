@@ -451,6 +451,7 @@ weakest evidence about the present.
 | `CONTEXT DOCUMENTS` | `.ai/**/README.md` (the context contract) | a task is active; the effective chain is listed for each of its scope paths |
 | `OPEN QUESTIONS` | `state/open-questions.md` | any unresolved entry names this task |
 | `DECISIONS` | `state/decisions.md` | `context.decisions: true` (this task) or `context.architecture_notes: true` (the repository) |
+| `REASONING` | `state/reasoning/<task>/`, rendered by `majordomus-cli reasoning status --report` | the task has reasoning records and `context.decisions: true` |
 | `LATEST CHECKPOINT` | `state/checkpoints/` | a checkpoint resolves for this task |
 | `LATEST COMPATIBLE HANDOVER` | `state/handovers/` | a handover resolves for this worktree and branch |
 | `FILES TOUCHED IN SCOPE` | git | `context.relevant_files: true` |
@@ -776,9 +777,13 @@ doctrine `majordomus.completion-gates`, and report each in one vocabulary:
 | `blocked` | something it cannot run without has not passed |
 | `queued` | the plan selects it and no run has ever reported |
 | `exempt` | nothing this change did can make it true or false |
-| `unknown` | it cannot be judged here at all — no model, no reader |
+| `unknown` | it cannot be judged here at all — a model that does not parse, a reader that is not built, errors or answers nothing, no `jq` |
 
-Only `fail`, `stale` and `blocked` refuse the outcome `completed`. `queued` is reported by
+`fail`, `stale`, `blocked` and `unknown` refuse the outcome `completed`: `completed` is a
+claim that the verdict is known, and a verdict that could not be read cannot back it. Every
+other outcome is still accepted over any of them, named "not refused", and `check` reports
+without refusing. A repository that declares no CI model at all has no gate to be unknown
+about and refuses nothing. `queued` is reported by
 name, never accepted as a pass and never refused: a verdict that never arrived and a verdict
 that said pass are different facts, and on 2026-09-10 this repository's trunk carried three
 branch-breaking defects overnight because they looked identical
@@ -1991,13 +1996,15 @@ when the container could not be written or does not read back as what went in.
 Print the version and exit. `--version` is accepted as a synonym, and `version` works
 without an installation: it never reads `.ai/`.
 
-**Reads:** nothing.
+**Reads:** `share/version.txt` beside the tool — never the one `MAJORDOMUS_SHARE` names.
 **Writes:** nothing.
 
 **Behaviour:**
 - Prints `majordomus <version>` on stdout and exits `0`.
-- The same string is the single source of the version everywhere else, including the
-  public site's footer.
+- The version is authored in `apps/majordomus-cli/Cargo.toml`; `share/version.txt` is its
+  generated projection, shipped in every archive, and this command prints it. The public
+  site's footer reads the same answer.
+- Exits `12`, naming the file, when the distribution carries no `share/version.txt`.
 
 ## Hook integration (target)
 

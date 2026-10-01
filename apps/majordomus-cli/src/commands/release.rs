@@ -12,7 +12,8 @@ use crate::error::{Error, Result};
 use crate::release::compat::{Impact, Severity, Status, VersionPlan};
 use crate::release::{self, changelog, version};
 
-/// Exit code when the two writers of the version disagree, matching
+/// Exit code when the version is not stated the way it must be — the projection behind or
+/// apart from the manifest, a version written by hand, a bump that did not take — matching
 /// `scripts/release-version --check`.
 pub const EXIT_DISAGREE: u8 = 10;
 
@@ -83,8 +84,13 @@ fn render_changelog(args: &ReleaseArgs, only: Option<String>) -> Result<u8> {
     Ok(0)
 }
 
-/// The version report. Exits 10 when the two writers disagree, which is the same verdict
-/// `scripts/release-version --check` gives and the same code.
+/// The version report, and the verdict on where the version is stated.
+///
+/// Exits 10 when the projection the shell tool reads is not current, or when a version is
+/// written down by hand where the tool's own files live ([`version::diagnose`], the same
+/// findings `release analyze` carries). That is the gate `version-authored-once` runs, and
+/// the same code `scripts/release-version --check` gives. The findings are printed after
+/// the report, or to stderr under `--format json`, whose stdout is the capability's value.
 fn render_version(args: &ReleaseArgs) -> Result<u8> {
     let app = App::load(&args.repo)?;
     let value = app
@@ -98,16 +104,25 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
         serde_json::from_value(value.clone()).map_err(|e| Error::Protocol {
             reason: e.to_string(),
         })?;
+    let root = std::path::Path::new(&app.index().repository.root).to_path_buf();
+    let findings = version::diagnose(&root);
 
     let stdout = std::io::stdout();
     let mut out = stdout.lock();
     match args.format {
-        OutputFormat::Json => writeln!(
-            out,
-            "{}",
-            serde_json::to_string_pretty(&value).unwrap_or_default()
-        )
-        .map_err(Error::Transport)?,
+        OutputFormat::Json => {
+            writeln!(
+                out,
+                "{}",
+                serde_json::to_string_pretty(&value).unwrap_or_default()
+            )
+            .map_err(Error::Transport)?;
+            let mut err = std::io::stderr().lock();
+            for d in &findings {
+                writeln!(err, "{} {}: {}", severity_word(d.severity), d.id, d.message)
+                    .map_err(Error::Transport)?;
+            }
+        }
         OutputFormat::Text => {
             writeln!(out, "declared     {}", report.declared).map_err(Error::Transport)?;
             writeln!(out, "tool         {}", report.tool).map_err(Error::Transport)?;
@@ -132,9 +147,26 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
                 report.next.as_deref().unwrap_or("—")
             )
             .map_err(Error::Transport)?;
+            for d in &findings {
+                writeln!(out).map_err(Error::Transport)?;
+                writeln!(out, "{} {}: {}", severity_word(d.severity), d.id, d.message)
+                    .map_err(Error::Transport)?;
+            }
         }
     }
-    Ok(if report.agree { 0 } else { EXIT_DISAGREE })
+    Ok(if report.agree && findings.is_empty() {
+        0
+    } else {
+        EXIT_DISAGREE
+    })
+}
+
+/// How a diagnostic's severity is printed, the same word in every rendering.
+fn severity_word(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Error => "ERROR  ",
+        Severity::Warning => "WARNING",
+    }
 }
 
 /// The plan, through the capability so that the terminal renders what HTTP and MCP answer.
@@ -212,8 +244,13 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
     if !plan.writers_agree {
         writeln!(
             out,
-            "  tool          {} — THE TWO WRITERS DISAGREE",
-            plan.tool_version
+            "  tool          {} — {} IS NOT CURRENT; scripts/derive projects it",
+            if plan.tool_version.is_empty() {
+                "nothing"
+            } else {
+                plan.tool_version.as_str()
+            },
+            version::PROJECTION
         )
         .map_err(Error::Transport)?;
     }
@@ -291,17 +328,7 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
 
     for d in &plan.diagnostics {
         writeln!(out).map_err(Error::Transport)?;
-        writeln!(
-            out,
-            "{} {}",
-            if d.severity == Severity::Error {
-                "ERROR  "
-            } else {
-                "WARNING"
-            },
-            d.message
-        )
-        .map_err(Error::Transport)?;
+        writeln!(out, "{} {}", severity_word(d.severity), d.message).map_err(Error::Transport)?;
     }
 
     writeln!(out).map_err(Error::Transport)?;
@@ -345,8 +372,8 @@ fn render_plan(out: &mut impl Write, plan: &VersionPlan, explain: bool) -> Resul
     Ok(())
 }
 
-/// Raise the version in every place that states it, to at least what the public contract
-/// requires.
+/// Raise the version in the one place it is authored, to at least what the public contract
+/// requires, and keep the lock's record of it in step; `scripts/derive` derives the rest.
 ///
 /// # The authority this no longer has
 ///
@@ -553,7 +580,8 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
 
     if dry_run {
         writeln!(out, "         {} (unwritten)", version::MANIFEST).map_err(Error::Transport)?;
-        writeln!(out, "         {} (unwritten)", version::ENTRY).map_err(Error::Transport)?;
+        writeln!(out, "         {} (unwritten)", version::LOCK).map_err(Error::Transport)?;
+        writeln!(out, "         {}", derived_after(&to)).map_err(Error::Transport)?;
         return Ok(0);
     }
 
@@ -561,31 +589,38 @@ fn bump(args: &ReleaseArgs, level: Option<&str>, exact: Option<&str>, dry_run: b
     for f in &written {
         writeln!(out, "         {f} written").map_err(Error::Transport)?;
     }
-    // Read every site back. A half-applied bump is exactly the failure the one-writer rule
-    // exists to prevent, so the writer proves its own work rather than leaving it to the
-    // release that finds out at its first step.
+    // Read both back. A half-applied bump is exactly the failure the one-writer rule exists
+    // to prevent, so the writer proves its own work rather than leaving it to the build or
+    // the release that finds out at its first step. The projection is not read: it is stale
+    // now by design, and deriving it is the next step, not this one.
     let after_manifest = version::declared(&root).unwrap_or_default();
-    let after_tool = version::tool(&root).unwrap_or_default();
     let after_lock = version::locked(&root);
     let lock_disagrees = after_lock.as_deref().is_some_and(|v| v != to);
-    if after_manifest != to || after_tool != to || lock_disagrees {
+    if after_manifest != to || lock_disagrees {
         writeln!(
             out,
-            "release: the bump did not take in every place ({} states '{after_manifest}', {} states '{after_tool}', {} states '{}')",
+            "release: the bump did not take ({} states '{after_manifest}', {} states '{}')",
             version::MANIFEST,
-            version::ENTRY,
             version::LOCK,
             after_lock.as_deref().unwrap_or("nothing")
         )
         .map_err(Error::Transport)?;
         return Ok(EXIT_DISAGREE);
     }
-    writeln!(
-        out,
-        "         both writers agree; every site states {to}. `majordomus generate changelog` renders the new section"
-    )
-    .map_err(Error::Transport)?;
+    writeln!(out, "         {} now declares {to}", version::MANIFEST).map_err(Error::Transport)?;
+    writeln!(out, "         {}", derived_after(&to)).map_err(Error::Transport)?;
     Ok(0)
+}
+
+/// What a bump leaves for the derivation: the one sentence both the dry run and the write
+/// end with, so the two cannot describe the next step differently.
+fn derived_after(to: &str) -> String {
+    format!(
+        "{} and every generator stamp state {to} once scripts/derive has run: it builds, then \
+         `majordomus generate` projects them. Never edit {} or bin/majordomus",
+        version::PROJECTION,
+        version::PROJECTION
+    )
 }
 
 /// Why the plan could not be made, for the message that says a floor is unmeasurable.

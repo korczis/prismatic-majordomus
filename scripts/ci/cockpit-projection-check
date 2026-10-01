@@ -28,14 +28,238 @@
 #   scripts/ci/cockpit-projection-check              report, and fail on a direct read
 #   MJ_ROOT=<dir> scripts/ci/cockpit-projection-check   measure another tree (case 389 does)
 #
-# Exit: 0 clean, 10 a page reads the index, 12 unusable.
+#   scripts/ci/cockpit-projection-check --ui-integrity                   the ui-integrity gate
+#   scripts/ci/cockpit-projection-check --ui-integrity --strict          the baseline ignored
+#   scripts/ci/cockpit-projection-check --ui-integrity --write-baseline  rewrite the baseline
+#
+# Exit: 0 clean, 10 a page reads the index (or, with --ui-integrity, a finding the baseline
+# does not hold), 12 unusable, 2 usage.
+#
+# --ui-integrity is the gate of ADR 0089 and project.ui-derived-state: what an interface
+# shows is derived, and unknown is never drawn as healthy. It widens this check rather than
+# adding a new shell unit (ADR 0069), because its first half is the same question asked of
+# three more fields of the context, and its other checks are the same kind of line scan:
+#
+#   direct-read       a Cockpit file reads ctx.registry, ctx.product or ctx.why itself
+#                     instead of asking a capability, outside the allow-list below
+#   unconditional-ok  health.rs gives a check `status: HealthStatus::Ok` as a literal, so the
+#                     check cannot report anything else
+#   healthy-default   an enum's `#[default]` is a healthy variant (Ok, Available, Current,
+#                     ...), so a value nobody declared reads as a good one
+#   count-default     pages.rs turns an absent count into zero: `unwrap_or(0)`, or
+#                     `unwrap_or_default()` on a numeric read, so unknown renders as a number
+#
+# An unconditional-ok, healthy-default or count-default site that is right as written says
+# why in a comment on its line or directly above it: `// ui-integrity: <reason>`. The
+# reason is read in review; an empty one is no exemption.
+#
+# Known findings are held in .ai/repo/ui-integrity-baseline.txt, written by
+# --write-baseline and never by hand. A finding the baseline names is debt and passes; one
+# it does not name fails. A baseline line nothing matches any more is reported as paid and
+# does not fail, so the fix that pays it lands without a second change to this file.
 set -eu
 set -o pipefail
 
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 cd "$ROOT"
 COCKPIT="apps/majordomus-cli/src/cockpit"
-[ $# -eq 0 ] || { echo "cockpit-projection-check: unknown option $1" >&2; exit 2; }
+UI=0 STRICT=0 WRITE=0
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --ui-integrity) UI=1 ;;
+    --strict) STRICT=1 ;;
+    --write-baseline) WRITE=1 ;;
+    *) echo "cockpit-projection-check: unknown option $1" >&2; exit 2 ;;
+  esac
+  shift
+done
+if [ "$UI" -eq 0 ] && [ $((STRICT + WRITE)) -gt 0 ]; then
+  echo "cockpit-projection-check: --strict and --write-baseline belong to --ui-integrity" >&2
+  exit 2
+fi
+if [ $((STRICT + WRITE)) -gt 1 ]; then
+  echo "cockpit-projection-check: --strict and --write-baseline are exclusive" >&2
+  exit 2
+fi
+
+# ---------------------------------------------------------------------------------------
+# --ui-integrity
+#
+# The allow-list of direct reads. The navigation is the Cockpit's module listing and its
+# kind listing: the "Capability modules" section is the registry's own module list, grouped
+# by the area the product model derives from the features that name each module and titled
+# by the Why catalogue (ADR 0026), and nav.rs's tests assert it is exactly the registry's.
+# Asking a capability for a list the process holds as its own declaration would add a
+# serialisation round trip and prove nothing more. A line here is a file and a field; any
+# other direct read in the Cockpit is a finding. Entries are separated by `;`.
+UI_ALLOW='apps/majordomus-cli/src/cockpit/nav.rs registry;apps/majordomus-cli/src/cockpit/nav.rs product;apps/majordomus-cli/src/cockpit/nav.rs why'
+UI_BASELINE=".ai/repo/ui-integrity-baseline.txt"
+UI_HEALTH="apps/majordomus-cli/src/capability/builtin/health.rs"
+UI_PAGES="$COCKPIT/pages.rs"
+UI_SRC="apps/majordomus-cli/src"
+
+# Every awk below prints one finding per line: the key, a tab, <file>:<line>, a tab, the
+# message. The key is what the baseline holds; it names the check, the file and the subject
+# — never a line number, so a baseline survives an edit above the finding.
+UI_AWK_COMMON='
+function trim(s) { sub(/^[ \t]+/, "", s); sub(/[ \t]+$/, "", s); return s }
+function squash(s) { gsub(/[ \t]+/, " ", s); return s }
+function is_comment(t) { return t ~ /^(\/\/|\*|\/\*)/ }
+function marks(t) { return t ~ /\/\/[\/!]?[ \t]*ui-integrity:[ \t]*[^ \t]/ }
+'
+
+ui_direct_reads() {
+  local f
+  while IFS= read -r f; do
+    awk -v F="$f" -v ALLOW="$UI_ALLOW" "$UI_AWK_COMMON"'
+BEGIN { n = split(ALLOW, a, ";"); for (i = 1; i <= n; i++) allowed[a[i]] = 1 }
+function hit(field) {
+  if ((F " " field) in allowed) return
+  printf "direct-read %s %s ctx.%s\t%s:%d\tctx.%s is read directly in fn %s; ask the capability that answers it through Context::execute\n", F, fn, field, F, NR, field, fn
+}
+{ t = trim($0) }
+is_comment(t) { next }
+match(t, /(^|[^A-Za-z0-9_])fn [A-Za-z0-9_]+/) { s = substr(t, RSTART, RLENGTH); sub(/.*fn /, "", s); fn = s }
+{
+  rest = t
+  while (match(rest, /(^|[^A-Za-z0-9_.])(ctx|context)\.(registry|product|why)([^A-Za-z0-9_]|$)/)) {
+    s = substr(rest, RSTART, RLENGTH); rest = substr(rest, RSTART + RLENGTH)
+    sub(/^[^a-z]*(ctx|context)\./, "", s); sub(/[^a-z]+$/, "", s); hit(s)
+  }
+  if (prev ~ /(^|[^A-Za-z0-9_.])(ctx|context)$/ && match(t, /^\.(registry|product|why)([^A-Za-z0-9_]|$)/)) {
+    s = substr(t, 2, RLENGTH - 1); sub(/[^a-z]+$/, "", s); hit(s)
+  }
+  prev = t
+}' "$f"
+  done < <(find "$COCKPIT" -name '*.rs' -type f | LC_ALL=C sort)
+}
+
+ui_unconditional_ok() {
+  awk -v F="$UI_HEALTH" "$UI_AWK_COMMON"'
+{ t = trim($0) }
+is_comment(t) { if (marks(t)) exempt = 1; next }
+match(t, /^id: "[^"]*"/) { s = substr(t, RSTART, RLENGTH); sub(/^id: "/, "", s); sub(/"$/, "", s); id = s }
+t ~ /^status:[ \t]*HealthStatus::Ok[ \t]*(,|\}|$)/ && !exempt && !marks(t) {
+  printf "unconditional-ok %s %s\t%s:%d\tthe check %s is given status HealthStatus::Ok as a literal; decide it from what was observed, or say why it cannot be otherwise (// ui-integrity: <reason>)\n", F, id, F, NR, id
+}
+{ exempt = 0 }' "$UI_HEALTH"
+}
+
+ui_healthy_default() {
+  local f
+  while IFS= read -r f; do
+    awk -v F="$f" "$UI_AWK_COMMON"'
+{ t = trim($0) }
+is_comment(t) { if (marks(t)) exempt = 1; next }
+match(t, /(^|[^A-Za-z0-9_])enum [A-Za-z0-9_]+/) { s = substr(t, RSTART, RLENGTH); sub(/.*enum /, "", s); en = s }
+t == "" { next }
+t ~ /^#\[default\]/ {
+  pending = 1; at = NR; ex = exempt || marks(t)
+  t = trim(substr(t, 11)); if (t == "") next
+}
+pending && t ~ /^#\[/ { next }
+pending {
+  pending = 0
+  if (match(t, /^[A-Za-z0-9_]+/)) {
+    v = substr(t, RSTART, RLENGTH)
+    if (v ~ /^(Ok|Healthy|Available|Current|Pass|Passed|Passing|Live|Clean|Valid|Verified|Supported|Green|Met|Success|Succeeded|Fresh|Active|Enforced|Proven|Up|Running)$/ && !ex && !marks(t))
+      printf "healthy-default %s %s::%s\t%s:%d\t#[default] makes %s::%s the value nobody declared; an undeclared value is unknown, not healthy\n", F, en, v, F, at, en, v
+  }
+}
+{ exempt = 0 }' "$f"
+  done < <(find "$UI_SRC" -name '*.rs' -type f | LC_ALL=C sort)
+}
+
+ui_count_default() {
+  awk -v F="$UI_PAGES" "$UI_AWK_COMMON"'
+{ t = trim($0) }
+is_comment(t) { if (marks(t)) exempt = 1; next }
+match(t, /(^|[^A-Za-z0-9_])fn [A-Za-z0-9_]+/) { s = substr(t, RSTART, RLENGTH); sub(/.*fn /, "", s); fn = s }
+{
+  # the chain this line ends: the lines since the last statement boundary, at most five
+  if (w5 ~ /(;|\{|\})$/) { w1 = ""; w2 = ""; w3 = ""; w4 = "" }
+  window = w1 " " w2 " " w3 " " w4 " " t
+  zero = t ~ /\.unwrap_or\((0|0\.0|0_?[ui](8|16|32|64|128|size)|0\.0_?f(32|64))\)/
+  numeric = t ~ /\.unwrap_or_default\(\)/ && window ~ /(as_u64|as_i64|as_f64|as_usize)/
+  if ((zero || numeric) && !exempt && !marks(t))
+    printf "count-default %s %s %s\t%s:%d\tan absent count renders as zero in fn %s; render it as unknown, or say why zero is the fact (// ui-integrity: <reason>)\n", F, fn, squash(t), F, NR, fn
+  w1 = w2; w2 = w3; w3 = w4; w4 = t; w5 = t
+  exempt = 0
+}' "$UI_PAGES"
+}
+
+ui_integrity() {
+  local subject
+  for subject in "$COCKPIT" "$UI_HEALTH" "$UI_PAGES" "$UI_SRC"; do
+    if [ ! -e "$subject" ]; then
+      echo "cockpit-projection-check: --ui-integrity cannot read $subject; nothing was measured" >&2
+      exit 12
+    fi
+  done
+  local found
+  found="$(ui_direct_reads; ui_unconditional_ok; ui_healthy_default; ui_count_default)"
+  local keys
+  keys="$(printf '%s\n' "$found" | cut -f1 | sed '/^$/d' | LC_ALL=C sort -u)"
+  local total
+  total="$(printf '%s\n' "$keys" | sed '/^$/d' | wc -l | tr -d ' ')"
+
+  if [ "$WRITE" -eq 1 ]; then
+    mkdir -p "$(dirname "$UI_BASELINE")"
+    {
+      echo "# The ui-integrity findings (ADR 0089, project.ui-derived-state) that were known"
+      echo "# when this file was written: debt, which does not fail the gate."
+      echo "#"
+      echo "# Written by scripts/ci/cockpit-projection-check --ui-integrity --write-baseline;"
+      echo "# never by hand. A finding this file does not name fails. The set only shrinks:"
+      echo "# a line is paid by fixing the finding it names, never by adding a line."
+      [ -z "$keys" ] || printf '%s\n' "$keys"
+    } > "$UI_BASELINE"
+    echo "cockpit-projection-check: $UI_BASELINE written, $total known finding(s)"
+    return 0
+  fi
+
+  local known=""
+  if [ "$STRICT" -eq 0 ] && [ -f "$UI_BASELINE" ]; then
+    known="$(sed -e '/^#/d' -e '/^$/d' "$UI_BASELINE" | LC_ALL=C sort -u)"
+  fi
+  local fresh=0 debt=0 paid=0 key where message
+  while IFS="$(printf '\t')" read -r key where message; do
+    [ -n "$key" ] || continue
+    if [ -n "$known" ] && printf '%s\n' "$known" | grep -qxF -- "$key"; then
+      debt=$((debt + 1))
+      printf 'debt %s  %s\n' "$where" "${key%% *}"
+    else
+      fresh=$((fresh + 1))
+      printf 'FAIL %s  %s: %s\n' "$where" "${key%% *}" "$message"
+    fi
+  done <<EOF
+$found
+EOF
+  if [ -n "$known" ]; then
+    while IFS= read -r key; do
+      [ -n "$key" ] || continue
+      if ! printf '%s\n' "$keys" | grep -qxF -- "$key"; then
+        paid=$((paid + 1))
+        printf 'paid %s  (nothing matches it now; drop it with --write-baseline)\n' "$key"
+      fi
+    done <<EOF
+$known
+EOF
+  fi
+  if [ "$fresh" -gt 0 ]; then
+    printf 'FAIL ui-integrity  %s finding(s) the baseline does not hold (%s known, %s paid).\n' "$fresh" "$debt" "$paid"
+    printf '     ADR 0089: what an interface shows is derived, and unknown is never drawn as healthy.\n'
+    printf '     Ask the capability, decide the status from what was observed, render an absent value as unknown,\n'
+    printf '     or give a site that is right as written a // ui-integrity: <reason> comment.\n'
+    exit 10
+  fi
+  printf 'ok   ui-integrity  no new finding: direct reads, unconditional ok, healthy defaults and zero counts (%s known finding(s) held by %s, %s baseline line(s) paid) (ADR 0089)\n' "$debt" "$UI_BASELINE" "$paid"
+}
+
+if [ "$UI" -eq 1 ]; then
+  ui_integrity
+  exit 0
+fi
 
 if [ ! -d "$COCKPIT" ]; then
   echo "cockpit-projection-check: no Cockpit at $COCKPIT; nothing to measure" >&2

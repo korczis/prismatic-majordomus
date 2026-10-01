@@ -5,6 +5,18 @@
 <span class="mj-badge mj-badge--{{ status | lower }}">{{ status }}</span>
 {% endcomponent badge %}
 
+{#- A claim's evidence verdict, beside and never instead of its declared status: the state
+    `majordomus evidence show` derived for it, as data/registry/product.json carries it. The
+    badge names its claim, so scripts/ci/homepage-check can refuse a coloured verdict the
+    evidence does not back; with no dataset, or no verdict for the claim, it says unknown. -#}
+{% component evidence(claim, ev) %}
+{%- if ev.available and claim in ev.claims -%}
+<span class="mj-badge mj-badge--{{ ev.claims[claim].state }}" data-claim="{{ claim }}">{{ ev.claims[claim].label }}</span>
+{%- else -%}
+<span class="mj-badge mj-badge--unknown" data-claim="{{ claim }}">unknown</span>
+{%- endif -%}
+{% endcomponent evidence %}
+
 {#- A snippet with an Alpine copy button. Progressive: without JS the code is there and the button hidden (x-cloak). -#}
 {% component code(label, lang="bash", wrap=false) %}
 <figure class="not-format overflow-hidden rounded-base border border-default bg-neutral-primary-soft" x-data="{ copied: false }">

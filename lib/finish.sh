@@ -135,7 +135,10 @@ mj_validate_verification() {
   if [ -z "$MJ_FINISH_VERIFY" ]; then
     mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
   local t0 t1 vexit; t0="$(date +%s)"
-  if ( cd "$MJ_ROOT" && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
+  # The verify command is the project's own verification, run as a worker would run it. The
+  # outcome this finish claims is its own state: a `check` the command runs that saw it would
+  # judge obligations and gates as a completed finish and refuse, so it is not exported there.
+  if ( cd "$MJ_ROOT" && unset MJ_FINISH_OUTCOME && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
   t1="$(date +%s)"; MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0))
   if [ "$vexit" = 0 ]; then mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s"
   else mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; fi

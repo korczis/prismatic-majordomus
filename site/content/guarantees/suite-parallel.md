@@ -1,7 +1,7 @@
 +++
 title = "The behavioural suite runs a bounded number of cases at a time with the serial runner's semantics, a case that writes into the checkout declares itself exclusive and runs alone, and the parallel phase fails naming the paths when the checkout changed under it"
 description = "MJ_TEST_JOBS=4 bash test/run.sh runs the cases four at a time and means exactly what bash test/run.sh means: every case runs, in a disposable repository each, a failing case turns the run red with its own output in front of its verdict, the summary is one deterministic block in name order, a filter that matches nothing is a usage error, and so is an empty case directory. Each case runs in its own repository already, which is what makes them independent; the one thing they share is the checkout they read from, so a case that must write into it says so with # majordomus-exclusive: <reason> and runs after the pool, alone."
-weight = 133
+weight = 136
 [extra]
 claim_id = "suite-parallel"
 status = "guaranteed"
@@ -15,7 +15,7 @@ source = "docs/claims/suite-parallel.md"
 
 ## How it works
 
-The runner classifies the cases by their header, feeds the parallel ones to `xargs -P` (bounded; never a bare `&`), each worker writing the case's log, status and duration to files, then runs the exclusive ones one at a time, then renders the verdicts in name order from the files. Before and after the parallel phase it takes `git status` of the checkout and fails naming the paths that differ. `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the job summary. Without `MJ_TEST_JOBS` the runner is the serial one it always was, streaming. `test/cases/94_ci_plan.sh` proves the semantics on a private harness of throwaway cases: the red run with the log rendered, the exclusive phase, the report, the bounded pool being faster than serial, the checkout guard naming the path, the usage errors; `test/cases/26_ci_wiring.sh` proves the failure semantics through both modes.
+The runner classifies the cases by their header, feeds the parallel ones to `xargs -P` (bounded; never a bare `&`), each worker writing the case's log, status and duration to files, then runs the exclusive ones one at a time, then renders the verdicts in name order from the files. Before and after the parallel phase it takes `git status` of the checkout and fails naming the paths that differ. A case started anywhere but the fixture the runner made for it never reaches its first line: `test/lib.sh` refuses it with `run this case through test/run.sh` unless `$T` and `$ROOT` are set, the case stands in `$T`, and `$T` is neither the checkout, nor inside it, nor another checkout of this repository. `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the job summary. Without `MJ_TEST_JOBS` the runner is the serial one it always was, streaming. `test/cases/94_ci_plan.sh` proves the semantics on a private harness of throwaway cases: the red run with the log rendered, the exclusive phase, the report, the bounded pool being faster than serial, the checkout guard naming the path, the usage errors; `test/cases/26_ci_wiring.sh` proves the failure semantics through both modes.
 
 ## How to see it
 

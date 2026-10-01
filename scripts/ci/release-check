@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
-# release-check — the gate of project.release-is-a-projection: the version is one fact with
-# one writer, and the changelog is composed rather than kept.
+# release-check — the gate of project.release-is-a-projection: the version is authored in one
+# place and written by one command, and the changelog is composed rather than kept.
 #
-# `majordomus generate --check` already proves that docs/generated/changelog.* is what the
-# composer would write from this tree today. It cannot prove the two things below, because
-# both are about declarations it never reads:
+# `majordomus generate --check` already proves that docs/generated/changelog.* and
+# share/version.txt are what the generator would write from this tree today, and the
+# `version-authored-once` gate refuses a version written down by hand where the tool's files
+# live. Neither can prove the things below, because they are about declarations generation
+# never reads:
 #
-#   1. Where the version is stated is itself stated twice. The crate names the two sites in
-#      apps/majordomus-cli/src/release/version.rs (MANIFEST, ENTRY) and the release script
-#      names them again in scripts/release-version, because an installed tree has no
-#      Cargo.toml and the crate is compiled before the shell tool exists. Two readers of one
-#      fact is tolerable; two readers that have drifted is a writer raising files the check
-#      does not read, and nothing else notices until a tag is cut.
-#   2. That the two sites agree is checked only by the release workflow, at the moment of
-#      publication — so a half-applied bump lives on the default branch until somebody tries
-#      to ship it. The same verdict belongs on every plan. The comparison itself is not made
-#      here: scripts/release-version is the one shell reader of the version, this gate runs
-#      it, and check 1 above is what proves it reads the sites the crate writes. A third
-#      parser here would be the duplication this gate exists to catch.
+#   1. The one place the version is authored is named twice: by the crate's writer in
+#      apps/majordomus-cli/src/release/version.rs (MANIFEST) and by the one shell reader,
+#      scripts/release-version, which reads it from a tree that may have no toolchain. Two
+#      readers of one place is tolerable; two that have drifted is a writer raising a file
+#      the release never reads, and nothing else notices until a tag is cut.
+#   2. The shell tool prints the authority. It reads share/version.txt, the manifest's
+#      projection, because an installed tree has no Cargo.toml; `generate --check` proves the
+#      file is current, and this proves the tool reads it. The comparison is not made here:
+#      scripts/release-version --check makes it, and check 1 proves it reads the right file.
+#      A third parser here would be the duplication this gate exists to catch.
+#   2b. The lock records the version the manifest declares, so the next --locked build
+#      survives the bump.
 #   3. Nothing may keep a changelog by hand. A composed changelog and a maintained
 #      CHANGELOG.md are two answers to one question, and the maintained one wins by being
 #      the file people open. A page that renders the derived document is a projection and is
@@ -45,68 +47,65 @@ SCRIPT=scripts/release-version
 [ -f "$MODULE" ] || { echo "release-check: $MODULE is missing" >&2; exit 12; }
 [ -f "$SCRIPT" ] || { echo "release-check: $SCRIPT is missing" >&2; exit 12; }
 
-# ------------------------------------------------------ 1. the two sites are named the same
-# Both declarations are read; neither is written here, so this gate cannot become a third
+# -------------------------------------------- 1. the one authored place is named the same
+# Both declarations are read; neither is written here, so this gate cannot become another
 # copy of the fact it is holding together.
 rust_const() { sed -n "s/^pub const $1: &str = \"\\([^\"]*\\)\";/\\1/p" "$MODULE" | head -n 1; }
 sh_path()    { sed -n "s|^$1=\"\\\$ROOT/\\(.*\\)\"\$|\\1|p" "$SCRIPT" | head -n 1; }
 
-for site in MANIFEST ENTRY; do
-  from_rust="$(rust_const "$site")"
-  from_shell="$(sh_path "$site")"
-  if [ -z "$from_rust" ] || [ -z "$from_shell" ]; then
-    fail "the $site version site is not declared in both $MODULE and $SCRIPT (rust '$from_rust', shell '$from_shell')"
-    continue
-  fi
-  if [ "$from_rust" = "$from_shell" ]; then
-    ok "$site is $from_rust in both the crate and the release script"
-  else
-    fail "the $site version site has drifted: the crate writes $from_rust and $SCRIPT reads $from_shell"
-  fi
-done
-
-MANIFEST_PATH="$(rust_const MANIFEST)"
-ENTRY_PATH="$(rust_const ENTRY)"
-
-# ------------------------------------------------------------ 2. the two sites state one version
-#
-# Asked of scripts/release-version, never parsed again here. That script is the one shell
-# reader of the version — it exists because a released tree has no toolchain — and check 1
-# above has just proved it reads the same two sites the crate writes. Reading them a third
-# time in this file would add exactly the drift this gate is for.
-if [ -n "$MANIFEST_PATH" ] && [ -n "$ENTRY_PATH" ] && [ -f "$MANIFEST_PATH" ] && [ -f "$ENTRY_PATH" ]; then
-  if version_out="$("$SCRIPT" --check 2>&1)"; then
-    crate="$("$SCRIPT")"
-    ok "both writers state $crate"
-  else
-    crate=""
-    printf '%s\n' "$version_out" | sed -n 's/^release-version: FAIL /      /p' | while IFS= read -r line; do
-      printf '%s\n' "$line"
-    done
-    fail "the two version sites do not state one version (scripts/release-version --check); \`majordomus release bump --exact <version>\` writes both"
-  fi
+from_rust="$(rust_const MANIFEST)"
+from_shell="$(sh_path MANIFEST)"
+if [ -z "$from_rust" ] || [ -z "$from_shell" ]; then
+  fail "the place the version is authored is not declared in both $MODULE and $SCRIPT (rust '$from_rust', shell '$from_shell')"
+elif [ "$from_rust" = "$from_shell" ]; then
+  ok "the version is authored in $from_rust, for both the crate's writer and the release script"
 else
-  fail "a version site the crate declares does not exist: $MANIFEST_PATH, $ENTRY_PATH"
-  crate=""
+  fail "the place the version is authored has drifted: the crate writes $from_rust and $SCRIPT reads $from_shell"
+fi
+
+MANIFEST_PATH="$from_rust"
+PROJECTION_PATH="$(rust_const PROJECTION)"
+
+# The authority, asked of the one shell reader. Independent of check 2: a projection that is
+# stale does not make the manifest unreadable, and the checks below still need the version.
+crate=""
+if [ -n "$MANIFEST_PATH" ] && [ -f "$MANIFEST_PATH" ]; then
+  crate="$("$SCRIPT" 2>/dev/null || true)"
+fi
+
+# ------------------------------------------------------ 2. the shell tool prints the authority
+#
+# Asked of scripts/release-version, never parsed again here: it reads the manifest and asks
+# bin/majordomus what it prints, which is what the installer and a person see.
+if [ -z "$crate" ]; then
+  fail "$MANIFEST_PATH declares no version, or does not exist"
+elif version_out="$("$SCRIPT" --check 2>&1)"; then
+  ok "bin/majordomus prints $crate, the version $MANIFEST_PATH declares"
+else
+  printf '%s\n' "$version_out" | sed -n 's/^release-version: FAIL /      /p' | while IFS= read -r line; do
+    printf '%s\n' "$line"
+  done
+  fail "the shell tool does not print the version the crate declares (scripts/release-version --check); ${PROJECTION_PATH:-its projection} is generated — run scripts/derive, and never edit it or bin/majordomus"
 fi
 
 # ------------------------------------------------- 2b. the lock records the version too
 #
-# Cargo.lock is not a third declaration — cargo derives it from the manifest and nobody
-# chooses the value — but it is tracked and the build runs `--locked`, so a bump that raised
-# the manifest and left the lock behind fails the next build with "cannot update the lock
-# file", which reads as a toolchain fault rather than as a half-applied bump. The writer owns
-# it (release/version.rs, LOCK); this is what notices when something else edited one of them.
+# Cargo.lock is not a declaration — cargo derives it from the manifest and nobody chooses the
+# value — but it is tracked and the build runs `--locked`, so a bump that raised the manifest
+# and left the lock behind fails the next build with "cannot update the lock file", which
+# reads as a toolchain fault rather than as a half-applied bump, and fails every launcher
+# call with it. The writer keeps the crate's entry in step (release/version.rs, LOCK); this
+# is what notices when something else edited one of them.
 LOCK_PATH="$(rust_const LOCK)"
 if [ -n "$LOCK_PATH" ] && [ -f "$LOCK_PATH" ] && [ -n "$crate" ]; then
   locked="$(awk '/^name = "majordomus-cli"$/{f=1;next} f && /^version = /{gsub(/[^0-9A-Za-z.+-]/,"",$3); print $3; exit}' "$LOCK_PATH")"
   if [ "$locked" = "$crate" ]; then
     ok "$LOCK_PATH records $locked for this crate"
   else
-    fail "$LOCK_PATH records '$locked' for this crate and the manifest states '$crate'; the next --locked build fails — \`majordomus release bump --exact $crate\` writes every site"
+    fail "$LOCK_PATH records '$locked' for this crate and the manifest states '$crate'; the next --locked build fails — \`majordomus release bump --exact $crate\` keeps the lock in step, as does \`cargo update -p majordomus-cli --offline --manifest-path $MANIFEST_PATH\`"
   fi
 elif [ -n "$LOCK_PATH" ] && [ ! -f "$LOCK_PATH" ]; then
-  fail "the crate declares the lock site $LOCK_PATH and it does not exist"
+  fail "the crate declares the lock $LOCK_PATH and it does not exist"
 fi
 
 # ------------------------------------------------------------------- 3. no changelog is kept
@@ -232,7 +231,7 @@ else
 fi
 
 if [ "$findings" -eq 0 ]; then
-  printf 'release-check: the release is a projection — one writer, no kept changelog, every published tag recorded\n'
+  printf 'release-check: the release is a projection — authored once, the tool prints it, no kept changelog, every published tag recorded\n'
   exit 0
 fi
 printf 'release-check: %s finding(s)\n' "$findings" >&2

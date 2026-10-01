@@ -33,6 +33,7 @@ pub fn run(args: GenerateArgs) -> Result<u8> {
         GenerateTarget::Deployment => &[Target::Deployment],
         GenerateTarget::Graph => &[Target::Graph],
         GenerateTarget::Design => &[Target::Design],
+        GenerateTarget::Economics => &[Target::Economics],
     };
     let artifacts = generate::plan(&app, targets)?;
     // the contract before the bytes: an artifact that carries no provenance, declares an
@@ -264,9 +265,10 @@ const CRATE_DIR: &str = "apps/majordomus-cli";
 /// The name of the crate this executable was built from, as its own manifest declares it.
 const CRATE_NAME: &str = env!("CARGO_PKG_NAME");
 
-/// The `version` of the manifest's `[package]` table.
+/// The `version` of the manifest's `[package]` table: the one Rust reader of the authority,
+/// [`crate::release::version::declared_in`], and never a second parse of it here.
 fn package_version(text: &str) -> Option<String> {
-    package_field(text, "version")
+    crate::release::version::declared_in(text)
 }
 
 /// One quoted scalar of the manifest's `[package]` table. Read without a TOML parser,

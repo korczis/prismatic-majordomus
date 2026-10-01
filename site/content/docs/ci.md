@@ -1,7 +1,7 @@
 +++
 title = "Continuous integration"
 description = "how a change is validated: the validation workflow over repository-owned gates, the planner and its model of what can affect what, the gates and how to run each locally, the caches and artifacts, the executable as a build output, the parallel suite and probe, the platform policy, and where the measurements live"
-weight = 59
+weight = 64
 [extra]
 source = "docs/CI.md"
 +++
@@ -22,7 +22,8 @@ every run writes its own summary.
 <pre class="mermaid">
 flowchart LR
   plan["plan"] --&gt; structure["structure&lt;br&gt;(always)"]
-  plan --&gt; suite["suite"]
+  plan --&gt; shards["suite-shard ×4&lt;br&gt;the suite, dealt by duration"]
+  shards --&gt; suite["suite&lt;br&gt;every case exactly once,&lt;br&gt;budget, one verdict"]
   plan --&gt; rust["rust"]
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
@@ -121,8 +122,9 @@ when a worker says the work is done, so that is who asks: `majordomus finish` ru
 published site is behind the trunk. The doctrine is `majordomus.publication-currency` and
 the repository turns it on with `publication_current` in `verification.finish_requires`; a
 gate that could not reach its subject — no network, no published branch — is reported
-unverified by name and refuses nothing, because a session that could not measure the site is
-not evidence that the site is stale.
+unverified by name, with its exit, and refuses `completed` as well: a session that could not
+measure the site is not evidence that it is stale, but it is no evidence that it is current
+either, which is what `completed` claims. `partial` and `blocked` are never refused over it.
 
 To force full validation of a pull request, add the label `ci:full`; the `labeled` event
 re-plans it. To see why a gate ran or did not, read the `plan` job's summary or the
@@ -170,6 +172,52 @@ it always has. The semantics are the serial runner's: a failing case turns the r
 filter that matches nothing is a usage error, an empty case directory is a usage error, and
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
 
+## The crate's tests in lanes
+
+The `rust` job is a matrix of three lanes. `scripts/rust-check` deals `cargo test` by whole
+test binaries (`MJ_RUST_TEST_LANE`), using their measured seconds:
+
+1. the doctests and `preflight`;
+2. the lib's unit tests, the binaries, `cli_examples`, `bench` and `peer_claims`;
+3. every other test binary, so a new one lands there by itself, and every other gate: fmt,
+   clippy, the docs, the benchmark build, the registry checks, the plan's rust gates and the
+   executable artifact.
+
+`scripts/rust-check --lanes` prints the deal. With `MJ_RUST_TEST_LANE` unset, `rust-check`
+runs the whole `cargo test` as before. Each lane keeps its own `cargo-test-<lane>.txt`, and
+the `evidence` job joins them. Every binary's record starts at a `Running` line or a
+`Doc-tests` line, which the recorder treats as a boundary, so joining the files cannot credit
+one lane's result to another lane's binary.
+
+## The suite in shards
+
+On CI the suite runs as four shards on four runners (`suite-shard`, a matrix), each four
+cases at a time. `MJ_TEST_SHARD=i/n` makes `test/run.sh` run the i-th part. The cases are
+dealt longest-first over n × `MJ_TEST_JOBS` worker slots by the seconds
+`.ai/repo/ci/suite-durations.tsv` records, and then the exclusive cases go to the
+least-loaded shard. Slot s belongs to shard s mod n, so the heaviest cases open one per
+shard. In the first run the slots were numbered shard by shard, the four 35-minute cases
+landed on one runner and starved each other past the 3630 s timeout, and case 721 now
+refuses that deal. A case with no recorded seconds weighs 300 s. The file is committed, so
+every shard of a run deals the same hand: stale numbers only unbalance the shards, they
+never lose a case. Measured on one runner the suite took more than two hours, because
+24,879 case-seconds were dealt to four workers. Dealt to sixteen workers, the critical path
+is the longest single case, about 35 minutes.
+
+Sharding can lose a case or run one twice, and either looks like a quieter or a slower
+suite rather than a wrong one. So the `suite` job does not run cases. It joins the shards'
+reports and runs `test/run.sh --verify-report`, which fails unless every case under
+`test/cases/` has exactly one row. It holds `scripts/ci/suite-budget` against the whole run,
+publishes the joined report as `ci-metrics-suite`, and fails when any shard failed. Case 721
+proves the deal and the verification. `MJ_TEST_LIST=1` prints what an invocation would run.
+
+To rebalance, record the seconds of a recent green run (the `ci-metrics-suite` artifact):
+
+```console
+$ gh run download <run-id> -n ci-metrics-suite -D /tmp/s
+$ awk -F'\t' -v OFS='\t' '{print $1, $3}' /tmp/s/suite.tsv | LC_ALL=C sort > .ai/repo/ci/suite-durations.tsv
+```
+
 The jobs that run the suite check out the whole history: a case that clones the checkout
 into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the
 other reason: `generate --check` runs there, and the changelog it checks is composed from
@@ -183,7 +231,12 @@ lives in but must not write into it while other cases run;
 the parallel phase checks `git status` before and after and fails naming the paths when
 something changed. The cases that must write there (the two that build the site into
 `site/public`, the one that edits and regenerates a derived document) carry the exclusive
-header. The Rust cases drive the executable `MAJORDOMUS_BIN` names when it is set (CI
+header. A case never runs outside the fixture the runner made for it: every case writes
+into the directory it starts in, and started by hand from a checkout it would write its
+fixture there. So `test/lib.sh`, which every case sources first, refuses with `run this
+case through test/run.sh` unless `$T` and `$ROOT` are set, the case stands in `$T`, and
+`$T` is neither the checkout, nor inside it, nor another checkout of this repository. The
+Rust cases drive the executable `MAJORDOMUS_BIN` names when it is set (CI
 builds it once per job and hands it to every case), and build it once through cargo
 otherwise; the two whose assertions are cargo's own (the crate's HTTP and projection suites,
 the doc examples, the benchmark build) keep cargo.

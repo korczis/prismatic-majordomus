@@ -1,0 +1,18 @@
+diff --git a/ledgerlite/csv_export.py b/ledgerlite/csv_export.py
+--- a/ledgerlite/csv_export.py
++++ b/ledgerlite/csv_export.py
+@@ -15,10 +15,12 @@ HEADER = ["number", "issued", "customer", "currency", "net", "vat", "gross"]
+ def decimal(minor: int, code: str) -> str:
+     """An amount in major units with a dot: 1050 EUR -> '10.50'."""
+     digits = currency(code).minor_digits
++    sign = "-" if minor < 0 else ""
++    minor = abs(minor)
+     if digits == 0:
+-        return str(minor)
++        return f"{sign}{minor}"
+     whole, frac = divmod(minor, 10**digits)
+-    return f"{whole}.{str(frac).zfill(digits)}"
++    return f"{sign}{whole}.{str(frac).zfill(digits)}"
+ 
+ 
+ def export(invoices: list[Invoice]) -> str:

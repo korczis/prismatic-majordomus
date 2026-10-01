@@ -1,0 +1,13 @@
+schema: economics-task/v1
+id: invoice-discounts
+title: "Add line discounts across invoice, storage, export and report"
+category: cross-module
+complexity: medium
+source: "A change that crosses four modules and a persisted format."
+fixture: test/fixtures/economics/ledgerlite
+acceptance: test/fixtures/economics/acceptance/invoice-discounts
+reference: test/fixtures/economics/reference/invoice-discounts.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md

@@ -911,17 +911,23 @@ nothing can be executed remotely.
 | instance, address, last seen | observed; expires |
 | trust label | authored policy applied to an observation |
 
-The declaration `.ai/repo/mesh/majordomus.yaml` ships with the mesh disabled and no rendezvous
-endpoints, so a default checkout opens no discovery socket. There is no Tailscale or mDNS
+A repository with no mesh declaration, or one declared `enabled: false`, opens no discovery
+socket, and the skeleton a new repository starts from ships none. This repository's own
+declaration, `.ai/repo/mesh/majordomus.yaml`, is enabled: multicast on the local segment, two
+rendezvous hubs on the owner's private network and tailnet, and three trusted keys
+(`docs/MESH.md`, "This repository's mesh"). There is no Tailscale or mDNS
 provider; ADR 0050 lists them as future providers, and a rendezvous endpoint reachable over a
 tailnet is the supported way to span machines. Data flow is the same as every other surface:
 `mesh.status` and `mesh.nodes` capabilities, served over HTTP and MCP and rendered at
 `/cockpit/mesh`.
 
-**The mesh and the board are not connected yet.** The board gathers checkouts of one machine
-through lease files; the mesh registry is not consulted. Cross-machine cooperation — sharing
-claims between nodes — is a proposal on an unmerged branch, not a feature. The mesh makes
-instances visible; it does not orchestrate agents.
+**The board is projected into the mesh.** The board still gathers the checkouts of one machine
+through lease files, and that remains the machine-local view. Above discovery, cooperation links
+the runtimes of one repository — a server per checkout, on this machine or another — over
+authenticated links (ADR 0067): every heartbeat a runtime's board sessions become mesh sessions
+and their announcements advisory claims, in one signed journal that every linked runtime
+replicates and folds the same way. So the peer board and the claims replicate across runtimes;
+a link needs an enabled mesh and a trusted key. The mesh does not orchestrate agents.
 
 ## The repository environment
 
@@ -958,17 +964,20 @@ endpoint — `build.json` on `majordomus.dev` carries the commit it was built fr
 publication has been owed longer than the deploy window
 (`share/standard/majordomus/rules/publication-currency.v1.md`).
 
-### The version has one writer
+### The version is authored once
 
-The version is stated in three sites — the crate manifest, the crate's lock entry and the shell
-tool's `MJ_VERSION` — and written by one command, `majordomus-cli release bump`
-(`apps/majordomus-cli/src/release/version.rs`), which reads all three back and refuses when they
-disagree. The minimum bump is measured, not chosen: `release analyze` compares the public
-capability surface — ids, exposures and schemas, with input and output compatibility judged in
-opposite directions — against the last release (ADR 0051). Conventional commits are evidence,
-not the authority. The same analysis is `GET /api/v1/release/analysis`, an MCP tool and
-`/cockpit/release`. After a bump, `just derive` rewrites every generator stamp, the changelog,
-`docs/INSTALL.md` and the site's version data.
+The version is authored in one place, the crate manifest's `[package] version`, and written by
+one command, `majordomus-cli release bump` (`apps/majordomus-cli/src/release/version.rs`), which
+also keeps the lock's own entry in step and reads both back. The shell tool states no version:
+it reads `share/version.txt`, a generated projection of the manifest that ships beside it
+(ADR 0085), and `release::version::diagnose` refuses a version written by hand anywhere the
+tool's files live — the gate `version-authored-once`. The minimum bump is measured, not
+chosen: `release analyze` compares the public capability surface — ids, exposures and schemas,
+with input and output compatibility judged in opposite directions — against the last release
+(ADR 0051). Conventional commits are evidence, not the authority. The same analysis is
+`GET /api/v1/release/analysis`, an MCP tool and `/cockpit/release`. After a bump, `just derive`
+rewrites `share/version.txt`, every generator stamp, the changelog, `docs/INSTALL.md` and the
+site's version data.
 
 A tag starts the release workflow: build the platform matrix from
 `docs/generated/distribution-matrix.json`, publish, write the release record under
@@ -1111,10 +1120,11 @@ Each strong statement in this document, with how to check it.
 | a rule's state is the weakest of its tests | `apps/majordomus-cli/src/rules/mod.rs`; `bin/majordomus-cli rules report` |
 | issue status is derived with no stored status | an issue YAML has no status key; `lib/project.awk`; `bin/majordomus plan status` |
 | overlap is advisory | `lib/check.sh` returns 0 after `--overlap`; `peers.rs` documents informational overlaps |
-| the mesh is off by default and has no Tailscale provider | `.ai/repo/mesh/majordomus.yaml`; `ls apps/majordomus-cli/src/mesh` |
+| the mesh is off by default and has no Tailscale provider | `ls share/skeleton/ai/repo` has no `mesh/`; `ls apps/majordomus-cli/src/mesh` |
+| this repository runs its own mesh, trusting three keys | `.ai/repo/mesh/majordomus.yaml`; `test/cases/491_the_mesh_is_on_here.sh` |
 | the board is in memory only | module comment of `apps/majordomus-cli/src/peers.rs` |
 | publication is verified against the public endpoint | `scripts/pages verify`; `curl -s https://majordomus.dev/build.json` |
-| the version has one writer with three sites | `apps/majordomus-cli/src/release/version.rs`; `scripts/ci/release-check` |
+| the version is authored in one place and projected for the shell tool | `apps/majordomus-cli/src/release/version.rs`; `share/version.txt`; `scripts/ci/release-check`; gate `version-authored-once` |
 
 ## Why this matters
 

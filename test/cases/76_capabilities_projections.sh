@@ -124,7 +124,7 @@ expect_grep "kind 'rule' is declared by both"
 #     suites; these are cargo's, so a prebuilt executable alone cannot run them
 if command -v cargo >/dev/null 2>&1; then
   RUSTFLAGS='' cargo test -q --manifest-path "$MANIFEST" --test http_serve --test projections 2>"$S/cargo.log" >"$S/cargo.out" \
-    || { tail -40 "$S/cargo.log" "$S/cargo.out"; echo "    the crate's HTTP and projection suites failed"; exit 1; }
+    || { tail -n 40 "$S/cargo.log" "$S/cargo.out"; echo "    the crate's HTTP and projection suites failed"; exit 1; }
 else
   echo "    skip: cargo not installed (the crate's HTTP and projection suites; the executable half ran)"
 fi

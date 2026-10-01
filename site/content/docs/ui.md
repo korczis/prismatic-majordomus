@@ -1,7 +1,7 @@
 +++
 title = "UI conformance"
 description = "UI conformance: the page set and the width set discovered rather than listed, the responsive, semantic, component and WCAG invariants a browser checks over every page, what the build normalises in markup it did not write, and where the report is"
-weight = 55
+weight = 58
 [extra]
 source = "docs/UI.md"
 +++
@@ -301,7 +301,13 @@ A projected document's relative links are resolved at their source by `scripts/l
 the directory of the file they came from:
 - A document with a page becomes its route.
 - A claim document becomes its guarantee page.
-- A tracked file or directory becomes its `blob` or `tree` on GitHub.
+- A tracked file or directory becomes its `blob` or `tree` on GitHub, at the commit the site was built from.
+  What the projection writes is committed, and a committed file cannot name the commit it is in, so it
+  writes a placeholder ref that `scripts/site-build` pins in the built pages to the commit
+  `data/build.json` records (`master` for a dirty build), the ref `site/templates/source-links.html` gives
+  template-made links. A placeholder left in a built page refuses the build, and `scripts/ci/link-check`
+  refuses a link that carries one. The pin runs on built files only, so a plain `zola serve` shows the
+  placeholder; the local preview, `scripts/site-serve`, serves the pinned build instead.
 - A path git does not track, such as checkout-local state under `.ai/local`, keeps its text and loses its link.
 
 **Controls.** A control is anything a reader can operate:

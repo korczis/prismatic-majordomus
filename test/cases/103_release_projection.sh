@@ -1,7 +1,8 @@
 # The release as a projection, against the real executable in a disposable repository: the
 # changelog is composed from the layer's own release records, the decisions whose file first
-# appears in each release's tree and the commits in its range; the version is one fact written into the two
-# sites that must state it by one writer; and every surface renders one value.
+# appears in each release's tree and the commits in its range; the version is authored in one
+# place, written by one writer and projected for the shell tool; and every surface renders one
+# value.
 #
 # The repository is built here rather than borrowed from the checkout, because every question
 # this case asks is a question about a history: which commits fall in which release's range,
@@ -31,8 +32,8 @@ git add -A >/dev/null && git commit -qm install
 # ---------------------------------------------------------------- a repository that publishes
 #
 # Three declarations and nothing else: the section the records live in, the source class that
-# discovers them, and the two files that state the version. Everything the case asserts below
-# is derived from these by the executable.
+# discovers them, and the one file that authors the version with the projection derived from
+# it. Everything the case asserts below is derived from these by the executable.
 
 awk '/^  deployments: repo\/deployments$/{print; print "  releases: repo/releases"; next} {print}' \
   .ai/manifest.yaml > "$S/manifest.yaml" && mv "$S/manifest.yaml" .ai/manifest.yaml
@@ -48,7 +49,7 @@ cat >> .ai/repo/knowledge/sources.yaml <<'Y'
     required: false
 Y
 
-mkdir -p .ai/repo/releases apps/majordomus-cli bin
+mkdir -p .ai/repo/releases apps/majordomus-cli share
 cat > .ai/repo/releases/README.md <<'Y'
 ---
 schema: context/v1
@@ -70,9 +71,11 @@ One file per release, `v<major>.<minor>.<patch>.yaml`, contract `release/v1`. A 
 evidence of what was published, never a plan.
 Y
 
-# The two version sites. Each carries the version a second time in a place the writer must
-# not touch — a dependency pinned at it, and a comment naming it — so that a writer which
-# rewrote the file rather than the one line it owns is caught below.
+# The one place the version is authored. It carries the version a second time where the
+# writer must not touch it — a dependency pinned at it — so that a writer which rewrote the
+# file rather than the one line it owns is caught below. Beside it the projection the shell
+# tool reads, which `majordomus generate` writes where the crate lives beside the tool; this
+# fixture's share is the checkout's, so it states the projection itself, as test data.
 cat > apps/majordomus-cli/Cargo.toml <<'Y'
 [package]
 name = "fixture"
@@ -82,14 +85,8 @@ edition = "2021"
 [dependencies]
 serde = { version = "1.0.0" }
 Y
-cat > bin/majordomus <<'Y'
-#!/usr/bin/env bash
-# this tool was MJ_VERSION 1.0.0 when it was written
-MJ_VERSION="1.0.0"
-echo "fixture $MJ_VERSION"
-Y
-chmod +x bin/majordomus
-git add -A >/dev/null && git commit -qm "chore(fixture): the releases section and the two version sites"
+printf '# GENERATED FILE — DO NOT EDIT DIRECTLY\nversion=1.0.0\n' > share/version.txt
+git add -A >/dev/null && git commit -qm "chore(fixture): the releases section, the manifest and its projection"
 
 # decision DDDD SLUG DATE
 decision() {
@@ -266,18 +263,27 @@ for field in '"declared": "1.0.0"' '"tool": "1.0.0"' '"agree": true' '"bump": "m
     echo "    the version report does not carry $field:"; cat "$S/version.json"; exit 1; }
 done
 
-# one site moved by hand is the failure the report exists to name, with the exit code the
-# release pipeline's own check gives
+# a projection edited by hand is the failure the report exists to name, with the exit code the
+# release pipeline's own check gives: a version no derivation writes is an error...
 MANIFEST=apps/majordomus-cli/Cargo.toml
-ENTRY=bin/majordomus
+PROJECTION=share/version.txt
 before_manifest="$(sha256_of_file "$MANIFEST")"
-before_entry="$(sha256_of_file "$ENTRY")"
-awk '{ if ($0 ~ /^MJ_VERSION=/) print "MJ_VERSION=\"1.0.1\""; else print }' "$ENTRY" > "$S/entry" && mv "$S/entry" "$ENTRY"
-grep -q 'MJ_VERSION="1.0.1"' "$ENTRY" || { echo "    the drift the case introduces did not take"; exit 1; }
+before_projection="$(sha256_of_file "$PROJECTION")"
+sed 's/^version=.*/version=1.0.1/' "$PROJECTION" > "$S/projection" && mv "$S/projection" "$PROJECTION"
+grep -qx 'version=1.0.1' "$PROJECTION" || { echo "    the drift the case introduces did not take"; exit 1; }
 expect_exit 10 "$RB" release version
 expect_grep 'agree        NO'
-git checkout -- "$ENTRY"
-[ "$(sha256_of_file "$ENTRY")" = "$before_entry" ] || { echo "    the entry was not restored"; exit 1; }
+expect_grep 'ERROR   writers-disagree'
+# ...and one that is merely behind the manifest is what every bump leaves until the
+# derivation runs: still exit 10 here, and a warning rather than an error, because the
+# refusal belongs to `generate --check` and the writer must be able to correct a bump
+sed 's/^version=.*/version=0.9.0/' "$PROJECTION" > "$S/projection" && mv "$S/projection" "$PROJECTION"
+expect_exit 10 "$RB" release version
+expect_grep 'WARNING projection-stale'
+expect_grep 'scripts/derive'
+expect_no_grep '^ERROR '
+git checkout -- "$PROJECTION"
+[ "$(sha256_of_file "$PROJECTION")" = "$before_projection" ] || { echo "    the projection was not restored"; exit 1; }
 
 # ---------------------------------------------------------------- the one writer
 #
@@ -289,16 +295,17 @@ expect_exit 12 "$RB" release bump --dry-run
 expect_grep 'the public contract cannot be measured here'
 expect_grep 'name the version deliberately'
 [ "$(sha256_of_file "$MANIFEST")" = "$before_manifest" ] || { echo "    a refused bump wrote to $MANIFEST"; exit 1; }
-[ "$(sha256_of_file "$ENTRY")" = "$before_entry" ] || { echo "    a refused bump wrote to $ENTRY"; exit 1; }
+[ "$(sha256_of_file "$PROJECTION")" = "$before_projection" ] || { echo "    a refused bump wrote to $PROJECTION"; exit 1; }
 
 # A version named deliberately is still written: refusing would make the command unusable in
 # exactly the repositories that most need to cut a first release. --dry-run writes nothing.
 expect_exit 0 "$RB" release bump --level minor --dry-run
 expect_grep 'would raise 1\.0\.0 -> 1\.1\.0'
-expect_grep "$MANIFEST"
-expect_grep "$ENTRY"
+expect_grep "$MANIFEST \(unwritten\)"
+# the dry run names what derivation owes afterwards, and does not list it as the writer's
+expect_grep "$PROJECTION and every generator stamp state 1\.1\.0 once scripts/derive has run"
 [ "$(sha256_of_file "$MANIFEST")" = "$before_manifest" ] || { echo "    --dry-run wrote to $MANIFEST"; exit 1; }
-[ "$(sha256_of_file "$ENTRY")" = "$before_entry" ] || { echo "    --dry-run wrote to $ENTRY"; exit 1; }
+[ "$(sha256_of_file "$PROJECTION")" = "$before_projection" ] || { echo "    --dry-run wrote to $PROJECTION"; exit 1; }
 [ -z "$(git status --porcelain)" ] || {
   echo "    --dry-run dirtied the working tree:"; git status --porcelain; exit 1; }
 
@@ -307,34 +314,39 @@ expect_exit 2 "$RB" release bump --exact 1.2
 [ "$(sha256_of_file "$MANIFEST")" = "$before_manifest" ] || { echo "    a refused bump still wrote"; exit 1; }
 expect_exit 2 "$RB" release bump --level enormous
 
-# --exact writes both sites, and they agree afterwards
+# --exact writes the one place the version is authored, and says what derivation owes
 expect_exit 0 "$RB" release bump --exact 9.9.9
 expect_grep '1\.0\.0 -> 9\.9\.9'
 expect_grep "$MANIFEST written"
-expect_grep "$ENTRY written"
-expect_grep 'both writers agree'
-expect_exit 0 "$RB" release version
+expect_grep "$MANIFEST now declares 9\.9\.9"
+expect_grep 'once scripts/derive has run'
+expect_no_grep "$PROJECTION written"
+# the projection is stale now by design — a warning, and the report says so
+expect_exit 10 "$RB" release version
 expect_grep 'declared     9\.9\.9'
-expect_grep 'tool         9\.9\.9'
-expect_grep 'agree        yes'
+expect_grep 'tool         1\.0\.0'
+expect_grep 'agree        NO'
+expect_grep 'WARNING projection-stale'
 
-# and nothing else in either file moved: one line each, and the two decoys are untouched
-git diff --numstat -- "$MANIFEST" "$ENTRY" > "$S/numstat"
-[ "$(wc -l < "$S/numstat" | tr -d ' ')" = 2 ] || {
-  echo "    the bump touched files other than the two version sites:"; cat "$S/numstat"; exit 1; }
+# and nothing else moved: one line in one file, the decoy untouched, the projection
+# byte-identical — the writer writes the authority and derivation writes the rest
+git diff --numstat > "$S/numstat"
+[ "$(wc -l < "$S/numstat" | tr -d ' ')" = 1 ] || {
+  echo "    the bump touched files other than the manifest:"; cat "$S/numstat"; exit 1; }
 while read -r added removed path; do
-  [ "$added" = 1 ] && [ "$removed" = 1 ] || {
-    echo "    the bump rewrote $path ($added added, $removed removed) instead of its one version line"
+  [ "$path" = "$MANIFEST" ] && [ "$added" = 1 ] && [ "$removed" = 1 ] || {
+    echo "    the bump rewrote $path ($added added, $removed removed) instead of the manifest's one version line"
     git diff -- "$path" | head -20; exit 1; }
 done < "$S/numstat"
 grep -q 'serde = { version = "1.0.0" }' "$MANIFEST" || { echo "    a dependency pinned at the old version was rewritten"; exit 1; }
-grep -q 'MJ_VERSION 1.0.0 when it was written' "$ENTRY" || { echo "    a comment naming the old version was rewritten"; exit 1; }
+[ "$(sha256_of_file "$PROJECTION")" = "$before_projection" ] || { echo "    the writer wrote the projection"; exit 1; }
 
-# writing the version that is already there writes nothing, so a bump is safe to repeat
+# writing the version that is already there writes nothing, so a bump is safe to repeat —
+# and a stale projection, being a warning, does not stop the writer correcting itself
 expect_exit 0 "$RB" release bump --exact 9.9.9
 expect_grep 'already 9\.9\.9; nothing written'
 
-git checkout -- "$MANIFEST" "$ENTRY"
+git checkout -- "$MANIFEST"
 
 # ---------------------------------------------------------------- adding a release edits nothing
 #
@@ -458,27 +470,34 @@ unset OPENAI_API_KEY ANTHROPIC_API_KEY
 # ---------------------------------------------------------------- the gate over this repository
 #
 # The gate is run against the checkout it belongs to, which is where its subject lives: the
-# two version sites are one fact, and no changelog is authored anywhere.
+# version is authored once and the tool prints it, and no changelog is authored anywhere.
 [ -x "$ROOT/scripts/ci/release-check" ] || { echo "    scripts/ci/release-check is missing or not executable"; exit 1; }
 ( cd "$ROOT" && ./scripts/ci/release-check > "$S/gate.out" 2>&1 ) || {
   echo "    the release gate failed on this checkout:"; cat "$S/gate.out"; exit 1; }
 
-# and it can fail: a copy in which the two writers disagree is rejected, exit 10
-PROBE="$S/probe"; mkdir -p "$PROBE/scripts/ci" "$PROBE/apps/majordomus-cli" "$PROBE/bin" "$PROBE/.ai/repo/releases"
+# and it can fail: a copy whose tool prints a version the crate does not declare is rejected,
+# exit 10. The copy carries the real tool and its libraries, so what is exercised is what the
+# tool actually prints from its projection, not a stand-in that echoes a string.
+PROBE="$S/probe"; mkdir -p "$PROBE/scripts/ci" "$PROBE/apps/majordomus-cli" "$PROBE/share" "$PROBE/.ai/repo/releases"
 cp "$ROOT/scripts/ci/release-check" "$PROBE/scripts/ci/"
 cp "$ROOT/scripts/release-version" "$PROBE/scripts/"
 cp "$ROOT/apps/majordomus-cli/Cargo.toml" "$PROBE/apps/majordomus-cli/"
 mkdir -p "$PROBE/apps/majordomus-cli/src/release"
 cp "$ROOT/apps/majordomus-cli/src/release/version.rs" "$PROBE/apps/majordomus-cli/src/release/"
-printf '#!/usr/bin/env bash\nMJ_VERSION="0.0.0-probe"\n' > "$PROBE/bin/majordomus"
+cp -R "$ROOT/bin" "$ROOT/lib" "$PROBE/"
+printf 'version=0.0.0-probe\n' > "$PROBE/share/version.txt"
 ( cd "$PROBE" && ./scripts/ci/release-check > "$S/probe.out" 2>&1; echo $? > "$S/probe.code" ) || true
 [ "$(cat "$S/probe.code")" = 10 ] || {
-  echo "    a tree whose two version sites disagree was not rejected (exit $(cat "$S/probe.code")):"
+  echo "    a tree whose tool prints another version was not rejected (exit $(cat "$S/probe.code")):"
   cat "$S/probe.out"; exit 1; }
+grep -q 'bin/majordomus prints "majordomus 0.0.0-probe"' "$S/probe.out" || {
+  echo "    the refusal does not say what the tool printed:"; cat "$S/probe.out"; exit 1; }
+grep -q 'run scripts/derive' "$S/probe.out" || {
+  echo "    the refusal does not name the derivation as the remedy:"; cat "$S/probe.out"; exit 1; }
 
 # ...and an authored changelog is rejected too, by the check that exists to reject it
 printf '# Changelog\n\n## 1.0.0\n\n- something somebody remembered to write down\n' > "$PROBE/CHANGELOG.md"
-printf 'MJ_VERSION="%s"\n' "$("$ROOT/scripts/release-version")" > "$PROBE/bin/majordomus"
+printf 'version=%s\n' "$("$ROOT/scripts/release-version")" > "$PROBE/share/version.txt"
 ( cd "$PROBE" && ./scripts/ci/release-check > "$S/probe2.out" 2>&1 ) || true
 grep -q 'CHANGELOG.md' "$S/probe2.out" || {
   echo "    the gate did not reject an authored changelog:"; cat "$S/probe2.out"; exit 1; }
@@ -493,7 +512,7 @@ grep -q 'CHANGELOG.md' "$S/probe2.out" || {
 #
 # The probe above is not a git checkout, so it cannot answer this; a second one is, with its
 # own tags and its own records — the two sources check 5 reads, and nothing else.
-TAGP="$S/tagprobe"; mkdir -p "$TAGP/scripts/ci" "$TAGP/apps/majordomus-cli/src/release" "$TAGP/bin" "$TAGP/.ai/repo/releases"
+TAGP="$S/tagprobe"; mkdir -p "$TAGP/scripts/ci" "$TAGP/apps/majordomus-cli/src/release" "$TAGP/share" "$TAGP/.ai/repo/releases"
 cp "$ROOT/scripts/ci/release-check" "$TAGP/scripts/ci/"
 cp "$ROOT/scripts/release-version" "$TAGP/scripts/"
 cp "$ROOT/apps/majordomus-cli/Cargo.toml" "$TAGP/apps/majordomus-cli/"
@@ -503,7 +522,8 @@ cp "$ROOT/apps/majordomus-cli/src/release/version.rs" "$TAGP/apps/majordomus-cli
 # states and the checks either side of this one stay clean: what is measured here is the tag
 # against the record, and nothing else.
 TAGV="$("$ROOT/scripts/release-version")"
-printf 'MJ_VERSION="%s"\n' "$TAGV" > "$TAGP/bin/majordomus"
+cp -R "$ROOT/bin" "$ROOT/lib" "$TAGP/"
+printf 'version=%s\n' "$TAGV" > "$TAGP/share/version.txt"
 (
   cd "$TAGP" || exit 1
   git init -q .

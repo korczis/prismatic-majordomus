@@ -179,6 +179,18 @@ mj_derive_sec_decisions() {
   printf '%s\n' "$out"
 }
 
+# The task's reasoning (ADR 0098): the conclusions, who reviewed each — or that nobody
+# could, and it was decided locally — what is unresolved, and which advisors failed on the
+# way. Rendered by the executable from the typed records, never restated here; a new
+# session reads the decision and its provenance instead of asking the advisors again.
+mj_derive_sec_reasoning() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local report; report="$(mj_rust_reasoning_report "$MJ_ROOT")"
+  if [ -n "$report" ]; then printf '%s\n' "$report"
+  else printf 'No reasoning was recorded for this task.\n'; fi
+}
+
 mj_derive_sec_verification() {
   # What a derived record may say about verification is what the ledger recorded, and
   # nothing else. A generator that wrote "tests pass" because it found a test directory
@@ -250,7 +262,7 @@ mj_derive_gather() {
 # The sections the policy requires, in the order it names them, followed by the ones this
 # generator can also fill. A required section with no writer is a configuration error
 # reported by name; an optional one with no writer is simply not emitted.
-MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Open_Questions Verification"
+MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Reasoning Open_Questions Verification"
 
 mj_derive_handover_body() {
   mj_derive_gather
@@ -318,15 +330,16 @@ mj_derive_checkpoint_body() {
 #
 # Absence is printed, not omitted. "No relevant handover" is a fact the next worker needs;
 # silence is indistinguishable from a briefing that failed to run.
-# The briefing the episode-start event writes. Its one argument is where the shared server
-# stands, as `mj_capture_ensure_server` reported it; empty when nothing asked.
+# The briefing the episode-start event writes. Its first argument is where the shared server
+# stands, as `mj_capture_ensure_server` reported it, and its second what that server did with
+# the mesh declaration, as `mj_capture_mesh_line` reported it; each empty when nothing asked.
 mj_derive_briefing() {
-  local server="${1:-}" budget out
+  local server="${1:-}" mesh="${2:-}" budget out
   budget="$(mj_pol session.briefing_budget_lines)"
   case "$budget" in ''|*[!0-9]*) budget="$(mj_pol context.always_loaded_budget_lines)" ;; esac
   case "$budget" in ''|*[!0-9]*) budget=60 ;; esac
 
-  out="$(mj_derive_briefing_body "$server")"
+  out="$(mj_derive_briefing_body "$server" "$mesh")"
   printf '%s\n' "$out" | head -n "$budget"
   local total; total="$(mj_derive_nlines "$out")"
   [ "$total" -gt "$budget" ] && printf '... %s more line(s) withheld by session.briefing_budget_lines; run `majordomus context` for the whole briefing.\n' "$((total - budget))"
@@ -334,7 +347,7 @@ mj_derive_briefing() {
 }
 
 mj_derive_briefing_body() {
-  local server="${1:-}" sid task_id outcome n
+  local server="${1:-}" mesh="${2:-}" sid task_id outcome n
   sid="$(mj_open_session_id)"
   printf '## Majordomus — what this repository already knows\n\n'
   printf 'Episode %s, on %s at %s, working tree %s.\n' \
@@ -352,6 +365,9 @@ mj_derive_briefing_body() {
   # --- the shared server, when the start event ensured it: one line, so that a worker
   # knows before its first tool call whether the board it is about to be told to read exists
   if [ -n "$server" ]; then printf '\nShared server: %s\n' "$server"; fi
+  # --- the mesh, directly under the server it lives in, whenever a declaration exists: a
+  # declaration enabled and a mesh not active is said here, not discovered later (ADR 0059)
+  if [ -n "$mesh" ]; then printf 'Mesh: %s\n' "$mesh"; fi
 
   # --- what blocks acceptance. First, because it is the only thing here that refuses a
   # command the worker is otherwise about to run.

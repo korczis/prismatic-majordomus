@@ -3,9 +3,25 @@
 # Single entry point. Subcommands live in ../lib/<name>.sh and are sourced.
 set -eu
 
-MJ_VERSION="0.8.0"
 MJ_BIN_DIR="$(cd "$(dirname "$0")" && pwd)"
 MJ_LIB_DIR="$MJ_BIN_DIR/../lib"
+# The version is authored once, in apps/majordomus-cli/Cargo.toml. share/version.txt is its
+# projection: written by `majordomus generate`, refused by `generate --check` when stale, and
+# shipped beside this file in every archive, because an installed tree has no Cargo.toml.
+# Read from this program's own distribution with builtins alone, and never from
+# MAJORDOMUS_SHARE, which names data to read and not the identity of the program reading it.
+MJ_VERSION=""
+if [ -r "$MJ_BIN_DIR/../share/version.txt" ]; then
+  while IFS= read -r mj_line || [ -n "$mj_line" ]; do
+    case "$mj_line" in version=*) MJ_VERSION="${mj_line#version=}"; break ;; esac
+  done < "$MJ_BIN_DIR/../share/version.txt"
+  unset mj_line
+fi
+[ -n "$MJ_VERSION" ] || {
+  printf 'majordomus: %s states no version; this distribution is incomplete (in a checkout: scripts/derive)\n' \
+    "$MJ_BIN_DIR/../share/version.txt" >&2
+  exit 12
+}
 # The path to write down. An installation puts the tool in a versioned directory and
 # reaches it through a launcher whose path does not move when the version does, and the
 # launcher says so; a checkout has no launcher and this file's own path is the answer.

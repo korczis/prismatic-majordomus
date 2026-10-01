@@ -5,8 +5,15 @@
 # Facts here carry provenance or they do not enter: the entries below are from the
 # Anthropic model reference as cached on 2026-06-24. Pricing is deliberately absent —
 # a price this tool cannot verify live is a fact it must not state. Vendors whose
-# facts nobody has verified (OpenAI, Google, local runtimes) are absent for the same
-# reason; adding one is editing this file, and nothing else.
+# facts nobody has verified (Google, for one) are absent for the same reason; adding one
+# is editing this file, and nothing else.
+#
+# OpenAI and the two local runtimes entered on 2026-10-01 as the vendors the advisor
+# catalogue (share/advisors.yaml, ADR 0098) references: OpenAI's `gpt-4o` was verified by
+# a chat completion answered under that id on that date, and it is declared with only the
+# capability that call proved (`text`) and no context window; Ollama and LM Studio were
+# verified installed as local runtimes and declare no model, because which model a local
+# runtime serves is the machine's, not the distribution's.
 #
 # `credential_env` names an environment variable; only its *presence* is ever
 # reported. No value is read, held or rendered anywhere.
@@ -17,6 +24,16 @@ vendors:
     title: Anthropic
     inference: remote
     credential_env: ANTHROPIC_API_KEY
+  - id: openai
+    title: OpenAI
+    inference: remote
+    credential_env: OPENAI_API_KEY
+  - id: ollama
+    title: Ollama
+    inference: local
+  - id: lmstudio
+    title: LM Studio
+    inference: local
 
 models:
   - id: claude-opus-5
@@ -73,3 +90,9 @@ models:
     context_window: 200000
     capabilities: [text, vision, tools, structured_output, streaming, reasoning]
     note: The fast, small tier; the usual choice for subagents and high-volume routes.
+
+  - id: gpt-4o
+    vendor: openai
+    native_id: gpt-4o
+    capabilities: [text]
+    note: Declared for the advisor catalogue; routing prefers the entries above it.
