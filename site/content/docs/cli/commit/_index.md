@@ -4,7 +4,7 @@ description = "The commit as a value: what the working tree would commit and how
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 83
+weight = 91
 [extra]
 route = "/docs/cli/commit/"
 command = "majordomus commit"

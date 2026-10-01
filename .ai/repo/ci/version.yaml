@@ -1,0 +1,55 @@
+# The version model of this repository: when the question "does the surface owe a version?"
+# is asked, who answers it, and what the answer may set in motion — a proposal, and nothing
+# further. .github/workflows/version.yml is an adapter over this file; it carries no rule of
+# its own.
+#
+# The judge is `release analyze` (ADR 0051): it compares the public contract — every
+# capability, route, MCP tool, command and schema — against the last release and says what is
+# required. The actor is the workflow: it runs the judge without waiting for a person to
+# notice, and when something is owed it proposes the bump as a pull request. Tagging and
+# releasing stay decisions; release.yaml models what a tag sets in motion.
+version: 1
+
+# ---------------------------------------------------------------- when the question is asked
+# A push to master that touches what the surface is measured from, and a daily schedule so a
+# cancelled or failed push run cannot silently skip the question.
+trigger:
+  push:
+    branches: [master]
+    paths:
+      - apps/majordomus-cli/src/**
+      - share/commands.yaml
+      - share/kinds.yaml
+      - share/schemas/**
+      - bin/majordomus
+      - lib/**
+  schedule: '17 6 * * *'
+  dispatch: true
+  # one question at a time, never cancelled: a cancelled run is a skipped question
+  concurrency: version
+
+# ---------------------------------------------------------------- the phases, in order
+# Each `runs` is the command a person can run too.
+phases:
+  - id: ask
+    job: owed
+    runs: majordomus release analyze --format json
+    summary: the version the tree declares and the version its public contract requires; equal means nothing is owed and the run ends
+
+  - id: raise
+    job: owed
+    when: the required version differs from the declared one, and no proposal for it is open
+    permissions: contents-write, pull-requests-write
+    runs: majordomus release bump && scripts/derive && scripts/derive-check
+    summary: every site that states a version is raised at once by the one writer, the projections follow, and the result is proposed as a pull request on release/bump-<version>
+
+# ---------------------------------------------------------------- what the actor may not do
+# A proposal is the furthest this workflow goes. It never tags, never releases, never pushes
+# to master and never edits a version with anything but `release bump`; an open proposal for
+# the same version is left to its review rather than replaced.
+forbidden:
+  - tag
+  - release
+  - push to the default branch
+  - write a version outside `majordomus release bump`
+  - replace an open proposal for the same version

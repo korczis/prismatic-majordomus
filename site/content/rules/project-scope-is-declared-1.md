@@ -1,7 +1,7 @@
 +++
 title = "What a worker reads is declared once, and nothing outside it is read or served"
 description = "What a worker reads is declared once, and nothing outside it is read or served"
-weight = 128
+weight = 129
 [extra]
 kind = "rule"
 slug = "project-scope-is-declared-1"

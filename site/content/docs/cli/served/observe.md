@@ -1,7 +1,7 @@
 +++
 title = "majordomus served observe"
 description = "Probe the build identity a deployment serves, judge it against a commit and record it"
-weight = 143
+weight = 151
 [extra]
 route = "/docs/cli/served/observe/"
 command = "majordomus served observe"

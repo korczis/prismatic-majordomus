@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 68,
+      "count": 69,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 144,
+      "count": 145,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 68
+      "count": 69
     },
     {
       "kind": "application",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 277
+      "count": 278
     },
     {
       "kind": "feature",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 144
+      "count": 145
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 274
+      "count": 276
     },
     {
       "kind": "use-case",
@@ -4626,6 +4626,103 @@
       "referenced_by": []
     },
     {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0101",
+      "identity": "adr-0101",
+      "slug": "adr-0101",
+      "cockpit": "/cockpit/objects/adr/adr-0101",
+      "title": "Pull requests are integrated one at a time, each against a master observed a moment before",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "git",
+        "github",
+        "governance",
+        "safety"
+      ],
+      "source": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/classify.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/drain.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/tests.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-network-no-eval@1",
+          "kind": "rule",
+          "route": "/rules/project-no-network-no-eval-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/720_integration_follows_the_current_master.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
       "kind": "rule",
       "id": "majordomus://rule/majordomus.adr-integrity@1",
       "identity": "majordomus.adr-integrity@1",
@@ -7476,6 +7573,20 @@
           "kind": "adr",
           "route": "/adrs/adr-0055/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "external": false
         }
       ]
     },
@@ -9072,6 +9183,49 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+      "identity": "project.integration-follows-the-current-master@1",
+      "slug": "project-integration-follows-the-current-master-1",
+      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
+      "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
+      "status": "active",
+      "tags": [
+        "integration",
+        "git",
+        "github",
+        "safety",
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.interfaces-are-projections@1",
       "identity": "project.interfaces-are-projections@1",
       "slug": "project-interfaces-are-projections-1",
@@ -9433,6 +9587,20 @@
           "label": "adr-0086",
           "kind": "adr",
           "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
           "external": false
         },
         {
@@ -10013,6 +10181,13 @@
           "label": "adr-0053",
           "kind": "adr",
           "route": "/adrs/adr-0053/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
           "external": false
         },
         {
