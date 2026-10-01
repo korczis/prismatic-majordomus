@@ -94,7 +94,7 @@ Every command below is declared once, in [`apps/majordomus-cli/src/cli.rs`](../.
 | [`majordomus worktree guard`](#majordomus-worktree-guard) | `/docs/cli/worktree/guard/` | May a mutation proceed from here? Exit 0 in a canonical worktree, in the primary checkout on the trunk, or detached; exit 10 with the reason otherwise. What the pre-commit hook asks |
 | [`majordomus worktree repair`](#majordomus-worktree-repair) | `/docs/cli/worktree/repair/` | Drop git's registrations of worktrees whose directories are gone, and repair the administrative links of the ones that exist. Deletes no directory |
 | [`majordomus worktree remove`](#majordomus-worktree-remove) | `/docs/cli/worktree/remove/` | Remove one linked worktree by branch or path. Never the primary checkout, never a branch, never uncommitted work without --force |
-| [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing |
+| [`majordomus worktree cleanup`](#majordomus-worktree-cleanup) | `/docs/cli/worktree/cleanup/` | The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove |
 | [`majordomus worktree branches`](#majordomus-worktree-branches) | `/docs/cli/worktree/branches/` | Every local branch, one per line, for a shell completion that wants the live set |
 | [`majordomus prs`](#majordomus-prs) | `/docs/cli/prs/` | Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101) |
 | [`majordomus prs status`](#majordomus-prs-status) | `/docs/cli/prs/status/` | Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent |
@@ -2630,7 +2630,7 @@ Examples:
 <a id="majordomus-worktree-cleanup"></a>
 ## `majordomus worktree cleanup`
 
-The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing
+The branches merged into the trunk whose worktree is clean or absent: what could be removed. Removes nothing without --remove
 
 ```text
 majordomus worktree cleanup [OPTIONS]
@@ -2638,6 +2638,7 @@ majordomus worktree cleanup [OPTIONS]
 
 | argument | value | default | description |
 |---|---|---|---|
+| `--remove` | flag | — | Remove the worktrees listed, each re-measured immediately before it goes: a branch ahead of its remote, uncommitted work, or a process working inside is refused and named. Branches are never deleted; the listing still says how |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4702,6 +4703,8 @@ majordomus evidence show [OPTIONS]
 | `--status` | `<STATUS>` | — | Only claims declaring this status (guaranteed, advisory, planned, rejected) |
 | `--findings` | flag | — | Only the claims whose declared status the evidence does not support |
 | `--check` | flag | — | Exit 10 when a claim declares a guarantee the evidence does not support |
+| `--presented` | `<REV>` | — | Judge at the checked-out commit as committed (HEAD, or any name of it), from the ledger that commit holds, instead of at the working tree |
+| `--presented-tree` | `clean` \| `dirty` \| `unknown` | — | What you know about the presented commit's tree (clean, dirty, unknown); it can only weaken the measured state — `clean`: Nothing you know of: the measured state stands; `dirty`: The build did not come from the commit as committed; nothing reads as proven; `unknown`: You cannot say whether it did; nothing reads as proven |
 | `--repo` | `<PATH>` | — | Start the search for the repository root here (default: the current directory) (accepted by every subcommand) |
 | `--discovery` | `vcs` \| `filesystem` | `vcs` | How declarative files are enumerated (accepted by every subcommand) — `vcs`: Tracked files, through the version-control index (the layer's contract); `filesystem`: A walk of the work tree with the same glob semantics; untracked files included |
 | `--strict` | flag | — | Refuse to proceed when any file of the layer carries an error diagnostic (accepted by every subcommand) |
@@ -4717,6 +4720,14 @@ Examples:
   ```
 
   Verified: exits 0; prints one JSON document carrying /claims, /totals, /ledger/path, /findings.
+
+- **The checked-out commit, judged as committed** — The reading a site built from this commit needs: every claim judged from the ledger the commit holds rather than the working tree's, against the commit's own tree, measured without the ledger's working copy. The first line names what was judged. A run the working ledger holds that the commit's does not can only withhold `proven`, and is named when there is one; a revision other than the checked-out commit is refused.
+
+  ```console
+  $ majordomus evidence show --presented HEAD
+  ```
+
+  Verified: exits 0; prints judged at, as committed.
 
 <a id="majordomus-evidence-claim"></a>
 ## `majordomus evidence claim`

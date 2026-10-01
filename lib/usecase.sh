@@ -468,6 +468,12 @@ mj_uc_cmd_validate() {
 # the executable at all — the suite job can, the site job cannot, and the catalogue each one
 # derived differed by seven lines. The advisor lines and the passing check line go, and the
 # remaining line becomes one token; a FAIL is kept whole, since a finding is the repository's.
+#
+# `knowledge nodes` (#620) checks every file against the schema of its kind through the
+# executable's index, and says so with a WARN when the recording job has no executable to
+# ask: the site job has none, the suite job and a laptop do, and the catalogue each derived
+# differed by that one line. The line is about the recorder, and it goes; what the nodes are
+# is kept.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -504,6 +510,7 @@ mj_uc_normalise() { # repo-path
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
     -e '/: printf: write error: Broken pipe$/d' \
+    -e '/^WARN knowledge +[^ ]+ — the index could not be asked /d' \
     -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
     -e '/^OK +reasoning +- — reasoning check: /d' \
     -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'

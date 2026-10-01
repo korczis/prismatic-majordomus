@@ -20,6 +20,13 @@
 # test/cases/97_pages_fast_path.sh fails when the two differ.
 name: pages
 on:
+  # Every thirty minutes, matching the window pages-check judges by (OWED_AFTER, 1800s). The
+  # publisher had no retry: a run that failed left the site where it was until a person noticed,
+  # and on 2026-09-14 that was seven hours — every push-triggered run failed at link-check's
+  # refusal while the site served 8cf4570. The gate that would have said so, `pages-live`, is
+  # at-finish, so it is asked when a session declares itself done and never on a clock.
+  schedule:
+    - cron: '*/30 * * * *'
   push:
     branches: [master]
     paths:
@@ -136,6 +143,76 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
+  # A scheduled run asks before it works: is a publication owed at all, and if so, which of its
+  # two causes is this? When the site is current the run ends here, green, having spent one
+  # small job — which is what makes forty-eight runs a day affordable now that a publication
+  # also documents the crate (the rustdoc job below costs a Rust toolchain; ADR 0086). When one
+  # is owed, the state chooses the remedy. If gh-pages does not carry the trunk's site,
+  # deploying is the fix, and the two jobs below run as a push would run them. If gh-pages is
+  # right and GitHub's own builder errored, deploying an identical tree changes nothing — the
+  # loop would go round every thirty minutes for ever, looking like it was trying — so this job
+  # asks GitHub to build again, through `scripts/pages rebuild`, which refuses to preempt a
+  # build in flight. The state is read through `pages built`, the one place this repository
+  # reads it. On a push or a dispatch this job is skipped and publishes nothing.
+  owed:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    # pages-check waits up to five minutes for a young mismatch before calling it owed. One
+    # bound for the job and none per step: nothing here is continue-on-error, so a kill by the
+    # job's bound reads no differently from a step's, and test/cases/26_ci_wiring.sh sums
+    # every step bound of this file against the deploy job's.
+    timeout-minutes: 10
+    # the rebuild request is a write to GitHub's Pages builder, and only this job makes it
+    permissions:
+      contents: read
+      pages: write
+    outputs:
+      owed: ${{ steps.publication-owed.outputs.owed }}
+      gate_rc: ${{ steps.publication-owed.outputs.gate_rc }}
+      remedy: ${{ steps.remedy.outputs.remedy }}
+    steps:
+      # pages-check asks whether the published commit is on master and how far behind it is,
+      # so it needs the history and the gh-pages branch, and no file of the past
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+
+      - id: publication-owed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          rc=0
+          scripts/ci/pages-check > "$RUNNER_TEMP/owed.txt" 2>&1 || rc=$?
+          sed 's/^/    /' "$RUNNER_TEMP/owed.txt"
+          if [ "$rc" = 0 ]; then echo "owed=false" >> "$GITHUB_OUTPUT"; else echo "owed=true" >> "$GITHUB_OUTPUT"; fi
+          echo "gate_rc=$rc" >> "$GITHUB_OUTPUT"
+          if [ "$rc" != 0 ]; then
+            {
+              printf '## A publication was owed when the schedule fired\n\n'
+              printf 'What scripts/ci/pages-check said (exit %s):\n\n' "$rc"
+              sed 's/^/    /' "$RUNNER_TEMP/owed.txt"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - id: remedy
+        if: steps.publication-owed.outputs.owed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          state="$(scripts/pages built --porcelain 2>/dev/null | cut -f1)"
+          if [ "$state" = errored ]; then remedy=rebuild; else remedy=deploy; fi
+          echo "remedy=$remedy" >> "$GITHUB_OUTPUT"
+          echo "the publication is owed; GitHub's build of gh-pages is ${state:-unreadable}, so the remedy is $remedy"
+          printf '\nGitHub'"'"'s build of gh-pages is %s, so the remedy is **%s**.\n' "${state:-unreadable}" "$remedy" >> "$GITHUB_STEP_SUMMARY"
+
+      # the remedy for a build that errored on a tree that is already right
+      - id: ask-rebuild
+        if: steps.remedy.outputs.remedy == 'rebuild'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/pages rebuild
+
   # The crate's Rust API reference, as the published surface `rustdoc` (ADR 0086). A job of its
   # own so that the deploy job keeps no Rust toolchain; its build cache is setup-rust's, which
   # Swatinem/rust-cache keys by this job's id, so it restores the small cache of a doc build and
@@ -145,6 +222,11 @@ jobs:
   # is a phase of the controlled path (the `rustdoc` row the deploy job writes); the queue in
   # front of it and between the two jobs is GitHub's and is reported as queue.
   rustdoc:
+    # A push or a dispatch always documents the crate; a scheduled run only when the owed job
+    # chose a deploy. `!cancelled()` because the owed job is skipped on a push, and a skipped
+    # need would otherwise skip this job with it.
+    needs: owed
+    if: ${{ !cancelled() && (github.event_name != 'schedule' || needs.owed.outputs.remedy == 'deploy') }}
     runs-on: ubuntu-latest
     # a cold runner documents the crate after building every dependency's metadata; a hang is
     # still a failure long before GitHub's six hours
@@ -190,7 +272,8 @@ jobs:
   # behind every step's own. No sum is written here, because a step's bound changes without this
   # comment: test/cases/26_ci_wiring.sh computes it and holds the job strictly above it.
   deploy:
-    needs: rustdoc
+    needs: [owed, rustdoc]
+    if: ${{ !cancelled() && needs.rustdoc.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 36
     steps:
@@ -204,16 +287,30 @@ jobs:
           echo "created=$(date -u -d "$created" +%s)" >> "$GITHUB_OUTPUT"
           echo "start=$(date -u +%s)" >> "$GITHUB_OUTPUT"
 
-      # every commit and tag, and no file of the past: scripts/ci/link-check (run by the check step)
-      # decides a commit, compare or release link by whether the commit is in the published history
-      # and the tag exists, and refuses to report clean from a shallow clone that cannot say. At
-      # depth 1 it refused every deploy after #356. blob:none keeps the cost to history metadata;
-      # the tree being built is still checked out in full. scripts/site-deploy fetches the one
-      # branch it pushes for itself.
+      # The fast path read the tree and never its history, and was shallow for it. `pages check`
+      # stopped being a statement about the tree alone when link-check became blocking (#356):
+      # the site links to commits, compares and release tags, and a clone without history or
+      # tags cannot decide any of them — 2302 commit links undecided and six existing tags
+      # reported as non-existent, on every run since, with `publish` skipped behind the refusal.
+      # fetch-depth: 0 is what the checker asks for by name. scripts/site-deploy still fetches
+      # the one branch it pushes for itself.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # blob:none keeps the cost to history metadata: every commit and tag is present so the
+          # link check can decide a ref, and no file of the past is fetched. The tree being built
+          # is still checked out in full. From #357, kept because the declaration says what must
+          # be decidable and this is how it is paid for.
           filter: blob:none
+
+      # The depth above is a declaration; this is the measurement, and both come from
+      # deploy.checkout in .ai/repo/ci/pages.yaml rather than from this file. `fetch-depth` is
+      # one edit away from being tuned back for speed, and the failure that follows is not a
+      # missing checkout — it is six links to tags that exist being called non-existent, three
+      # steps later, inside a checker that looks like the thing at fault.
+      - name: the checkout can decide a ref
+        timeout-minutes: 1
+        run: scripts/pages checkout --verify
 
       - id: setup
         uses: ./.github/actions/setup-site
@@ -378,10 +475,21 @@ jobs:
         if: always()
         env:
           PUBLISH: ${{ steps.publish.outcome }}
+          SERVED: ${{ steps.public.outcome }}
         run: |
           if [ "$PUBLISH" = success ]; then
             echo "::notice title=Published::gh-pages was pushed with $GITHUB_SHA before this run ended"
             printf '\nPublication: **pushed** — gh-pages carries %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+            # The public probe's verdict, stated rather than left as a grey icon inside a
+            # green run. The probe stays continue-on-error (see its step for why), so without
+            # this line a site still serving an older commit after ten minutes looked, from
+            # the run page, exactly like a site that served this one.
+            if [ "$SERVED" = success ]; then
+              printf 'Public site: **serves** %s.\n' "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning title=Public site not verified::after the probe's window the public site did not serve $GITHUB_SHA (probe: ${SERVED:-not run}); pages-live will refuse if it still does not"
+              printf 'Public site: **not verified** (probe: %s) — it did not serve %s within the window.\n' "${SERVED:-not run}" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+            fi
           else
             echo "::error title=Not published::this run ended (publish: $PUBLISH) without pushing gh-pages; the site still serves an older commit"
             printf '\nPublication: **not pushed** (publish step: %s). The site still serves an older\ncommit; if no newer run of this workflow follows, the pages-live gate will refuse.\n' "$PUBLISH" >> "$GITHUB_STEP_SUMMARY"
@@ -421,3 +529,26 @@ jobs:
             --queue "$(( ${{ steps.t.outputs.start }} - ${{ steps.t.outputs.created }} - ${{ needs.rustdoc.outputs.seconds || 0 }} ))" \
             --pages-build "${{ steps.public.outputs.pages_build || 'not measured' }}" \
             ${{ steps.public.outputs.end_to_end && format('--end-to-end {0}', steps.public.outputs.end_to_end) || '' }}
+
+  # A scheduled run that found a publication owed has repaired it, or asked GitHub to, and ends
+  # red anyway: the push-triggered deploy failed, was cancelled or never ran, and healing
+  # without reporting would hide a fault that recurs every thirty minutes — the recurrence is
+  # the thing worth seeing. It runs after the remedy, whatever became of it, so the report is
+  # of an intervention that happened rather than one that was planned. test/cases/97 names this
+  # step by its id rather than by any exit.
+  intervention:
+    needs: [owed, deploy]
+    if: ${{ always() && needs.owed.outputs.owed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - id: report-intervention
+        env:
+          GATE_RC: ${{ needs.owed.outputs.gate_rc }}
+          REMEDY: ${{ needs.owed.outputs.remedy }}
+          DEPLOY: ${{ needs.deploy.result }}
+        run: |
+          printf '## The publisher needed help\n\nA publication was owed when the schedule fired (pages-check exit %s). Remedy: %s; deploy job: %s.\n' \
+            "$GATE_RC" "${REMEDY:-none}" "$DEPLOY" >> "$GITHUB_STEP_SUMMARY"
+          echo "publication was owed (pages-check exit $GATE_RC); remedy $REMEDY, deploy $DEPLOY; reporting the intervention" >&2
+          exit 1

@@ -5,7 +5,7 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "4400bfab76dfd5406276d0de86d61f7c9357d65610274360c9f93a0348283f6b",
+  "fingerprint": "b12c95e05d9ba676facb91c37c821c43180687884bedda2e08d0872ac7fa5ee2",
   "route": "/features/",
   "counts": {
     "features": 26,
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 204
+          "objects": 207
         }
       ],
       "rule_refs": [
@@ -568,11 +568,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 268,
+        "mcp_resources": 271,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 262,
+        "objects": 265,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -3752,7 +3752,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 70
+          "objects": 71
         },
         {
           "name": "knowledge",
@@ -3760,7 +3760,7 @@
         },
         {
           "name": "document",
-          "objects": 286
+          "objects": 290
         }
       ],
       "rule_refs": [
@@ -4009,11 +4009,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 358,
+        "mcp_resources": 363,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 357,
+        "objects": 362,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4223,7 +4223,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 147
+          "objects": 148
         }
       ],
       "rule_refs": [
@@ -4587,11 +4587,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 149,
+        "mcp_resources": 150,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 147,
+        "objects": 148,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -8138,7 +8138,10 @@
         "evidence-currency-is-not-collapsed",
         "evidence-partial-run-preserves-the-rest",
         "evidence-navigates-both-ways",
-        "evidence-unsupported-guarantee-is-reported"
+        "evidence-unsupported-guarantee-is-reported",
+        "evidence-judged-at-the-presented-revision",
+        "evidence-a-skip-is-not-run",
+        "evidence-a-failure-outranks-an-absence"
       ],
       "use_cases": [],
       "cockpit": [],
@@ -8259,6 +8262,21 @@
           "id": "evidence-unsupported-guarantee-is-reported",
           "claim": "A claim that declares a guarantee no recorded run supports is named by a gate rather than displayed as guaranteed",
           "status": "guaranteed"
+        },
+        {
+          "id": "evidence-judged-at-the-presented-revision",
+          "claim": "A claim reads proven only when its passing run was recorded on a commit the presented revision contains, nothing but the evidence ledger changed between the two, and neither the recorded tree nor the presented tree was dirty; a run on a commit the presented revision does not contain reads stale; a named revision is judged by the ledger committed in it, and a clean failing run of the same test that the checkout holds uncommitted, recorded between the two, caps it at stale",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-a-skip-is-not-run",
+          "claim": "A test that declined to run reads not_run with a detail saying it declined, never proven and never failing, and a test that errored or timed out reads failing",
+          "status": "guaranteed"
+        },
+        {
+          "id": "evidence-a-failure-outranks-an-absence",
+          "claim": "A rule with a failing test reads failing whatever its other tests say, so a blocking rule whose tests are one failing and one not run is still a finding",
+          "status": "guaranteed"
         }
       ],
       "use_case_refs": [],
@@ -8280,13 +8298,13 @@
         "enforced_rules": 0,
         "docs": 1,
         "adrs": 1,
-        "claims": 5,
+        "claims": 8,
         "use_cases": 0,
         "moments": 0
       },
       "evidence": {
         "claims": {
-          "guaranteed": 5
+          "guaranteed": 8
         },
         "modules": {
           "behaviorally_verified": 1
@@ -10356,7 +10374,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (70)",
+        "title": "adr (71)",
         "features": [
           "knowledge"
         ]
@@ -10384,7 +10402,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (204)",
+        "title": "claim (207)",
         "features": [
           "declare-once"
         ]
@@ -10487,7 +10505,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (147)",
+        "title": "rule (148)",
         "features": [
           "doctrine"
         ]
@@ -11350,28 +11368,28 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1704,
+    "capabilities": 1729,
     "builtin": 152,
-    "declarative": 1552,
+    "declarative": 1577,
     "modules": 45,
     "mcp_tools": 146,
-    "mcp_resources": 1599,
+    "mcp_resources": 1624,
     "http_routes": 150,
     "cli_commands": 161,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1552,
+    "objects": 1577,
     "by_kind": {
-      "adr": 70,
+      "adr": 71,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 204,
+      "claim": 207,
       "command": 31,
       "context": 31,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 286,
+      "document": 290,
       "feature": 27,
       "implementation": 49,
       "issue": 238,
@@ -11383,12 +11401,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 147,
+      "rule": 148,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 286,
+      "test": 302,
       "use-case": 46,
       "workspace": 1
     },
@@ -11405,7 +11423,7 @@
       "executions": 6,
       "newest": "2026-09-12T10:36:18Z"
     },
-    "declared": 188,
+    "declared": 191,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -11762,6 +11780,18 @@
         "label": "not run",
         "supported": false
       },
+      "evidence-a-failure-outranks-an-absence": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-a-skip-is-not-run": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
       "evidence-currency-is-not-collapsed": {
         "status": "guaranteed",
         "state": "stale",
@@ -11769,6 +11799,12 @@
         "supported": false
       },
       "evidence-gates-done": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "evidence-judged-at-the-presented-revision": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

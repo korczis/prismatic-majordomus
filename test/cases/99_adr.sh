@@ -232,7 +232,7 @@ printf '# a case this repository has, so that a test: reference has something to
 # a repository that declares where its cases live gets test nodes; without the class the
 # reference is to a tracked file the graph has no node for, which is silence, not a finding
 printf '  - id: test\n    kind: test\n    discovery: vcs\n    pathspec: \x27:(glob)test/cases/*.sh\x27\n    required: false\n' >> .ai/repo/knowledge/sources.yaml
-printf 'claims:\n  - id: state-untracked\n    claim: The state directory is never tracked\n' > docs/CLAIMS.yaml
+printf 'version: 1\nclaims:\n  - id: state-untracked\n    claim: The state directory is never tracked\n' > docs/CLAIMS.yaml
 sed -i.bak 's|^status: proposed$|status: proposed\
 related:\
   - rule:majordomus.adr-integrity\

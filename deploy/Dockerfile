@@ -8,6 +8,13 @@ FROM rust:1.85-alpine3.21 AS build
 RUN apk add --no-cache musl-dev
 WORKDIR /src
 COPY apps/majordomus-cli ./apps/majordomus-cli
+# The commit this image is built from, compiled into the executable so that
+# /api/v1/live and /api/v1/ready can name it. The build context carries no .git,
+# so the builder cannot ask git and the deploy must say it:
+#   fly deploy --build-arg MAJORDOMUS_BUILD_COMMIT="$(git rev-parse HEAD)"
+# Left unset, the deployed process answers `unknown` rather than a guess.
+ARG MAJORDOMUS_BUILD_COMMIT=unknown
+ARG MAJORDOMUS_BUILD_DIRTY=unknown
 RUN cargo build --locked --release --manifest-path apps/majordomus-cli/Cargo.toml --package majordomus-cli --bin majordomus
 
 FROM alpine:3.21
