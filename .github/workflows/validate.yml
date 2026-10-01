@@ -182,9 +182,19 @@ jobs:
   # cargo's own gates (the crate's HTTP and projection suites, the doc examples, the
   # benchmark build) keep cargo, warm from the cache. Zola and the site dependencies are
   # present so the site cases run rather than skip.
-  suite:
+  # Four shards of the suite on four runners, each running its cases four at a time. Which
+  # case runs where is decided by test/run.sh (MJ_TEST_SHARD) from the seconds recorded in
+  # .ai/repo/ci/suite-durations.tsv, longest first: one committed file, so every shard deals
+  # the same hand and their union is the whole suite. Measured: one runner took >130 min,
+  # because 24,879 case-seconds were dealt to four workers; dealt to sixteen, the critical
+  # path is the longest single case (~35 min). The suite job below proves the union.
+  suite-shard:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     # 225, re-measured. The bound is a backstop against a wedged runner, and every case
     # already carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound
     # only has to sit above what a healthy run costs. It kept not doing that. 150 was set
@@ -242,12 +252,93 @@ jobs:
       - name: behavioural tests
         env:
           MJ_TEST_JOBS: 4
+          MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
         run: bash test/run.sh
+      # The tree the suite ran in, measured here, right after its run: the evidence job records
+      # the suite's report against this measurement, never against its own fresh checkout
+      # (ADR 0087 decision 6). The one output the run names, its report, is excluded by name,
+      # and nothing else is; whatever else the run left behind makes the tree dirty, and the
+      # first lines of it are printed.
+      - name: the tree the suite ran in
+        if: always()
+        run: |
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)suite.tsv')"
+          if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["suite.tsv"]}' > "$RUNNER_TEMP/suite-tree.json"
+      # an artifact of its own per shard (the ci job reads every ci-metrics-* artifact as
+      # metrics); the suite job joins the four into the one measurement the evidence job reads
       - if: always()
-        run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
-      # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost. After the
-      # summary, so the table a reader wants is already in the job summary when this refuses.
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-suite-tree-${{ matrix.shard }}
+          path: ${{ runner.temp }}/suite-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - if: always()
+        run: scripts/ci/summary --job suite --report suite.tsv --fact "shard=${{ matrix.shard }}/4" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-shard-${{ matrix.shard }}
+          path: suite.tsv
+          retention-days: 3
+
+  # The suite's one verdict, over every shard: the four reports joined, every case under
+  # test/cases/ present exactly once (test/run.sh --verify-report, so a shard that lost or
+  # repeated a case is a failure, not a quieter suite), the budget held against the whole run,
+  # and the joined report published as ci-metrics-suite for the evidence job and the metrics.
+  # It fails when any shard failed. Named `suite` so the gate model, the evidence job and the
+  # ci verdict read it exactly as they read the single job it replaces.
+  suite:
+    needs: [plan, suite-shard]
+    if: always() && needs.plan.outputs.shell_suite == 'true'
+    # 225, re-measured. The bound is a backstop against a wedged runner, and every case
+    # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
+    # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
+    timeout-minutes: 225
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: suite-shard-*
+          path: shards
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-evidence-suite-tree-*
+          path: ${{ runner.temp }}/trees
+      # The suite ran in four trees, one per shard, each measured where it ran. The suite's
+      # tree is clean only when all four were and when they are one commit; a shard that left
+      # no measurement leaves the suite's tree unknown, and no file is written at all.
+      - name: the trees the shards ran in
+        if: always()
+        run: |
+          set -- "$RUNNER_TEMP"/trees/*/suite-tree.json
+          if [ "$#" -eq 4 ] && [ -f "$1" ]; then
+            jq -s '{commit: (if (map(.commit) | unique | length) == 1 then .[0].commit else "several" end),
+                    working_tree: (if all(.[]; .working_tree == "clean") and (map(.commit) | unique | length) == 1
+                                   then "clean" else "dirty" end),
+                    excluded: ["suite.tsv"]}' "$@" > "$RUNNER_TEMP/suite-tree.json"
+            cat "$RUNNER_TEMP/suite-tree.json"
+          else
+            echo "::warning::$# of 4 shards left a tree measurement; the suite's tree is unknown"
+          fi
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-suite-tree
+          path: ${{ runner.temp }}/suite-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: every case, exactly once
+        run: |
+          cat shards/*/suite.tsv > suite.tsv
+          test/run.sh --verify-report suite.tsv
+      - if: always()
+        run: scripts/ci/summary --job suite --report suite.tsv
+      # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost: the whole
+      # suite's case-seconds and its slowest case, never a shard's share of them.
       - name: the suite finishes inside its bound
         if: always()
         run: scripts/ci/suite-budget --report suite.tsv
@@ -257,6 +348,11 @@ jobs:
           name: ci-metrics-suite
           path: suite.tsv
           retention-days: 14
+      - name: every shard passed
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.suite-shard.result }}"
+          [ "${{ needs.suite-shard.result }}" = success ]
 
   # ------------------------------------------------------------------ rust
   # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
@@ -289,6 +385,16 @@ jobs:
     # again from a run that measured the whole job, not from this estimate.
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # Three lanes of the crate's tests on three runners (scripts/rust-check, MJ_RUST_TEST_LANE),
+    # dealt by whole test binaries from their measured seconds: 1 is the doctests and preflight,
+    # 2 the lib, the binaries, cli_examples, bench and peer_claims, 3 every other binary and
+    # every other gate — fmt, clippy, docs, the benchmark build, the registry checks, the plan's
+    # rust gates and the executable artifact. One runner spent ~30 of its 40 minutes in
+    # `cargo test`; dealt to three, each lane costs about a third of it.
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [1, 2, 3]
     steps:
       # the whole history: `generate --check` runs here, and the changelog is composed from
       # the release records, the decisions and `git log <previous>..<this>` — history is one
@@ -305,21 +411,49 @@ jobs:
         uses: ./.github/actions/setup-rust
         with:
           components: rustfmt, clippy
+      - name: the crate's tests, lane ${{ matrix.lane }}
+        if: matrix.lane != 3 && needs.plan.outputs.rust_check == 'true'
+        env:
+          MJ_RUST_TEST_LANE: ${{ matrix.lane }}
+          # the lane's results, for the evidence job to record (ADR 68): plain text, which the
+          # recorder reads line by line, and outside the checkout the tree step measures
+          CARGO_TERM_COLOR: never
+          MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test-${{ matrix.lane }}.txt
+        run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check --ci
       - name: rust-check
-        if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+        if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
-          # the crate's results, for the evidence job to record (ADR 68)
-          MJ_CARGO_TEST_OUTPUT: ${{ github.workspace }}/cargo-test.txt
+          MJ_RUST_TEST_LANE: 3
+          # the crate's results, for the evidence job to record (ADR 68): plain text, which the
+          # recorder reads line by line, and outside the checkout the next step measures
+          CARGO_TERM_COLOR: never
+          MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test-3.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
+      # The tree the crate ran in, measured here, before the plan below is downloaded into it
+      # (ADR 0087 decision 6). The two outputs the step above names, its timings and its
+      # artifact directory, are excluded by name, and nothing else is. scripts/rust-check runs
+      # in the crate's directory, so both relative names land there, and that is where they
+      # are excluded: excluded at the root, they matched nothing and the tree read dirty.
+      - name: the tree the crate ran in
+        if: always() && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
+        run: |
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)apps/majordomus-cli/timings.tsv' ':(exclude)apps/majordomus-cli/dist')"
+          if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["apps/majordomus-cli/timings.tsv","apps/majordomus-cli/dist"]}' > "$RUNNER_TEMP/crate-tree.json"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-evidence-crate
-          path: cargo-test.txt
+          # one artifact per lane, its output beside the tree it ran in; the evidence job
+          # joins the three outputs and the three measurements
+          name: ci-evidence-crate-${{ matrix.lane }}
+          path: |
+            ${{ runner.temp }}/cargo-test-${{ matrix.lane }}.txt
+            ${{ runner.temp }}/crate-tree.json
           if-no-files-found: ignore
           retention-days: 14
-      - uses: actions/download-artifact@v4
+      - if: matrix.lane == 3
+        uses: actions/download-artifact@v4
         with:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
@@ -330,19 +464,21 @@ jobs:
       # the mode and the artifact argument the model's line does not carry, so they are the
       # only two skipped here.
       - name: the rust gates of the plan
+        if: matrix.lane == 3
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
+        if: matrix.lane == 3
         run: |
           echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
-      - if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+      - if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: majordomus-cli-${{ steps.target.outputs.triple }}
           path: dist
           retention-days: 7
-      - if: always()
+      - if: always() && matrix.lane == 3
         run: scripts/ci/summary --job rust --timings timings.tsv --fact "mode=${{ needs.plan.outputs.rust_check == 'true' && 'ci' || 'integration' }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "artifact=majordomus-cli-${{ steps.target.outputs.triple }}"
-      - if: always()
+      - if: always() && matrix.lane == 3
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-rust
@@ -384,13 +520,16 @@ jobs:
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
 
   # ------------------------------------------------------------------ evidence
-  # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68). The suite, the crate
-  # and the coverage jobs each leave a raw report; scripts/ci/evidence-collect records the first
-  # two into the ledger as `ci` executions stamped with this run, derives the report, summarises
-  # the coverage, and this job keeps the result as the artifact `evidence`. It is not a gate and
-  # the verdict does not need it: it reads jobs that have already decided, and a red suite is
-  # exactly the evidence worth keeping. It runs whenever the suite or the crate produced
-  # anything, whatever they concluded.
+  # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68 as ADR 0087 amends
+  # it). The suite, the crate and the coverage jobs each leave a raw report, and the suite and
+  # the crate a measurement of the tree they ran in. scripts/ci/evidence-collect first derives
+  # the report from the tracked ledger on this checkout, then records the suite's and the
+  # crate's results as `ci` executions stamped with this run (a run record, which decides no
+  # verdict), summarises the coverage, and this job keeps the result as the artifact `evidence`.
+  # The reports and the result live under the runner's temporary directory, never in the
+  # checkout the report is derived in. It is not a gate and the verdict does not need it: it
+  # reads jobs that have already decided, and a red suite is exactly the evidence worth
+  # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
   #
   # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
   # site that was published at once with the nearest older evidence (labelled stale) republishes
@@ -404,6 +543,9 @@ jobs:
       contents: read
       # `gh workflow run pages.yml`, and nothing else of Actions
       actions: write
+    env:
+      # the head a pull request was built from, carried beside the merge commit that ran
+      MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       # the whole history: the report compares each execution's commit with the tree
       - uses: actions/checkout@v4
@@ -417,15 +559,34 @@ jobs:
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       - uses: actions/download-artifact@v4
         with:
-          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-crate}'
-          path: reports
+          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-suite-tree}'
+          path: ${{ runner.temp }}/reports
           merge-multiple: true
+      # each lane in a directory of its own: every lane names its measurement crate-tree.json
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-evidence-crate-*
+          path: ${{ runner.temp }}/lanes
+      # Each lane of the rust job kept its own cargo test output and the recorder reads one;
+      # every binary's record starts at a `Running` or `Doc-tests` line, so joining is exact.
+      # The crate ran in three trees: clean only when all three were and on one commit, and
+      # unknown (no file) when a lane left no measurement.
       - name: gather
-        run: scripts/ci/evidence-collect --out evidence --suite reports/suite.tsv --crate-output reports/cargo-test.txt --coverage reports/coverage.json
+        run: |
+          r="$RUNNER_TEMP/reports"; mkdir -p "$r"
+          cat "$RUNNER_TEMP"/lanes/*/cargo-test-*.txt > "$r/cargo-test.txt" 2>/dev/null || : > "$r/cargo-test.txt"
+          set -- "$RUNNER_TEMP"/lanes/*/crate-tree.json
+          if [ "$#" -eq 3 ] && [ -f "$1" ]; then
+            jq -s '{commit: (if (map(.commit) | unique | length) == 1 then .[0].commit else "several" end),
+                    working_tree: (if all(.[]; .working_tree == "clean") and (map(.commit) | unique | length) == 1
+                                   then "clean" else "dirty" end),
+                    excluded: .[0].excluded}' "$@" > "$r/crate-tree.json"
+          fi
+          scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$r/suite.tsv" --suite-tree "$r/suite-tree.json" --crate-output "$r/cargo-test.txt" --crate-tree "$r/crate-tree.json" --coverage "$r/coverage.json"
       - uses: actions/upload-artifact@v4
         with:
           name: evidence
-          path: evidence
+          path: ${{ runner.temp }}/evidence
           retention-days: 90
       - name: refresh the publication
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'

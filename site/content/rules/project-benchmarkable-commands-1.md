@@ -1,7 +1,7 @@
 +++
 title = "Every public command is benchmarkable from the registry"
 description = "Every public command is benchmarkable from the registry"
-weight = 62
+weight = 64
 [extra]
 kind = "rule"
 slug = "project-benchmarkable-commands-1"

@@ -9,11 +9,11 @@ Every externally callable operation is a benchmark target, derived from the regi
 
 | scope | required | covered | missing | waived |
 |---|---|---|---|---|
-| direct | 143 | 126 | 0 | 17 |
-| http | 141 | 126 | 0 | 15 |
-| mcp | 137 | 122 | 0 | 15 |
+| direct | 152 | 134 | 0 | 18 |
+| http | 150 | 134 | 0 | 16 |
+| mcp | 146 | 130 | 0 | 16 |
 | system | 13 | 13 | 0 | 0 |
-| total | 434 | 387 | 0 | 47 |
+| total | 461 | 411 | 0 | 50 |
 
 ## Capabilities
 
@@ -79,6 +79,9 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `health.live` | health | query | — | covered | — | covered | `default` |
 | `health.ready` | health | query | — | covered | — | covered | `default` |
 | `health.report` | health | query | process, 4 entries, 5s | covered | covered | covered | `default` |
+| `integration.events` | integration | query | — | covered | covered | covered | `default` |
+| `integration.explain` | integration | query | — | covered | covered | covered | `a-number` |
+| `integration.queue` | integration | query | — | covered | covered | covered | `default` |
 | `lifecycle.closed` | lifecycle | query | process, 2 entries, 30s | covered | covered | covered | `default` |
 | `lifecycle.episodes` | lifecycle | query | process, 2 entries, 2s | covered | covered | covered | `default` |
 | `lifecycle.providers` | lifecycle | query | process, 2 entries | covered | covered | covered | `default` |
@@ -132,6 +135,12 @@ Every externally callable operation is a benchmark target, derived from the regi
 | `product.validate` | product | query | process, 2 entries | covered | covered | covered | `default` |
 | `quality.report` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default` |
 | `quality.rustdoc` | quality | query | process, 8 entries, 10s | covered | covered | covered | `default`, `missing-pages-summary` |
+| `reasoning.advisors` | reasoning | query | — | covered | covered | covered | `default` |
+| `reasoning.check` | reasoning | query | — | covered | covered | covered | `default` |
+| `reasoning.explain` | reasoning | query | — | waived | waived | waived | — |
+| `reasoning.plan` | reasoning | query | — | covered | covered | covered | `material` |
+| `reasoning.record` | reasoning | command | — | covered | covered | covered | `refused` |
+| `reasoning.status` | reasoning | query | — | covered | covered | covered | `current`, `all` |
 | `recover.orphans` | recover | command | — | covered | covered | covered | `check-twelve-hours`, `check-one-second` |
 | `release.analysis` | release | query | — | waived | waived | waived | — |
 | `release.changelog` | release | query | — | covered | covered | covered | `all`, `one-version` |

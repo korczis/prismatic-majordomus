@@ -63,6 +63,8 @@ tags:
     description: "The graphs derived from the registry and the index: the executable's own capability registry, the shape of the layer, the rule dependencies, the decisions and what they put in force, and the use cases and what they exercise. Canonical nodes and edges; a rendering library is a consumer, never the shape."
   - name: health
     description: "Whether what this process serves is healthy, decided by the engines that already decide it: the index's diagnostics, the registry builder, the benchmark projection's coverage, the comparison `generate --check` makes and the lease reading `server.status` answers from. No check here has an opinion of its own."
+  - name: integration
+    description: "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network."
   - name: lifecycle
     description: "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here."
   - name: mesh
@@ -83,6 +85,8 @@ tags:
     description: "What this repository's product does for a person, as the features under the layer's features section declare it: each feature made of modules, commands, kinds, rules, documents, decisions, claims, use cases, Cockpit areas and web surfaces it names, with the interfaces it is exposed through, every count, the moments it answers and what is guaranteed derived from those references. The matrix of features against interfaces, the providers the tool has an adapter for, and the model's own validation. The homepage is a reader of this module and holds no inventory of its own."
   - name: quality
     description: "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
+  - name: reasoning
+    description: "Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence."
   - name: recover
     description: "The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks."
   - name: release
@@ -4554,7 +4558,7 @@ paths:
     get:
       operationId: mesh.doctor
       summary: The mesh self-check
-      description: "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, the repository has a mesh identity, the advertised endpoints are reachable from beyond this machine, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory. Each failed check names its impact and its remedy. Deterministic, no second node required."
+      description: "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required."
       tags:
         - mesh
       parameters: []
@@ -7193,6 +7197,176 @@ paths:
       x-majordomus-mcp:
         tool: majordomus_product_validate
       x-majordomus-cli: product validate
+  "/api/v1/pull-requests":
+    get:
+      operationId: integration.queue
+      summary: The integration queue
+      description: "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation."
+      tags:
+        - integration
+      parameters: []
+      responses:
+        "200":
+          description: "The integration queue: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntegrationStatus"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.queue
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_requests
+      x-majordomus-cli: prs status
+  "/api/v1/pull-requests/events":
+    get:
+      operationId: integration.events
+      summary: The integration audit trail
+      description: "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons."
+      tags:
+        - integration
+      parameters: []
+      responses:
+        "200":
+          description: "The integration audit trail: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntegrationEvents"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.events
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_integration_events
+      x-majordomus-cli: prs events
+  "/api/v1/pull-requests/explain":
+    get:
+      operationId: integration.explain
+      summary: Why one pull request is where it is
+      description: "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed."
+      tags:
+        - integration
+      parameters:
+        - name: number
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: The pull request number.
+          examples:
+            a-number:
+              value: 1
+      responses:
+        "200":
+          description: "Why one pull request is where it is: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/IntegrationExplanation"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: integration.explain
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::integration
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_pull_request_explain
+      x-majordomus-cli: prs explain
   "/api/v1/quality":
     get:
       operationId: quality.report
@@ -7414,6 +7588,398 @@ paths:
       x-majordomus-cache:
         policy: disabled
       x-majordomus-effect: read
+  "/api/v1/reasoning":
+    get:
+      operationId: reasoning.status
+      summary: "The session's reasoning state"
+      description: "The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically."
+      tags:
+        - reasoning
+      parameters:
+        - name: task
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "A task id, or `all`; the open task when absent."
+          examples:
+            all:
+              value: all
+      responses:
+        "200":
+          description: "The session's reasoning state: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReasoningStatus"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: reasoning.status
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::reasoning
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_reasoning
+        resource:
+          uri: majordomus://reasoning
+          name: reasoning
+      x-majordomus-cli: reasoning status
+  "/api/v1/reasoning/advisors":
+    get:
+      operationId: reasoning.advisors
+      summary: The advisors and what they can do now
+      description: "Every declared advisor — then every linked mesh peer carrying the review feature — with its status (available, unavailable, not_configured, disabled, temporarily_failed, rate_limited) and why, from presence alone (an executable on PATH, a credential variable set; never a value), the reasoning mode and the recorded outcomes of earlier consultations. Plus the capacity per advisory capability. No advisor is an ordinary answer: reasoning is operational either way."
+      tags:
+        - reasoning
+      parameters: []
+      responses:
+        "200":
+          description: "The advisors and what they can do now: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/AdvisorsReport"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: reasoning.advisors
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::reasoning
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_reasoning_advisors
+        resource:
+          uri: majordomus://reasoning/advisors
+          name: reasoning-advisors
+      x-majordomus-cli: reasoning advisors
+  "/api/v1/reasoning/check":
+    get:
+      operationId: reasoning.check
+      summary: Check that reasoning stays provider-independent
+      description: "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites."
+      tags:
+        - reasoning
+      parameters: []
+      responses:
+        "200":
+          description: "Check that reasoning stays provider-independent: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReasoningCheck"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: reasoning.check
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::reasoning
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_reasoning_check
+      x-majordomus-cli: reasoning check
+  "/api/v1/reasoning/explain":
+    get:
+      operationId: reasoning.explain
+      summary: Why a decision was made
+      description: "One reasoning record with the whole chain of its assessment: the uncertainty and its evidence, the plan and who it selected or why nobody, each consultation, each disagreement and the experiment that settled it, the conclusion and its validation — the provenance of a decision without the conversation that produced it."
+      tags:
+        - reasoning
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: string
+          description: "A record id: a conclusion, usually."
+          examples:
+            absent:
+              value: conclusion-benchmark-absent
+      responses:
+        "200":
+          description: "Why a decision was made: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReasoningExplanation"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: reasoning.explain
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::reasoning
+      x-majordomus-benchmark:
+        policy: waived
+        reason: transient_state
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_reasoning_explain
+      x-majordomus-cli: reasoning explain
+  "/api/v1/reasoning/plan":
+    get:
+      operationId: reasoning.plan
+      summary: What an uncertainty calls for
+      description: "Decide, without recording anything, whether a stated uncertainty warrants independent review, how much the mode allows, and which available advisors a capability-driven selection would ask — with every advisor left out and why. Trivial and low uncertainty is decided locally; material uncertainty with no suitable advisor gets the structured local review instead. Pure over the catalogue, the availability and the input."
+      tags:
+        - reasoning
+      parameters:
+        - name: materiality
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/Materiality"
+              - type: "null"
+          description: "`trivial`, `low`, `material`, `high` or `critical`."
+          examples:
+            material:
+              value: material
+        - name: confidence
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - "$ref": "#/components/schemas/ReasoningConfidence"
+              - type: "null"
+          description: "`low`, `medium` or `high`."
+          examples:
+            material:
+              value: medium
+        - name: capabilities
+          in: query
+          required: false
+          schema:
+            type: string
+          description: "Advisory capabilities review needs, comma-separated."
+          examples:
+            material:
+              value: "independent_reasoning,code_review"
+      responses:
+        "200":
+          description: "What an uncertainty calls for: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReviewPlan"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: reasoning.plan
+      x-majordomus-kind: query
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::reasoning
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: read
+      x-majordomus-mcp:
+        tool: majordomus_reasoning_plan
+      x-majordomus-cli: reasoning plan
+  "/api/v1/reasoning/records":
+    post:
+      operationId: reasoning.record
+      summary: Record a reasoning step
+      description: "Write one typed reasoning record of the open task under .ai/local/state/reasoning/: an assessment (with its evidence), a plan (computed here from the availability of this moment, never supplied), a consultation (only of an advisor its plan selected), a disagreement, a resolution (evidence, never a count), a conclusion (its review count computed from the consultations it cites; refused while a disagreement on its assessment is unsettled), a validation or a failed attempt. Secret shapes are redacted before anything is written."
+      tags:
+        - reasoning
+      requestBody:
+        required: true
+        description: "The input of `reasoning.record`."
+        content:
+          "application/json":
+            schema:
+              "$ref": "#/components/schemas/ReasoningRecordInput"
+            examples:
+              refused:
+                value:
+                  record:
+                    kind: plan
+                    assessment: assessment-benchmark-absent
+      responses:
+        "200":
+          description: "Record a reasoning step: the result."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ReasoningRecorded"
+        "400":
+          description: "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "404":
+          description: "`not_found`: The input names something the repository does not hold."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "422":
+          description: "`refused`: The command was understood and turned down for the reason the message gives."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        "500":
+          description: "`internal`: The capability failed for a reason of its own; the message names it."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+        default:
+          description: "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object."
+          content:
+            "application/json":
+              schema:
+                "$ref": "#/components/schemas/ErrorBody"
+      x-majordomus-id: reasoning.record
+      x-majordomus-kind: command
+      x-majordomus-stability: experimental
+      x-majordomus-provenance:
+        source: builtin
+        module: majordomus_cli::capability::builtin::reasoning
+      x-majordomus-benchmark:
+        policy: required
+      x-majordomus-cache:
+        policy: disabled
+      x-majordomus-effect: repository_mutation
+      x-majordomus-mcp:
+        tool: majordomus_reasoning_record
+      x-majordomus-cli: reasoning record
   "/api/v1/recover/orphans":
     post:
       operationId: recover.orphans
@@ -9374,6 +9940,202 @@ components:
         - status
         - path
       description: One architecture decision the feature names.
+    AdvisorCapacity:
+      type: object
+      properties:
+        capability:
+          type: string
+          description: The capability word.
+        description:
+          type: string
+          description: What it means.
+        available:
+          type: array
+          items:
+            type: string
+          description: "Available advisors offering it, in preference order."
+      required:
+        - capability
+        - description
+        - available
+      description: "One advisory capability and who can provide it now: a row of the capacity table\n`reasoning.advisors` reports. An empty `available` is answered by the local review.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::AdvisorCapacity;\n\nlet row: AdvisorCapacity = serde_json::from_value(serde_json::json!({\n    \"capability\": \"code_review\", \"description\": \"Critique of a change.\", \"available\": [],\n})).unwrap();\nassert_eq!(row.capability, \"code_review\");\nassert!(row.available.is_empty());\n```"
+    AdvisorCircuit:
+      type: object
+      properties:
+        opened_by:
+          type: string
+          description: The consultation outcome that opened it.
+        failures:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The consecutive failures behind it.
+        until:
+          type: string
+          description: "When it closes again, RFC 3339."
+      required:
+        - opened_by
+        - failures
+        - until
+      description: "An open circuit: the consultation that opened it, the failures behind it, and when it\ncloses. Derived from the records and the clock, never stored.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nstruct All;\nimpl Presence for All {\n    fn executable(&self, _: &str) -> bool { true }\n    fn variable(&self, _: &str) -> bool { true }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: cli\\n    adapter: a-cli\\n    executable: a\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet limited = [Outcome {\n    id: \"consultation-1\".into(), advisor: \"a\".into(),\n    status: ConsultationStatus::RateLimited, at: 0, retry_after: Some(60),\n}];\nlet refs = References::default();\nlet states = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &All, mode: ReasoningMode::Standard, disabled: &[],\n    history: &limited, peers: &[], now: 10, cooldown: None,\n});\nlet circuit: &AdvisorCircuit = states[0].circuit.as_ref().unwrap();\nassert_eq!(circuit.opened_by, \"consultation-1\");\nassert_eq!(circuit.until, \"1970-01-01T00:01:00Z\");\n```"
+    AdvisorState:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "The advisor id (a peer is `peer:<runtime>`)."
+        title:
+          type: string
+          description: The human name.
+        transport:
+          "$ref": "#/components/schemas/AdvisorTransport"
+          description: How it is reached.
+        adapter:
+          type: string
+          description: The adapter that speaks to it.
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: The advisory capabilities it offers.
+        model:
+          type:
+            - string
+            - "null"
+          description: "The model it asks, when the catalogue names one: what its adapter sends."
+        executable:
+          type:
+            - string
+            - "null"
+          description: "The executable its adapter runs, when it runs one."
+        credential:
+          type:
+            - string
+            - "null"
+          description: "The name of the credential variable its adapter reads — a name, never a value."
+        status:
+          "$ref": "#/components/schemas/AdvisorStatus"
+          description: Its standing.
+        reason:
+          type: string
+          description: "Why, as one machine word: `present`, `executable_not_found`, `credential_absent`,\n`mode_ci`, `mode_offline`, `disabled_by_configuration`, `consecutive_failures`,\n`rate_limited`, `authentication_failed`, `peer_linked`."
+        probe:
+          type: string
+          description: "What was observed, for a person: which executable, which variable (never a value)."
+        recovering:
+          type: boolean
+          description: "Available again after an open circuit's cooldown: the next consultation is its test."
+          default: false
+        circuit:
+          anyOf:
+            - "$ref": "#/components/schemas/AdvisorCircuit"
+            - type: "null"
+          description: "The open circuit, when there is one."
+      required:
+        - id
+        - title
+        - transport
+        - adapter
+        - capabilities
+        - status
+        - reason
+        - probe
+      description: "One advisor as it stands now: what the catalogue declares of it, its status, the one\nmachine word saying why, and what was probed. The row `reasoning.advisors` reports and\nthe policy plans over.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\n\nstruct Nothing;\nimpl Presence for Nothing {\n    fn executable(&self, _: &str) -> bool { false }\n    fn variable(&self, _: &str) -> bool { false }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: local_runtime\\n    adapter: a-rt\\n    executable: rt\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet refs = References::default();\nlet state: AdvisorState = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &Nothing, mode: ReasoningMode::Standard, disabled: &[],\n    history: &[], peers: &[], now: 0, cooldown: None,\n})\n.remove(0);\nassert_eq!((state.id.as_str(), state.status), (\"a\", AdvisorStatus::Unavailable));\nassert_eq!(state.probe, \"executable rt on PATH\");\nassert!(state.circuit.is_none() && !state.recovering);\n```"
+    AdvisorStatus:
+      oneOf:
+        - type: string
+          const: available
+          description: It may be asked. Presence was observed; whether it answers is learned by asking.
+        - type: string
+          const: unavailable
+          description: "Not installed: its executable is not on `PATH`."
+        - type: string
+          const: not_configured
+          description: "Installed or reachable in principle, but its credential is not configured."
+        - type: string
+          const: disabled
+          description: Left out by the mode or by an explicit disable.
+        - type: string
+          const: temporarily_failed
+          description: Its recent consultations failed; its circuit is open until the cooldown passes.
+        - type: string
+          const: rate_limited
+          description: It answered with a rate limit; not asked again until the limit passes.
+      description: "An advisor's standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \"not_configured\");\nlet s: AdvisorStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```"
+    AdvisorTransport:
+      oneOf:
+        - type: string
+          const: api
+          description: "A remote API; present when its vendor's credential variable is set."
+        - type: string
+          const: cli
+          description: "A client tool run as a process; present when its executable is on `PATH`."
+        - type: string
+          const: local_runtime
+          description: "A model runtime on this machine; present when its executable is on `PATH`."
+        - type: string
+          const: peer
+          description: A linked mesh runtime carrying the review feature; present while linked.
+      description: "How an advisor is reached. The transport decides how its presence is probed (a\ncredential variable, an executable, a mesh link) and whether `offline` mode admits it.\n\n```\nuse majordomus_cli::reasoning::catalogue::AdvisorTransport;\n\nlet t: AdvisorTransport = serde_json::from_str(\"\\\"local_runtime\\\"\").unwrap();\nassert_eq!(t, AdvisorTransport::LocalRuntime);\nassert!(!t.is_remote());\n```"
+    AdvisorUsage:
+      type: object
+      additionalProperties: false
+      properties:
+        input_tokens:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Input tokens.
+          default: 0
+        output_tokens:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Output tokens.
+          default: 0
+      description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated.\n\nThe state sums these into its totals. A missing count reads as zero, so an adapter\nthat reports only one of the two still records what it reported.\n\n```\nuse majordomus_cli::reasoning::record::AdvisorUsage;\n\nlet u: AdvisorUsage = serde_json::from_str(r#\"{\"input_tokens\": 120}\"#).unwrap();\nassert_eq!(u, AdvisorUsage { input_tokens: 120, output_tokens: 0 });\n```"
+    AdvisorsReport:
+      type: object
+      properties:
+        operational:
+          type: boolean
+          description: "Reasoning works whatever the advisors: always `true`, stated so a reader need not\ninfer it from a count."
+        mode:
+          "$ref": "#/components/schemas/ModeResolution"
+          description: The mode in force and what decided it.
+        available:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Advisors that may be asked now.
+        unavailable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Advisors that may not, each optional."
+        advisors:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdvisorState"
+          description: "Every advisor, declared ones in preference order, then linked peers."
+        capacity:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdvisorCapacity"
+          description: "Per advisory capability, who can provide it now. A row with nobody is answered by\nthe local review path."
+        diagnostics:
+          type: array
+          items:
+            type: string
+          description: "The catalogue's own findings."
+      required:
+        - operational
+        - mode
+        - available
+        - unavailable
+        - advisors
+        - capacity
+      description: "The answer of `reasoning.advisors`: the mode in force, how many advisors may and may\nnot be asked, every advisor's state, the capacity per advisory capability, and the\ncatalogue's own findings. `operational` is `true` whatever the counts.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::AdvisorsReport;\n\nlet report: AdvisorsReport = serde_json::from_value(serde_json::json!({\n    \"operational\": true,\n    \"mode\": { \"mode\": \"ci\", \"source\": \"CI\" },\n    \"available\": 0, \"unavailable\": 0, \"advisors\": [], \"capacity\": [],\n})).unwrap();\nassert!(report.operational && report.advisors.is_empty());\nassert_eq!(report.mode.source, \"CI\");\nassert!(report.diagnostics.is_empty(), \"absent findings are the ordinary case\");\n```"
     AnnounceInput:
       type: object
       additionalProperties: false
@@ -9475,6 +10237,24 @@ components:
         - scope
         - at
       description: "One claim a peer has made: what it is working on, and where.\n\nA peer may hold several. The `name` is what tells them apart and what makes announcing\nagain an update rather than a second claim: announce under the same name and the claim\nis replaced, announce under a new one and the peer now holds both. A peer that never\nnames anything holds exactly one claim, the unnamed one, which is what a single session\nannouncing about itself has always had."
+    AnswerObservation:
+      type: object
+      properties:
+        observed_at:
+          type: string
+          description: "RFC 3339 UTC, whole seconds: when the state behind the answer was read. Empty only\nin an answer from an index that was never built (a hand-made one in a test)."
+        source:
+          type: string
+          description: "What was read at that time: `index build` or `git read`."
+        stale_after:
+          type:
+            - string
+            - "null"
+          description: "RFC 3339 UTC: after this the answer is not to be trusted as current even though\nnothing announced a change. Absent when there is no known blind spot."
+      required:
+        - observed_at
+        - source
+      description: "When the state behind an answer was read: the freshness contract of a capability answer.\n\nDeclared once and carried in the output type of every answer that is a picture of\nstate, so that the output schema, OpenAPI, the MCP tool schemas and the command line's\nJSON all carry it without a transport of their own. It is set where the state is read —\nthe index build, the git read — never by the executor, which knows when a handler ran\nand not when the state it read was taken.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::AnswerObservation;\nlet at = UNIX_EPOCH + Duration::from_secs(1_788_000_000);\nlet o = AnswerObservation::taken(\"git read\", at, Some(Duration::from_secs(120)));\nassert_eq!(o.observed_at, \"2026-08-29T10:40:00Z\");\nassert_eq!(o.stale_after.as_deref(), Some(\"2026-08-29T10:42:00Z\"));\nassert!(!o.is_stale_at(at + Duration::from_secs(120)));\nassert!(o.is_stale_at(at + Duration::from_secs(121)));\n```"
     AnswerView:
       type: object
       properties:
@@ -9642,6 +10422,9 @@ components:
         tallies:
           "$ref": "#/components/schemas/ArtifactTallies"
           description: The counts.
+        verdict:
+          "$ref": "#/components/schemas/ArtifactVerdict"
+          description: "Where the tree stands as a whole, decided from every tally."
         regenerate:
           type: string
           description: The command that rewrites every one of them.
@@ -9655,6 +10438,7 @@ components:
         - documents
         - artifacts
         - tallies
+        - verdict
         - regenerate
         - verify
       description: "The answer of `artifacts.list`."
@@ -9714,6 +10498,24 @@ components:
         - missing
         - present
       description: "How many of each, so a caller needs no arithmetic of its own."
+    ArtifactVerdict:
+      oneOf:
+        - type: string
+          const: current
+          description: Every file is there and hashes to what the manifest recorded.
+        - type: string
+          const: unverified
+          description: "Every file is there, none is stale, and some carry no recorded hash: their bytes\nwere not compared here, so the tree is not known to be current.\n`majordomus generate --check` is what decides them."
+        - type: string
+          const: stale
+          description: A file differs from what the manifest recorded.
+        - type: string
+          const: missing
+          description: A file the manifest names is not in the tree.
+        - type: string
+          const: not_generated
+          description: "No manifest is committed: the repository has never run `majordomus generate`."
+      description: "Where the generated tree stands as a whole: the one verdict every surface renders,\ndecided here so that no page decides it again from a subset of the tallies.\n\n```\nuse majordomus_cli::capability::builtin::artifacts::ArtifactVerdict;\nlet v: ArtifactVerdict = serde_json::from_str(\"\\\"unverified\\\"\").unwrap();\nassert_eq!(v, ArtifactVerdict::Unverified);\nassert!(ArtifactVerdict::Current < ArtifactVerdict::Unverified);\n```"
     ArtifactView:
       type: object
       properties:
@@ -9756,6 +10558,62 @@ components:
         - source
         - state
       description: "One generated file, as the manifest declares it and as the tree has it."
+    AssessmentStanding:
+      oneOf:
+        - type: string
+          const: open
+          description: Stated; no plan yet.
+        - type: string
+          const: planned
+          description: Planned; no conclusion yet.
+        - type: string
+          const: disputed
+          description: A disagreement on it is unsettled.
+        - type: string
+          const: concluded
+          description: Concluded; not yet validated.
+        - type: string
+          const: validated
+          description: "Concluded, and every validation recorded passed."
+        - type: string
+          const: validation_failed
+          description: "Concluded, and a validation failed."
+      description: "Where an assessment stands, from open through validated.\n\nThe standing is derived, never stored: an unresolved disagreement makes it disputed\nwhatever else is recorded; otherwise its standing conclusion and that conclusion's\nvalidations decide it, and without a conclusion a recorded plan makes it planned.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, AssessmentStanding};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"assessment-1\", 1, json!({ \"kind\": \"assessment\", \"subject\": \"s\" })));\nassert_eq!(derive(&loaded, None).assessments[0].standing, AssessmentStanding::Open);\n\nloaded.records.push(rec(\"disagreement-2\", 2, json!({\n    \"kind\": \"disagreement\", \"assessment\": \"assessment-1\",\n    \"positions\": [\n        { \"source\": \"primary\", \"position\": \"A\" },\n        { \"source\": \"consultation-9\", \"position\": \"B\" },\n    ],\n    \"discriminating_question\": \"do callers retry?\",\n})));\nassert_eq!(derive(&loaded, None).assessments[0].standing, AssessmentStanding::Disputed);\n```"
+    AssessmentView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Record id.
+        task:
+          type: string
+          description: The task it was recorded under.
+        subject:
+          type: string
+          description: What is uncertain.
+        materiality:
+          "$ref": "#/components/schemas/Materiality"
+          description: How much it matters.
+        standing:
+          "$ref": "#/components/schemas/AssessmentStanding"
+          description: Where it stands.
+        conclusion:
+          type:
+            - string
+            - "null"
+          description: Its standing conclusion.
+        questions:
+          type: array
+          items:
+            type: string
+          description: Questions it left open.
+      required:
+        - id
+        - task
+        - subject
+        - materiality
+        - standing
+      description: "One assessment and where it stands.\n\nThe view carries what a reader needs to pick the work up: the subject, its\nmateriality, its derived standing, the conclusion that stands for it and the\nquestions it left open.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::policy::Materiality;\nuse majordomus_cli::reasoning::state::{derive, AssessmentView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"assessment-1\", 1, json!({\n    \"kind\": \"assessment\", \"subject\": \"lock scope\", \"materiality\": \"trivial\",\n    \"questions\": [\"is it held across an await?\"],\n})));\nlet state = derive(&loaded, None);\nlet view: &AssessmentView = &state.assessments[0];\nassert_eq!((view.id.as_str(), view.task.as_str()), (\"assessment-1\", \"t\"));\nassert_eq!(view.materiality, Materiality::Trivial);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.questions, [\"is it held across an await?\"]);\n```"
     AttestationTally:
       type: object
       properties:
@@ -12426,6 +13284,63 @@ components:
         - obligations
         - questions
       description: "```\nuse majordomus_cli::gates::Completion;\n\n// the document every surface reads, as `gates.completion` answers with it. The property\n// that matters is the one asserted here: a gate that never reported leaves the task\n// finishable and *unverified*, which is a different thing from a task that passed.\nlet c: Completion = serde_json::from_value(serde_json::json!({\n    \"present\": true,\n    \"model\": \".ai/repo/ci/gates.yaml\",\n    \"plan\": { \"mode\": \"affected\", \"reason\": \"1 path in 1 class\", \"changed\": [\"docs/CLI.md\"],\n              \"classes\": [], \"unclassified\": [], \"selected\": {}, \"excluded\": {} },\n    \"finishable\": true,\n    \"unverified\": [\"reference-check\"],\n    \"tallies\": { \"queued\": 1 },\n    \"gates\": [],\n    \"obligations\": [],\n    \"questions\": []\n}))\n.unwrap();\nassert!(c.finishable, \"absence of a verdict does not refuse\");\nassert_eq!(c.unverified, [\"reference-check\"], \"and it is never silently accepted\");\nassert!(c.blocking.is_empty());\n```\nWhether the active task may be called finished, and everything the answer rests on.\n\n`finishable` is the field a caller acts on and the one thing no surface may recompute:\nthe shell tool's `check` and `finish` read it, the HTTP API serves it, the Cockpit\nrenders it, and all of them are reading this one execution."
+    ConclusionView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Record id.
+        assessment:
+          type: string
+          description: The assessment it concludes.
+        decision:
+          type: string
+          description: The decision.
+        reviewed_by:
+          type: array
+          items:
+            type: string
+          description: Advisors whose answers it weighed.
+        independent_review_count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many.
+        validations_passed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Validations recorded: passed, failed."
+        validations_failed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Validations failed.
+        superseded_by:
+          type:
+            - string
+            - "null"
+          description: Superseded by a later conclusion.
+        validation_plan:
+          type: array
+          items:
+            type: string
+          description: Its validation plan.
+        risks:
+          type: array
+          items:
+            type: string
+          description: Risks that remain.
+      required:
+        - id
+        - assessment
+        - decision
+        - reviewed_by
+        - independent_review_count
+        - validations_passed
+        - validations_failed
+        - validation_plan
+      description: "One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &str, supersedes: Option<&str>| {\n    json!({\n        \"kind\": \"conclusion\", \"assessment\": \"assessment-0\", \"decision\": decision,\n        \"rationale\": \"r\", \"supersedes\": supersedes,\n        \"reviewed_by\": [], \"independent_review_count\": 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"conclusion-1\", 1, conclusion(\"A\", None)));\nloaded.records.push(rec(\"validation-2\", 2, json!({\n    \"kind\": \"validation\", \"conclusion\": \"conclusion-1\", \"check\": \"x\", \"outcome\": \"fail\",\n})));\nloaded.records.push(rec(\"conclusion-3\", 3, conclusion(\"B\", Some(\"conclusion-1\"))));\n\nlet state = derive(&loaded, None);\nlet first: &ConclusionView = &state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\"conclusion-3\"));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```"
     Concurrency:
       type: object
       additionalProperties: false
@@ -12473,6 +13388,72 @@ components:
         - kind
         - detail
       description: "Two things in the answer that do not agree, named rather than silently ordered.\n\nThe compiler could have resolved every disagreement by keeping one side, and for\ndeduplication it does. A conflict is what is left when both sides are legitimately in\nthe answer and they still do not agree — so the resolution belongs to the session\nreading it, and the compiler's job is to make sure the disagreement is visible rather\nthan implied by the order of two rows.\n\n`current` is the side the compiler treats as current, which is a statement about\nrecency, not correctness: `supersedes` means the layer declared one to replace the other,\n`version` means two versions of one thing are both here.\n\n```\nuse majordomus_cli::devcontext::Conflict;\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |current: &str, against: &str, kind: &str| -> Conflict {\n    serde_json::from_value(json!({\n        \"current\": current, \"against\": against, \"kind\": kind,\n        \"detail\": \"both are in the answer and they disagree\",\n    })).unwrap()\n};\n\nlet mut conflicts = vec![\n    row(\"majordomus://rule/project.x@2\", \"majordomus://rule/project.x@1\", \"version\"),\n    row(\"majordomus://adr/0052\", \"majordomus://adr/0031\", \"supersedes\"),\n];\ncanonical(&mut conflicts);\n\n// filed under the kind of disagreement, so like reads with like\nlet kinds: Vec<&str> = conflicts.iter().map(|c| c.kind.as_str()).collect();\nassert_eq!(kinds, [\"supersedes\", \"version\"]);\n\n// and both sides are always named: the pair is the fact, not the winner alone\nfor c in &conflicts {\n    assert_ne!(c.current, c.against);\n    assert!(!c.detail.is_empty());\n}\n```"
+    ConsultationStatus:
+      oneOf:
+        - type: string
+          const: completed
+          description: An answer was received and normalised.
+        - type: string
+          const: timeout
+          description: No answer within the time allowed.
+        - type: string
+          const: rate_limited
+          description: The advisor refused for rate.
+        - type: string
+          const: auth_failed
+          description: The credential was refused.
+        - type: string
+          const: malformed
+          description: An answer arrived that could not be normalised.
+        - type: string
+          const: empty
+          description: An answer arrived with nothing in it.
+        - type: string
+          const: unavailable
+          description: "The advisor could not be reached: not running, not answering, gone."
+        - type: string
+          const: cancelled
+          description: The session withdrew the request.
+        - type: string
+          const: error
+          description: Anything else the adapter could not classify.
+      description: "How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```"
+    ConsultationView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Record id.
+        plan:
+          type: string
+          description: The plan that selected it.
+        advisor:
+          type: string
+          description: The advisor.
+        status:
+          "$ref": "#/components/schemas/ConsultationStatus"
+          description: How it ended.
+        stance:
+          anyOf:
+            - "$ref": "#/components/schemas/Stance"
+            - type: "null"
+          description: Where the advice stands.
+        conclusion:
+          type:
+            - string
+            - "null"
+          description: "The advice, summarised."
+        diagnostic:
+          type:
+            - string
+            - "null"
+          description: "The adapter's diagnostic, for a failure."
+      required:
+        - id
+        - plan
+        - advisor
+        - status
+      description: "One consultation, as the state reports it.\n\nA failed consultation is reported as plainly as a completed one: its status and the\nadapter's diagnostic stand where the advice would, so degradation is visible rather\nthan silently absent.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::record::ConsultationStatus;\nuse majordomus_cli::reasoning::state::{derive, ConsultationView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, json!({\n    \"kind\": \"consultation\", \"plan\": \"plan-0\", \"advisor\": \"alpha\",\n    \"status\": \"timeout\", \"diagnostic\": \"timeout: no answer in 60s\",\n})));\nlet state = derive(&loaded, None);\nlet view: &ConsultationView = &state.consultations[0];\nassert_eq!(view.status, ConsultationStatus::Timeout);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.diagnostic.as_deref(), Some(\"timeout: no answer in 60s\"));\nassert_eq!(state.totals.consultations_failed, 1);\n```"
     ConsumeAnswer:
       type: object
       properties:
@@ -13457,6 +14438,15 @@ components:
         - elapsed_ms
         - observed
       description: "The answer of `executions.demonstrate`."
+    DependencyCertainty:
+      oneOf:
+        - type: string
+          const: confirmed
+          description: "Declared: a `Depends on #N` / `Stacked on #N` line in the body, or a base branch\nthat is another open pull request's head."
+        - type: string
+          const: inferred
+          description: "Inferred: the head contains the other's head commit. Evidence, never a block."
+      description: How a dependency is known. Only a declared one blocks.
     DeploymentCheck:
       type: object
       properties:
@@ -14377,6 +15367,47 @@ components:
         - conflicted
         - clean
       description: "Uncommitted work in a work tree, counted from `git status --porcelain`. Untracked\ncontent counts: it is exactly what a careless move loses."
+    DisagreementPosition:
+      type: object
+      additionalProperties: false
+      properties:
+        source:
+          type: string
+          description: "Whose position: `primary`, or a completed consultation's record id."
+        position:
+          type: string
+          description: "The position, in one line."
+      required:
+        - source
+        - position
+      description: "One side of a disagreement: whose position it is, and the position in one line.\n\nThe source is `primary` for the executor, or the id of a completed consultation; the\nstore refuses a position sourced from a consultation that did not complete.\n\n```\nuse majordomus_cli::reasoning::record::DisagreementPosition;\n\nlet p = DisagreementPosition { source: \"primary\".into(), position: \"keep the lock\".into() };\nlet json = serde_json::to_value(&p).unwrap();\nassert_eq!(json, serde_json::json!({ \"source\": \"primary\", \"position\": \"keep the lock\" }));\n```"
+    DisagreementView:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Record id.
+        assessment:
+          type: string
+          description: The assessment.
+        discriminating_question:
+          type: string
+          description: The question that decides it.
+        resolution:
+          type:
+            - string
+            - "null"
+          description: "The resolution, when settled."
+        favours:
+          type:
+            - string
+            - "null"
+          description: The position the evidence favoured.
+      required:
+        - id
+        - assessment
+        - discriminating_question
+      description: "One disagreement, as the state reports it.\n\nThe view names the question that decides the disagreement and, once a resolution is\nrecorded, the resolution and the position its evidence favoured. A view without a\nresolution is an unsettled disagreement that blocks its assessment.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, DisagreementView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"disagreement-1\", 1, json!({\n    \"kind\": \"disagreement\", \"assessment\": \"assessment-0\",\n    \"positions\": [\n        { \"source\": \"primary\", \"position\": \"A\" },\n        { \"source\": \"consultation-9\", \"position\": \"B\" },\n    ],\n    \"discriminating_question\": \"do callers retry?\",\n})));\nloaded.records.push(rec(\"resolution-2\", 2, json!({\n    \"kind\": \"resolution\", \"disagreement\": \"disagreement-1\",\n    \"experiment\": \"read the callers\", \"outcome\": \"none retries\",\n    \"favours\": \"consultation-9\",\n    \"evidence\": [{ \"kind\": \"file\", \"reference\": \"src/caller.rs\" }],\n})));\nlet state = derive(&loaded, None);\nlet view: &DisagreementView = &state.disagreements[0];\nassert_eq!(view.discriminating_question, \"do callers retry?\");\nassert_eq!(view.resolution.as_deref(), Some(\"resolution-2\"));\nassert_eq!(view.favours.as_deref(), Some(\"consultation-9\"));\n```"
     Discovery:
       type: object
       properties:
@@ -16304,6 +17335,19 @@ components:
         - code
         - message
       description: "What went wrong, as the HTTP projection names it."
+    EvaluatedAgainst:
+      type: object
+      properties:
+        master_sha:
+          type: string
+          description: The master commit.
+        head_sha:
+          type: string
+          description: "The pull request's head commit."
+      required:
+        - master_sha
+        - head_sha
+      description: "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts."
     EventHistory:
       type: object
       properties:
@@ -16766,6 +17810,23 @@ components:
         - cost_tokens
         - relevance
       description: "One thing the compiler reached and did not give. Excluded is not the same as absent:\nan under-filled context is debugged from this list, not by guessing.\n\n`cost_tokens` is why this type exists in the shape it does. A budget that reported only\n*that* it dropped things would leave a caller guessing at a new ceiling; one that reports\nwhat each omission would have cost turns \"raise the budget\" into arithmetic. `detail`\ncarries the same in words, so the row is legible without the reader doing that\narithmetic themselves.\n\nThe ordering puts the tier first as an explicit rank, because the tier is the precedence\nthe budget spent in; inside a tier a reader is looking for a reason, and the identifier\nends the key so the list is total and the same tree always prints it the same way.\n\n```\nuse majordomus_cli::devcontext::{Excluded, ExclusionReason, Tier};\nuse majordomus_cli::order::canonical;\nuse serde_json::json;\n\nlet row = |uri: &str, tier: &str, reason: &str, cost: u64| -> Excluded {\n    serde_json::from_value(json!({\n        \"uri\": uri, \"tier\": tier, \"reason\": reason,\n        \"detail\": \"as measured\", \"cost_tokens\": cost, \"relevance\": 0.4,\n    })).unwrap()\n};\n\nlet mut excluded = vec![\n    row(\"majordomus://knowledge/b\", \"history\", \"budget\", 900),\n    row(\"majordomus://adr/0001\", \"decision\", \"superseded\", 300),\n    row(\"majordomus://knowledge/a\", \"history\", \"budget\", 1_200),\n];\ncanonical(&mut excluded);\n\n// the tier ranks first, so the decision tier precedes history whatever the reason says\nassert_eq!(excluded[0].tier, Tier::Decision);\nassert_eq!(excluded[0].reason, ExclusionReason::Superseded);\n// then the reason, then the identifier — which makes the order total\nlet rest: Vec<&str> = excluded[1..].iter().map(|e| e.uri.as_str()).collect();\nassert_eq!(rest, [\"majordomus://knowledge/a\", \"majordomus://knowledge/b\"]);\n\n// and the row a caller acts on says what it would have cost to keep\nlet biggest = excluded.iter().max_by_key(|e| e.cost_tokens).unwrap();\nassert_eq!(biggest.cost_tokens, 1_200);\n```"
+    ExcludedAdvisor:
+      type: object
+      properties:
+        advisor:
+          type: string
+          description: The advisor id.
+        status:
+          "$ref": "#/components/schemas/AdvisorStatus"
+          description: Its standing when the plan was made.
+        reason:
+          type: string
+          description: Why it is not in the plan.
+      required:
+        - advisor
+        - status
+        - reason
+      description: "One advisor left out of the plan, its standing when the plan was made, and why: its\nstatus, a capability it does not offer, or a budget already spent.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet states = [advisor(\"a\", \"x-api\", \"available\"), advisor(\"b\", \"y-api\", \"available\")];\nlet p = plan(&request, &mode, &states);\nlet left: &ExcludedAdvisor = &p.excluded[0];\nassert_eq!((left.advisor.as_str(), left.status), (\"b\", AdvisorStatus::Available));\nassert!(left.reason.contains(\"budget was spent\"));\n```"
     ExcludedModel:
       type: object
       properties:
@@ -17328,6 +18389,26 @@ components:
         - correlation_id
         - links
       description: One execution with the links to everything else about it.
+    ExecutorWait:
+      type: object
+      properties:
+        actionable_since:
+          type: string
+          description: "When it was first observed ready or refreshable in its current run of being so,\nRFC 3339."
+        passed_over:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "How many times the executor selected another pull request while this one was ready\nor refreshable."
+        last_passed_over:
+          anyOf:
+            - "$ref": "#/components/schemas/PassedOver"
+            - type: "null"
+          description: The last of those times.
+      required:
+        - actionable_since
+        - passed_over
+      description: "How long a pull request has waited for the executor, from the audit trail. Starvation is\nmade visible here, never resolved by changing the rank: the rank's age tie-break already\nprefers the older of two otherwise equal candidates, and a wait this long is a fact a\nperson reads, not a reason to merge anything less safe."
     Exemption:
       type: object
       properties:
@@ -18667,6 +19748,11 @@ components:
           items:
             "$ref": "#/components/schemas/HealthCheck"
           description: "Every dimension, in a stable order."
+        observed:
+          type: object
+          additionalProperties:
+            "$ref": "#/components/schemas/AnswerObservation"
+          description: "When the state a check decided on was read, by check id: the freshness contract\n(`crate::index::AnswerObservation`). A check absent here decided live, during this call.\n`layer` and `git` are here because they judge the picture the index took, which is\nas old as the index."
       required:
         - status
         - tallies
@@ -19116,6 +20202,307 @@ components:
           const: unknown
           description: "The trunk is unknown, so there is nothing to measure the branch against."
       description: "How a branch stands to the trunk, which is what decides which commits are its own."
+    IntegrationEvent:
+      type: object
+      properties:
+        at:
+          type: string
+          description: "When, RFC 3339."
+        actor:
+          type: string
+          description: "Who: the git identity, the process and the machine."
+        action:
+          type: string
+          description: "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`)."
+        pr:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The pull request, when one."
+        master_before:
+          type:
+            - string
+            - "null"
+          description: Master before.
+        head_sha:
+          type:
+            - string
+            - "null"
+          description: The head acted on.
+        master_after:
+          type:
+            - string
+            - "null"
+          description: Master after.
+        reasons:
+          type: array
+          items:
+            type: string
+          description: "The decision's reason codes."
+        detail:
+          type: string
+          description: "What happened, for a person."
+        passed_over:
+          type: array
+          items:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`)."
+      required:
+        - at
+        - actor
+        - action
+        - reasons
+        - detail
+      description: One entry of the audit trail.
+    IntegrationEvents:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntegrationEvent"
+          description: "Every recorded integration action, oldest first."
+      required:
+        - events
+      description: The audit trail.
+    IntegrationEvidence:
+      type: object
+      properties:
+        kind:
+          type: string
+          description: "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`)."
+        status:
+          type: string
+          description: "What it said, as a word."
+        detail:
+          type: string
+          description: The detail a person reads.
+      required:
+        - kind
+        - status
+        - detail
+      description: "One piece of evidence behind a disposition: what was read, and what it said."
+    IntegrationExplanation:
+      type: object
+      properties:
+        found:
+          type: boolean
+          description: Whether the pull request is in the observed queue.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why not, when not."
+        rank:
+          type:
+            - integer
+            - "null"
+          format: uint
+          minimum: 0
+          description: "Its position in the ranked queue, 1-based."
+        of:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many open pull requests were ranked.
+        observed_at:
+          type:
+            - string
+            - "null"
+          description: When the forge was observed.
+        assessment:
+          anyOf:
+            - "$ref": "#/components/schemas/PullRequestAssessment"
+            - type: "null"
+          description: The assessment.
+      required:
+        - found
+        - of
+      description: "One pull request's assessment and rank, or why it has none."
+    IntegrationLane:
+      oneOf:
+        - type: string
+          const: ready
+          description: The executor may merge it now.
+        - type: string
+          const: waiting
+          description: "Something will happen without a person: a refresh, a check, a dependency."
+        - type: string
+          const: repair
+          description: A person must change the branch.
+        - type: string
+          const: cleanup
+          description: Its work is on master already.
+        - type: string
+          const: held
+          description: "Not asking to be merged, or undecidable."
+      description: The queues the Cockpit and the status table group pull requests into.
+    IntegrationLeaseState:
+      type: object
+      properties:
+        holder:
+          anyOf:
+            - "$ref": "#/components/schemas/LeaseHolder"
+            - type: "null"
+          description: "Who holds it; `None` when the file does not say in a form this reads."
+        renewed_seconds_ago:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: How long ago the holder last renewed it.
+        stale:
+          type: boolean
+          description: "Whether it is older than `LEASE_STALE_AFTER`: its holder stopped without releasing\nit, and the next executor takes it over."
+      required:
+        - renewed_seconds_ago
+        - stale
+      description: The lease of a base as an observer reads it.
+    IntegrationPolicy:
+      type: object
+      properties:
+        base:
+          type: string
+          description: The branch integrated into.
+        required_checks:
+          type:
+            - array
+            - "null"
+          items:
+            type: string
+          description: "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`."
+        reviews_required:
+          type:
+            - boolean
+            - "null"
+          description: "Whether the branch protection requires an approving review; `None` when unread."
+        blocking_labels:
+          type: array
+          items:
+            type: string
+          description: Labels that hold a pull request whatever else is true.
+        merge_method:
+          type: string
+          description: The merge method the executor asks the forge for.
+      required:
+        - base
+        - blocking_labels
+        - merge_method
+      description: "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it."
+    IntegrationQueue:
+      type: object
+      properties:
+        repository:
+          type: string
+          description: "`owner/name`."
+        base:
+          type: string
+          description: The integration base.
+        master_sha:
+          type: string
+          description: "The master commit every assessment was decided against (this clone's fetched ref)."
+        observed_at:
+          type: string
+          description: When the forge was observed.
+        observed_base_sha:
+          type: string
+          description: The base commit the forge reported at that moment.
+        policy:
+          "$ref": "#/components/schemas/IntegrationPolicy"
+          description: The policy in force.
+        assessments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PullRequestAssessment"
+          description: "Every open pull request, in rank order: the first `ready` one is the next merge."
+        next_merge:
+          type:
+            - integer
+            - "null"
+          format: uint64
+          minimum: 0
+          description: "The next merge, when anything is ready."
+        next_refresh:
+          type: array
+          items:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "The pull requests the executor could refresh (bring master in), in rank order."
+        tallies:
+          "$ref": "#/components/schemas/QueueTallies"
+          description: Counts.
+        diagnostics:
+          type: array
+          items:
+            type: string
+          description: What makes this queue less than a full answer.
+        starving:
+          type: array
+          items:
+            type: integer
+            format: uint64
+            minimum: 0
+          description: "The actionable pull requests the executor has passed over at least\n`wait::STARVING_AFTER` times in their current wait, in rank order. Visible, never\npromoted: see `wait`."
+          default: []
+      required:
+        - repository
+        - base
+        - master_sha
+        - observed_at
+        - observed_base_sha
+        - policy
+        - assessments
+        - next_refresh
+        - tallies
+        - diagnostics
+      description: "The integration queue: every open pull request assessed against one master, ranked."
+    IntegrationRisk:
+      oneOf:
+        - type: string
+          const: low
+          description: "Documentation, tests, content."
+        - type: string
+          const: medium
+          description: Code of the executable or the tool.
+        - type: string
+          const: high
+          description: "CI, release, governance, schemas, or a large change."
+      description: "How much could go wrong if this lands and something was missed. Planning information:\nit orders work and it never relaxes a policy."
+    IntegrationStatus:
+      type: object
+      properties:
+        observed:
+          type: boolean
+          description: Whether a forge observation is recorded in this checkout.
+        reason:
+          type:
+            - string
+            - "null"
+          description: "Why there is no queue, when there is none."
+        queue:
+          anyOf:
+            - "$ref": "#/components/schemas/IntegrationQueue"
+            - type: "null"
+          description: The queue.
+        lease:
+          anyOf:
+            - "$ref": "#/components/schemas/IntegrationLeaseState"
+            - type: "null"
+          description: "The base branch's integration lease as an observer reads it: `None` when nobody\nholds it (or nothing is observed, so no base is known)."
+          default: null
+        last_merge:
+          anyOf:
+            - "$ref": "#/components/schemas/IntegrationEvent"
+            - type: "null"
+          description: "The last merge the executor recorded, from the audit trail."
+          default: null
+      required:
+        - observed
+      description: "The queue, or why there is none."
     Interface:
       oneOf:
         - type: string
@@ -19397,6 +20784,31 @@ components:
       required:
         - state
       description: "What the layer holds, counted per kind, plus the registry the executable composes.\nEvery number here comes from the index — the same objects every other surface serves —\nand never from counting files that match a pattern: a file that does not parse is not\na rule, and a count that says otherwise is a lie a person acts on."
+    LeaseHolder:
+      type: object
+      properties:
+        pid:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: The process.
+        host:
+          type: string
+          description: The machine.
+        base:
+          type: string
+          description: The base branch.
+        since:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: "When it was taken, seconds since the epoch."
+      required:
+        - pid
+        - host
+        - base
+        - since
+      description: Who holds the lease.
     LeaseView:
       type: object
       properties:
@@ -19650,6 +21062,24 @@ components:
           const: same_branch
           description: "Same repository, same branch, another worktree of it."
       description: "Which tier of the resolution rule matched. There is no third tier on purpose: a record\nfrom an unrelated worktree or branch is never offered."
+    Materiality:
+      oneOf:
+        - type: string
+          const: trivial
+          description: "A name, a format, an obvious convention: never reviewed."
+        - type: string
+          const: low
+          description: Local and reversible.
+        - type: string
+          const: material
+          description: "Could affect correctness, an interface, persistent data, concurrency, operations."
+        - type: string
+          const: high
+          description: "Architecture, security, compatibility or a public contract."
+        - type: string
+          const: critical
+          description: "Irreversible or destructive, or repository governance itself."
+      description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
     Matrix:
       type: object
       properties:
@@ -20449,6 +21879,19 @@ components:
         - transitive_dependents
         - scope
       description: "One issue of a milestone, as a node of its graph."
+    ModeResolution:
+      type: object
+      properties:
+        mode:
+          "$ref": "#/components/schemas/ReasoningMode"
+          description: The mode.
+        source:
+          type: string
+          description: "What decided it: `MAJORDOMUS_REASONING_MODE`, `CI`, `profile <name>`, or `default`."
+      required:
+        - mode
+        - source
+      description: "The mode in force and what decided it, as `resolve_mode` returns it. A plan and a\nreport carry the source beside the mode, so a reader learns why the mode is what it is.\n\n```\nuse majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};\n\nlet r: ModeResolution = resolve_mode(None, true, None);\nassert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() });\n```"
     ModelEntry:
       type: object
       additionalProperties: false
@@ -20481,9 +21924,10 @@ components:
           minimum: 0
           description: "The context window, tokens."
         status:
-          "$ref": "#/components/schemas/ModelStatus"
-          description: The lifecycle standing.
-          default: available
+          anyOf:
+            - "$ref": "#/components/schemas/ModelStatus"
+            - type: "null"
+          description: "The lifecycle standing, when the catalogue declares one. Absent is undeclared: the\ncatalogue admits only facts with provenance, and routing still considers the model,\nbut nothing may say it is available on the catalogue's behalf."
         note:
           type:
             - string
@@ -20508,7 +21952,7 @@ components:
         - type: string
           const: retired
           description: "Gone; kept so an old record's reference still resolves to a row with a story."
-      description: "A model's lifecycle standing, as the catalogue declares it."
+      description: "A model's lifecycle standing, as the catalogue declares it. There is no default: a\ncatalogue entry that declares none has an undeclared standing, which is not the same\nfact as \"available\", and no reader may render it as one."
     ModelsReport:
       type: object
       properties:
@@ -21598,6 +23042,25 @@ components:
         - description
         - required
       description: One query parameter of the live channel.
+    PassedOver:
+      type: object
+      properties:
+        at:
+          type: string
+          description: "When, RFC 3339."
+        for_pr:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request chosen instead.
+        action:
+          type: string
+          description: "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in)."
+      required:
+        - at
+        - for_pr
+        - action
+      description: One time the executor chose another pull request.
     PathChange:
       type: object
       properties:
@@ -21618,6 +23081,23 @@ components:
         - stage
         - status
       description: "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```"
+    PathOverlap:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The other pull request.
+        paths:
+          type: array
+          items:
+            type: string
+          description: The paths both change.
+      required:
+        - number
+        - paths
+      description: Shared authored paths with one other open pull request.
     Peer:
       type: object
       properties:
@@ -22330,6 +23810,18 @@ components:
       required:
         - active_milestone
       description: The one issue a worker should take now.
+    PlanOutcome:
+      oneOf:
+        - type: string
+          const: consult
+          description: "Consult the selected advisors, then conclude."
+        - type: string
+          const: decide_locally
+          description: Decide on local evidence; no independent review is called for or none is available.
+        - type: string
+          const: reuse_prior
+          description: A standing conclusion already answers this; reuse it rather than ask again.
+      description: "What the plan decided: consult the selected advisors, decide on local evidence, or\nreuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};\n\nlet mode = ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() };\nlet request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };\nlet outcome: PlanOutcome = plan(&request, &mode, &[]).outcome;\nassert_eq!(outcome, PlanOutcome::DecideLocally);\nassert_eq!(serde_json::to_value(outcome).unwrap(), \"decide_locally\");\n```"
     PlanProject:
       type: object
       properties:
@@ -23448,6 +24940,190 @@ components:
         - identity
         - verification
       description: "The publication as observed: where the site is, what it serves, and whether that was\nverified."
+    PullRequestAssessment:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The number.
+        title:
+          type: string
+          description: The title.
+        author:
+          type: string
+          description: The author.
+        head_ref:
+          type: string
+          description: The head branch.
+        base_ref:
+          type: string
+          description: The base branch.
+        evaluated_against:
+          "$ref": "#/components/schemas/EvaluatedAgainst"
+          description: The revisions this was decided against.
+        disposition:
+          "$ref": "#/components/schemas/PullRequestDisposition"
+          description: The classification.
+        lane:
+          "$ref": "#/components/schemas/IntegrationLane"
+          description: The queue it is in.
+        reasons:
+          type: array
+          items:
+            type: string
+          description: "Machine-readable reason codes, most decisive first."
+        next_action:
+          type:
+            - string
+            - "null"
+          description: "What a person or the executor does next, when anything."
+        required_checks:
+          "$ref": "#/components/schemas/RequiredCheckState"
+          description: The required checks on the head.
+        review:
+          "$ref": "#/components/schemas/PullRequestReview"
+          description: The review state.
+        relation:
+          "$ref": "#/components/schemas/RelationToMaster"
+          description: What the head is to master.
+        dependencies:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PullRequestDependency"
+          description: Declared and inferred dependencies.
+        authored_paths:
+          type: array
+          items:
+            type: string
+          description: Paths the pull request changes (authored ones; derived output is excluded).
+        overlaps:
+          type: array
+          items:
+            "$ref": "#/components/schemas/PathOverlap"
+          description: "Other open pull requests changing a same authored path, with the shared paths."
+        risk:
+          "$ref": "#/components/schemas/IntegrationRisk"
+          description: The planning risk.
+        risk_factors:
+          type: array
+          items:
+            type: string
+          description: Why the risk is what it is.
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/IntegrationEvidence"
+          description: Every fact read.
+        created_at:
+          type: string
+          description: When it was opened.
+        wait:
+          anyOf:
+            - "$ref": "#/components/schemas/ExecutorWait"
+            - type: "null"
+          description: "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable."
+      required:
+        - number
+        - title
+        - author
+        - head_ref
+        - base_ref
+        - evaluated_against
+        - disposition
+        - lane
+        - reasons
+        - required_checks
+        - review
+        - relation
+        - dependencies
+        - authored_paths
+        - overlaps
+        - risk
+        - risk_factors
+        - evidence
+        - created_at
+      description: "The canonical state of one open pull request: what was observed, what it is to master,\nhow it is classified and why. The one value every surface renders."
+    PullRequestDependency:
+      type: object
+      properties:
+        number:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: The pull request this one waits for.
+        certainty:
+          "$ref": "#/components/schemas/DependencyCertainty"
+          description: How it is known.
+        satisfied:
+          type: boolean
+          description: "Whether it is satisfied: that pull request has landed (or is not open any more)."
+      required:
+        - number
+        - certainty
+        - satisfied
+      description: "Explicit ordering between pull requests, as declared."
+    PullRequestDisposition:
+      oneOf:
+        - type: string
+          const: ready
+          description: "Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it."
+        - type: string
+          const: needs_refresh
+          description: "Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again."
+        - type: string
+          const: waiting_for_checks
+          description: Contains master; a required check has not finished on this head.
+        - type: string
+          const: waiting_for_review
+          description: A required review is missing or changes were requested.
+        - type: string
+          const: waiting_for_dependency
+          description: A declared dependency has not landed.
+        - type: string
+          const: draft
+          description: A draft.
+        - type: string
+          const: needs_repair
+          description: A required check failed on this head.
+        - type: string
+          const: conflicting
+          description: "Conflicts on authored paths: a person resolves them."
+        - type: string
+          const: blocked
+          description: A blocking label holds it.
+        - type: string
+          const: superseded
+          description: "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy."
+        - type: string
+          const: possibly_redundant
+          description: "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically."
+        - type: string
+          const: other_base
+          description: Targets a branch other than the integration base.
+        - type: string
+          const: unknown
+          description: Something needed to decide could not be observed.
+      description: "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`."
+    PullRequestReview:
+      oneOf:
+        - type: string
+          const: not_required
+          description: The branch protection requires no review.
+        - type: string
+          const: approved
+          description: Approved.
+        - type: string
+          const: changes_requested
+          description: A reviewer asked for changes.
+        - type: string
+          const: pending
+          description: A required review has not been given.
+        - type: string
+          const: unknown
+          description: The protection could not be read.
+      description: "Where the forge's review policy stands."
     QualityAnswer:
       type: object
       properties:
@@ -23516,6 +25192,33 @@ components:
           const: warning
           description: "Reported, and the gate passes."
       description: "How much a finding matters.\n\nThere are two levels and not five, because the only question a gate can answer is\nwhether the change may land. A warning is a finding the repository has decided not to\nblock on; nothing else is a warning."
+    QueueTallies:
+      type: object
+      properties:
+        open:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Open pull requests.
+        by_disposition:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: By disposition word.
+        by_lane:
+          type: object
+          additionalProperties:
+            type: integer
+            format: uint
+            minimum: 0
+          description: By lane word.
+      required:
+        - open
+        - by_disposition
+        - by_lane
+      description: How many pull requests are in each disposition and lane.
     Readiness:
       type: object
       properties:
@@ -23615,6 +25318,1080 @@ components:
           const: binary
           description: "Content with a NUL byte in its first `SNIFF_BYTES`: not text."
       description: Why a path is out. The order is the order the rules decide in.
+    ReasoningBody:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          properties:
+            subject:
+              type: string
+              description: "What is uncertain, as one line. Later assessments of the same subject find the\nconclusions of earlier ones through it."
+            materiality:
+              "$ref": "#/components/schemas/Materiality"
+              description: How much the decision could matter.
+              default: low
+            confidence:
+              "$ref": "#/components/schemas/ReasoningConfidence"
+              description: How sure the executor is of its hypothesis.
+              default: medium
+            hypothesis:
+              type:
+                - string
+                - "null"
+              description: The current hypothesis.
+            affects:
+              type: array
+              items:
+                type: string
+              description: "What the decision could affect: `public_api`, `persistent_data`, `security`,\n`concurrency`, `architecture`, ..."
+            facts:
+              type: array
+              items:
+                type: string
+              description: What is known.
+            assumptions:
+              type: array
+              items:
+                type: string
+              description: What is assumed.
+            questions:
+              type: array
+              items:
+                type: string
+              description: What is still open.
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence gathered locally.
+            capabilities:
+              type: array
+              items:
+                type: string
+              description: "The advisory capabilities review would need; empty means `independent_reasoning`."
+            new_evidence:
+              type: boolean
+              description: "The assessment brings evidence a standing conclusion on the subject did not have,\nso that conclusion does not answer it."
+              default: false
+            kind:
+              type: string
+              const: assessment
+          required:
+            - kind
+            - subject
+          description: A material uncertainty.
+        - "$ref": "#/components/schemas/StoredPlan"
+          type: object
+          properties:
+            kind:
+              type: string
+              const: plan
+          required:
+            - kind
+          description: "A plan, with its availability snapshot."
+        - type: object
+          additionalProperties: false
+          properties:
+            plan:
+              type: string
+              description: The recorded plan that selected this advisor.
+            advisor:
+              type: string
+              description: The advisor asked.
+            status:
+              "$ref": "#/components/schemas/ConsultationStatus"
+              description: How it ended.
+            question:
+              type:
+                - string
+                - "null"
+              description: "The question asked, in one line (the full prompt is not kept)."
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence the question carried.
+            conclusion:
+              type:
+                - string
+                - "null"
+              description: "The advisor's conclusion, summarised. Required when completed, refused otherwise."
+            stance:
+              anyOf:
+                - "$ref": "#/components/schemas/Stance"
+                - type: "null"
+              description: Where it stands relative to the hypothesis.
+            assumptions:
+              type: array
+              items:
+                type: string
+              description: Assumptions it identified.
+            risks:
+              type: array
+              items:
+                type: string
+              description: Risks it identified.
+            actions:
+              type: array
+              items:
+                type: string
+              description: Actions it recommended.
+            falsifiers:
+              type: array
+              items:
+                type: string
+              description: What would falsify its conclusion.
+            confidence:
+              anyOf:
+                - "$ref": "#/components/schemas/ReasoningConfidence"
+                - type: "null"
+              description: Its stated confidence.
+            duration_ms:
+              type:
+                - integer
+                - "null"
+              format: uint64
+              minimum: 0
+              description: "How long it took, milliseconds."
+            usage:
+              anyOf:
+                - "$ref": "#/components/schemas/AdvisorUsage"
+                - type: "null"
+              description: What the transport reported it cost.
+            diagnostic:
+              type:
+                - string
+                - "null"
+              description: "The adapter's diagnostic for a failure: a class and a sentence, never a payload."
+            retry_after_seconds:
+              type:
+                - integer
+                - "null"
+              format: uint64
+              minimum: 0
+              description: "A rate limit's retry-after, seconds."
+            kind:
+              type: string
+              const: consultation
+          required:
+            - kind
+            - plan
+            - advisor
+            - status
+          description: One advisor exchange.
+        - type: object
+          additionalProperties: false
+          properties:
+            assessment:
+              type: string
+              description: The assessment it is about.
+            positions:
+              type: array
+              items:
+                "$ref": "#/components/schemas/DisagreementPosition"
+              description: The positions; at least two.
+            divergent_assumptions:
+              type: array
+              items:
+                type: string
+              description: The assumptions the positions divide on.
+            discriminating_question:
+              type: string
+              description: The question whose answer decides between them.
+            experiment:
+              type:
+                - string
+                - "null"
+              description: The experiment proposed to answer it.
+            kind:
+              type: string
+              const: disagreement
+          required:
+            - kind
+            - assessment
+            - positions
+            - discriminating_question
+          description: A disagreement.
+        - type: object
+          additionalProperties: false
+          properties:
+            disagreement:
+              type: string
+              description: The disagreement it settles.
+            experiment:
+              type: string
+              description: The experiment performed.
+            outcome:
+              type: string
+              description: What it showed.
+            favours:
+              type: string
+              description: "The position it favours: a `source` of the disagreement, or `neither`."
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence it produced; at least one reference.
+            kind:
+              type: string
+              const: resolution
+          required:
+            - kind
+            - disagreement
+            - experiment
+            - outcome
+            - favours
+            - evidence
+          description: A disagreement settled by evidence.
+        - "$ref": "#/components/schemas/StoredConclusion"
+          type: object
+          properties:
+            kind:
+              type: string
+              const: conclusion
+          required:
+            - kind
+          description: "An engineering conclusion, with its computed review."
+        - type: object
+          additionalProperties: false
+          properties:
+            conclusion:
+              type: string
+              description: The conclusion validated.
+            check:
+              type: string
+              description: "What was checked, in one line."
+            command:
+              type:
+                - string
+                - "null"
+              description: The command that checked it.
+            outcome:
+              "$ref": "#/components/schemas/ValidationOutcome"
+              description: How it came out.
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: What it produced.
+            kind:
+              type: string
+              const: validation
+          required:
+            - kind
+            - conclusion
+            - check
+            - outcome
+          description: A validation step performed.
+        - type: object
+          additionalProperties: false
+          properties:
+            assessment:
+              type:
+                - string
+                - "null"
+              description: "The assessment it bears on, when there is one."
+            attempt:
+              type: string
+              description: What was tried.
+            observed_failure:
+              type: string
+              description: "What failed, observed."
+            assumption_invalidated:
+              type:
+                - string
+                - "null"
+              description: The assumption the failure invalidated.
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: Evidence the failure produced.
+            updated_hypothesis:
+              type:
+                - string
+                - "null"
+              description: The hypothesis now.
+            kind:
+              type: string
+              const: attempt
+          required:
+            - kind
+            - attempt
+            - observed_failure
+          description: A failed attempt.
+      description: "A stored record's body: the admitted input, with whatever the writer computed.\n\nIt mirrors `ReasoningInput` variant for variant, except that a plan is stored as a\n`StoredPlan` and a conclusion as a `StoredConclusion`. Only the store produces one,\nby admitting an input; its JSON form is tagged by `kind` like the input's.\n\n```\nuse majordomus_cli::reasoning::record::{AssessmentInput, ReasoningBody};\n\nlet body = ReasoningBody::Assessment(AssessmentInput {\n    subject: \"lock scope\".into(),\n    ..Default::default()\n});\nassert_eq!(body.kind(), \"assessment\");\nassert_eq!(serde_json::to_value(&body).unwrap()[\"kind\"], \"assessment\");\n```"
+    ReasoningCheck:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          description: No finding.
+        checks:
+          type: array
+          items:
+            type: string
+          description: "The checks performed, in order."
+        findings:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReasoningFinding"
+          description: What they found.
+      required:
+        - ok
+        - checks
+        - findings
+      description: "The answer of `reasoning.check`: whether it is clean, the checks performed in order,\nand every finding. `ok` is `true` exactly when `findings` is empty.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningCheck;\n\nlet clean: ReasoningCheck = serde_json::from_value(serde_json::json!({\n    \"ok\": true, \"checks\": [\"catalogue\"], \"findings\": [],\n})).unwrap();\nassert!(clean.ok && clean.findings.is_empty());\nassert_eq!(clean.checks, [\"catalogue\"]);\n```"
+    ReasoningConfidence:
+      oneOf:
+        - type: string
+          const: low
+          description: A guess the evidence does not yet support.
+        - type: string
+          const: medium
+          description: "Supported, with open questions."
+        - type: string
+          const: high
+          description: Supported by evidence that would be hard to overturn.
+      description: "How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \"default\".into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&request, &mode, &[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```"
+    ReasoningEvidence:
+      type: object
+      additionalProperties: false
+      properties:
+        kind:
+          "$ref": "#/components/schemas/ReasoningEvidenceKind"
+          description: What it is.
+        reference:
+          type: string
+          description: "Where it is: a path, a case, an id, a command line."
+        note:
+          type:
+            - string
+            - "null"
+          description: "What it shows, in one line."
+      required:
+        - kind
+        - reference
+      description: "A reference to something that supports a claim.\n\nEvidence is a pointer, never a copy: a path, a case, an id or a command line, with an\noptional one-line note of what it shows. Unknown fields are refused, so a misspelt\nfield is an error rather than a silently dropped claim.\n\n```\nuse majordomus_cli::reasoning::record::{ReasoningEvidence, ReasoningEvidenceKind};\n\nlet e: ReasoningEvidence = serde_json::from_value(serde_json::json!({\n    \"kind\": \"file\",\n    \"reference\": \"src/worker.rs:42\",\n}))\n.unwrap();\nassert_eq!(e.kind, ReasoningEvidenceKind::File);\nassert_eq!(e.note, None);\n\nlet typo = serde_json::from_value::<ReasoningEvidence>(serde_json::json!({\n    \"kind\": \"file\", \"reference\": \"x\", \"notes\": \"misspelt\",\n}));\nassert!(typo.is_err());\n```"
+    ReasoningEvidenceKind:
+      oneOf:
+        - type: string
+          const: file
+          description: "A file of the repository, optionally with a line: `src/x.rs:42`."
+        - type: string
+          const: test
+          description: A test case or test name.
+        - type: string
+          const: adr
+          description: An architecture decision record.
+        - type: string
+          const: rule
+          description: A rule of the layer.
+        - type: string
+          const: commit
+          description: A commit.
+        - type: string
+          const: command
+          description: "A command that was run, and what it showed."
+        - type: string
+          const: record
+          description: Another reasoning record.
+        - type: string
+          const: document
+          description: Documentation.
+        - type: string
+          const: runtime
+          description: "A runtime observation: a log, a measurement, a diagnostic."
+        - type: string
+          const: prior_external_opinion
+          description: "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
+      description: "What a piece of evidence is.\n\nThe kind tells a reader how to follow the reference: open a file, run a test, read an\nADR or a rule, show a commit. A prior external opinion is a kind of its own so that an\nadvisor's earlier conclusion, handed to another advisor, is never read as a fact.\n\n```\nuse majordomus_cli::reasoning::record::ReasoningEvidenceKind;\n\nlet kind: ReasoningEvidenceKind = serde_json::from_str(\"\\\"prior_external_opinion\\\"\").unwrap();\nassert_eq!(kind, ReasoningEvidenceKind::PriorExternalOpinion);\nassert_eq!(serde_json::to_string(&ReasoningEvidenceKind::Adr).unwrap(), \"\\\"adr\\\"\");\n```"
+    ReasoningExplanation:
+      type: object
+      properties:
+        record:
+          "$ref": "#/components/schemas/ReasoningRecord"
+          description: The record asked about.
+        assessment:
+          type:
+            - string
+            - "null"
+          description: "The assessment it belongs to, when it belongs to one."
+        chain:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReasoningStep"
+          description: "Every record of that assessment, in order: its provenance chain."
+      required:
+        - record
+        - chain
+      description: "A record with everything it rests on and everything that rests on it.\n\nIt carries the record itself, the assessment it belongs to, and that assessment's\nwhole provenance chain as timeline steps in order. A record that belongs to no\nassessment has a chain of itself alone.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{explain, ReasoningExplanation};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"attempt-1\", 1, json!({\n    \"kind\": \"attempt\", \"attempt\": \"inline it\", \"observed_failure\": \"still slow\",\n})));\nlet e: ReasoningExplanation = explain(&loaded, \"attempt-1\").unwrap();\nassert_eq!(e.record.id, \"attempt-1\");\nassert_eq!(e.assessment, None);\nassert_eq!(e.chain.len(), 1);\n```"
+    ReasoningFinding:
+      type: object
+      properties:
+        check:
+          type: string
+          description: The check that found it.
+        subject:
+          type: string
+          description: "Where: a file, a record, an advisor."
+        message:
+          type: string
+          description: What is wrong.
+      required:
+        - check
+        - subject
+        - message
+      description: "One finding of a reasoning check: which check, where, and what is wrong.\n\n`check` is one of `CHECKS`; `subject` is a repository-relative path, a record id or\nan advisor; `message` is one sentence saying what the rule refuses. Findings are\nreported, never repaired.\n\n```\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\nuse majordomus_cli::reasoning::check::{run, ReasoningFinding, CHECKS};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet root = tempfile::tempdir().unwrap();\nlet loaded = Loaded { records: vec![], unreadable: vec![\"t/broken.json\".into()] };\nlet found = run(root.path(), &AdvisorCatalogue::default(), &References::default(), &loaded);\nlet expected = ReasoningFinding {\n    check: \"records\".into(),\n    subject: \"t/broken.json\".into(),\n    message: \"a reasoning record that does not parse\".into(),\n};\nassert_eq!(found, [expected]);\nassert!(CHECKS.contains(&found[0].check.as_str()));\n```"
+    ReasoningInput:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          properties:
+            subject:
+              type: string
+              description: "What is uncertain, as one line. Later assessments of the same subject find the\nconclusions of earlier ones through it."
+            materiality:
+              "$ref": "#/components/schemas/Materiality"
+              description: How much the decision could matter.
+              default: low
+            confidence:
+              "$ref": "#/components/schemas/ReasoningConfidence"
+              description: How sure the executor is of its hypothesis.
+              default: medium
+            hypothesis:
+              type:
+                - string
+                - "null"
+              description: The current hypothesis.
+            affects:
+              type: array
+              items:
+                type: string
+              description: "What the decision could affect: `public_api`, `persistent_data`, `security`,\n`concurrency`, `architecture`, ..."
+            facts:
+              type: array
+              items:
+                type: string
+              description: What is known.
+            assumptions:
+              type: array
+              items:
+                type: string
+              description: What is assumed.
+            questions:
+              type: array
+              items:
+                type: string
+              description: What is still open.
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence gathered locally.
+            capabilities:
+              type: array
+              items:
+                type: string
+              description: "The advisory capabilities review would need; empty means `independent_reasoning`."
+            new_evidence:
+              type: boolean
+              description: "The assessment brings evidence a standing conclusion on the subject did not have,\nso that conclusion does not answer it."
+              default: false
+            kind:
+              type: string
+              const: assessment
+          required:
+            - kind
+            - subject
+          description: A material uncertainty.
+        - type: object
+          additionalProperties: false
+          properties:
+            assessment:
+              type: string
+              description: The assessment the plan answers.
+            kind:
+              type: string
+              const: plan
+          required:
+            - kind
+            - assessment
+          description: Make and record the plan for an assessment.
+        - type: object
+          additionalProperties: false
+          properties:
+            plan:
+              type: string
+              description: The recorded plan that selected this advisor.
+            advisor:
+              type: string
+              description: The advisor asked.
+            status:
+              "$ref": "#/components/schemas/ConsultationStatus"
+              description: How it ended.
+            question:
+              type:
+                - string
+                - "null"
+              description: "The question asked, in one line (the full prompt is not kept)."
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence the question carried.
+            conclusion:
+              type:
+                - string
+                - "null"
+              description: "The advisor's conclusion, summarised. Required when completed, refused otherwise."
+            stance:
+              anyOf:
+                - "$ref": "#/components/schemas/Stance"
+                - type: "null"
+              description: Where it stands relative to the hypothesis.
+            assumptions:
+              type: array
+              items:
+                type: string
+              description: Assumptions it identified.
+            risks:
+              type: array
+              items:
+                type: string
+              description: Risks it identified.
+            actions:
+              type: array
+              items:
+                type: string
+              description: Actions it recommended.
+            falsifiers:
+              type: array
+              items:
+                type: string
+              description: What would falsify its conclusion.
+            confidence:
+              anyOf:
+                - "$ref": "#/components/schemas/ReasoningConfidence"
+                - type: "null"
+              description: Its stated confidence.
+            duration_ms:
+              type:
+                - integer
+                - "null"
+              format: uint64
+              minimum: 0
+              description: "How long it took, milliseconds."
+            usage:
+              anyOf:
+                - "$ref": "#/components/schemas/AdvisorUsage"
+                - type: "null"
+              description: What the transport reported it cost.
+            diagnostic:
+              type:
+                - string
+                - "null"
+              description: "The adapter's diagnostic for a failure: a class and a sentence, never a payload."
+            retry_after_seconds:
+              type:
+                - integer
+                - "null"
+              format: uint64
+              minimum: 0
+              description: "A rate limit's retry-after, seconds."
+            kind:
+              type: string
+              const: consultation
+          required:
+            - kind
+            - plan
+            - advisor
+            - status
+          description: One advisor exchange.
+        - type: object
+          additionalProperties: false
+          properties:
+            assessment:
+              type: string
+              description: The assessment it is about.
+            positions:
+              type: array
+              items:
+                "$ref": "#/components/schemas/DisagreementPosition"
+              description: The positions; at least two.
+            divergent_assumptions:
+              type: array
+              items:
+                type: string
+              description: The assumptions the positions divide on.
+            discriminating_question:
+              type: string
+              description: The question whose answer decides between them.
+            experiment:
+              type:
+                - string
+                - "null"
+              description: The experiment proposed to answer it.
+            kind:
+              type: string
+              const: disagreement
+          required:
+            - kind
+            - assessment
+            - positions
+            - discriminating_question
+          description: A disagreement.
+        - type: object
+          additionalProperties: false
+          properties:
+            disagreement:
+              type: string
+              description: The disagreement it settles.
+            experiment:
+              type: string
+              description: The experiment performed.
+            outcome:
+              type: string
+              description: What it showed.
+            favours:
+              type: string
+              description: "The position it favours: a `source` of the disagreement, or `neither`."
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence it produced; at least one reference.
+            kind:
+              type: string
+              const: resolution
+          required:
+            - kind
+            - disagreement
+            - experiment
+            - outcome
+            - favours
+            - evidence
+          description: A disagreement settled by evidence.
+        - type: object
+          additionalProperties: false
+          properties:
+            assessment:
+              type: string
+              description: The assessment it concludes.
+            decision:
+              type: string
+              description: The decision.
+            rationale:
+              type: string
+              description: "Why, from the evidence."
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: The evidence it rests on. Required for material uncertainty.
+            consultations:
+              type: array
+              items:
+                type: string
+              description: The completed consultations it weighed.
+            disagreements:
+              type: array
+              items:
+                type: string
+              description: The resolved disagreements it rests on.
+            rejected:
+              type: array
+              items:
+                type: string
+              description: "Alternatives considered and rejected, each with why."
+            assumptions:
+              type: array
+              items:
+                type: string
+              description: Assumptions it still depends on.
+            risks:
+              type: array
+              items:
+                type: string
+              description: Risks that remain.
+            validation_plan:
+              type: array
+              items:
+                type: string
+              description: How the decision will be proven. Required for material uncertainty.
+            confidence:
+              "$ref": "#/components/schemas/ReasoningConfidence"
+              description: Confidence in it.
+              default: medium
+            supersedes:
+              type:
+                - string
+                - "null"
+              description: "An earlier conclusion this one replaces, because new evidence overturned it."
+            kind:
+              type: string
+              const: conclusion
+          required:
+            - kind
+            - assessment
+            - decision
+            - rationale
+          description: An engineering conclusion.
+        - type: object
+          additionalProperties: false
+          properties:
+            conclusion:
+              type: string
+              description: The conclusion validated.
+            check:
+              type: string
+              description: "What was checked, in one line."
+            command:
+              type:
+                - string
+                - "null"
+              description: The command that checked it.
+            outcome:
+              "$ref": "#/components/schemas/ValidationOutcome"
+              description: How it came out.
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: What it produced.
+            kind:
+              type: string
+              const: validation
+          required:
+            - kind
+            - conclusion
+            - check
+            - outcome
+          description: A validation step performed.
+        - type: object
+          additionalProperties: false
+          properties:
+            assessment:
+              type:
+                - string
+                - "null"
+              description: "The assessment it bears on, when there is one."
+            attempt:
+              type: string
+              description: What was tried.
+            observed_failure:
+              type: string
+              description: "What failed, observed."
+            assumption_invalidated:
+              type:
+                - string
+                - "null"
+              description: The assumption the failure invalidated.
+            evidence:
+              type: array
+              items:
+                "$ref": "#/components/schemas/ReasoningEvidence"
+              description: Evidence the failure produced.
+            updated_hypothesis:
+              type:
+                - string
+                - "null"
+              description: The hypothesis now.
+            kind:
+              type: string
+              const: attempt
+          required:
+            - kind
+            - attempt
+            - observed_failure
+          description: A failed attempt.
+      description: "Anything a session records, as authored.\n\nThe JSON form is tagged by `kind`, with the variant's fields beside the tag. This is\nwhat the CLI, HTTP and MCP surfaces accept; `crate::reasoning::store::admit` turns\nit into the `ReasoningBody` that is stored, or refuses it.\n\n```\nuse majordomus_cli::reasoning::record::ReasoningInput;\n\nlet input: ReasoningInput = serde_json::from_value(serde_json::json!({\n    \"kind\": \"plan\",\n    \"assessment\": \"assessment-1\",\n}))\n.unwrap();\nassert!(matches!(input, ReasoningInput::Plan(ref p) if p.assessment == \"assessment-1\"));\nlet unknown = serde_json::json!({ \"kind\": \"opinion\", \"text\": \"x\" });\nassert!(serde_json::from_value::<ReasoningInput>(unknown).is_err());\n```"
+    ReasoningMode:
+      oneOf:
+        - type: string
+          const: offline
+          description: "No network: only advisors that stay on this machine."
+        - type: string
+          const: ci
+          description: "Deterministic: no advisor at all, whatever is installed."
+        - type: string
+          const: fast
+          description: Review only where the blast radius is high.
+        - type: string
+          const: standard
+          description: Review where uncertainty is material.
+        - type: string
+          const: strict
+          description: "Review wider, and complementary review where the stakes are highest."
+      description: "How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \"offline\");\nlet m: ReasoningMode = serde_json::from_str(\"\\\"strict\\\"\").unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```"
+    ReasoningPhase:
+      oneOf:
+        - type: string
+          const: uncertainty
+          description: Uncertainty stated with evidence.
+        - type: string
+          const: consulting
+          description: Review planned.
+        - type: string
+          const: local
+          description: "Decided locally, by plan."
+        - type: string
+          const: reuse
+          description: A standing conclusion reused.
+        - type: string
+          const: advisor_response
+          description: An advisor answered.
+        - type: string
+          const: degradation
+          description: An advisor could not answer.
+        - type: string
+          const: disagreement
+          description: Positions diverged.
+        - type: string
+          const: experiment
+          description: An experiment settled a disagreement.
+        - type: string
+          const: conclusion
+          description: A conclusion.
+        - type: string
+          const: validation
+          description: A validation step.
+        - type: string
+          const: attempt
+          description: A failed attempt.
+      description: "A phase of the reasoning timeline.\n\nEach record maps to one phase: a plan to consulting, local or reuse by its outcome, a\nconsultation to an advisor response or a degradation by its status, and every other\nkind to the phase of the same name.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, json!({\n    \"kind\": \"consultation\", \"plan\": \"plan-0\", \"advisor\": \"alpha\", \"status\": \"unavailable\",\n})));\nlet phases: Vec<ReasoningPhase> =\n    derive(&loaded, None).timeline.iter().map(|s| s.phase).collect();\nassert_eq!(phases, [ReasoningPhase::Degradation]);\nlet word = serde_json::to_value(ReasoningPhase::AdvisorResponse).unwrap();\nassert_eq!(word, \"advisor_response\");\n```"
+    ReasoningRecord:
+      type: object
+      properties:
+        schema:
+          type: string
+          description: "`RECORD_SCHEMA`."
+        version:
+          type: integer
+          format: uint32
+          minimum: 0
+          description: "`RECORD_VERSION`."
+        id:
+          type: string
+          description: "`<kind>-<yyyymmddThhmmssZ>-<hex>`, unique in the store."
+        task:
+          type: string
+          description: "The task it was recorded under, or `untasked`."
+        recorded_at:
+          type: string
+          description: "When it was recorded, RFC 3339; stamped by the writer, never supplied."
+        head:
+          type:
+            - string
+            - "null"
+          description: The commit the checkout was on.
+        redacted:
+          type: array
+          items:
+            type: string
+          description: "Secret shapes the writer removed from the text, by shape name."
+        body:
+          "$ref": "#/components/schemas/ReasoningBody"
+          description: The record.
+      required:
+        - schema
+        - version
+        - id
+        - task
+        - recorded_at
+        - body
+      description: "A stored record: a body with the envelope only the writer stamps.\n\nThe envelope carries the schema and version, a unique id, the task, the time it was\nrecorded, the commit the checkout was on and the secret shapes redacted from its text.\nOne record is one JSON file in the store; the store reads back only records whose\nschema and version match.\n\n```\nuse majordomus_cli::reasoning::record::*;\n\nlet record = ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"attempt-20261001T000000Z-abcdef\".into(),\n    task: \"untasked\".into(),\n    recorded_at: \"2026-10-01T00:00:00Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Attempt(AttemptInput {\n        assessment: None,\n        attempt: \"inline the call\".into(),\n        observed_failure: \"the test still fails\".into(),\n        assumption_invalidated: None,\n        evidence: vec![],\n        updated_hypothesis: None,\n    }),\n};\nlet text = serde_json::to_string(&record).unwrap();\nassert!(!text.contains(\"\\\"head\\\"\"), \"an absent head is not written\");\nlet back: ReasoningRecord = serde_json::from_str(&text).unwrap();\nassert_eq!(back.id, record.id);\nassert_eq!(back.body.kind(), \"attempt\");\n```"
+    ReasoningRecordInput:
+      type: object
+      additionalProperties: false
+      properties:
+        record:
+          "$ref": "#/components/schemas/ReasoningInput"
+          description: The record.
+      required:
+        - record
+      description: "The input of `reasoning.record`: one record, as authored, tagged by its `kind`. The\nwriter computes everything else (id, task, stamp, a plan's selection) itself.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningRecordInput;\nuse majordomus_cli::reasoning::record::ReasoningInput;\n\nlet input: ReasoningRecordInput = serde_json::from_value(serde_json::json!({\n    \"record\": { \"kind\": \"plan\", \"assessment\": \"assessment-1\" },\n})).unwrap();\nassert!(matches!(input.record, ReasoningInput::Plan(ref p) if p.assessment == \"assessment-1\"));\n```"
+    ReasoningRecorded:
+      type: object
+      properties:
+        record:
+          "$ref": "#/components/schemas/ReasoningRecord"
+          description: The stored record.
+        path:
+          type: string
+          description: "Where it was written, relative to the repository."
+        step:
+          "$ref": "#/components/schemas/ReasoningStep"
+          description: "The step it adds to the timeline: the report a terminal or the Cockpit shows."
+      required:
+        - record
+        - path
+        - step
+      description: "The answer of `reasoning.record`: the record as stored, where it was written, and the\ntimeline step it adds.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningRecorded;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningRecorded)).unwrap();\nfor field in [\"record\", \"path\", \"step\"] {\n    assert!(schema[\"required\"].as_array().unwrap().iter().any(|f| f == field), \"{field}\");\n}\n```"
+    ReasoningState:
+      type: object
+      properties:
+        task:
+          type: string
+          description: "The task reported, or `all`."
+        assessments:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AssessmentView"
+          description: The assessments.
+        consultations:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ConsultationView"
+          description: The consultations.
+        disagreements:
+          type: array
+          items:
+            "$ref": "#/components/schemas/DisagreementView"
+          description: The disagreements.
+        conclusions:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ConclusionView"
+          description: The conclusions.
+        timeline:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReasoningStep"
+          description: The timeline.
+        totals:
+          "$ref": "#/components/schemas/ReasoningTotals"
+          description: Totals.
+        unreadable:
+          type: array
+          items:
+            type: string
+          description: Store files that could not be read.
+      required:
+        - task
+        - assessments
+        - consultations
+        - disagreements
+        - conclusions
+        - timeline
+        - totals
+      description: "The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive()`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, task: &str, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": task,\n#         \"recorded_at\": \"2026-10-01T00:00:00Z\", \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &str| json!({ \"kind\": \"assessment\", \"subject\": subject });\nloaded.records.push(rec(\"assessment-1\", \"t1\", assessment(\"a\")));\nloaded.records.push(rec(\"assessment-2\", \"t2\", assessment(\"b\")));\nloaded.unreadable.push(\"t2/broken.json\".into());\n\nlet one: ReasoningState = derive(&loaded, Some(\"t1\"));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\"t1\", 1));\nlet all = derive(&loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\"all\", 2));\nassert_eq!(all.unreadable, [\"t2/broken.json\"]);\n```"
+    ReasoningStatus:
+      type: object
+      properties:
+        mode:
+          "$ref": "#/components/schemas/ModeResolution"
+          description: The mode in force.
+        advisors_available:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Advisors available now.
+        advisors_unavailable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Advisors not available now, each optional."
+        state:
+          "$ref": "#/components/schemas/ReasoningState"
+          description: The state.
+        report:
+          type: string
+          description: "The state as Markdown: what a handover carries."
+      required:
+        - mode
+        - advisors_available
+        - advisors_unavailable
+        - state
+        - report
+      description: "The answer of `reasoning.status`: the mode in force, the advisor counts, the state the\nrecords derive, and that state rendered as the Markdown a handover carries.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatus;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();\nfor field in [\"mode\", \"advisors_available\", \"advisors_unavailable\", \"state\", \"report\"] {\n    assert!(schema[\"required\"].as_array().unwrap().iter().any(|f| f == field), \"{field}\");\n}\n```"
+    ReasoningStep:
+      type: object
+      properties:
+        at:
+          type: string
+          description: When.
+        id:
+          type: string
+          description: The record.
+        phase:
+          "$ref": "#/components/schemas/ReasoningPhase"
+          description: The phase.
+        summary:
+          type: string
+          description: One line.
+      required:
+        - at
+        - id
+        - phase
+        - summary
+      description: "One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"attempt-1\", 1, json!({\n    \"kind\": \"attempt\", \"attempt\": \"share the client\\nacross threads\",\n    \"observed_failure\": \"the handle is not Sync\",\n})));\nlet state = derive(&loaded, None);\nlet step: &ReasoningStep = &state.timeline[0];\nassert_eq!(step.at, \"2026-10-01T00:00:01Z\");\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \"share the client failed: the handle is not Sync\");\n```"
+    ReasoningSummary:
+      type: object
+      properties:
+        operational:
+          type: boolean
+          description: "Reasoning works with no advisor at all; always `true`."
+        mode:
+          type: string
+          description: "The mode in force: `offline`, `ci`, `fast`, `standard`, `strict`."
+        available:
+          type: array
+          items:
+            type: string
+          description: "The advisors that may be asked now, in preference order."
+        unavailable:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many declared advisors may not, each optional."
+      required:
+        - operational
+        - mode
+        - available
+        - unavailable
+      description: "Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the\nsame derivation, never a provider list of its own.\n\n```\nuse majordomus_cli::environment::ReasoningSummary;\n\nlet summary: ReasoningSummary = serde_json::from_value(serde_json::json!({\n    \"operational\": true, \"mode\": \"offline\", \"available\": [\"local\"], \"unavailable\": 2,\n})).unwrap();\nassert!(summary.operational);\nassert_eq!(summary.available, [\"local\"]);\nassert_eq!(serde_json::to_value(&summary).unwrap()[\"unavailable\"], 2);\n```"
+    ReasoningTotals:
+      type: object
+      properties:
+        records:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Records.
+        consultations_completed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Consultations that completed.
+        consultations_failed:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Consultations that did not.
+        independent_reviewers:
+          type: integer
+          format: uint
+          minimum: 0
+          description: Distinct advisors that answered.
+        input_tokens:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Input tokens the adapters reported.
+        output_tokens:
+          type: integer
+          format: uint64
+          minimum: 0
+          description: Output tokens the adapters reported.
+      required:
+        - records
+        - consultations_completed
+        - consultations_failed
+        - independent_reviewers
+        - input_tokens
+        - output_tokens
+      description: "Totals over the records of the derived task: counts, reviewers and reported tokens.\n\nIndependent reviewers are distinct advisors with at least one completed consultation;\ntoken counts are summed only from what adapters reported, never estimated.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningTotals};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet answer = |plan: &str| {\n    json!({\n        \"kind\": \"consultation\", \"plan\": plan, \"advisor\": \"alpha\", \"status\": \"completed\",\n        \"conclusion\": \"A\", \"stance\": \"supports\",\n        \"usage\": { \"input_tokens\": 100, \"output_tokens\": 20 },\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, answer(\"plan-a\")));\nloaded.records.push(rec(\"consultation-2\", 2, answer(\"plan-b\")));\nlet totals: ReasoningTotals = derive(&loaded, None).totals;\nassert_eq!(totals.consultations_completed, 2);\nassert_eq!(totals.independent_reviewers, 1, \"one advisor, however often asked\");\nassert_eq!((totals.input_tokens, totals.output_tokens), (200, 40));\n```"
     Recommendation:
       type: object
       properties:
@@ -23974,6 +26751,99 @@ components:
           const: incoming
           description: "Another entity named this one. Never declared: derived by reading every other\nobject's references and keeping the ones that resolve here."
       description: "Which way a relation runs from the entity being read.\n\nThe direction is a property of the *reading*, not of the relation: one edge in\n`graph::RELATIONS` is outgoing on the page of the object that declared it and incoming\non the page of the object it names. Nothing in the layer writes `Incoming` down.\n\n```\nuse majordomus_cli::entity::Direction;\n\n// the wire spelling, which every surface shows and the site template reads\nassert_eq!(\n    serde_json::to_string(&Direction::Outgoing).unwrap(),\n    \"\\\"outgoing\\\"\"\n);\nassert_eq!(\n    serde_json::to_string(&Direction::Incoming).unwrap(),\n    \"\\\"incoming\\\"\"\n);\n// declared before derived, which is the order an entity page renders the two sections\nassert!((Direction::Outgoing as u8) < (Direction::Incoming as u8));\n```"
+    RelationToMaster:
+      oneOf:
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: contained
+          required:
+            - kind
+          description: "The head is an ancestor of master: every commit already landed."
+        - type: object
+          properties:
+            kind:
+              type: string
+              const: superseded
+          required:
+            - kind
+          description: "Merging the head into master changes nothing: its patch is already fully there."
+        - type: object
+          properties:
+            paths:
+              type: array
+              items:
+                type: string
+              description: The derived paths that would change.
+            kind:
+              type: string
+              const: derived_only
+          required:
+            - kind
+            - paths
+          description: "Merging changes only derived artifacts: the authored change is already on master,\nand what differs is output the generators rewrite."
+        - type: object
+          properties:
+            authored:
+              type: array
+              items:
+                type: string
+              description: Authored (non-derived) paths the merge changes.
+            kind:
+              type: string
+              const: up_to_date
+          required:
+            - kind
+            - authored
+          description: The head already contains master and merges cleanly.
+        - type: object
+          properties:
+            behind:
+              type: integer
+              format: uint64
+              minimum: 0
+              description: Commits on master the head does not have.
+            authored:
+              type: array
+              items:
+                type: string
+              description: Authored paths the merge changes.
+            kind:
+              type: string
+              const: behind
+          required:
+            - kind
+            - behind
+            - authored
+          description: "The head does not contain master, but the merge is clean with the derived driver."
+        - type: object
+          properties:
+            paths:
+              type: array
+              items:
+                type: string
+              description: The conflicting authored paths.
+            kind:
+              type: string
+              const: conflicting
+          required:
+            - kind
+            - paths
+          description: "Merging conflicts on authored paths: a person must resolve it."
+        - type: object
+          properties:
+            reason:
+              type: string
+              description: Why.
+            kind:
+              type: string
+              const: unknown
+          required:
+            - kind
+            - reason
+          description: "Git could not answer (the head is not fetched, or git failed); the reason."
+      description: "What the pull request's head is to the current master, decided locally by git with\nthis repository's own merge drivers — never by the forge's `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting."
     ReleaseArtifactView:
       type: object
       properties:
@@ -24720,6 +27590,11 @@ components:
           items:
             "$ref": "#/components/schemas/ServiceState"
           description: "The local services, in the order the service table declares them."
+        reasoning:
+          anyOf:
+            - "$ref": "#/components/schemas/ReasoningSummary"
+            - type: "null"
+          description: "Reasoning (ADR 0098): operational whatever the advisors, the mode in force, and how\nmany optional advisors can be asked. Absent when the distribution declares none."
         diagnostics:
           type: array
           items:
@@ -24817,6 +27692,16 @@ components:
         scope_path:
           type: string
           description: "The scope file: repository-relative for the repository's own, the share path for\nthe distribution's default."
+        observed:
+          "$ref": "#/components/schemas/RepositoryObservations"
+          description: "When the index and the git state it carries were read. Defaults to empty so that a\nrecord written before the freshness contract still reads."
+          default:
+            index:
+              observed_at: ""
+              source: ""
+            git:
+              observed_at: ""
+              source: ""
       required:
         - root
         - layer_schema
@@ -24828,6 +27713,19 @@ components:
         - scope_origin
         - scope_path
       description: What the index knows about the repository it was built from.
+    RepositoryObservations:
+      type: object
+      properties:
+        index:
+          "$ref": "#/components/schemas/AnswerObservation"
+          description: "When the index was built: the objects, the kinds, the diagnostics."
+        git:
+          "$ref": "#/components/schemas/AnswerObservation"
+          description: "When git was asked: the branch, the head, the working tree."
+      required:
+        - index
+        - git
+      description: "The two pictures a process takes of the repository, each with when it was taken.\n\nA picture without a window is never stale, and its window is not serialized.\n\n```\nuse std::time::{Duration, UNIX_EPOCH};\nuse majordomus_cli::index::{AnswerObservation, RepositoryObservations};\nlet now = RepositoryObservations {\n    index: AnswerObservation::taken(\"index build\", UNIX_EPOCH, None),\n    git: AnswerObservation::taken(\"git read\", UNIX_EPOCH, Some(Duration::from_secs(120))),\n};\nlet json = serde_json::to_value(&now).unwrap();\nassert_eq!(json[\"git\"][\"stale_after\"], \"1970-01-01T00:02:00Z\");\nassert!(json[\"index\"].get(\"stale_after\").is_none());\nlet back: RepositoryObservations = serde_json::from_value(json).unwrap();\nassert_eq!(back, now);\n```"
     RepositoryRef:
       type: object
       properties:
@@ -24951,6 +27849,24 @@ components:
         - git_common_dir
         - name
       description: "The repository's identity, as the topology reports it."
+    RequiredCheckState:
+      oneOf:
+        - type: string
+          const: passed
+          description: Every required check passed on this head.
+        - type: string
+          const: pending
+          description: A required check is queued or running.
+        - type: string
+          const: failed
+          description: A required check failed.
+        - type: string
+          const: missing
+          description: A required check has not reported on this head at all.
+        - type: string
+          const: unknown
+          description: "The repository's required checks could not be read."
+      description: "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass."
     Resolution:
       oneOf:
         - type: string
@@ -25277,6 +28193,70 @@ components:
         - request
         - verdict
       description: "The input of `mesh.review.answer`."
+    ReviewPlan:
+      type: object
+      properties:
+        mode:
+          "$ref": "#/components/schemas/ReasoningMode"
+          description: The mode it was made under.
+        mode_source:
+          type: string
+          description: What decided the mode.
+        materiality:
+          "$ref": "#/components/schemas/Materiality"
+          description: The materiality it answered.
+        confidence:
+          "$ref": "#/components/schemas/ReasoningConfidence"
+          description: The confidence it answered.
+        capabilities:
+          type: array
+          items:
+            type: string
+          description: The capabilities review was asked for.
+        budget:
+          type: integer
+          format: uint
+          minimum: 0
+          description: How many advisors the mode and materiality allow.
+        outcome:
+          "$ref": "#/components/schemas/PlanOutcome"
+          description: What to do.
+        reason:
+          type: string
+          description: "Why, in one sentence."
+        selected:
+          type: array
+          items:
+            "$ref": "#/components/schemas/SelectedAdvisor"
+          description: "The advisors to consult, in selection order."
+        excluded:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ExcludedAdvisor"
+          description: "Every advisor not selected, with its reason."
+        available:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "Advisors available when the plan was made, whatever was selected."
+        local_review:
+          type: array
+          items:
+            type: string
+          description: "The structured local review to perform, when material uncertainty meets no advisor."
+      required:
+        - mode
+        - mode_source
+        - materiality
+        - confidence
+        - capabilities
+        - budget
+        - outcome
+        - reason
+        - selected
+        - excluded
+        - available
+      description: "The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \"MAJORDOMUS_REASONING_MODE\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&request, &mode, &[]);\nassert_eq!(p.mode_source, \"MAJORDOMUS_REASONING_MODE\");\nassert_eq!(p.capabilities, [\"independent_reasoning\"]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\"no available advisor offers\"));\n```"
     ReviewRequestInput:
       type: object
       additionalProperties: false
@@ -26535,6 +29515,25 @@ components:
         - kind
         - from
       description: "What the request asked to compile a context about.\n\nA seed is the request echoed back after resolution, and it is in the answer so that a\ncaller can see what their short name turned into. `from` names the request field it came\nfrom — `issue`, `milestone`, `uris`, `paths`, `intent` — which is how the same identifier\narriving two ways stays two seeds rather than one.\n\n`resolved` is populated only when resolution actually changed something: name a\nmilestone by its slug and it carries the canonical identity, name it by that identity and\nthere was nothing to resolve, so the field is absent. A path and an intent are not\nresolved against the index at all — their `uri` is the literal the request gave.\n\n```\nuse majordomus_cli::devcontext::Seed;\nuse serde_json::json;\n\n// named by a slug: the answer says what it became\nlet by_slug: Seed = serde_json::from_value(json!({\n    \"uri\": \"majordomus://milestone/M04\",\n    \"kind\": \"milestone\",\n    \"from\": \"milestone\",\n    \"resolved\": \"M04\",\n})).unwrap();\nassert_eq!(by_slug.resolved.as_deref(), Some(\"M04\"));\n\n// named canonically: nothing was resolved, so nothing is reported\nlet canonical: Seed = serde_json::from_value(json!({\n    \"uri\": \"majordomus://issue/I0301\",\n    \"kind\": \"issue\",\n    \"from\": \"issue\",\n})).unwrap();\nassert!(canonical.resolved.is_none());\n\n// and a path is carried verbatim: its `uri` is not a canonical identifier at all\nlet path: Seed = serde_json::from_value(json!({\n    \"uri\": \"apps/majordomus-cli/src\",\n    \"kind\": \"path\",\n    \"from\": \"paths\",\n})).unwrap();\nassert!(!path.uri.starts_with(\"majordomus://\"));\nassert_eq!(path.from, \"paths\", \"which request field it came from\");\n```"
+    SelectedAdvisor:
+      type: object
+      properties:
+        advisor:
+          type: string
+          description: The advisor id.
+        covers:
+          type: array
+          items:
+            type: string
+          description: The requested capabilities it covers.
+        why:
+          type: string
+          description: Why it was chosen.
+      required:
+        - advisor
+        - covers
+        - why
+      description: "One selected advisor, the requested capabilities it covers, and why the greedy\nselection chose it at its position.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p = plan(&request, &mode, &[advisor(\"a\", \"x-api\", \"available\")]);\nlet chosen: &SelectedAdvisor = &p.selected[0];\nassert_eq!(chosen.advisor, \"a\");\nassert_eq!(chosen.covers, [\"independent_reasoning\"]);\nassert!(chosen.why.starts_with(\"the first available advisor\"));\n```"
     Selector:
       oneOf:
         - type: string
@@ -27201,6 +30200,21 @@ components:
           const: unsupported
           description: "Considered and refused: listed with the reason, never executable."
       description: "Where a capability stands, in the repository's own vocabulary for claims. A capability\nthat is `Planned` or `Unsupported` may be listed but is never executable through any\nprojection; the registry refuses to build otherwise."
+    Stance:
+      oneOf:
+        - type: string
+          const: supports
+          description: It supports the hypothesis.
+        - type: string
+          const: opposes
+          description: It argues against it.
+        - type: string
+          const: alternative
+          description: It proposes something else.
+        - type: string
+          const: inconclusive
+          description: It does not decide.
+      description: "Where an advisor's answer stands relative to the executor's hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\"\\\"alternative\\\"\").unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::<Stance>(\"\\\"agrees\\\"\").is_err());\n```"
     Standing:
       oneOf:
         - type: string
@@ -27356,6 +30370,98 @@ components:
         - state
         - started_at
       description: "One named phase of an execution, as the handler reported it."
+    StoredConclusion:
+      type: object
+      description: "A conclusion as stored: the input and what only the writer computes.\n\nThe input is flattened, so a stored conclusion reads as the input plus two fields:\nthe advisors whose completed consultations it cites, each once and in canonical\norder, and their count. Both are computed at admission and checked again by\n`reasoning.check`, so a hand-edited count is reported.\n\n```\nuse majordomus_cli::reasoning::record::{ConclusionInput, StoredConclusion};\n\nlet stored = StoredConclusion {\n    input: ConclusionInput {\n        assessment: \"assessment-1\".into(),\n        decision: \"keep the lock\".into(),\n        rationale: \"measured\".into(),\n        ..Default::default()\n    },\n    reviewed_by: vec![\"alpha\".into()],\n    independent_review_count: 1,\n};\nlet json = serde_json::to_value(&stored).unwrap();\nassert_eq!(json[\"decision\"], \"keep the lock\");\nassert_eq!(json[\"independent_review_count\"], 1);\n```"
+      properties:
+        assessment:
+          type: string
+          description: The assessment it concludes.
+        decision:
+          type: string
+          description: The decision.
+        rationale:
+          type: string
+          description: "Why, from the evidence."
+        evidence:
+          type: array
+          items:
+            "$ref": "#/components/schemas/ReasoningEvidence"
+          description: The evidence it rests on. Required for material uncertainty.
+        consultations:
+          type: array
+          items:
+            type: string
+          description: The completed consultations it weighed.
+        disagreements:
+          type: array
+          items:
+            type: string
+          description: The resolved disagreements it rests on.
+        rejected:
+          type: array
+          items:
+            type: string
+          description: "Alternatives considered and rejected, each with why."
+        assumptions:
+          type: array
+          items:
+            type: string
+          description: Assumptions it still depends on.
+        risks:
+          type: array
+          items:
+            type: string
+          description: Risks that remain.
+        validation_plan:
+          type: array
+          items:
+            type: string
+          description: How the decision will be proven. Required for material uncertainty.
+        confidence:
+          "$ref": "#/components/schemas/ReasoningConfidence"
+          description: Confidence in it.
+          default: medium
+        supersedes:
+          type:
+            - string
+            - "null"
+          description: "An earlier conclusion this one replaces, because new evidence overturned it."
+        reviewed_by:
+          type: array
+          items:
+            type: string
+          description: "The advisors whose completed consultations it cites, each once. Computed."
+        independent_review_count:
+          type: integer
+          format: uint
+          minimum: 0
+          description: "How many independent advisors reviewed it: `reviewed_by`'s length. Computed."
+      required:
+        - assessment
+        - decision
+        - rationale
+        - reviewed_by
+        - independent_review_count
+    StoredPlan:
+      type: object
+      properties:
+        assessment:
+          type: string
+          description: The assessment it answers.
+        plan:
+          "$ref": "#/components/schemas/ReviewPlan"
+          description: The decision.
+        availability:
+          type: array
+          items:
+            "$ref": "#/components/schemas/AdvisorState"
+          description: "Every advisor's standing at the moment of the plan: the snapshot a later\nconsultation is admitted against."
+      required:
+        - assessment
+        - plan
+        - availability
+      description: "A plan as stored: the decision and the availability it was made against.\n\nThe store builds it when it admits a `PlanInput`; nothing else does. The snapshot of\navailability is what a later consultation is admitted against, so an answer that\narrives after the advisor's circuit opened still belongs to the plan that asked for it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::PlanOutcome;\nuse majordomus_cli::reasoning::record::*;\nuse majordomus_cli::reasoning::store::{admit, Admission, Loaded};\n\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet admission = Admission { mode: &mode, availability: &[] };\nlet mut loaded = Loaded::default();\nloaded.records.push(ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"assessment-1\".into(),\n    task: \"t\".into(),\n    recorded_at: \"2026-10-01T00:00:01Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Assessment(AssessmentInput {\n        subject: \"a name\".into(),\n        ..Default::default()\n    }),\n});\nlet input = ReasoningInput::Plan(PlanInput { assessment: \"assessment-1\".into() });\nlet ReasoningBody::Plan(stored) = admit(input, &loaded, &admission).unwrap() else {\n    panic!(\"a plan input is stored as a plan\");\n};\nlet stored: StoredPlan = stored;\nassert_eq!(stored.assessment, \"assessment-1\");\nassert_eq!(stored.plan.outcome, PlanOutcome::DecideLocally);\nassert!(stored.availability.is_empty());\n```"
     Stranded:
       type: object
       properties:
@@ -28744,6 +31850,15 @@ components:
         - id
         - title
       description: One use case the feature names.
+    ValidationOutcome:
+      oneOf:
+        - type: string
+          const: pass
+          description: It passed.
+        - type: string
+          const: fail
+          description: It failed.
+      description: "Whether a performed validation step passed or failed.\n\nOne failed validation is enough to mark the assessment's standing as\n`validation_failed` in the derived state, whatever else passed.\n\n```\nuse majordomus_cli::reasoning::record::ValidationOutcome;\n\nlet o: ValidationOutcome = serde_json::from_str(\"\\\"fail\\\"\").unwrap();\nassert_eq!(o, ValidationOutcome::Fail);\nassert_eq!(serde_json::to_string(&ValidationOutcome::Pass).unwrap(), \"\\\"pass\\\"\");\n```"
     ValidationReport:
       type: object
       properties:

@@ -1390,6 +1390,7 @@ pub(crate) fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String
 ///         kind_sources: vec![],
 ///         scope_origin: majordomus_cli::scope::Origin::Distribution,
 ///         scope_path: String::new(),
+///         observed: Default::default(),
 ///     },
 ///     objects: vec![claim],
 ///     diagnostics: vec![],

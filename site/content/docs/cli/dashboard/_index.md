@@ -4,7 +4,7 @@ description = "The Dashboard Suite: each page a projection of the capabilities t
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 165
+weight = 181
 [extra]
 route = "/docs/cli/dashboard/"
 command = "majordomus dashboard"

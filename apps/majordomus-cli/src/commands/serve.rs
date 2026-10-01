@@ -784,6 +784,20 @@ fn stop(repo: &Repository, wait: Duration) -> Result<u8> {
         // of a server that had stopped before the first tick. So the token decides.
         match LeaseFile::read(&path).document() {
             None => {
+                // The lease is released a moment before the process has closed its listener
+                // and exited, and a caller told "stopped" may then still find it answering.
+                // Stopped means the process is gone, so its exit is waited for too.
+                if !exited_by(doc.pid, deadline) {
+                    say(
+                        &mut out,
+                        format!(
+                            "pid {} at {url} released its lease but was still running after {} second(s)",
+                            doc.pid,
+                            wait.as_secs()
+                        ),
+                    )?;
+                    return Ok(10);
+                }
                 say(&mut out, format!("stopped {url} (pid {})", doc.pid))?;
                 return Ok(0);
             }
@@ -816,6 +830,19 @@ fn stop(repo: &Repository, wait: Duration) -> Result<u8> {
         ),
     )?;
     Ok(10)
+}
+
+/// Wait until `pid` has exited, or `deadline` passes; whether it exited.
+fn exited_by(pid: u32, deadline: Instant) -> bool {
+    loop {
+        if !lease::alive(pid) {
+            return true;
+        }
+        if Instant::now() >= deadline {
+            return false;
+        }
+        std::thread::sleep(Duration::from_millis(50));
+    }
 }
 
 #[cfg(unix)]

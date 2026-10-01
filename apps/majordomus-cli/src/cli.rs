@@ -64,6 +64,9 @@ pub enum Command {
     /// The branch-to-worktree topology: where every linked worktree belongs (`<repo>-wt/<branch>`), where each one is, and the lifecycle — create, migrate, repair, guard
     #[command(alias = "wt")]
     Worktree(WorktreeArgs),
+    /// Pull-request integration: every open pull request classified against the current master with its evidence, the ranked plan, and the executor that merges the next provably safe one — one at a time, re-planning after each (ADR 0101)
+    #[command(alias = "pr")]
+    Prs(PrsArgs),
     /// The commit as a value: what the working tree would commit and how it divides, the scope vocabulary this repository's history yields, and the verdict on one message against the commit policy
     Commit(CommitArgs),
     /// The product: what this repository's tool does for a person, as the features under the layer declare it, with every surface, count and moment derived; the matrix of features against interfaces; the providers; and the model's own validation
@@ -82,6 +85,8 @@ pub enum Command {
     Mesh(MeshArgs),
     /// The model catalogue the distribution declares, and the explainable routing over it: vendors, canonical model references, typed capabilities, and which model a stated need selects — with why, for every candidate
     Models(ModelsArgs),
+    /// Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor
+    Reasoning(ReasoningArgs),
     /// What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened
     Evidence(EvidenceArgs),
     /// Whether a deployment serves the commit it was meant to: observe the build identity it serves, judged by commit containment, and read each deployment's recorded standing against a commit
@@ -207,6 +212,93 @@ pub enum ModelsCommand {
     List(ModelsListArgs),
     /// Which model a stated need selects, the fallback chain behind it, and why every excluded model fell out
     Route(ModelsRouteArgs),
+}
+
+#[derive(Debug, Args)]
+/// `majordomus reasoning`: the command-line projection of the `reasoning` capabilities.
+/// The repository arguments and the output shape are shared by every subcommand, and the
+/// shape is global, so `--format` reads the same before or after the subcommand.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ReasoningArgs, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan", "--materiality", "high", "--format", "json"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let args: ReasoningArgs = args;
+/// assert!(matches!(args.command, ReasoningCommand::Plan { .. }));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct ReasoningArgs {
+    #[command(flatten)]
+    /// Where and how the repository is read.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// `advisors`, `plan`, `record`, `status`, `explain`, `check`.
+    pub command: ReasoningCommand,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// `text` for a person, `json` for a machine; both render the same answer.
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The `reasoning` subcommands, one per capability: `advisors`, `plan` and `status` read,
+/// `explain` traces one record, `check` gates, and `record` is the one that writes.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let ReasoningCommand::Plan { materiality, confidence, capabilities } = args.command else {
+///     panic!("not plan")
+/// };
+/// assert_eq!((materiality.as_str(), confidence.as_str()), ("material", "medium"));
+/// assert!(capabilities.is_none());
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "status", "--task", "all", "--report"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// assert!(matches!(args.command, ReasoningCommand::Status { report: true, .. }));
+/// ```
+pub enum ReasoningCommand {
+    /// Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer
+    Advisors,
+    /// Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing
+    Plan {
+        /// trivial, low, material, high or critical
+        #[arg(long, default_value = "material")]
+        materiality: String,
+        /// low, medium or high
+        #[arg(long, default_value = "medium")]
+        confidence: String,
+        /// Advisory capabilities review needs, comma-separated
+        #[arg(long)]
+        capabilities: Option<String>,
+    },
+    /// Record one reasoning step of the open task from JSON (`{"kind":"assessment",...}`) read from --file or standard input; a record that breaks a rule is refused and nothing is written
+    Record {
+        /// The JSON record; standard input when absent
+        #[arg(long)]
+        file: Option<std::path::PathBuf>,
+    },
+    /// The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries
+    Status {
+        /// A task id, or `all`
+        #[arg(long)]
+        task: Option<String>,
+        /// Print only the Markdown report (empty when there is nothing to report)
+        #[arg(long)]
+        report: bool,
+    },
+    /// One record with the whole chain of its assessment: why a decision was made
+    Explain {
+        /// The record id
+        id: String,
+    },
+    /// Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding
+    Check,
 }
 
 #[derive(Debug, Args)]
@@ -2454,6 +2546,103 @@ pub struct RepoArgs {
 }
 
 #[derive(Debug, Args)]
+/// `majordomus prs` (alias `pr`). Every subcommand but `refresh`, `drain` and `cleanup`
+/// reads the last recorded forge observation and never reaches the network.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, PrsArgs, PrsCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "pr", "explain", "12", "--format", "json"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// let args: PrsArgs = args;
+/// assert!(matches!(args.command, Some(PrsCommand::Explain { number: 12 })));
+/// assert!(matches!(args.format, OutputFormat::Json));
+/// ```
+pub struct PrsArgs {
+    #[command(flatten)]
+    /// Where the repository is found.
+    pub repo: RepoArgs,
+
+    #[command(subcommand)]
+    /// The subcommand; none is `status`.
+    pub command: Option<PrsCommand>,
+
+    #[arg(long, value_enum, default_value_t = OutputFormat::Text, global = true)]
+    /// Output shape
+    pub format: OutputFormat,
+}
+
+#[derive(Debug, Subcommand)]
+/// The subcommands of `majordomus prs`. `status`, `plan`, `explain` and `events` render the
+/// recorded observation offline; `refresh`, `drain` and `cleanup` reach the forge, and a
+/// drain is bounded by `--max` merges and, without `--dry-run`, holds the base branch's
+/// integration lease while it acts.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, PrsCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "drain", "--max", "3", "--refresh"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!("not the prs command") };
+/// assert!(matches!(
+///     args.command,
+///     Some(PrsCommand::Drain { max: 3, dry_run: false, refresh: true, continuous: false, .. })
+/// ));
+/// // continuous: drain, wait, drain again — never together with a dry run
+/// let cli = Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "60"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(matches!(args.command, Some(PrsCommand::Drain { continuous: true, interval: 60, .. })));
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--dry-run"]).is_err());
+/// assert!(Cli::try_parse_from(["majordomus", "prs", "drain", "--continuous", "--interval", "5"]).is_err());
+/// // with no subcommand it is `status`
+/// let cli = Cli::try_parse_from(["majordomus", "prs"]).unwrap();
+/// let Command::Prs(args) = cli.command else { panic!() };
+/// assert!(args.command.is_none());
+/// ```
+pub enum PrsCommand {
+    /// Every open pull request with its disposition, risk and reason, in rank order, from the last recorded observation; exit 10 when the observation is stale or absent
+    Status,
+    /// What the executor would do next: the next merge, the pull requests that need master brought in, and the lanes; nothing is changed
+    Plan,
+    /// Why one pull request is where it is: the revisions it was decided against, every piece of evidence, its rank and the factors behind it
+    Explain {
+        /// The pull request number.
+        number: u64,
+    },
+    /// Observe the forge now (the GitHub CLI and one `git fetch`) and record the observation; the only read that reaches the network
+    Refresh,
+    /// Merge the next ready pull request, verify it landed, observe again, and repeat — at most `--max` merges; `--dry-run` decides without acting
+    Drain {
+        /// At most this many merges.
+        #[arg(long, default_value_t = 1)]
+        max: usize,
+        /// Observe and decide, change nothing.
+        #[arg(long)]
+        dry_run: bool,
+        /// When nothing is ready, bring master into the first pull request that needs it (a merge commit with the derived driver and a fresh derive, pushed as a fast-forward), so that its checks run against the current master
+        #[arg(long)]
+        refresh: bool,
+        /// Drain, wait `--interval` seconds, and drain again until stopped, holding the lease throughout; each cycle is bounded by `--max` and observes before every step. Ctrl-C or SIGTERM lets the step in progress finish, then releases the lease; a second signal ends it at once. Never with `--dry-run`
+        #[arg(long, conflicts_with = "dry_run")]
+        continuous: bool,
+        /// With `--continuous`: seconds between cycles, 30 to 900
+        #[arg(long, default_value_t = 300, value_parser = clap::value_parser!(u64).range(crate::integration::drain::INTERVAL_SECONDS))]
+        interval: u64,
+    },
+    /// Close the pull requests whose work is provably on master already; without `--apply` it only lists them
+    Cleanup {
+        /// Close them.
+        #[arg(long)]
+        apply: bool,
+    },
+    /// The audit trail: every selection, merge, refusal, stale decision and closure this checkout's executor recorded
+    Events,
+    /// One line for a session briefing: the last queue built in this checkout (open, by lane, the next merge, the starving), who holds the integration lease, and the last merge. Offline, decides no relation, and prints nothing where the forge was never observed
+    Brief,
+}
+
+#[derive(Debug, Args)]
 /// `majordomus worktree` (alias `wt`). The output shape is global, so it reads the way a
 /// person writes it — `worktree list --format json` — and is declared once.
 pub struct WorktreeArgs {
@@ -3857,6 +4046,105 @@ pub const EXAMPLES: &[CommandExamples] = &[
         }],
     },
     CommandExamples {
+        command: "prs",
+        examples: &[ExampleDoc {
+            id: "prs-default-unobserved",
+            title: "The queue, before the forge was ever observed",
+            description: "`prs` with nothing after it is `prs status`. It reads the last recorded forge observation and never reaches the network, so in a checkout where `prs refresh` has never run it has nothing to rank: it says so, names the command that observes, and exits 10.",
+            argv: &["prs"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs status",
+        examples: &[ExampleDoc {
+            id: "prs-status-json-unobserved",
+            title: "The ranked queue as one document",
+            description: "Every open pull request's assessment in rank order — disposition, lane, reasons, the master and head it was decided against, evidence, risk, overlaps — with the next merge and the tallies. The same value `GET /api/v1/pull-requests` and the MCP tool `majordomus_pull_requests` answer. With no observation recorded it exits 10.",
+            argv: &["prs", "status", "--format", "json"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs plan",
+        examples: &[ExampleDoc {
+            id: "prs-plan-unobserved",
+            title: "What the executor would do next",
+            description: "The next merge, the pull requests that need master brought in, and the repair, cleanup and held lanes. The plan is void after any merge: the executor observes again before its next step. With no observation recorded it exits 10.",
+            argv: &["prs", "plan"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs explain",
+        examples: &[ExampleDoc {
+            id: "prs-explain-unobserved",
+            title: "Why one pull request is where it is",
+            description: "The revisions it was decided against, every piece of evidence, its rank and the factors behind it. The same answer `GET /api/v1/pull-requests/explain?number=` gives. With no observation recorded it exits 10.",
+            argv: &["prs", "explain", "1"],
+            setup: &[],
+            expect: Expect::ExitCode(10),
+        }],
+    },
+    CommandExamples {
+        command: "prs events",
+        examples: &[ExampleDoc {
+            id: "prs-events-empty",
+            title: "The audit trail of this checkout's executor",
+            description: "Every selection, stale decision, merge with the master before and after, refusal, refresh and closure, oldest first. A checkout whose executor never ran has none, and says so.",
+            argv: &["prs", "events"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["no integration action"]),
+        }],
+    },
+    CommandExamples {
+        command: "prs refresh",
+        examples: &[ExampleDoc {
+            id: "prs-refresh-no-forge",
+            title: "Observing the forge, where there is none",
+            description: "`refresh` is one of the three `prs` commands that reach the network: it asks the GitHub CLI about the repository, its branch protection and its open pull requests, and fetches their heads. A repository with no GitHub remote cannot be observed, and the answer is exit 12 — unusable, never an empty queue.",
+            argv: &["prs", "refresh"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs drain",
+        examples: &[ExampleDoc {
+            id: "prs-drain-dry-run-no-forge",
+            title: "A dry run starts from a fresh observation",
+            description: "Even a dry run observes the forge first — a decision is never taken from the recorded observation — so where the forge cannot be reached it stops with exit 12 before deciding anything, and nothing is merged, refreshed or recorded.",
+            argv: &["prs", "drain", "--dry-run"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
+        command: "prs brief",
+        examples: &[ExampleDoc {
+            id: "prs-brief-unobserved",
+            title: "The briefing line, where nothing was observed",
+            description: "What `majordomus context` prints under INTEGRATION: the last queue this checkout built, the lease and the last merge, in one line, read from files and never from the network. A checkout whose forge was never observed has nothing to say, prints nothing, and exits 0 — a briefing does not grow a section about an empty queue.",
+            argv: &["prs", "brief"],
+            setup: &[],
+            expect: Expect::ExitCode(0),
+        }],
+    },
+    CommandExamples {
+        command: "prs cleanup",
+        examples: &[ExampleDoc {
+            id: "prs-cleanup-no-forge",
+            title: "Cleanup lists before it closes, and observes before it lists",
+            description: "Without `--apply` cleanup only lists the pull requests whose work is provably on master; either way it observes the forge first, so where there is none it exits 12.",
+            argv: &["prs", "cleanup"],
+            setup: &[],
+            expect: Expect::ExitCode(12),
+        }],
+    },
+    CommandExamples {
         command: "worktree",
         examples: &[ExampleDoc {
             id: "worktree-default-status",
@@ -4990,8 +5278,8 @@ pub const EXAMPLES: &[CommandExamples] = &[
         command: "mesh doctor",
         examples: &[ExampleDoc {
             id: "mesh-doctor",
-            title: "Every mesh prerequisite, proved on this machine alone",
-            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory. The report is the value and the command exits 0; a failed check is a row that says why, so `--format json` scripts against it.",
+            title: "Every mesh prerequisite, and the server's verdict on the declaration",
+            description: "Deterministic checks in a fixed order — the declaration parses, the identity loads, a UDP socket binds, the multicast group joins, broadcast enables, and the protocol signs, encodes, parses and verifies in memory — then `runtime`: asked of this checkout's running server when one serves it, whether an enabled declaration actually activated the mesh. With no server, as here, the report is this process's and `runtime` says nothing was decided. Every check holds here, so the command exits 0; a failed check is a row that says why, and exits 10.",
             argv: &["mesh", "doctor"],
             setup: &[],
             expect: Expect::StdoutContains(&["protocol"]),
@@ -5160,6 +5448,72 @@ pub const EXAMPLES: &[CommandExamples] = &[
             argv: &["models", "route", "--require", "text"],
             setup: &[],
             expect: Expect::StdoutContains(&["selected"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning advisors",
+        examples: &[ExampleDoc {
+            id: "reasoning-advisors",
+            title: "The advisors, and what they can do now",
+            description: "Every declared advisor with its status and why — available, unavailable, not_configured, disabled, temporarily_failed, rate_limited — from presence alone (an executable on PATH, a credential variable set, never a value), the mode in force and the recorded outcomes of earlier consultations; then who can provide each advisory capability now. Reasoning is operational whether or not any advisor is.",
+            argv: &["reasoning", "advisors"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["reasoning   operational"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning plan",
+        examples: &[ExampleDoc {
+            id: "reasoning-plan",
+            title: "What a material uncertainty calls for",
+            description: "Whether independent review is worth having, how many advisors the mode allows, which available advisors a capability-driven selection asks, and why every other advisor is left out. With no suitable advisor the plan is the structured local review. Nothing is recorded.",
+            argv: &["reasoning", "plan", "--materiality", "material"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["outcome", "budget"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning record",
+        examples: &[ExampleDoc {
+            id: "reasoning-record-refused",
+            title: "Input that is not a record is refused",
+            description: "The writer reads one JSON record (`{\"kind\":\"assessment\",...}`) from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and nothing is written; so is a record that breaks a rule, such as a plan for an assessment nobody recorded.",
+            argv: &["reasoning", "record", "--file", "share/advisors.yaml"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning status",
+        examples: &[ExampleDoc {
+            id: "reasoning-status",
+            title: "The reasoning state of the open task",
+            description: "Assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, and the timeline — derived from the records alone.",
+            argv: &["reasoning", "status", "--task", "all"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["records"]),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning explain",
+        examples: &[ExampleDoc {
+            id: "reasoning-explain-absent",
+            title: "Why a decision was made",
+            description: "One record with the whole chain of its assessment. An id nothing recorded is refused as not found.",
+            argv: &["reasoning", "explain", "conclusion-absent"],
+            setup: &[],
+            expect: Expect::ExitCode(13),
+        }],
+    },
+    CommandExamples {
+        command: "reasoning check",
+        examples: &[ExampleDoc {
+            id: "reasoning-check",
+            title: "Check that reasoning stays provider-independent",
+            description: "The advisor catalogue's references, the transport adapters, the provider-independent sources, CI, the documents and every stored record; exit 10 on a finding.",
+            argv: &["reasoning", "check"],
+            setup: &[],
+            expect: Expect::StdoutContains(&["checks"]),
         }],
     },
 ];

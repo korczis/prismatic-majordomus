@@ -11,6 +11,14 @@
 # alone only decides how long the repository waits before losing the verdict entirely.
 version: 1
 
+# ---------------------------------------------------------------- the shards
+# Since 2026-10-01 the suite runs as four duration-balanced shards (suite-shard in
+# validate.yml, MJ_TEST_SHARD in test/run.sh, dealt from suite-durations.tsv beside this
+# file), and the `suite` job joins their reports and proves every case ran exactly once. The
+# bound and the budgets below are unchanged and apply to the whole suite: the bound to every
+# shard job and to the aggregate, the budgets to the joined report. Re-measure the bound from
+# the first sharded runs; it was set for one runner doing all of it.
+
 # ---------------------------------------------------------------- the bound
 # `timeout-minutes` of the suite job. It is a backstop against a wedged runner, not a target:
 # every case already carries its own `majordomus-timeout:`. One declaration, two readers —

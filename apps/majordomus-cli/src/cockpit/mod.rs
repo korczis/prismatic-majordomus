@@ -25,6 +25,7 @@ pub mod assets;
 pub mod html;
 pub(crate) mod nav;
 pub(crate) mod pages;
+pub(crate) mod reasoning;
 pub(crate) mod view;
 
 use std::sync::Arc;
@@ -175,8 +176,10 @@ impl Cockpit {
             "/cockpit/graphs/topology" => pages::topology(ctx),
             "/cockpit/continuity" => pages::continuity(ctx),
             "/cockpit/worktrees" => pages::worktrees(ctx),
+            "/cockpit/integration" => pages::integration(ctx),
             "/cockpit/mesh" => pages::mesh(ctx),
             "/cockpit/models" => pages::models(ctx),
+            "/cockpit/reasoning" => reasoning::page(ctx),
             "/cockpit/economics" => pages::economics(ctx),
             "/cockpit/directories" => pages::directories(ctx, query),
             "/cockpit/health" => pages::health(ctx),

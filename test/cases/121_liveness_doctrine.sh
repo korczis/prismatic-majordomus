@@ -18,6 +18,13 @@
 # enforces list this case and `test/cases/122_liveness_gate.sh` under their front matter's
 # `tests:`, where a typed reader sees them, not only in prose.
 #
+# Since the scans ADR 0039 named as follow-ups exist, the doctrine also has a shape: the two
+# mechanically decidable rules are blocking and each names the scan that decides it, and the
+# two the ADR reserved for review are advisory and say why in reviewed_because. That split is
+# asserted below, so neither half can drift — a rule cannot be quietly lowered back to
+# advisory once its scan exists, and one cannot be raised to blocking while its only
+# declaration is that review decides.
+#
 # Whether a rule is obliged to carry proof at all is not decided here. That is
 # scripts/ci/rule-proof-check, which asks it of every rule in the set rather than of these
 # four, and test/cases/125_rule_proof.sh mutation-tests it.
@@ -33,14 +40,14 @@ project.recovery-is-idempotent"
 
 # every id in the doctrine resolves to exactly one file that claims it
 for id in $ids; do
-  matches="$(grep -l "^id: $id\$" "$RULES"/*.v1.md 2>/dev/null | wc -l | tr -d ' ')"
+  matches="$(grep -l "^id: $id\$" "$RULES"/*.md 2>/dev/null | wc -l | tr -d ' ')"
   [ "$matches" = 1 ] || { echo "    $id is claimed by $matches files, expected exactly 1"; exit 1; }
 done
 
 field() { sed -n "s/^$2: //p" "$1" | head -1; }
 
 for id in $ids; do
-  f="$(grep -l "^id: $id\$" "$RULES"/*.v1.md)"
+  f="$(grep -l "^id: $id\$" "$RULES"/*.md)"
 
   # the front matter the rules README requires of every rule
   for key in version kind title description statement status class; do
@@ -100,7 +107,7 @@ done
 
 # the doctrine's own dependency spine: the other three rest on the first
 for id in project.every-wait-is-bounded project.commands-run-non-interactively; do
-  f="$(grep -l "^id: $id\$" "$RULES"/*.v1.md)"
+  f="$(grep -l "^id: $id\$" "$RULES"/*.md)"
   grep -q 'project.execution-state-is-authoritative@1' "$f" ||
     { echo "    $id does not depend on project.execution-state-is-authoritative@1"; exit 1; }
 done
@@ -118,7 +125,7 @@ project.execution-state-is-authoritative"
 for id in $served; do
   grep -q "$id" "$GATE" ||
     { echo "    scripts/liveness-check no longer names $id; this case and that header disagree"; exit 1; }
-  f="$(grep -l "^id: $id\$" "$RULES"/*.v1.md)"
+  f="$(grep -l "^id: $id\$" "$RULES"/*.md)"
   # The cases are read from the front matter's `tests:` list, the only place a typed reader
   # (the proof graph, rule-proof-check) looks. Prose naming them is for a person; a rule
   # whose prose names the gate while its front matter says review decides is the same
@@ -135,4 +142,30 @@ for id in $served; do
     { echo "    $id does not name scripts/liveness-check, the gate that decides it"; exit 1; }
 done
 
-echo "    4 liveness rules: identities unique, front matter complete, classes backed, dependencies resolve, 3 name the gate back"
+# the split ADR 0039 drew, now that both scans exist: the mechanically decidable rules are
+# decided by a scan, the other two by review, and each says which in its own block. A
+# reviewed rule may also name the cases of the one shape the gate reads for it (the
+# converse check above asks that of execution-state); the test wins as its mode and the
+# reason stays the declaration for everything the gate cannot see.
+for id in project.commands-run-non-interactively project.every-wait-is-bounded; do
+  f="$(grep -l "^id: $id\$" "$RULES"/*.md)"
+  [ "$(field "$f" class)" = blocking ] ||
+    { echo "    $id: its scan exists, so it is decided by one — class is '$(field "$f" class)', not blocking"; exit 1; }
+  grep -q '^  tests:' "$f" ||
+    { echo "    $id: blocking and names no test; the scan that decides it must be named"; exit 1; }
+  for t in $(sed -n 's/^  tests: \[\(.*\)\]$/\1/p' "$f" | head -1 | tr ',' ' '); do
+    t="$(echo "$t" | tr -d ' ')"
+    [ -n "$t" ] || continue
+    [ -f "$ROOT/$t" ] || { echo "    $id: names $t, which is not in the tree"; exit 1; }
+  done
+done
+
+for id in project.execution-state-is-authoritative project.recovery-is-idempotent; do
+  f="$(grep -l "^id: $id\$" "$RULES"/*.md)"
+  [ "$(field "$f" class)" = advisory ] ||
+    { echo "    $id: ADR 0039 reserved it for review, and nothing here decides it mechanically"; exit 1; }
+  grep -qE '^  reviewed_because: *[^ ]' "$f" ||
+    { echo "    $id: advisory by design and does not say why review decides it"; exit 1; }
+done
+
+echo "    4 liveness rules: identities unique, front matter complete, classes backed, dependencies resolve, 3 name the gate back; 2 decided by their scan, 2 by review"

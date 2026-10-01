@@ -997,6 +997,53 @@ fn cleanup_eligibility_is_derived_and_nothing_is_deleted() {
 }
 
 #[test]
+fn a_branch_the_remote_trunk_contains_is_merged_even_when_the_local_trunk_is_behind() {
+    let f = Fixture::new();
+    let root = f.root();
+    let remote = root.parent().unwrap().join(format!(
+        "remote-{}.git",
+        root.file_name().unwrap().to_string_lossy()
+    ));
+    git(&root, &["init", "-q", "--bare", remote.to_str().unwrap()]);
+    git(
+        &root,
+        &["remote", "add", "origin", remote.to_str().unwrap()],
+    );
+    let trunk = git(&root, &["rev-parse", "--abbrev-ref", "HEAD"]);
+    let trunk = trunk.trim();
+    git(&root, &["push", "-q", "-u", "origin", trunk]);
+    ok(&root, &["worktree", "create", "feature/landed-remotely"]);
+    let wt = f.container().join("feature/landed-remotely");
+    std::fs::write(wt.join("landed.txt"), "x\n").unwrap();
+    git(&wt, &["add", "landed.txt"]);
+    git(
+        &wt,
+        &[
+            "-c",
+            "user.email=t@example.com",
+            "-c",
+            "user.name=t",
+            "commit",
+            "-qm",
+            "landed",
+        ],
+    );
+    // it lands on the remote trunk; the local trunk is not pulled
+    git(&wt, &["push", "-q", "origin", &format!("HEAD:{trunk}")]);
+    git(&root, &["fetch", "-q", "origin"]);
+    let t = json(&root, &["worktree", "topology"]);
+    let b = t["branches"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|b| b["name"] == "feature/landed-remotely")
+        .unwrap()
+        .clone();
+    assert_eq!(b["merged_into_trunk"], true, "{b:#}");
+    assert_eq!(b["cleanup_eligible"], true, "{b:#}");
+}
+
+#[test]
 fn an_issue_is_inferred_only_from_an_exact_id_component_and_create_names_it_that_way() {
     let f = Fixture::new();
     let root = f.root();

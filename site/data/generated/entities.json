@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 62,
+      "count": 70,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 141,
+      "count": 147,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 62
+      "count": 70
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 195
+      "count": 204
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 275
+      "count": 286
     },
     {
       "kind": "feature",
@@ -117,7 +117,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "implementation",
@@ -133,7 +133,7 @@
       "route": "/plan/",
       "title": null,
       "reason": null,
-      "count": 237
+      "count": 238
     },
     {
       "kind": "knowledge",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 141
+      "count": 147
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 256
+      "count": 286
     },
     {
       "kind": "use-case",
@@ -678,6 +678,13 @@
           "label": "adr-0088",
           "kind": "adr",
           "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
           "external": false
         }
       ]
@@ -1273,6 +1280,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0049/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
         }
       ]
     },
@@ -1758,6 +1772,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0049/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
         }
       ]
     },
@@ -2230,9 +2251,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.commands-run-non-interactively@1",
+          "label": "project.commands-run-non-interactively@2",
           "kind": "rule",
-          "route": "/rules/project-commands-run-non-interactively-1/",
+          "route": "/rules/project-commands-run-non-interactively-2/",
           "external": false
         },
         {
@@ -2244,9 +2265,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -2589,6 +2610,13 @@
       "referenced_by": [
         {
           "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
           "label": "adr-0067",
           "kind": "adr",
           "route": "/adrs/adr-0067/",
@@ -2904,7 +2932,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -2951,6 +2987,13 @@
         }
       ],
       "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
         {
           "edge": "put_in_force",
           "label": "adr-0067",
@@ -3369,9 +3412,9 @@
         },
         {
           "edge": "put_in_force",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -3419,6 +3462,156 @@
         "web"
       ],
       "source": ".ai/repo/adrs/0056-every-object-of-the-layer-has-a-derived-address-both-directi.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0059",
+      "identity": "adr-0059",
+      "slug": "adr-0059",
+      "cockpit": "/cockpit/objects/adr/adr-0059",
+      "title": "The mesh is on for this repository, and every session start holds it",
+      "status": "proposed",
+      "tags": [
+        "mesh",
+        "coordination",
+        "operations"
+      ],
+      "source": ".ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/mesh/doctor.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0044",
+          "kind": "adr",
+          "route": "/adrs/adr-0044/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0050",
+          "kind": "adr",
+          "route": "/adrs/adr-0050/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "mesh-declared-is-held",
+          "kind": "claim",
+          "route": "/guarantees/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/MESH.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/capture.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "majordomus",
+          "kind": "mesh-declaration",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/491_the_mesh_is_on_here.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0061",
+      "identity": "adr-0061",
+      "slug": "adr-0061",
+      "cockpit": "/cockpit/objects/adr/adr-0061",
+      "title": "A gate's verdict is evidence, and a rule the repository enforces itself is proven by it",
+      "status": "proposed",
+      "tags": [
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/adrs/0061-a-gate-s-verdict-is-evidence-and-a-rule-the-repository-enfor.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0062",
+      "identity": "adr-0062",
+      "slug": "adr-0062",
+      "cockpit": "/cockpit/objects/adr/adr-0062",
+      "title": "A verification is proved against a commit, and two attempts that disagree are not proof",
+      "status": "proposed",
+      "tags": [
+        "evidence",
+        "verification"
+      ],
+      "source": ".ai/repo/adrs/0062-a-verification-is-proved-against-a-commit-and-two-attempts-t.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0063",
+      "identity": "adr-0063",
+      "slug": "adr-0063",
+      "cockpit": "/cockpit/objects/adr/adr-0063",
+      "title": "A peer's uncommitted work is part of its claim, and a commit that carries it is refused",
+      "status": "proposed",
+      "tags": [
+        "coordination"
+      ],
+      "source": ".ai/repo/adrs/0063-a-peer-s-uncommitted-work-is-part-of-its-claim-and-a-commit-.md",
+      "references": [],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0064",
+      "identity": "adr-0064",
+      "slug": "adr-0064",
+      "cockpit": "/cockpit/objects/adr/adr-0064",
+      "title": "A declared tool has a version, and a mismatch is a finding",
+      "status": "proposed",
+      "tags": [
+        "environment"
+      ],
+      "source": ".ai/repo/adrs/0064-a-declared-tool-has-a-version-and-a-mismatch-is-a-finding.md",
       "references": [],
       "referenced_by": []
     },
@@ -3535,7 +3728,22 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0059",
+          "kind": "adr",
+          "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -4317,6 +4525,289 @@
           "kind": "test",
           "route": null,
           "external": true
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0089",
+      "identity": "adr-0089",
+      "slug": "adr-0089",
+      "cockpit": "/cockpit/objects/adr/adr-0089",
+      "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+      "status": "proposed",
+      "tags": [
+        "ui",
+        "cockpit",
+        "site",
+        "evidence",
+        "enforcement"
+      ],
+      "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ci/gates.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": ".ai/repo/ui-integrity-baseline.txt",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/health.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/cockpit/pages.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "scripts/ci/cockpit-projection-check",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0012",
+          "kind": "adr",
+          "route": "/adrs/adr-0012/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.derived-once@1",
+          "kind": "rule",
+          "route": "/rules/project-derived-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.product-surface-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-product-surface-derived-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-conformance@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-conformance-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/389_cockpit_projection.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/547_the_ui_says_only_what_is_derived.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0098",
+      "identity": "adr-0098",
+      "slug": "adr-0098",
+      "cockpit": "/cockpit/objects/adr/adr-0098",
+      "title": "Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim",
+      "status": "proposed",
+      "tags": [
+        "reasoning",
+        "advisors",
+        "providers",
+        "sessions"
+      ],
+      "source": ".ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/advisors.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0024",
+          "kind": "adr",
+          "route": "/adrs/adr-0024/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0032",
+          "kind": "adr",
+          "route": "/adrs/adr-0032/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0049",
+          "kind": "adr",
+          "route": "/adrs/adr-0049/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/REASONING.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0101",
+      "identity": "adr-0101",
+      "slug": "adr-0101",
+      "cockpit": "/cockpit/objects/adr/adr-0101",
+      "title": "Pull requests are integrated one at a time, each against a master observed a moment before",
+      "status": "proposed",
+      "tags": [
+        "integration",
+        "git",
+        "github",
+        "governance",
+        "safety"
+      ],
+      "source": ".ai/repo/adrs/0101-pull-requests-are-integrated-one-at-a-time-against-the-current-master.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/classify.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/drain.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/mod.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "apps/majordomus-cli/src/integration/tests.rs",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/INTEGRATION.md",
+          "kind": "document",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-network-no-eval@1",
+          "kind": "rule",
+          "route": "/rules/project-no-network-no-eval-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "test/cases/720_integration_follows_the_current_master.sh",
+          "kind": "test",
+          "route": null,
+          "external": false
         }
       ],
       "referenced_by": []
@@ -6969,6 +7460,38 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.a-number-names-one-case@1",
+      "identity": "project.a-number-names-one-case@1",
+      "slug": "project-a-number-names-one-case-1",
+      "cockpit": "/cockpit/objects/rule/project-a-number-names-one-case-1",
+      "title": "A case number names one case",
+      "status": "active",
+      "tags": [
+        "tests",
+        "identifiers",
+        "coordination"
+      ],
+      "source": ".ai/repo/rules/project/a-number-names-one-case.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-verdict-states-its-subject@1",
+          "kind": "rule",
+          "route": "/rules/project-a-verdict-states-its-subject-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.work-is-claimed-before-it-is-built@1",
+          "kind": "rule",
+          "route": "/rules/project-work-is-claimed-before-it-is-built-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
       "identity": "project.a-tool-that-cannot-match-the-tree-refuses@1",
       "slug": "project-a-tool-that-cannot-match-the-tree-refuses-1",
@@ -7028,7 +7551,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.a-number-names-one-case@1",
+          "kind": "rule",
+          "route": "/rules/project-a-number-names-one-case-1/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
@@ -7098,9 +7629,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -7131,6 +7662,54 @@
           "label": "adr-0055",
           "kind": "adr",
           "route": "/adrs/adr-0055/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.advisors-are-optional@1",
+      "identity": "project.advisors-are-optional@1",
+      "slug": "project-advisors-are-optional-1",
+      "cockpit": "/cockpit/objects/rule/project-advisors-are-optional-1",
+      "title": "Advisors are optional; reasoning, governance and CI never depend on one",
+      "status": "active",
+      "tags": [
+        "reasoning",
+        "advisors",
+        "providers",
+        "ci"
+      ],
+      "source": ".ai/repo/rules/project/advisors-are-optional.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.empty-is-not-failure@1",
+          "kind": "rule",
+          "route": "/rules/project-empty-is-not-failure-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.review-is-recorded-not-claimed@1",
+          "kind": "rule",
+          "route": "/rules/project-review-is-recorded-not-claimed-1/",
           "external": false
         }
       ]
@@ -7295,6 +7874,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0048/",
           "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.independent-of-prismatic@1",
+          "kind": "rule",
+          "route": "/rules/project-independent-of-prismatic-1/",
+          "external": false
         }
       ]
     },
@@ -7341,10 +7927,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.commands-run-non-interactively@1",
-      "identity": "project.commands-run-non-interactively@1",
-      "slug": "project-commands-run-non-interactively-1",
-      "cockpit": "/cockpit/objects/rule/project-commands-run-non-interactively-1",
+      "id": "majordomus://rule/project.commands-run-non-interactively@2",
+      "identity": "project.commands-run-non-interactively@2",
+      "slug": "project-commands-run-non-interactively-2",
+      "cockpit": "/cockpit/objects/rule/project-commands-run-non-interactively-2",
       "title": "A command runs with nobody at the keyboard",
       "status": "active",
       "tags": [
@@ -7352,7 +7938,7 @@
         "process",
         "agents"
       ],
-      "source": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+      "source": ".ai/repo/rules/project/commands-run-non-interactively.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -7577,6 +8163,13 @@
           "label": "adr-0020",
           "kind": "adr",
           "route": "/adrs/adr-0020/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
           "external": false
         },
         {
@@ -7954,6 +8547,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.advisors-are-optional@1",
+          "kind": "rule",
+          "route": "/rules/project-advisors-are-optional-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
@@ -8043,9 +8643,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -8132,6 +8732,20 @@
           "label": "adr-0066",
           "kind": "adr",
           "route": "/adrs/adr-0066/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         }
       ]
@@ -8255,10 +8869,10 @@
     },
     {
       "kind": "rule",
-      "id": "majordomus://rule/project.every-wait-is-bounded@1",
-      "identity": "project.every-wait-is-bounded@1",
-      "slug": "project-every-wait-is-bounded-1",
-      "cockpit": "/cockpit/objects/rule/project-every-wait-is-bounded-1",
+      "id": "majordomus://rule/project.every-wait-is-bounded@2",
+      "identity": "project.every-wait-is-bounded@2",
+      "slug": "project-every-wait-is-bounded-2",
+      "cockpit": "/cockpit/objects/rule/project-every-wait-is-bounded-2",
       "title": "Every wait is bounded",
       "status": "active",
       "tags": [
@@ -8266,7 +8880,7 @@
         "shell",
         "orchestration"
       ],
-      "source": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+      "source": ".ai/repo/rules/project/every-wait-is-bounded.v2.md",
       "references": [
         {
           "edge": "depends_on",
@@ -8402,16 +9016,16 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.commands-run-non-interactively@1",
+          "label": "project.commands-run-non-interactively@2",
           "kind": "rule",
-          "route": "/rules/project-commands-run-non-interactively-1/",
+          "route": "/rules/project-commands-run-non-interactively-2/",
           "external": false
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         },
         {
@@ -8676,6 +9290,73 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.independent-of-prismatic@1",
+      "identity": "project.independent-of-prismatic@1",
+      "slug": "project-independent-of-prismatic-1",
+      "cockpit": "/cockpit/objects/rule/project-independent-of-prismatic-1",
+      "title": "Independent of Prismatic",
+      "status": "active",
+      "tags": [
+        "provenance",
+        "dependencies"
+      ],
+      "source": ".ai/repo/rules/project/independent-of-prismatic.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.clean-room@1",
+          "kind": "rule",
+          "route": "/rules/project-clean-room-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.integration-follows-the-current-master@1",
+      "identity": "project.integration-follows-the-current-master@1",
+      "slug": "project-integration-follows-the-current-master-1",
+      "cockpit": "/cockpit/objects/rule/project-integration-follows-the-current-master-1",
+      "title": "Pull requests are integrated one at a time, each decided against the current master, never around the branch protection",
+      "status": "active",
+      "tags": [
+        "integration",
+        "git",
+        "github",
+        "safety",
+        "governance",
+        "evidence"
+      ],
+      "source": ".ai/repo/rules/project/integration-follows-the-current-master.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.accumulation-is-measured@2",
+          "kind": "rule",
+          "route": "/rules/project-accumulation-is-measured-2/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.land-and-publish@1",
+          "kind": "rule",
+          "route": "/rules/project-land-and-publish-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.interfaces-are-projections@1",
       "identity": "project.interfaces-are-projections@1",
       "slug": "project-interfaces-are-projections-1",
@@ -8793,6 +9474,13 @@
           "label": "adr-0088",
           "kind": "adr",
           "route": "/adrs/adr-0088/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
           "external": false
         },
         {
@@ -8958,6 +9646,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.web-surface-declared-once@1",
           "kind": "rule",
           "route": "/rules/project-web-surface-declared-once-1/",
@@ -9023,6 +9718,20 @@
           "label": "adr-0086",
           "kind": "adr",
           "route": "/adrs/adr-0086/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.integration-follows-the-current-master@1",
+          "kind": "rule",
+          "route": "/rules/project-integration-follows-the-current-master-1/",
           "external": false
         },
         {
@@ -9308,9 +10017,9 @@
         },
         {
           "edge": "depends_on",
-          "label": "project.every-wait-is-bounded@1",
+          "label": "project.every-wait-is-bounded@2",
           "kind": "rule",
-          "route": "/rules/project-every-wait-is-bounded-1/",
+          "route": "/rules/project-every-wait-is-bounded-2/",
           "external": false
         }
       ]
@@ -9606,6 +10315,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0101",
+          "kind": "adr",
+          "route": "/adrs/adr-0101/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.envrc-is-an-adapter@2",
           "kind": "rule",
@@ -9809,9 +10525,9 @@
       "referenced_by": [
         {
           "edge": "depends_on",
-          "label": "project.commands-run-non-interactively@1",
+          "label": "project.commands-run-non-interactively@2",
           "kind": "rule",
-          "route": "/rules/project-commands-run-non-interactively-1/",
+          "route": "/rules/project-commands-run-non-interactively-2/",
           "external": false
         }
       ]
@@ -9860,6 +10576,20 @@
           "label": "adr-0023",
           "kind": "adr",
           "route": "/adrs/adr-0023/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         }
       ]
@@ -10077,6 +10807,32 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.review-is-recorded-not-claimed@1",
+      "identity": "project.review-is-recorded-not-claimed@1",
+      "slug": "project-review-is-recorded-not-claimed-1",
+      "cockpit": "/cockpit/objects/rule/project-review-is-recorded-not-claimed-1",
+      "title": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+      "status": "active",
+      "tags": [
+        "reasoning",
+        "advisors",
+        "evidence",
+        "sessions"
+      ],
+      "source": ".ai/repo/rules/project/review-is-recorded-not-claimed.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.advisors-are-optional@1",
+          "kind": "rule",
+          "route": "/rules/project-advisors-are-optional-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",
@@ -10737,6 +11493,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.design-tokens-declared-once@2",
           "kind": "rule",
@@ -10748,6 +11511,63 @@
           "label": "project.every-link-and-control-is-tested@1",
           "kind": "rule",
           "route": "/rules/project-every-link-and-control-is-tested-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.ui-derived-state@1",
+      "identity": "project.ui-derived-state@1",
+      "slug": "project-ui-derived-state-1",
+      "cockpit": "/cockpit/objects/rule/project-ui-derived-state-1",
+      "title": "An interface shows only what is derived, and unknown is never drawn as healthy",
+      "status": "active",
+      "tags": [
+        "ui",
+        "cockpit",
+        "site",
+        "evidence",
+        "derivation",
+        "enforcement"
+      ],
+      "source": ".ai/repo/rules/project/ui-derived-state.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.entry-reports-only-evidence@1",
+          "kind": "rule",
+          "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.interfaces-are-projections@1",
+          "kind": "rule",
+          "route": "/rules/project-interfaces-are-projections-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.product-surface-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-product-surface-derived-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.web-surface-declared-once@1",
+          "kind": "rule",
+          "route": "/rules/project-web-surface-declared-once-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
           "external": false
         }
       ]
@@ -10838,6 +11658,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0089",
+          "kind": "adr",
+          "route": "/adrs/adr-0089/",
+          "external": false
+        },
+        {
           "edge": "defined_in",
           "label": "web-namespaces-reserved",
           "kind": "claim",
@@ -10849,6 +11676,13 @@
           "label": "project.the-crate-reference-is-published@1",
           "kind": "rule",
           "route": "/rules/project-the-crate-reference-is-published-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.ui-derived-state@1",
+          "kind": "rule",
+          "route": "/rules/project-ui-derived-state-1/",
           "external": false
         }
       ]
@@ -10968,6 +11802,13 @@
           "label": "adr-0053",
           "kind": "adr",
           "route": "/adrs/adr-0053/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.a-number-names-one-case@1",
+          "kind": "rule",
+          "route": "/rules/project-a-number-names-one-case-1/",
           "external": false
         },
         {

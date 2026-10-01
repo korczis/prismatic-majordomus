@@ -1,0 +1,88 @@
+# The advisor catalogue this distribution ships (ADR 0098): every advisory role a session
+# may consult for independent review of a material engineering uncertainty, one
+# declaration, projected by `reasoning.advisors` to every surface.
+#
+# An advisor is neither a provider (share/providers.yaml: a client tool working in the
+# repository) nor a vendor (share/models.yaml: a party serving models). It is a role
+# reached through one transport, and this file holds only what the other two tables do not
+# know: the transport, the adapter speaking it (scripts/lib/advisors/<adapter>.mjs), the
+# executable whose presence says it is installed, and the advisory capabilities it offers.
+# Provider, vendor and model are references, and `reasoning.check` refuses one that
+# resolves to nothing.
+#
+# Every advisor is optional. Absence is a status, never a failure: with none of them
+# installed, reasoning plans a structured local review and a session still concludes,
+# implements and validates. Declaration order is the preference order the policy reads,
+# which is where "ask ChatGPT first, then Gemini or Codex" lives — as data, not as a name
+# any code knows.
+version: 1
+
+capabilities:
+  - id: independent_reasoning
+    description: A second, independent line of reasoning about a stated uncertainty and its evidence.
+  - id: architecture_review
+    description: Critique of a design decision, its boundaries and its failure modes.
+  - id: code_review
+    description: Critique of a concrete change or piece of code.
+  - id: security_review
+    description: Critique of a trust boundary, a credential path or an attack surface.
+  - id: test_review
+    description: Critique of what a test proves and what it misses.
+  - id: repository_analysis
+    description: The advisor can read the checkout itself rather than only the evidence it is handed.
+
+advisors:
+  - id: chatgpt
+    title: ChatGPT
+    transport: api
+    adapter: openai-chat
+    vendor: openai
+    model: gpt-4o
+    capabilities: [independent_reasoning, architecture_review, code_review, security_review, test_review]
+    note: The preferred general reviewer; needs the vendor's credential variable set.
+  - id: gemini
+    title: Gemini CLI
+    transport: cli
+    adapter: gemini-cli
+    provider: gemini
+    executable: gemini
+    capabilities: [independent_reasoning, architecture_review, code_review, repository_analysis]
+  - id: codex
+    title: Codex
+    transport: cli
+    adapter: codex-exec
+    provider: codex
+    executable: codex
+    capabilities: [independent_reasoning, code_review, test_review, security_review, repository_analysis]
+    note: Runs read-only against the checkout.
+  - id: ollama
+    title: Ollama
+    transport: local_runtime
+    adapter: ollama-chat
+    vendor: ollama
+    executable: ollama
+    capabilities: [independent_reasoning]
+    note: Stays on the machine, so the offline mode admits it.
+  - id: lmstudio
+    title: LM Studio
+    transport: local_runtime
+    adapter: lmstudio-chat
+    vendor: lmstudio
+    executable: lms
+    capabilities: [independent_reasoning]
+    note: Stays on the machine, so the offline mode admits it.
+
+# Linked mesh runtimes carrying the reviews feature are advisors too, discovered from the
+# mesh rather than listed (ADR 0067); a request reaches one as a mesh review request.
+peers:
+  feature: reviews
+  adapter: mesh-review
+  capabilities: [code_review, independent_reasoning]
+
+# Claims no document of the repository may make. Agreement is evidence about agreement.
+forbidden_claims:
+  - consensus guarantees
+  - consensus proves
+  - majority vote decides
+  - the majority decides
+  - agreement proves correctness

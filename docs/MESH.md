@@ -191,13 +191,12 @@ The guarantees, exactly:
 - **Forward compatibility:** an event of a kind this executable does not know is stored and
   relayed, not interpreted. An event of a known kind out of bounds is refused.
 - **Bounds:** 48 KiB per event, 32 KiB per handover body, 64 paths per claim, 64 streams per
-  node. Streams expired longer than 15 minutes (and holding no handover) are compacted away
+  node. Streams expired longer than 15 minutes that nothing still needs are compacted away
   when the journal passes 20 000 events or 768 streams, and a node's own such streams when
   it holds 48 — every worktree of a machine signs with the machine's key and every server
   restart is a new stream, so a machine would otherwise fill its quota by running and its
-  later runs would be refused. A stream never heard beating counts as silent from when the
-  journal learned of it, so the streams a restart reloads are not taken for dead at once;
-  compaction forgets the ended sessions and claims of what it drops, never a live one.
+  later runs would be refused. What compaction keeps, and how a compacted stream that
+  returns is heard again, is [Compaction](#compaction).
 
 ## State synchronisation
 
@@ -206,7 +205,7 @@ Replication is a comparison of marks, not a flood. A sync request carries the di
 lack; the answer carries the answerer's marks and the events the request's marks lack. One
 round replicates both ways. A runtime joining late — or rejoining after a partition — gets
 exactly what its marks lack in its first rounds (600 KiB per round), which after compaction is
-the live state plus retained handovers, not an unbounded history. Once marks agree, rounds
+the live state plus what compaction keeps, not an unbounded history. Once marks agree, rounds
 carry no events: replication stops rather than loops.
 
 `mesh.state` folds the journal: every runtime with the same events and the same liveness
@@ -243,6 +242,67 @@ path of the publishing machine travels. On another runtime, `mesh handover consu
 into that checkout's handovers directory — once, however often consumed — naming the local
 repository and `mesh:<origin runtime>` as its worktree, so `majordomus handover --resolve` on
 the same branch finds it as another checkout's handover.
+
+## Compaction
+
+Every server restart is a new stream, so a journal that kept everything would grow without
+bound and a machine would fill its 64-stream quota by running. Compaction drops the streams
+nothing needs any more. Each runtime runs it on its own, every sixty heartbeats (five minutes
+at the defaults), and only when its journal holds more than 20 000 events or 768 streams or
+when one node holds 48 streams — then that node's streams alone are due. A stream can go only
+when it has been silent for longer than the expiry plus 15 minutes, measured on the local
+clock from the last beat heard or, for a stream never heard beating, from when the journal
+learned of it (so the streams a restart reloads are not taken for dead at once). A runtime
+never drops its own stream. Of the streams that could go, one stays while:
+
+- **it published a handover nobody has taken** — for at most a day past those 15 minutes
+  (`HANDOVER_RETENTION`). A handover is continuity meant to outlive the run that wrote it;
+  the day bounds how much of its node's quota a machine's untaken handovers can hold. A
+  handover somebody has taken keeps nothing. A lapsed one is still its author's record, and
+  `mesh handover publish` offers it again under the same id.
+- **it holds the taking of a handover, or the answer to a review, that stays.** Who took a
+  handover and who answered a review are events of the taker's stream. Dropping that stream
+  while the handover or the review stays would make a handover still offered look untaken
+  and an answered review open again. Keeping one stream can keep the stream that answered
+  it, so this is applied until nothing changes.
+
+Who took what and who answered what are read by the fold, as every surface reads them. A
+review request keeps nothing on its own: it asks something of the session that made it, and
+once that session's runtime is long dead and nothing else keeps its stream, the request goes
+with it. So compaction forgets the ended sessions and claims, the taken handovers and the
+requests of what it drops — never a claim that holds or a session that is open, never a
+handover still offered, and never who took or answered what stays. A property test holds
+that over random histories of dead and live runs.
+
+**Tombstones.** A dropped stream leaves a tombstone: the sequence it reached, advertised as its
+mark so that a peer still holding the stream does not send it again, and the beat it was last
+heard at. A late copy of what was held, or an event the stream wrote after it was compacted,
+changes nothing; the mark rises over a later event, so a relay that holds it stops offering it.
+Tombstones live in memory: a restarted runtime has none, may be sent a compacted stream again,
+and drops it again once it has been silent there as long as any stream must be.
+
+**A compacted stream that returns.** A laptop that sleeps past the expiry and the 15 minutes is
+compacted away by its peers; it wakes as the same process, so as the same stream, and goes on
+writing. A fresh beat from it — signed by its key, from a trusted origin, within the expiry,
+and above the beat its tombstone holds — lifts the tombstone: the stream's mark falls to
+nothing held, and the peers send it again from its first event. From the first event and not
+from the tombstone's mark, because what the stream said before it was compacted is live again
+with it: a claim it took and never released holds again the moment it beats, and a runtime
+holding only the part after the mark would admit a claim that conflicts with it, and would
+see releases of claims it never knew. The origin never compacts its own stream, so the whole
+stream is always there to fetch; a return costs one refetch, bounded by the node's quota and
+600 KiB a round. A relay replaying the old beat, however fresh it says it is, lifts nothing.
+
+**Digests while runtimes compact.** Each runtime decides on its own when compaction is due, so
+two runtimes can hold different sets of dead streams for a while: one has forgotten a dead
+stream's ended sessions and claims, or a taken handover, that the other still lists. The
+`digest` covers those records, so `mesh state` and `mesh verify` can print different digests
+on two runtimes that agree on everything live — held and conflicted claims, open sessions,
+handovers still offered with their takers, answered reviews — for up to one schedule when both
+are due, and for as long as one of them is not. Marks are unaffected: a tombstone advertises
+the sequence its stream reached, so `mesh verify`'s `converged`, which compares marks, holds.
+Compare digests between runtimes that are both past their compaction, or compare the live
+claims.
 
 ## Sessions and the peer board
 
@@ -363,26 +423,63 @@ private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refu
 declaration that names a public one.
 
 **Adding a machine.** Run `majordomus mesh identity` there, add the key under `trust.allow` with
-a comment naming the machine, and commit it; `majordomus mesh doctor` on that machine passes its
+a comment naming the machine and its node id to the trust row of the table above, and commit
+both; `majordomus mesh doctor` on that machine passes its
 `trust` check once the key is listed, and names the remedy until then. A new hub is a server
 started with `majordomus serve --host 0.0.0.0 --port 8791` on the machine, and its addresses
 added under `rendezvous.endpoints`.
 
-**Turning it off.** Commit `enabled: false`; a server started after that opens nothing and
-`mesh status` says why.
+**Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
+`mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,
+so it is a decision of its own: case 494 refuses a disabled declaration until the decision and
+the case change with it.
+
+**Whether the server holds it.** The declaration says what should run; the shared server
+decides what does, and the two can drift — on 2026-09-12 three machines ran an uncommitted
+`enabled: true` while the committed file said `false`, and the one reset to it was silently
+alone (ADR 0059). So `mesh doctor` ends with a `runtime` check that is the server's verdict:
+
+| `runtime` says | when | verdict |
+|---|---|---|
+| `active as <node> since …: n of m provider(s) running; …` | the server activated the mesh | holds; fails only when every declared transport failed |
+| `off, as declared — …` | the declaration is disabled and the server left the mesh off | holds |
+| `the declaration is enabled and this server's mesh is not active — <reason>` | the server could not, or did not, activate an enabled declaration | **fails**, with the impact and the restart that follows fixing the reason |
+| `not decided in this process: …` | no server runs in the process asked | holds: an absence, not a verdict |
+
+`majordomus mesh doctor` asks this checkout's running server for its report when one serves
+it — the verdict is the server's — and runs in its own process when none does; it exits 10 on
+any failed check. `majordomus run mesh.doctor` is the self-check of the invoking process alone,
+under its own state directory, and never asks a server.
+
+**The session start says it.** The briefing the provider's start event injects carries one line
+under the server line whenever the repository tracks a declaration and the server is ready:
+
+```
+Shared server: ready http://127.0.0.1:8741 pid 123 version 0.10.0
+Mesh: active — 2 of 2 provider(s) running; 2 node(s) known, 2 trusted, 2 present
+Mesh: off, as declared
+Mesh: DECLARED ENABLED BUT NOT ACTIVE — identity: …/majordomus/node.json: Is a directory (os error 21)
+```
+
+(one of the three). A tracked declaration the index cannot read is
+`Mesh: DECLARATION NOT READ — …`. The line is the executable's `mesh doctor` rendered by the
+hook library, which sends no request of its own (SECURITY.md); with no ready server there is no
+line, and the server line above says why.
 
 **What holds it.** `test/cases/491_the_mesh_is_on_here.sh`: the committed declaration is the
-reviewed one as the executable reads it, `mesh doctor` holds over this repository, two
+reviewed one as the executable reads it, the self-check holds over this repository, two
 worktrees under one key link, an unlisted key is refused `untrusted`, and a machine whose key is
-missing is told so. A fuller design — the doctor judging the running server and not only the
-machine, a session-start briefing line naming the mesh, and a script that installs a hub as a
-systemd user unit — is proposed on the branch `feature/the-mesh-is-on-and-held` (its ADR 0059)
-and is not part of this tree.
+missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
+tracked, enabled, `deny_unknown`, allowlists at least as many keys as the trust row above names
+machines, and names a hub — so adding a machine is a key under `trust.allow` and a node id in
+that row, in one commit — and a disposable repository proves every briefing answer and exit 10
+through the start event. The hubs are started by hand; an installer that runs one as a service
+is owed as a typed capability or a Rhai workflow (ADR 0059).
 
 ## Operating it
 
 ```sh
-majordomus mesh doctor            # prerequisites on this machine, each failure with impact and remedy
+majordomus mesh doctor            # prerequisites and the server's runtime verdict; exits 10 on a failed check
 majordomus mesh identity          # this machine's key, for trust.allow
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
@@ -423,7 +520,8 @@ the same capabilities from their Capabilities pages.
 ## Troubleshooting
 
 1. **`mesh doctor`** on each machine. A failed `declaration`, `identity`, `trust`,
-   `repository`, `udp` or `multicast` check names its impact and remedy.
+   `repository`, `udp` or `multicast` check names its impact and remedy; a failed `runtime`
+   check is the server's: the declaration is enabled and its mesh is not active, and why.
 2. **`mesh status`** — discovery. No nodes: multicast is not routed between the machines;
    declare `cooperation.seeds` or a rendezvous. Rising `signature` refusals: a broken or
    hostile sender. `version` refusals: a peer runs an executable older than discovery
@@ -435,7 +533,9 @@ the same capabilities from their Capabilities pages.
    `connecting` with a `last_error` of "connection refused": the peer listens on loopback.
 4. **`mesh verify`** — a live round with every dialed peer, and whether both hold the same
    marks afterwards. `NOT converged` right after a burst of events is one round of lag; a
-   persistent one with `journal pending > 0` is a peer relaying a partial stream.
+   persistent one with `journal pending > 0` is a peer relaying a partial stream. Two
+   runtimes printing different digests while converged is compaction on different schedules
+   ([Compaction](#compaction)), not a divergence of anything live.
 5. Server logs carry `runtime_id`, `peer`, `link_id`, `session_id`, `repository_id` and the
    refusal `code` on every link event.
 
@@ -443,7 +543,8 @@ the same capabilities from their Capabilities pages.
 
 | level | what | where | runs |
 |---|---|---|---|
-| unit & property | journal dedup, gaps, hostile events, beats; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity | `cargo test --lib mesh` | CI `rust` |
+| unit & property | journal dedup, gaps, hostile events, beats; compaction changes nothing live, bounds a handover's hold and hears a returning stream again; fold order/duplicate independence and exclusivity; handshake refusals; three-runtime relay; partition reconciliation; board projection; handover materialisation; repository identity | `cargo test --lib mesh` | CI `rust` |
+| two runtimes in process | the real link protocol over an in-process transport: a runtime compacted while it slept is heard again whole; takers and answers outlive their runs; a taken handover keeps its stopped publisher nowhere | `cargo test --test mesh_compaction`, `test/run.sh 493_mesh_compaction_keeps_what_is_live` | CI `rust`, `suite` |
 | multi-process integration | separate `majordomus serve` processes with separate keys over TCP: two-runtime cooperation (sessions, claims, conflicts, reviews, handover, CLI parity, verify), repository isolation, untrusted key, SIGKILL expiry and restart, three runtimes in a line, hostile messages over HTTP, two worktrees under one key | `cargo test --test mesh_cooperation` | CI `rust`, `macos` |
 | network lab | four Linux containers on one docker bridge: multicast discovery with no seeds, full-mesh handshake, repository isolation, cross-node claim and conflict, cross-node handover, three-node convergence, network partition and healing, process crash and restart, `mesh verify` in a node | `test/mesh-lab/run` → `target/mesh-lab/evidence.json` | CI `mesh-lab` |
 | physical machines | the procedure below | manual | recorded when run |
@@ -497,7 +598,8 @@ Guaranteed and tested: authenticated links with typed refusals; repository isola
 cross-runtime exclusive claims with deterministic conflict resolution; liveness and expiry
 without clock agreement; reconnection without duplicate peers; convergence through relays with
 each event held once; at-least-once delivery with idempotent application; handovers and reviews
-across runtimes; one state across every surface.
+across runtimes; compaction that changes nothing live and hears a returning stream again; one
+state across every surface.
 
 Not guaranteed: exactly-once delivery; strong consistency or linearisable claims; availability of
 a claim during a partition beyond each side's view; confidentiality on the wire; WAN operation,
