@@ -730,249 +730,250 @@
 <a href=#730 id=730 data-nosnippet>730</a><span class="doccomment">/// Is the process with this id alive on this machine? A lease is a file of this checkout,
 <a href=#731 id=731 data-nosnippet>731</a>/// so its pid is a pid of this host. `kill(pid, 0)` delivers nothing and asks only whether
 <a href=#732 id=732 data-nosnippet>732</a>/// the process exists; a process owned by somebody else answers `EPERM`, which is alive.
-<a href=#733 id=733 data-nosnippet>733</a></span><span class="kw">fn </span>alive(pid: u32) -&gt; bool {
-<a href=#734 id=734 data-nosnippet>734</a>    <span class="kw">if </span>pid == <span class="number">0 </span>{
-<a href=#735 id=735 data-nosnippet>735</a>        <span class="kw">return </span><span class="bool-val">false</span>;
-<a href=#736 id=736 data-nosnippet>736</a>    }
-<a href=#737 id=737 data-nosnippet>737</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(pid) = libc::pid_t::try_from(pid) <span class="kw">else </span>{
-<a href=#738 id=738 data-nosnippet>738</a>        <span class="kw">return </span><span class="bool-val">false</span>;
-<a href=#739 id=739 data-nosnippet>739</a>    };
-<a href=#740 id=740 data-nosnippet>740</a>    <span class="comment">// SAFETY: signal 0 performs the existence and permission check and sends nothing.
-<a href=#741 id=741 data-nosnippet>741</a>    </span><span class="kw">let </span>rc = <span class="kw">unsafe </span>{ libc::kill(pid, <span class="number">0</span>) };
-<a href=#742 id=742 data-nosnippet>742</a>    rc == <span class="number">0 </span>|| std::io::Error::last_os_error().raw_os_error() == <span class="prelude-val">Some</span>(libc::EPERM)
-<a href=#743 id=743 data-nosnippet>743</a>}
-<a href=#744 id=744 data-nosnippet>744</a>
-<a href=#745 id=745 data-nosnippet>745</a><span class="kw">impl </span>Lease {
-<a href=#746 id=746 data-nosnippet>746</a>    <span class="doccomment">/// The file.
-<a href=#747 id=747 data-nosnippet>747</a>    </span><span class="kw">pub fn </span>path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Path {
-<a href=#748 id=748 data-nosnippet>748</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.path
-<a href=#749 id=749 data-nosnippet>749</a>    }
-<a href=#750 id=750 data-nosnippet>750</a>
-<a href=#751 id=751 data-nosnippet>751</a>    <span class="doccomment">/// The repository root the lease is for.
-<a href=#752 id=752 data-nosnippet>752</a>    </span><span class="kw">pub fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Path {
-<a href=#753 id=753 data-nosnippet>753</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.root
-<a href=#754 id=754 data-nosnippet>754</a>    }
-<a href=#755 id=755 data-nosnippet>755</a>
-<a href=#756 id=756 data-nosnippet>756</a>    <span class="doccomment">/// When this process took the lease, RFC 3339: the identity of this server's
-<a href=#757 id=757 data-nosnippet>757</a>    /// generation, the same value the lease file carries as `started_at`.
-<a href=#758 id=758 data-nosnippet>758</a>    </span><span class="kw">pub fn </span>started_at(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-<a href=#759 id=759 data-nosnippet>759</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.started_at
-<a href=#760 id=760 data-nosnippet>760</a>    }
-<a href=#761 id=761 data-nosnippet>761</a>
-<a href=#762 id=762 data-nosnippet>762</a>    <span class="doccomment">/// What makes the file this process's. For the server's own reader, which checks from
-<a href=#763 id=763 data-nosnippet>763</a>    /// another thread whether the lease is still its own.
-<a href=#764 id=764 data-nosnippet>764</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>token(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
-<a href=#765 id=765 data-nosnippet>765</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.token
-<a href=#766 id=766 data-nosnippet>766</a>    }
-<a href=#767 id=767 data-nosnippet>767</a>
-<a href=#768 id=768 data-nosnippet>768</a>    <span class="doccomment">/// Keep the lease young while the layer loads. A peer that finds a lease without a URL
-<a href=#769 id=769 data-nosnippet>769</a>    /// waits for it only as long as the file is younger than [`BIND_GRACE`]; a cold start
-<a href=#770 id=770 data-nosnippet>770</a>    /// that takes longer than that — a large layer, a machine under load — would otherwise
-<a href=#771 id=771 data-nosnippet>771</a>    /// be taken for an abandoned one and taken over while its owner is still binding. So
-<a href=#772 id=772 data-nosnippet>772</a>    /// until [`Lease::publish`], a thread rewrites the same document every third of the
-<a href=#773 id=773 data-nosnippet>773</a>    /// grace, under the lock `publish` also takes, so that a touch can never land after the
-<a href=#774 id=774 data-nosnippet>774</a>    /// URL. It writes only while the file is still this process's: a lease that was taken
-<a href=#775 id=775 data-nosnippet>775</a>    /// over anyway is somebody else's to write.
-<a href=#776 id=776 data-nosnippet>776</a>    ///
-<a href=#777 id=777 data-nosnippet>777</a>    /// ```
-<a href=#778 id=778 data-nosnippet>778</a>    /// use majordomus_cli::lease::{elect, held, LeaseFile, Role};
-<a href=#779 id=779 data-nosnippet>779</a>    /// use majordomus_cli::Repository;
-<a href=#780 id=780 data-nosnippet>780</a>    /// let dir = tempfile::tempdir().unwrap();
-<a href=#781 id=781 data-nosnippet>781</a>    /// std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
-<a href=#782 id=782 data-nosnippet>782</a>    /// std::fs::write(dir.path().join(".ai/manifest.yaml"),
-<a href=#783 id=783 data-nosnippet>783</a>    ///     "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").unwrap();
-<a href=#784 id=784 data-nosnippet>784</a>    /// let repo = Repository::discover(dir.path()).unwrap();
-<a href=#785 id=785 data-nosnippet>785</a>    /// let Role::Server(lease) = elect(&amp;repo).unwrap() else { panic!("nobody else serves a fresh directory") };
-<a href=#786 id=786 data-nosnippet>786</a>    /// lease.keep_alive();                         // returns at once; the touching runs beside the load
-<a href=#787 id=787 data-nosnippet>787</a>    /// assert!(held().is_none(), "nothing is published yet");
-<a href=#788 id=788 data-nosnippet>788</a>    /// lease.publish("http://127.0.0.1:1").unwrap();  // stops the touching, under the same lock
-<a href=#789 id=789 data-nosnippet>789</a>    /// assert_eq!(held().unwrap().url.as_deref(), Some("http://127.0.0.1:1"));
-<a href=#790 id=790 data-nosnippet>790</a>    /// assert!(matches!(LeaseFile::read(lease.path()), LeaseFile::Document(d) if d.url.is_some()));
-<a href=#791 id=791 data-nosnippet>791</a>    /// lease.release();
-<a href=#792 id=792 data-nosnippet>792</a>    /// assert_eq!(LeaseFile::read(&amp;dir.path().join(".ai/local/state/mcp/server.json")), LeaseFile::Absent);
-<a href=#793 id=793 data-nosnippet>793</a>    /// ```
-<a href=#794 id=794 data-nosnippet>794</a>    </span><span class="kw">pub fn </span>keep_alive(<span class="kw-2">&amp;</span><span class="self">self</span>) {
-<a href=#795 id=795 data-nosnippet>795</a>        <span class="kw">let </span>path = <span class="self">self</span>.path.clone();
-<a href=#796 id=796 data-nosnippet>796</a>        <span class="kw">let </span>token = <span class="self">self</span>.token.clone();
-<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">let </span>binding = Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.binding);
-<a href=#798 id=798 data-nosnippet>798</a>        <span class="kw">let </span>document = serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>.document(<span class="prelude-val">None</span>)).unwrap_or_default();
-<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span>tick = BIND_GRACE / <span class="number">3</span>;
-<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let _ </span>= std::thread::Builder::new()
-<a href=#801 id=801 data-nosnippet>801</a>            .name(<span class="string">"majordomus-lease-keep-alive"</span>.into())
-<a href=#802 id=802 data-nosnippet>802</a>            .spawn(<span class="kw">move </span>|| <span class="kw">loop </span>{
-<a href=#803 id=803 data-nosnippet>803</a>                std::thread::sleep(tick);
-<a href=#804 id=804 data-nosnippet>804</a>                <span class="kw">let </span><span class="prelude-val">Ok</span>(guard) = binding.lock() <span class="kw">else </span>{ <span class="kw">return </span>};
-<a href=#805 id=805 data-nosnippet>805</a>                <span class="kw">if </span>!<span class="kw-2">*</span>guard {
-<a href=#806 id=806 data-nosnippet>806</a>                    <span class="kw">return</span>;
-<a href=#807 id=807 data-nosnippet>807</a>                }
-<a href=#808 id=808 data-nosnippet>808</a>                <span class="kw">let </span>mine = LeaseFile::read(<span class="kw-2">&amp;</span>path)
-<a href=#809 id=809 data-nosnippet>809</a>                    .document()
-<a href=#810 id=810 data-nosnippet>810</a>                    .is_some_and(|d| d.token == token);
-<a href=#811 id=811 data-nosnippet>811</a>                <span class="kw">if </span>!mine {
-<a href=#812 id=812 data-nosnippet>812</a>                    <span class="kw">return</span>;
-<a href=#813 id=813 data-nosnippet>813</a>                }
-<a href=#814 id=814 data-nosnippet>814</a>                <span class="kw">let </span>tmp = path.with_extension(<span class="string">"json.tmp"</span>);
-<a href=#815 id=815 data-nosnippet>815</a>                <span class="kw">if </span>fs::write(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span>document).is_ok() {
-<a href=#816 id=816 data-nosnippet>816</a>                    <span class="kw">let _ </span>= fs::rename(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span>path);
-<a href=#817 id=817 data-nosnippet>817</a>                }
-<a href=#818 id=818 data-nosnippet>818</a>            });
-<a href=#819 id=819 data-nosnippet>819</a>    }
-<a href=#820 id=820 data-nosnippet>820</a>
-<a href=#821 id=821 data-nosnippet>821</a>    <span class="kw">fn </span>document(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; LeaseDocument {
-<a href=#822 id=822 data-nosnippet>822</a>        LeaseDocument {
-<a href=#823 id=823 data-nosnippet>823</a>            schema: SCHEMA.into(),
-<a href=#824 id=824 data-nosnippet>824</a>            pid: std::process::id(),
-<a href=#825 id=825 data-nosnippet>825</a>            token: <span class="self">self</span>.token.clone(),
-<a href=#826 id=826 data-nosnippet>826</a>            root: <span class="self">self</span>.root.clone(),
-<a href=#827 id=827 data-nosnippet>827</a>            url: url.map(str::to_string),
-<a href=#828 id=828 data-nosnippet>828</a>            started_at: <span class="self">self</span>.started_at.clone(),
-<a href=#829 id=829 data-nosnippet>829</a>            executable: executable_identity(),
-<a href=#830 id=830 data-nosnippet>830</a>            version: <span class="prelude-val">Some</span>(<span class="kw">crate</span>::VERSION.into()),
-<a href=#831 id=831 data-nosnippet>831</a>        }
-<a href=#832 id=832 data-nosnippet>832</a>    }
-<a href=#833 id=833 data-nosnippet>833</a>
-<a href=#834 id=834 data-nosnippet>834</a>    <span class="doccomment">/// Record the URL the server is listening on, atomically, so that a peer reading the
-<a href=#835 id=835 data-nosnippet>835</a>    /// file sees either no URL or the whole one. Refused when the file is no longer this
-<a href=#836 id=836 data-nosnippet>836</a>    /// process's: a lease taken over while its owner was binding belongs to whoever took it,
-<a href=#837 id=837 data-nosnippet>837</a>    /// and writing over it would leave two servers claiming one address.
-<a href=#838 id=838 data-nosnippet>838</a>    </span><span class="kw">pub fn </span>publish(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-<a href=#839 id=839 data-nosnippet>839</a>        <span class="kw">let </span><span class="kw-2">mut </span>binding = <span class="self">self</span>.binding.lock().map_err(|<span class="kw">_</span>| Error::Lease {
-<a href=#840 id=840 data-nosnippet>840</a>            reason: <span class="string">"the lease's binding lock is poisoned"</span>.into(),
-<a href=#841 id=841 data-nosnippet>841</a>        })<span class="question-mark">?</span>;
-<a href=#842 id=842 data-nosnippet>842</a>        <span class="kw-2">*</span>binding = <span class="bool-val">false</span>;
-<a href=#843 id=843 data-nosnippet>843</a>        <span class="kw">if </span>!<span class="self">self</span>.is_mine() {
-<a href=#844 id=844 data-nosnippet>844</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Lease {
-<a href=#845 id=845 data-nosnippet>845</a>                reason: <span class="macro">format!</span>(
-<a href=#846 id=846 data-nosnippet>846</a>                    <span class="string">"the lease at {} was taken over while this server was starting; another process serves this checkout"</span>,
-<a href=#847 id=847 data-nosnippet>847</a>                    <span class="self">self</span>.path.display()
-<a href=#848 id=848 data-nosnippet>848</a>                ),
-<a href=#849 id=849 data-nosnippet>849</a>            });
-<a href=#850 id=850 data-nosnippet>850</a>        }
-<a href=#851 id=851 data-nosnippet>851</a>        <span class="kw">let </span>tmp = <span class="self">self</span>.path.with_extension(<span class="string">"json.tmp"</span>);
-<a href=#852 id=852 data-nosnippet>852</a>        <span class="kw">let </span>document = <span class="self">self</span>.document(<span class="prelude-val">Some</span>(url));
-<a href=#853 id=853 data-nosnippet>853</a>        <span class="kw">let </span>text = serde_json::to_string(<span class="kw-2">&amp;</span>document).map_err(|e| Error::Lease {
-<a href=#854 id=854 data-nosnippet>854</a>            reason: <span class="macro">format!</span>(<span class="string">"cannot render the lease: {e}"</span>),
-<a href=#855 id=855 data-nosnippet>855</a>        })<span class="question-mark">?</span>;
-<a href=#856 id=856 data-nosnippet>856</a>        fs::write(<span class="kw-2">&amp;</span>tmp, text).map_err(|e| Error::io(<span class="kw-2">&amp;</span>tmp, e))<span class="question-mark">?</span>;
-<a href=#857 id=857 data-nosnippet>857</a>        fs::rename(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span><span class="self">self</span>.path).map_err(|e| Error::io(<span class="kw-2">&amp;</span><span class="self">self</span>.path, e))<span class="question-mark">?</span>;
-<a href=#858 id=858 data-nosnippet>858</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>slot) = published().lock() {
-<a href=#859 id=859 data-nosnippet>859</a>            <span class="kw-2">*</span>slot = <span class="prelude-val">Some</span>(document);
-<a href=#860 id=860 data-nosnippet>860</a>        }
-<a href=#861 id=861 data-nosnippet>861</a>        <span class="prelude-val">Ok</span>(())
-<a href=#862 id=862 data-nosnippet>862</a>    }
-<a href=#863 id=863 data-nosnippet>863</a>
-<a href=#864 id=864 data-nosnippet>864</a>    <span class="doccomment">/// Is the file on disk still this process's lease?
-<a href=#865 id=865 data-nosnippet>865</a>    </span><span class="kw">fn </span>is_mine(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#866 id=866 data-nosnippet>866</a>        LeaseFile::read(<span class="kw-2">&amp;</span><span class="self">self</span>.path)
-<a href=#867 id=867 data-nosnippet>867</a>            .document()
-<a href=#868 id=868 data-nosnippet>868</a>            .is_some_and(|d| d.token == <span class="self">self</span>.token)
-<a href=#869 id=869 data-nosnippet>869</a>    }
-<a href=#870 id=870 data-nosnippet>870</a>
-<a href=#871 id=871 data-nosnippet>871</a>    <span class="doccomment">/// Remove the lease: the server has stopped.
-<a href=#872 id=872 data-nosnippet>872</a>    </span><span class="kw">pub fn </span>release(<span class="kw-2">mut </span><span class="self">self</span>) {
-<a href=#873 id=873 data-nosnippet>873</a>        <span class="self">self</span>.release_now();
-<a href=#874 id=874 data-nosnippet>874</a>    }
-<a href=#875 id=875 data-nosnippet>875</a>
-<a href=#876 id=876 data-nosnippet>876</a>    <span class="kw">fn </span>release_now(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#877 id=877 data-nosnippet>877</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>binding) = <span class="self">self</span>.binding.lock() {
-<a href=#878 id=878 data-nosnippet>878</a>            <span class="kw-2">*</span>binding = <span class="bool-val">false</span>;
-<a href=#879 id=879 data-nosnippet>879</a>        }
-<a href=#880 id=880 data-nosnippet>880</a>        <span class="kw">if </span>!<span class="self">self</span>.released &amp;&amp; <span class="self">self</span>.is_mine() {
-<a href=#881 id=881 data-nosnippet>881</a>            <span class="kw">let _ </span>= fs::remove_file(<span class="kw-2">&amp;</span><span class="self">self</span>.path);
-<a href=#882 id=882 data-nosnippet>882</a>        }
-<a href=#883 id=883 data-nosnippet>883</a>        <span class="self">self</span>.released = <span class="bool-val">true</span>;
-<a href=#884 id=884 data-nosnippet>884</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>slot) = published().lock() {
-<a href=#885 id=885 data-nosnippet>885</a>            <span class="kw">if </span>slot.as_ref().is_some_and(|d| d.token == <span class="self">self</span>.token) {
-<a href=#886 id=886 data-nosnippet>886</a>                <span class="kw-2">*</span>slot = <span class="prelude-val">None</span>;
-<a href=#887 id=887 data-nosnippet>887</a>            }
-<a href=#888 id=888 data-nosnippet>888</a>        }
-<a href=#889 id=889 data-nosnippet>889</a>        signals::release();
-<a href=#890 id=890 data-nosnippet>890</a>    }
-<a href=#891 id=891 data-nosnippet>891</a>}
-<a href=#892 id=892 data-nosnippet>892</a>
-<a href=#893 id=893 data-nosnippet>893</a><span class="kw">impl </span>Drop <span class="kw">for </span>Lease {
-<a href=#894 id=894 data-nosnippet>894</a>    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#895 id=895 data-nosnippet>895</a>        <span class="self">self</span>.release_now();
-<a href=#896 id=896 data-nosnippet>896</a>    }
-<a href=#897 id=897 data-nosnippet>897</a>}
-<a href=#898 id=898 data-nosnippet>898</a>
-<a href=#899 id=899 data-nosnippet>899</a><span class="doccomment">/// The lease is removed when the process dies of `SIGTERM`, `SIGINT` or `SIGHUP`: a client
-<a href=#900 id=900 data-nosnippet>900</a>/// killing its server, a person pressing Ctrl-C, a terminal closing. The handler does only
-<a href=#901 id=901 data-nosnippet>901</a>/// what is safe inside a signal handler: `unlink` the path recorded when the lease was
-<a href=#902 id=902 data-nosnippet>902</a>/// taken, restore the default disposition, and raise the signal again so that the exit
-<a href=#903 id=903 data-nosnippet>903</a>/// status still says which signal it was. The path is recorded once per process (a
-<a href=#904 id=904 data-nosnippet>904</a>/// repository's lease never moves) and is never freed, because a handler may be reading
-<a href=#905 id=905 data-nosnippet>905</a>/// it. A `kill -9` cannot be caught: the next process finds the stale lease and takes it
-<a href=#906 id=906 data-nosnippet>906</a>/// over.
-<a href=#907 id=907 data-nosnippet>907</a></span><span class="attr">#[cfg(unix)]
-<a href=#908 id=908 data-nosnippet>908</a></span><span class="kw">mod </span>signals {
-<a href=#909 id=909 data-nosnippet>909</a>    <span class="kw">use </span>std::ffi::CString;
-<a href=#910 id=910 data-nosnippet>910</a>    <span class="kw">use </span>std::os::unix::ffi::OsStrExt;
-<a href=#911 id=911 data-nosnippet>911</a>    <span class="kw">use </span>std::path::Path;
-<a href=#912 id=912 data-nosnippet>912</a>    <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
-<a href=#913 id=913 data-nosnippet>913</a>    <span class="kw">use </span>std::sync::Once;
-<a href=#914 id=914 data-nosnippet>914</a>
-<a href=#915 id=915 data-nosnippet>915</a>    <span class="kw">static </span>HELD: AtomicBool = AtomicBool::new(<span class="bool-val">false</span>);
-<a href=#916 id=916 data-nosnippet>916</a>    <span class="kw">static </span>PATH: AtomicPtr&lt;libc::c_char&gt; = AtomicPtr::new(std::ptr::null_mut());
-<a href=#917 id=917 data-nosnippet>917</a>    <span class="kw">static </span>INSTALL: Once = Once::new();
-<a href=#918 id=918 data-nosnippet>918</a>
-<a href=#919 id=919 data-nosnippet>919</a>    <span class="doccomment">/// This process now holds the lease at `path`; install the handlers the first time.
-<a href=#920 id=920 data-nosnippet>920</a>    </span><span class="kw">pub fn </span>hold(path: <span class="kw-2">&amp;</span>Path) {
-<a href=#921 id=921 data-nosnippet>921</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(c) = CString::new(path.as_os_str().as_bytes()) <span class="kw">else </span>{
-<a href=#922 id=922 data-nosnippet>922</a>            <span class="kw">return</span>;
-<a href=#923 id=923 data-nosnippet>923</a>        };
-<a href=#924 id=924 data-nosnippet>924</a>        <span class="kw">let </span>raw = c.into_raw();
-<a href=#925 id=925 data-nosnippet>925</a>        <span class="kw">if </span>PATH
-<a href=#926 id=926 data-nosnippet>926</a>            .compare_exchange(
-<a href=#927 id=927 data-nosnippet>927</a>                std::ptr::null_mut(),
-<a href=#928 id=928 data-nosnippet>928</a>                raw,
-<a href=#929 id=929 data-nosnippet>929</a>                Ordering::SeqCst,
+<a href=#733 id=733 data-nosnippet>733</a>/// Whether a process with this pid exists (signal 0: checked, nothing sent).
+<a href=#734 id=734 data-nosnippet>734</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>alive(pid: u32) -&gt; bool {
+<a href=#735 id=735 data-nosnippet>735</a>    <span class="kw">if </span>pid == <span class="number">0 </span>{
+<a href=#736 id=736 data-nosnippet>736</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#737 id=737 data-nosnippet>737</a>    }
+<a href=#738 id=738 data-nosnippet>738</a>    <span class="kw">let </span><span class="prelude-val">Ok</span>(pid) = libc::pid_t::try_from(pid) <span class="kw">else </span>{
+<a href=#739 id=739 data-nosnippet>739</a>        <span class="kw">return </span><span class="bool-val">false</span>;
+<a href=#740 id=740 data-nosnippet>740</a>    };
+<a href=#741 id=741 data-nosnippet>741</a>    <span class="comment">// SAFETY: signal 0 performs the existence and permission check and sends nothing.
+<a href=#742 id=742 data-nosnippet>742</a>    </span><span class="kw">let </span>rc = <span class="kw">unsafe </span>{ libc::kill(pid, <span class="number">0</span>) };
+<a href=#743 id=743 data-nosnippet>743</a>    rc == <span class="number">0 </span>|| std::io::Error::last_os_error().raw_os_error() == <span class="prelude-val">Some</span>(libc::EPERM)
+<a href=#744 id=744 data-nosnippet>744</a>}
+<a href=#745 id=745 data-nosnippet>745</a>
+<a href=#746 id=746 data-nosnippet>746</a><span class="kw">impl </span>Lease {
+<a href=#747 id=747 data-nosnippet>747</a>    <span class="doccomment">/// The file.
+<a href=#748 id=748 data-nosnippet>748</a>    </span><span class="kw">pub fn </span>path(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Path {
+<a href=#749 id=749 data-nosnippet>749</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.path
+<a href=#750 id=750 data-nosnippet>750</a>    }
+<a href=#751 id=751 data-nosnippet>751</a>
+<a href=#752 id=752 data-nosnippet>752</a>    <span class="doccomment">/// The repository root the lease is for.
+<a href=#753 id=753 data-nosnippet>753</a>    </span><span class="kw">pub fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Path {
+<a href=#754 id=754 data-nosnippet>754</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.root
+<a href=#755 id=755 data-nosnippet>755</a>    }
+<a href=#756 id=756 data-nosnippet>756</a>
+<a href=#757 id=757 data-nosnippet>757</a>    <span class="doccomment">/// When this process took the lease, RFC 3339: the identity of this server's
+<a href=#758 id=758 data-nosnippet>758</a>    /// generation, the same value the lease file carries as `started_at`.
+<a href=#759 id=759 data-nosnippet>759</a>    </span><span class="kw">pub fn </span>started_at(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+<a href=#760 id=760 data-nosnippet>760</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.started_at
+<a href=#761 id=761 data-nosnippet>761</a>    }
+<a href=#762 id=762 data-nosnippet>762</a>
+<a href=#763 id=763 data-nosnippet>763</a>    <span class="doccomment">/// What makes the file this process's. For the server's own reader, which checks from
+<a href=#764 id=764 data-nosnippet>764</a>    /// another thread whether the lease is still its own.
+<a href=#765 id=765 data-nosnippet>765</a>    </span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>token(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>str {
+<a href=#766 id=766 data-nosnippet>766</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.token
+<a href=#767 id=767 data-nosnippet>767</a>    }
+<a href=#768 id=768 data-nosnippet>768</a>
+<a href=#769 id=769 data-nosnippet>769</a>    <span class="doccomment">/// Keep the lease young while the layer loads. A peer that finds a lease without a URL
+<a href=#770 id=770 data-nosnippet>770</a>    /// waits for it only as long as the file is younger than [`BIND_GRACE`]; a cold start
+<a href=#771 id=771 data-nosnippet>771</a>    /// that takes longer than that — a large layer, a machine under load — would otherwise
+<a href=#772 id=772 data-nosnippet>772</a>    /// be taken for an abandoned one and taken over while its owner is still binding. So
+<a href=#773 id=773 data-nosnippet>773</a>    /// until [`Lease::publish`], a thread rewrites the same document every third of the
+<a href=#774 id=774 data-nosnippet>774</a>    /// grace, under the lock `publish` also takes, so that a touch can never land after the
+<a href=#775 id=775 data-nosnippet>775</a>    /// URL. It writes only while the file is still this process's: a lease that was taken
+<a href=#776 id=776 data-nosnippet>776</a>    /// over anyway is somebody else's to write.
+<a href=#777 id=777 data-nosnippet>777</a>    ///
+<a href=#778 id=778 data-nosnippet>778</a>    /// ```
+<a href=#779 id=779 data-nosnippet>779</a>    /// use majordomus_cli::lease::{elect, held, LeaseFile, Role};
+<a href=#780 id=780 data-nosnippet>780</a>    /// use majordomus_cli::Repository;
+<a href=#781 id=781 data-nosnippet>781</a>    /// let dir = tempfile::tempdir().unwrap();
+<a href=#782 id=782 data-nosnippet>782</a>    /// std::fs::create_dir_all(dir.path().join(".ai/repo")).unwrap();
+<a href=#783 id=783 data-nosnippet>783</a>    /// std::fs::write(dir.path().join(".ai/manifest.yaml"),
+<a href=#784 id=784 data-nosnippet>784</a>    ///     "schema: ai-repository/v1\nrepo:\n  path: repo\nlocal:\n  path: local\n  tracked: false\n  implicit_context: false\nsections:\n  policy: repo/policy.yaml\n").unwrap();
+<a href=#785 id=785 data-nosnippet>785</a>    /// let repo = Repository::discover(dir.path()).unwrap();
+<a href=#786 id=786 data-nosnippet>786</a>    /// let Role::Server(lease) = elect(&amp;repo).unwrap() else { panic!("nobody else serves a fresh directory") };
+<a href=#787 id=787 data-nosnippet>787</a>    /// lease.keep_alive();                         // returns at once; the touching runs beside the load
+<a href=#788 id=788 data-nosnippet>788</a>    /// assert!(held().is_none(), "nothing is published yet");
+<a href=#789 id=789 data-nosnippet>789</a>    /// lease.publish("http://127.0.0.1:1").unwrap();  // stops the touching, under the same lock
+<a href=#790 id=790 data-nosnippet>790</a>    /// assert_eq!(held().unwrap().url.as_deref(), Some("http://127.0.0.1:1"));
+<a href=#791 id=791 data-nosnippet>791</a>    /// assert!(matches!(LeaseFile::read(lease.path()), LeaseFile::Document(d) if d.url.is_some()));
+<a href=#792 id=792 data-nosnippet>792</a>    /// lease.release();
+<a href=#793 id=793 data-nosnippet>793</a>    /// assert_eq!(LeaseFile::read(&amp;dir.path().join(".ai/local/state/mcp/server.json")), LeaseFile::Absent);
+<a href=#794 id=794 data-nosnippet>794</a>    /// ```
+<a href=#795 id=795 data-nosnippet>795</a>    </span><span class="kw">pub fn </span>keep_alive(<span class="kw-2">&amp;</span><span class="self">self</span>) {
+<a href=#796 id=796 data-nosnippet>796</a>        <span class="kw">let </span>path = <span class="self">self</span>.path.clone();
+<a href=#797 id=797 data-nosnippet>797</a>        <span class="kw">let </span>token = <span class="self">self</span>.token.clone();
+<a href=#798 id=798 data-nosnippet>798</a>        <span class="kw">let </span>binding = Arc::clone(<span class="kw-2">&amp;</span><span class="self">self</span>.binding);
+<a href=#799 id=799 data-nosnippet>799</a>        <span class="kw">let </span>document = serde_json::to_string(<span class="kw-2">&amp;</span><span class="self">self</span>.document(<span class="prelude-val">None</span>)).unwrap_or_default();
+<a href=#800 id=800 data-nosnippet>800</a>        <span class="kw">let </span>tick = BIND_GRACE / <span class="number">3</span>;
+<a href=#801 id=801 data-nosnippet>801</a>        <span class="kw">let _ </span>= std::thread::Builder::new()
+<a href=#802 id=802 data-nosnippet>802</a>            .name(<span class="string">"majordomus-lease-keep-alive"</span>.into())
+<a href=#803 id=803 data-nosnippet>803</a>            .spawn(<span class="kw">move </span>|| <span class="kw">loop </span>{
+<a href=#804 id=804 data-nosnippet>804</a>                std::thread::sleep(tick);
+<a href=#805 id=805 data-nosnippet>805</a>                <span class="kw">let </span><span class="prelude-val">Ok</span>(guard) = binding.lock() <span class="kw">else </span>{ <span class="kw">return </span>};
+<a href=#806 id=806 data-nosnippet>806</a>                <span class="kw">if </span>!<span class="kw-2">*</span>guard {
+<a href=#807 id=807 data-nosnippet>807</a>                    <span class="kw">return</span>;
+<a href=#808 id=808 data-nosnippet>808</a>                }
+<a href=#809 id=809 data-nosnippet>809</a>                <span class="kw">let </span>mine = LeaseFile::read(<span class="kw-2">&amp;</span>path)
+<a href=#810 id=810 data-nosnippet>810</a>                    .document()
+<a href=#811 id=811 data-nosnippet>811</a>                    .is_some_and(|d| d.token == token);
+<a href=#812 id=812 data-nosnippet>812</a>                <span class="kw">if </span>!mine {
+<a href=#813 id=813 data-nosnippet>813</a>                    <span class="kw">return</span>;
+<a href=#814 id=814 data-nosnippet>814</a>                }
+<a href=#815 id=815 data-nosnippet>815</a>                <span class="kw">let </span>tmp = path.with_extension(<span class="string">"json.tmp"</span>);
+<a href=#816 id=816 data-nosnippet>816</a>                <span class="kw">if </span>fs::write(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span>document).is_ok() {
+<a href=#817 id=817 data-nosnippet>817</a>                    <span class="kw">let _ </span>= fs::rename(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span>path);
+<a href=#818 id=818 data-nosnippet>818</a>                }
+<a href=#819 id=819 data-nosnippet>819</a>            });
+<a href=#820 id=820 data-nosnippet>820</a>    }
+<a href=#821 id=821 data-nosnippet>821</a>
+<a href=#822 id=822 data-nosnippet>822</a>    <span class="kw">fn </span>document(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; LeaseDocument {
+<a href=#823 id=823 data-nosnippet>823</a>        LeaseDocument {
+<a href=#824 id=824 data-nosnippet>824</a>            schema: SCHEMA.into(),
+<a href=#825 id=825 data-nosnippet>825</a>            pid: std::process::id(),
+<a href=#826 id=826 data-nosnippet>826</a>            token: <span class="self">self</span>.token.clone(),
+<a href=#827 id=827 data-nosnippet>827</a>            root: <span class="self">self</span>.root.clone(),
+<a href=#828 id=828 data-nosnippet>828</a>            url: url.map(str::to_string),
+<a href=#829 id=829 data-nosnippet>829</a>            started_at: <span class="self">self</span>.started_at.clone(),
+<a href=#830 id=830 data-nosnippet>830</a>            executable: executable_identity(),
+<a href=#831 id=831 data-nosnippet>831</a>            version: <span class="prelude-val">Some</span>(<span class="kw">crate</span>::VERSION.into()),
+<a href=#832 id=832 data-nosnippet>832</a>        }
+<a href=#833 id=833 data-nosnippet>833</a>    }
+<a href=#834 id=834 data-nosnippet>834</a>
+<a href=#835 id=835 data-nosnippet>835</a>    <span class="doccomment">/// Record the URL the server is listening on, atomically, so that a peer reading the
+<a href=#836 id=836 data-nosnippet>836</a>    /// file sees either no URL or the whole one. Refused when the file is no longer this
+<a href=#837 id=837 data-nosnippet>837</a>    /// process's: a lease taken over while its owner was binding belongs to whoever took it,
+<a href=#838 id=838 data-nosnippet>838</a>    /// and writing over it would leave two servers claiming one address.
+<a href=#839 id=839 data-nosnippet>839</a>    </span><span class="kw">pub fn </span>publish(<span class="kw-2">&amp;</span><span class="self">self</span>, url: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
+<a href=#840 id=840 data-nosnippet>840</a>        <span class="kw">let </span><span class="kw-2">mut </span>binding = <span class="self">self</span>.binding.lock().map_err(|<span class="kw">_</span>| Error::Lease {
+<a href=#841 id=841 data-nosnippet>841</a>            reason: <span class="string">"the lease's binding lock is poisoned"</span>.into(),
+<a href=#842 id=842 data-nosnippet>842</a>        })<span class="question-mark">?</span>;
+<a href=#843 id=843 data-nosnippet>843</a>        <span class="kw-2">*</span>binding = <span class="bool-val">false</span>;
+<a href=#844 id=844 data-nosnippet>844</a>        <span class="kw">if </span>!<span class="self">self</span>.is_mine() {
+<a href=#845 id=845 data-nosnippet>845</a>            <span class="kw">return </span><span class="prelude-val">Err</span>(Error::Lease {
+<a href=#846 id=846 data-nosnippet>846</a>                reason: <span class="macro">format!</span>(
+<a href=#847 id=847 data-nosnippet>847</a>                    <span class="string">"the lease at {} was taken over while this server was starting; another process serves this checkout"</span>,
+<a href=#848 id=848 data-nosnippet>848</a>                    <span class="self">self</span>.path.display()
+<a href=#849 id=849 data-nosnippet>849</a>                ),
+<a href=#850 id=850 data-nosnippet>850</a>            });
+<a href=#851 id=851 data-nosnippet>851</a>        }
+<a href=#852 id=852 data-nosnippet>852</a>        <span class="kw">let </span>tmp = <span class="self">self</span>.path.with_extension(<span class="string">"json.tmp"</span>);
+<a href=#853 id=853 data-nosnippet>853</a>        <span class="kw">let </span>document = <span class="self">self</span>.document(<span class="prelude-val">Some</span>(url));
+<a href=#854 id=854 data-nosnippet>854</a>        <span class="kw">let </span>text = serde_json::to_string(<span class="kw-2">&amp;</span>document).map_err(|e| Error::Lease {
+<a href=#855 id=855 data-nosnippet>855</a>            reason: <span class="macro">format!</span>(<span class="string">"cannot render the lease: {e}"</span>),
+<a href=#856 id=856 data-nosnippet>856</a>        })<span class="question-mark">?</span>;
+<a href=#857 id=857 data-nosnippet>857</a>        fs::write(<span class="kw-2">&amp;</span>tmp, text).map_err(|e| Error::io(<span class="kw-2">&amp;</span>tmp, e))<span class="question-mark">?</span>;
+<a href=#858 id=858 data-nosnippet>858</a>        fs::rename(<span class="kw-2">&amp;</span>tmp, <span class="kw-2">&amp;</span><span class="self">self</span>.path).map_err(|e| Error::io(<span class="kw-2">&amp;</span><span class="self">self</span>.path, e))<span class="question-mark">?</span>;
+<a href=#859 id=859 data-nosnippet>859</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>slot) = published().lock() {
+<a href=#860 id=860 data-nosnippet>860</a>            <span class="kw-2">*</span>slot = <span class="prelude-val">Some</span>(document);
+<a href=#861 id=861 data-nosnippet>861</a>        }
+<a href=#862 id=862 data-nosnippet>862</a>        <span class="prelude-val">Ok</span>(())
+<a href=#863 id=863 data-nosnippet>863</a>    }
+<a href=#864 id=864 data-nosnippet>864</a>
+<a href=#865 id=865 data-nosnippet>865</a>    <span class="doccomment">/// Is the file on disk still this process's lease?
+<a href=#866 id=866 data-nosnippet>866</a>    </span><span class="kw">fn </span>is_mine(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+<a href=#867 id=867 data-nosnippet>867</a>        LeaseFile::read(<span class="kw-2">&amp;</span><span class="self">self</span>.path)
+<a href=#868 id=868 data-nosnippet>868</a>            .document()
+<a href=#869 id=869 data-nosnippet>869</a>            .is_some_and(|d| d.token == <span class="self">self</span>.token)
+<a href=#870 id=870 data-nosnippet>870</a>    }
+<a href=#871 id=871 data-nosnippet>871</a>
+<a href=#872 id=872 data-nosnippet>872</a>    <span class="doccomment">/// Remove the lease: the server has stopped.
+<a href=#873 id=873 data-nosnippet>873</a>    </span><span class="kw">pub fn </span>release(<span class="kw-2">mut </span><span class="self">self</span>) {
+<a href=#874 id=874 data-nosnippet>874</a>        <span class="self">self</span>.release_now();
+<a href=#875 id=875 data-nosnippet>875</a>    }
+<a href=#876 id=876 data-nosnippet>876</a>
+<a href=#877 id=877 data-nosnippet>877</a>    <span class="kw">fn </span>release_now(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#878 id=878 data-nosnippet>878</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>binding) = <span class="self">self</span>.binding.lock() {
+<a href=#879 id=879 data-nosnippet>879</a>            <span class="kw-2">*</span>binding = <span class="bool-val">false</span>;
+<a href=#880 id=880 data-nosnippet>880</a>        }
+<a href=#881 id=881 data-nosnippet>881</a>        <span class="kw">if </span>!<span class="self">self</span>.released &amp;&amp; <span class="self">self</span>.is_mine() {
+<a href=#882 id=882 data-nosnippet>882</a>            <span class="kw">let _ </span>= fs::remove_file(<span class="kw-2">&amp;</span><span class="self">self</span>.path);
+<a href=#883 id=883 data-nosnippet>883</a>        }
+<a href=#884 id=884 data-nosnippet>884</a>        <span class="self">self</span>.released = <span class="bool-val">true</span>;
+<a href=#885 id=885 data-nosnippet>885</a>        <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>slot) = published().lock() {
+<a href=#886 id=886 data-nosnippet>886</a>            <span class="kw">if </span>slot.as_ref().is_some_and(|d| d.token == <span class="self">self</span>.token) {
+<a href=#887 id=887 data-nosnippet>887</a>                <span class="kw-2">*</span>slot = <span class="prelude-val">None</span>;
+<a href=#888 id=888 data-nosnippet>888</a>            }
+<a href=#889 id=889 data-nosnippet>889</a>        }
+<a href=#890 id=890 data-nosnippet>890</a>        signals::release();
+<a href=#891 id=891 data-nosnippet>891</a>    }
+<a href=#892 id=892 data-nosnippet>892</a>}
+<a href=#893 id=893 data-nosnippet>893</a>
+<a href=#894 id=894 data-nosnippet>894</a><span class="kw">impl </span>Drop <span class="kw">for </span>Lease {
+<a href=#895 id=895 data-nosnippet>895</a>    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#896 id=896 data-nosnippet>896</a>        <span class="self">self</span>.release_now();
+<a href=#897 id=897 data-nosnippet>897</a>    }
+<a href=#898 id=898 data-nosnippet>898</a>}
+<a href=#899 id=899 data-nosnippet>899</a>
+<a href=#900 id=900 data-nosnippet>900</a><span class="doccomment">/// The lease is removed when the process dies of `SIGTERM`, `SIGINT` or `SIGHUP`: a client
+<a href=#901 id=901 data-nosnippet>901</a>/// killing its server, a person pressing Ctrl-C, a terminal closing. The handler does only
+<a href=#902 id=902 data-nosnippet>902</a>/// what is safe inside a signal handler: `unlink` the path recorded when the lease was
+<a href=#903 id=903 data-nosnippet>903</a>/// taken, restore the default disposition, and raise the signal again so that the exit
+<a href=#904 id=904 data-nosnippet>904</a>/// status still says which signal it was. The path is recorded once per process (a
+<a href=#905 id=905 data-nosnippet>905</a>/// repository's lease never moves) and is never freed, because a handler may be reading
+<a href=#906 id=906 data-nosnippet>906</a>/// it. A `kill -9` cannot be caught: the next process finds the stale lease and takes it
+<a href=#907 id=907 data-nosnippet>907</a>/// over.
+<a href=#908 id=908 data-nosnippet>908</a></span><span class="attr">#[cfg(unix)]
+<a href=#909 id=909 data-nosnippet>909</a></span><span class="kw">mod </span>signals {
+<a href=#910 id=910 data-nosnippet>910</a>    <span class="kw">use </span>std::ffi::CString;
+<a href=#911 id=911 data-nosnippet>911</a>    <span class="kw">use </span>std::os::unix::ffi::OsStrExt;
+<a href=#912 id=912 data-nosnippet>912</a>    <span class="kw">use </span>std::path::Path;
+<a href=#913 id=913 data-nosnippet>913</a>    <span class="kw">use </span>std::sync::atomic::{AtomicBool, AtomicPtr, Ordering};
+<a href=#914 id=914 data-nosnippet>914</a>    <span class="kw">use </span>std::sync::Once;
+<a href=#915 id=915 data-nosnippet>915</a>
+<a href=#916 id=916 data-nosnippet>916</a>    <span class="kw">static </span>HELD: AtomicBool = AtomicBool::new(<span class="bool-val">false</span>);
+<a href=#917 id=917 data-nosnippet>917</a>    <span class="kw">static </span>PATH: AtomicPtr&lt;libc::c_char&gt; = AtomicPtr::new(std::ptr::null_mut());
+<a href=#918 id=918 data-nosnippet>918</a>    <span class="kw">static </span>INSTALL: Once = Once::new();
+<a href=#919 id=919 data-nosnippet>919</a>
+<a href=#920 id=920 data-nosnippet>920</a>    <span class="doccomment">/// This process now holds the lease at `path`; install the handlers the first time.
+<a href=#921 id=921 data-nosnippet>921</a>    </span><span class="kw">pub fn </span>hold(path: <span class="kw-2">&amp;</span>Path) {
+<a href=#922 id=922 data-nosnippet>922</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(c) = CString::new(path.as_os_str().as_bytes()) <span class="kw">else </span>{
+<a href=#923 id=923 data-nosnippet>923</a>            <span class="kw">return</span>;
+<a href=#924 id=924 data-nosnippet>924</a>        };
+<a href=#925 id=925 data-nosnippet>925</a>        <span class="kw">let </span>raw = c.into_raw();
+<a href=#926 id=926 data-nosnippet>926</a>        <span class="kw">if </span>PATH
+<a href=#927 id=927 data-nosnippet>927</a>            .compare_exchange(
+<a href=#928 id=928 data-nosnippet>928</a>                std::ptr::null_mut(),
+<a href=#929 id=929 data-nosnippet>929</a>                raw,
 <a href=#930 id=930 data-nosnippet>930</a>                Ordering::SeqCst,
-<a href=#931 id=931 data-nosnippet>931</a>            )
-<a href=#932 id=932 data-nosnippet>932</a>            .is_err()
-<a href=#933 id=933 data-nosnippet>933</a>        {
-<a href=#934 id=934 data-nosnippet>934</a>            <span class="comment">// the path is already recorded (the same repository, taken over again): this
-<a href=#935 id=935 data-nosnippet>935</a>            // copy is not needed, and the recorded one stays reachable for the handler
-<a href=#936 id=936 data-nosnippet>936</a>            </span>drop(<span class="kw">unsafe </span>{ CString::from_raw(raw) });
-<a href=#937 id=937 data-nosnippet>937</a>        }
-<a href=#938 id=938 data-nosnippet>938</a>        HELD.store(<span class="bool-val">true</span>, Ordering::SeqCst);
-<a href=#939 id=939 data-nosnippet>939</a>        INSTALL.call_once(|| {
-<a href=#940 id=940 data-nosnippet>940</a>            <span class="kw">let </span>handler = on_signal <span class="kw">as extern </span><span class="string">"C" </span><span class="kw">fn</span>(libc::c_int) <span class="kw">as </span>libc::sighandler_t;
-<a href=#941 id=941 data-nosnippet>941</a>            <span class="kw">for </span>signal <span class="kw">in </span>[libc::SIGTERM, libc::SIGINT, libc::SIGHUP] {
-<a href=#942 id=942 data-nosnippet>942</a>                <span class="comment">// SAFETY: installing a handler that only calls async-signal-safe functions
-<a href=#943 id=943 data-nosnippet>943</a>                </span><span class="kw">unsafe </span>{ libc::signal(signal, handler) };
-<a href=#944 id=944 data-nosnippet>944</a>            }
-<a href=#945 id=945 data-nosnippet>945</a>        });
-<a href=#946 id=946 data-nosnippet>946</a>    }
-<a href=#947 id=947 data-nosnippet>947</a>
-<a href=#948 id=948 data-nosnippet>948</a>    <span class="doccomment">/// The lease is released (or was never this process's any more): stop removing it.
-<a href=#949 id=949 data-nosnippet>949</a>    </span><span class="kw">pub fn </span>release() {
-<a href=#950 id=950 data-nosnippet>950</a>        HELD.store(<span class="bool-val">false</span>, Ordering::SeqCst);
-<a href=#951 id=951 data-nosnippet>951</a>    }
-<a href=#952 id=952 data-nosnippet>952</a>
-<a href=#953 id=953 data-nosnippet>953</a>    <span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>on_signal(signal: libc::c_int) {
-<a href=#954 id=954 data-nosnippet>954</a>        <span class="kw">if </span>HELD.load(Ordering::SeqCst) {
-<a href=#955 id=955 data-nosnippet>955</a>            <span class="kw">let </span>path = PATH.load(Ordering::SeqCst);
-<a href=#956 id=956 data-nosnippet>956</a>            <span class="kw">if </span>!path.is_null() {
-<a href=#957 id=957 data-nosnippet>957</a>                <span class="comment">// SAFETY: a valid NUL-terminated path that is never freed; unlink is
-<a href=#958 id=958 data-nosnippet>958</a>                // async-signal-safe
-<a href=#959 id=959 data-nosnippet>959</a>                </span><span class="kw">unsafe </span>{ libc::unlink(path) };
-<a href=#960 id=960 data-nosnippet>960</a>            }
-<a href=#961 id=961 data-nosnippet>961</a>        }
-<a href=#962 id=962 data-nosnippet>962</a>        <span class="comment">// SAFETY: restoring the default disposition and re-raising are async-signal-safe
-<a href=#963 id=963 data-nosnippet>963</a>        </span><span class="kw">unsafe </span>{
-<a href=#964 id=964 data-nosnippet>964</a>            libc::signal(signal, libc::SIG_DFL);
-<a href=#965 id=965 data-nosnippet>965</a>            libc::raise(signal);
-<a href=#966 id=966 data-nosnippet>966</a>        }
-<a href=#967 id=967 data-nosnippet>967</a>    }
-<a href=#968 id=968 data-nosnippet>968</a>}
-<a href=#969 id=969 data-nosnippet>969</a>
-<a href=#970 id=970 data-nosnippet>970</a><span class="attr">#[cfg(not(unix))]
-<a href=#971 id=971 data-nosnippet>971</a></span><span class="kw">mod </span>signals {
-<a href=#972 id=972 data-nosnippet>972</a>    <span class="kw">use </span>std::path::Path;
-<a href=#973 id=973 data-nosnippet>973</a>
-<a href=#974 id=974 data-nosnippet>974</a>    <span class="kw">pub fn </span>hold(<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path) {}
-<a href=#975 id=975 data-nosnippet>975</a>
-<a href=#976 id=976 data-nosnippet>976</a>    <span class="kw">pub fn </span>release() {}
-<a href=#977 id=977 data-nosnippet>977</a>}
+<a href=#931 id=931 data-nosnippet>931</a>                Ordering::SeqCst,
+<a href=#932 id=932 data-nosnippet>932</a>            )
+<a href=#933 id=933 data-nosnippet>933</a>            .is_err()
+<a href=#934 id=934 data-nosnippet>934</a>        {
+<a href=#935 id=935 data-nosnippet>935</a>            <span class="comment">// the path is already recorded (the same repository, taken over again): this
+<a href=#936 id=936 data-nosnippet>936</a>            // copy is not needed, and the recorded one stays reachable for the handler
+<a href=#937 id=937 data-nosnippet>937</a>            </span>drop(<span class="kw">unsafe </span>{ CString::from_raw(raw) });
+<a href=#938 id=938 data-nosnippet>938</a>        }
+<a href=#939 id=939 data-nosnippet>939</a>        HELD.store(<span class="bool-val">true</span>, Ordering::SeqCst);
+<a href=#940 id=940 data-nosnippet>940</a>        INSTALL.call_once(|| {
+<a href=#941 id=941 data-nosnippet>941</a>            <span class="kw">let </span>handler = on_signal <span class="kw">as extern </span><span class="string">"C" </span><span class="kw">fn</span>(libc::c_int) <span class="kw">as </span>libc::sighandler_t;
+<a href=#942 id=942 data-nosnippet>942</a>            <span class="kw">for </span>signal <span class="kw">in </span>[libc::SIGTERM, libc::SIGINT, libc::SIGHUP] {
+<a href=#943 id=943 data-nosnippet>943</a>                <span class="comment">// SAFETY: installing a handler that only calls async-signal-safe functions
+<a href=#944 id=944 data-nosnippet>944</a>                </span><span class="kw">unsafe </span>{ libc::signal(signal, handler) };
+<a href=#945 id=945 data-nosnippet>945</a>            }
+<a href=#946 id=946 data-nosnippet>946</a>        });
+<a href=#947 id=947 data-nosnippet>947</a>    }
+<a href=#948 id=948 data-nosnippet>948</a>
+<a href=#949 id=949 data-nosnippet>949</a>    <span class="doccomment">/// The lease is released (or was never this process's any more): stop removing it.
+<a href=#950 id=950 data-nosnippet>950</a>    </span><span class="kw">pub fn </span>release() {
+<a href=#951 id=951 data-nosnippet>951</a>        HELD.store(<span class="bool-val">false</span>, Ordering::SeqCst);
+<a href=#952 id=952 data-nosnippet>952</a>    }
+<a href=#953 id=953 data-nosnippet>953</a>
+<a href=#954 id=954 data-nosnippet>954</a>    <span class="kw">extern </span><span class="string">"C" </span><span class="kw">fn </span>on_signal(signal: libc::c_int) {
+<a href=#955 id=955 data-nosnippet>955</a>        <span class="kw">if </span>HELD.load(Ordering::SeqCst) {
+<a href=#956 id=956 data-nosnippet>956</a>            <span class="kw">let </span>path = PATH.load(Ordering::SeqCst);
+<a href=#957 id=957 data-nosnippet>957</a>            <span class="kw">if </span>!path.is_null() {
+<a href=#958 id=958 data-nosnippet>958</a>                <span class="comment">// SAFETY: a valid NUL-terminated path that is never freed; unlink is
+<a href=#959 id=959 data-nosnippet>959</a>                // async-signal-safe
+<a href=#960 id=960 data-nosnippet>960</a>                </span><span class="kw">unsafe </span>{ libc::unlink(path) };
+<a href=#961 id=961 data-nosnippet>961</a>            }
+<a href=#962 id=962 data-nosnippet>962</a>        }
+<a href=#963 id=963 data-nosnippet>963</a>        <span class="comment">// SAFETY: restoring the default disposition and re-raising are async-signal-safe
+<a href=#964 id=964 data-nosnippet>964</a>        </span><span class="kw">unsafe </span>{
+<a href=#965 id=965 data-nosnippet>965</a>            libc::signal(signal, libc::SIG_DFL);
+<a href=#966 id=966 data-nosnippet>966</a>            libc::raise(signal);
+<a href=#967 id=967 data-nosnippet>967</a>        }
+<a href=#968 id=968 data-nosnippet>968</a>    }
+<a href=#969 id=969 data-nosnippet>969</a>}
+<a href=#970 id=970 data-nosnippet>970</a>
+<a href=#971 id=971 data-nosnippet>971</a><span class="attr">#[cfg(not(unix))]
+<a href=#972 id=972 data-nosnippet>972</a></span><span class="kw">mod </span>signals {
+<a href=#973 id=973 data-nosnippet>973</a>    <span class="kw">use </span>std::path::Path;
+<a href=#974 id=974 data-nosnippet>974</a>
+<a href=#975 id=975 data-nosnippet>975</a>    <span class="kw">pub fn </span>hold(<span class="kw">_</span>: <span class="kw-2">&amp;</span>Path) {}
+<a href=#976 id=976 data-nosnippet>976</a>
+<a href=#977 id=977 data-nosnippet>977</a>    <span class="kw">pub fn </span>release() {}
+<a href=#978 id=978 data-nosnippet>978</a>}
 </code></pre></div></section></main></body></html>
