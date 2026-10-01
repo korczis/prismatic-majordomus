@@ -211,6 +211,7 @@ fn write_status(out: &mut impl Write, e: &RepositoryEnvironment) -> Result<()> {
             format!(
                 "{}{} ({})",
                 match (&t.installed, t.availability) {
+                    (Some(v), ToolchainAvailability::Mismatch) => format!("{v}, mismatch"),
                     (Some(v), _) => v.clone(),
                     (None, ToolchainAvailability::Missing) => "not installed".into(),
                     (None, _) => "unknown".into(),
