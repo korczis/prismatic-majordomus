@@ -182,9 +182,19 @@ jobs:
   # cargo's own gates (the crate's HTTP and projection suites, the doc examples, the
   # benchmark build) keep cargo, warm from the cache. Zola and the site dependencies are
   # present so the site cases run rather than skip.
-  suite:
+  # Four shards of the suite on four runners, each running its cases four at a time. Which
+  # case runs where is decided by test/run.sh (MJ_TEST_SHARD) from the seconds recorded in
+  # .ai/repo/ci/suite-durations.tsv, longest first: one committed file, so every shard deals
+  # the same hand and their union is the whole suite. Measured: one runner took >130 min,
+  # because 24,879 case-seconds were dealt to four workers; dealt to sixteen, the critical
+  # path is the longest single case (~35 min). The suite job below proves the union.
+  suite-shard:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     # 225, re-measured. The bound is a backstop against a wedged runner, and every case
     # already carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound
     # only has to sit above what a healthy run costs. It kept not doing that. 150 was set
@@ -242,6 +252,7 @@ jobs:
       - name: behavioural tests
         env:
           MJ_TEST_JOBS: 4
+          MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
         run: bash test/run.sh
       # The tree the suite ran in, measured here, right after its run: the evidence job records
@@ -264,9 +275,42 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
       - if: always()
-        run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
-      # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost. After the
-      # summary, so the table a reader wants is already in the job summary when this refuses.
+        run: scripts/ci/summary --job suite --report suite.tsv --fact "shard=${{ matrix.shard }}/4" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-shard-${{ matrix.shard }}
+          path: suite.tsv
+          retention-days: 3
+
+  # The suite's one verdict, over every shard: the four reports joined, every case under
+  # test/cases/ present exactly once (test/run.sh --verify-report, so a shard that lost or
+  # repeated a case is a failure, not a quieter suite), the budget held against the whole run,
+  # and the joined report published as ci-metrics-suite for the evidence job and the metrics.
+  # It fails when any shard failed. Named `suite` so the gate model, the evidence job and the
+  # ci verdict read it exactly as they read the single job it replaces.
+  suite:
+    needs: [plan, suite-shard]
+    if: always() && needs.plan.outputs.shell_suite == 'true'
+    # 225, re-measured. The bound is a backstop against a wedged runner, and every case
+    # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
+    # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
+    timeout-minutes: 225
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: suite-shard-*
+          path: shards
+      - name: every case, exactly once
+        run: |
+          cat shards/*/suite.tsv > suite.tsv
+          test/run.sh --verify-report suite.tsv
+      - if: always()
+        run: scripts/ci/summary --job suite --report suite.tsv
+      # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost: the whole
+      # suite's case-seconds and its slowest case, never a shard's share of them.
       - name: the suite finishes inside its bound
         if: always()
         run: scripts/ci/suite-budget --report suite.tsv
@@ -276,6 +320,11 @@ jobs:
           name: ci-metrics-suite
           path: suite.tsv
           retention-days: 14
+      - name: every shard passed
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.suite-shard.result }}"
+          [ "${{ needs.suite-shard.result }}" = success ]
 
   # ------------------------------------------------------------------ rust
   # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
