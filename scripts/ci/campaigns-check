@@ -17,7 +17,7 @@
 #
 # Exit 0 clean (and 0 with a word where a tree keeps no campaigns — a repository that was never
 # handed a brief owes none), 10 findings, 12 when it cannot decide.
-set -eu
+set -euo pipefail
 
 ROOT="${MJ_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 cd "$ROOT"

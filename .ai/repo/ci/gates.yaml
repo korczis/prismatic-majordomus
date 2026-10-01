@@ -529,9 +529,6 @@ gates:
     runs: MJ_TEST_JOBS=3 bash test/run.sh && cargo test --no-fail-fast --manifest-path apps/majordomus-cli/Cargo.toml
     summary: the behavioural suite under the stock macOS shell and userland, and the crate's suites on macOS
 
-  # Box art in a published document: a picture nothing can render, link, theme, diff against
-  # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
-  # job; the ratchet is meant to reach zero.
   # The campaign briefs under campaigns/ are provenance: nothing reads them at run time, which is
   # why nothing would notice one being edited, half-copied or quietly added to. File reads only —
   # the manifest against the tree in both directions, and the index against the packs.
@@ -540,6 +537,9 @@ gates:
     runs: scripts/ci/campaigns-check
     summary: every file under campaigns/ is the bytes the manifest recorded, every file present is declared, and every pack has a row in the index that names it
 
+  # Box art in a published document: a picture nothing can render, link, theme, diff against
+  # what it describes, or wrap on a phone. File reads only, so it belongs in the structure
+  # job; the ratchet is meant to reach zero.
   - id: diagram-check
     job: structure
     runs: scripts/ci/diagram-check
