@@ -39,7 +39,17 @@ index() {
     for p in "$@"; do printf '| `%s` | 2026-09-15 | 1 | %s | `~/Downloads/%s` |\n' "$p" "$p" "$p"; done
   } > "$F/campaigns/README.md"
 }
-manifest() { ( cd "$F/campaigns" && find . -type f ! -name MANIFEST.sha256 | LC_ALL=C sort | xargs shasum -a 256 | sed 's|\./||' > MANIFEST.sha256 ); }
+# The fixture's manifest is written the way campaigns/README.md says to write one: every file
+# but the top-level manifest itself, and never with `shasum`, which is a Perl script on macOS.
+if command -v sha256sum >/dev/null 2>&1; then
+  hash_all() { xargs -0 sha256sum; }
+else
+  hash_all() { xargs -0 openssl dgst -sha256 -r; }
+fi
+manifest() {
+  ( cd "$F/campaigns" && find . -type f ! -path ./MANIFEST.sha256 -print0 | LC_ALL=C sort -z | hash_all \
+      | sed 's|^\([0-9a-f]*\) [ *]\./|\1  |' > MANIFEST.sha256 )
+}
 index alpha-pack beta-pack
 manifest
 
@@ -72,6 +82,35 @@ printf '%s\n' "$LAST_OUT" | grep -q '02_added.md — held by the tree and absent
   || { echo "    the undeclared file was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
 rm -f "$F/campaigns/alpha-pack/phases/02_added.md"
 echo "    a file added into a pack without the manifest is a finding, not a silence"
+
+# ---------------------------------------------------------------- 3b. a manifest below the top
+# Only campaigns/MANIFEST.sha256 is left out of its own list. A check that dropped the name at
+# any depth would never see a pack's own manifest (kept as received, so a byte of the brief),
+# and would never see a new file of that name planted anywhere below the top. Each plant here
+# passes a check that excludes by name, so each one is a finding only when the exclusion is
+# the one path it should be.
+printf 'not the manifest of anything\n' > "$F/campaigns/alpha-pack/phases/MANIFEST.sha256"
+run_check
+[ "$rc" = 10 ] || { echo "    an unrecorded file named MANIFEST.sha256 below the top exited $rc, not 10 (the check excludes the name, not the path)"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'alpha-pack/phases/MANIFEST.sha256 — held by the tree and absent from the manifest' \
+  || { echo "    the unrecorded nested manifest was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -f "$F/campaigns/alpha-pack/phases/MANIFEST.sha256"
+echo "    a new file named MANIFEST.sha256 below the top is a finding, not an exclusion"
+
+printf '0000  ./README.md\n' > "$F/campaigns/beta-pack/MANIFEST.sha256"
+manifest
+grep -q '  beta-pack/MANIFEST.sha256$' "$F/campaigns/MANIFEST.sha256" \
+  || { echo "    the fixture's manifest did not record the pack's own manifest"; exit 1; }
+run_check
+[ "$rc" = 0 ] || { echo "    a pack's own manifest, recorded, exited $rc, not 0"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '0001  ./phases/99_later.md\n' >> "$F/campaigns/beta-pack/MANIFEST.sha256"
+run_check
+[ "$rc" = 10 ] || { echo "    a tampered pack manifest exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'beta-pack/MANIFEST.sha256 — its bytes are not the bytes the manifest recorded' \
+  || { echo "    the tampered pack manifest was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -f "$F/campaigns/beta-pack/MANIFEST.sha256"
+manifest
+echo "    a pack's own manifest is recorded like any byte, and appending to it is a finding"
 
 # ---------------------------------------------------------------- 4. a brief that went missing
 rm -f "$F/campaigns/alpha-pack/phases/01_first.md"
@@ -149,5 +188,33 @@ rc=0; "$ROOT/scripts/ci/reference-check" "$G" >"$T/ref2.out" 2>&1 || rc=$?
   exit 1
 }
 echo "    a brief may name a path this repository does not have, and only a brief may"
+
+# ---------------------------------------------------------------- 9. either hasher, and names with spaces
+# The check hashes with sha256sum where it is present and with openssl where it is not; each
+# branch is forced here so that neither is the one nobody ran. A name with whitespace travels
+# NUL-separated and must be one row, not two.
+printf 'a phase with a spaced name\n' > "$F/campaigns/alpha-pack/phases/03 spaced name.md"
+manifest
+ran=0
+for h in sha256sum openssl; do
+  command -v "$h" >/dev/null 2>&1 || { echo "    $h is not on this machine; its branch is proven where it is"; continue; }
+  ran=$((ran + 1))
+  rc=0; LAST_OUT="$(MJ_SHA256="$h" MJ_ROOT="$F" "$CHK" 2>&1)" || rc=$?
+  [ "$rc" = 0 ] || { echo "    MJ_SHA256=$h on a recorded tree exited $rc, not 0"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+  printf '%s\n' "$LAST_OUT" | grep -q "hashed by $h" \
+    || { echo "    MJ_SHA256=$h did not say which tool hashed"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+  printf 'edited\n' >> "$F/campaigns/alpha-pack/phases/03 spaced name.md"
+  rc=0; LAST_OUT="$(MJ_SHA256="$h" MJ_ROOT="$F" "$CHK" 2>&1)" || rc=$?
+  [ "$rc" = 10 ] || { echo "    MJ_SHA256=$h on an edited spaced name exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+  printf '%s\n' "$LAST_OUT" | grep -q 'alpha-pack/phases/03 spaced name.md — its bytes are not' \
+    || { echo "    MJ_SHA256=$h did not name the edited spaced file whole"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+  printf 'a phase with a spaced name\n' > "$F/campaigns/alpha-pack/phases/03 spaced name.md"
+done
+[ "$ran" -gt 0 ] || { echo "    neither sha256sum nor openssl is here, so no hasher branch was proven"; exit 1; }
+rc=0; LAST_OUT="$(MJ_SHA256=shasum MJ_ROOT="$F" "$CHK" 2>&1)" || rc=$?
+[ "$rc" = 12 ] || { echo "    MJ_SHA256=shasum exited $rc, not 12 (refusal)"; exit 1; }
+rm -f "$F/campaigns/alpha-pack/phases/03 spaced name.md"
+manifest
+echo "    each hasher decides the same set, a spaced name is one row, and shasum is refused"
 
 echo "    a brief is kept as received: bytes, both directions of the set, and the index"

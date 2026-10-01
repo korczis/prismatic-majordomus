@@ -12,8 +12,20 @@
 #   1. `campaigns/MANIFEST.sha256` covers exactly the files present, with their bytes — declared
 #      and present, in both directions. A checker that walks only the manifest passes a tree
 #      somebody added a file to, which is the one-sided shape this repository keeps meeting.
+#      Only that top-level manifest is left out of the set: a pack may carry a manifest of its
+#      own, kept as received, and that file is a brief's byte like any other. Excluding the
+#      name at any depth would hide every such file, and any new one planted below the top.
 #   2. Every pack directory has a row in `campaigns/README.md`.
 #   3. Every row names a directory that exists.
+#
+# SHA-256 is taken without Perl, which this repository does not run (`shasum` is a Perl
+# script on macOS): `sha256sum` where present (GNU coreutils on the runner, /sbin on recent
+# macOS), else `openssl dgst -sha256 -r`, whose `<hash> *<path>` is normalised to sha256sum's
+# `<hash>  <path>`. MJ_SHA256=sha256sum|openssl forces one, so each branch can be proven.
+#
+# Paths travel NUL-separated, so whitespace in a name is kept. A name holding a newline or a
+# backslash cannot be carried by a `<hash>  <path>` line (sha256sum escapes both), so such a
+# file is refused rather than misread.
 #
 # Exit 0 clean (and 0 with a word where a tree keeps no campaigns — a repository that was never
 # handed a brief owes none), 10 findings, 12 when it cannot decide.
@@ -28,10 +40,43 @@ INDEX="$DIR/README.md"
 
 [ -d "$DIR" ] || { echo "campaigns-check: this tree keeps no $DIR/; nothing to decide"; exit 0; }
 
+hasher="${MJ_SHA256:-}"
+if [ -z "$hasher" ]; then
+  if command -v sha256sum >/dev/null 2>&1; then hasher=sha256sum
+  elif command -v openssl >/dev/null 2>&1; then hasher=openssl
+  fi
+fi
+case "$hasher" in
+  sha256sum) HASH_CMD='sha256sum' ;;
+  openssl) HASH_CMD='openssl dgst -sha256 -r' ;;
+  '')
+    echo "campaigns-check: neither sha256sum nor openssl is on PATH, so no byte can be proven" >&2
+    echo "  [reproduce: command -v sha256sum openssl]" >&2
+    exit 12 ;;
+  *)
+    echo "campaigns-check: MJ_SHA256 is '$hasher'; it names sha256sum or openssl" >&2
+    echo "  [reproduce: MJ_SHA256=sha256sum scripts/ci/campaigns-check]" >&2
+    exit 12 ;;
+esac
+command -v "$hasher" >/dev/null 2>&1 || {
+  echo "campaigns-check: MJ_SHA256 names $hasher, which is not on PATH" >&2
+  echo "  [reproduce: command -v $hasher]" >&2
+  exit 12
+}
+
+# NUL-separated paths in, `<hash>  <path>` lines out, whichever tool hashed them.
+hash_paths() {
+  case "$hasher" in
+    sha256sum) xargs -0 sha256sum ;;
+    openssl) xargs -0 openssl dgst -sha256 -r | sed 's|^\([0-9a-f]\{64\}\) \*|\1  |' ;;
+  esac
+}
+REGEN="(cd $DIR && find . -type f ! -path ./MANIFEST.sha256 -print0 | LC_ALL=C sort -z | xargs -0 $HASH_CMD | sed 's|^\([0-9a-f]*\) [ *]\./|\1  |' > MANIFEST.sha256)"
+
 # Absence of the manifest is not "everything matches": it is a set that was never read.
 [ -f "$MAN" ] || {
   echo "campaigns-check: $DIR/ is present and $MAN is not, so nothing here can be proven" >&2
-  echo "  [reproduce: (cd $DIR && find . -type f ! -name MANIFEST.sha256 | LC_ALL=C sort | xargs shasum -a 256 | sed 's|./||' > MANIFEST.sha256)]" >&2
+  echo "  [reproduce: $REGEN]" >&2
   exit 12
 }
 [ -f "$INDEX" ] || {
@@ -44,26 +89,39 @@ tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.camp.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
 : > "$tmp/findings"
 
-# The bytes, as two sorted `<path>\t<hash>` tables the same way round.
-( cd "$DIR" && find . -type f ! -name MANIFEST.sha256 | LC_ALL=C sort | xargs shasum -a 256 | sed 's|^\([0-9a-f]*\)  \./*|\1  |' ) \
-  | awk '{ print $2 "\t" $1 }' | LC_ALL=C sort > "$tmp/present"
-awk '{ print $2 "\t" $1 }' "$MAN" | sed 's|^\./||' | LC_ALL=C sort > "$tmp/declared"
+# A name no `<hash>  <path>` line can carry is refused, not split into two wrong rows.
+nl='
+'
+( cd "$DIR" && find . -type f \( -name "*$nl*" -o -name '*\\*' \) -print ) > "$tmp/unrepresentable"
+if [ -s "$tmp/unrepresentable" ]; then
+  echo "campaigns-check: $DIR/ holds a file whose name carries a newline or a backslash, which no manifest line can record" >&2
+  echo "  [reproduce: (cd $DIR && find . -type f \\( -name '*\\\\*' -o -name '*<newline>*' \\))]" >&2
+  exit 12
+fi
 
-join -t"$(printf '\t')" -v1 "$tmp/declared" "$tmp/present" | cut -f1 \
-  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — the manifest declares it and the tree does not hold it  [reproduce: ls &]|" >> "$tmp/findings" || true
-join -t"$(printf '\t')" -v2 "$tmp/declared" "$tmp/present" | cut -f1 \
-  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — held by the tree and absent from the manifest  [reproduce: shasum -a 256 &]|" >> "$tmp/findings" || true
-join -t"$(printf '\t')" "$tmp/declared" "$tmp/present" | awk -F'\t' '$2 != $3 { print $1 }' \
-  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — its bytes are not the bytes the manifest recorded  [reproduce: shasum -a 256 &]|" >> "$tmp/findings" || true
+# The bytes, as two sorted `<path>\t<hash>` tables the same way round. A hash is 64 hex
+# characters and two spaces, so the path is the rest of the line, whitespace and all.
+( cd "$DIR" && find . -type f ! -path ./MANIFEST.sha256 -print0 | hash_paths ) \
+  | awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' | sed 's|^\./||' | LC_ALL=C sort > "$tmp/present"
+awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$MAN" | sed 's|^\./||' | LC_ALL=C sort > "$tmp/declared"
+
+TAB="$(printf '\t')"
+# One substitution per line, so `&` is the path itself (a second `s|$|...|` would see an empty match).
+LC_ALL=C join -t"$TAB" -v1 "$tmp/declared" "$tmp/present" | cut -f1 \
+  | sed "s|.*|FAIL campaigns  $DIR/& — the manifest declares it and the tree does not hold it  [reproduce: ls '$DIR/&']|" >> "$tmp/findings" || true
+LC_ALL=C join -t"$TAB" -v2 "$tmp/declared" "$tmp/present" | cut -f1 \
+  | sed "s|.*|FAIL campaigns  $DIR/& — held by the tree and absent from the manifest  [reproduce: $HASH_CMD '$DIR/&']|" >> "$tmp/findings" || true
+LC_ALL=C join -t"$TAB" "$tmp/declared" "$tmp/present" | awk -F'\t' '$2 != $3 { print $1 }' \
+  | sed "s|.*|FAIL campaigns  $DIR/& — its bytes are not the bytes the manifest recorded  [reproduce: $HASH_CMD '$DIR/&']|" >> "$tmp/findings" || true
 
 # The index and the packs, as two sorted name lists.
 find "$DIR" -mindepth 1 -maxdepth 1 -type d -exec basename {} \; | LC_ALL=C sort > "$tmp/packs"
 sed -n 's/^| `\([^`]*\)` |.*/\1/p' "$INDEX" | LC_ALL=C sort -u > "$tmp/rows"
 
-comm -23 "$tmp/packs" "$tmp/rows" \
-  | sed "s|^|FAIL campaigns  $DIR/|;s|$| — a pack the index does not list  [reproduce: grep -F '\`&\`' $INDEX]|" >> "$tmp/findings" || true
-comm -13 "$tmp/packs" "$tmp/rows" \
-  | sed "s|^|FAIL campaigns  $INDEX — lists \`|;s|$|\`, which is not a pack of this tree  [reproduce: ls $DIR/&]|" >> "$tmp/findings" || true
+LC_ALL=C comm -23 "$tmp/packs" "$tmp/rows" \
+  | sed "s|.*|FAIL campaigns  $DIR/& — a pack the index does not list  [reproduce: grep -F '\`&\`' $INDEX]|" >> "$tmp/findings" || true
+LC_ALL=C comm -13 "$tmp/packs" "$tmp/rows" \
+  | sed "s|.*|FAIL campaigns  $INDEX — lists \`&\`, which is not a pack of this tree  [reproduce: ls '$DIR/&']|" >> "$tmp/findings" || true
 
 findings="$(awk 'END { print NR }' "$tmp/findings")"
 packs="$(awk 'END { print NR }' "$tmp/packs")"
@@ -74,4 +132,4 @@ if [ "$findings" -gt 0 ]; then
   printf 'campaigns-check: %s finding(s) over %s pack(s)\n' "$findings" "$packs"
   exit 10
 fi
-printf 'campaigns-check: %s pack(s), %s file(s), every one the bytes the manifest recorded and every one in the index\n' "$packs" "$files"
+printf 'campaigns-check: %s pack(s), %s file(s) hashed by %s, every one the bytes the manifest recorded and every one in the index\n' "$packs" "$files" "$hasher"

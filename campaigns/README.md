@@ -45,10 +45,13 @@ evidence that what it asked for exists — the gates are.
 
 ## Adding one
 
-Copy the pack directory in unmodified, regenerate `MANIFEST.sha256`, and add its row above:
+Copy the pack directory in unmodified, regenerate `MANIFEST.sha256`, and add its row above.
+Only the top-level manifest is left out of its own list; a pack's own `MANIFEST.sha256` is a
+byte of the brief and is recorded like any other. Hash with `sha256sum`, or with
+`openssl dgst -sha256 -r` where it is absent, never `shasum`, which is a Perl script on macOS:
 
 ```console
 $ cp -R ~/Downloads/<pack> campaigns/<pack>
-$ (cd campaigns && find . -type f ! -name MANIFEST.sha256 | LC_ALL=C sort | xargs shasum -a 256 | sed 's|\./||' > MANIFEST.sha256)
+$ (cd campaigns && find . -type f ! -path ./MANIFEST.sha256 -print0 | LC_ALL=C sort -z | xargs -0 sha256sum | sed 's|^\([0-9a-f]*\) [ *]\./|\1  |' > MANIFEST.sha256)
 ```
 
