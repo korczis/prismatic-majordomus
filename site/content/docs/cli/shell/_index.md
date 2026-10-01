@@ -4,7 +4,7 @@ description = "The repository's shell automation against the tracked migration i
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 163
+weight = 170
 [extra]
 route = "/docs/cli/shell/"
 command = "majordomus shell"

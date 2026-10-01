@@ -6,22 +6,22 @@ generated: "GENERATED FILE — DO NOT EDIT DIRECTLY; source: the benchmark proje
 generator: majordomus-cli 0.11.0
 coverage:
   - scope: direct
-    required: 143
-    covered: 126
+    required: 149
+    covered: 131
     missing: 0
-    waived: 17
+    waived: 18
     inapplicable: 0
   - scope: http
-    required: 141
-    covered: 126
+    required: 147
+    covered: 131
     missing: 0
-    waived: 15
+    waived: 16
     inapplicable: 0
   - scope: mcp
-    required: 137
-    covered: 122
+    required: 143
+    covered: 127
     missing: 0
-    waived: 15
+    waived: 16
     inapplicable: 0
   - scope: system
     required: 13
@@ -30,10 +30,10 @@ coverage:
     waived: 0
     inapplicable: 0
   - scope: total
-    required: 434
-    covered: 387
+    required: 452
+    covered: 402
     missing: 0
-    waived: 47
+    waived: 50
     inapplicable: 0
 capabilities:
   - id: artifacts.list
@@ -1082,6 +1082,60 @@ capabilities:
     cases:
       - default
       - missing-pages-summary
+  - id: reasoning.advisors
+    module: reasoning
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: reasoning.check
+    module: reasoning
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - default
+  - id: reasoning.explain
+    module: reasoning
+    kind: query
+    cache: "—"
+    direct: waived
+    mcp: waived
+    http: waived
+    cases: []
+  - id: reasoning.plan
+    module: reasoning
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - material
+  - id: reasoning.record
+    module: reasoning
+    kind: command
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - refused
+  - id: reasoning.status
+    module: reasoning
+    kind: query
+    cache: "—"
+    direct: covered
+    mcp: covered
+    http: covered
+    cases:
+      - current
+      - all
   - id: recover.orphans
     module: recover
     kind: command

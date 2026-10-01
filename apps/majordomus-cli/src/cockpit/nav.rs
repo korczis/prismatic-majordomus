@@ -57,6 +57,8 @@ pub enum Area {
     Mesh,
     /// The declared model catalogue and its routing.
     Models,
+    /// Reasoning: the optional advisors, and the session's uncertainties and conclusions.
+    Reasoning,
     /// Token economics, measured.
     Economics,
     /// The health report.
@@ -157,6 +159,12 @@ pub fn areas() -> &'static [AreaInfo] {
             label: "Models",
             href: "/cockpit/models",
             area: Area::Models,
+        },
+        AreaInfo {
+            id: "reasoning",
+            label: "Reasoning",
+            href: "/cockpit/reasoning",
+            area: Area::Reasoning,
         },
         AreaInfo {
             id: "economics",

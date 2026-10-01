@@ -252,6 +252,14 @@
       "capabilities": 2
     },
     {
+      "id": "reasoning",
+      "title": "Reasoning",
+      "description": "Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence.",
+      "stability": "experimental",
+      "source": "builtin",
+      "capabilities": 6
+    },
+    {
       "id": "recover",
       "title": "Recovery of the record stores",
       "description": "The stray files a killed publish, an interrupted rename or an unfinished site build leave in the record stores, classified by reading the clock and the content, and swept exactly once. This is the capability that backs `majordomus recover` (ADR 0040): the command no longer decides what a stray is, it asks.",
@@ -17680,6 +17688,17 @@
               },
               "description": "The local services, in the order the service table declares them."
             },
+            "reasoning": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ReasoningSummary"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Reasoning (ADR 0098): operational whatever the advisors, the mode in force, and how\nmany optional advisors can be asked. Absent when the distribution declares none."
+            },
             "diagnostics": {
               "type": "array",
               "items": {
@@ -18406,6 +18425,39 @@
                 }
               ],
               "description": "Whether a service answers. `Unknown` is a real answer and never a disguised `no`: a\nprobe that timed out and a port that refused the connection lead a reader to different\nactions."
+            },
+            "ReasoningSummary": {
+              "type": "object",
+              "properties": {
+                "operational": {
+                  "type": "boolean",
+                  "description": "Reasoning works with no advisor at all; always `true`."
+                },
+                "mode": {
+                  "type": "string",
+                  "description": "The mode in force: `offline`, `ci`, `fast`, `standard`, `strict`."
+                },
+                "available": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The advisors that may be asked now, in preference order."
+                },
+                "unavailable": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many declared advisors may not, each optional."
+                }
+              },
+              "required": [
+                "operational",
+                "mode",
+                "available",
+                "unavailable"
+              ],
+              "description": "Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the\nsame derivation, never a provider list of its own."
             },
             "FieldSource": {
               "type": "object",
@@ -40181,6 +40233,5211 @@
         "concurrency": "unrestricted"
       },
       "source_path": "apps/majordomus-cli/src/capability/builtin/quality.rs"
+    },
+    {
+      "id": "reasoning.advisors",
+      "module": "reasoning",
+      "kind": "query",
+      "title": "The advisors and what they can do now",
+      "description": "Every declared advisor — then every linked mesh peer carrying the review feature — with its status (available, unavailable, not_configured, disabled, temporarily_failed, rate_limited) and why, from presence alone (an executable on PATH, a credential variable set; never a value), the reasoning mode and the recorded outcomes of earlier consultations. Plus the capacity per advisory capability. No advisor is an ordinary answer: reasoning is operational either way.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "AdvisorsReport",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "operational": {
+              "type": "boolean",
+              "description": "Reasoning works whatever the advisors: always `true`, stated so a reader need not\ninfer it from a count."
+            },
+            "mode": {
+              "$ref": "#/$defs/ModeResolution",
+              "description": "The mode in force and what decided it."
+            },
+            "available": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "Advisors that may be asked now."
+            },
+            "unavailable": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "Advisors that may not, each optional."
+            },
+            "advisors": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AdvisorState"
+              },
+              "description": "Every advisor, declared ones in preference order, then linked peers."
+            },
+            "capacity": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/AdvisorCapacity"
+              },
+              "description": "Per advisory capability, who can provide it now. A row with nobody is answered by\nthe local review path."
+            },
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The catalogue's own findings."
+            }
+          },
+          "required": [
+            "operational",
+            "mode",
+            "available",
+            "unavailable",
+            "advisors",
+            "capacity"
+          ],
+          "description": "The answer of `reasoning.advisors`.",
+          "title": "AdvisorsReport",
+          "$defs": {
+            "ModeResolution": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "$ref": "#/$defs/ReasoningMode",
+                  "description": "The mode."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "What decided it: `MAJORDOMUS_REASONING_MODE`, `CI`, `profile <name>`, or `default`."
+                }
+              },
+              "required": [
+                "mode",
+                "source"
+              ],
+              "description": "The mode in force and what decided it."
+            },
+            "ReasoningMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "offline",
+                  "description": "No network: only advisors that stay on this machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Deterministic: no advisor at all, whatever is installed."
+                },
+                {
+                  "type": "string",
+                  "const": "fast",
+                  "description": "Review only where the blast radius is high."
+                },
+                {
+                  "type": "string",
+                  "const": "standard",
+                  "description": "Review where uncertainty is material."
+                },
+                {
+                  "type": "string",
+                  "const": "strict",
+                  "description": "Review wider, and complementary review where the stakes are highest."
+                }
+              ],
+              "description": "How much independent review a session may use, and where from."
+            },
+            "AdvisorState": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The advisor id (a peer is `peer:<runtime>`)."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The human name."
+                },
+                "transport": {
+                  "$ref": "#/$defs/AdvisorTransport",
+                  "description": "How it is reached."
+                },
+                "adapter": {
+                  "type": "string",
+                  "description": "The adapter that speaks to it."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The advisory capabilities it offers."
+                },
+                "model": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The model it asks, when the catalogue names one: what its adapter sends."
+                },
+                "executable": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The executable its adapter runs, when it runs one."
+                },
+                "credential": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The name of the credential variable its adapter reads — a name, never a value."
+                },
+                "status": {
+                  "$ref": "#/$defs/AdvisorStatus",
+                  "description": "Its standing."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why, as one machine word: `present`, `executable_not_found`, `credential_absent`,\n`mode_ci`, `mode_offline`, `disabled_by_configuration`, `consecutive_failures`,\n`rate_limited`, `authentication_failed`, `peer_linked`."
+                },
+                "probe": {
+                  "type": "string",
+                  "description": "What was observed, for a person: which executable, which variable (never a value)."
+                },
+                "recovering": {
+                  "type": "boolean",
+                  "description": "Available again after an open circuit's cooldown: the next consultation is its test.",
+                  "default": false
+                },
+                "circuit": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/AdvisorCircuit"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The open circuit, when there is one."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "transport",
+                "adapter",
+                "capabilities",
+                "status",
+                "reason",
+                "probe"
+              ],
+              "description": "One advisor as it stands now."
+            },
+            "AdvisorTransport": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "api",
+                  "description": "A remote API; present when its vendor's credential variable is set."
+                },
+                {
+                  "type": "string",
+                  "const": "cli",
+                  "description": "A client tool run as a process; present when its executable is on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "local_runtime",
+                  "description": "A model runtime on this machine; present when its executable is on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "peer",
+                  "description": "A linked mesh runtime carrying the review feature; present while linked."
+                }
+              ],
+              "description": "How an advisor is reached."
+            },
+            "AdvisorStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "available",
+                  "description": "It may be asked. Presence was observed; whether it answers is learned by asking."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "Not installed: its executable is not on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "not_configured",
+                  "description": "Installed or reachable in principle, but its credential is not configured."
+                },
+                {
+                  "type": "string",
+                  "const": "disabled",
+                  "description": "Left out by the mode or by an explicit disable."
+                },
+                {
+                  "type": "string",
+                  "const": "temporarily_failed",
+                  "description": "Its recent consultations failed; its circuit is open until the cooldown passes."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "It answered with a rate limit; not asked again until the limit passes."
+                }
+              ],
+              "description": "An advisor's standing."
+            },
+            "AdvisorCircuit": {
+              "type": "object",
+              "properties": {
+                "opened_by": {
+                  "type": "string",
+                  "description": "The consultation outcome that opened it."
+                },
+                "failures": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The consecutive failures behind it."
+                },
+                "until": {
+                  "type": "string",
+                  "description": "When it closes again, RFC 3339."
+                }
+              },
+              "required": [
+                "opened_by",
+                "failures",
+                "until"
+              ],
+              "description": "An open circuit: why, and until when."
+            },
+            "AdvisorCapacity": {
+              "type": "object",
+              "properties": {
+                "capability": {
+                  "type": "string",
+                  "description": "The capability word."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "What it means."
+                },
+                "available": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Available advisors offering it, in preference order."
+                }
+              },
+              "required": [
+                "capability",
+                "description",
+                "available"
+              ],
+              "description": "One advisory capability and who can provide it now."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::reasoning"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_reasoning_advisors",
+          "resource": {
+            "uri": "majordomus://reasoning/advisors",
+            "name": "reasoning-advisors"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/reasoning/advisors"
+        },
+        "cli": {
+          "path": [
+            "reasoning",
+            "advisors"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "reasoning",
+        "advisors"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+    },
+    {
+      "id": "reasoning.check",
+      "module": "reasoning",
+      "kind": "query",
+      "title": "Check that reasoning stays provider-independent",
+      "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites.",
+      "input": {
+        "name": "Empty",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No input.",
+          "title": "Empty"
+        }
+      },
+      "output": {
+        "name": "ReasoningCheck",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "ok": {
+              "type": "boolean",
+              "description": "No finding."
+            },
+            "checks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The checks performed, in order."
+            },
+            "findings": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReasoningFinding"
+              },
+              "description": "What they found."
+            }
+          },
+          "required": [
+            "ok",
+            "checks",
+            "findings"
+          ],
+          "description": "The answer of `reasoning.check`.",
+          "title": "ReasoningCheck",
+          "$defs": {
+            "ReasoningFinding": {
+              "type": "object",
+              "properties": {
+                "check": {
+                  "type": "string",
+                  "description": "The check that found it."
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "Where: a file, a record, an advisor."
+                },
+                "message": {
+                  "type": "string",
+                  "description": "What is wrong."
+                }
+              },
+              "required": [
+                "check",
+                "subject",
+                "message"
+              ],
+              "description": "One finding."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::reasoning"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_reasoning_check"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/reasoning/check"
+        },
+        "cli": {
+          "path": [
+            "reasoning",
+            "check"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "reasoning",
+        "governance"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+    },
+    {
+      "id": "reasoning.explain",
+      "module": "reasoning",
+      "kind": "query",
+      "title": "Why a decision was made",
+      "description": "One reasoning record with the whole chain of its assessment: the uncertainty and its evidence, the plan and who it selected or why nobody, each consultation, each disagreement and the experiment that settled it, the conclusion and its validation — the provenance of a decision without the conversation that produced it.",
+      "input": {
+        "name": "ReasoningExplainInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "A record id: a conclusion, usually."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "description": "The input of `reasoning.explain`.",
+          "title": "ReasoningExplainInput"
+        }
+      },
+      "output": {
+        "name": "ReasoningExplanation",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "record": {
+              "$ref": "#/$defs/ReasoningRecord",
+              "description": "The record asked about."
+            },
+            "assessment": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "The assessment it belongs to, when it belongs to one."
+            },
+            "chain": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ReasoningStep"
+              },
+              "description": "Every record of that assessment, in order: its provenance chain."
+            }
+          },
+          "required": [
+            "record",
+            "chain"
+          ],
+          "description": "A record with everything it rests on and everything that rests on it.",
+          "title": "ReasoningExplanation",
+          "$defs": {
+            "ReasoningRecord": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "description": "`RECORD_SCHEMA`."
+                },
+                "version": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "`RECORD_VERSION`."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "`<kind>-<yyyymmddThhmmssZ>-<hex>`, unique in the store."
+                },
+                "task": {
+                  "type": "string",
+                  "description": "The task it was recorded under, or `untasked`."
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "description": "When it was recorded, RFC 3339; stamped by the writer, never supplied."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit the checkout was on."
+                },
+                "redacted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Secret shapes the writer removed from the text, by shape name."
+                },
+                "body": {
+                  "$ref": "#/$defs/ReasoningBody",
+                  "description": "The record."
+                }
+              },
+              "required": [
+                "schema",
+                "version",
+                "id",
+                "task",
+                "recorded_at",
+                "body"
+              ],
+              "description": "A stored record."
+            },
+            "ReasoningBody": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "subject": {
+                      "type": "string",
+                      "description": "What is uncertain, as one line. Later assessments of the same subject find the\nconclusions of earlier ones through it."
+                    },
+                    "materiality": {
+                      "$ref": "#/$defs/Materiality",
+                      "description": "How much the decision could matter.",
+                      "default": "low"
+                    },
+                    "confidence": {
+                      "$ref": "#/$defs/ReasoningConfidence",
+                      "description": "How sure the executor is of its hypothesis.",
+                      "default": "medium"
+                    },
+                    "hypothesis": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The current hypothesis."
+                    },
+                    "affects": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What the decision could affect: `public_api`, `persistent_data`, `security`,\n`concurrency`, `architecture`, ..."
+                    },
+                    "facts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is known."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is assumed."
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is still open."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence gathered locally."
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The advisory capabilities review would need; empty means `independent_reasoning`."
+                    },
+                    "new_evidence": {
+                      "type": "boolean",
+                      "description": "The assessment brings evidence a standing conclusion on the subject did not have,\nso that conclusion does not answer it.",
+                      "default": false
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "assessment"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "subject"
+                  ],
+                  "description": "A material uncertainty."
+                },
+                {
+                  "$ref": "#/$defs/StoredPlan",
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "plan"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "description": "A plan, with its availability snapshot."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "description": "The recorded plan that selected this advisor."
+                    },
+                    "advisor": {
+                      "type": "string",
+                      "description": "The advisor asked."
+                    },
+                    "status": {
+                      "$ref": "#/$defs/ConsultationStatus",
+                      "description": "How it ended."
+                    },
+                    "question": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The question asked, in one line (the full prompt is not kept)."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence the question carried."
+                    },
+                    "conclusion": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The advisor's conclusion, summarised. Required when completed, refused otherwise."
+                    },
+                    "stance": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/Stance"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Where it stands relative to the hypothesis."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Assumptions it identified."
+                    },
+                    "risks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Risks it identified."
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Actions it recommended."
+                    },
+                    "falsifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What would falsify its conclusion."
+                    },
+                    "confidence": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/ReasoningConfidence"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Its stated confidence."
+                    },
+                    "duration_ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "How long it took, milliseconds."
+                    },
+                    "usage": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/AdvisorUsage"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "What the transport reported it cost."
+                    },
+                    "diagnostic": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The adapter's diagnostic for a failure: a class and a sentence, never a payload."
+                    },
+                    "retry_after_seconds": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "A rate limit's retry-after, seconds."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "consultation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "plan",
+                    "advisor",
+                    "status"
+                  ],
+                  "description": "One advisor exchange."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": "string",
+                      "description": "The assessment it is about."
+                    },
+                    "positions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/DisagreementPosition"
+                      },
+                      "description": "The positions; at least two."
+                    },
+                    "divergent_assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The assumptions the positions divide on."
+                    },
+                    "discriminating_question": {
+                      "type": "string",
+                      "description": "The question whose answer decides between them."
+                    },
+                    "experiment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The experiment proposed to answer it."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "disagreement"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "assessment",
+                    "positions",
+                    "discriminating_question"
+                  ],
+                  "description": "A disagreement."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "disagreement": {
+                      "type": "string",
+                      "description": "The disagreement it settles."
+                    },
+                    "experiment": {
+                      "type": "string",
+                      "description": "The experiment performed."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "description": "What it showed."
+                    },
+                    "favours": {
+                      "type": "string",
+                      "description": "The position it favours: a `source` of the disagreement, or `neither`."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence it produced; at least one reference."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "resolution"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "disagreement",
+                    "experiment",
+                    "outcome",
+                    "favours",
+                    "evidence"
+                  ],
+                  "description": "A disagreement settled by evidence."
+                },
+                {
+                  "$ref": "#/$defs/StoredConclusion",
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "conclusion"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "description": "An engineering conclusion, with its computed review."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "conclusion": {
+                      "type": "string",
+                      "description": "The conclusion validated."
+                    },
+                    "check": {
+                      "type": "string",
+                      "description": "What was checked, in one line."
+                    },
+                    "command": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The command that checked it."
+                    },
+                    "outcome": {
+                      "$ref": "#/$defs/ValidationOutcome",
+                      "description": "How it came out."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "What it produced."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "validation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "conclusion",
+                    "check",
+                    "outcome"
+                  ],
+                  "description": "A validation step performed."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The assessment it bears on, when there is one."
+                    },
+                    "attempt": {
+                      "type": "string",
+                      "description": "What was tried."
+                    },
+                    "observed_failure": {
+                      "type": "string",
+                      "description": "What failed, observed."
+                    },
+                    "assumption_invalidated": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The assumption the failure invalidated."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "Evidence the failure produced."
+                    },
+                    "updated_hypothesis": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The hypothesis now."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "attempt"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "attempt",
+                    "observed_failure"
+                  ],
+                  "description": "A failed attempt."
+                }
+              ],
+              "description": "A stored record's body."
+            },
+            "Materiality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "trivial",
+                  "description": "A name, a format, an obvious convention: never reviewed."
+                },
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "Local and reversible."
+                },
+                {
+                  "type": "string",
+                  "const": "material",
+                  "description": "Could affect correctness, an interface, persistent data, concurrency, operations."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Architecture, security, compatibility or a public contract."
+                },
+                {
+                  "type": "string",
+                  "const": "critical",
+                  "description": "Irreversible or destructive, or repository governance itself."
+                }
+              ],
+              "description": "How much the uncertain decision could matter."
+            },
+            "ReasoningConfidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "A guess the evidence does not yet support."
+                },
+                {
+                  "type": "string",
+                  "const": "medium",
+                  "description": "Supported, with open questions."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Supported by evidence that would be hard to overturn."
+                }
+              ],
+              "description": "How sure the primary executor is of its current hypothesis."
+            },
+            "ReasoningEvidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "$ref": "#/$defs/ReasoningEvidenceKind",
+                  "description": "What it is."
+                },
+                "reference": {
+                  "type": "string",
+                  "description": "Where it is: a path, a case, an id, a command line."
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What it shows, in one line."
+                }
+              },
+              "required": [
+                "kind",
+                "reference"
+              ],
+              "description": "A reference to something that supports a claim."
+            },
+            "ReasoningEvidenceKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "file",
+                  "description": "A file of the repository, optionally with a line: `src/x.rs:42`."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "A test case or test name."
+                },
+                {
+                  "type": "string",
+                  "const": "adr",
+                  "description": "An architecture decision record."
+                },
+                {
+                  "type": "string",
+                  "const": "rule",
+                  "description": "A rule of the layer."
+                },
+                {
+                  "type": "string",
+                  "const": "commit",
+                  "description": "A commit."
+                },
+                {
+                  "type": "string",
+                  "const": "command",
+                  "description": "A command that was run, and what it showed."
+                },
+                {
+                  "type": "string",
+                  "const": "record",
+                  "description": "Another reasoning record."
+                },
+                {
+                  "type": "string",
+                  "const": "document",
+                  "description": "Documentation."
+                },
+                {
+                  "type": "string",
+                  "const": "runtime",
+                  "description": "A runtime observation: a log, a measurement, a diagnostic."
+                },
+                {
+                  "type": "string",
+                  "const": "prior_external_opinion",
+                  "description": "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
+                }
+              ],
+              "description": "What a piece of evidence is."
+            },
+            "ReviewPlan": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "$ref": "#/$defs/ReasoningMode",
+                  "description": "The mode it was made under."
+                },
+                "mode_source": {
+                  "type": "string",
+                  "description": "What decided the mode."
+                },
+                "materiality": {
+                  "$ref": "#/$defs/Materiality",
+                  "description": "The materiality it answered."
+                },
+                "confidence": {
+                  "$ref": "#/$defs/ReasoningConfidence",
+                  "description": "The confidence it answered."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The capabilities review was asked for."
+                },
+                "budget": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many advisors the mode and materiality allow."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/PlanOutcome",
+                  "description": "What to do."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why, in one sentence."
+                },
+                "selected": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SelectedAdvisor"
+                  },
+                  "description": "The advisors to consult, in selection order."
+                },
+                "excluded": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ExcludedAdvisor"
+                  },
+                  "description": "Every advisor not selected, with its reason."
+                },
+                "available": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Advisors available when the plan was made, whatever was selected."
+                },
+                "local_review": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The structured local review to perform, when material uncertainty meets no advisor."
+                }
+              },
+              "required": [
+                "mode",
+                "mode_source",
+                "materiality",
+                "confidence",
+                "capabilities",
+                "budget",
+                "outcome",
+                "reason",
+                "selected",
+                "excluded",
+                "available"
+              ],
+              "description": "The plan: the decision with its reasons attached."
+            },
+            "ReasoningMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "offline",
+                  "description": "No network: only advisors that stay on this machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Deterministic: no advisor at all, whatever is installed."
+                },
+                {
+                  "type": "string",
+                  "const": "fast",
+                  "description": "Review only where the blast radius is high."
+                },
+                {
+                  "type": "string",
+                  "const": "standard",
+                  "description": "Review where uncertainty is material."
+                },
+                {
+                  "type": "string",
+                  "const": "strict",
+                  "description": "Review wider, and complementary review where the stakes are highest."
+                }
+              ],
+              "description": "How much independent review a session may use, and where from."
+            },
+            "PlanOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "consult",
+                  "description": "Consult the selected advisors, then conclude."
+                },
+                {
+                  "type": "string",
+                  "const": "decide_locally",
+                  "description": "Decide on local evidence; no independent review is called for or none is available."
+                },
+                {
+                  "type": "string",
+                  "const": "reuse_prior",
+                  "description": "A standing conclusion already answers this; reuse it rather than ask again."
+                }
+              ],
+              "description": "What the plan decided."
+            },
+            "SelectedAdvisor": {
+              "type": "object",
+              "properties": {
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor id."
+                },
+                "covers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The requested capabilities it covers."
+                },
+                "why": {
+                  "type": "string",
+                  "description": "Why it was chosen."
+                }
+              },
+              "required": [
+                "advisor",
+                "covers",
+                "why"
+              ],
+              "description": "One selected advisor and why."
+            },
+            "ExcludedAdvisor": {
+              "type": "object",
+              "properties": {
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor id."
+                },
+                "status": {
+                  "$ref": "#/$defs/AdvisorStatus",
+                  "description": "Its standing when the plan was made."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it is not in the plan."
+                }
+              },
+              "required": [
+                "advisor",
+                "status",
+                "reason"
+              ],
+              "description": "One advisor left out and why."
+            },
+            "AdvisorStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "available",
+                  "description": "It may be asked. Presence was observed; whether it answers is learned by asking."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "Not installed: its executable is not on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "not_configured",
+                  "description": "Installed or reachable in principle, but its credential is not configured."
+                },
+                {
+                  "type": "string",
+                  "const": "disabled",
+                  "description": "Left out by the mode or by an explicit disable."
+                },
+                {
+                  "type": "string",
+                  "const": "temporarily_failed",
+                  "description": "Its recent consultations failed; its circuit is open until the cooldown passes."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "It answered with a rate limit; not asked again until the limit passes."
+                }
+              ],
+              "description": "An advisor's standing."
+            },
+            "AdvisorState": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The advisor id (a peer is `peer:<runtime>`)."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The human name."
+                },
+                "transport": {
+                  "$ref": "#/$defs/AdvisorTransport",
+                  "description": "How it is reached."
+                },
+                "adapter": {
+                  "type": "string",
+                  "description": "The adapter that speaks to it."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The advisory capabilities it offers."
+                },
+                "model": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The model it asks, when the catalogue names one: what its adapter sends."
+                },
+                "executable": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The executable its adapter runs, when it runs one."
+                },
+                "credential": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The name of the credential variable its adapter reads — a name, never a value."
+                },
+                "status": {
+                  "$ref": "#/$defs/AdvisorStatus",
+                  "description": "Its standing."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why, as one machine word: `present`, `executable_not_found`, `credential_absent`,\n`mode_ci`, `mode_offline`, `disabled_by_configuration`, `consecutive_failures`,\n`rate_limited`, `authentication_failed`, `peer_linked`."
+                },
+                "probe": {
+                  "type": "string",
+                  "description": "What was observed, for a person: which executable, which variable (never a value)."
+                },
+                "recovering": {
+                  "type": "boolean",
+                  "description": "Available again after an open circuit's cooldown: the next consultation is its test.",
+                  "default": false
+                },
+                "circuit": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/AdvisorCircuit"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The open circuit, when there is one."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "transport",
+                "adapter",
+                "capabilities",
+                "status",
+                "reason",
+                "probe"
+              ],
+              "description": "One advisor as it stands now."
+            },
+            "AdvisorTransport": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "api",
+                  "description": "A remote API; present when its vendor's credential variable is set."
+                },
+                {
+                  "type": "string",
+                  "const": "cli",
+                  "description": "A client tool run as a process; present when its executable is on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "local_runtime",
+                  "description": "A model runtime on this machine; present when its executable is on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "peer",
+                  "description": "A linked mesh runtime carrying the review feature; present while linked."
+                }
+              ],
+              "description": "How an advisor is reached."
+            },
+            "AdvisorCircuit": {
+              "type": "object",
+              "properties": {
+                "opened_by": {
+                  "type": "string",
+                  "description": "The consultation outcome that opened it."
+                },
+                "failures": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The consecutive failures behind it."
+                },
+                "until": {
+                  "type": "string",
+                  "description": "When it closes again, RFC 3339."
+                }
+              },
+              "required": [
+                "opened_by",
+                "failures",
+                "until"
+              ],
+              "description": "An open circuit: why, and until when."
+            },
+            "StoredPlan": {
+              "type": "object",
+              "properties": {
+                "assessment": {
+                  "type": "string",
+                  "description": "The assessment it answers."
+                },
+                "plan": {
+                  "$ref": "#/$defs/ReviewPlan",
+                  "description": "The decision."
+                },
+                "availability": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/AdvisorState"
+                  },
+                  "description": "Every advisor's standing at the moment of the plan: the snapshot a later\nconsultation is admitted against."
+                }
+              },
+              "required": [
+                "assessment",
+                "plan",
+                "availability"
+              ],
+              "description": "A plan as stored: the decision and the availability it was made against."
+            },
+            "ConsultationStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "completed",
+                  "description": "An answer was received and normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "No answer within the time allowed."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "The advisor refused for rate."
+                },
+                {
+                  "type": "string",
+                  "const": "auth_failed",
+                  "description": "The credential was refused."
+                },
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "An answer arrived that could not be normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "empty",
+                  "description": "An answer arrived with nothing in it."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "The advisor could not be reached: not running, not answering, gone."
+                },
+                {
+                  "type": "string",
+                  "const": "cancelled",
+                  "description": "The session withdrew the request."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "Anything else the adapter could not classify."
+                }
+              ],
+              "description": "How a consultation ended."
+            },
+            "Stance": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "supports",
+                  "description": "It supports the hypothesis."
+                },
+                {
+                  "type": "string",
+                  "const": "opposes",
+                  "description": "It argues against it."
+                },
+                {
+                  "type": "string",
+                  "const": "alternative",
+                  "description": "It proposes something else."
+                },
+                {
+                  "type": "string",
+                  "const": "inconclusive",
+                  "description": "It does not decide."
+                }
+              ],
+              "description": "Where an advisor's answer stands relative to the executor's hypothesis."
+            },
+            "AdvisorUsage": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "input_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Input tokens.",
+                  "default": 0
+                },
+                "output_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Output tokens.",
+                  "default": 0
+                }
+              },
+              "description": "Token counts an adapter reported. Absent when the transport reports none; never\nestimated."
+            },
+            "DisagreementPosition": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Whose position: `primary`, or a completed consultation's record id."
+                },
+                "position": {
+                  "type": "string",
+                  "description": "The position, in one line."
+                }
+              },
+              "required": [
+                "source",
+                "position"
+              ],
+              "description": "One side of a disagreement."
+            },
+            "StoredConclusion": {
+              "type": "object",
+              "description": "A conclusion as stored: the input and what only the writer computes.",
+              "properties": {
+                "assessment": {
+                  "type": "string",
+                  "description": "The assessment it concludes."
+                },
+                "decision": {
+                  "type": "string",
+                  "description": "The decision."
+                },
+                "rationale": {
+                  "type": "string",
+                  "description": "Why, from the evidence."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReasoningEvidence"
+                  },
+                  "description": "The evidence it rests on. Required for material uncertainty."
+                },
+                "consultations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The completed consultations it weighed."
+                },
+                "disagreements": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The resolved disagreements it rests on."
+                },
+                "rejected": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Alternatives considered and rejected, each with why."
+                },
+                "assumptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Assumptions it still depends on."
+                },
+                "risks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Risks that remain."
+                },
+                "validation_plan": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "How the decision will be proven. Required for material uncertainty."
+                },
+                "confidence": {
+                  "$ref": "#/$defs/ReasoningConfidence",
+                  "description": "Confidence in it.",
+                  "default": "medium"
+                },
+                "supersedes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "An earlier conclusion this one replaces, because new evidence overturned it."
+                },
+                "reviewed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The advisors whose completed consultations it cites, each once. Computed."
+                },
+                "independent_review_count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many independent advisors reviewed it: `reviewed_by`'s length. Computed."
+                }
+              },
+              "required": [
+                "assessment",
+                "decision",
+                "rationale",
+                "reviewed_by",
+                "independent_review_count"
+              ]
+            },
+            "ValidationOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                }
+              ],
+              "description": "Whether a validation passed."
+            },
+            "ReasoningStep": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "When."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The record."
+                },
+                "phase": {
+                  "$ref": "#/$defs/ReasoningPhase",
+                  "description": "The phase."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line."
+                }
+              },
+              "required": [
+                "at",
+                "id",
+                "phase",
+                "summary"
+              ],
+              "description": "One step of the timeline."
+            },
+            "ReasoningPhase": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "uncertainty",
+                  "description": "Uncertainty stated with evidence."
+                },
+                {
+                  "type": "string",
+                  "const": "consulting",
+                  "description": "Review planned."
+                },
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Decided locally, by plan."
+                },
+                {
+                  "type": "string",
+                  "const": "reuse",
+                  "description": "A standing conclusion reused."
+                },
+                {
+                  "type": "string",
+                  "const": "advisor_response",
+                  "description": "An advisor answered."
+                },
+                {
+                  "type": "string",
+                  "const": "degradation",
+                  "description": "An advisor could not answer."
+                },
+                {
+                  "type": "string",
+                  "const": "disagreement",
+                  "description": "Positions diverged."
+                },
+                {
+                  "type": "string",
+                  "const": "experiment",
+                  "description": "An experiment settled a disagreement."
+                },
+                {
+                  "type": "string",
+                  "const": "conclusion",
+                  "description": "A conclusion."
+                },
+                {
+                  "type": "string",
+                  "const": "validation",
+                  "description": "A validation step."
+                },
+                {
+                  "type": "string",
+                  "const": "attempt",
+                  "description": "A failed attempt."
+                }
+              ],
+              "description": "A phase of the reasoning timeline."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::reasoning"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_reasoning_explain"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/reasoning/explain"
+        },
+        "cli": {
+          "path": [
+            "reasoning",
+            "explain"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "reasoning",
+        "provenance"
+      ],
+      "benchmark": {
+        "policy": "waived",
+        "reason": "transient_state"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+    },
+    {
+      "id": "reasoning.plan",
+      "module": "reasoning",
+      "kind": "query",
+      "title": "What an uncertainty calls for",
+      "description": "Decide, without recording anything, whether a stated uncertainty warrants independent review, how much the mode allows, and which available advisors a capability-driven selection would ask — with every advisor left out and why. Trivial and low uncertainty is decided locally; material uncertainty with no suitable advisor gets the structured local review instead. Pure over the catalogue, the availability and the input.",
+      "input": {
+        "name": "PlanPreviewInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "materiality": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/Materiality"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`trivial`, `low`, `material`, `high` or `critical`."
+            },
+            "confidence": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ReasoningConfidence"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`low`, `medium` or `high`."
+            },
+            "capabilities": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "Advisory capabilities review needs, comma-separated."
+            }
+          },
+          "description": "The input of `reasoning.plan`: a stated uncertainty, in transport-friendly scalars.\nNothing is recorded; `reasoning.record` with a `plan` records one.",
+          "title": "PlanPreviewInput",
+          "$defs": {
+            "Materiality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "trivial",
+                  "description": "A name, a format, an obvious convention: never reviewed."
+                },
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "Local and reversible."
+                },
+                {
+                  "type": "string",
+                  "const": "material",
+                  "description": "Could affect correctness, an interface, persistent data, concurrency, operations."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Architecture, security, compatibility or a public contract."
+                },
+                {
+                  "type": "string",
+                  "const": "critical",
+                  "description": "Irreversible or destructive, or repository governance itself."
+                }
+              ],
+              "description": "How much the uncertain decision could matter."
+            },
+            "ReasoningConfidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "A guess the evidence does not yet support."
+                },
+                {
+                  "type": "string",
+                  "const": "medium",
+                  "description": "Supported, with open questions."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Supported by evidence that would be hard to overturn."
+                }
+              ],
+              "description": "How sure the primary executor is of its current hypothesis."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "ReviewPlan",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "$ref": "#/$defs/ReasoningMode",
+              "description": "The mode it was made under."
+            },
+            "mode_source": {
+              "type": "string",
+              "description": "What decided the mode."
+            },
+            "materiality": {
+              "$ref": "#/$defs/Materiality",
+              "description": "The materiality it answered."
+            },
+            "confidence": {
+              "$ref": "#/$defs/ReasoningConfidence",
+              "description": "The confidence it answered."
+            },
+            "capabilities": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The capabilities review was asked for."
+            },
+            "budget": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "How many advisors the mode and materiality allow."
+            },
+            "outcome": {
+              "$ref": "#/$defs/PlanOutcome",
+              "description": "What to do."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Why, in one sentence."
+            },
+            "selected": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/SelectedAdvisor"
+              },
+              "description": "The advisors to consult, in selection order."
+            },
+            "excluded": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ExcludedAdvisor"
+              },
+              "description": "Every advisor not selected, with its reason."
+            },
+            "available": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "Advisors available when the plan was made, whatever was selected."
+            },
+            "local_review": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "The structured local review to perform, when material uncertainty meets no advisor."
+            }
+          },
+          "required": [
+            "mode",
+            "mode_source",
+            "materiality",
+            "confidence",
+            "capabilities",
+            "budget",
+            "outcome",
+            "reason",
+            "selected",
+            "excluded",
+            "available"
+          ],
+          "description": "The plan: the decision with its reasons attached.",
+          "title": "ReviewPlan",
+          "$defs": {
+            "ReasoningMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "offline",
+                  "description": "No network: only advisors that stay on this machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Deterministic: no advisor at all, whatever is installed."
+                },
+                {
+                  "type": "string",
+                  "const": "fast",
+                  "description": "Review only where the blast radius is high."
+                },
+                {
+                  "type": "string",
+                  "const": "standard",
+                  "description": "Review where uncertainty is material."
+                },
+                {
+                  "type": "string",
+                  "const": "strict",
+                  "description": "Review wider, and complementary review where the stakes are highest."
+                }
+              ],
+              "description": "How much independent review a session may use, and where from."
+            },
+            "Materiality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "trivial",
+                  "description": "A name, a format, an obvious convention: never reviewed."
+                },
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "Local and reversible."
+                },
+                {
+                  "type": "string",
+                  "const": "material",
+                  "description": "Could affect correctness, an interface, persistent data, concurrency, operations."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Architecture, security, compatibility or a public contract."
+                },
+                {
+                  "type": "string",
+                  "const": "critical",
+                  "description": "Irreversible or destructive, or repository governance itself."
+                }
+              ],
+              "description": "How much the uncertain decision could matter."
+            },
+            "ReasoningConfidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "A guess the evidence does not yet support."
+                },
+                {
+                  "type": "string",
+                  "const": "medium",
+                  "description": "Supported, with open questions."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Supported by evidence that would be hard to overturn."
+                }
+              ],
+              "description": "How sure the primary executor is of its current hypothesis."
+            },
+            "PlanOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "consult",
+                  "description": "Consult the selected advisors, then conclude."
+                },
+                {
+                  "type": "string",
+                  "const": "decide_locally",
+                  "description": "Decide on local evidence; no independent review is called for or none is available."
+                },
+                {
+                  "type": "string",
+                  "const": "reuse_prior",
+                  "description": "A standing conclusion already answers this; reuse it rather than ask again."
+                }
+              ],
+              "description": "What the plan decided."
+            },
+            "SelectedAdvisor": {
+              "type": "object",
+              "properties": {
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor id."
+                },
+                "covers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The requested capabilities it covers."
+                },
+                "why": {
+                  "type": "string",
+                  "description": "Why it was chosen."
+                }
+              },
+              "required": [
+                "advisor",
+                "covers",
+                "why"
+              ],
+              "description": "One selected advisor and why."
+            },
+            "ExcludedAdvisor": {
+              "type": "object",
+              "properties": {
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor id."
+                },
+                "status": {
+                  "$ref": "#/$defs/AdvisorStatus",
+                  "description": "Its standing when the plan was made."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it is not in the plan."
+                }
+              },
+              "required": [
+                "advisor",
+                "status",
+                "reason"
+              ],
+              "description": "One advisor left out and why."
+            },
+            "AdvisorStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "available",
+                  "description": "It may be asked. Presence was observed; whether it answers is learned by asking."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "Not installed: its executable is not on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "not_configured",
+                  "description": "Installed or reachable in principle, but its credential is not configured."
+                },
+                {
+                  "type": "string",
+                  "const": "disabled",
+                  "description": "Left out by the mode or by an explicit disable."
+                },
+                {
+                  "type": "string",
+                  "const": "temporarily_failed",
+                  "description": "Its recent consultations failed; its circuit is open until the cooldown passes."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "It answered with a rate limit; not asked again until the limit passes."
+                }
+              ],
+              "description": "An advisor's standing."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::reasoning"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_reasoning_plan"
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/reasoning/plan"
+        },
+        "cli": {
+          "path": [
+            "reasoning",
+            "plan"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "reasoning",
+        "policy"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+    },
+    {
+      "id": "reasoning.record",
+      "module": "reasoning",
+      "kind": "command",
+      "title": "Record a reasoning step",
+      "description": "Write one typed reasoning record of the open task under .ai/local/state/reasoning/: an assessment (with its evidence), a plan (computed here from the availability of this moment, never supplied), a consultation (only of an advisor its plan selected), a disagreement, a resolution (evidence, never a count), a conclusion (its review count computed from the consultations it cites; refused while a disagreement on its assessment is unsettled), a validation or a failed attempt. Secret shapes are redacted before anything is written.",
+      "input": {
+        "name": "ReasoningRecordInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "record": {
+              "$ref": "#/$defs/ReasoningInput",
+              "description": "The record."
+            }
+          },
+          "required": [
+            "record"
+          ],
+          "description": "The input of `reasoning.record`: one record, as authored.",
+          "title": "ReasoningRecordInput",
+          "$defs": {
+            "ReasoningInput": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "subject": {
+                      "type": "string",
+                      "description": "What is uncertain, as one line. Later assessments of the same subject find the\nconclusions of earlier ones through it."
+                    },
+                    "materiality": {
+                      "$ref": "#/$defs/Materiality",
+                      "description": "How much the decision could matter.",
+                      "default": "low"
+                    },
+                    "confidence": {
+                      "$ref": "#/$defs/ReasoningConfidence",
+                      "description": "How sure the executor is of its hypothesis.",
+                      "default": "medium"
+                    },
+                    "hypothesis": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The current hypothesis."
+                    },
+                    "affects": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What the decision could affect: `public_api`, `persistent_data`, `security`,\n`concurrency`, `architecture`, ..."
+                    },
+                    "facts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is known."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is assumed."
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is still open."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence gathered locally."
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The advisory capabilities review would need; empty means `independent_reasoning`."
+                    },
+                    "new_evidence": {
+                      "type": "boolean",
+                      "description": "The assessment brings evidence a standing conclusion on the subject did not have,\nso that conclusion does not answer it.",
+                      "default": false
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "assessment"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "subject"
+                  ],
+                  "description": "A material uncertainty."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": "string",
+                      "description": "The assessment the plan answers."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "plan"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "assessment"
+                  ],
+                  "description": "Make and record the plan for an assessment."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "description": "The recorded plan that selected this advisor."
+                    },
+                    "advisor": {
+                      "type": "string",
+                      "description": "The advisor asked."
+                    },
+                    "status": {
+                      "$ref": "#/$defs/ConsultationStatus",
+                      "description": "How it ended."
+                    },
+                    "question": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The question asked, in one line (the full prompt is not kept)."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence the question carried."
+                    },
+                    "conclusion": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The advisor's conclusion, summarised. Required when completed, refused otherwise."
+                    },
+                    "stance": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/Stance"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Where it stands relative to the hypothesis."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Assumptions it identified."
+                    },
+                    "risks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Risks it identified."
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Actions it recommended."
+                    },
+                    "falsifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What would falsify its conclusion."
+                    },
+                    "confidence": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/ReasoningConfidence"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Its stated confidence."
+                    },
+                    "duration_ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "How long it took, milliseconds."
+                    },
+                    "usage": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/AdvisorUsage"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "What the transport reported it cost."
+                    },
+                    "diagnostic": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The adapter's diagnostic for a failure: a class and a sentence, never a payload."
+                    },
+                    "retry_after_seconds": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "A rate limit's retry-after, seconds."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "consultation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "plan",
+                    "advisor",
+                    "status"
+                  ],
+                  "description": "One advisor exchange."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": "string",
+                      "description": "The assessment it is about."
+                    },
+                    "positions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/DisagreementPosition"
+                      },
+                      "description": "The positions; at least two."
+                    },
+                    "divergent_assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The assumptions the positions divide on."
+                    },
+                    "discriminating_question": {
+                      "type": "string",
+                      "description": "The question whose answer decides between them."
+                    },
+                    "experiment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The experiment proposed to answer it."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "disagreement"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "assessment",
+                    "positions",
+                    "discriminating_question"
+                  ],
+                  "description": "A disagreement."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "disagreement": {
+                      "type": "string",
+                      "description": "The disagreement it settles."
+                    },
+                    "experiment": {
+                      "type": "string",
+                      "description": "The experiment performed."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "description": "What it showed."
+                    },
+                    "favours": {
+                      "type": "string",
+                      "description": "The position it favours: a `source` of the disagreement, or `neither`."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence it produced; at least one reference."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "resolution"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "disagreement",
+                    "experiment",
+                    "outcome",
+                    "favours",
+                    "evidence"
+                  ],
+                  "description": "A disagreement settled by evidence."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": "string",
+                      "description": "The assessment it concludes."
+                    },
+                    "decision": {
+                      "type": "string",
+                      "description": "The decision."
+                    },
+                    "rationale": {
+                      "type": "string",
+                      "description": "Why, from the evidence."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence it rests on. Required for material uncertainty."
+                    },
+                    "consultations": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The completed consultations it weighed."
+                    },
+                    "disagreements": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The resolved disagreements it rests on."
+                    },
+                    "rejected": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Alternatives considered and rejected, each with why."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Assumptions it still depends on."
+                    },
+                    "risks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Risks that remain."
+                    },
+                    "validation_plan": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "How the decision will be proven. Required for material uncertainty."
+                    },
+                    "confidence": {
+                      "$ref": "#/$defs/ReasoningConfidence",
+                      "description": "Confidence in it.",
+                      "default": "medium"
+                    },
+                    "supersedes": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "An earlier conclusion this one replaces, because new evidence overturned it."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "conclusion"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "assessment",
+                    "decision",
+                    "rationale"
+                  ],
+                  "description": "An engineering conclusion."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "conclusion": {
+                      "type": "string",
+                      "description": "The conclusion validated."
+                    },
+                    "check": {
+                      "type": "string",
+                      "description": "What was checked, in one line."
+                    },
+                    "command": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The command that checked it."
+                    },
+                    "outcome": {
+                      "$ref": "#/$defs/ValidationOutcome",
+                      "description": "How it came out."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "What it produced."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "validation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "conclusion",
+                    "check",
+                    "outcome"
+                  ],
+                  "description": "A validation step performed."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The assessment it bears on, when there is one."
+                    },
+                    "attempt": {
+                      "type": "string",
+                      "description": "What was tried."
+                    },
+                    "observed_failure": {
+                      "type": "string",
+                      "description": "What failed, observed."
+                    },
+                    "assumption_invalidated": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The assumption the failure invalidated."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "Evidence the failure produced."
+                    },
+                    "updated_hypothesis": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The hypothesis now."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "attempt"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "attempt",
+                    "observed_failure"
+                  ],
+                  "description": "A failed attempt."
+                }
+              ],
+              "description": "Anything a session records, as authored."
+            },
+            "Materiality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "trivial",
+                  "description": "A name, a format, an obvious convention: never reviewed."
+                },
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "Local and reversible."
+                },
+                {
+                  "type": "string",
+                  "const": "material",
+                  "description": "Could affect correctness, an interface, persistent data, concurrency, operations."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Architecture, security, compatibility or a public contract."
+                },
+                {
+                  "type": "string",
+                  "const": "critical",
+                  "description": "Irreversible or destructive, or repository governance itself."
+                }
+              ],
+              "description": "How much the uncertain decision could matter."
+            },
+            "ReasoningConfidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "A guess the evidence does not yet support."
+                },
+                {
+                  "type": "string",
+                  "const": "medium",
+                  "description": "Supported, with open questions."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Supported by evidence that would be hard to overturn."
+                }
+              ],
+              "description": "How sure the primary executor is of its current hypothesis."
+            },
+            "ReasoningEvidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "$ref": "#/$defs/ReasoningEvidenceKind",
+                  "description": "What it is."
+                },
+                "reference": {
+                  "type": "string",
+                  "description": "Where it is: a path, a case, an id, a command line."
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What it shows, in one line."
+                }
+              },
+              "required": [
+                "kind",
+                "reference"
+              ],
+              "description": "A reference to something that supports a claim."
+            },
+            "ReasoningEvidenceKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "file",
+                  "description": "A file of the repository, optionally with a line: `src/x.rs:42`."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "A test case or test name."
+                },
+                {
+                  "type": "string",
+                  "const": "adr",
+                  "description": "An architecture decision record."
+                },
+                {
+                  "type": "string",
+                  "const": "rule",
+                  "description": "A rule of the layer."
+                },
+                {
+                  "type": "string",
+                  "const": "commit",
+                  "description": "A commit."
+                },
+                {
+                  "type": "string",
+                  "const": "command",
+                  "description": "A command that was run, and what it showed."
+                },
+                {
+                  "type": "string",
+                  "const": "record",
+                  "description": "Another reasoning record."
+                },
+                {
+                  "type": "string",
+                  "const": "document",
+                  "description": "Documentation."
+                },
+                {
+                  "type": "string",
+                  "const": "runtime",
+                  "description": "A runtime observation: a log, a measurement, a diagnostic."
+                },
+                {
+                  "type": "string",
+                  "const": "prior_external_opinion",
+                  "description": "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
+                }
+              ],
+              "description": "What a piece of evidence is."
+            },
+            "ConsultationStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "completed",
+                  "description": "An answer was received and normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "No answer within the time allowed."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "The advisor refused for rate."
+                },
+                {
+                  "type": "string",
+                  "const": "auth_failed",
+                  "description": "The credential was refused."
+                },
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "An answer arrived that could not be normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "empty",
+                  "description": "An answer arrived with nothing in it."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "The advisor could not be reached: not running, not answering, gone."
+                },
+                {
+                  "type": "string",
+                  "const": "cancelled",
+                  "description": "The session withdrew the request."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "Anything else the adapter could not classify."
+                }
+              ],
+              "description": "How a consultation ended."
+            },
+            "Stance": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "supports",
+                  "description": "It supports the hypothesis."
+                },
+                {
+                  "type": "string",
+                  "const": "opposes",
+                  "description": "It argues against it."
+                },
+                {
+                  "type": "string",
+                  "const": "alternative",
+                  "description": "It proposes something else."
+                },
+                {
+                  "type": "string",
+                  "const": "inconclusive",
+                  "description": "It does not decide."
+                }
+              ],
+              "description": "Where an advisor's answer stands relative to the executor's hypothesis."
+            },
+            "AdvisorUsage": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "input_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Input tokens.",
+                  "default": 0
+                },
+                "output_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Output tokens.",
+                  "default": 0
+                }
+              },
+              "description": "Token counts an adapter reported. Absent when the transport reports none; never\nestimated."
+            },
+            "DisagreementPosition": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Whose position: `primary`, or a completed consultation's record id."
+                },
+                "position": {
+                  "type": "string",
+                  "description": "The position, in one line."
+                }
+              },
+              "required": [
+                "source",
+                "position"
+              ],
+              "description": "One side of a disagreement."
+            },
+            "ValidationOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                }
+              ],
+              "description": "Whether a validation passed."
+            }
+          }
+        }
+      },
+      "output": {
+        "name": "ReasoningRecorded",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "record": {
+              "$ref": "#/$defs/ReasoningRecord",
+              "description": "The stored record."
+            },
+            "path": {
+              "type": "string",
+              "description": "Where it was written, relative to the repository."
+            },
+            "step": {
+              "$ref": "#/$defs/ReasoningStep",
+              "description": "The step it adds to the timeline: the report a terminal or the Cockpit shows."
+            }
+          },
+          "required": [
+            "record",
+            "path",
+            "step"
+          ],
+          "description": "The answer of `reasoning.record`.",
+          "title": "ReasoningRecorded",
+          "$defs": {
+            "ReasoningRecord": {
+              "type": "object",
+              "properties": {
+                "schema": {
+                  "type": "string",
+                  "description": "`RECORD_SCHEMA`."
+                },
+                "version": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "`RECORD_VERSION`."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "`<kind>-<yyyymmddThhmmssZ>-<hex>`, unique in the store."
+                },
+                "task": {
+                  "type": "string",
+                  "description": "The task it was recorded under, or `untasked`."
+                },
+                "recorded_at": {
+                  "type": "string",
+                  "description": "When it was recorded, RFC 3339; stamped by the writer, never supplied."
+                },
+                "head": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The commit the checkout was on."
+                },
+                "redacted": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Secret shapes the writer removed from the text, by shape name."
+                },
+                "body": {
+                  "$ref": "#/$defs/ReasoningBody",
+                  "description": "The record."
+                }
+              },
+              "required": [
+                "schema",
+                "version",
+                "id",
+                "task",
+                "recorded_at",
+                "body"
+              ],
+              "description": "A stored record."
+            },
+            "ReasoningBody": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "subject": {
+                      "type": "string",
+                      "description": "What is uncertain, as one line. Later assessments of the same subject find the\nconclusions of earlier ones through it."
+                    },
+                    "materiality": {
+                      "$ref": "#/$defs/Materiality",
+                      "description": "How much the decision could matter.",
+                      "default": "low"
+                    },
+                    "confidence": {
+                      "$ref": "#/$defs/ReasoningConfidence",
+                      "description": "How sure the executor is of its hypothesis.",
+                      "default": "medium"
+                    },
+                    "hypothesis": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The current hypothesis."
+                    },
+                    "affects": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What the decision could affect: `public_api`, `persistent_data`, `security`,\n`concurrency`, `architecture`, ..."
+                    },
+                    "facts": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is known."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is assumed."
+                    },
+                    "questions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What is still open."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence gathered locally."
+                    },
+                    "capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The advisory capabilities review would need; empty means `independent_reasoning`."
+                    },
+                    "new_evidence": {
+                      "type": "boolean",
+                      "description": "The assessment brings evidence a standing conclusion on the subject did not have,\nso that conclusion does not answer it.",
+                      "default": false
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "assessment"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "subject"
+                  ],
+                  "description": "A material uncertainty."
+                },
+                {
+                  "$ref": "#/$defs/StoredPlan",
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "plan"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "description": "A plan, with its availability snapshot."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "plan": {
+                      "type": "string",
+                      "description": "The recorded plan that selected this advisor."
+                    },
+                    "advisor": {
+                      "type": "string",
+                      "description": "The advisor asked."
+                    },
+                    "status": {
+                      "$ref": "#/$defs/ConsultationStatus",
+                      "description": "How it ended."
+                    },
+                    "question": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The question asked, in one line (the full prompt is not kept)."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence the question carried."
+                    },
+                    "conclusion": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The advisor's conclusion, summarised. Required when completed, refused otherwise."
+                    },
+                    "stance": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/Stance"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Where it stands relative to the hypothesis."
+                    },
+                    "assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Assumptions it identified."
+                    },
+                    "risks": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Risks it identified."
+                    },
+                    "actions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Actions it recommended."
+                    },
+                    "falsifiers": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "What would falsify its conclusion."
+                    },
+                    "confidence": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/ReasoningConfidence"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Its stated confidence."
+                    },
+                    "duration_ms": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "How long it took, milliseconds."
+                    },
+                    "usage": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/AdvisorUsage"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "What the transport reported it cost."
+                    },
+                    "diagnostic": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The adapter's diagnostic for a failure: a class and a sentence, never a payload."
+                    },
+                    "retry_after_seconds": {
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "format": "uint64",
+                      "minimum": 0,
+                      "description": "A rate limit's retry-after, seconds."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "consultation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "plan",
+                    "advisor",
+                    "status"
+                  ],
+                  "description": "One advisor exchange."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": "string",
+                      "description": "The assessment it is about."
+                    },
+                    "positions": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/DisagreementPosition"
+                      },
+                      "description": "The positions; at least two."
+                    },
+                    "divergent_assumptions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "The assumptions the positions divide on."
+                    },
+                    "discriminating_question": {
+                      "type": "string",
+                      "description": "The question whose answer decides between them."
+                    },
+                    "experiment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The experiment proposed to answer it."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "disagreement"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "assessment",
+                    "positions",
+                    "discriminating_question"
+                  ],
+                  "description": "A disagreement."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "disagreement": {
+                      "type": "string",
+                      "description": "The disagreement it settles."
+                    },
+                    "experiment": {
+                      "type": "string",
+                      "description": "The experiment performed."
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "description": "What it showed."
+                    },
+                    "favours": {
+                      "type": "string",
+                      "description": "The position it favours: a `source` of the disagreement, or `neither`."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "The evidence it produced; at least one reference."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "resolution"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "disagreement",
+                    "experiment",
+                    "outcome",
+                    "favours",
+                    "evidence"
+                  ],
+                  "description": "A disagreement settled by evidence."
+                },
+                {
+                  "$ref": "#/$defs/StoredConclusion",
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "type": "string",
+                      "const": "conclusion"
+                    }
+                  },
+                  "required": [
+                    "kind"
+                  ],
+                  "description": "An engineering conclusion, with its computed review."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "conclusion": {
+                      "type": "string",
+                      "description": "The conclusion validated."
+                    },
+                    "check": {
+                      "type": "string",
+                      "description": "What was checked, in one line."
+                    },
+                    "command": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The command that checked it."
+                    },
+                    "outcome": {
+                      "$ref": "#/$defs/ValidationOutcome",
+                      "description": "How it came out."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "What it produced."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "validation"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "conclusion",
+                    "check",
+                    "outcome"
+                  ],
+                  "description": "A validation step performed."
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "assessment": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The assessment it bears on, when there is one."
+                    },
+                    "attempt": {
+                      "type": "string",
+                      "description": "What was tried."
+                    },
+                    "observed_failure": {
+                      "type": "string",
+                      "description": "What failed, observed."
+                    },
+                    "assumption_invalidated": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The assumption the failure invalidated."
+                    },
+                    "evidence": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/ReasoningEvidence"
+                      },
+                      "description": "Evidence the failure produced."
+                    },
+                    "updated_hypothesis": {
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "description": "The hypothesis now."
+                    },
+                    "kind": {
+                      "type": "string",
+                      "const": "attempt"
+                    }
+                  },
+                  "required": [
+                    "kind",
+                    "attempt",
+                    "observed_failure"
+                  ],
+                  "description": "A failed attempt."
+                }
+              ],
+              "description": "A stored record's body."
+            },
+            "Materiality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "trivial",
+                  "description": "A name, a format, an obvious convention: never reviewed."
+                },
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "Local and reversible."
+                },
+                {
+                  "type": "string",
+                  "const": "material",
+                  "description": "Could affect correctness, an interface, persistent data, concurrency, operations."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Architecture, security, compatibility or a public contract."
+                },
+                {
+                  "type": "string",
+                  "const": "critical",
+                  "description": "Irreversible or destructive, or repository governance itself."
+                }
+              ],
+              "description": "How much the uncertain decision could matter."
+            },
+            "ReasoningConfidence": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "A guess the evidence does not yet support."
+                },
+                {
+                  "type": "string",
+                  "const": "medium",
+                  "description": "Supported, with open questions."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Supported by evidence that would be hard to overturn."
+                }
+              ],
+              "description": "How sure the primary executor is of its current hypothesis."
+            },
+            "ReasoningEvidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "$ref": "#/$defs/ReasoningEvidenceKind",
+                  "description": "What it is."
+                },
+                "reference": {
+                  "type": "string",
+                  "description": "Where it is: a path, a case, an id, a command line."
+                },
+                "note": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "What it shows, in one line."
+                }
+              },
+              "required": [
+                "kind",
+                "reference"
+              ],
+              "description": "A reference to something that supports a claim."
+            },
+            "ReasoningEvidenceKind": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "file",
+                  "description": "A file of the repository, optionally with a line: `src/x.rs:42`."
+                },
+                {
+                  "type": "string",
+                  "const": "test",
+                  "description": "A test case or test name."
+                },
+                {
+                  "type": "string",
+                  "const": "adr",
+                  "description": "An architecture decision record."
+                },
+                {
+                  "type": "string",
+                  "const": "rule",
+                  "description": "A rule of the layer."
+                },
+                {
+                  "type": "string",
+                  "const": "commit",
+                  "description": "A commit."
+                },
+                {
+                  "type": "string",
+                  "const": "command",
+                  "description": "A command that was run, and what it showed."
+                },
+                {
+                  "type": "string",
+                  "const": "record",
+                  "description": "Another reasoning record."
+                },
+                {
+                  "type": "string",
+                  "const": "document",
+                  "description": "Documentation."
+                },
+                {
+                  "type": "string",
+                  "const": "runtime",
+                  "description": "A runtime observation: a log, a measurement, a diagnostic."
+                },
+                {
+                  "type": "string",
+                  "const": "prior_external_opinion",
+                  "description": "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
+                }
+              ],
+              "description": "What a piece of evidence is."
+            },
+            "ReviewPlan": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "$ref": "#/$defs/ReasoningMode",
+                  "description": "The mode it was made under."
+                },
+                "mode_source": {
+                  "type": "string",
+                  "description": "What decided the mode."
+                },
+                "materiality": {
+                  "$ref": "#/$defs/Materiality",
+                  "description": "The materiality it answered."
+                },
+                "confidence": {
+                  "$ref": "#/$defs/ReasoningConfidence",
+                  "description": "The confidence it answered."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The capabilities review was asked for."
+                },
+                "budget": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many advisors the mode and materiality allow."
+                },
+                "outcome": {
+                  "$ref": "#/$defs/PlanOutcome",
+                  "description": "What to do."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why, in one sentence."
+                },
+                "selected": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/SelectedAdvisor"
+                  },
+                  "description": "The advisors to consult, in selection order."
+                },
+                "excluded": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ExcludedAdvisor"
+                  },
+                  "description": "Every advisor not selected, with its reason."
+                },
+                "available": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Advisors available when the plan was made, whatever was selected."
+                },
+                "local_review": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The structured local review to perform, when material uncertainty meets no advisor."
+                }
+              },
+              "required": [
+                "mode",
+                "mode_source",
+                "materiality",
+                "confidence",
+                "capabilities",
+                "budget",
+                "outcome",
+                "reason",
+                "selected",
+                "excluded",
+                "available"
+              ],
+              "description": "The plan: the decision with its reasons attached."
+            },
+            "ReasoningMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "offline",
+                  "description": "No network: only advisors that stay on this machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Deterministic: no advisor at all, whatever is installed."
+                },
+                {
+                  "type": "string",
+                  "const": "fast",
+                  "description": "Review only where the blast radius is high."
+                },
+                {
+                  "type": "string",
+                  "const": "standard",
+                  "description": "Review where uncertainty is material."
+                },
+                {
+                  "type": "string",
+                  "const": "strict",
+                  "description": "Review wider, and complementary review where the stakes are highest."
+                }
+              ],
+              "description": "How much independent review a session may use, and where from."
+            },
+            "PlanOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "consult",
+                  "description": "Consult the selected advisors, then conclude."
+                },
+                {
+                  "type": "string",
+                  "const": "decide_locally",
+                  "description": "Decide on local evidence; no independent review is called for or none is available."
+                },
+                {
+                  "type": "string",
+                  "const": "reuse_prior",
+                  "description": "A standing conclusion already answers this; reuse it rather than ask again."
+                }
+              ],
+              "description": "What the plan decided."
+            },
+            "SelectedAdvisor": {
+              "type": "object",
+              "properties": {
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor id."
+                },
+                "covers": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The requested capabilities it covers."
+                },
+                "why": {
+                  "type": "string",
+                  "description": "Why it was chosen."
+                }
+              },
+              "required": [
+                "advisor",
+                "covers",
+                "why"
+              ],
+              "description": "One selected advisor and why."
+            },
+            "ExcludedAdvisor": {
+              "type": "object",
+              "properties": {
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor id."
+                },
+                "status": {
+                  "$ref": "#/$defs/AdvisorStatus",
+                  "description": "Its standing when the plan was made."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why it is not in the plan."
+                }
+              },
+              "required": [
+                "advisor",
+                "status",
+                "reason"
+              ],
+              "description": "One advisor left out and why."
+            },
+            "AdvisorStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "available",
+                  "description": "It may be asked. Presence was observed; whether it answers is learned by asking."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "Not installed: its executable is not on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "not_configured",
+                  "description": "Installed or reachable in principle, but its credential is not configured."
+                },
+                {
+                  "type": "string",
+                  "const": "disabled",
+                  "description": "Left out by the mode or by an explicit disable."
+                },
+                {
+                  "type": "string",
+                  "const": "temporarily_failed",
+                  "description": "Its recent consultations failed; its circuit is open until the cooldown passes."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "It answered with a rate limit; not asked again until the limit passes."
+                }
+              ],
+              "description": "An advisor's standing."
+            },
+            "AdvisorState": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The advisor id (a peer is `peer:<runtime>`)."
+                },
+                "title": {
+                  "type": "string",
+                  "description": "The human name."
+                },
+                "transport": {
+                  "$ref": "#/$defs/AdvisorTransport",
+                  "description": "How it is reached."
+                },
+                "adapter": {
+                  "type": "string",
+                  "description": "The adapter that speaks to it."
+                },
+                "capabilities": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The advisory capabilities it offers."
+                },
+                "model": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The model it asks, when the catalogue names one: what its adapter sends."
+                },
+                "executable": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The executable its adapter runs, when it runs one."
+                },
+                "credential": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The name of the credential variable its adapter reads — a name, never a value."
+                },
+                "status": {
+                  "$ref": "#/$defs/AdvisorStatus",
+                  "description": "Its standing."
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Why, as one machine word: `present`, `executable_not_found`, `credential_absent`,\n`mode_ci`, `mode_offline`, `disabled_by_configuration`, `consecutive_failures`,\n`rate_limited`, `authentication_failed`, `peer_linked`."
+                },
+                "probe": {
+                  "type": "string",
+                  "description": "What was observed, for a person: which executable, which variable (never a value)."
+                },
+                "recovering": {
+                  "type": "boolean",
+                  "description": "Available again after an open circuit's cooldown: the next consultation is its test.",
+                  "default": false
+                },
+                "circuit": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/AdvisorCircuit"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The open circuit, when there is one."
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "transport",
+                "adapter",
+                "capabilities",
+                "status",
+                "reason",
+                "probe"
+              ],
+              "description": "One advisor as it stands now."
+            },
+            "AdvisorTransport": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "api",
+                  "description": "A remote API; present when its vendor's credential variable is set."
+                },
+                {
+                  "type": "string",
+                  "const": "cli",
+                  "description": "A client tool run as a process; present when its executable is on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "local_runtime",
+                  "description": "A model runtime on this machine; present when its executable is on `PATH`."
+                },
+                {
+                  "type": "string",
+                  "const": "peer",
+                  "description": "A linked mesh runtime carrying the review feature; present while linked."
+                }
+              ],
+              "description": "How an advisor is reached."
+            },
+            "AdvisorCircuit": {
+              "type": "object",
+              "properties": {
+                "opened_by": {
+                  "type": "string",
+                  "description": "The consultation outcome that opened it."
+                },
+                "failures": {
+                  "type": "integer",
+                  "format": "uint32",
+                  "minimum": 0,
+                  "description": "The consecutive failures behind it."
+                },
+                "until": {
+                  "type": "string",
+                  "description": "When it closes again, RFC 3339."
+                }
+              },
+              "required": [
+                "opened_by",
+                "failures",
+                "until"
+              ],
+              "description": "An open circuit: why, and until when."
+            },
+            "StoredPlan": {
+              "type": "object",
+              "properties": {
+                "assessment": {
+                  "type": "string",
+                  "description": "The assessment it answers."
+                },
+                "plan": {
+                  "$ref": "#/$defs/ReviewPlan",
+                  "description": "The decision."
+                },
+                "availability": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/AdvisorState"
+                  },
+                  "description": "Every advisor's standing at the moment of the plan: the snapshot a later\nconsultation is admitted against."
+                }
+              },
+              "required": [
+                "assessment",
+                "plan",
+                "availability"
+              ],
+              "description": "A plan as stored: the decision and the availability it was made against."
+            },
+            "ConsultationStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "completed",
+                  "description": "An answer was received and normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "No answer within the time allowed."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "The advisor refused for rate."
+                },
+                {
+                  "type": "string",
+                  "const": "auth_failed",
+                  "description": "The credential was refused."
+                },
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "An answer arrived that could not be normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "empty",
+                  "description": "An answer arrived with nothing in it."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "The advisor could not be reached: not running, not answering, gone."
+                },
+                {
+                  "type": "string",
+                  "const": "cancelled",
+                  "description": "The session withdrew the request."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "Anything else the adapter could not classify."
+                }
+              ],
+              "description": "How a consultation ended."
+            },
+            "Stance": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "supports",
+                  "description": "It supports the hypothesis."
+                },
+                {
+                  "type": "string",
+                  "const": "opposes",
+                  "description": "It argues against it."
+                },
+                {
+                  "type": "string",
+                  "const": "alternative",
+                  "description": "It proposes something else."
+                },
+                {
+                  "type": "string",
+                  "const": "inconclusive",
+                  "description": "It does not decide."
+                }
+              ],
+              "description": "Where an advisor's answer stands relative to the executor's hypothesis."
+            },
+            "AdvisorUsage": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "input_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Input tokens.",
+                  "default": 0
+                },
+                "output_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Output tokens.",
+                  "default": 0
+                }
+              },
+              "description": "Token counts an adapter reported. Absent when the transport reports none; never\nestimated."
+            },
+            "DisagreementPosition": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Whose position: `primary`, or a completed consultation's record id."
+                },
+                "position": {
+                  "type": "string",
+                  "description": "The position, in one line."
+                }
+              },
+              "required": [
+                "source",
+                "position"
+              ],
+              "description": "One side of a disagreement."
+            },
+            "StoredConclusion": {
+              "type": "object",
+              "description": "A conclusion as stored: the input and what only the writer computes.",
+              "properties": {
+                "assessment": {
+                  "type": "string",
+                  "description": "The assessment it concludes."
+                },
+                "decision": {
+                  "type": "string",
+                  "description": "The decision."
+                },
+                "rationale": {
+                  "type": "string",
+                  "description": "Why, from the evidence."
+                },
+                "evidence": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReasoningEvidence"
+                  },
+                  "description": "The evidence it rests on. Required for material uncertainty."
+                },
+                "consultations": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The completed consultations it weighed."
+                },
+                "disagreements": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The resolved disagreements it rests on."
+                },
+                "rejected": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Alternatives considered and rejected, each with why."
+                },
+                "assumptions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Assumptions it still depends on."
+                },
+                "risks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Risks that remain."
+                },
+                "validation_plan": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "How the decision will be proven. Required for material uncertainty."
+                },
+                "confidence": {
+                  "$ref": "#/$defs/ReasoningConfidence",
+                  "description": "Confidence in it.",
+                  "default": "medium"
+                },
+                "supersedes": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "An earlier conclusion this one replaces, because new evidence overturned it."
+                },
+                "reviewed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The advisors whose completed consultations it cites, each once. Computed."
+                },
+                "independent_review_count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many independent advisors reviewed it: `reviewed_by`'s length. Computed."
+                }
+              },
+              "required": [
+                "assessment",
+                "decision",
+                "rationale",
+                "reviewed_by",
+                "independent_review_count"
+              ]
+            },
+            "ValidationOutcome": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "pass",
+                  "description": "It passed."
+                },
+                {
+                  "type": "string",
+                  "const": "fail",
+                  "description": "It failed."
+                }
+              ],
+              "description": "Whether a validation passed."
+            },
+            "ReasoningStep": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "When."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The record."
+                },
+                "phase": {
+                  "$ref": "#/$defs/ReasoningPhase",
+                  "description": "The phase."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line."
+                }
+              },
+              "required": [
+                "at",
+                "id",
+                "phase",
+                "summary"
+              ],
+              "description": "One step of the timeline."
+            },
+            "ReasoningPhase": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "uncertainty",
+                  "description": "Uncertainty stated with evidence."
+                },
+                {
+                  "type": "string",
+                  "const": "consulting",
+                  "description": "Review planned."
+                },
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Decided locally, by plan."
+                },
+                {
+                  "type": "string",
+                  "const": "reuse",
+                  "description": "A standing conclusion reused."
+                },
+                {
+                  "type": "string",
+                  "const": "advisor_response",
+                  "description": "An advisor answered."
+                },
+                {
+                  "type": "string",
+                  "const": "degradation",
+                  "description": "An advisor could not answer."
+                },
+                {
+                  "type": "string",
+                  "const": "disagreement",
+                  "description": "Positions diverged."
+                },
+                {
+                  "type": "string",
+                  "const": "experiment",
+                  "description": "An experiment settled a disagreement."
+                },
+                {
+                  "type": "string",
+                  "const": "conclusion",
+                  "description": "A conclusion."
+                },
+                {
+                  "type": "string",
+                  "const": "validation",
+                  "description": "A validation step."
+                },
+                {
+                  "type": "string",
+                  "const": "attempt",
+                  "description": "A failed attempt."
+                }
+              ],
+              "description": "A phase of the reasoning timeline."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::reasoning"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_reasoning_record"
+        },
+        "http": {
+          "method": "POST",
+          "path": "/api/v1/reasoning/records"
+        },
+        "cli": {
+          "path": [
+            "reasoning",
+            "record"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "reasoning",
+        "records"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "repository_mutation",
+        "cancellable": false,
+        "concurrency": "serial"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
+    },
+    {
+      "id": "reasoning.status",
+      "module": "reasoning",
+      "kind": "query",
+      "title": "The session's reasoning state",
+      "description": "The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically.",
+      "input": {
+        "name": "ReasoningStatusInput",
+        "schema": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "task": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "description": "A task id, or `all`; the open task when absent."
+            }
+          },
+          "description": "The input of `reasoning.status`.",
+          "title": "ReasoningStatusInput"
+        }
+      },
+      "output": {
+        "name": "ReasoningStatus",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "mode": {
+              "$ref": "#/$defs/ModeResolution",
+              "description": "The mode in force."
+            },
+            "advisors_available": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "Advisors available now."
+            },
+            "advisors_unavailable": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0,
+              "description": "Advisors not available now, each optional."
+            },
+            "state": {
+              "$ref": "#/$defs/ReasoningState",
+              "description": "The state."
+            },
+            "report": {
+              "type": "string",
+              "description": "The state as Markdown: what a handover carries."
+            }
+          },
+          "required": [
+            "mode",
+            "advisors_available",
+            "advisors_unavailable",
+            "state",
+            "report"
+          ],
+          "description": "The answer of `reasoning.status`.",
+          "title": "ReasoningStatus",
+          "$defs": {
+            "ModeResolution": {
+              "type": "object",
+              "properties": {
+                "mode": {
+                  "$ref": "#/$defs/ReasoningMode",
+                  "description": "The mode."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "What decided it: `MAJORDOMUS_REASONING_MODE`, `CI`, `profile <name>`, or `default`."
+                }
+              },
+              "required": [
+                "mode",
+                "source"
+              ],
+              "description": "The mode in force and what decided it."
+            },
+            "ReasoningMode": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "offline",
+                  "description": "No network: only advisors that stay on this machine."
+                },
+                {
+                  "type": "string",
+                  "const": "ci",
+                  "description": "Deterministic: no advisor at all, whatever is installed."
+                },
+                {
+                  "type": "string",
+                  "const": "fast",
+                  "description": "Review only where the blast radius is high."
+                },
+                {
+                  "type": "string",
+                  "const": "standard",
+                  "description": "Review where uncertainty is material."
+                },
+                {
+                  "type": "string",
+                  "const": "strict",
+                  "description": "Review wider, and complementary review where the stakes are highest."
+                }
+              ],
+              "description": "How much independent review a session may use, and where from."
+            },
+            "ReasoningState": {
+              "type": "object",
+              "properties": {
+                "task": {
+                  "type": "string",
+                  "description": "The task reported, or `all`."
+                },
+                "assessments": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/AssessmentView"
+                  },
+                  "description": "The assessments."
+                },
+                "consultations": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ConsultationView"
+                  },
+                  "description": "The consultations."
+                },
+                "disagreements": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/DisagreementView"
+                  },
+                  "description": "The disagreements."
+                },
+                "conclusions": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ConclusionView"
+                  },
+                  "description": "The conclusions."
+                },
+                "timeline": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/ReasoningStep"
+                  },
+                  "description": "The timeline."
+                },
+                "totals": {
+                  "$ref": "#/$defs/ReasoningTotals",
+                  "description": "Totals."
+                },
+                "unreadable": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Store files that could not be read."
+                }
+              },
+              "required": [
+                "task",
+                "assessments",
+                "consultations",
+                "disagreements",
+                "conclusions",
+                "timeline",
+                "totals"
+              ],
+              "description": "The reasoning state of a task (or of every task)."
+            },
+            "AssessmentView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Record id."
+                },
+                "task": {
+                  "type": "string",
+                  "description": "The task it was recorded under."
+                },
+                "subject": {
+                  "type": "string",
+                  "description": "What is uncertain."
+                },
+                "materiality": {
+                  "$ref": "#/$defs/Materiality",
+                  "description": "How much it matters."
+                },
+                "standing": {
+                  "$ref": "#/$defs/AssessmentStanding",
+                  "description": "Where it stands."
+                },
+                "conclusion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Its standing conclusion."
+                },
+                "questions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Questions it left open."
+                }
+              },
+              "required": [
+                "id",
+                "task",
+                "subject",
+                "materiality",
+                "standing"
+              ],
+              "description": "One assessment and where it stands."
+            },
+            "Materiality": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "trivial",
+                  "description": "A name, a format, an obvious convention: never reviewed."
+                },
+                {
+                  "type": "string",
+                  "const": "low",
+                  "description": "Local and reversible."
+                },
+                {
+                  "type": "string",
+                  "const": "material",
+                  "description": "Could affect correctness, an interface, persistent data, concurrency, operations."
+                },
+                {
+                  "type": "string",
+                  "const": "high",
+                  "description": "Architecture, security, compatibility or a public contract."
+                },
+                {
+                  "type": "string",
+                  "const": "critical",
+                  "description": "Irreversible or destructive, or repository governance itself."
+                }
+              ],
+              "description": "How much the uncertain decision could matter."
+            },
+            "AssessmentStanding": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "open",
+                  "description": "Stated; no plan yet."
+                },
+                {
+                  "type": "string",
+                  "const": "planned",
+                  "description": "Planned; no conclusion yet."
+                },
+                {
+                  "type": "string",
+                  "const": "disputed",
+                  "description": "A disagreement on it is unsettled."
+                },
+                {
+                  "type": "string",
+                  "const": "concluded",
+                  "description": "Concluded; not yet validated."
+                },
+                {
+                  "type": "string",
+                  "const": "validated",
+                  "description": "Concluded, and every validation recorded passed."
+                },
+                {
+                  "type": "string",
+                  "const": "validation_failed",
+                  "description": "Concluded, and a validation failed."
+                }
+              ],
+              "description": "Where an assessment stands."
+            },
+            "ConsultationView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Record id."
+                },
+                "plan": {
+                  "type": "string",
+                  "description": "The plan that selected it."
+                },
+                "advisor": {
+                  "type": "string",
+                  "description": "The advisor."
+                },
+                "status": {
+                  "$ref": "#/$defs/ConsultationStatus",
+                  "description": "How it ended."
+                },
+                "stance": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Stance"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the advice stands."
+                },
+                "conclusion": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The advice, summarised."
+                },
+                "diagnostic": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The adapter's diagnostic, for a failure."
+                }
+              },
+              "required": [
+                "id",
+                "plan",
+                "advisor",
+                "status"
+              ],
+              "description": "One consultation, as the state reports it."
+            },
+            "ConsultationStatus": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "completed",
+                  "description": "An answer was received and normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "timeout",
+                  "description": "No answer within the time allowed."
+                },
+                {
+                  "type": "string",
+                  "const": "rate_limited",
+                  "description": "The advisor refused for rate."
+                },
+                {
+                  "type": "string",
+                  "const": "auth_failed",
+                  "description": "The credential was refused."
+                },
+                {
+                  "type": "string",
+                  "const": "malformed",
+                  "description": "An answer arrived that could not be normalised."
+                },
+                {
+                  "type": "string",
+                  "const": "empty",
+                  "description": "An answer arrived with nothing in it."
+                },
+                {
+                  "type": "string",
+                  "const": "unavailable",
+                  "description": "The advisor could not be reached: not running, not answering, gone."
+                },
+                {
+                  "type": "string",
+                  "const": "cancelled",
+                  "description": "The session withdrew the request."
+                },
+                {
+                  "type": "string",
+                  "const": "error",
+                  "description": "Anything else the adapter could not classify."
+                }
+              ],
+              "description": "How a consultation ended."
+            },
+            "Stance": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "supports",
+                  "description": "It supports the hypothesis."
+                },
+                {
+                  "type": "string",
+                  "const": "opposes",
+                  "description": "It argues against it."
+                },
+                {
+                  "type": "string",
+                  "const": "alternative",
+                  "description": "It proposes something else."
+                },
+                {
+                  "type": "string",
+                  "const": "inconclusive",
+                  "description": "It does not decide."
+                }
+              ],
+              "description": "Where an advisor's answer stands relative to the executor's hypothesis."
+            },
+            "DisagreementView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Record id."
+                },
+                "assessment": {
+                  "type": "string",
+                  "description": "The assessment."
+                },
+                "discriminating_question": {
+                  "type": "string",
+                  "description": "The question that decides it."
+                },
+                "resolution": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The resolution, when settled."
+                },
+                "favours": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "The position the evidence favoured."
+                }
+              },
+              "required": [
+                "id",
+                "assessment",
+                "discriminating_question"
+              ],
+              "description": "One disagreement, as the state reports it."
+            },
+            "ConclusionView": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Record id."
+                },
+                "assessment": {
+                  "type": "string",
+                  "description": "The assessment it concludes."
+                },
+                "decision": {
+                  "type": "string",
+                  "description": "The decision."
+                },
+                "reviewed_by": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Advisors whose answers it weighed."
+                },
+                "independent_review_count": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "How many."
+                },
+                "validations_passed": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Validations recorded: passed, failed."
+                },
+                "validations_failed": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Validations failed."
+                },
+                "superseded_by": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Superseded by a later conclusion."
+                },
+                "validation_plan": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Its validation plan."
+                },
+                "risks": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Risks that remain."
+                }
+              },
+              "required": [
+                "id",
+                "assessment",
+                "decision",
+                "reviewed_by",
+                "independent_review_count",
+                "validations_passed",
+                "validations_failed",
+                "validation_plan"
+              ],
+              "description": "One conclusion, as the state reports it."
+            },
+            "ReasoningStep": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string",
+                  "description": "When."
+                },
+                "id": {
+                  "type": "string",
+                  "description": "The record."
+                },
+                "phase": {
+                  "$ref": "#/$defs/ReasoningPhase",
+                  "description": "The phase."
+                },
+                "summary": {
+                  "type": "string",
+                  "description": "One line."
+                }
+              },
+              "required": [
+                "at",
+                "id",
+                "phase",
+                "summary"
+              ],
+              "description": "One step of the timeline."
+            },
+            "ReasoningPhase": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "const": "uncertainty",
+                  "description": "Uncertainty stated with evidence."
+                },
+                {
+                  "type": "string",
+                  "const": "consulting",
+                  "description": "Review planned."
+                },
+                {
+                  "type": "string",
+                  "const": "local",
+                  "description": "Decided locally, by plan."
+                },
+                {
+                  "type": "string",
+                  "const": "reuse",
+                  "description": "A standing conclusion reused."
+                },
+                {
+                  "type": "string",
+                  "const": "advisor_response",
+                  "description": "An advisor answered."
+                },
+                {
+                  "type": "string",
+                  "const": "degradation",
+                  "description": "An advisor could not answer."
+                },
+                {
+                  "type": "string",
+                  "const": "disagreement",
+                  "description": "Positions diverged."
+                },
+                {
+                  "type": "string",
+                  "const": "experiment",
+                  "description": "An experiment settled a disagreement."
+                },
+                {
+                  "type": "string",
+                  "const": "conclusion",
+                  "description": "A conclusion."
+                },
+                {
+                  "type": "string",
+                  "const": "validation",
+                  "description": "A validation step."
+                },
+                {
+                  "type": "string",
+                  "const": "attempt",
+                  "description": "A failed attempt."
+                }
+              ],
+              "description": "A phase of the reasoning timeline."
+            },
+            "ReasoningTotals": {
+              "type": "object",
+              "properties": {
+                "records": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Records."
+                },
+                "consultations_completed": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Consultations that completed."
+                },
+                "consultations_failed": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Consultations that did not."
+                },
+                "independent_reviewers": {
+                  "type": "integer",
+                  "format": "uint",
+                  "minimum": 0,
+                  "description": "Distinct advisors that answered."
+                },
+                "input_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Input tokens the adapters reported."
+                },
+                "output_tokens": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0,
+                  "description": "Output tokens the adapters reported."
+                }
+              },
+              "required": [
+                "records",
+                "consultations_completed",
+                "consultations_failed",
+                "independent_reviewers",
+                "input_tokens",
+                "output_tokens"
+              ],
+              "description": "Totals over the records."
+            }
+          }
+        }
+      },
+      "provenance": {
+        "source": "builtin",
+        "module": "majordomus_cli::capability::builtin::reasoning"
+      },
+      "exposure": {
+        "mcp": {
+          "tool": "majordomus_reasoning",
+          "resource": {
+            "uri": "majordomus://reasoning",
+            "name": "reasoning"
+          }
+        },
+        "http": {
+          "method": "GET",
+          "path": "/api/v1/reasoning"
+        },
+        "cli": {
+          "path": [
+            "reasoning",
+            "status"
+          ]
+        }
+      },
+      "availability": "runtime",
+      "visibility": "public",
+      "stability": "experimental",
+      "tags": [
+        "reasoning",
+        "session"
+      ],
+      "benchmark": {
+        "policy": "required"
+      },
+      "cache": {
+        "policy": "disabled"
+      },
+      "execution": {
+        "effect": "read",
+        "cancellable": false,
+        "concurrency": "unrestricted"
+      },
+      "source_path": "apps/majordomus-cli/src/capability/builtin/reasoning.rs"
     },
     {
       "id": "recover.orphans",
