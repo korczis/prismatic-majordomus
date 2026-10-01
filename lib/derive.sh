@@ -179,6 +179,18 @@ mj_derive_sec_decisions() {
   printf '%s\n' "$out"
 }
 
+# The task's reasoning (ADR 0098): the conclusions, who reviewed each — or that nobody
+# could, and it was decided locally — what is unresolved, and which advisors failed on the
+# way. Rendered by the executable from the typed records, never restated here; a new
+# session reads the decision and its provenance instead of asking the advisors again.
+mj_derive_sec_reasoning() {
+  # shellcheck source=rust_bin.sh
+  . "$MJ_LIB_DIR/rust_bin.sh"
+  local report; report="$(mj_rust_reasoning_report "$MJ_ROOT")"
+  if [ -n "$report" ]; then printf '%s\n' "$report"
+  else printf 'No reasoning was recorded for this task.\n'; fi
+}
+
 mj_derive_sec_verification() {
   # What a derived record may say about verification is what the ledger recorded, and
   # nothing else. A generator that wrote "tests pass" because it found a test directory
@@ -250,7 +262,7 @@ mj_derive_gather() {
 # The sections the policy requires, in the order it names them, followed by the ones this
 # generator can also fill. A required section with no writer is a configuration error
 # reported by name; an optional one with no writer is simply not emitted.
-MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Open_Questions Verification"
+MJ_DERIVE_OPTIONAL_SECTIONS="Decisions Reasoning Open_Questions Verification"
 
 mj_derive_handover_body() {
   mj_derive_gather

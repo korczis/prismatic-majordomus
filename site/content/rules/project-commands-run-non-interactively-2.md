@@ -1,7 +1,7 @@
 +++
 title = "A command runs with nobody at the keyboard"
 description = "A command runs with nobody at the keyboard"
-weight = 69
+weight = 70
 [extra]
 kind = "rule"
 slug = "project-commands-run-non-interactively-2"

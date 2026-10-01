@@ -61,6 +61,7 @@ pub mod product;
 pub mod proto;
 pub mod providers;
 pub mod quality;
+pub mod reasoning;
 pub mod redaction;
 pub mod release;
 pub mod repository;

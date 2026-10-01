@@ -1109,6 +1109,60 @@
         "status": "query"
       },
       {
+        "id": "capability:reasoning.advisors",
+        "kind": "capability",
+        "label": "reasoning.advisors",
+        "summary": "The advisors and what they can do now",
+        "route": "/cockpit/capabilities/reasoning.advisors",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:reasoning.check",
+        "kind": "capability",
+        "label": "reasoning.check",
+        "summary": "Check that reasoning stays provider-independent",
+        "route": "/cockpit/capabilities/reasoning.check",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:reasoning.explain",
+        "kind": "capability",
+        "label": "reasoning.explain",
+        "summary": "Why a decision was made",
+        "route": "/cockpit/capabilities/reasoning.explain",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:reasoning.plan",
+        "kind": "capability",
+        "label": "reasoning.plan",
+        "summary": "What an uncertainty calls for",
+        "route": "/cockpit/capabilities/reasoning.plan",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "query"
+      },
+      {
+        "id": "capability:reasoning.record",
+        "kind": "capability",
+        "label": "reasoning.record",
+        "summary": "Record a reasoning step",
+        "route": "/cockpit/capabilities/reasoning.record",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "command"
+      },
+      {
+        "id": "capability:reasoning.status",
+        "kind": "capability",
+        "label": "reasoning.status",
+        "summary": "The session's reasoning state",
+        "route": "/cockpit/capabilities/reasoning.status",
+        "source": "apps/majordomus-cli/src/capability/builtin/reasoning.rs",
+        "status": "query"
+      },
+      {
         "id": "capability:recover.orphans",
         "kind": "capability",
         "label": "recover.orphans",
@@ -1379,27 +1433,6 @@
         "status": "query"
       },
       {
-        "id": "command:adr",
-        "kind": "command",
-        "label": "adr",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:archive",
-        "kind": "command",
-        "label": "archive",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:bench",
-        "kind": "command",
-        "label": "bench",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
         "id": "command:capture",
         "kind": "command",
         "label": "capture",
@@ -1428,30 +1461,9 @@
         "external": true
       },
       {
-        "id": "command:decision",
-        "kind": "command",
-        "label": "decision",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
         "id": "command:doctor",
         "kind": "command",
         "label": "doctor",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:doctrine",
-        "kind": "command",
-        "label": "doctrine",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:evidence",
-        "kind": "command",
-        "label": "evidence",
         "summary": "named by the layer; not an object of this index",
         "external": true
       },
@@ -1470,13 +1482,6 @@
         "external": true
       },
       {
-        "id": "command:history",
-        "kind": "command",
-        "label": "history",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
         "id": "command:init",
         "kind": "command",
         "label": "init",
@@ -1484,72 +1489,9 @@
         "external": true
       },
       {
-        "id": "command:knowledge",
-        "kind": "command",
-        "label": "knowledge",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:migrate",
-        "kind": "command",
-        "label": "migrate",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:plan",
-        "kind": "command",
-        "label": "plan",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:prompt",
-        "kind": "command",
-        "label": "prompt",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
         "id": "command:question",
         "kind": "command",
         "label": "question",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:recover",
-        "kind": "command",
-        "label": "recover",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:rules",
-        "kind": "command",
-        "label": "rules",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:search",
-        "kind": "command",
-        "label": "search",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:session",
-        "kind": "command",
-        "label": "session",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:skills",
-        "kind": "command",
-        "label": "skills",
         "summary": "named by the layer; not an object of this index",
         "external": true
       },
@@ -1571,20 +1513,6 @@
         "id": "command:usecase",
         "kind": "command",
         "label": "usecase",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:version",
-        "kind": "command",
-        "label": "version",
-        "summary": "named by the layer; not an object of this index",
-        "external": true
-      },
-      {
-        "id": "command:watch",
-        "kind": "command",
-        "label": "watch",
         "summary": "named by the layer; not an object of this index",
         "external": true
       },
@@ -2341,6 +2269,46 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/reasoning/availability.rs",
+        "kind": "file",
+        "label": "availability.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/availability.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/check.rs",
+        "kind": "file",
+        "label": "check.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/check.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/policy.rs",
+        "kind": "file",
+        "label": "policy.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/policy.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/state.rs",
+        "kind": "file",
+        "label": "state.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/state.rs",
+        "external": true
+      },
+      {
+        "id": "file:apps/majordomus-cli/src/reasoning/store.rs",
+        "kind": "file",
+        "label": "store.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/reasoning/store.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/release/commits.rs",
         "kind": "file",
         "label": "commits.rs",
@@ -2773,6 +2741,14 @@
         "external": true
       },
       {
+        "id": "file:scripts/lib/advisors/contract.mjs",
+        "kind": "file",
+        "label": "contract.mjs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "scripts/lib/advisors/contract.mjs",
+        "external": true
+      },
+      {
         "id": "file:scripts/lib/executable-site.jq",
         "kind": "file",
         "label": "executable-site.jq",
@@ -2898,6 +2874,14 @@
         "label": "ui",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/ui",
+        "external": true
+      },
+      {
+        "id": "file:share/advisors.yaml",
+        "kind": "file",
+        "label": "advisors.yaml",
+        "summary": "named by the layer; not an object of this index",
+        "source": "share/advisors.yaml",
         "external": true
       },
       {
@@ -5032,6 +5016,32 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0098",
+        "kind": "adr",
+        "label": "adr-0098",
+        "summary": "Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim",
+        "route": "/cockpit/objects/adr/adr-0098",
+        "source": ".ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-10-01",
+          "related": [
+            "file:.ai/repo/adrs/0024-an-orchestrator-is-a-provider-only-at-the-bootstrap-level-an.md",
+            "file:.ai/repo/adrs/0032-an-external-workspace-is-not-a-provider-the-term-the-depende.md",
+            "file:.ai/repo/adrs/0049-the-model-catalogue-is-declarative-data-and-routing-is-an-ex.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:docs/REASONING.md",
+            "file:share/advisors.yaml"
+          ],
+          "tags": [
+            "reasoning",
+            "advisors",
+            "providers",
+            "sessions"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0101",
         "kind": "adr",
         "label": "adr-0101",
@@ -5712,6 +5722,71 @@
           "responsibility": "projection",
           "source": "docs/DISTRIBUTION.md",
           "test": "test/cases/97_install_gate.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/advice-is-weighed-not-counted",
+        "kind": "claim",
+        "label": "advice-is-weighed-not-counted",
+        "summary": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+        "route": "/cockpit/objects/claim/advice-is-weighed-not-counted",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "claim": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+          "implementation": "apps/majordomus-cli/src/reasoning/store.rs",
+          "note": "the case lets the minority position win once an experiment settles the disagreement.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/732_disagreement_is_settled_by_evidence.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
+        "kind": "claim",
+        "label": "advisor-failure-is-recorded-and-recovers",
+        "summary": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+        "route": "/cockpit/objects/claim/advisor-failure-is-recorded-and-recovers",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/reasoning/availability.rs",
+          "note": "the circuit is derived from the recorded outcomes and the clock; the case shortens the cooldown with MAJORDOMUS_REASONING_COOLDOWN_SECONDS.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/733_advisor_failure_and_recovery.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/advisor-transports-share-one-contract",
+        "kind": "claim",
+        "label": "advisor-transports-share-one-contract",
+        "summary": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+        "route": "/cockpit/objects/claim/advisor-transports-share-one-contract",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "scripts/lib/advisors/contract.mjs",
+          "note": "node --test scripts/lib/advisors/contract.test.mjs; the case refuses a run of fewer tests than the suite holds.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/731_advisor_transport_contract.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/advisors-are-declared-once",
+        "kind": "claim",
+        "label": "advisors-are-declared-once",
+        "summary": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+        "route": "/cockpit/objects/claim/advisors-are-declared-once",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "share/advisors.yaml",
+          "note": "the case appends a representative advisor to a fixture catalogue and reads it back from every surface, then removes its executable and sees it unavailable everywhere.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh"
         }
       },
       {
@@ -7818,6 +7893,38 @@
         }
       },
       {
+        "id": "majordomus://claim/reasoning-survives-the-session",
+        "kind": "claim",
+        "label": "reasoning-survives-the-session",
+        "summary": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+        "route": "/cockpit/objects/claim/reasoning-survives-the-session",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/reasoning/state.rs",
+          "note": "the scripted advisor of session B would hang if it were asked, so reuse is proven by the absence of a consultation.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/734_reasoning_survives_the_session.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/reasoning-works-with-no-advisor",
+        "kind": "claim",
+        "label": "reasoning-works-with-no-advisor",
+        "summary": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+        "route": "/cockpit/objects/claim/reasoning-works-with-no-advisor",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/reasoning/policy.rs",
+          "note": "the case builds its environment from nothing (env -i, a PATH holding git and node only, no credential), so it holds on a machine where every advisor is installed.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/730_reasoning_works_with_no_advisor.sh"
+        }
+      },
+      {
         "id": "majordomus://claim/record-resolution",
         "kind": "claim",
         "label": "record-resolution",
@@ -7948,6 +8055,22 @@
           "responsibility": "doctor",
           "source": "share/skeleton/policy.yaml",
           "test": "test/cases/02_doctor_basic.sh"
+        }
+      },
+      {
+        "id": "majordomus://claim/review-is-never-fabricated",
+        "kind": "claim",
+        "label": "review-is-never-fabricated",
+        "summary": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+        "route": "/cockpit/objects/claim/review-is-never-fabricated",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/reasoning/check.rs",
+          "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor.",
+          "responsibility": "none",
+          "source": "docs/REASONING.md",
+          "test": "test/cases/736_reasoning_check_refuses_drift.sh"
         }
       },
       {
@@ -11201,6 +11324,14 @@
         "source": "docs/README.md"
       },
       {
+        "id": "majordomus://document/docs/REASONING.md",
+        "kind": "document",
+        "label": "docs/REASONING.md",
+        "summary": "Reasoning",
+        "route": "/cockpit/objects/document/docs-reasoning-md",
+        "source": "docs/REASONING.md"
+      },
+      {
         "id": "majordomus://document/docs/RELEASE.md",
         "kind": "document",
         "label": "docs/RELEASE.md",
@@ -11359,6 +11490,38 @@
         "summary": "The install command this project advertises is run, from the published site, and proved to work",
         "route": "/cockpit/objects/document/docs-claims-advertised-install-command-works-md",
         "source": "docs/claims/advertised-install-command-works.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/advice-is-weighed-not-counted.md",
+        "kind": "document",
+        "label": "docs/claims/advice-is-weighed-not-counted.md",
+        "summary": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+        "route": "/cockpit/objects/document/docs-claims-advice-is-weighed-not-counted-md",
+        "source": "docs/claims/advice-is-weighed-not-counted.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/advisor-failure-is-recorded-and-recovers.md",
+        "kind": "document",
+        "label": "docs/claims/advisor-failure-is-recorded-and-recovers.md",
+        "summary": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+        "route": "/cockpit/objects/document/docs-claims-advisor-failure-is-recorded-and-recovers-md",
+        "source": "docs/claims/advisor-failure-is-recorded-and-recovers.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/advisor-transports-share-one-contract.md",
+        "kind": "document",
+        "label": "docs/claims/advisor-transports-share-one-contract.md",
+        "summary": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+        "route": "/cockpit/objects/document/docs-claims-advisor-transports-share-one-contract-md",
+        "source": "docs/claims/advisor-transports-share-one-contract.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/advisors-are-declared-once.md",
+        "kind": "document",
+        "label": "docs/claims/advisors-are-declared-once.md",
+        "summary": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+        "route": "/cockpit/objects/document/docs-claims-advisors-are-declared-once-md",
+        "source": "docs/claims/advisors-are-declared-once.md"
       },
       {
         "id": "majordomus://document/docs/claims/ai-layer-manifest.md",
@@ -12409,6 +12572,22 @@
         "source": "docs/claims/provider-projections-one-renderer.md"
       },
       {
+        "id": "majordomus://document/docs/claims/reasoning-survives-the-session.md",
+        "kind": "document",
+        "label": "docs/claims/reasoning-survives-the-session.md",
+        "summary": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+        "route": "/cockpit/objects/document/docs-claims-reasoning-survives-the-session-md",
+        "source": "docs/claims/reasoning-survives-the-session.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/reasoning-works-with-no-advisor.md",
+        "kind": "document",
+        "label": "docs/claims/reasoning-works-with-no-advisor.md",
+        "summary": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+        "route": "/cockpit/objects/document/docs-claims-reasoning-works-with-no-advisor-md",
+        "source": "docs/claims/reasoning-works-with-no-advisor.md"
+      },
+      {
         "id": "majordomus://document/docs/claims/record-resolution.md",
         "kind": "document",
         "label": "docs/claims/record-resolution.md",
@@ -12471,6 +12650,14 @@
         "summary": "The append-only ledger and handover store have retention caps that are checked",
         "route": "/cockpit/objects/document/docs-claims-retention-caps-md",
         "source": "docs/claims/retention-caps.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/review-is-never-fabricated.md",
+        "kind": "document",
+        "label": "docs/claims/review-is-never-fabricated.md",
+        "summary": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+        "route": "/cockpit/objects/document/docs-claims-review-is-never-fabricated-md",
+        "source": "docs/claims/review-is-never-fabricated.md"
       },
       {
         "id": "majordomus://document/docs/claims/roadmap-derived.md",
@@ -14290,6 +14477,59 @@
             "open-and-close-a-session"
           ],
           "weight": 110
+        }
+      },
+      {
+        "id": "majordomus://feature/reasoning",
+        "kind": "feature",
+        "label": "reasoning",
+        "summary": "Reasoning that works with or without advisors, and review that is recorded rather than claimed",
+        "route": "/cockpit/objects/feature/reasoning",
+        "source": ".ai/repo/features/reasoning.md",
+        "status": "stable",
+        "facts": {
+          "adrs": [
+            "adr-0098"
+          ],
+          "areas": [
+            "coordination"
+          ],
+          "claims": [
+            "reasoning-works-with-no-advisor",
+            "advisor-transports-share-one-contract",
+            "advice-is-weighed-not-counted",
+            "advisor-failure-is-recorded-and-recovers",
+            "reasoning-survives-the-session",
+            "advisors-are-declared-once",
+            "review-is-never-fabricated"
+          ],
+          "cockpit": [
+            "reasoning"
+          ],
+          "docs": [
+            "docs/REASONING.md"
+          ],
+          "featured": true,
+          "headline": "Material uncertainty becomes an evidence-backed decision — reviewed by whichever optional advisors are available, decided locally when none are, and carried to the next session as a record.",
+          "modules": [
+            "reasoning"
+          ],
+          "related": [
+            "models",
+            "mesh"
+          ],
+          "rules": [
+            "project.advisors-are-optional",
+            "project.review-is-recorded-not-claimed"
+          ],
+          "short_title": "Reasoning",
+          "tags": [
+            "reasoning",
+            "advisors",
+            "review"
+          ],
+          "use_cases": [],
+          "weight": 47
         }
       },
       {
@@ -29813,6 +30053,7 @@
             "next_action"
           ],
           "presentation": "engineering",
+          "reasoning": "standard",
           "verbosity": "concise"
         }
       },
@@ -29837,6 +30078,7 @@
             "decisions"
           ],
           "presentation": "engineering",
+          "reasoning": "strict",
           "verbosity": "detailed"
         }
       },
@@ -29860,6 +30102,7 @@
             "next_action"
           ],
           "presentation": "engineering",
+          "reasoning": "standard",
           "verbosity": "concise"
         }
       },
@@ -29881,6 +30124,7 @@
             "verification"
           ],
           "presentation": "machine",
+          "reasoning": "fast",
           "verbosity": "terse"
         }
       },
@@ -31305,6 +31549,28 @@
         }
       },
       {
+        "id": "majordomus://rule/project.advisors-are-optional@1",
+        "kind": "rule",
+        "label": "project.advisors-are-optional@1",
+        "summary": "Advisors are optional; reasoning, governance and CI never depend on one",
+        "route": "/cockpit/objects/rule/project-advisors-are-optional-1",
+        "source": ".ai/repo/rules/project/advisors-are-optional.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.empty-is-not-failure@1"
+          ],
+          "statement": "Name advisory capabilities, never advisors, in reasoning code; derive availability from presence and recorded outcomes; treat no advisor as an ordinary plan; and keep every model credential out of CI.",
+          "tags": [
+            "reasoning",
+            "advisors",
+            "providers",
+            "ci"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.benchmarkable-commands@1",
         "kind": "rule",
         "label": "project.benchmarkable-commands@1",
@@ -32516,6 +32782,28 @@
             "changelog",
             "version",
             "projections"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.review-is-recorded-not-claimed@1",
+        "kind": "rule",
+        "label": "project.review-is-recorded-not-claimed@1",
+        "summary": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+        "route": "/cockpit/objects/rule/project-review-is-recorded-not-claimed-1",
+        "source": ".ai/repo/rules/project/review-is-recorded-not-claimed.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.advisors-are-optional@1"
+          ],
+          "statement": "Gather evidence before asking, record every exchange, settle disagreement with evidence, weigh every answer received, and let the writer compute who reviewed a decision.",
+          "tags": [
+            "reasoning",
+            "advisors",
+            "evidence",
+            "sessions"
           ]
         }
       },
@@ -36700,6 +36988,55 @@
         "source": "test/cases/72_rust_mcp.sh"
       },
       {
+        "id": "majordomus://test/test/cases/730_reasoning_works_with_no_advisor.sh",
+        "kind": "test",
+        "label": "test/cases/730_reasoning_works_with_no_advisor.sh",
+        "route": "/cockpit/objects/test/test-cases-730-reasoning-works-with-no-advisor-sh",
+        "source": "test/cases/730_reasoning_works_with_no_advisor.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/731_advisor_transport_contract.sh",
+        "kind": "test",
+        "label": "test/cases/731_advisor_transport_contract.sh",
+        "route": "/cockpit/objects/test/test-cases-731-advisor-transport-contract-sh",
+        "source": "test/cases/731_advisor_transport_contract.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/732_disagreement_is_settled_by_evidence.sh",
+        "kind": "test",
+        "label": "test/cases/732_disagreement_is_settled_by_evidence.sh",
+        "route": "/cockpit/objects/test/test-cases-732-disagreement-is-settled-by-evidence-sh",
+        "source": "test/cases/732_disagreement_is_settled_by_evidence.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/733_advisor_failure_and_recovery.sh",
+        "kind": "test",
+        "label": "test/cases/733_advisor_failure_and_recovery.sh",
+        "route": "/cockpit/objects/test/test-cases-733-advisor-failure-and-recovery-sh",
+        "source": "test/cases/733_advisor_failure_and_recovery.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/734_reasoning_survives_the_session.sh",
+        "kind": "test",
+        "label": "test/cases/734_reasoning_survives_the_session.sh",
+        "route": "/cockpit/objects/test/test-cases-734-reasoning-survives-the-session-sh",
+        "source": "test/cases/734_reasoning_survives_the_session.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+        "kind": "test",
+        "label": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+        "route": "/cockpit/objects/test/test-cases-735-a-new-advisor-needs-no-consumer-edit-sh",
+        "source": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/736_reasoning_check_refuses_drift.sh",
+        "kind": "test",
+        "label": "test/cases/736_reasoning_check_refuses_drift.sh",
+        "route": "/cockpit/objects/test/test-cases-736-reasoning-check-refuses-drift-sh",
+        "source": "test/cases/736_reasoning_check_refuses_drift.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/73_knowledge_nodes.sh",
         "kind": "test",
         "label": "test/cases/73_knowledge_nodes.sh",
@@ -39164,6 +39501,11 @@
         "label": "quality"
       },
       {
+        "id": "module:reasoning",
+        "kind": "module",
+        "label": "reasoning"
+      },
+      {
         "id": "module:recover",
         "kind": "module",
         "label": "recover"
@@ -41230,6 +41572,126 @@
       },
       {
         "source": "capability:quality.rustdoc",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.advisors",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.advisors",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.advisors",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.advisors",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.check",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.check",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.check",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.check",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.explain",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.explain",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.explain",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.explain",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.plan",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.plan",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.plan",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.plan",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.record",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.record",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.record",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.record",
+        "target": "projection:mcp",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.status",
+        "target": "projection:cli",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.status",
+        "target": "projection:cockpit",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.status",
+        "target": "projection:http",
+        "kind": "projects"
+      },
+      {
+        "source": "capability:reasoning.status",
         "target": "projection:mcp",
         "kind": "projects"
       },
@@ -44149,6 +44611,41 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0098",
+        "target": "file:share/advisors.yaml",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0098",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0098",
+        "target": "majordomus://adr/adr-0024",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0098",
+        "target": "majordomus://adr/adr-0032",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0098",
+        "target": "majordomus://adr/adr-0049",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0098",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0098",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0101",
         "target": "file:apps/majordomus-cli/src/capability/builtin/integration.rs",
         "kind": "put_in_force"
@@ -44511,6 +45008,86 @@
       {
         "source": "majordomus://claim/advertised-install-command-works",
         "target": "majordomus://test/test/cases/97_install_gate.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/advice-is-weighed-not-counted",
+        "target": "file:apps/majordomus-cli/src/reasoning/store.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/advice-is-weighed-not-counted",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/advice-is-weighed-not-counted",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/advice-is-weighed-not-counted",
+        "target": "majordomus://test/test/cases/732_disagreement_is_settled_by_evidence.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
+        "target": "file:apps/majordomus-cli/src/reasoning/availability.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/advisor-failure-is-recorded-and-recovers",
+        "target": "majordomus://test/test/cases/733_advisor_failure_and_recovery.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/advisor-transports-share-one-contract",
+        "target": "file:scripts/lib/advisors/contract.mjs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/advisor-transports-share-one-contract",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/advisor-transports-share-one-contract",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/advisor-transports-share-one-contract",
+        "target": "majordomus://test/test/cases/731_advisor_transport_contract.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/advisors-are-declared-once",
+        "target": "file:share/advisors.yaml",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/advisors-are-declared-once",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/advisors-are-declared-once",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/advisors-are-declared-once",
+        "target": "majordomus://test/test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
         "kind": "tested_by"
       },
       {
@@ -47114,6 +47691,46 @@
         "kind": "tested_by"
       },
       {
+        "source": "majordomus://claim/reasoning-survives-the-session",
+        "target": "file:apps/majordomus-cli/src/reasoning/state.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/reasoning-survives-the-session",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/reasoning-survives-the-session",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/reasoning-survives-the-session",
+        "target": "majordomus://test/test/cases/734_reasoning_survives_the_session.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/reasoning-works-with-no-advisor",
+        "target": "file:apps/majordomus-cli/src/reasoning/policy.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/reasoning-works-with-no-advisor",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/reasoning-works-with-no-advisor",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/reasoning-works-with-no-advisor",
+        "target": "majordomus://test/test/cases/730_reasoning_works_with_no_advisor.sh",
+        "kind": "tested_by"
+      },
+      {
         "source": "majordomus://claim/record-resolution",
         "target": "kind:claim",
         "kind": "is_a"
@@ -47271,6 +47888,26 @@
       {
         "source": "majordomus://claim/retention-caps",
         "target": "majordomus://test/test/cases/02_doctor_basic.sh",
+        "kind": "tested_by"
+      },
+      {
+        "source": "majordomus://claim/review-is-never-fabricated",
+        "target": "file:apps/majordomus-cli/src/reasoning/check.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/review-is-never-fabricated",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/review-is-never-fabricated",
+        "target": "majordomus://document/docs/REASONING.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/review-is-never-fabricated",
+        "target": "majordomus://test/test/cases/736_reasoning_check_refuses_drift.sh",
         "kind": "tested_by"
       },
       {
@@ -49119,6 +49756,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/REASONING.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/RELEASE.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -49215,6 +49857,26 @@
       },
       {
         "source": "majordomus://document/docs/claims/advertised-install-command-works.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/advice-is-weighed-not-counted.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/advisor-failure-is-recorded-and-recovers.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/advisor-transports-share-one-contract.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/advisors-are-declared-once.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -49874,6 +50536,16 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://document/docs/claims/reasoning-survives-the-session.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/reasoning-works-with-no-advisor.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://document/docs/claims/record-resolution.md",
         "target": "kind:document",
         "kind": "is_a"
@@ -49910,6 +50582,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/retention-caps.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/review-is-never-fabricated.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -50280,6 +50957,11 @@
       },
       {
         "source": "majordomus://feature/provenance",
+        "target": "kind:feature",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://feature/reasoning",
         "target": "kind:feature",
         "kind": "is_a"
       },
@@ -55564,6 +56246,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.advisors-are-optional@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.advisors-are-optional@1",
+        "target": "majordomus://rule/project.empty-is-not-failure@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.benchmarkable-commands@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -56286,6 +56978,16 @@
       {
         "source": "majordomus://rule/project.release-is-a-projection@2",
         "target": "majordomus://rule/project.interfaces-are-projections@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.review-is-recorded-not-claimed@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.review-is-recorded-not-claimed@1",
+        "target": "majordomus://rule/project.advisors-are-optional@1",
         "kind": "depends_on"
       },
       {
@@ -57909,6 +58611,41 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/730_reasoning_works_with_no_advisor.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/731_advisor_transport_contract.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/732_disagreement_is_settled_by_evidence.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/733_advisor_failure_and_recovery.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/734_reasoning_survives_the_session.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/736_reasoning_check_refuses_drift.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/73_knowledge_nodes.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -58575,16 +59312,6 @@
       },
       {
         "source": "majordomus://use-case/classify-what-belongs-in-the-context",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/classify-what-belongs-in-the-context",
-        "target": "command:knowledge",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/classify-what-belongs-in-the-context",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -58622,11 +59349,6 @@
         "source": "majordomus://use-case/classify-what-belongs-in-the-context",
         "target": "majordomus://rule/majordomus.policy-completeness@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/complete-an-issue-only-with-its-evidence",
-        "target": "command:plan",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/complete-an-issue-only-with-its-evidence",
@@ -58682,16 +59404,6 @@
         "source": "majordomus://use-case/complete-an-issue-only-with-its-evidence",
         "target": "majordomus://rule/majordomus.verification-integrity@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/deliver-issues-in-waves",
-        "target": "command:plan",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/deliver-issues-in-waves",
-        "target": "command:start",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/deliver-issues-in-waves",
@@ -58810,11 +59522,6 @@
       },
       {
         "source": "majordomus://use-case/extend-what-the-executable-serves",
-        "target": "command:knowledge",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/extend-what-the-executable-serves",
         "target": "command:update",
         "kind": "runs"
       },
@@ -58890,21 +59597,6 @@
       },
       {
         "source": "majordomus://use-case/find-an-object-without-reading-everything",
-        "target": "command:knowledge",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/find-an-object-without-reading-everything",
-        "target": "command:prompt",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/find-an-object-without-reading-everything",
-        "target": "command:search",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/find-an-object-without-reading-everything",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -58942,21 +59634,6 @@
         "source": "majordomus://use-case/find-an-object-without-reading-everything",
         "target": "majordomus://rule/majordomus.prompt-integrity@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/find-out-what-drifted",
-        "target": "command:history",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/find-out-what-drifted",
-        "target": "command:update",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/find-out-what-drifted",
-        "target": "command:watch",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/find-out-what-drifted",
@@ -59010,11 +59687,6 @@
       },
       {
         "source": "majordomus://use-case/follow-a-skill-the-repository-defines",
-        "target": "command:skills",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/follow-a-skill-the-repository-defines",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -59045,22 +59717,7 @@
       },
       {
         "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
         "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
-        "target": "command:doctrine",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
-        "target": "command:watch",
         "kind": "runs"
       },
       {
@@ -59132,11 +59789,6 @@
         "source": "majordomus://use-case/gate-ci-on-the-tool-itself",
         "target": "majordomus://rule/majordomus.enforcement-wiring@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/hand-the-repository-to-a-reader",
-        "target": "command:archive",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/hand-the-repository-to-a-reader",
@@ -59250,21 +59902,6 @@
       },
       {
         "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "command:init",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
-        "target": "command:version",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/install-the-tool-in-one-command",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -59302,21 +59939,6 @@
         "source": "majordomus://use-case/install-the-tool-in-one-command",
         "target": "majordomus://rule/majordomus.ai-layout-integrity@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "command:decision",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "command:history",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
-        "target": "command:search",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/keep-decisions-out-of-the-transcript",
@@ -59371,11 +59993,6 @@
       {
         "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
         "target": "command:update",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/keep-the-bootstrap-thin-and-within-budget",
-        "target": "command:watch",
         "kind": "runs"
       },
       {
@@ -59450,11 +60067,6 @@
       },
       {
         "source": "majordomus://use-case/know-whether-this-work-is-finished",
-        "target": "command:watch",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/know-whether-this-work-is-finished",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -59472,11 +60084,6 @@
         "source": "majordomus://use-case/know-whether-this-work-is-finished",
         "target": "majordomus://rule/majordomus.state-consistency@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/know-which-tool-is-running",
-        "target": "command:version",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/know-which-tool-is-running",
@@ -59501,31 +60108,6 @@
       {
         "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
         "target": "command:capture",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "command:checkpoint",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "command:handover",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "command:session",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/let-the-provider-draw-the-episode-boundary",
-        "target": "command:start",
         "kind": "runs"
       },
       {
@@ -59575,16 +60157,6 @@
       },
       {
         "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
-        "target": "command:migrate",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/migrate-from-the-old-layout",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -59612,21 +60184,6 @@
         "source": "majordomus://use-case/migrate-from-the-old-layout",
         "target": "majordomus://rule/majordomus.layout-integrity@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "command:history",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "command:knowledge",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/open-and-close-a-session",
-        "target": "command:session",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/open-and-close-a-session",
@@ -59695,11 +60252,6 @@
       },
       {
         "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
-        "target": "command:doctrine",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -59722,11 +60274,6 @@
         "source": "majordomus://use-case/plan-a-commit-and-judge-its-message",
         "target": "majordomus://rule/majordomus.enforcement-wiring@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/plan-the-work-as-data",
-        "target": "command:plan",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/plan-the-work-as-data",
@@ -59775,21 +60322,6 @@
       },
       {
         "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
-        "target": "command:doctrine",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-a-rule-is-enforced",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -59832,16 +60364,6 @@
         "source": "majordomus://use-case/prove-a-rule-is-enforced",
         "target": "majordomus://rule/majordomus.enforcement-wiring@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "command:bench",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-performance-with-benchmarks",
-        "target": "command:doctor",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/prove-performance-with-benchmarks",
@@ -59890,21 +60412,6 @@
       },
       {
         "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "command:evidence",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
-        "target": "command:finish",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
         "target": "command:start",
         "kind": "runs"
       },
@@ -59922,21 +60429,6 @@
         "source": "majordomus://use-case/prove-what-a-task-owed-before-calling-it-done",
         "target": "majordomus://rule/majordomus.obligation-closure@1",
         "kind": "exercises"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "command:history",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "command:search",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/read-back-what-happened",
-        "target": "command:watch",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/read-back-what-happened",
@@ -60060,16 +60552,6 @@
       },
       {
         "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "command:doctrine",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
-        "target": "command:rules",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/read-the-rules-the-tool-applies",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -60110,16 +60592,6 @@
       },
       {
         "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "command:adr",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
-        "target": "command:knowledge",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/record-a-decision-before-it-is-forgotten",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -60150,11 +60622,6 @@
       },
       {
         "source": "majordomus://use-case/recover-an-episode-nobody-closed",
-        "target": "command:recover",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/recover-an-episode-nobody-closed",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -60162,16 +60629,6 @@
         "source": "majordomus://use-case/recover-an-episode-nobody-closed",
         "target": "majordomus://application/long-running-work",
         "kind": "serves"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "command:context",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/resume-from-a-prompt-asset",
-        "target": "command:prompt",
-        "kind": "runs"
       },
       {
         "source": "majordomus://use-case/resume-from-a-prompt-asset",
@@ -60335,21 +60792,6 @@
       },
       {
         "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "command:check",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "command:evidence",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
-        "target": "command:finish",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/say-what-reached-the-remote-and-what-did-not",
         "target": "kind:use-case",
         "kind": "is_a"
       },
@@ -60400,17 +60842,7 @@
       },
       {
         "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
         "target": "command:init",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/say-what-the-tool-is-for",
-        "target": "command:knowledge",
         "kind": "runs"
       },
       {
@@ -60506,11 +60938,6 @@
       {
         "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
         "target": "command:doctor",
-        "kind": "runs"
-      },
-      {
-        "source": "majordomus://use-case/see-what-the-repository-holds-without-reading-it",
-        "target": "command:knowledge",
         "kind": "runs"
       },
       {
@@ -61424,6 +61851,36 @@
         "kind": "composes"
       },
       {
+        "source": "module:reasoning",
+        "target": "capability:reasoning.advisors",
+        "kind": "composes"
+      },
+      {
+        "source": "module:reasoning",
+        "target": "capability:reasoning.check",
+        "kind": "composes"
+      },
+      {
+        "source": "module:reasoning",
+        "target": "capability:reasoning.explain",
+        "kind": "composes"
+      },
+      {
+        "source": "module:reasoning",
+        "target": "capability:reasoning.plan",
+        "kind": "composes"
+      },
+      {
+        "source": "module:reasoning",
+        "target": "capability:reasoning.record",
+        "kind": "composes"
+      },
+      {
+        "source": "module:reasoning",
+        "target": "capability:reasoning.status",
+        "kind": "composes"
+      },
+      {
         "source": "module:recover",
         "target": "capability:recover.orphans",
         "kind": "composes"
@@ -61575,10 +62032,10 @@
       }
     ],
     "metadata": {
-      "nodes": 1978,
-      "edges": 4460,
+      "nodes": 2000,
+      "edges": 4483,
       "acyclic": true,
-      "truncated": false
+      "truncated": true
     }
   }
 }

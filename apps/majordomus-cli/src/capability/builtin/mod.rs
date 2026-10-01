@@ -62,6 +62,7 @@ pub(crate) mod perf;
 pub mod plan;
 pub(crate) mod product;
 pub mod quality;
+pub mod reasoning;
 pub mod recover;
 pub mod release;
 pub mod repository;
@@ -178,6 +179,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         executions,
         mesh,
         models,
+        reasoning,
         peers,
         server,
         session_domain,
@@ -289,7 +291,9 @@ mod tests {
             .collect();
         assert_eq!(
             writers.into_iter().collect::<Vec<_>>(),
-            ["plan.transition", "recover.orphans"]
+            // reasoning.record writes checkout state under .ai/local, never a tracked file,
+            // and is classified with the writers so that every surface asks before it runs.
+            ["plan.transition", "reasoning.record", "recover.orphans"]
         );
     }
 }

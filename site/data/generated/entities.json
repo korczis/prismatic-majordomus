@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 69,
+      "count": 70,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 145,
+      "count": 147,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 69
+      "count": 70
     },
     {
       "kind": "application",
@@ -69,7 +69,7 @@
       "route": "/guarantees/",
       "title": null,
       "reason": null,
-      "count": 197
+      "count": 204
     },
     {
       "kind": "command",
@@ -109,7 +109,7 @@
       "route": null,
       "title": null,
       "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-      "count": 278
+      "count": 286
     },
     {
       "kind": "feature",
@@ -117,7 +117,7 @@
       "route": "/features/",
       "title": null,
       "reason": null,
-      "count": 26
+      "count": 27
     },
     {
       "kind": "implementation",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 145
+      "count": 147
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 276
+      "count": 283
     },
     {
       "kind": "use-case",
@@ -1280,6 +1280,13 @@
           "kind": "adr",
           "route": "/adrs/adr-0049/",
           "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
         }
       ]
     },
@@ -1764,6 +1771,13 @@
           "label": "adr-0049",
           "kind": "adr",
           "route": "/adrs/adr-0049/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
           "external": false
         }
       ]
@@ -2918,7 +2932,15 @@
           "external": false
         }
       ],
-      "referenced_by": []
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "adr",
@@ -3712,6 +3734,13 @@
           "label": "adr-0059",
           "kind": "adr",
           "route": "/adrs/adr-0059/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0098",
+          "kind": "adr",
+          "route": "/adrs/adr-0098/",
           "external": false
         }
       ]
@@ -4619,6 +4648,67 @@
           "edge": "put_in_force",
           "label": "test/cases/547_the_ui_says_only_what_is_derived.sh",
           "kind": "test",
+          "route": null,
+          "external": false
+        }
+      ],
+      "referenced_by": []
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0098",
+      "identity": "adr-0098",
+      "slug": "adr-0098",
+      "cockpit": "/cockpit/objects/adr/adr-0098",
+      "title": "Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim",
+      "status": "proposed",
+      "tags": [
+        "reasoning",
+        "advisors",
+        "providers",
+        "sessions"
+      ],
+      "source": ".ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "share/advisors.yaml",
+          "kind": "file",
+          "route": null,
+          "external": true
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0024",
+          "kind": "adr",
+          "route": "/adrs/adr-0024/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0032",
+          "kind": "adr",
+          "route": "/adrs/adr-0032/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0049",
+          "kind": "adr",
+          "route": "/adrs/adr-0049/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "adr-0067",
+          "kind": "adr",
+          "route": "/adrs/adr-0067/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "docs/REASONING.md",
+          "kind": "document",
           "route": null,
           "external": false
         }
@@ -7592,6 +7682,40 @@
     },
     {
       "kind": "rule",
+      "id": "majordomus://rule/project.advisors-are-optional@1",
+      "identity": "project.advisors-are-optional@1",
+      "slug": "project-advisors-are-optional-1",
+      "cockpit": "/cockpit/objects/rule/project-advisors-are-optional-1",
+      "title": "Advisors are optional; reasoning, governance and CI never depend on one",
+      "status": "active",
+      "tags": [
+        "reasoning",
+        "advisors",
+        "providers",
+        "ci"
+      ],
+      "source": ".ai/repo/rules/project/advisors-are-optional.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.empty-is-not-failure@1",
+          "kind": "rule",
+          "route": "/rules/project-empty-is-not-failure-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "depends_on",
+          "label": "project.review-is-recorded-not-claimed@1",
+          "kind": "rule",
+          "route": "/rules/project-review-is-recorded-not-claimed-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
       "id": "majordomus://rule/project.benchmarkable-commands@1",
       "identity": "project.benchmarkable-commands@1",
       "slug": "project-benchmarkable-commands-1",
@@ -8419,6 +8543,13 @@
           "label": "project.a-verdict-states-its-subject@1",
           "kind": "rule",
           "route": "/rules/project-a-verdict-states-its-subject-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.advisors-are-optional@1",
+          "kind": "rule",
+          "route": "/rules/project-advisors-are-optional-1/",
           "external": false
         },
         {
@@ -10676,6 +10807,32 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.review-is-recorded-not-claimed@1",
+      "identity": "project.review-is-recorded-not-claimed@1",
+      "slug": "project-review-is-recorded-not-claimed-1",
+      "cockpit": "/cockpit/objects/rule/project-review-is-recorded-not-claimed-1",
+      "title": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+      "status": "active",
+      "tags": [
+        "reasoning",
+        "advisors",
+        "evidence",
+        "sessions"
+      ],
+      "source": ".ai/repo/rules/project/review-is-recorded-not-claimed.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.advisors-are-optional@1",
+          "kind": "rule",
+          "route": "/rules/project-advisors-are-optional-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "rule",

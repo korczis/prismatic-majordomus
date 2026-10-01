@@ -150,6 +150,12 @@
           "route": "/docs/cli/models/"
         },
         {
+          "about": "Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor",
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        },
+        {
           "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
           "command": "majordomus evidence",
           "name": "evidence",
@@ -23221,6 +23227,1023 @@
       "usage": "majordomus models route [OPTIONS]"
     },
     {
+      "about": "Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [
+        {
+          "about": "Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer",
+          "command": "majordomus reasoning advisors",
+          "name": "advisors",
+          "route": "/docs/cli/reasoning/advisors/"
+        },
+        {
+          "about": "Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing",
+          "command": "majordomus reasoning plan",
+          "name": "plan",
+          "route": "/docs/cli/reasoning/plan/"
+        },
+        {
+          "about": "Record one reasoning step of the open task from JSON (`{\"kind\":\"assessment\",...}`) read from --file or standard input; a record that breaks a rule is refused and nothing is written",
+          "command": "majordomus reasoning record",
+          "name": "record",
+          "route": "/docs/cli/reasoning/record/"
+        },
+        {
+          "about": "The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries",
+          "command": "majordomus reasoning status",
+          "name": "status",
+          "route": "/docs/cli/reasoning/status/"
+        },
+        {
+          "about": "One record with the whole chain of its assessment: why a decision was made",
+          "command": "majordomus reasoning explain",
+          "name": "explain",
+          "route": "/docs/cli/reasoning/explain/"
+        },
+        {
+          "about": "Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding",
+          "command": "majordomus reasoning check",
+          "name": "check",
+          "route": "/docs/cli/reasoning/check/"
+        }
+      ],
+      "command": "majordomus reasoning",
+      "depth": 1,
+      "examples": [],
+      "executable": false,
+      "long_about": null,
+      "name": "reasoning",
+      "parent_route": "/docs/cli/",
+      "path": [
+        "majordomus",
+        "reasoning"
+      ],
+      "route": "/docs/cli/reasoning/",
+      "usage": "majordomus reasoning [OPTIONS] <COMMAND>"
+    },
+    {
+      "about": "Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning advisors",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "advisors"
+          ],
+          "command": "majordomus reasoning advisors",
+          "description": "Every declared advisor with its status and why — available, unavailable, not_configured, disabled, temporarily_failed, rate_limited — from presence alone (an executable on PATH, a credential variable set, never a value), the mode in force and the recorded outcomes of earlier consultations; then who can provide each advisory capability now. Reasoning is operational whether or not any advisor is.",
+          "expectation": "exits 0; prints reasoning   operational",
+          "id": "reasoning-advisors",
+          "setup": [],
+          "title": "The advisors, and what they can do now"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "advisors",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "advisors"
+      ],
+      "route": "/docs/cli/reasoning/advisors/",
+      "usage": "majordomus reasoning advisors [OPTIONS]"
+    },
+    {
+      "about": "Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [
+            "material"
+          ],
+          "global": false,
+          "help": "trivial, low, material, high or critical",
+          "long": "materiality",
+          "name": "materiality",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "MATERIALITY"
+        },
+        {
+          "defaults": [
+            "medium"
+          ],
+          "global": false,
+          "help": "low, medium or high",
+          "long": "confidence",
+          "name": "confidence",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CONFIDENCE"
+        },
+        {
+          "defaults": [],
+          "global": false,
+          "help": "Advisory capabilities review needs, comma-separated",
+          "long": "capabilities",
+          "name": "capabilities",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "CAPABILITIES"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning plan",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "plan",
+            "--materiality",
+            "material"
+          ],
+          "command": "majordomus reasoning plan --materiality material",
+          "description": "Whether independent review is worth having, how many advisors the mode allows, which available advisors a capability-driven selection asks, and why every other advisor is left out. With no suitable advisor the plan is the structured local review. Nothing is recorded.",
+          "expectation": "exits 0; prints outcome, budget",
+          "id": "reasoning-plan",
+          "setup": [],
+          "title": "What a material uncertainty calls for"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "plan",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "plan"
+      ],
+      "route": "/docs/cli/reasoning/plan/",
+      "usage": "majordomus reasoning plan [OPTIONS]"
+    },
+    {
+      "about": "Record one reasoning step of the open task from JSON (`{\"kind\":\"assessment\",...}`) read from --file or standard input; a record that breaks a rule is refused and nothing is written",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The JSON record; standard input when absent",
+          "long": "file",
+          "name": "file",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FILE"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning record",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "record",
+            "--file",
+            "share/advisors.yaml"
+          ],
+          "command": "majordomus reasoning record --file share/advisors.yaml",
+          "description": "The writer reads one JSON record (`{\"kind\":\"assessment\",...}`) from --file or standard input. Anything else — here a YAML file — is refused with exit 13 and nothing is written; so is a record that breaks a rule, such as a plan for an assessment nobody recorded.",
+          "expectation": "exits 13",
+          "id": "reasoning-record-refused",
+          "setup": [],
+          "title": "Input that is not a record is refused"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "record",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "record"
+      ],
+      "route": "/docs/cli/reasoning/record/",
+      "usage": "majordomus reasoning record [OPTIONS]"
+    },
+    {
+      "about": "The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "A task id, or `all`",
+          "long": "task",
+          "name": "task",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "TASK"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": false,
+          "help": "Print only the Markdown report (empty when there is nothing to report)",
+          "long": "report",
+          "name": "report",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "REPORT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning status",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "status",
+            "--task",
+            "all"
+          ],
+          "command": "majordomus reasoning status --task all",
+          "description": "Assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, and the timeline — derived from the records alone.",
+          "expectation": "exits 0; prints records",
+          "id": "reasoning-status",
+          "setup": [],
+          "title": "The reasoning state of the open task"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "status",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "status"
+      ],
+      "route": "/docs/cli/reasoning/status/",
+      "usage": "majordomus reasoning status [OPTIONS]"
+    },
+    {
+      "about": "One record with the whole chain of its assessment: why a decision was made",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": false,
+          "help": "The record id",
+          "name": "id",
+          "positional": true,
+          "possible_values": [],
+          "required": true,
+          "takes_value": true,
+          "value_name": "ID"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning explain",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "explain",
+            "conclusion-absent"
+          ],
+          "command": "majordomus reasoning explain conclusion-absent",
+          "description": "One record with the whole chain of its assessment. An id nothing recorded is refused as not found.",
+          "expectation": "exits 13",
+          "id": "reasoning-explain-absent",
+          "setup": [],
+          "title": "Why a decision was made"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "explain",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "explain"
+      ],
+      "route": "/docs/cli/reasoning/explain/",
+      "usage": "majordomus reasoning explain [OPTIONS] <ID>"
+    },
+    {
+      "about": "Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding",
+      "ancestors": [
+        {
+          "command": "majordomus",
+          "name": "majordomus",
+          "route": "/docs/cli/"
+        },
+        {
+          "command": "majordomus reasoning",
+          "name": "reasoning",
+          "route": "/docs/cli/reasoning/"
+        }
+      ],
+      "args": [
+        {
+          "defaults": [],
+          "global": true,
+          "help": "Start the search for the repository root here (default: the current directory)",
+          "long": "repo",
+          "name": "repo",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "PATH"
+        },
+        {
+          "defaults": [
+            "vcs"
+          ],
+          "global": true,
+          "help": "How declarative files are enumerated",
+          "long": "discovery",
+          "name": "discovery",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Tracked files, through the version-control index (the layer's contract)",
+              "name": "vcs"
+            },
+            {
+              "help": "A walk of the work tree with the same glob semantics; untracked files included",
+              "name": "filesystem"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DISCOVERY"
+        },
+        {
+          "defaults": [
+            "false"
+          ],
+          "global": true,
+          "help": "Refuse to proceed when any file of the layer carries an error diagnostic",
+          "long": "strict",
+          "name": "strict",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": false,
+          "value_name": "STRICT"
+        },
+        {
+          "defaults": [],
+          "global": true,
+          "help": "The tool distribution's share directory (kinds.yaml, schemas/); default: $MAJORDOMUS_SHARE, then the repository's own share/, then the one beside the executable",
+          "long": "share",
+          "name": "share",
+          "positional": false,
+          "possible_values": [],
+          "required": false,
+          "takes_value": true,
+          "value_name": "DIR"
+        },
+        {
+          "defaults": [
+            "text"
+          ],
+          "global": true,
+          "help": "`text` for a person, `json` for a machine; both render the same answer",
+          "long": "format",
+          "name": "format",
+          "positional": false,
+          "possible_values": [
+            {
+              "help": "Lines for a person",
+              "name": "text"
+            },
+            {
+              "help": "One JSON document, deterministic",
+              "name": "json"
+            }
+          ],
+          "required": false,
+          "takes_value": true,
+          "value_name": "FORMAT"
+        }
+      ],
+      "children": [],
+      "command": "majordomus reasoning check",
+      "depth": 2,
+      "examples": [
+        {
+          "argv": [
+            "reasoning",
+            "check"
+          ],
+          "command": "majordomus reasoning check",
+          "description": "The advisor catalogue's references, the transport adapters, the provider-independent sources, CI, the documents and every stored record; exit 10 on a finding.",
+          "expectation": "exits 0; prints checks",
+          "id": "reasoning-check",
+          "setup": [],
+          "title": "Check that reasoning stays provider-independent"
+        }
+      ],
+      "executable": true,
+      "long_about": null,
+      "name": "check",
+      "parent_route": "/docs/cli/reasoning/",
+      "path": [
+        "majordomus",
+        "reasoning",
+        "check"
+      ],
+      "route": "/docs/cli/reasoning/check/",
+      "usage": "majordomus reasoning check [OPTIONS]"
+    },
+    {
       "about": "What actually ran and what it proves: every claim of the matrix against the runs recorded for it, one claim's proof, one test's claims, and the recording of a run that happened",
       "ancestors": [
         {
@@ -27604,10 +28627,10 @@
     }
   ],
   "counts": {
-    "arguments": 1196,
-    "commands": 174,
-    "examples": 175,
-    "runnable": 154
+    "arguments": 1238,
+    "commands": 181,
+    "examples": 181,
+    "runnable": 160
   },
   "declaration": "apps/majordomus-cli/src/cli.rs",
   "generator_version": "0.11.0",

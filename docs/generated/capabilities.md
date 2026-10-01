@@ -41,6 +41,7 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `plan` | The plan and its derivations | behaviorally_verified | 9 | [`modules/plan.md`](modules/plan.md) |
 | `product` | Product | behaviorally_verified | 5 | [`modules/product.md`](modules/product.md) |
 | `quality` | Public API quality | behaviorally_verified | 2 | [`modules/quality.md`](modules/quality.md) |
+| `reasoning` | Reasoning | experimental | 6 | [`modules/reasoning.md`](modules/reasoning.md) |
 | `recover` | Recovery of the record stores | behaviorally_verified | 1 | [`modules/recover.md`](modules/recover.md) |
 | `release` | Release | implemented | 3 | [`modules/release.md`](modules/release.md) |
 | `repository` | Repository | behaviorally_verified | 3 | [`modules/repository.md`](modules/repository.md) |
@@ -174,6 +175,12 @@ Every capability this executable ships, as the registry holds it. MCP tools and 
 | `product.validate` | `product` | query | behaviorally_verified | `majordomus_product_validate` | — | `GET /api/v1/product/validate` | `majordomus product validate` | process, 2 entries | required |
 | `quality.report` | `quality` | query | behaviorally_verified | `majordomus_quality` | `majordomus://quality` | `GET /api/v1/quality` | `majordomus quality report` | process, 8 entries, 10s | required |
 | `quality.rustdoc` | `quality` | query | behaviorally_verified | `majordomus_quality_rustdoc` | `majordomus://quality/rustdoc` | `GET /api/v1/quality/rustdoc` | `majordomus quality rustdoc` | process, 8 entries, 10s | required |
+| `reasoning.advisors` | `reasoning` | query | experimental | `majordomus_reasoning_advisors` | `majordomus://reasoning/advisors` | `GET /api/v1/reasoning/advisors` | `majordomus reasoning advisors` | — | required |
+| `reasoning.check` | `reasoning` | query | experimental | `majordomus_reasoning_check` | — | `GET /api/v1/reasoning/check` | `majordomus reasoning check` | — | required |
+| `reasoning.explain` | `reasoning` | query | experimental | `majordomus_reasoning_explain` | — | `GET /api/v1/reasoning/explain` | `majordomus reasoning explain` | — | waived (transient_state) |
+| `reasoning.plan` | `reasoning` | query | experimental | `majordomus_reasoning_plan` | — | `GET /api/v1/reasoning/plan` | `majordomus reasoning plan` | — | required |
+| `reasoning.record` | `reasoning` | command | experimental | `majordomus_reasoning_record` | — | `POST /api/v1/reasoning/records` | `majordomus reasoning record` | — | required |
+| `reasoning.status` | `reasoning` | query | experimental | `majordomus_reasoning` | `majordomus://reasoning` | `GET /api/v1/reasoning` | `majordomus reasoning status` | — | required |
 | `recover.orphans` | `recover` | command | behaviorally_verified | `majordomus_recover_orphans` | — | `POST /api/v1/recover/orphans` | — | — | required |
 | `release.analysis` | `release` | query | implemented | `majordomus_release_analysis` | — | `GET /api/v1/release/analysis` | — | — | waived (published_history) |
 | `release.changelog` | `release` | query | implemented | `majordomus_changelog` | `majordomus://changelog` | `GET /api/v1/changelog` | — | — | required |
