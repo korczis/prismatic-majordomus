@@ -23,7 +23,7 @@ A worker reports success. The report is a paragraph, the evidence is the paragra
 # What you run
 
 - `question`: anything unresolved is recorded as state, and refuses completion while it stands
-- `finish`: --verify-command runs the project's own verification and records its exit code and duration
+- `finish`: --verify-command runs the project's own verification and records its exit code, its duration and the tree it ran over
 
 # Scenario
 
@@ -58,7 +58,7 @@ steps:
       stdout_contains: ['completed']
 then:
   - 'finish writes nothing while any line of the contract fails'
-  - 'the verification command, its exit code and duration are recorded'
+  - 'the verification command, its exit code, its duration and the tree it ran over are recorded'
 ```
 
 # Outcome
