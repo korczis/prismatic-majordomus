@@ -19,7 +19,7 @@
 #   5. the transition heals a forged start; a record's unsealed_stamps excuses only the
 #      stamps it names, and none written at or after the instant seals began.
 . "$ROOT/test/lib.sh"
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
 RB="$(rust_bin)" || rust_bin_exit $?
 [ -x "$RB" ] || { echo "    the build produced no executable at $RB"; exit 1; }
 MAJORDOMUS_SHARE="$ROOT/share"; export MAJORDOMUS_SHARE
