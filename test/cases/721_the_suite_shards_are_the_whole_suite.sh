@@ -30,6 +30,22 @@ LC_ALL=C sort "$union" | cmp -s - "$all" || {
   echo "    the shards are not the suite:"; LC_ALL=C sort "$union" | diff - "$all" | head; exit 1; }
 for i in 1 2 3 4; do [ -s "$T/shard$i.txt" ] || { echo "    shard $i was dealt nothing"; exit 1; }; done
 
+# ---------------------------------------------------------------- 1b. the heaviest open apart
+# Four 35-minute cases dealt to one runner's four workers starved each other past their
+# timeout (#701's first run). The four heaviest parallel cases go to four different shards.
+heavy="$(LC_ALL=C sort -t "$(printf '\t')" -k2,2nr "$ROOT/.ai/repo/ci/suite-durations.tsv" |
+  while IFS="$(printf '\t')" read -r name _; do
+    f="$ROOT/test/cases/$name.sh"
+    [ -f "$f" ] && ! grep -q '^# majordomus-exclusive:' "$f" && echo "$name"
+  done | head -4)"
+[ "$(printf '%s\n' "$heavy" | grep -c .)" = 4 ] || { echo "    fewer than four timed parallel cases"; exit 1; }
+seen=""
+for name in $heavy; do
+  s="$(grep -lx "$name" "$T"/shard[1-4].txt)"
+  case " $seen " in *" $s "*) echo "    two of the heaviest cases share $(basename "$s" .txt): $heavy"; exit 1 ;; esac
+  seen="$seen $s"
+done
+
 # ---------------------------------------------------------------- 2. the deal is deterministic
 for i in 1 2 3 4; do
   deal "$i" | cmp -s - "$T/shard$i.txt" || { echo "    dealing shard $i twice dealt two hands"; exit 1; }

@@ -217,7 +217,9 @@ done
 
 # ---------------------------------------------------------------- one shard
 # Longest-processing-time first: cases sorted by their recorded seconds, each dealt to the
-# least-loaded of n x jobs worker slots; then the exclusive ones, each to the shard whose
+# least-loaded of n x jobs worker slots, slot s belonging to shard s mod n so that the
+# heaviest cases open one per shard rather than all on the first (four 35-minute cases on one
+# runner starve each other past their timeout); then the exclusive ones, each to the shard whose
 # busiest worker finishes first. Pure arithmetic over one committed file, ties broken by
 # name, so every shard of a run deals the same hand and their union is the whole suite.
 if [ -n "${MJ_TEST_SHARD:-}" ]; then
@@ -236,8 +238,8 @@ if [ -n "${MJ_TEST_SHARD:-}" ]; then
     LC_ALL=C sort -t "$tab" -k3,3r -k1,1nr -k2,2 |
     awk -F'\t' -v N="$of" -v J="$jobs" -v me="$me" '
       $3 == "p" { b = 0; for (s = 1; s < N * J; s++) if (slot[s] < slot[b]) b = s
-                  slot[b] += $1; if (int(b / J) == me - 1) print $2; next }
-      { if (!ready) { for (k = 0; k < N; k++) { m = 0; for (w = 0; w < J; w++) if (slot[k * J + w] > m) m = slot[k * J + w]; load[k] = m }; ready = 1 }
+                  slot[b] += $1; if (b % N == me - 1) print $2; next }
+      { if (!ready) { for (k = 0; k < N; k++) { m = 0; for (w = 0; w < J; w++) if (slot[w * N + k] > m) m = slot[w * N + k]; load[k] = m }; ready = 1 }
         b = 0; for (k = 1; k < N; k++) if (load[k] < load[b]) b = k
         load[b] += $1; if (b == me - 1) print $2 }')"
   keep_p=""; keep_e=""

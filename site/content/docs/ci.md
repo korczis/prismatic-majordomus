@@ -177,7 +177,10 @@ On CI the suite runs as four shards on four runners (`suite-shard`, a matrix), e
 cases at a time. `MJ_TEST_SHARD=i/n` makes `test/run.sh` run the i-th part. The cases are
 dealt longest-first over n × `MJ_TEST_JOBS` worker slots by the seconds
 `.ai/repo/ci/suite-durations.tsv` records, and then the exclusive cases go to the
-least-loaded shard. A case with no recorded seconds weighs 300 s. The file is committed, so
+least-loaded shard. Slot s belongs to shard s mod n, so the heaviest cases open one per
+shard. In the first run the slots were numbered shard by shard, the four 35-minute cases
+landed on one runner and starved each other past the 3630 s timeout, and case 721 now
+refuses that deal. A case with no recorded seconds weighs 300 s. The file is committed, so
 every shard of a run deals the same hand: stale numbers only unbalance the shards, they
 never lose a case. Measured on one runner the suite took more than two hours, because
 24,879 case-seconds were dealt to four workers. Dealt to sixteen workers, the critical path
