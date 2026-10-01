@@ -266,11 +266,12 @@ jobs:
           st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)suite.tsv')"
           if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
           jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["suite.tsv"]}' > "$RUNNER_TEMP/suite-tree.json"
-      # an artifact of its own: the ci job reads every ci-metrics-* artifact as metrics
+      # an artifact of its own per shard (the ci job reads every ci-metrics-* artifact as
+      # metrics); the suite job joins the four into the one measurement the evidence job reads
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-evidence-suite-tree
+          name: ci-evidence-suite-tree-${{ matrix.shard }}
           path: ${{ runner.temp }}/suite-tree.json
           if-no-files-found: ignore
           retention-days: 14
@@ -303,6 +304,33 @@ jobs:
         with:
           pattern: suite-shard-*
           path: shards
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-evidence-suite-tree-*
+          path: ${{ runner.temp }}/trees
+      # The suite ran in four trees, one per shard, each measured where it ran. The suite's
+      # tree is clean only when all four were and when they are one commit; a shard that left
+      # no measurement leaves the suite's tree unknown, and no file is written at all.
+      - name: the trees the shards ran in
+        if: always()
+        run: |
+          set -- "$RUNNER_TEMP"/trees/*/suite-tree.json
+          if [ "$#" -eq 4 ] && [ -f "$1" ]; then
+            jq -s '{commit: (if (map(.commit) | unique | length) == 1 then .[0].commit else "several" end),
+                    working_tree: (if all(.[]; .working_tree == "clean") and (map(.commit) | unique | length) == 1
+                                   then "clean" else "dirty" end),
+                    excluded: ["suite.tsv"]}' "$@" > "$RUNNER_TEMP/suite-tree.json"
+            cat "$RUNNER_TEMP/suite-tree.json"
+          else
+            echo "::warning::$# of 4 shards left a tree measurement; the suite's tree is unknown"
+          fi
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-suite-tree
+          path: ${{ runner.temp }}/suite-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
       - name: every case, exactly once
         run: |
           cat shards/*/suite.tsv > suite.tsv
