@@ -33559,12 +33559,12 @@
       "variants": []
     },
     {
-      "description": "Who answered a version report's `next`: the public contract, the contract with the\ncommits, or — only when it could not be measured — the commit subjects.\n\nADR 0051 makes the contract the authority and demotes conventional commits to evidence,\nso `DecidedBy::Contract` is the normal answer and `DecidedBy::Commits` is a fallback\nthat names itself rather than passing for the measurement.\n\n```\nuse majordomus_cli::release::model::DecidedBy;\nassert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), \"contract\");\nassert_eq!(DecidedBy::Commits.as_str(), \"commits\");\nassert_eq!(DecidedBy::default(), DecidedBy::Commits);\n```",
+      "description": "Who answered a version report's `next`: the public contract, the contract with the\ncommits — or no one, because the contract could not be measured.\n\nADR 0051 makes the contract the authority and demotes conventional commits to evidence,\nso `DecidedBy::Contract` is the normal answer. An unmeasurable contract is refused, not\nguessed: `DecidedBy::Undecided` leaves `next` absent and carries the reason, and the\ncommit inference stays what it always is, evidence — never the answer in its place.\n\n```\nuse majordomus_cli::release::model::DecidedBy;\nassert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), \"contract\");\nassert_eq!(DecidedBy::Undecided.as_str(), \"undecided\");\nassert_eq!(DecidedBy::default(), DecidedBy::Undecided);\n```",
       "home": "release",
       "is_enum": true,
       "name": "ReleaseVersionDecidedBy",
       "properties": [],
-      "type": "\"contract\" | \"contract_and_commits\" | \"commits\"",
+      "type": "\"contract\" | \"contract_and_commits\" | \"undecided\"",
       "used_by": [],
       "used_by_schemas": [
         "ReleaseVersionReport"
@@ -33579,8 +33579,8 @@
           "value": "contract_and_commits"
         },
         {
-          "description": "The contract could not be measured — no published baseline carries a registry, or a\nversion is not three numbers — so `next` is what the commit subjects imply, and says\nso.",
-          "value": "commits"
+          "description": "The contract could not be measured — no published baseline carries a registry, or a\nversion is not three numbers — so nothing decides `next`: it is absent, the reason is\nin `contract_unreadable`, and `release bump` without an explicit target refuses.",
+          "value": "undecided"
         }
       ],
       "variants": []
@@ -33738,7 +33738,7 @@
       "variants": []
     },
     {
-      "description": "What the version is, what the public contract requires it to become, and what the\ncommits since the last release say about themselves.\n\n`next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the\nsmallest release above the last when that requirement is the last release itself. The\ncommit inference is evidence — `bump` and `commits_imply` — and is the answer only when\nthe contract cannot be measured, which `decided_by` and `contract_unreadable` then say.",
+      "description": "What the version is, what the public contract requires it to become, and what the\ncommits since the last release say about themselves.\n\n`next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the\nsmallest release above the last when that requirement is the last release itself. The\ncommit inference is evidence — `bump` and `commits_imply` — and never the answer: when the\ncontract cannot be measured `next` is absent, `decided_by` is `undecided` and\n`contract_unreadable` says why. The selection is `crate::release::version::select`, the\none function `release bump` also takes its default target from.",
       "home": "release",
       "is_enum": false,
       "name": "ReleaseVersionReport",
@@ -33779,14 +33779,14 @@
           "type": "string"
         },
         {
-          "description": "The version that bump would produce from the last release (from the declared version\nwhen nothing was released yet). Evidence only.",
+          "description": "The version that bump would produce from the last release (from the declared version\nwhen nothing was released yet). Evidence only, even when the contract cannot answer.",
           "name": "commits_imply",
           "refs": [],
           "required": false,
           "type": "string | null"
         },
         {
-          "description": "The next version. When the contract could be measured, the version it requires: the\ndeclared version when that already satisfies it, otherwise the smallest one it allows\n— and, when that is the last release itself, the smallest release above it. When it\ncould not, the commit inference, labelled by `decided_by`. Absent when nothing would\nbe released.",
+          "description": "The next version. When the contract could be measured, the version it requires: the\ndeclared version when that already satisfies it, otherwise the smallest one it allows\n— and, when that is the last release itself, the smallest release above it. Absent\nwhen nothing would be released, and when the contract could not be measured\n(`decided_by: undecided`): an unmeasurable baseline is refused, not guessed.",
           "name": "next",
           "refs": [],
           "required": false,
@@ -33802,7 +33802,7 @@
           "type": "ReleaseVersionDecidedBy"
         },
         {
-          "description": "Why the contract could not answer, when `decided_by` is `commits`.",
+          "description": "Why the contract could not answer, when `decided_by` is `undecided`.",
           "name": "contract_unreadable",
           "refs": [],
           "required": false,
@@ -51343,7 +51343,7 @@
       "slug": "recover"
     },
     {
-      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become, with what the commits since the last release imply beside it as evidence.",
+      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.",
       "name": "release",
       "operations": [
         {
@@ -51487,7 +51487,7 @@
           "cache_detail": "",
           "cli": "",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/release/version\"",
-          "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence; they answer `next` only when the contract cannot be measured, and `decided_by` and `contract_unreadable` then say so.",
+          "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. It is the one release selection `release bump` also raises to when no target is named, so the report and the writer cannot disagree. When the contract cannot be measured — no published baseline, a version that is not three numbers, or any other error that makes the plan unsound, the plan `release bump` refuses to write from — the baseline is refused, not guessed: `next` is absent, `decided_by` is `undecided` and `contract_unreadable` carries every error, one per line. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence, and never answer `next` in the contract's place.",
           "home": "release",
           "id": "release.version",
           "kind": "query",

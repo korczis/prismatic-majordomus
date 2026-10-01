@@ -1111,6 +1111,18 @@ fn records(objects: &[Object]) -> Vec<(Version, String, Option<String>, Option<S
 }
 
 /// The release a version is measured from, named without reading its surface.
+///
+/// ```
+/// use majordomus_cli::release::compat::LastRelease;
+/// let tagged = LastRelease {
+///     version: "0.5.0".into(),
+///     reference: "v0.5.0".into(),
+///     read_at: "v0.5.0".into(),
+///     recorded: false,
+/// };
+/// // a release known only from its tag is read at the tag itself
+/// assert_eq!(tagged.read_at, tagged.reference);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LastRelease {
     /// `0.5.0`.
@@ -1397,10 +1409,14 @@ pub struct VersionPlan {
 impl VersionPlan {
     /// The version the contract requires, when the analysis could measure one.
     ///
-    /// The analysis still returns a plan when a version is not three numbers — it reports
-    /// `baseline-version-malformed` or `declared-version-malformed` and falls back to a guess
-    /// — so a caller that takes `required_version` as the contract's answer must ask this
-    /// instead: a guess is refused with the diagnostic that says why.
+    /// The analysis still returns a plan when a fact it rests on is untrustworthy — a version
+    /// that is not three numbers (`baseline-version-malformed`, `declared-version-malformed`,
+    /// then a guess), a baseline whose record and tag name different commits
+    /// (`tag-commit-mismatch`), a version stated by hand (`writers-disagree`,
+    /// `version-stated-by-hand`) — so a caller that takes `required_version` as the
+    /// contract's answer must ask this instead. It is sound exactly when `release bump` would
+    /// write from it: any [`Severity::Error`] diagnostic ([`VersionPlan::has_errors`]) refuses,
+    /// with every error's message, one per line, as `bump` prints them.
     ///
     /// ```
     /// # use majordomus_cli::release::compat::*;
@@ -1425,16 +1441,27 @@ impl VersionPlan {
     ///     severity: Severity::Error, message: "the baseline is not three numbers".into() };
     /// assert_eq!(plan("0.6.0", vec![guessed]).measured_version(),
     ///     Err("the baseline is not three numbers".into()));
+    /// // any error refuses, not only a malformed version: the plan bump would not write from
+    /// let moved = Diagnostic { id: "tag-commit-mismatch".into(),
+    ///     severity: Severity::Error, message: "the tag moved".into() };
+    /// let stale = Diagnostic { id: "projection-stale".into(),
+    ///     severity: Severity::Warning, message: "run scripts/derive".into() };
+    /// assert_eq!(plan("0.6.0", vec![stale.clone()]).measured_version(), Ok("0.6.0".into()));
+    /// let unsound = plan("0.6.0", vec![moved.clone(), stale, moved]);
+    /// assert!(unsound.has_errors());
+    /// assert_eq!(unsound.measured_version(), Err("the tag moved\nthe tag moved".into()));
     /// ```
     pub fn measured_version(&self) -> Result<String, String> {
-        if let Some(d) = self.diagnostics.iter().find(|d| {
-            d.severity == Severity::Error
-                && matches!(
-                    d.id.as_str(),
-                    "baseline-version-malformed" | "declared-version-malformed"
-                )
-        }) {
-            return Err(d.message.clone());
+        // One soundness test with `release bump`: the plan it refuses to write from is the
+        // plan the report refuses to decide from, for the same reasons.
+        if self.has_errors() {
+            let errors: Vec<&str> = self
+                .diagnostics
+                .iter()
+                .filter(|d| d.severity == Severity::Error)
+                .map(|d| d.message.as_str())
+                .collect();
+            return Err(errors.join("\n"));
         }
         Version::parse(&self.required_version)
             .map(|v| v.to_string())

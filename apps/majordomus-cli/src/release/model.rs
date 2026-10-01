@@ -385,17 +385,18 @@ pub struct Changelog {
 }
 
 /// Who answered a version report's `next`: the public contract, the contract with the
-/// commits, or — only when it could not be measured — the commit subjects.
+/// commits — or no one, because the contract could not be measured.
 ///
 /// ADR 0051 makes the contract the authority and demotes conventional commits to evidence,
-/// so [`DecidedBy::Contract`] is the normal answer and [`DecidedBy::Commits`] is a fallback
-/// that names itself rather than passing for the measurement.
+/// so [`DecidedBy::Contract`] is the normal answer. An unmeasurable contract is refused, not
+/// guessed: [`DecidedBy::Undecided`] leaves `next` absent and carries the reason, and the
+/// commit inference stays what it always is, evidence — never the answer in its place.
 ///
 /// ```
 /// use majordomus_cli::release::model::DecidedBy;
 /// assert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), "contract");
-/// assert_eq!(DecidedBy::Commits.as_str(), "commits");
-/// assert_eq!(DecidedBy::default(), DecidedBy::Commits);
+/// assert_eq!(DecidedBy::Undecided.as_str(), "undecided");
+/// assert_eq!(DecidedBy::default(), DecidedBy::Undecided);
 /// ```
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -410,10 +411,10 @@ pub enum DecidedBy {
     /// smallest release above the last, a patch, however much the commit subjects claim.
     ContractAndCommits,
     /// The contract could not be measured — no published baseline carries a registry, or a
-    /// version is not three numbers — so `next` is what the commit subjects imply, and says
-    /// so.
+    /// version is not three numbers — so nothing decides `next`: it is absent, the reason is
+    /// in `contract_unreadable`, and `release bump` without an explicit target refuses.
     #[default]
-    Commits,
+    Undecided,
 }
 
 impl DecidedBy {
@@ -421,7 +422,7 @@ impl DecidedBy {
     ///
     /// ```
     /// use majordomus_cli::release::model::DecidedBy;
-    /// for by in [DecidedBy::Contract, DecidedBy::ContractAndCommits, DecidedBy::Commits] {
+    /// for by in [DecidedBy::Contract, DecidedBy::ContractAndCommits, DecidedBy::Undecided] {
     ///     assert_eq!(serde_json::to_value(by).unwrap(), by.as_str());
     /// }
     /// ```
@@ -429,22 +430,25 @@ impl DecidedBy {
         match self {
             DecidedBy::Contract => "contract",
             DecidedBy::ContractAndCommits => "contract_and_commits",
-            DecidedBy::Commits => "commits",
+            DecidedBy::Undecided => "undecided",
         }
     }
 
-    /// Who answered, as the text renderings print it after "decided by".
+    /// Who answered, as the text renderings print it in parentheses after `next`.
     ///
     /// ```
     /// use majordomus_cli::release::model::DecidedBy;
-    /// assert_eq!(DecidedBy::Contract.phrase(), "the contract");
-    /// assert_eq!(DecidedBy::ContractAndCommits.phrase(), "the contract and the commits");
+    /// assert_eq!(DecidedBy::Contract.phrase(), "decided by the contract");
+    /// let both = DecidedBy::ContractAndCommits.phrase();
+    /// assert_eq!(both, "decided by the contract and the commits");
+    /// let none = DecidedBy::Undecided.phrase();
+    /// assert_eq!(none, "undecided: the contract could not be measured");
     /// ```
     pub fn phrase(self) -> &'static str {
         match self {
-            DecidedBy::Contract => "the contract",
-            DecidedBy::ContractAndCommits => "the contract and the commits",
-            DecidedBy::Commits => "the commits",
+            DecidedBy::Contract => "decided by the contract",
+            DecidedBy::ContractAndCommits => "decided by the contract and the commits",
+            DecidedBy::Undecided => "undecided: the contract could not be measured",
         }
     }
 }
@@ -454,8 +458,10 @@ impl DecidedBy {
 ///
 /// `next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the
 /// smallest release above the last when that requirement is the last release itself. The
-/// commit inference is evidence — `bump` and `commits_imply` — and is the answer only when
-/// the contract cannot be measured, which `decided_by` and `contract_unreadable` then say.
+/// commit inference is evidence — `bump` and `commits_imply` — and never the answer: when the
+/// contract cannot be measured `next` is absent, `decided_by` is `undecided` and
+/// `contract_unreadable` says why. The selection is [`crate::release::version::select`], the
+/// one function `release bump` also takes its default target from.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseVersionReport")]
 pub struct VersionReport {
@@ -478,20 +484,20 @@ pub struct VersionReport {
     pub bump: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     /// The version that bump would produce from the last release (from the declared version
-    /// when nothing was released yet). Evidence only.
+    /// when nothing was released yet). Evidence only, even when the contract cannot answer.
     pub commits_imply: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     /// The next version. When the contract could be measured, the version it requires: the
     /// declared version when that already satisfies it, otherwise the smallest one it allows
-    /// — and, when that is the last release itself, the smallest release above it. When it
-    /// could not, the commit inference, labelled by `decided_by`. Absent when nothing would
-    /// be released.
+    /// — and, when that is the last release itself, the smallest release above it. Absent
+    /// when nothing would be released, and when the contract could not be measured
+    /// (`decided_by: undecided`): an unmeasurable baseline is refused, not guessed.
     pub next: Option<String>,
     #[serde(default)]
     /// Who answered `next`.
     pub decided_by: DecidedBy,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    /// Why the contract could not answer, when `decided_by` is `commits`.
+    /// Why the contract could not answer, when `decided_by` is `undecided`.
     pub contract_unreadable: Option<String>,
     /// How many commits since the last release, and of what kind — the evidence for the
     /// bump, so that a surprising answer can be checked rather than believed.

@@ -367,12 +367,20 @@ fn next_version(v: &Value, answer: &Value) -> (HealthStatus, String) {
                  {bump}: the smallest release above it, a patch"
             ),
         ),
+        (_, Some("undecided")) => (
+            HealthStatus::Unknown,
+            format!(
+                "undecided: the public contract could not be measured ({}), so no version is \
+                 selected; the commits imply a {bump} (evidence only), and `release bump` needs \
+                 an explicit target",
+                answer["contract_unreadable"]
+                    .as_str()
+                    .unwrap_or("no reason given")
+            ),
+        ),
         (Some(_), _) => (
             HealthStatus::Ok,
-            format!(
-                "what the {bump} bump the commits imply would produce; the contract could not \
-                 be measured"
-            ),
+            "the version the public contract requires".to_string(),
         ),
         (None, _) => (HealthStatus::Ok, "nothing would be released".to_string()),
     }
@@ -741,8 +749,9 @@ mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
 
-    /// The next-version card names who answered: the contract, the contract with the
-    /// commits, or the commits alone — never the commits' answer passed off as the contract's.
+    /// The next-version card names who answered: the contract, or the contract with the
+    /// commits — and, when the contract cannot be measured, that no one did: the commit
+    /// inference is never passed off as the answer.
     #[test]
     fn the_next_version_card_names_who_answered() {
         let v = Value::from("0.11.0");
@@ -758,10 +767,24 @@ mod tests {
         assert!(contract.contains("the commits imply a major (evidence)"));
         let (_, both) = by("contract_and_commits");
         assert!(both.starts_with("the contract requires no release over the last one"));
-        let (_, commits) = by("commits");
-        assert!(commits.contains("the contract could not be measured"));
-        assert!(!commits.contains("the public contract requires"));
-        let (_, nothing) = next_version(&Value::Null, &serde_json::json!({}));
+        // unmeasurable: no version is selected, and the card neither passes the commit
+        // inference off as the answer nor reports `ok`
+        let (status, undecided) = next_version(
+            &Value::Null,
+            &serde_json::json!({
+                "bump": "major",
+                "decided_by": "undecided",
+                "contract_unreadable": "no release to compare with",
+            }),
+        );
+        assert_eq!(status, HealthStatus::Unknown);
+        assert!(undecided.starts_with("undecided: the public contract could not be measured"));
+        assert!(undecided.contains("no release to compare with"));
+        assert!(undecided.contains("needs an explicit target"));
+        let (_, nothing) = next_version(
+            &Value::Null,
+            &serde_json::json!({ "decided_by": "contract" }),
+        );
         assert_eq!(nothing, "nothing would be released");
     }
 
