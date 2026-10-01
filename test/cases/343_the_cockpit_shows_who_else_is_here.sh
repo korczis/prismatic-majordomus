@@ -30,13 +30,13 @@ trap '"$RB" serve stop --repo "$R" >/dev/null 2>&1; rm -rf "$S"' EXIT
 url="$(jq -r '.url // .server.url // empty' "$S/ensure.json")"
 [ -n "$url" ] || { echo "    the server reported no url"; cat "$S/ensure.json"; exit 1; }
 
-curl -fsS "$url/api/v1/peers" > "$S/api.json" || { echo "    GET /api/v1/peers failed"; exit 1; }
-curl -fsS -H 'Accept: text/html' "$url/cockpit/peers" > "$S/page.html" \
+curl -fsS --max-time 10 "$url/api/v1/peers" > "$S/api.json" || { echo "    GET /api/v1/peers failed"; exit 1; }
+curl -fsS --max-time 10 -H 'Accept: text/html' "$url/cockpit/peers" > "$S/page.html" \
   || { echo "    the Peers page did not render"; exit 1; }
 
 # ---------------------------------------------------------------- 1. the area exists at all
 grep -q 'Peers' "$S/page.html" || { echo "    the page does not name itself"; exit 1; }
-curl -fsS -H 'Accept: text/html' "$url/cockpit" > "$S/index.html" || { echo "    /cockpit did not render"; exit 1; }
+curl -fsS --max-time 10 -H 'Accept: text/html' "$url/cockpit" > "$S/index.html" || { echo "    /cockpit did not render"; exit 1; }
 grep -q '/cockpit/peers' "$S/index.html" \
   || { echo "    the Cockpit's own navigation does not offer the Peers area"; exit 1; }
 echo "    the Cockpit has a peers area, and its navigation leads there"

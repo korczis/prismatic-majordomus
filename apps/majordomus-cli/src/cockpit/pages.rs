@@ -9,6 +9,7 @@
 
 use serde_json::{json, Value};
 
+use crate::capability::builtin::peers::PeerList;
 use crate::capability::builtin::{
     ArtifactReport, CheckState, CommandIndex, Continuity, DesignReport, DirectoryReport,
     DirectoryState, EventHistory, ExecutionList, ExecutionView, GraphList, Health, HealthStatus,
@@ -23,9 +24,8 @@ use crate::execution::{Execution, ExecutionState, StepState};
 use crate::generate;
 use crate::graph::Graph;
 use crate::http::router::percent_encode;
-use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
-use crate::capability::builtin::peers::PeerList;
 use crate::peers::OverlapPath;
+use crate::release::compat::{Impact, Severity, Status as ReleaseStatus, VersionPlan};
 use crate::worktree::{
     BranchState, MigrationPlan, RepositoryTopology, Standing, StepOutcome, TopologyDiagnostic,
     WorktreeState,
@@ -3904,8 +3904,16 @@ pub fn peers(ctx: &Context) -> Page {
     let statistics = el("div")
         .class("mj-stats")
         .child(statistic(b.count.to_string(), "peers", "peers.list"))
-        .child(statistic(attached.to_string(), "attached now", "peers.list"))
-        .child(statistic(b.boards.len().to_string(), "checkouts", "peers.list"))
+        .child(statistic(
+            attached.to_string(),
+            "attached now",
+            "peers.list",
+        ))
+        .child(statistic(
+            b.boards.len().to_string(),
+            "checkouts",
+            "peers.list",
+        ))
         .child(statistic(unread.to_string(), "boards unread", "peers.list"))
         .child(statistic(
             b.overlaps.len().to_string(),
@@ -3956,7 +3964,12 @@ pub fn peers(ctx: &Context) -> Page {
                         .map(|v| {
                             row(vec![
                                 cell(mono(v.checkout.worktree.display().to_string())),
-                                cell(mono(v.checkout.branch.clone().unwrap_or_else(|| "(detached)".into()))),
+                                cell(mono(
+                                    v.checkout
+                                        .branch
+                                        .clone()
+                                        .unwrap_or_else(|| "(detached)".into()),
+                                )),
                                 cell(badge("warn", v.standing.as_str())),
                                 cell(el("span").text(v.reason.clone().unwrap_or_default())),
                             ])
@@ -3982,7 +3995,9 @@ pub fn peers(ctx: &Context) -> Page {
                     .map(|p| {
                         let checkout = match &p.checkout {
                             Some(c) => el("span")
-                                .child(mono(c.branch.clone().unwrap_or_else(|| "(detached)".into())))
+                                .child(mono(
+                                    c.branch.clone().unwrap_or_else(|| "(detached)".into()),
+                                ))
                                 .when(c.this_checkout, |e| e.text(" ").child(tag("here"))),
                             None => el("span").text("(unknown)"),
                         };
@@ -4061,7 +4076,12 @@ pub fn peers(ctx: &Context) -> Page {
                 .map(|v| {
                     row(vec![
                         cell(mono(v.checkout.worktree.display().to_string())),
-                        cell(mono(v.checkout.branch.clone().unwrap_or_else(|| "(detached)".into()))),
+                        cell(mono(
+                            v.checkout
+                                .branch
+                                .clone()
+                                .unwrap_or_else(|| "(detached)".into()),
+                        )),
                         cell(badge(
                             if v.reason.is_some() { "warn" } else { "ok" },
                             v.standing.as_str(),
