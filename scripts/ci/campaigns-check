@@ -23,13 +23,23 @@
 # macOS), else `openssl dgst -sha256 -r`, whose `<hash> *<path>` is normalised to sha256sum's
 # `<hash>  <path>`. MJ_SHA256=sha256sum|openssl forces one, so each branch can be proven.
 #
-# Paths travel NUL-separated, so whitespace in a name is kept. A name holding a newline or a
-# backslash cannot be carried by a `<hash>  <path>` line (sha256sum escapes both), so such a
-# file is refused rather than misread.
+# Paths travel NUL-separated, so whitespace in a name is kept. A name holding a control
+# character (newline, TAB, any byte below 0x20, DEL) or a backslash cannot be carried by a
+# `<hash>  <path>` line or by the `<path>\t<hash>` tables compared below — sha256sum escapes a
+# newline and a backslash, and a TAB would split a path into a path and a planted hash — so
+# such a name is refused rather than misread, and so is a manifest line that holds one.
+#
+# Only regular files and directories are entries a manifest can record. A symbolic link (to a
+# file or to a directory) is a finding, never followed: its bytes are another file's, and a
+# linked directory would hand the walk a tree that is not under campaigns/ at all.
 #
 # Exit 0 clean (and 0 with a word where a tree keeps no campaigns — a repository that was never
-# handed a brief owes none), 10 findings, 12 when it cannot decide.
+# handed a brief owes none), 10 findings, 12 when it cannot decide (an unwalkable directory, an
+# unreadable file, a name or a manifest line no row can carry).
 set -euo pipefail
+# Bytes, not characters: a control character is a byte below 0x20 or 0x7f in every comparison,
+# pattern and sort below, whatever locale the caller runs in.
+export LC_ALL=C
 
 ROOT="${MJ_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
 cd "$ROOT"
@@ -38,6 +48,11 @@ DIR=campaigns
 MAN="$DIR/MANIFEST.sha256"
 INDEX="$DIR/README.md"
 
+if [ -L "$DIR" ]; then
+  echo "FAIL campaigns  $DIR — a symbolic link, so the briefs it reaches are not kept in this tree  [reproduce: ls -ld $DIR]"
+  echo "campaigns-check: 1 finding(s) over 0 pack(s)"
+  exit 10
+fi
 [ -d "$DIR" ] || { echo "campaigns-check: this tree keeps no $DIR/; nothing to decide"; exit 0; }
 
 hasher="${MJ_SHA256:-}"
@@ -89,21 +104,70 @@ tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj.camp.XXXXXX")"
 trap 'rm -rf "$tmp"' EXIT
 : > "$tmp/findings"
 
-# A name no `<hash>  <path>` line can carry is refused, not split into two wrong rows.
-nl='
-'
-( cd "$DIR" && find . -type f \( -name "*$nl*" -o -name '*\\*' \) -print ) > "$tmp/unrepresentable"
+# Every entry, walked once without following a link. A directory the walk cannot enter is a set
+# that was never read, not an empty one.
+if ! ( cd "$DIR" && find . -mindepth 1 -print0 ) > "$tmp/entries" 2> "$tmp/walk.err"; then
+  echo "campaigns-check: $DIR/ cannot be walked whole, so the set it holds was never read" >&2
+  sed 's/^/  /' "$tmp/walk.err" >&2
+  echo "  [reproduce: find $DIR -mindepth 1 >/dev/null]" >&2
+  exit 12
+fi
+
+# Each entry is a name a row can carry and a regular file or a directory, or it is named here.
+: > "$tmp/unrepresentable"
+while IFS= read -r -d '' p; do
+  p="${p#./}"
+  case "$p" in
+    *[[:cntrl:]]* | *\\*) printf '  %q\n' "$DIR/$p" >> "$tmp/unrepresentable"; continue ;;
+  esac
+  if [ -L "$DIR/$p" ]; then
+    echo "FAIL campaigns  $DIR/$p — a symbolic link, whose bytes no manifest line records; a brief is kept as a file  [reproduce: ls -ld '$DIR/$p']" >> "$tmp/findings"
+  elif [ ! -f "$DIR/$p" ] && [ ! -d "$DIR/$p" ]; then
+    echo "FAIL campaigns  $DIR/$p — neither a regular file nor a directory, so no manifest line records it  [reproduce: ls -ld '$DIR/$p']" >> "$tmp/findings"
+  fi
+done < "$tmp/entries"
 if [ -s "$tmp/unrepresentable" ]; then
-  echo "campaigns-check: $DIR/ holds a file whose name carries a newline or a backslash, which no manifest line can record" >&2
-  echo "  [reproduce: (cd $DIR && find . -type f \\( -name '*\\\\*' -o -name '*<newline>*' \\))]" >&2
+  echo "campaigns-check: $DIR/ holds a name carrying a control character (newline, TAB, ...) or a backslash, which no manifest line can record:" >&2
+  cat "$tmp/unrepresentable" >&2
+  printf '%s\n' "  [reproduce: (cd $DIR && LC_ALL=C find . -name '*[[:cntrl:]]*' -o -name '*\\\\*')]" >&2
+  exit 12
+fi
+
+# A manifest line is `<64 hex>  <path>`, and the path holds no byte a name may not. Anything
+# else is a line this check would split into rows nobody wrote.
+# grep exits 0 when it selected a bad line, 1 when none, and 2 when it could not read the
+# pattern or the file; the last is a refusal too, never a clean verdict.
+grc=0; grep -nvE '^[0-9a-f]{64}  [^[:cntrl:]\\]+$' "$MAN" > "$tmp/badlines" || grc=$?
+if [ "$grc" -gt 1 ]; then
+  echo "campaigns-check: grep could not read $MAN against its line shape (exit $grc)" >&2
+  echo "  [reproduce: grep -nvE '^[0-9a-f]{64}  ' $MAN]" >&2
+  exit 12
+fi
+if [ "$grc" = 0 ]; then
+  echo "campaigns-check: $MAN holds a line that is not '<sha256>  <path>' with a path a name may carry:" >&2
+  cut -c1-120 "$tmp/badlines" | sed 's/^/  line /' >&2
+  echo "  [reproduce: $REGEN]" >&2
   exit 12
 fi
 
 # The bytes, as two sorted `<path>\t<hash>` tables the same way round. A hash is 64 hex
-# characters and two spaces, so the path is the rest of the line, whitespace and all.
-( cd "$DIR" && find . -type f ! -path ./MANIFEST.sha256 -print0 | hash_paths ) \
-  | awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' | sed 's|^\./||' | LC_ALL=C sort > "$tmp/present"
-awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$MAN" | sed 's|^\./||' | LC_ALL=C sort > "$tmp/declared"
+# characters and two spaces, so the path is the rest of the line, whitespace and all. A file
+# the hasher cannot read is a byte nobody measured: the check refuses and names it.
+if ! ( cd "$DIR" && find . -type f ! -path ./MANIFEST.sha256 -print0 | hash_paths ) \
+    > "$tmp/hashed" 2> "$tmp/hash.err"; then
+  echo "campaigns-check: $hasher could not read every file under $DIR/, so their bytes cannot be proven:" >&2
+  while IFS= read -r -d '' p; do
+    p="${p#./}"
+    if [ -f "$DIR/$p" ] && [ ! -L "$DIR/$p" ] && [ ! -r "$DIR/$p" ]; then
+      printf '  %s — not readable\n' "$DIR/$p" >&2
+    fi
+  done < "$tmp/entries"
+  sed 's/^/  /' "$tmp/hash.err" >&2
+  echo "  [reproduce: (cd $DIR && find . -type f ! -path ./MANIFEST.sha256 -print0 | xargs -0 $HASH_CMD >/dev/null)]" >&2
+  exit 12
+fi
+awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$tmp/hashed" | sed 's|^\./||' | sort > "$tmp/present"
+awk '{ print substr($0, 67) "\t" substr($0, 1, 64) }' "$MAN" | sed 's|^\./||' | sort > "$tmp/declared"
 
 TAB="$(printf '\t')"
 # One substitution per line, so `&` is the path itself (a second `s|$|...|` would see an empty match).

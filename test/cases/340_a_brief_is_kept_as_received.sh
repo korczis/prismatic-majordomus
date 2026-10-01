@@ -217,4 +217,85 @@ rm -f "$F/campaigns/alpha-pack/phases/03 spaced name.md"
 manifest
 echo "    each hasher decides the same set, a spaced name is one row, and shasum is refused"
 
+# ---------------------------------------------------------------- 10. names and entries no row can carry
+# Each plant here passed the check before it refused them: the internal tables are
+# `<path>\t<hash>`, so a name holding a TAB split into a declared path and a hash the planter
+# chose; `find -type f` never saw a symbolic link, to a file or to a directory; and a file the
+# hasher could not read ended the check under pipefail with an exit nobody documented.
+run_check
+[ "$rc" = 0 ] || { echo "    the fixture before section 10 exited $rc, not 0"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+
+# 10a. "<recorded path><TAB><its recorded hash>", any content, the manifest untouched.
+alpha_hash="$(cd "$F/campaigns/alpha-pack" && printf 'README.md\0' | hash_all | cut -c1-64)"
+TABC="$(printf '\t')"
+printf 'anything at all\n' > "$F/campaigns/alpha-pack/README.md$TABC$alpha_hash"
+run_check
+[ "$rc" = 12 ] || { echo "    a name aliasing a recorded row with a TAB and its hash exited $rc, not 12 (a TAB split the path)"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'control character' \
+  || { echo "    the TAB-name refusal does not say why"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -f "$F/campaigns/alpha-pack/README.md$TABC$alpha_hash"
+printf 'a byte below space\n' > "$F/campaigns/beta-pack/$(printf 'odd\001name').md"
+run_check
+[ "$rc" = 12 ] || { echo "    a name holding a 0x01 byte exited $rc, not 12"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -f "$F/campaigns/beta-pack/$(printf 'odd\001name').md"
+# The same alias written into the manifest instead of the tree: a declared line whose path
+# holds a TAB is one the tables would split, so it is refused, not compared.
+cp "$F/campaigns/MANIFEST.sha256" "$T/manifest.kept"
+printf '%s  alpha-pack/README.md\t%s\n' "$alpha_hash" "$alpha_hash" >> "$F/campaigns/MANIFEST.sha256"
+run_check
+[ "$rc" = 12 ] || { echo "    a manifest line whose path holds a TAB exited $rc, not 12"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q "MANIFEST.sha256 holds a line that is not" \
+  || { echo "    the malformed manifest line was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+cp "$T/manifest.kept" "$F/campaigns/MANIFEST.sha256"
+echo "    a name or a manifest line holding a TAB or another control byte is refused, not split into a row"
+
+# 10b. a symbolic link to a file: no manifest line records it, and find -type f never saw it.
+ln -s README.md "$F/campaigns/alpha-pack/linked.md"
+run_check
+[ "$rc" = 10 ] || { echo "    a symbolic link to a file exited $rc, not 10 (links are not walked)"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'alpha-pack/linked.md — a symbolic link' \
+  || { echo "    the linked file was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -f "$F/campaigns/alpha-pack/linked.md"
+
+# 10c. a symbolic link to a directory, here one outside campaigns/ altogether.
+mkdir -p "$T/elsewhere"
+printf 'a brief nobody kept here\n' > "$T/elsewhere/README.md"
+ln -s "$T/elsewhere" "$F/campaigns/alpha-pack/phases/linked-dir"
+run_check
+[ "$rc" = 10 ] || { echo "    a symbolic link to a directory exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'alpha-pack/phases/linked-dir — a symbolic link' \
+  || { echo "    the linked directory was not named"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q 'linked-dir/README.md' \
+  && { echo "    the check followed the linked directory into what it reaches"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+rm -f "$F/campaigns/alpha-pack/phases/linked-dir"
+# and campaigns/ itself as a link: the briefs it reaches are not kept in this tree
+H="$T/linked-root"
+mkdir -p "$H"
+ln -s "$F/campaigns" "$H/campaigns"
+rc=0; LAST_OUT="$(MJ_ROOT="$H" "$CHK" 2>&1)" || rc=$?
+[ "$rc" = 10 ] || { echo "    campaigns/ as a symbolic link exited $rc, not 10"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+printf '%s\n' "$LAST_OUT" | grep -q '^FAIL campaigns  campaigns — a symbolic link' \
+  || { echo "    campaigns/ as a symbolic link was not named as one"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+run_check
+[ "$rc" = 0 ] || { echo "    removing the links did not settle the tree: exit $rc"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+echo "    a symbolic link, to a file, to a directory or as campaigns/ itself, is a finding and is never followed"
+
+# 10d. a file the hasher cannot read is a refusal that names it, not a crash with exit 1.
+chmod 000 "$F/campaigns/beta-pack/README.md"
+if [ -r "$F/campaigns/beta-pack/README.md" ]; then
+  echo "    (this user reads a mode-000 file, as root does; the unreadable plant is proven where it cannot)"
+else
+  for h in sha256sum openssl; do
+    command -v "$h" >/dev/null 2>&1 || continue
+    rc=0; LAST_OUT="$(MJ_SHA256="$h" MJ_ROOT="$F" "$CHK" 2>&1)" || rc=$?
+    [ "$rc" = 12 ] || { chmod 644 "$F/campaigns/beta-pack/README.md"; echo "    MJ_SHA256=$h on an unreadable file exited $rc, not 12"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+    printf '%s\n' "$LAST_OUT" | grep -q 'campaigns/beta-pack/README.md — not readable' \
+      || { chmod 644 "$F/campaigns/beta-pack/README.md"; echo "    MJ_SHA256=$h did not name the unreadable file"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+  done
+  echo "    a file the hasher cannot read is refused with exit 12 and named"
+fi
+chmod 644 "$F/campaigns/beta-pack/README.md"
+run_check
+[ "$rc" = 0 ] || { echo "    restoring the mode did not settle the tree: exit $rc"; printf '%s\n' "$LAST_OUT" | sed 's/^/      /'; exit 1; }
+
 echo "    a brief is kept as received: bytes, both directions of the set, and the index"
