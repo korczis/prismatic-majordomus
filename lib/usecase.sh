@@ -499,7 +499,7 @@ mj_uc_normalise() { # repo-path
     -e 's/^([a-z_-]+ +(cold|warm) +[a-z]+ +[0-9]+) +[0-9]+ +[0-9]+ +[0-9]+ +[0-9]+/\1  <ms>  <ms>  <ms>  <ms>/' \
     -e 's/^(INFO|WARN) +budget +([a-z]+) — .*$/·    budget      \2 — <timed against the policy budget>/' \
     -e 's/^(OK|WARN|FAIL) +checkpoint +([^ ]+) — .*$/·    checkpoint  \2 — <timed against the checkpoint interval>/' \
-    -e 's/(exit [0-9]+, )[0-9]+s$/\1<s>s/' \
+    -e 's/(exit [0-9]+, )[0-9]+s(,|$)/\1<s>s\2/' \
     -e 's/[0-9]+ ms/<n> ms/g' \
     -e 's/[0-9]+ ms of/<n> ms of/g' \
     -e 's/\([0-9]+[mhd] ago/(<age> ago/g' \

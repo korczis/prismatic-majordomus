@@ -100,4 +100,8 @@ out_of "$T/ev-without/list-the-nodes.json" | grep -q '^INFO knowledge .* the sch
 # and the recorder's normalisation no longer carries a mask for the line
 grep -q 'index could not be asked' "$ROOT/lib/usecase.sh" \
   && { echo "    lib/usecase.sh still masks the knowledge line"; exit 1; }
+# and a duration is masked wherever it stands, not only at the end of a line: the finish line
+# reads "exit 0, 0s, tree <sha>", and a recorder that took 1s wrote a different catalogue
+norm="$(MJ_BIN_DIR="$ROOT/bin" MJ_LIB_DIR="$ROOT/lib" bash -c '. "$1/lib/usecase.sh" && printf "%s\n" "OK verification t-1 — true — exit 0, 7s, tree a9eff10ec68c" "OK verification t-1 — true — exit 0, 12s" | mj_uc_normalise "$2"' _ "$ROOT" "$T")"
+case "$norm" in *"7s"*|*"12s"*) echo "    a recorded duration is not masked:"; printf '%s\n' "$norm"; exit 1 ;; esac
 exit 0
