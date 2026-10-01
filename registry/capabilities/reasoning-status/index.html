@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth" data-theme-key="color-theme" data-theme-class="dark" data-design="edc7bf48e646">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reasoning.status — Prismatic Majordomus</title>
+<meta name="description" content="The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically.">
+<link rel="canonical" href="https://majordomus.dev/registry/capabilities/reasoning-status/"><meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Prismatic Majordomus">
+<meta property="og:title" content="reasoning.status — Prismatic Majordomus">
+<meta property="og:description" content="The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically.">
+<meta property="og:url" content="https://majordomus.dev/registry/capabilities/reasoning-status/">
+<meta property="og:image" content="https://majordomus.dev/images/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
+<link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=29701c44b07f0ef76531">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
+<link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
+</head>
+<body class="min-h-screen bg-neutral-primary text-body antialiased">
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-base focus:bg-brand focus:px-3 focus:py-2 focus:text-white">Skip to content</a>
+
+
+<nav class="sticky top-0 z-20 w-full border-b border-default bg-neutral-primary" aria-label="Main">
+  <div class="mx-auto flex max-w-screen-xl flex-wrap items-center justify-between gap-y-2 p-4">
+    <a href="https://majordomus.dev/" class="flex items-center gap-2.5 rtl:space-x-reverse">
+      <span class="inline-flex h-7 w-7 shrink-0 text-heading [&>svg]:h-full [&>svg]:w-full" aria-hidden="true"><!-- GENERATED FILE — DO NOT EDIT DIRECTLY
+     Source: share/design/brand/logo-mark.svg, the canonical mark; regenerate with `majordomus generate`
+     Generator: majordomus-cli 0.11.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Prismatic Majordomus">
+  <title>Prismatic Majordomus</title>
+  <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <!-- one incoming beam: the canonical policy -->
+    <path d="M4 32h16"/>
+    <!-- the prism: the supervisory layer -->
+    <path d="M32 12 46 52H18Z"/>
+    <!-- three outgoing beams: the workers -->
+    <path d="M44 24l16-8"/>
+    <path d="M46 32h14"/>
+    <path d="M44 40l16 8"/>
+  </g>
+  <g fill="currentColor">
+    <circle cx="60" cy="16" r="3"/>
+    <circle cx="60" cy="32" r="3"/>
+    <circle cx="60" cy="48" r="3"/>
+  </g>
+</svg>
+</span>
+      <span class="self-center whitespace-nowrap text-xl font-semibold text-heading">Majordomus</span>
+      
+      
+      <span class="inline rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">v0.10.0</span>
+      
+    </a>
+    <div class="flex items-center gap-2 md:order-2">
+      <button id="theme-toggle" type="button" class="rounded-lg p-2.5 text-sm text-body hover:bg-neutral-secondary-medium focus:outline-none focus:ring-4 focus:ring-neutral-tertiary" aria-label="Toggle dark mode">
+  <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+  <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" fill-rule="evenodd" clip-rule="evenodd"></path></svg>
+</button>
+
+      <a href="https://github.com/korczis/prismatic-majordomus" class="hidden rounded-base border border-default px-3 py-2 text-sm font-medium text-heading hover:bg-neutral-secondary-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary sm:inline-flex">GitHub</a>
+      <a href="https://majordomus.dev/getting-started/" class="hidden rounded-base bg-brand px-3 py-2 text-sm font-semibold text-white hover:bg-brand-strong focus:outline-none focus:ring-4 focus:ring-brand-medium md:inline-flex">Get started</a>
+      <button data-collapse-toggle="navbar-main" type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-base p-2 text-sm text-body hover:bg-neutral-secondary-soft hover:text-heading focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:hidden" aria-controls="navbar-main" aria-expanded="false">
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24"><path stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M5 7h14M5 12h14M5 17h14"/></svg>
+      </button>
+    </div><div class="hidden w-full min-w-0 md:order-1 md:block md:w-auto" id="navbar-main">
+      <ul class="mt-4 flex flex-col rounded-base border border-default bg-neutral-secondary-soft p-4 font-medium md:mt-0 md:flex-row md:flex-wrap md:items-center md:gap-x-2 md:gap-y-1 md:border-0 md:bg-neutral-primary md:p-0">
+        
+        
+        
+        
+        <li><a href="https://majordomus.dev/why/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand">Why</a></li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-2" data-dropdown-toggle="nav-menu-2" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Product<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-2" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-2">
+              <li><a href="https://majordomus.dev/features/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">What it supervises</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Product</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/features/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">What it supervises</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-3" data-dropdown-toggle="nav-menu-3" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">How it works<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-3" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-3">
+              <li><a href="https://majordomus.dev/method/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">How the product page is derived</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">How it works</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/method/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">How the product page is derived</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-4" data-dropdown-toggle="nav-menu-4" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Docs<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-4" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-4">
+              <li><a href="https://majordomus.dev/docs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Install</a></li><li><a href="https://majordomus.dev/commands/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Registry</a></li><li><a href="https://majordomus.dev/map/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Program map</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Docs</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/docs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Install</a></li><li><a href="https://majordomus.dev/commands/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Registry</a></li><li><a href="https://majordomus.dev/map/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Program map</a></li></ul>
+        </li>
+        
+        
+        
+        
+        
+        <li class="md:relative">
+          
+          <button id="nav-5" data-dropdown-toggle="nav-menu-5" data-dropdown-placement="bottom-start" type="button" class="hidden w-full items-center justify-between rounded px-3 py-2 text-heading hover:bg-neutral-tertiary md:hover:bg-transparent md:hover:text-fg-brand focus:outline-none focus:ring-2 focus:ring-neutral-tertiary md:inline-flex md:w-auto" aria-expanded="false">Evidence<svg class="ms-1.5 h-3 w-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6"><path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/></svg></button>
+          <div id="nav-menu-5" class="z-10 hidden w-56 rounded-base border border-default-medium bg-neutral-primary-medium shadow-lg">
+            <ul class="p-2 text-sm font-medium text-body" aria-labelledby="nav-5">
+              <li><a href="https://majordomus.dev/guarantees/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="inline-flex w-full items-center rounded p-2 hover:bg-neutral-tertiary-medium hover:text-heading">Dogfooding</a></li>
+            </ul>
+          </div>
+          <p class="mt-3 px-3 font-mono text-xs uppercase tracking-wide text-body-subtle md:hidden">Evidence</p>
+          <ul class="md:hidden"><li><a href="https://majordomus.dev/guarantees/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="block rounded px-3 py-2 text-heading hover:bg-neutral-tertiary">Dogfooding</a></li></ul>
+        </li>
+        
+        
+        <li class="mt-3 md:hidden"><a href="https://majordomus.dev/getting-started/" class="block rounded-base bg-brand px-3 py-2 text-center font-semibold text-white hover:bg-brand-strong">Get started</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main id="main">
+<div class="border-b border-default bg-neutral-primary-soft">
+  <div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+    <nav class="flex" aria-label="Breadcrumb">
+  <ol class="inline-flex flex-wrap items-center gap-x-1 text-sm text-body md:gap-x-2 rtl:space-x-reverse">
+    <li class="inline-flex items-center"><a href="https://majordomus.dev/" class="inline-flex items-center font-medium text-body hover:text-fg-brand">Home</a></li>
+    <li aria-hidden="true">/</li><li class="inline-flex items-center"><a href="https://majordomus.dev/registry/capabilities/" class="font-medium text-body hover:text-fg-brand">Capabilities</a></li>
+    <li aria-hidden="true">/</li>
+    <li aria-current="page" class="font-medium text-heading">reasoning.status</li>
+  </ol>
+</nav>
+
+    <h1 class="mt-4 break-words text-3xl font-bold tracking-tight text-heading sm:text-4xl">reasoning.status</h1>
+    <p class="mt-3 max-w-3xl break-words text-lg text-body">The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically.</p>
+  </div>
+</div>
+<div class="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:px-8">
+  <nav aria-label="Rust executable" class="-mx-1 flex flex-wrap gap-1 text-sm">
+  <a href="https://majordomus.dev/registry/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Registry</a>
+  <a href="https://majordomus.dev/registry/executable/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">The executable</a>
+  <a href="https://majordomus.dev/registry/modules/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Modules</a>
+  <a href="https://majordomus.dev/registry/capabilities/" class="rounded px-2 py-1 bg-brand-softer font-medium text-fg-brand-strong" aria-current="page">Capabilities</a>
+  <a href="https://majordomus.dev/registry/cli/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Command line</a>
+  <a href="https://majordomus.dev/registry/mcp/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">MCP</a>
+  <a href="https://majordomus.dev/docs/api/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">HTTP API</a>
+  <a href="https://majordomus.dev/registry/artifacts/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Artifacts</a>
+  <a href="https://majordomus.dev/registry/benchmarks/" class="rounded px-2 py-1 text-body hover:bg-neutral-secondary-medium hover:text-heading">Benchmarks</a>
+</nav>
+
+<div class="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_18rem]">
+  <div class="min-w-0">
+    <p class="break-words text-lg text-body">The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically.</p>
+    <ul class="mt-4 flex flex-wrap gap-2 font-mono text-xs">
+      <li><span class="rounded border border-default bg-neutral-secondary-medium px-1.5 py-0.5 text-heading">query</span></li>
+      <li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">experimental</span></li>
+      <li><a href="https://majordomus.dev/registry/modules/reasoning/" class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-fg-brand hover:underline">module reasoning</a></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#reasoning</span></li><li><span class="rounded border border-default bg-neutral-primary-soft px-1.5 py-0.5 text-body">#session</span></li></ul>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Exposure</h2>
+    <p class="mt-2 text-sm text-body">Where this one definition is reachable. Absence is explicit: a surface not listed does not carry it.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[24rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">surface</th><th class="px-3 py-2">as</th></tr></thead>
+        <tbody>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/mcp/" class="text-fg-brand hover:underline">MCP</a></td><td class="px-3 py-2 font-mono text-heading">tool <span class="break-all">majordomus_reasoning</span><br>resource <span class="break-all">majordomus://reasoning</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/docs/api/" class="text-fg-brand hover:underline">HTTP</a></td><td class="px-3 py-2 font-mono text-heading"><a href="https://majordomus.dev/docs/api/reasoning/#op-reasoning-status" class="break-all text-fg-brand hover:underline inline-block py-1">GET /api/v1/reasoning</a> <span class="text-xs text-body-subtle">operationId reasoning.status</span></td></tr>
+          <tr class="border-t border-default align-top"><td class="px-3 py-2 text-body"><a href="https://majordomus.dev/registry/cli/" class="text-fg-brand hover:underline">command line</a></td><td class="px-3 py-2 font-mono text-heading">majordomus reasoning status</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Schemas</h2>
+    <p class="mt-2 text-sm text-body">The canonical input and output, from the Rust types; the MCP tool schema and the OpenAPI parameters and responses are derived from these.</p>
+    <div class="mt-4 grid gap-6"><div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">input · ReasoningStatusInput</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The input of <code>reasoning.status</code>: which task's records to derive the state from. Absent
+is the open task; <code>all</code> is every task the store holds.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::reasoning::ReasoningStatusInput;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let open: ReasoningStatusInput = serde_json::from_str(&quot;{}&quot;).unwrap();</span></span>
+<span class="giallo-l"><span>assert!(open.task.is_none());</span></span>
+<span class="giallo-l"><span>let all: ReasoningStatusInput = serde_json::from_str(r#&quot;{&quot;task&quot;:&quot;all&quot;}&quot;#).unwrap();</span></span>
+<span class="giallo-l"><span>assert_eq!(all.task.as_deref(), Some(&quot;all&quot;));</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">task</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string | null</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">no</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">A task id, or <code>all</code>; the open task when absent.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;additionalProperties&quot;: false,
+  &quot;description&quot;: &quot;The input of `reasoning.status`: which task&#39;s records to derive the state from. Absent\nis the open task; `all` is every task the store holds.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatusInput;\n\nlet open: ReasoningStatusInput = serde_json::from_str(\&quot;{}\&quot;).unwrap();\nassert!(open.task.is_none());\nlet all: ReasoningStatusInput = serde_json::from_str(r#\&quot;{\&quot;task\&quot;:\&quot;all\&quot;}\&quot;#).unwrap();\nassert_eq!(all.task.as_deref(), Some(\&quot;all\&quot;));\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;task&quot;: {
+      &quot;description&quot;: &quot;A task id, or `all`; the open task when absent.&quot;,
+      &quot;type&quot;: [
+        &quot;string&quot;,
+        &quot;null&quot;
+      ]
+    }
+  },
+  &quot;title&quot;: &quot;ReasoningStatusInput&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+<div class="min-w-0">
+  <h3 class="font-mono text-sm font-semibold text-heading">output · ReasoningStatus</h3><div class="mt-1 break-words text-sm text-body [&_:not(pre)>code]:break-words [&_:not(pre)>code]:whitespace-normal [&_pre]:max-w-full [&_pre]:overflow-x-auto">The answer of <code>reasoning.status</code>: the mode in force, the advisor counts, the state the
+records derive, and that state rendered as the Markdown a handover carries.</p>
+<pre class="giallo z-l-code z-d-code"  tabindex="0"><code data-lang="plain"><span class="giallo-l"><span>use majordomus_cli::capability::builtin::reasoning::ReasoningStatus;</span></span>
+<span class="giallo-l"></span>
+<span class="giallo-l"><span>let schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();</span></span>
+<span class="giallo-l"><span>for field in [&quot;mode&quot;, &quot;advisors_available&quot;, &quot;advisors_unavailable&quot;, &quot;state&quot;, &quot;report&quot;] {</span></span>
+<span class="giallo-l"><span>    assert!(schema[&quot;required&quot;].as_array().unwrap().iter().any(|f| f == field), &quot;{field}&quot;);</span></span>
+<span class="giallo-l"><span>}</span></span></code></pre></div><div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+    <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+      <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">property</th><th class="px-3 py-2">type</th><th class="px-3 py-2">required</th><th class="px-3 py-2">description</th></tr></thead>
+      <tbody><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">advisors_available</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Advisors available now.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">advisors_unavailable</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">integer</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">Advisors not available now, each optional.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">mode</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The mode in force.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">report</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">string</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The state as Markdown: what a handover carries.</td>
+      </tr><tr class="border-t border-default align-top">
+        <td class="px-3 py-2 font-mono text-heading">state</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">reference</td>
+        <td class="px-3 py-2 font-mono text-xs text-body">yes</td>
+        <td class="px-3 py-2 text-body [&_:not(pre)>code]:break-words">The state.</td>
+      </tr></tbody>
+    </table>
+  </div><details class="mt-3 rounded-base border border-default bg-neutral-primary-soft">
+    <summary class="cursor-pointer px-4 py-2 font-mono text-xs uppercase tracking-wide text-body-subtle">JSON Schema</summary>
+    <div class="overflow-x-auto border-t border-default" tabindex="0"><pre class="m-0 p-4 font-mono text-xs leading-relaxed text-heading" tabindex="0">{
+  &quot;$defs&quot;: {
+    &quot;AssessmentStanding&quot;: {
+      &quot;description&quot;: &quot;Where an assessment stands, from open through validated.\n\nThe standing is derived, never stored: an unresolved disagreement makes it disputed\nwhatever else is recorded; otherwise its standing conclusion and that conclusion&#39;s\nvalidations decide it, and without a conclusion a recorded plan makes it planned.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, AssessmentStanding};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;assessment-1\&quot;, 1, json!({ \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: \&quot;s\&quot; })));\nassert_eq!(derive(&amp;loaded, None).assessments[0].standing, AssessmentStanding::Open);\n\nloaded.records.push(rec(\&quot;disagreement-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;disagreement\&quot;, \&quot;assessment\&quot;: \&quot;assessment-1\&quot;,\n    \&quot;positions\&quot;: [\n        { \&quot;source\&quot;: \&quot;primary\&quot;, \&quot;position\&quot;: \&quot;A\&quot; },\n        { \&quot;source\&quot;: \&quot;consultation-9\&quot;, \&quot;position\&quot;: \&quot;B\&quot; },\n    ],\n    \&quot;discriminating_question\&quot;: \&quot;do callers retry?\&quot;,\n})));\nassert_eq!(derive(&amp;loaded, None).assessments[0].standing, AssessmentStanding::Disputed);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;open&quot;,
+          &quot;description&quot;: &quot;Stated; no plan yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;planned&quot;,
+          &quot;description&quot;: &quot;Planned; no conclusion yet.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;disputed&quot;,
+          &quot;description&quot;: &quot;A disagreement on it is unsettled.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;concluded&quot;,
+          &quot;description&quot;: &quot;Concluded; not yet validated.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;validated&quot;,
+          &quot;description&quot;: &quot;Concluded, and every validation recorded passed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;validation_failed&quot;,
+          &quot;description&quot;: &quot;Concluded, and a validation failed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;AssessmentView&quot;: {
+      &quot;description&quot;: &quot;One assessment and where it stands.\n\nThe view carries what a reader needs to pick the work up: the subject, its\nmateriality, its derived standing, the conclusion that stands for it and the\nquestions it left open.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::policy::Materiality;\nuse majordomus_cli::reasoning::state::{derive, AssessmentView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;assessment-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: \&quot;lock scope\&quot;, \&quot;materiality\&quot;: \&quot;trivial\&quot;,\n    \&quot;questions\&quot;: [\&quot;is it held across an await?\&quot;],\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;AssessmentView = &amp;state.assessments[0];\nassert_eq!((view.id.as_str(), view.task.as_str()), (\&quot;assessment-1\&quot;, \&quot;t\&quot;));\nassert_eq!(view.materiality, Materiality::Trivial);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.questions, [\&quot;is it held across an await?\&quot;]);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;conclusion&quot;: {
+          &quot;description&quot;: &quot;Its standing conclusion.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;materiality&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/Materiality&quot;,
+          &quot;description&quot;: &quot;How much it matters.&quot;
+        },
+        &quot;questions&quot;: {
+          &quot;description&quot;: &quot;Questions it left open.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;standing&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/AssessmentStanding&quot;,
+          &quot;description&quot;: &quot;Where it stands.&quot;
+        },
+        &quot;subject&quot;: {
+          &quot;description&quot;: &quot;What is uncertain.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task it was recorded under.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;task&quot;,
+        &quot;subject&quot;,
+        &quot;materiality&quot;,
+        &quot;standing&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ConclusionView&quot;: {
+      &quot;description&quot;: &quot;One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &amp;str, supersedes: Option&lt;&amp;str&gt;| {\n    json!({\n        \&quot;kind\&quot;: \&quot;conclusion\&quot;, \&quot;assessment\&quot;: \&quot;assessment-0\&quot;, \&quot;decision\&quot;: decision,\n        \&quot;rationale\&quot;: \&quot;r\&quot;, \&quot;supersedes\&quot;: supersedes,\n        \&quot;reviewed_by\&quot;: [], \&quot;independent_review_count\&quot;: 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;conclusion-1\&quot;, 1, conclusion(\&quot;A\&quot;, None)));\nloaded.records.push(rec(\&quot;validation-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;validation\&quot;, \&quot;conclusion\&quot;: \&quot;conclusion-1\&quot;, \&quot;check\&quot;: \&quot;x\&quot;, \&quot;outcome\&quot;: \&quot;fail\&quot;,\n})));\nloaded.records.push(rec(\&quot;conclusion-3\&quot;, 3, conclusion(\&quot;B\&quot;, Some(\&quot;conclusion-1\&quot;))));\n\nlet state = derive(&amp;loaded, None);\nlet first: &amp;ConclusionView = &amp;state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\&quot;conclusion-3\&quot;));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;assessment&quot;: {
+          &quot;description&quot;: &quot;The assessment it concludes.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;decision&quot;: {
+          &quot;description&quot;: &quot;The decision.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;independent_review_count&quot;: {
+          &quot;description&quot;: &quot;How many.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;reviewed_by&quot;: {
+          &quot;description&quot;: &quot;Advisors whose answers it weighed.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;risks&quot;: {
+          &quot;description&quot;: &quot;Risks that remain.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;superseded_by&quot;: {
+          &quot;description&quot;: &quot;Superseded by a later conclusion.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;validation_plan&quot;: {
+          &quot;description&quot;: &quot;Its validation plan.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;validations_failed&quot;: {
+          &quot;description&quot;: &quot;Validations failed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;validations_passed&quot;: {
+          &quot;description&quot;: &quot;Validations recorded: passed, failed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;assessment&quot;,
+        &quot;decision&quot;,
+        &quot;reviewed_by&quot;,
+        &quot;independent_review_count&quot;,
+        &quot;validations_passed&quot;,
+        &quot;validations_failed&quot;,
+        &quot;validation_plan&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ConsultationStatus&quot;: {
+      &quot;description&quot;: &quot;How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\&quot;\\\&quot;rate_limited\\\&quot;\&quot;).unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;completed&quot;,
+          &quot;description&quot;: &quot;An answer was received and normalised.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;timeout&quot;,
+          &quot;description&quot;: &quot;No answer within the time allowed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;rate_limited&quot;,
+          &quot;description&quot;: &quot;The advisor refused for rate.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;auth_failed&quot;,
+          &quot;description&quot;: &quot;The credential was refused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;malformed&quot;,
+          &quot;description&quot;: &quot;An answer arrived that could not be normalised.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;empty&quot;,
+          &quot;description&quot;: &quot;An answer arrived with nothing in it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;unavailable&quot;,
+          &quot;description&quot;: &quot;The advisor could not be reached: not running, not answering, gone.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;cancelled&quot;,
+          &quot;description&quot;: &quot;The session withdrew the request.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;error&quot;,
+          &quot;description&quot;: &quot;Anything else the adapter could not classify.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ConsultationView&quot;: {
+      &quot;description&quot;: &quot;One consultation, as the state reports it.\n\nA failed consultation is reported as plainly as a completed one: its status and the\nadapter&#39;s diagnostic stand where the advice would, so degradation is visible rather\nthan silently absent.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::record::ConsultationStatus;\nuse majordomus_cli::reasoning::state::{derive, ConsultationView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;consultation-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;consultation\&quot;, \&quot;plan\&quot;: \&quot;plan-0\&quot;, \&quot;advisor\&quot;: \&quot;alpha\&quot;,\n    \&quot;status\&quot;: \&quot;timeout\&quot;, \&quot;diagnostic\&quot;: \&quot;timeout: no answer in 60s\&quot;,\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;ConsultationView = &amp;state.consultations[0];\nassert_eq!(view.status, ConsultationStatus::Timeout);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.diagnostic.as_deref(), Some(\&quot;timeout: no answer in 60s\&quot;));\nassert_eq!(state.totals.consultations_failed, 1);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;advisor&quot;: {
+          &quot;description&quot;: &quot;The advisor.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;conclusion&quot;: {
+          &quot;description&quot;: &quot;The advice, summarised.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;diagnostic&quot;: {
+          &quot;description&quot;: &quot;The adapter&#39;s diagnostic, for a failure.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;plan&quot;: {
+          &quot;description&quot;: &quot;The plan that selected it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;stance&quot;: {
+          &quot;anyOf&quot;: [
+            {
+              &quot;$ref&quot;: &quot;#/$defs/Stance&quot;
+            },
+            {
+              &quot;type&quot;: &quot;null&quot;
+            }
+          ],
+          &quot;description&quot;: &quot;Where the advice stands.&quot;
+        },
+        &quot;status&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ConsultationStatus&quot;,
+          &quot;description&quot;: &quot;How it ended.&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;plan&quot;,
+        &quot;advisor&quot;,
+        &quot;status&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;DisagreementView&quot;: {
+      &quot;description&quot;: &quot;One disagreement, as the state reports it.\n\nThe view names the question that decides the disagreement and, once a resolution is\nrecorded, the resolution and the position its evidence favoured. A view without a\nresolution is an unsettled disagreement that blocks its assessment.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, DisagreementView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;disagreement-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;disagreement\&quot;, \&quot;assessment\&quot;: \&quot;assessment-0\&quot;,\n    \&quot;positions\&quot;: [\n        { \&quot;source\&quot;: \&quot;primary\&quot;, \&quot;position\&quot;: \&quot;A\&quot; },\n        { \&quot;source\&quot;: \&quot;consultation-9\&quot;, \&quot;position\&quot;: \&quot;B\&quot; },\n    ],\n    \&quot;discriminating_question\&quot;: \&quot;do callers retry?\&quot;,\n})));\nloaded.records.push(rec(\&quot;resolution-2\&quot;, 2, json!({\n    \&quot;kind\&quot;: \&quot;resolution\&quot;, \&quot;disagreement\&quot;: \&quot;disagreement-1\&quot;,\n    \&quot;experiment\&quot;: \&quot;read the callers\&quot;, \&quot;outcome\&quot;: \&quot;none retries\&quot;,\n    \&quot;favours\&quot;: \&quot;consultation-9\&quot;,\n    \&quot;evidence\&quot;: [{ \&quot;kind\&quot;: \&quot;file\&quot;, \&quot;reference\&quot;: \&quot;src/caller.rs\&quot; }],\n})));\nlet state = derive(&amp;loaded, None);\nlet view: &amp;DisagreementView = &amp;state.disagreements[0];\nassert_eq!(view.discriminating_question, \&quot;do callers retry?\&quot;);\nassert_eq!(view.resolution.as_deref(), Some(\&quot;resolution-2\&quot;));\nassert_eq!(view.favours.as_deref(), Some(\&quot;consultation-9\&quot;));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;assessment&quot;: {
+          &quot;description&quot;: &quot;The assessment.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;discriminating_question&quot;: {
+          &quot;description&quot;: &quot;The question that decides it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;favours&quot;: {
+          &quot;description&quot;: &quot;The position the evidence favoured.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;Record id.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;resolution&quot;: {
+          &quot;description&quot;: &quot;The resolution, when settled.&quot;,
+          &quot;type&quot;: [
+            &quot;string&quot;,
+            &quot;null&quot;
+          ]
+        }
+      },
+      &quot;required&quot;: [
+        &quot;id&quot;,
+        &quot;assessment&quot;,
+        &quot;discriminating_question&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Materiality&quot;: {
+      &quot;description&quot;: &quot;How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material &lt; Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\&quot;\\\&quot;high\\\&quot;\&quot;).unwrap();\nassert_eq!(m, Materiality::High);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;trivial&quot;,
+          &quot;description&quot;: &quot;A name, a format, an obvious convention: never reviewed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;low&quot;,
+          &quot;description&quot;: &quot;Local and reversible.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;material&quot;,
+          &quot;description&quot;: &quot;Could affect correctness, an interface, persistent data, concurrency, operations.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;high&quot;,
+          &quot;description&quot;: &quot;Architecture, security, compatibility or a public contract.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;critical&quot;,
+          &quot;description&quot;: &quot;Irreversible or destructive, or repository governance itself.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ModeResolution&quot;: {
+      &quot;description&quot;: &quot;The mode in force and what decided it, as `resolve_mode` returns it. A plan and a\nreport carry the source beside the mode, so a reader learns why the mode is what it is.\n\n```\nuse majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};\n\nlet r: ModeResolution = resolve_mode(None, true, None);\nassert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: \&quot;CI\&quot;.into() });\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;mode&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReasoningMode&quot;,
+          &quot;description&quot;: &quot;The mode.&quot;
+        },
+        &quot;source&quot;: {
+          &quot;description&quot;: &quot;What decided it: `MAJORDOMUS_REASONING_MODE`, `CI`, `profile &lt;name&gt;`, or `default`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;mode&quot;,
+        &quot;source&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReasoningMode&quot;: {
+      &quot;description&quot;: &quot;How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \&quot;offline\&quot;);\nlet m: ReasoningMode = serde_json::from_str(\&quot;\\\&quot;strict\\\&quot;\&quot;).unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;offline&quot;,
+          &quot;description&quot;: &quot;No network: only advisors that stay on this machine.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;ci&quot;,
+          &quot;description&quot;: &quot;Deterministic: no advisor at all, whatever is installed.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;fast&quot;,
+          &quot;description&quot;: &quot;Review only where the blast radius is high.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;standard&quot;,
+          &quot;description&quot;: &quot;Review where uncertainty is material.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;strict&quot;,
+          &quot;description&quot;: &quot;Review wider, and complementary review where the stakes are highest.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReasoningPhase&quot;: {
+      &quot;description&quot;: &quot;A phase of the reasoning timeline.\n\nEach record maps to one phase: a plan to consulting, local or reuse by its outcome, a\nconsultation to an advisor response or a degradation by its status, and every other\nkind to the phase of the same name.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;consultation-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;consultation\&quot;, \&quot;plan\&quot;: \&quot;plan-0\&quot;, \&quot;advisor\&quot;: \&quot;alpha\&quot;, \&quot;status\&quot;: \&quot;unavailable\&quot;,\n})));\nlet phases: Vec&lt;ReasoningPhase&gt; =\n    derive(&amp;loaded, None).timeline.iter().map(|s| s.phase).collect();\nassert_eq!(phases, [ReasoningPhase::Degradation]);\nlet word = serde_json::to_value(ReasoningPhase::AdvisorResponse).unwrap();\nassert_eq!(word, \&quot;advisor_response\&quot;);\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;uncertainty&quot;,
+          &quot;description&quot;: &quot;Uncertainty stated with evidence.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;consulting&quot;,
+          &quot;description&quot;: &quot;Review planned.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;local&quot;,
+          &quot;description&quot;: &quot;Decided locally, by plan.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;reuse&quot;,
+          &quot;description&quot;: &quot;A standing conclusion reused.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;advisor_response&quot;,
+          &quot;description&quot;: &quot;An advisor answered.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;degradation&quot;,
+          &quot;description&quot;: &quot;An advisor could not answer.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;disagreement&quot;,
+          &quot;description&quot;: &quot;Positions diverged.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;experiment&quot;,
+          &quot;description&quot;: &quot;An experiment settled a disagreement.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;conclusion&quot;,
+          &quot;description&quot;: &quot;A conclusion.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;validation&quot;,
+          &quot;description&quot;: &quot;A validation step.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;attempt&quot;,
+          &quot;description&quot;: &quot;A failed attempt.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    },
+    &quot;ReasoningState&quot;: {
+      &quot;description&quot;: &quot;The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive()`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, task: &amp;str, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: task,\n#         \&quot;recorded_at\&quot;: \&quot;2026-10-01T00:00:00Z\&quot;, \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &amp;str| json!({ \&quot;kind\&quot;: \&quot;assessment\&quot;, \&quot;subject\&quot;: subject });\nloaded.records.push(rec(\&quot;assessment-1\&quot;, \&quot;t1\&quot;, assessment(\&quot;a\&quot;)));\nloaded.records.push(rec(\&quot;assessment-2\&quot;, \&quot;t2\&quot;, assessment(\&quot;b\&quot;)));\nloaded.unreadable.push(\&quot;t2/broken.json\&quot;.into());\n\nlet one: ReasoningState = derive(&amp;loaded, Some(\&quot;t1\&quot;));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\&quot;t1\&quot;, 1));\nlet all = derive(&amp;loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\&quot;all\&quot;, 2));\nassert_eq!(all.unreadable, [\&quot;t2/broken.json\&quot;]);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;assessments&quot;: {
+          &quot;description&quot;: &quot;The assessments.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/AssessmentView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;conclusions&quot;: {
+          &quot;description&quot;: &quot;The conclusions.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ConclusionView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;consultations&quot;: {
+          &quot;description&quot;: &quot;The consultations.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ConsultationView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;disagreements&quot;: {
+          &quot;description&quot;: &quot;The disagreements.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/DisagreementView&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;task&quot;: {
+          &quot;description&quot;: &quot;The task reported, or `all`.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;timeline&quot;: {
+          &quot;description&quot;: &quot;The timeline.&quot;,
+          &quot;items&quot;: {
+            &quot;$ref&quot;: &quot;#/$defs/ReasoningStep&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        },
+        &quot;totals&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReasoningTotals&quot;,
+          &quot;description&quot;: &quot;Totals.&quot;
+        },
+        &quot;unreadable&quot;: {
+          &quot;description&quot;: &quot;Store files that could not be read.&quot;,
+          &quot;items&quot;: {
+            &quot;type&quot;: &quot;string&quot;
+          },
+          &quot;type&quot;: &quot;array&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;task&quot;,
+        &quot;assessments&quot;,
+        &quot;consultations&quot;,
+        &quot;disagreements&quot;,
+        &quot;conclusions&quot;,
+        &quot;timeline&quot;,
+        &quot;totals&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReasoningStep&quot;: {
+      &quot;description&quot;: &quot;One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;attempt-1\&quot;, 1, json!({\n    \&quot;kind\&quot;: \&quot;attempt\&quot;, \&quot;attempt\&quot;: \&quot;share the client\\nacross threads\&quot;,\n    \&quot;observed_failure\&quot;: \&quot;the handle is not Sync\&quot;,\n})));\nlet state = derive(&amp;loaded, None);\nlet step: &amp;ReasoningStep = &amp;state.timeline[0];\nassert_eq!(step.at, \&quot;2026-10-01T00:00:01Z\&quot;);\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \&quot;share the client failed: the handle is not Sync\&quot;);\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;at&quot;: {
+          &quot;description&quot;: &quot;When.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;id&quot;: {
+          &quot;description&quot;: &quot;The record.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        &quot;phase&quot;: {
+          &quot;$ref&quot;: &quot;#/$defs/ReasoningPhase&quot;,
+          &quot;description&quot;: &quot;The phase.&quot;
+        },
+        &quot;summary&quot;: {
+          &quot;description&quot;: &quot;One line.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;at&quot;,
+        &quot;id&quot;,
+        &quot;phase&quot;,
+        &quot;summary&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;ReasoningTotals&quot;: {
+      &quot;description&quot;: &quot;Totals over the records of the derived task: counts, reviewers and reported tokens.\n\nIndependent reviewers are distinct advisors with at least one completed consultation;\ntoken counts are summed only from what adapters reported, never estimated.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &amp;str, n: u32, body: serde_json::Value) -&gt; ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \&quot;schema\&quot;: \&quot;majordomus/reasoning-record\&quot;, \&quot;version\&quot;: 1, \&quot;id\&quot;: id, \&quot;task\&quot;: \&quot;t\&quot;,\n#         \&quot;recorded_at\&quot;: format!(\&quot;2026-10-01T00:00:{n:02}Z\&quot;), \&quot;body\&quot;: body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningTotals};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet answer = |plan: &amp;str| {\n    json!({\n        \&quot;kind\&quot;: \&quot;consultation\&quot;, \&quot;plan\&quot;: plan, \&quot;advisor\&quot;: \&quot;alpha\&quot;, \&quot;status\&quot;: \&quot;completed\&quot;,\n        \&quot;conclusion\&quot;: \&quot;A\&quot;, \&quot;stance\&quot;: \&quot;supports\&quot;,\n        \&quot;usage\&quot;: { \&quot;input_tokens\&quot;: 100, \&quot;output_tokens\&quot;: 20 },\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\&quot;consultation-1\&quot;, 1, answer(\&quot;plan-a\&quot;)));\nloaded.records.push(rec(\&quot;consultation-2\&quot;, 2, answer(\&quot;plan-b\&quot;)));\nlet totals: ReasoningTotals = derive(&amp;loaded, None).totals;\nassert_eq!(totals.consultations_completed, 2);\nassert_eq!(totals.independent_reviewers, 1, \&quot;one advisor, however often asked\&quot;);\nassert_eq!((totals.input_tokens, totals.output_tokens), (200, 40));\n```&quot;,
+      &quot;properties&quot;: {
+        &quot;consultations_completed&quot;: {
+          &quot;description&quot;: &quot;Consultations that completed.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;consultations_failed&quot;: {
+          &quot;description&quot;: &quot;Consultations that did not.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;independent_reviewers&quot;: {
+          &quot;description&quot;: &quot;Distinct advisors that answered.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;input_tokens&quot;: {
+          &quot;description&quot;: &quot;Input tokens the adapters reported.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;output_tokens&quot;: {
+          &quot;description&quot;: &quot;Output tokens the adapters reported.&quot;,
+          &quot;format&quot;: &quot;uint64&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        },
+        &quot;records&quot;: {
+          &quot;description&quot;: &quot;Records.&quot;,
+          &quot;format&quot;: &quot;uint&quot;,
+          &quot;minimum&quot;: 0,
+          &quot;type&quot;: &quot;integer&quot;
+        }
+      },
+      &quot;required&quot;: [
+        &quot;records&quot;,
+        &quot;consultations_completed&quot;,
+        &quot;consultations_failed&quot;,
+        &quot;independent_reviewers&quot;,
+        &quot;input_tokens&quot;,
+        &quot;output_tokens&quot;
+      ],
+      &quot;type&quot;: &quot;object&quot;
+    },
+    &quot;Stance&quot;: {
+      &quot;description&quot;: &quot;Where an advisor&#39;s answer stands relative to the executor&#39;s hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\&quot;\\\&quot;alternative\\\&quot;\&quot;).unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::&lt;Stance&gt;(\&quot;\\\&quot;agrees\\\&quot;\&quot;).is_err());\n```&quot;,
+      &quot;oneOf&quot;: [
+        {
+          &quot;const&quot;: &quot;supports&quot;,
+          &quot;description&quot;: &quot;It supports the hypothesis.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;opposes&quot;,
+          &quot;description&quot;: &quot;It argues against it.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;alternative&quot;,
+          &quot;description&quot;: &quot;It proposes something else.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        },
+        {
+          &quot;const&quot;: &quot;inconclusive&quot;,
+          &quot;description&quot;: &quot;It does not decide.&quot;,
+          &quot;type&quot;: &quot;string&quot;
+        }
+      ]
+    }
+  },
+  &quot;description&quot;: &quot;The answer of `reasoning.status`: the mode in force, the advisor counts, the state the\nrecords derive, and that state rendered as the Markdown a handover carries.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatus;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();\nfor field in [\&quot;mode\&quot;, \&quot;advisors_available\&quot;, \&quot;advisors_unavailable\&quot;, \&quot;state\&quot;, \&quot;report\&quot;] {\n    assert!(schema[\&quot;required\&quot;].as_array().unwrap().iter().any(|f| f == field), \&quot;{field}\&quot;);\n}\n```&quot;,
+  &quot;properties&quot;: {
+    &quot;advisors_available&quot;: {
+      &quot;description&quot;: &quot;Advisors available now.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;advisors_unavailable&quot;: {
+      &quot;description&quot;: &quot;Advisors not available now, each optional.&quot;,
+      &quot;format&quot;: &quot;uint&quot;,
+      &quot;minimum&quot;: 0,
+      &quot;type&quot;: &quot;integer&quot;
+    },
+    &quot;mode&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ModeResolution&quot;,
+      &quot;description&quot;: &quot;The mode in force.&quot;
+    },
+    &quot;report&quot;: {
+      &quot;description&quot;: &quot;The state as Markdown: what a handover carries.&quot;,
+      &quot;type&quot;: &quot;string&quot;
+    },
+    &quot;state&quot;: {
+      &quot;$ref&quot;: &quot;#/$defs/ReasoningState&quot;,
+      &quot;description&quot;: &quot;The state.&quot;
+    }
+  },
+  &quot;required&quot;: [
+    &quot;mode&quot;,
+    &quot;advisors_available&quot;,
+    &quot;advisors_unavailable&quot;,
+    &quot;state&quot;,
+    &quot;report&quot;
+  ],
+  &quot;title&quot;: &quot;ReasoningStatus&quot;,
+  &quot;type&quot;: &quot;object&quot;
+}</pre></div>
+  </details>
+</div>
+
+    </div>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Policies</h2>
+    <dl class="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">benchmark</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">required</span> — a target on every transport the exposure declares; the cases are the input type's</dd></div>
+      <div class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4"><dt class="font-mono text-xs uppercase tracking-wide text-body-subtle">cache</dt><dd class="mt-1 text-body"><span class="font-mono text-heading">disabled</span> — every call runs the handler</dd></div>
+    </dl>
+
+    <h2 class="mt-10 text-xl font-semibold tracking-tight text-heading">Benchmark targets</h2><p class="mt-2 text-sm text-body">Derived from the registry for this repository: one requirement per transport, and the cases the input type provides. The whole matrix is on the <a href="https://majordomus.dev/registry/benchmarks/" class="text-fg-brand underline">benchmarks page</a>.</p>
+    <div class="mt-3 overflow-x-auto rounded-base border border-default" tabindex="0">
+      <table class="w-full min-w-[28rem] text-left text-sm" tabindex="0">
+        <thead class="bg-neutral-secondary-medium font-mono text-xs uppercase tracking-wide text-body-subtle"><tr><th class="px-3 py-2">transport</th><th class="px-3 py-2">state</th><th class="px-3 py-2">cases</th><th class="px-3 py-2">targets</th></tr></thead>
+        <tbody><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">direct</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-reasoning-status-direct-current" class="break-all text-fg-brand hover:underline inline-block py-1">current</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-reasoning-status-direct-all" class="break-all text-fg-brand hover:underline inline-block py-1">all</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">mcp</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-reasoning-status-mcp-current" class="break-all text-fg-brand hover:underline inline-block py-1">current</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-reasoning-status-mcp-all" class="break-all text-fg-brand hover:underline inline-block py-1">all</a><br></td></tr><tr class="border-t border-default align-top"><td class="px-3 py-2 font-mono text-heading">http</td><td class="px-3 py-2 font-mono text-xs text-body">covered</td><td class="px-3 py-2 font-mono text-xs text-body">2</td><td class="px-3 py-2 font-mono text-xs text-body"><a href="https://majordomus.dev/registry/benchmarks/#target-reasoning-status-http-current" class="break-all text-fg-brand hover:underline inline-block py-1">current</a><br><a href="https://majordomus.dev/registry/benchmarks/#target-reasoning-status-http-all" class="break-all text-fg-brand hover:underline inline-block py-1">all</a><br></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <aside class="min-w-0 lg:sticky lg:top-24 lg:self-start">
+    <div class="rounded-base border border-default bg-neutral-primary-soft p-4 text-sm">
+      <span class="mb-2 block font-mono text-xs uppercase tracking-wide text-body-subtle">provenance</span>
+      <dl class="space-y-2">
+        <div><dt class="text-body-subtle">registry id</dt><dd class="min-w-0 break-all font-mono text-heading">reasoning.status</dd></div>
+        <div><dt class="text-body-subtle">composed in</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/reasoning.rs" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">apps/majordomus-cli/src/capability/builtin/reasoning.rs</a></dd></div>
+        <div><dt class="text-body-subtle">Rust module</dt><dd class="min-w-0 break-all font-mono text-heading">majordomus_cli::capability::builtin::reasoning</dd></div>
+        <div><dt class="text-body-subtle">input type</dt><dd class="font-mono text-heading">ReasoningStatusInput</dd></div>
+        <div><dt class="text-body-subtle">output type</dt><dd class="font-mono text-heading">ReasoningStatus</dd></div>
+        <div><dt class="text-body-subtle">reference on GitHub</dt><dd class="min-w-0 break-all"><a href="https://github.com/korczis/prismatic-majordomus/blob/0258e440d4a2ab4bb6e44610b9b30fa217a786c8/docs/generated/modules/reasoning.md" class="break-all font-mono text-fg-brand hover:underline inline-block py-1">docs/generated/modules/reasoning.md</a></dd></div><div><dt class="text-body-subtle">registry fingerprint</dt><dd class="min-w-0 break-all font-mono text-xs text-heading">af6c657fc917d06ffa502da2a613912cb5e995e036d474e1f2ba4fa208cbe290</dd></div>
+        <div><dt class="text-body-subtle">generated by</dt><dd class="font-mono text-heading">majordomus-cli 0.11.0</dd></div>
+      </dl>
+    </div>
+  </aside>
+</div>
+
+
+
+</div>
+
+</main>
+
+<footer class="border-t border-default bg-neutral-primary-soft">
+  <div class="mx-auto w-full max-w-screen-xl p-4 md:py-8">
+    <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/why/" class="hover:text-heading hover:underline">Why</a></h2>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Product</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/features/" class="hover:text-heading hover:underline">Features</a></li><li><a href="https://majordomus.dev/features/matrix/" class="hover:text-heading hover:underline">Features against interfaces</a></li><li><a href="https://majordomus.dev/use-cases/" class="hover:text-heading hover:underline">Use cases</a></li><li><a href="https://majordomus.dev/applications/" class="hover:text-heading hover:underline">Applications</a></li><li><a href="https://majordomus.dev/skills/" class="hover:text-heading hover:underline">Skills</a></li><li><a href="https://majordomus.dev/supervises/" class="hover:text-heading hover:underline">What it supervises</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">How it works</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/method/" class="hover:text-heading hover:underline">Doctrine, policy, rule, enforcement</a></li><li><a href="https://majordomus.dev/method/axes/" class="hover:text-heading hover:underline">Four axes</a></li><li><a href="https://majordomus.dev/method/argument/" class="hover:text-heading hover:underline">The full argument</a></li><li><a href="https://majordomus.dev/docs/concepts/" class="hover:text-heading hover:underline">Vocabulary</a></li><li><a href="https://majordomus.dev/policy/" class="hover:text-heading hover:underline">Canonical policy</a></li><li><a href="https://majordomus.dev/context/" class="hover:text-heading hover:underline">Directory contracts</a></li><li><a href="https://majordomus.dev/sessions/" class="hover:text-heading hover:underline">Sessions</a></li><li><a href="https://majordomus.dev/docs/planning/" class="hover:text-heading hover:underline">How planning works</a></li><li><a href="https://majordomus.dev/docs/design/" class="hover:text-heading hover:underline">Design</a></li><li><a href="https://majordomus.dev/architecture/" class="hover:text-heading hover:underline">How this site is built</a></li><li><a href="https://majordomus.dev/docs/product/" class="hover:text-heading hover:underline">How the product page is derived</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">Docs</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/docs/" class="hover:text-heading hover:underline">All documents</a></li><li><a href="https://majordomus.dev/docs/install/" class="hover:text-heading hover:underline">Install</a></li><li><a href="https://majordomus.dev/commands/" class="hover:text-heading hover:underline">Commands</a></li><li><a href="https://majordomus.dev/profiles/" class="hover:text-heading hover:underline">Execution profiles</a></li><li><a href="https://majordomus.dev/docs/cli/" class="hover:text-heading hover:underline">Command reference</a></li><li><a href="https://majordomus.dev/docs/api/" class="hover:text-heading hover:underline">HTTP API</a></li><li><a href="https://majordomus.dev/rustdoc/" class="hover:text-heading hover:underline">Rust API</a></li><li><a href="https://majordomus.dev/registry/mcp/" class="hover:text-heading hover:underline">MCP surface</a></li><li><a href="https://majordomus.dev/docs/schemas/" class="hover:text-heading hover:underline">File schemas</a></li><li><a href="https://majordomus.dev/registry/" class="hover:text-heading hover:underline">Registry</a></li><li><a href="https://majordomus.dev/map/" class="hover:text-heading hover:underline">Program map</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle"><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Evidence</a></h2>
+        
+        <ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://majordomus.dev/guarantees/" class="hover:text-heading hover:underline">Guarantees</a></li><li><a href="https://majordomus.dev/evidence/" class="hover:text-heading hover:underline">Evidence graph</a></li><li><a href="https://majordomus.dev/contract/" class="hover:text-heading hover:underline">The finish contract</a></li><li><a href="https://majordomus.dev/doctrines/" class="hover:text-heading hover:underline">Doctrine</a></li><li><a href="https://majordomus.dev/adrs/" class="hover:text-heading hover:underline">Decisions</a></li><li><a href="https://majordomus.dev/rules/" class="hover:text-heading hover:underline">Rules in force</a></li><li><a href="https://majordomus.dev/registry/benchmarks/" class="hover:text-heading hover:underline">Benchmarks</a></li><li><a href="https://majordomus.dev/economics/" class="hover:text-heading hover:underline">Token economics</a></li><li><a href="https://majordomus.dev/limitations/" class="hover:text-heading hover:underline">Limitations</a></li><li><a href="https://majordomus.dev/roadmap/" class="hover:text-heading hover:underline">Roadmap</a></li><li><a href="https://majordomus.dev/plan/" class="hover:text-heading hover:underline">Milestones and issues</a></li><li><a href="https://majordomus.dev/plan/dag/" class="hover:text-heading hover:underline">Dependency graph</a></li><li><a href="https://majordomus.dev/changelog/" class="hover:text-heading hover:underline">Changelog</a></li><li><a href="https://majordomus.dev/docs/dogfooding/" class="hover:text-heading hover:underline">Dogfooding</a></li>
+        </ul>
+        
+      </div>
+      
+      <div class="min-w-0">
+        <h2 class="mb-3 font-mono text-xs uppercase tracking-wide text-body-subtle">Project</h2><ul class="space-y-2 text-sm font-medium text-body">
+          <li><a href="https://github.com/korczis/prismatic-majordomus" class="hover:text-heading hover:underline">GitHub</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/LICENSE" class="hover:text-heading hover:underline">MIT licence</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/SECURITY.md" class="hover:text-heading hover:underline">Security policy</a></li>
+          <li><a href="https://github.com/korczis/prismatic-majordomus/blob/master/CONTRIBUTING.md" class="hover:text-heading hover:underline">Contributing guide</a></li>
+        </ul>
+      </div>
+    </div>
+    <hr class="my-6 border-default sm:mx-auto lg:my-8"><div class="space-y-4">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
+    </div>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0258e440d4a2ab4bb6e44610b9b30fa217a786c8" class="font-mono underline">0258e44</a> · inputs <span class="font-mono">ecf125b98915</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://majordomus.dev/js/flowbite.min.js"></script>
+<script src="https://majordomus.dev/js/theme.js"></script>
+<script defer src="https://majordomus.dev/js/alpine.min.js"></script><script>document.addEventListener('DOMContentLoaded', function () { if (window.initFlowbite) { window.initFlowbite(); } }, { once: true });</script>
+
+</body>
+</html>

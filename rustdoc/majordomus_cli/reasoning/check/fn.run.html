@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Run every check over the repository at `root`, in the order of `CHECKS`."><title>run in majordomus_cli::reasoning::check - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc fn"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">run</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"><h2><a href="index.html">In majordomus_<wbr>cli::<wbr>reasoning::<wbr>check</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">reasoning</a>::<wbr><a href="index.html">check</a></div><h1>Function <span class="fn">run</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/reasoning/check.rs.html#213-407">Source</a> </span></div><pre class="rust item-decl"><code>pub fn run(
+    root: &amp;<a class="struct" href="https://doc.rust-lang.org/1.98.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+    catalogue: &amp;<a class="struct" href="../catalogue/struct.AdvisorCatalogue.html" title="struct majordomus_cli::reasoning::catalogue::AdvisorCatalogue">AdvisorCatalogue</a>,
+    refs: &amp;<a class="struct" href="../catalogue/struct.References.html" title="struct majordomus_cli::reasoning::catalogue::References">References</a>,
+    loaded: &amp;<a class="struct" href="../store/struct.Loaded.html" title="struct majordomus_cli::reasoning::store::Loaded">Loaded</a>,
+) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.98.1/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="struct.ReasoningFinding.html" title="struct majordomus_cli::reasoning::check::ReasoningFinding">ReasoningFinding</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Run every check over the repository at <code>root</code>, in the order of <a href="constant.CHECKS.html" title="constant majordomus_cli::reasoning::check::CHECKS"><code>CHECKS</code></a>.</p>
+<p>It reads the catalogue, the adapter modules, the provider-independent sources, the CI
+workflows, the documentation and the loaded records, and asks no advisor anything.
+The findings come back in check order; an empty list means every rule holds.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+<span class="kw">use </span>majordomus_cli::reasoning::check::run;
+<span class="kw">use </span>majordomus_cli::reasoning::record::ReasoningRecord;
+<span class="kw">use </span>majordomus_cli::reasoning::store::Loaded;
+
+<span class="kw">let </span>record: ReasoningRecord = serde_json::from_value(<span class="macro">serde_json::json!</span>({
+    <span class="string">"schema"</span>: <span class="string">"majordomus/reasoning-record"</span>, <span class="string">"version"</span>: <span class="number">1</span>, <span class="string">"id"</span>: <span class="string">"consultation-1"</span>,
+    <span class="string">"task"</span>: <span class="string">"t"</span>, <span class="string">"recorded_at"</span>: <span class="string">"2026-10-01T00:00:01Z"</span>,
+    <span class="string">"body"</span>: {
+        <span class="string">"kind"</span>: <span class="string">"consultation"</span>, <span class="string">"plan"</span>: <span class="string">"plan-0"</span>, <span class="string">"advisor"</span>: <span class="string">"alpha"</span>, <span class="string">"status"</span>: <span class="string">"timeout"</span>,
+    },
+}))
+.unwrap();
+<span class="kw">let </span>loaded = Loaded { records: <span class="macro">vec!</span>[record], unreadable: <span class="macro">vec!</span>[] };
+<span class="kw">let </span>root = tempfile::tempdir().unwrap();
+<span class="kw">let </span>found = run(root.path(), <span class="kw-2">&amp;</span>AdvisorCatalogue::default(), <span class="kw-2">&amp;</span>References::default(), <span class="kw-2">&amp;</span>loaded);
+<span class="kw">let </span>messages: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = found.iter().map(|f| f.message.as_str()).collect();
+<span class="macro">assert_eq!</span>(
+    messages,
+    [
+        <span class="string">"names advisor 'alpha', which the catalogue does not declare"</span>,
+        <span class="string">"cites plan plan-0, which is not recorded"</span>,
+    ]
+);</code></pre></div></div></details></section></div></main></body></html>

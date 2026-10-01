@@ -1,0 +1,66 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The consultation policy: given what is uncertain and how much it matters, whether independent review is worth having, how much, and from which available advisors."><title>majordomus_cli::reasoning::policy - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module policy</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module policy</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>reasoning</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">reasoning</a></div><h1>Module <span>policy</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/reasoning/policy.rs.html#1-764">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The consultation policy: given what is uncertain and how much it matters, whether
+independent review is worth having, how much, and from which available advisors.</p>
+<p>Pure over its inputs, like <code>models.route</code>: the same assessment against the same
+availability gets the same plan, and every advisor that was not selected says why.
+It names capabilities and never an advisor: a repository’s preference (“ask this one
+first”) is the catalogue’s declaration order, which reaches this function only as the
+order of the states it is handed.</p>
+<p>The budget is the number of advisors, by materiality and mode:</p>
+<div><table><thead><tr><th>mode</th><th>trivial</th><th>low</th><th>material</th><th>high</th><th>critical</th></tr></thead><tbody>
+<tr><td>ci</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+<tr><td>fast</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+<tr><td>standard</td><td>0</td><td>0</td><td>1</td><td>2</td><td>2</td></tr>
+<tr><td>offline</td><td>0</td><td>0</td><td>1</td><td>2</td><td>2</td></tr>
+<tr><td>strict</td><td>0</td><td>0</td><td>1</td><td>2</td><td>3</td></tr>
+</tbody></table>
+</div>
+<p>High confidence in the local conclusion lowers it by one. Selection is greedy and
+explainable: each next advisor is the one covering the most requested capabilities not
+yet covered, then one from a source not yet asked (independence: two answers from one
+vendor are one opinion twice), then declaration order. Zero selected is a plan, not a
+failure: the plan then carries the structured local review a session performs instead.</p>
+<p>What the policy never does is count. There is no quorum, no threshold of agreeing
+advisors, no majority: how advice becomes a decision is the conclusion’s business,
+and a conclusion is refused while a disagreement it covers is unresolved (see
+<a href="../store/index.html" title="mod majordomus_cli::reasoning::store"><code>super::store</code></a>).</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>High uncertainty under <code>standard</code> allows two advisors. Of three, one is rate limited
+and is excluded with its reason; the other two are selected in preference order.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};
+<span class="kw">use </span>majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};
+
+<span class="kw">fn </span>advisor(id: <span class="kw-2">&amp;</span>str, adapter: <span class="kw-2">&amp;</span>str, status: <span class="kw-2">&amp;</span>str) -&gt; AdvisorState {
+    serde_json::from_value(<span class="macro">serde_json::json!</span>({
+        <span class="string">"id"</span>: id, <span class="string">"title"</span>: id, <span class="string">"transport"</span>: <span class="string">"api"</span>, <span class="string">"adapter"</span>: adapter,
+        <span class="string">"capabilities"</span>: [<span class="string">"independent_reasoning"</span>], <span class="string">"status"</span>: status,
+        <span class="string">"reason"</span>: <span class="string">"present"</span>, <span class="string">"probe"</span>: <span class="string">""</span>,
+    }))
+    .unwrap()
+}
+<span class="kw">let </span>states = [
+    advisor(<span class="string">"first"</span>, <span class="string">"x-api"</span>, <span class="string">"available"</span>),
+    advisor(<span class="string">"limited"</span>, <span class="string">"y-api"</span>, <span class="string">"rate_limited"</span>),
+    advisor(<span class="string">"second"</span>, <span class="string">"z-cli"</span>, <span class="string">"available"</span>),
+];
+<span class="kw">let </span>mode = ModeResolution { mode: ReasoningMode::Standard, source: <span class="string">"default"</span>.into() };
+<span class="kw">let </span>request = PlanRequest { materiality: Materiality::High, ..Default::default() };
+<span class="kw">let </span>p = plan(<span class="kw-2">&amp;</span>request, <span class="kw-2">&amp;</span>mode, <span class="kw-2">&amp;</span>states);
+<span class="macro">assert_eq!</span>(p.outcome, PlanOutcome::Consult);
+<span class="kw">let </span>selected: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = p.selected.iter().map(|s| s.advisor.as_str()).collect();
+<span class="macro">assert_eq!</span>(selected, [<span class="string">"first"</span>, <span class="string">"second"</span>]);
+<span class="macro">assert_eq!</span>(p.excluded[<span class="number">0</span>].advisor, <span class="string">"limited"</span>);
+<span class="macro">assert!</span>(p.excluded[<span class="number">0</span>].reason.starts_with(<span class="string">"rate_limited"</span>));</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.ExcludedAdvisor.html" title="struct majordomus_cli::reasoning::policy::ExcludedAdvisor">Excluded<wbr>Advisor</a></dt><dd>One advisor left out of the plan, its standing when the plan was made, and why: its
+status, a capability it does not offer, or a budget already spent.</dd><dt><a class="struct" href="struct.PlanRequest.html" title="struct majordomus_cli::reasoning::policy::PlanRequest">Plan<wbr>Request</a></dt><dd>What the policy is asked about: the materiality and confidence of one uncertainty,
+the advisory capabilities review needs, and any standing conclusion on the subject.</dd><dt><a class="struct" href="struct.ReviewPlan.html" title="struct majordomus_cli::reasoning::policy::ReviewPlan">Review<wbr>Plan</a></dt><dd>The plan: the decision with its reasons attached. It carries what it answered (mode,
+materiality, confidence, capabilities), the budget, the outcome with one sentence of
+why, every advisor selected or excluded, and the local review when one is due.</dd><dt><a class="struct" href="struct.SelectedAdvisor.html" title="struct majordomus_cli::reasoning::policy::SelectedAdvisor">Selected<wbr>Advisor</a></dt><dd>One selected advisor, the requested capabilities it covers, and why the greedy
+selection chose it at its position.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Materiality.html" title="enum majordomus_cli::reasoning::policy::Materiality">Materiality</a></dt><dd>How much the uncertain decision could matter. Ordered from <code>trivial</code> to <code>critical</code>:
+with the mode it sets the review budget, and from <code>material</code> up a decision taken alone
+carries the structured local review.</dd><dt><a class="enum" href="enum.PlanOutcome.html" title="enum majordomus_cli::reasoning::policy::PlanOutcome">Plan<wbr>Outcome</a></dt><dd>What the plan decided: consult the selected advisors, decide on local evidence, or
+reuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.</dd><dt><a class="enum" href="enum.ReasoningConfidence.html" title="enum majordomus_cli::reasoning::policy::ReasoningConfidence">Reasoning<wbr>Confidence</a></dt><dd>How sure the primary executor is of its current hypothesis. <code>high</code> lowers the review
+budget by one; the other levels leave it as the mode and materiality set it.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.DEFAULT_CAPABILITY.html" title="constant majordomus_cli::reasoning::policy::DEFAULT_CAPABILITY">DEFAULT_<wbr>CAPABILITY</a></dt><dd>The capability review defaults to.</dd><dt><a class="constant" href="constant.LOCAL_REVIEW.html" title="constant majordomus_cli::reasoning::policy::LOCAL_REVIEW">LOCAL_<wbr>REVIEW</a></dt><dd>The adversarial self-review a session performs when it must decide alone.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.budget.html" title="fn majordomus_cli::reasoning::policy::budget">budget</a></dt><dd>The budget of a mode and materiality, before confidence: how many advisors a plan may
+select, as the table in the module header states it.</dd><dt><a class="fn" href="fn.materiality_word.html" title="fn majordomus_cli::reasoning::policy::materiality_word">materiality_<wbr>word</a></dt><dd>The word that names a materiality, the same one its JSON form carries: what a plan’s
+reason sentence prints.</dd><dt><a class="fn" href="fn.plan.html" title="fn majordomus_cli::reasoning::policy::plan">plan</a></dt><dd>Make the plan for one request under one mode, over the advisors’ states in preference
+order. Pure: the same inputs give the same plan, and every advisor not selected is in
+<code>excluded</code> with its reason.</dd></dl></section></div></main></body></html>

@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://majordomus.dev/images/social-card.png">
 <link rel="icon" href="https://majordomus.dev/images/logo-mark.svg" type="image/svg+xml">
-<link rel="stylesheet" href="https://majordomus.dev/app.css?h=c9d3af24213375085bb6">
+<link rel="stylesheet" href="https://majordomus.dev/app.css?h=29701c44b07f0ef76531">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-light.css">
 <link rel="stylesheet" href="https://majordomus.dev/giallo-dark.css"><script>try{var t=localStorage.getItem('color-theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}</script>
 </head>
@@ -164,7 +164,7 @@
       <div class="flex flex-wrap gap-1" role="group" aria-label="Filter by status">
         <button type="button" x-on:click="status = 'all'" :aria-pressed="status === 'all' ? 'true' : 'false'" aria-pressed="true" :class="status === 'all' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">All</button>
         <button type="button" x-on:click="status = 'accepted'" :aria-pressed="status === 'accepted' ? 'true' : 'false'" aria-pressed="false" :class="status === 'accepted' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">accepted <span class="text-body-subtle">24</span></button>
-        <button type="button" x-on:click="status = 'proposed'" :aria-pressed="status === 'proposed' ? 'true' : 'false'" aria-pressed="false" :class="status === 'proposed' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">proposed <span class="text-body-subtle">39</span></button>
+        <button type="button" x-on:click="status = 'proposed'" :aria-pressed="status === 'proposed' ? 'true' : 'false'" aria-pressed="false" :class="status === 'proposed' ? 'bg-brand-softer text-fg-brand-strong' : 'text-body hover:bg-neutral-secondary-medium'" class="rounded-base px-3 py-1.5 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-neutral-tertiary">proposed <span class="text-body-subtle">40</span></button>
       </div>
     </div>
     <p class="mt-2 text-xs text-body-subtle">Filtering runs in the browser. Without JavaScript every entry below is still listed, in the order the index resolves them.</p>
@@ -453,7 +453,7 @@
           <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
             <span>0 outgoing</span>
             <span aria-hidden="true">·</span>
-            <span>1 incoming</span>
+            <span>2 incoming</span>
           </span>
           <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">provider</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">worktree</span></span>
         </a>
@@ -549,7 +549,7 @@
           <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
             <span>0 outgoing</span>
             <span aria-hidden="true">·</span>
-            <span>1 incoming</span>
+            <span>2 incoming</span>
           </span>
           <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">architecture</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">workspace</span></span>
         </a>
@@ -705,7 +705,7 @@
           <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
             <span>4 outgoing</span>
             <span aria-hidden="true">·</span>
-            <span>0 incoming</span>
+            <span>1 incoming</span>
           </span>
           <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">models</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">catalogue</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">routing</span></span>
         </a>
@@ -813,7 +813,7 @@
           <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
             <span>6 outgoing</span>
             <span aria-hidden="true">·</span>
-            <span>0 incoming</span>
+            <span>1 incoming</span>
           </span>
           <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">mesh</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">cooperation</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">security</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">distributed</span></span>
         </a>
@@ -925,12 +925,24 @@
           </span>
           <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">ui</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">cockpit</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">site</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">evidence</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">enforcement</span></span>
         </a>
+      </li><li x-show="(status === 'all' || status === 'proposed') && ('adr-0098 reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim reasoning advisors providers sessions'.includes(q.toLowerCase()))">
+        <a href="https://majordomus.dev/adrs/adr-0098/" class="flex h-full min-w-0 flex-col rounded-base border border-default bg-neutral-primary-soft p-5 shadow-xs hover:bg-neutral-secondary-medium">
+          <span class="mb-2 flex min-w-0 flex-wrap items-center gap-2"><code class="min-w-0 break-all font-mono text-sm font-medium text-fg-brand">adr-0098</code><span class="mj-badge mj-badge--proposed">proposed</span>
+</span>
+          <h2 class="text-base font-semibold leading-snug tracking-tight text-heading">Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim</h2>
+          <span class="mt-auto flex flex-wrap items-center gap-2 pt-3 text-xs text-body-subtle">
+            <span>6 outgoing</span>
+            <span aria-hidden="true">·</span>
+            <span>0 incoming</span>
+          </span>
+          <span class="mt-2 flex flex-wrap gap-1"><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">reasoning</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">advisors</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">providers</span><span class="rounded bg-neutral-secondary-medium px-1.5 py-0.5 font-mono text-xs text-heading">sessions</span></span>
+        </a>
       </li></ul>
   </div>
 
   <div class="mt-12 max-w-3xl">
     <h2 class="text-xl font-semibold tracking-tight text-heading">Where these come from</h2>
-    <p class="mt-3 text-body">63 objects of kind <code class="font-mono text-heading">adr</code>, read from the repository's own layer. Nothing on this page is typed into the site: the source class that discovers the files is declared in the repository's knowledge sources, the executable indexes them, and this page, <code class="font-mono text-heading">majordomus entity show adr/&lt;slug&gt;</code>, the MCP resource <code class="font-mono text-heading">majordomus://adr/&lt;identity&gt;</code> and the Cockpit route <code class="font-mono text-heading">/cockpit/objects/adr/&lt;slug&gt;</code> are all projections of that one index.</p>
+    <p class="mt-3 text-body">64 objects of kind <code class="font-mono text-heading">adr</code>, read from the repository's own layer. Nothing on this page is typed into the site: the source class that discovers the files is declared in the repository's knowledge sources, the executable indexes them, and this page, <code class="font-mono text-heading">majordomus entity show adr/&lt;slug&gt;</code>, the MCP resource <code class="font-mono text-heading">majordomus://adr/&lt;identity&gt;</code> and the Cockpit route <code class="font-mono text-heading">/cockpit/objects/adr/&lt;slug&gt;</code> are all projections of that one index.</p>
     <p class="mt-3 text-body">The references and backlinks each page shows are edges of one graph. A reference is declared in the front matter of the object that makes it; the backlink is that same edge read from the other end, so nothing declares a relationship twice and nothing can declare half of one.</p>
   </div>
 </div>
@@ -995,7 +1007,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <a href="https://majordomus.dev/" class="mb-4 flex items-center gap-2.5 sm:mb-0"><svg viewBox="0 0 64 64" class="h-6 w-6 text-heading" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><title>Prismatic Majordomus</title><g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><!-- one incoming beam: the canonical policy --><path d="M4 32h16"/><!-- the prism: the supervisory layer --><path d="M32 12 46 52H18Z"/><!-- three outgoing beams: the workers --><path d="M44 24l16-8"/><path d="M46 32h14"/><path d="M44 40l16 8"/></g><g fill="currentColor"><circle cx="60" cy="16" r="3"/><circle cx="60" cy="32" r="3"/><circle cx="60" cy="48" r="3"/></g></svg><span class="self-center text-lg font-semibold text-heading">Prismatic Majordomus</span></a>
     </div>
-    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/224520468f0d09f56761a838b10eae4acee9ac31" class="font-mono underline">2245204</a> · inputs <span class="font-mono">ddab2fa77da0</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
+    <p class="block text-sm text-body sm:text-center">Generated from Prismatic Majordomus v0.11.0 · commit <a href="https://github.com/korczis/prismatic-majordomus/commit/0258e440d4a2ab4bb6e44610b9b30fa217a786c8" class="font-mono underline">0258e44</a> · inputs <span class="font-mono">ecf125b98915</span>. Every value on this site is derived from the repository; nothing here is maintained by hand except one short marketing file.</p>
     </div>
   </div>
 </footer>

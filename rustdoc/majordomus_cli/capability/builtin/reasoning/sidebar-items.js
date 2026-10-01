@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADVISORS_URI","REASONING_URI"],"fn":["module"],"struct":["AdvisorCapacity","AdvisorsReport","PlanPreviewInput","ReasoningCheck","ReasoningExplainInput","ReasoningRecordInput","ReasoningRecorded","ReasoningStatus","ReasoningStatusInput"]};

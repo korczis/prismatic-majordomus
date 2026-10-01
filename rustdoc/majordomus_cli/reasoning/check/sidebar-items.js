@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ADAPTER_DIR","CHECKS","INDEPENDENT_SOURCES"],"fn":["catalogue_names","literals_naming","run"],"struct":["ReasoningFinding"]};

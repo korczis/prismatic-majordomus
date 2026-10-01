@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_CAPABILITY","LOCAL_REVIEW"],"enum":["Materiality","PlanOutcome","ReasoningConfidence"],"fn":["budget","materiality_word","plan"],"struct":["ExcludedAdvisor","PlanRequest","ReviewPlan","SelectedAdvisor"]};

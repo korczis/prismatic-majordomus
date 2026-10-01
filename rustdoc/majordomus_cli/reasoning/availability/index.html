@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Which advisors can be asked right now, and why each one that cannot, cannot."><title>majordomus_cli::reasoning::availability - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module availability</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module availability</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>reasoning</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">reasoning</a></div><h1>Module <span>availability</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/reasoning/availability.rs.html#1-1048">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Which advisors can be asked right now, and why each one that cannot, cannot.</p>
+<p>Three inputs, all cheap and none over the network (ADR 0032):</p>
+<ul>
+<li><strong>presence</strong> — an executable on <code>PATH</code>, a credential variable <em>set</em> (its value is
+never read). Presence is what the crate can know; it says “installed/configured”,
+not “answering”, and the status says which it measured.</li>
+<li><strong>the reasoning mode</strong> — <code>offline</code> admits only advisors that stay on the machine,
+<code>ci</code> admits none, the rest admit all; an explicit disable list removes any.</li>
+<li><strong>recorded outcomes</strong> — every consultation a session recorded carries its status.
+A run of transient failures opens the advisor’s circuit for a cooldown, a rate limit
+for its own, an authentication failure for longer; once the cooldown passes the
+advisor is available again and marked <code>recovering</code>. The circuit is therefore a pure
+function of the records and the clock: deterministic, replayable, and never a
+permanent failure nobody configured.</li>
+</ul>
+<p>An empty result is an ordinary answer. A session with no advisor still reasons; it
+reasons locally, and says so.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>One advisor through its lifecycle: present, then two timeouts open its circuit, then
+the cooldown passes and it is available again, marked <code>recovering</code>.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::reasoning::availability::{
+    derive_availability, resolve_mode, AdvisorState, AdvisorStatus, Inputs, Outcome,
+    Presence, FAILURE_COOLDOWN,
+};
+<span class="kw">use </span>majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+<span class="kw">use </span>majordomus_cli::reasoning::record::ConsultationStatus;
+
+<span class="comment">// Presence is the seam a test fakes: this "machine" has the executable `a`.
+</span><span class="kw">struct </span>Installed;
+<span class="kw">impl </span>Presence <span class="kw">for </span>Installed {
+    <span class="kw">fn </span>executable(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str) -&gt; bool { name == <span class="string">"a" </span>}
+    <span class="kw">fn </span>variable(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw">_</span>: <span class="kw-2">&amp;</span>str) -&gt; bool { <span class="bool-val">false </span>}
+}
+<span class="kw">let </span>catalogue: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+    <span class="string">"version: 1\ncapabilities:\n  - id: code_review\n    description: x\nadvisors:\n  - id: a\n    title: A\n    transport: cli\n    adapter: a-cli\n    executable: a\n    capabilities: [code_review]\n"</span>,
+).unwrap();
+<span class="kw">let </span>refs = References::default();
+<span class="kw">let </span>mode = resolve_mode(<span class="prelude-val">None</span>, <span class="bool-val">false</span>, <span class="prelude-val">None</span>);
+<span class="kw">let </span>at = |now: i64, history: <span class="kw-2">&amp;</span>[Outcome]| -&gt; AdvisorState {
+    derive_availability(<span class="kw-2">&amp;</span>catalogue, <span class="kw-2">&amp;</span>Inputs {
+        refs: <span class="kw-2">&amp;</span>refs, presence: <span class="kw-2">&amp;</span>Installed, mode: mode.mode, disabled: <span class="kw-2">&amp;</span>[],
+        history, peers: <span class="kw-2">&amp;</span>[], now, cooldown: <span class="prelude-val">None</span>,
+    })
+    .remove(<span class="number">0</span>)
+};
+
+<span class="macro">assert_eq!</span>(at(<span class="number">0</span>, <span class="kw-2">&amp;</span>[]).status, AdvisorStatus::Available);
+
+<span class="kw">let </span>timeouts: Vec&lt;Outcome&gt; = (<span class="number">0</span>..<span class="number">2</span>)
+    .map(|i| Outcome {
+        id: <span class="macro">format!</span>(<span class="string">"consultation-{i}"</span>),
+        advisor: <span class="string">"a"</span>.into(),
+        status: ConsultationStatus::Timeout,
+        at: <span class="number">100 </span>+ i,
+        retry_after: <span class="prelude-val">None</span>,
+    })
+    .collect();
+<span class="kw">let </span>open = at(<span class="number">102</span>, <span class="kw-2">&amp;</span>timeouts);
+<span class="macro">assert_eq!</span>(open.status, AdvisorStatus::TemporarilyFailed);
+<span class="macro">assert_eq!</span>(open.reason, <span class="string">"consecutive_failures"</span>);
+
+<span class="kw">let </span>later = at(<span class="number">101 </span>+ FAILURE_COOLDOWN, <span class="kw-2">&amp;</span>timeouts);
+<span class="macro">assert_eq!</span>(later.status, AdvisorStatus::Available);
+<span class="macro">assert!</span>(later.recovering);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.AdvisorCircuit.html" title="struct majordomus_cli::reasoning::availability::AdvisorCircuit">Advisor<wbr>Circuit</a></dt><dd>An open circuit: the consultation that opened it, the failures behind it, and when it
+closes. Derived from the records and the clock, never stored.</dd><dt><a class="struct" href="struct.AdvisorState.html" title="struct majordomus_cli::reasoning::availability::AdvisorState">Advisor<wbr>State</a></dt><dd>One advisor as it stands now: what the catalogue declares of it, its status, the one
+machine word saying why, and what was probed. The row <code>reasoning.advisors</code> reports and
+the policy plans over.</dd><dt><a class="struct" href="struct.Inputs.html" title="struct majordomus_cli::reasoning::availability::Inputs">Inputs</a></dt><dd>Everything availability reads besides the catalogue: presence, the mode, the disable
+list, the recorded outcomes, the linked peers and the clock. Holding them in one value
+is what keeps <a href="fn.derive_availability.html" title="fn majordomus_cli::reasoning::availability::derive_availability"><code>derive_availability</code></a> pure.</dd><dt><a class="struct" href="struct.LinkedPeer.html" title="struct majordomus_cli::reasoning::availability::LinkedPeer">Linked<wbr>Peer</a></dt><dd>A linked mesh runtime, as the mesh reports it. Those carrying the feature the
+catalogue’s <code>peers</code> block names become advisors with the id <code>peer:&lt;runtime&gt;</code>.</dd><dt><a class="struct" href="struct.ModeResolution.html" title="struct majordomus_cli::reasoning::availability::ModeResolution">Mode<wbr>Resolution</a></dt><dd>The mode in force and what decided it, as <a href="fn.resolve_mode.html" title="fn majordomus_cli::reasoning::availability::resolve_mode"><code>resolve_mode</code></a> returns it. A plan and a
+report carry the source beside the mode, so a reader learns why the mode is what it is.</dd><dt><a class="struct" href="struct.Outcome.html" title="struct majordomus_cli::reasoning::availability::Outcome">Outcome</a></dt><dd>The recorded outcome of one consultation, as availability reads it: the advisor, how
+the consultation ended and when. The circuit is computed from these alone.</dd><dt><a class="struct" href="struct.SystemPresence.html" title="struct majordomus_cli::reasoning::availability::SystemPresence">System<wbr>Presence</a></dt><dd>The process’s own <code>PATH</code> and environment: an executable counts when a file of its
+name with an execute bit stands in a <code>PATH</code> directory, a variable when it is set and
+non-empty. A name containing <code>/</code> is never an executable on <code>PATH</code>.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.AdvisorStatus.html" title="enum majordomus_cli::reasoning::availability::AdvisorStatus">Advisor<wbr>Status</a></dt><dd>An advisor’s standing: whether it may be asked now and, when not, which kind of
+reason keeps it out. Only <code>available</code> advisors enter a plan.</dd><dt><a class="enum" href="enum.ReasoningMode.html" title="enum majordomus_cli::reasoning::availability::ReasoningMode">Reasoning<wbr>Mode</a></dt><dd>How much independent review a session may use, and where from. The policy reads it
+for the review budget; availability reads it to leave advisors out (<code>ci</code> all of them,
+<code>offline</code> every one that leaves the machine). <code>standard</code> is the default.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.AUTH_COOLDOWN.html" title="constant majordomus_cli::reasoning::availability::AUTH_COOLDOWN">AUTH_<wbr>COOLDOWN</a></dt><dd>How long an authentication failure keeps an advisor out, seconds: a credential is not
+fixed by asking again, so it is not asked again soon.</dd><dt><a class="constant" href="constant.COOLDOWN_ENV.html" title="constant majordomus_cli::reasoning::availability::COOLDOWN_ENV">COOLDOWN_<wbr>ENV</a></dt><dd>The environment variable overriding every circuit cooldown, in seconds.</dd><dt><a class="constant" href="constant.DISABLE_ENV.html" title="constant majordomus_cli::reasoning::availability::DISABLE_ENV">DISABLE_<wbr>ENV</a></dt><dd>The environment variable listing advisors to leave out (comma-separated, or <code>all</code>).</dd><dt><a class="constant" href="constant.FAILURES_TO_OPEN.html" title="constant majordomus_cli::reasoning::availability::FAILURES_TO_OPEN">FAILURES_<wbr>TO_<wbr>OPEN</a></dt><dd>Consecutive transient failures that open a circuit.</dd><dt><a class="constant" href="constant.FAILURE_COOLDOWN.html" title="constant majordomus_cli::reasoning::availability::FAILURE_COOLDOWN">FAILURE_<wbr>COOLDOWN</a></dt><dd>How long a circuit opened by transient failures stays open, seconds.</dd><dt><a class="constant" href="constant.MODE_ENV.html" title="constant majordomus_cli::reasoning::availability::MODE_ENV">MODE_<wbr>ENV</a></dt><dd>The environment variable that names the mode outright.</dd><dt><a class="constant" href="constant.RATE_LIMIT_COOLDOWN.html" title="constant majordomus_cli::reasoning::availability::RATE_LIMIT_COOLDOWN">RATE_<wbr>LIMIT_<wbr>COOLDOWN</a></dt><dd>How long a rate limit is honoured when it names no retry-after, seconds.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Presence.html" title="trait majordomus_cli::reasoning::availability::Presence">Presence</a></dt><dd>What the crate can observe about an advisor’s installation. The one seam tests fake:
+<a href="struct.SystemPresence.html" title="struct majordomus_cli::reasoning::availability::SystemPresence"><code>SystemPresence</code></a> reads the process, and an example or a test answers from a list.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.derive_availability.html" title="fn majordomus_cli::reasoning::availability::derive_availability">derive_<wbr>availability</a></dt><dd>Every advisor — declared ones in preference order, then linked peers by runtime — with
+its status. Pure over its inputs.</dd><dt><a class="fn" href="fn.resolve_mode.html" title="fn majordomus_cli::reasoning::availability::resolve_mode">resolve_<wbr>mode</a></dt><dd>Decide the mode: the variable, else a CI runner, else the active profile’s declared
+mode, else <code>standard</code>. An unreadable word is skipped with its source, never guessed.</dd></dl></section></div></main></body></html>

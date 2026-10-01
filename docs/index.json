@@ -2,18 +2,18 @@
  "schema": 1,
  "generated_by": "scripts/lib/docs-index.mjs",
  "build": {
-  "commit": "224520468f0d09f56761a838b10eae4acee9ac31",
+  "commit": "0258e440d4a2ab4bb6e44610b9b30fa217a786c8",
   "source_version": "0.11.0",
-  "registry_fingerprint": "39729848c70671ada800886fd9434f6e3fb10debcec64f09ede2643f49d4e9cd"
+  "registry_fingerprint": "af6c657fc917d06ffa502da2a613912cb5e995e036d474e1f2ba4fa208cbe290"
  },
  "counts": {
-  "pages": 1627,
-  "capabilities": 1642,
-  "cli_commands": 65,
-  "http_routes": 141,
-  "mcp_tools": 137,
-  "mcp_resources": 1544,
-  "modules": 72
+  "pages": 1663,
+  "capabilities": 1674,
+  "cli_commands": 71,
+  "http_routes": 147,
+  "mcp_tools": 143,
+  "mcp_resources": 1572,
+  "modules": 73
  },
  "kinds": [
   {
@@ -22,7 +22,7 @@
    "route": "/adrs/",
    "title": "Decisions",
    "reason": null,
-   "count": 63
+   "count": 64
   },
   {
    "kind": "application",
@@ -54,7 +54,7 @@
    "route": "/guarantees/",
    "title": null,
    "reason": null,
-   "count": 196
+   "count": 203
   },
   {
    "kind": "command",
@@ -94,7 +94,7 @@
    "route": null,
    "title": null,
    "reason": "A document of the layer is prose already published where it belongs — /docs/, /method/, /context/ — and a second address for the same words is the duplication this file exists to prevent.",
-   "count": 276
+   "count": 284
   },
   {
    "kind": "feature",
@@ -102,7 +102,7 @@
    "route": "/features/",
    "title": null,
    "reason": null,
-   "count": 26
+   "count": 27
   },
   {
    "kind": "implementation",
@@ -190,7 +190,7 @@
    "route": "/rules/",
    "title": "Rules",
    "reason": null,
-   "count": 142
+   "count": 144
   },
   {
    "kind": "scope",
@@ -230,7 +230,7 @@
    "route": null,
    "title": null,
    "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-   "count": 265
+   "count": 272
   },
   {
    "kind": "use-case",
@@ -765,6 +765,14 @@
    "source": ".ai/repo/adrs/0089-an-interface-shows-only-what-is-derived-and-unknown-is-never-healthy.md"
   },
   {
+   "route": "/adrs/adr-0098/",
+   "title": "Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim",
+   "description": "Reasoning is provider-independent, advisors are optional, and review is a recorded fact rather than a claim",
+   "kind": "adr",
+   "id": "majordomus://adr/adr-0098",
+   "source": ".ai/repo/adrs/0098-reasoning-is-provider-independent-advisors-are-optional-and-review-is-recorded.md"
+  },
+  {
    "route": "/applications/",
    "title": "Applications",
    "description": "Where it fits, and where it does not. Every entry declares both, because a catalogue that only lists fits is not a description."
@@ -1143,6 +1151,11 @@
    "route": "/docs/api/quality/",
    "title": "HTTP API: quality",
    "description": "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
+  },
+  {
+   "route": "/docs/api/reasoning/",
+   "title": "HTTP API: reasoning",
+   "description": "Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence."
   },
   {
    "route": "/docs/api/recover/",
@@ -1800,6 +1813,41 @@
    "description": "Judge the crate's rustdoc tree against the crate: every page present, HEAD's, nothing broken or leaked"
   },
   {
+   "route": "/docs/cli/reasoning/",
+   "title": "majordomus reasoning",
+   "description": "Provider-independent reasoning: the optional advisors and what they can do now, what an uncertainty calls for, the session's reasoning records, their state and provenance, and the checks that keep reasoning independent of any advisor"
+  },
+  {
+   "route": "/docs/cli/reasoning/advisors/",
+   "title": "majordomus reasoning advisors",
+   "description": "Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer"
+  },
+  {
+   "route": "/docs/cli/reasoning/check/",
+   "title": "majordomus reasoning check",
+   "description": "Check that reasoning stays provider-independent and that every record is consistent; exit 10 on a finding"
+  },
+  {
+   "route": "/docs/cli/reasoning/explain/",
+   "title": "majordomus reasoning explain",
+   "description": "One record with the whole chain of its assessment: why a decision was made"
+  },
+  {
+   "route": "/docs/cli/reasoning/plan/",
+   "title": "majordomus reasoning plan",
+   "description": "Whether a stated uncertainty warrants independent review, how much, and from which available advisors — with every advisor left out and why; records nothing"
+  },
+  {
+   "route": "/docs/cli/reasoning/record/",
+   "title": "majordomus reasoning record",
+   "description": "Record one reasoning step of the open task from JSON (`{\"kind\":\"assessment\",...}`) read from --file or standard input; a record that breaks a rule is refused and nothing is written"
+  },
+  {
+   "route": "/docs/cli/reasoning/status/",
+   "title": "majordomus reasoning status",
+   "description": "The reasoning state of the open task — assessments, consultations, disagreements, conclusions, the timeline — and the report a handover carries"
+  },
+  {
    "route": "/docs/cli/release/",
    "title": "majordomus release",
    "description": "What this project has shipped and what it would ship next: the changelog derived from the layer's own records, the version authored in one place and projected for the shell tool, and the one command that raises it"
@@ -2260,6 +2308,11 @@
    "description": "what the Rust crate's exported surface is held to: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry — the codes, the ratchet, and the golden path for adding a command"
   },
   {
+   "route": "/docs/reasoning/",
+   "title": "Reasoning",
+   "description": "provider-independent reasoning: material uncertainty assessed with evidence, optional advisors discovered by capability and consulted through one transport contract, disagreement settled by experiment rather than count, conclusions and review recorded, and the state carried across sessions, with no advisor required"
+  },
+  {
    "route": "/docs/release/",
    "title": "The release",
    "description": "the release: the changelog composed from the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version authored in one place, its projection for the shell tool, and the one command that writes it; the bump the commits imply and the evidence for it; and every surface derived from both"
@@ -2685,6 +2738,11 @@
    "description": "The ledger records every durable event with its task and its head; identity fields on any record are computed from git and refused when authored; a closed session is an immutable record of what one episode produced; the person's prompts are captured by the provider's hooks; and retention is capped by policy rather than by forgetting."
   },
   {
+   "route": "/features/reasoning/",
+   "title": "Reasoning that works with or without advisors, and review that is recorded rather than claimed",
+   "description": "share/advisors.yaml declares advisory roles by reference to the provider table and the model catalogue; availability is derived from presence and recorded outcomes, with no network; a pure policy plans review by capability and treats no advisor as a structured local review; one writer records assessments, consultations, disagreements settled by experiment, conclusions with computed review counts, and validations; and the state reaches the command line, HTTP, MCP, the Cockpit, the environment banner, doctor, the context briefing and the derived handover."
+  },
+  {
    "route": "/features/skills/",
    "title": "Skills are procedures as data, discovered and checked, never registered",
    "description": "A skill is a provider-neutral procedure for one bounded kind of work, front matter under a schema over a body with a purpose, a procedure and an output contract; the source class discovers it, skills check holds every one to its contract, and nothing loads a skill unless the task is about it."
@@ -2743,6 +2801,26 @@
    "route": "/guarantees/advertised-install-command-works/",
    "title": "The install command this project advertises is fetched and run from the published site every night and on request, and the run that asked for it is red while it does not install a working tool",
    "description": "Every document here shows one line to a stranger:"
+  },
+  {
+   "route": "/guarantees/advice-is-weighed-not-counted/",
+   "title": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+   "description": "When advice diverges, the divergence is a record — the positions, the assumptions they"
+  },
+  {
+   "route": "/guarantees/advisor-failure-is-recorded-and-recovers/",
+   "title": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+   "description": "A failing advisor costs the session one bounded wait, then the work continues on local"
+  },
+  {
+   "route": "/guarantees/advisor-transports-share-one-contract/",
+   "title": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+   "description": "Whatever an advisor is — an API, a client tool, a local runtime, a mesh peer — talking to"
+  },
+  {
+   "route": "/guarantees/advisors-are-declared-once/",
+   "title": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+   "description": "There is one advisor inventory. Every surface that lists advisors — the command line,"
   },
   {
    "route": "/guarantees/advisory/",
@@ -3410,6 +3488,16 @@
    "description": "AGENTS.md, CLAUDE.md, GEMINI.md and every other target the policy's projections[] declares are caches of two inputs: .ai/repo/policy.yaml with its profiles, and the provider template (.ai/repo/providers/<provider>.tmpl, else the distribution's share/providers/<provider>.tmpl). The Rust executable's majordomus generate providers writes them; majordomus generate --check, which CI runs on every push, derives them again, compares byte for byte, writes nothing, and exits 10 naming every file that differs or is missing. A rule typed into AGENTS.md by hand therefore does not merge."
   },
   {
+   "route": "/guarantees/reasoning-survives-the-session/",
+   "title": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+   "description": "Consultation reduces repeated reasoning instead of multiplying it. A later session reads"
+  },
+  {
+   "route": "/guarantees/reasoning-works-with-no-advisor/",
+   "title": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+   "description": "With none of the declared advisors installed, configured or reachable, a session still"
+  },
+  {
    "route": "/guarantees/record-resolution/",
    "title": "The right prior record is resolved by worktree and branch, and an unrelated one is never offered",
    "description": "handover --resolve, checkpoint --show and context all answer the same question: of the records on disk, which one is about the work happening here? The answer is deterministic, it is explained, and when there is no safe answer it says so instead of offering the nearest thing."
@@ -3453,6 +3541,11 @@
    "route": "/guarantees/retention-caps/",
    "title": "The append-only ledger and handover store have retention caps that are checked",
    "description": "state/ledger.jsonl and state/handovers/ only ever grow. The policy sets a cap for each (ledger.retention_max_lines, handover.retention_max_files); doctor and watch report when a cap is exceeded. Nothing is deleted by Majordomus; the cap makes growth visible before it becomes a problem."
+  },
+  {
+   "route": "/guarantees/review-is-never-fabricated/",
+   "title": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+   "description": "\"Reviewed by\" is a fact about records, never a sentence someone wrote. The design's other"
   },
   {
    "route": "/guarantees/roadmap-derived/",
@@ -5650,6 +5743,36 @@
    "description": "The crate's rustdoc tree — the rustdoc surface's artifact, as the web topology resolves it — judged against the crate's own inventory of exported items: every item that owns a page has it at the route rustdoc gives it, no item page is left without an item, the tree declares it was built from HEAD, the library's index is present and names the crate, its assets are present, every relative link resolves, and no file names the machine it was built on or carries a credential. Answers the verdict (clean, findings, or no_tree when there is nothing to judge), the counts it joined, every exported module with its page, and one typed finding per defect with the file and what to do."
   },
   {
+   "route": "/registry/capabilities/reasoning-advisors/",
+   "title": "reasoning.advisors",
+   "description": "Every declared advisor — then every linked mesh peer carrying the review feature — with its status (available, unavailable, not_configured, disabled, temporarily_failed, rate_limited) and why, from presence alone (an executable on PATH, a credential variable set; never a value), the reasoning mode and the recorded outcomes of earlier consultations. Plus the capacity per advisory capability. No advisor is an ordinary answer: reasoning is operational either way."
+  },
+  {
+   "route": "/registry/capabilities/reasoning-check/",
+   "title": "reasoning.check",
+   "description": "The executable half of the rules advisors-are-optional and review-is-recorded-not-claimed: the advisor catalogue resolves against the provider table and the model catalogue; every adapter it names has its transport module; no provider-independent source names an advisor; no CI workflow or gate names a model credential; no document asserts a refused claim; every stored consultation names an advisor its plan selected, and every conclusion's review matches what it cites."
+  },
+  {
+   "route": "/registry/capabilities/reasoning-explain/",
+   "title": "reasoning.explain",
+   "description": "One reasoning record with the whole chain of its assessment: the uncertainty and its evidence, the plan and who it selected or why nobody, each consultation, each disagreement and the experiment that settled it, the conclusion and its validation — the provenance of a decision without the conversation that produced it."
+  },
+  {
+   "route": "/registry/capabilities/reasoning-plan/",
+   "title": "reasoning.plan",
+   "description": "Decide, without recording anything, whether a stated uncertainty warrants independent review, how much the mode allows, and which available advisors a capability-driven selection would ask — with every advisor left out and why. Trivial and low uncertainty is decided locally; material uncertainty with no suitable advisor gets the structured local review instead. Pure over the catalogue, the availability and the input."
+  },
+  {
+   "route": "/registry/capabilities/reasoning-record/",
+   "title": "reasoning.record",
+   "description": "Write one typed reasoning record of the open task under .ai/local/state/reasoning/: an assessment (with its evidence), a plan (computed here from the availability of this moment, never supplied), a consultation (only of an advisor its plan selected), a disagreement, a resolution (evidence, never a count), a conclusion (its review count computed from the consultations it cites; refused while a disagreement on its assessment is unsettled), a validation or a failed attempt. Secret shapes are redacted before anything is written."
+  },
+  {
+   "route": "/registry/capabilities/reasoning-status/",
+   "title": "reasoning.status",
+   "description": "The reasoning state of the open task (or of a named one, or of all): assessments and where each stands, consultations and how each ended, disagreements and what settled them, conclusions with their computed review and validation, the timeline, token totals the adapters reported, and the Markdown report a handover carries. Derived from the records alone, deterministically."
+  },
+  {
    "route": "/registry/capabilities/recover-orphans/",
    "title": "recover.orphans",
    "description": "Walk the publish temps of every record store, the rename temps under the layer's local half and the tracked sessions section, and the site generator's staging directories at the repository root; give each a verdict by reading its age and then its content; and, unless the call is a check, remove the ones the verdict says nothing is holding. Nothing is deleted for being unrecognised: a temp holding the only copy of a record is reported as `incomplete` and left for the caller to publish, content this version cannot classify is `foreign` and left exactly where it is, a candidate whose age this platform cannot read is `unmeasurable` and never a candidate, and no directory is ever removed. The threshold is required and has no default, because a sweep measuring against an absent threshold would find every file stale."
@@ -5973,6 +6096,11 @@
    "route": "/registry/modules/quality/",
    "title": "Public API quality",
    "description": "What this executable's own public surface is held to, measured from its syntax tree: documentation that says more than the signature, an executable example on everything that carries behaviour, a module boundary something exercises, and every command of the command line accounted for against the capability registry. The rules are project.rust-public-api-quality and project.operation-transport-parity; this is the measurement of them."
+  },
+  {
+   "route": "/registry/modules/reasoning/",
+   "title": "Reasoning",
+   "description": "Provider-independent reasoning (ADR 0098): which optional advisors can be asked and what they offer, what a material uncertainty calls for, the session's typed reasoning records — assessments, plans, consultations, disagreements, resolutions, conclusions, validations, attempts — and the state, timeline and provenance they derive. Nothing here talks to an advisor, and nothing here needs one: with none available, the plan is a structured local review and the session concludes on its own evidence."
   },
   {
    "route": "/registry/modules/recover/",
@@ -6538,6 +6666,14 @@
    "source": ".ai/repo/rules/project/accumulation-is-measured.v2.md"
   },
   {
+   "route": "/rules/project-advisors-are-optional-1/",
+   "title": "Advisors are optional; reasoning, governance and CI never depend on one",
+   "description": "Advisors are optional; reasoning, governance and CI never depend on one",
+   "kind": "rule",
+   "id": "majordomus://rule/project.advisors-are-optional@1",
+   "source": ".ai/repo/rules/project/advisors-are-optional.v1.md"
+  },
+  {
    "route": "/rules/project-benchmarkable-commands-1/",
    "title": "Every public command is benchmarkable from the registry",
    "description": "Every public command is benchmarkable from the registry",
@@ -6994,6 +7130,14 @@
    "source": ".ai/repo/rules/project/release-is-a-projection.v2.md"
   },
   {
+   "route": "/rules/project-review-is-recorded-not-claimed-1/",
+   "title": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+   "description": "Independent review is a recorded fact, weighed by evidence, never claimed and never counted",
+   "kind": "rule",
+   "id": "majordomus://rule/project.review-is-recorded-not-claimed@1",
+   "source": ".ai/repo/rules/project/review-is-recorded-not-claimed.v1.md"
+  },
+  {
    "route": "/rules/project-rule-is-a-doctrine-1/",
    "title": "A new enforced rule is a doctrine, not an inline check",
    "description": "A new enforced rule is a doctrine, not an inline check",
@@ -7188,7 +7332,7 @@
   {
    "route": "/rustdoc/",
    "title": "majordomus-cli 0.11.0 — Rust API reference",
-   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 224520468f0d09f56761a838b10eae4acee9ac31: the public items of the library and of the executable, and the source they were built from."
+   "description": "The rustdoc reference of majordomus-cli 0.11.0, built from commit 0258e440d4a2ab4bb6e44610b9b30fa217a786c8: the public items of the library and of the executable, and the source they were built from."
   },
   {
    "route": "/rustdoc/majordomus/",
@@ -7319,6 +7463,11 @@
    "route": "/rustdoc/majordomus_cli/capability/builtin/quality/",
    "title": "majordomus_cli::capability::builtin::quality - Rust",
    "description": "The `quality` module: what this executable’s own public surface is held to, answered through every transport the surface is measured against."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/capability/builtin/reasoning/",
+   "title": "majordomus_cli::capability::builtin::reasoning - Rust",
+   "description": "The `reasoning` module: provider-independent reasoning, projected (ADR 0098)."
   },
   {
    "route": "/rustdoc/majordomus_cli/capability/builtin/recover/",
@@ -8044,6 +8193,46 @@
    "route": "/rustdoc/majordomus_cli/quality/source/",
    "title": "majordomus_cli::quality::source - Rust",
    "description": "The crate read as a syntax tree: which items this crate actually exports, where each one is declared, what its documentation says, and which of its doc examples run."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/",
+   "title": "majordomus_cli::reasoning - Rust",
+   "description": "Reasoning: how a session turns material engineering uncertainty into a recorded, evidence-backed conclusion — with independent advisors when some are present, and without them when none are. ADR 0098 is the decision; `docs/REASONING.md` the manual."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/availability/",
+   "title": "majordomus_cli::reasoning::availability - Rust",
+   "description": "Which advisors can be asked right now, and why each one that cannot, cannot."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/catalogue/",
+   "title": "majordomus_cli::reasoning::catalogue - Rust",
+   "description": "The advisor catalogue: `share/advisors.yaml`, one declaration of every advisory role a session may consult, in the grain of `share/providers.yaml` and `share/models.yaml`."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/check/",
+   "title": "majordomus_cli::reasoning::check - Rust",
+   "description": "`reasoning.check`: the executable half of the rules `project.advisors-are-optional` and `project.review-is-recorded-not-claimed`. Each check reads files and says what it found; none of them asks an advisor anything."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/policy/",
+   "title": "majordomus_cli::reasoning::policy - Rust",
+   "description": "The consultation policy: given what is uncertain and how much it matters, whether independent review is worth having, how much, and from which available advisors."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/record/",
+   "title": "majordomus_cli::reasoning::record - Rust",
+   "description": "The records a session writes while it reasons: typed engineering artefacts, never a transcript and never hidden reasoning. What is kept is what a later session needs to avoid rediscovering a decision — facts, evidence references, assumptions, questions, positions, conclusions, validation — and nothing an advisor said verbatim beyond the summary its adapter normalised."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/state/",
+   "title": "majordomus_cli::reasoning::state - Rust",
+   "description": "The reasoning state of a session, derived from its records and nothing else: what is uncertain, what was asked and what came back, where advice disagreed and what settled it, what was concluded and whether it was proven — plus the timeline, the degradation that happened along the way, and the report a handover or a final summary carries."
+  },
+  {
+   "route": "/rustdoc/majordomus_cli/reasoning/store/",
+   "title": "majordomus_cli::reasoning::store - Rust",
+   "description": "The one writer of reasoning records, and the rules a record must satisfy before it becomes durable."
   },
   {
    "route": "/rustdoc/majordomus_cli/redaction/",

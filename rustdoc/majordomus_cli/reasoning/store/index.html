@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The one writer of reasoning records, and the rules a record must satisfy before it becomes durable."><title>majordomus_cli::reasoning::store - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module store</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module store</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>reasoning</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">reasoning</a></div><h1>Module <span>store</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/reasoning/store.rs.html#1-1409">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The one writer of reasoning records, and the rules a record must satisfy before it
+becomes durable.</p>
+<p>Records live under <code>.ai/local/state/reasoning/&lt;task&gt;/</code>, one JSON file per record,
+written to a temporary name and renamed into place so that a reader never meets half a
+record and two writers never share a file. They are checkout state (ADR 0005): never
+tracked, never a source, never published.</p>
+<p>Admission is where the design’s promises become refusals:</p>
+<ul>
+<li>a material assessment carries evidence — evidence before opinion;</li>
+<li>a plan is computed here, from the availability at this moment, never supplied;</li>
+<li>a consultation names an advisor its recorded plan selected — no review nobody planned,
+and no claim of review from an advisor that was not available (the plan’s own
+snapshot is the proof); a completed one carries a conclusion, a failed one none;</li>
+<li>a disagreement is settled by a resolution that cites evidence, and a conclusion is
+refused while a disagreement on its assessment is unsettled — there is no path from
+“two advisors said A” to a decision that skips the evidence;</li>
+<li>a conclusion on material uncertainty carries evidence and a validation plan, weighs
+every completed consultation of its assessment, and has its review count computed.</li>
+</ul>
+<p>The lifecycle of a write: <a href="struct.Store.html#method.load" title="method majordomus_cli::reasoning::store::Store::load"><code>Store::load</code></a> reads what is durable, <a href="fn.admit.html" title="fn majordomus_cli::reasoning::store::admit"><code>admit</code></a> checks the
+input against it, <a href="fn.redact.html" title="fn majordomus_cli::reasoning::store::redact"><code>redact</code></a> removes secret shapes, <a href="fn.mint_id.html" title="fn majordomus_cli::reasoning::store::mint_id"><code>mint_id</code></a> names the record, and
+<a href="struct.Store.html#method.write" title="method majordomus_cli::reasoning::store::Store::write"><code>Store::write</code></a> makes it durable where the next <a href="struct.Store.html#method.load" title="method majordomus_cli::reasoning::store::Store::load"><code>Store::load</code></a> finds it.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+<span class="kw">use </span>majordomus_cli::reasoning::record::<span class="kw-2">*</span>;
+<span class="kw">use </span>majordomus_cli::reasoning::store::{admit, mint_id, redact, Admission, Store};
+
+<span class="kw">let </span>dir = tempfile::tempdir().unwrap();
+<span class="kw">let </span>store = Store::at(dir.path());
+<span class="kw">let </span>mode = ModeResolution { mode: ReasoningMode::Standard, source: <span class="string">"default"</span>.into() };
+<span class="kw">let </span>admission = Admission { mode: <span class="kw-2">&amp;</span>mode, availability: <span class="kw-2">&amp;</span>[] };
+
+<span class="kw">let </span>input = ReasoningInput::Assessment(AssessmentInput {
+    subject: <span class="string">"whether the cache survives a restart"</span>.into(),
+    ..Default::default()
+});
+<span class="kw">let </span>(body, redacted) = redact(admit(input, <span class="kw-2">&amp;</span>store.load(), <span class="kw-2">&amp;</span>admission).unwrap());
+<span class="kw">let </span>at = <span class="string">"2026-10-01T00:00:00Z"</span>;
+<span class="kw">let </span>record = ReasoningRecord {
+    schema: RECORD_SCHEMA.into(),
+    version: RECORD_VERSION,
+    id: mint_id(body.kind(), at),
+    task: store.current_task(),
+    recorded_at: at.into(),
+    head: <span class="prelude-val">None</span>,
+    redacted,
+    body,
+};
+store.write(<span class="kw-2">&amp;</span>record).unwrap();
+
+<span class="kw">let </span>loaded = store.load();
+<span class="macro">assert_eq!</span>(loaded.records.len(), <span class="number">1</span>);
+<span class="macro">assert_eq!</span>(loaded.records[<span class="number">0</span>].task, <span class="string">"untasked"</span>);
+<span class="macro">assert!</span>(loaded.get(<span class="kw-2">&amp;</span>record.id).is_some());</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Admission.html" title="struct majordomus_cli::reasoning::store::Admission">Admission</a></dt><dd>What admission needs besides the records.</dd><dt><a class="struct" href="struct.Loaded.html" title="struct majordomus_cli::reasoning::store::Loaded">Loaded</a></dt><dd>The records of a store, read.</dd><dt><a class="struct" href="struct.Refusal.html" title="struct majordomus_cli::reasoning::store::Refusal">Refusal</a></dt><dd>Why a record was refused: one sentence a caller can act on.</dd><dt><a class="struct" href="struct.Store.html" title="struct majordomus_cli::reasoning::store::Store">Store</a></dt><dd>The store of one checkout: the one place reasoning records are read from and written to.</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.STATE_DIR.html" title="constant majordomus_cli::reasoning::store::STATE_DIR">STATE_<wbr>DIR</a></dt><dd>The store’s directory, relative to the repository root.</dd><dt><a class="constant" href="constant.UNTASKED.html" title="constant majordomus_cli::reasoning::store::UNTASKED">UNTASKED</a></dt><dd>The task name of a record written while no task was open.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.admit.html" title="fn majordomus_cli::reasoning::store::admit">admit</a></dt><dd>Admit an input against the records already durable: the body to store, or why not.</dd><dt><a class="fn" href="fn.assessment_of.html" title="fn majordomus_cli::reasoning::store::assessment_of">assessment_<wbr>of</a></dt><dd>The assessment a record belongs to, when it belongs to one.</dd><dt><a class="fn" href="fn.mint_id.html" title="fn majordomus_cli::reasoning::store::mint_id">mint_id</a></dt><dd>A fresh record id: the kind, the stamp, and six hex digits of the moment and process.</dd><dt><a class="fn" href="fn.prior_on_subject.html" title="fn majordomus_cli::reasoning::store::prior_on_subject">prior_<wbr>on_<wbr>subject</a></dt><dd>A standing conclusion on the same subject as an assessment, from any task: what a
+later session reuses instead of asking again.</dd><dt><a class="fn" href="fn.redact.html" title="fn majordomus_cli::reasoning::store::redact">redact</a></dt><dd>Remove every secret shape from every string of a body; the shapes that fired.</dd><dt><a class="fn" href="fn.resolution_of.html" title="fn majordomus_cli::reasoning::store::resolution_of">resolution_<wbr>of</a></dt><dd>The resolution of a disagreement, when there is one.</dd><dt><a class="fn" href="fn.standing_conclusion.html" title="fn majordomus_cli::reasoning::store::standing_conclusion">standing_<wbr>conclusion</a></dt><dd>The conclusion that stands for an assessment: its latest not superseded by another.</dd><dt><a class="fn" href="fn.strip_controls.html" title="fn majordomus_cli::reasoning::store::strip_controls">strip_<wbr>controls</a></dt><dd>A text without control characters: ANSI escape sequences dropped whole, every other
+control character but the newline dropped.</dd></dl></section></div></main></body></html>

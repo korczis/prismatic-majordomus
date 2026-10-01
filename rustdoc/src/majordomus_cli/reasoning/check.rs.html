@@ -1,0 +1,468 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/reasoning/check.rs`."><title>check.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">majordomus_cli/reasoning/</div>check.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! `reasoning.check`: the executable half of the rules `project.advisors-are-optional`
+<a href=#2 id=2 data-nosnippet>2</a>//! and `project.review-is-recorded-not-claimed`. Each check reads files and says what it
+<a href=#3 id=3 data-nosnippet>3</a>//! found; none of them asks an advisor anything.
+<a href=#4 id=4 data-nosnippet>4</a>//!
+<a href=#5 id=5 data-nosnippet>5</a>//! * `catalogue` — the advisor catalogue resolves against the provider table and the
+<a href=#6 id=6 data-nosnippet>6</a>//!   model catalogue (one inventory, referenced, never restated);
+<a href=#7 id=7 data-nosnippet>7</a>//! * `adapters` — every adapter the catalogue names has its transport module, so the Node
+<a href=#8 id=8 data-nosnippet>8</a>//!   layer is derived from the catalogue rather than keeping a list of its own;
+<a href=#9 id=9 data-nosnippet>9</a>//! * `coupling` — the provider-independent code (this module, its capability, its CLI
+<a href=#10 id=10 data-nosnippet>10</a>//!   rendering, its Cockpit page, the transport driver) names no advisor, adapter,
+<a href=#11 id=11 data-nosnippet>11</a>//!   executable, provider, vendor or model of the catalogue as a string literal;
+<a href=#12 id=12 data-nosnippet>12</a>//! * `ci` — no CI workflow or gate names a model vendor's credential variable, so no
+<a href=#13 id=13 data-nosnippet>13</a>//!   required gate can depend on a live model;
+<a href=#14 id=14 data-nosnippet>14</a>//! * `claims` — no document asserts a claim the catalogue forbids ("consensus
+<a href=#15 id=15 data-nosnippet>15</a>//!   guarantees ...") or that an advisor is required;
+<a href=#16 id=16 data-nosnippet>16</a>//! * `records` — every stored record is readable, every consultation names an advisor
+<a href=#17 id=17 data-nosnippet>17</a>//!   its plan selected and one this repository knows, every conclusion's computed review
+<a href=#18 id=18 data-nosnippet>18</a>//!   matches the consultations it cites.
+<a href=#19 id=19 data-nosnippet>19</a>//!
+<a href=#20 id=20 data-nosnippet>20</a>//! The lifecycle: load the catalogue, its references and the store, then [`run`] every
+<a href=#21 id=21 data-nosnippet>21</a>//! check over a repository root; an empty list is a clean repository.
+<a href=#22 id=22 data-nosnippet>22</a>//!
+<a href=#23 id=23 data-nosnippet>23</a>//! ```
+<a href=#24 id=24 data-nosnippet>24</a>//! use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+<a href=#25 id=25 data-nosnippet>25</a>//! use majordomus_cli::reasoning::check::run;
+<a href=#26 id=26 data-nosnippet>26</a>//! use majordomus_cli::reasoning::store::Store;
+<a href=#27 id=27 data-nosnippet>27</a>//!
+<a href=#28 id=28 data-nosnippet>28</a>//! let root = tempfile::tempdir().unwrap();
+<a href=#29 id=29 data-nosnippet>29</a>//! let catalogue = AdvisorCatalogue {
+<a href=#30 id=30 data-nosnippet>30</a>//!     forbidden_claims: vec!["consensus guarantees correctness".into()],
+<a href=#31 id=31 data-nosnippet>31</a>//!     ..Default::default()
+<a href=#32 id=32 data-nosnippet>32</a>//! };
+<a href=#33 id=33 data-nosnippet>33</a>//! let loaded = Store::at(root.path()).load();
+<a href=#34 id=34 data-nosnippet>34</a>//! assert!(run(root.path(), &amp;catalogue, &amp;References::default(), &amp;loaded).is_empty());
+<a href=#35 id=35 data-nosnippet>35</a>//!
+<a href=#36 id=36 data-nosnippet>36</a>//! std::fs::write(root.path().join("README.md"), "Consensus guarantees correctness.\n").unwrap();
+<a href=#37 id=37 data-nosnippet>37</a>//! let findings = run(root.path(), &amp;catalogue, &amp;References::default(), &amp;loaded);
+<a href=#38 id=38 data-nosnippet>38</a>//! assert_eq!(findings.len(), 1);
+<a href=#39 id=39 data-nosnippet>39</a>//! assert_eq!((findings[0].check.as_str(), findings[0].subject.as_str()), ("claims", "README.md"));
+<a href=#40 id=40 data-nosnippet>40</a>//! ```
+<a href=#41 id=41 data-nosnippet>41</a>
+<a href=#42 id=42 data-nosnippet>42</a></span><span class="kw">use </span>std::path::Path;
+<a href=#43 id=43 data-nosnippet>43</a>
+<a href=#44 id=44 data-nosnippet>44</a><span class="kw">use </span>schemars::JsonSchema;
+<a href=#45 id=45 data-nosnippet>45</a><span class="kw">use </span>serde::{Deserialize, Serialize};
+<a href=#46 id=46 data-nosnippet>46</a>
+<a href=#47 id=47 data-nosnippet>47</a><span class="kw">use </span><span class="kw">super</span>::catalogue::{AdvisorCatalogue, References};
+<a href=#48 id=48 data-nosnippet>48</a><span class="kw">use </span><span class="kw">super</span>::record::{ConsultationStatus, ReasoningBody};
+<a href=#49 id=49 data-nosnippet>49</a><span class="kw">use </span><span class="kw">super</span>::store::Loaded;
+<a href=#50 id=50 data-nosnippet>50</a>
+<a href=#51 id=51 data-nosnippet>51</a><span class="doccomment">/// One finding of a reasoning check: which check, where, and what is wrong.
+<a href=#52 id=52 data-nosnippet>52</a>///
+<a href=#53 id=53 data-nosnippet>53</a>/// `check` is one of [`CHECKS`]; `subject` is a repository-relative path, a record id or
+<a href=#54 id=54 data-nosnippet>54</a>/// an advisor; `message` is one sentence saying what the rule refuses. Findings are
+<a href=#55 id=55 data-nosnippet>55</a>/// reported, never repaired.
+<a href=#56 id=56 data-nosnippet>56</a>///
+<a href=#57 id=57 data-nosnippet>57</a>/// ```
+<a href=#58 id=58 data-nosnippet>58</a>/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+<a href=#59 id=59 data-nosnippet>59</a>/// use majordomus_cli::reasoning::check::{run, ReasoningFinding, CHECKS};
+<a href=#60 id=60 data-nosnippet>60</a>/// use majordomus_cli::reasoning::store::Loaded;
+<a href=#61 id=61 data-nosnippet>61</a>///
+<a href=#62 id=62 data-nosnippet>62</a>/// let root = tempfile::tempdir().unwrap();
+<a href=#63 id=63 data-nosnippet>63</a>/// let loaded = Loaded { records: vec![], unreadable: vec!["t/broken.json".into()] };
+<a href=#64 id=64 data-nosnippet>64</a>/// let found = run(root.path(), &amp;AdvisorCatalogue::default(), &amp;References::default(), &amp;loaded);
+<a href=#65 id=65 data-nosnippet>65</a>/// let expected = ReasoningFinding {
+<a href=#66 id=66 data-nosnippet>66</a>///     check: "records".into(),
+<a href=#67 id=67 data-nosnippet>67</a>///     subject: "t/broken.json".into(),
+<a href=#68 id=68 data-nosnippet>68</a>///     message: "a reasoning record that does not parse".into(),
+<a href=#69 id=69 data-nosnippet>69</a>/// };
+<a href=#70 id=70 data-nosnippet>70</a>/// assert_eq!(found, [expected]);
+<a href=#71 id=71 data-nosnippet>71</a>/// assert!(CHECKS.contains(&amp;found[0].check.as_str()));
+<a href=#72 id=72 data-nosnippet>72</a>/// ```
+<a href=#73 id=73 data-nosnippet>73</a></span><span class="attr">#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+<a href=#74 id=74 data-nosnippet>74</a></span><span class="kw">pub struct </span>ReasoningFinding {
+<a href=#75 id=75 data-nosnippet>75</a>    <span class="doccomment">/// The check that found it.
+<a href=#76 id=76 data-nosnippet>76</a>    </span><span class="kw">pub </span>check: String,
+<a href=#77 id=77 data-nosnippet>77</a>    <span class="doccomment">/// Where: a file, a record, an advisor.
+<a href=#78 id=78 data-nosnippet>78</a>    </span><span class="kw">pub </span>subject: String,
+<a href=#79 id=79 data-nosnippet>79</a>    <span class="doccomment">/// What is wrong.
+<a href=#80 id=80 data-nosnippet>80</a>    </span><span class="kw">pub </span>message: String,
+<a href=#81 id=81 data-nosnippet>81</a>}
+<a href=#82 id=82 data-nosnippet>82</a>
+<a href=#83 id=83 data-nosnippet>83</a><span class="doccomment">/// The source files that must stay provider-independent, relative to the root.
+<a href=#84 id=84 data-nosnippet>84</a></span><span class="kw">pub const </span>INDEPENDENT_SOURCES: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="string">"apps/majordomus-cli/src/reasoning"</span>,
+<a href=#86 id=86 data-nosnippet>86</a>    <span class="string">"apps/majordomus-cli/src/capability/builtin/reasoning.rs"</span>,
+<a href=#87 id=87 data-nosnippet>87</a>    <span class="string">"apps/majordomus-cli/src/commands/reasoning.rs"</span>,
+<a href=#88 id=88 data-nosnippet>88</a>    <span class="string">"apps/majordomus-cli/src/cockpit/reasoning.rs"</span>,
+<a href=#89 id=89 data-nosnippet>89</a>    <span class="string">"scripts/lib/advisors/driver.mjs"</span>,
+<a href=#90 id=90 data-nosnippet>90</a>    <span class="string">"scripts/lib/advisors/contract.mjs"</span>,
+<a href=#91 id=91 data-nosnippet>91</a>];
+<a href=#92 id=92 data-nosnippet>92</a>
+<a href=#93 id=93 data-nosnippet>93</a><span class="doccomment">/// Where the transport adapters live, relative to the root.
+<a href=#94 id=94 data-nosnippet>94</a></span><span class="kw">pub const </span>ADAPTER_DIR: <span class="kw-2">&amp;</span>str = <span class="string">"scripts/lib/advisors"</span>;
+<a href=#95 id=95 data-nosnippet>95</a>
+<a href=#96 id=96 data-nosnippet>96</a><span class="kw">fn </span>files_under(root: <span class="kw-2">&amp;</span>Path, rel: <span class="kw-2">&amp;</span>str, ext: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; Vec&lt;std::path::PathBuf&gt; {
+<a href=#97 id=97 data-nosnippet>97</a>    <span class="kw">let </span>path = root.join(rel);
+<a href=#98 id=98 data-nosnippet>98</a>    <span class="comment">// ordered by construction: a directory listing has no order of its own
+<a href=#99 id=99 data-nosnippet>99</a>    </span><span class="kw">let </span><span class="kw-2">mut </span>out = std::collections::BTreeSet::new();
+<a href=#100 id=100 data-nosnippet>100</a>    <span class="kw">if </span>path.is_file() {
+<a href=#101 id=101 data-nosnippet>101</a>        out.insert(path);
+<a href=#102 id=102 data-nosnippet>102</a>    } <span class="kw">else if let </span><span class="prelude-val">Ok</span>(entries) = std::fs::read_dir(<span class="kw-2">&amp;</span>path) {
+<a href=#103 id=103 data-nosnippet>103</a>        <span class="kw">for </span>e <span class="kw">in </span>entries.flatten() {
+<a href=#104 id=104 data-nosnippet>104</a>            <span class="kw">let </span>p = e.path();
+<a href=#105 id=105 data-nosnippet>105</a>            <span class="kw">if </span>p.is_dir() {
+<a href=#106 id=106 data-nosnippet>106</a>                <span class="kw">if let </span><span class="prelude-val">Ok</span>(r) = p.strip_prefix(root) {
+<a href=#107 id=107 data-nosnippet>107</a>                    out.extend(files_under(root, <span class="kw-2">&amp;</span>r.display().to_string(), ext));
+<a href=#108 id=108 data-nosnippet>108</a>                }
+<a href=#109 id=109 data-nosnippet>109</a>            } <span class="kw">else if </span>p
+<a href=#110 id=110 data-nosnippet>110</a>                .extension()
+<a href=#111 id=111 data-nosnippet>111</a>                .and_then(|x| x.to_str())
+<a href=#112 id=112 data-nosnippet>112</a>                .is_some_and(|x| ext.contains(<span class="kw-2">&amp;</span>x))
+<a href=#113 id=113 data-nosnippet>113</a>            {
+<a href=#114 id=114 data-nosnippet>114</a>                out.insert(p);
+<a href=#115 id=115 data-nosnippet>115</a>            }
+<a href=#116 id=116 data-nosnippet>116</a>        }
+<a href=#117 id=117 data-nosnippet>117</a>    }
+<a href=#118 id=118 data-nosnippet>118</a>    out.into_iter().collect()
+<a href=#119 id=119 data-nosnippet>119</a>}
+<a href=#120 id=120 data-nosnippet>120</a>
+<a href=#121 id=121 data-nosnippet>121</a><span class="doccomment">/// The names the independent code must not spell.
+<a href=#122 id=122 data-nosnippet>122</a>///
+<a href=#123 id=123 data-nosnippet>123</a>/// Every advisor's id, adapter, executable, provider, vendor and model, and the peer
+<a href=#124 id=124 data-nosnippet>124</a>/// adapter when peers are declared: each once, in canonical order. These are the
+<a href=#125 id=125 data-nosnippet>125</a>/// literals the `coupling` check looks for.
+<a href=#126 id=126 data-nosnippet>126</a>///
+<a href=#127 id=127 data-nosnippet>127</a>/// ```
+<a href=#128 id=128 data-nosnippet>128</a>/// use majordomus_cli::reasoning::catalogue::AdvisorCatalogue;
+<a href=#129 id=129 data-nosnippet>129</a>/// use majordomus_cli::reasoning::check::catalogue_names;
+<a href=#130 id=130 data-nosnippet>130</a>///
+<a href=#131 id=131 data-nosnippet>131</a>/// let catalogue: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+<a href=#132 id=132 data-nosnippet>132</a>///     "version: 1\nadvisors:\n  - id: alpha\n    title: Alpha\n    transport: cli\n    adapter: alpha-cli\n    executable: alpha\n",
+<a href=#133 id=133 data-nosnippet>133</a>/// )
+<a href=#134 id=134 data-nosnippet>134</a>/// .unwrap();
+<a href=#135 id=135 data-nosnippet>135</a>/// assert_eq!(catalogue_names(&amp;catalogue), ["alpha", "alpha-cli"]);
+<a href=#136 id=136 data-nosnippet>136</a>/// ```
+<a href=#137 id=137 data-nosnippet>137</a></span><span class="kw">pub fn </span>catalogue_names(catalogue: <span class="kw-2">&amp;</span>AdvisorCatalogue) -&gt; Vec&lt;String&gt; {
+<a href=#138 id=138 data-nosnippet>138</a>    <span class="kw">let </span><span class="kw-2">mut </span>names = Vec::new();
+<a href=#139 id=139 data-nosnippet>139</a>    <span class="kw">for </span>a <span class="kw">in </span><span class="kw-2">&amp;</span>catalogue.advisors {
+<a href=#140 id=140 data-nosnippet>140</a>        names.push(a.id.clone());
+<a href=#141 id=141 data-nosnippet>141</a>        names.push(a.adapter.clone());
+<a href=#142 id=142 data-nosnippet>142</a>        names.extend(a.executable.clone());
+<a href=#143 id=143 data-nosnippet>143</a>        names.extend(a.provider.clone());
+<a href=#144 id=144 data-nosnippet>144</a>        names.extend(a.vendor.clone());
+<a href=#145 id=145 data-nosnippet>145</a>        names.extend(a.model.clone());
+<a href=#146 id=146 data-nosnippet>146</a>    }
+<a href=#147 id=147 data-nosnippet>147</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = <span class="kw-2">&amp;</span>catalogue.peers {
+<a href=#148 id=148 data-nosnippet>148</a>        names.push(p.adapter.clone());
+<a href=#149 id=149 data-nosnippet>149</a>    }
+<a href=#150 id=150 data-nosnippet>150</a>    <span class="kw">crate</span>::order::canonical(<span class="kw-2">&amp;mut </span>names);
+<a href=#151 id=151 data-nosnippet>151</a>    names.dedup();
+<a href=#152 id=152 data-nosnippet>152</a>    names
+<a href=#153 id=153 data-nosnippet>153</a>}
+<a href=#154 id=154 data-nosnippet>154</a>
+<a href=#155 id=155 data-nosnippet>155</a><span class="doccomment">/// String literals of a source naming any of `names`: `"name"` or `'name'`, exactly.
+<a href=#156 id=156 data-nosnippet>156</a>///
+<a href=#157 id=157 data-nosnippet>157</a>/// A name inside prose, a path or a longer literal is not a hit: only a literal that is
+<a href=#158 id=158 data-nosnippet>158</a>/// the name and nothing else couples code to an advisor. Each name is reported once, in
+<a href=#159 id=159 data-nosnippet>159</a>/// the order of `names`.
+<a href=#160 id=160 data-nosnippet>160</a>///
+<a href=#161 id=161 data-nosnippet>161</a>/// ```
+<a href=#162 id=162 data-nosnippet>162</a>/// use majordomus_cli::reasoning::check::literals_naming;
+<a href=#163 id=163 data-nosnippet>163</a>///
+<a href=#164 id=164 data-nosnippet>164</a>/// let names = vec!["alpha".to_string(), "beta".to_string()];
+<a href=#165 id=165 data-nosnippet>165</a>/// let source = "let a = \"alpha\"; let b = 'alpha'; // the beta advisor\nimport('./beta.mjs')";
+<a href=#166 id=166 data-nosnippet>166</a>/// assert_eq!(literals_naming(source, &amp;names), ["alpha"]);
+<a href=#167 id=167 data-nosnippet>167</a>/// ```
+<a href=#168 id=168 data-nosnippet>168</a></span><span class="kw">pub fn </span>literals_naming(text: <span class="kw-2">&amp;</span>str, names: <span class="kw-2">&amp;</span>[String]) -&gt; Vec&lt;String&gt; {
+<a href=#169 id=169 data-nosnippet>169</a>    <span class="kw">let </span><span class="kw-2">mut </span>hits = Vec::new();
+<a href=#170 id=170 data-nosnippet>170</a>    <span class="kw">for </span>n <span class="kw">in </span>names {
+<a href=#171 id=171 data-nosnippet>171</a>        <span class="kw">for </span>quote <span class="kw">in </span>[<span class="string">'"'</span>, <span class="string">'\''</span>] {
+<a href=#172 id=172 data-nosnippet>172</a>            <span class="kw">let </span>needle = <span class="macro">format!</span>(<span class="string">"{quote}{n}{quote}"</span>);
+<a href=#173 id=173 data-nosnippet>173</a>            <span class="kw">if </span>text.contains(<span class="kw-2">&amp;</span>needle) &amp;&amp; !hits.contains(n) {
+<a href=#174 id=174 data-nosnippet>174</a>                hits.push(n.clone());
+<a href=#175 id=175 data-nosnippet>175</a>            }
+<a href=#176 id=176 data-nosnippet>176</a>        }
+<a href=#177 id=177 data-nosnippet>177</a>    }
+<a href=#178 id=178 data-nosnippet>178</a>    hits
+<a href=#179 id=179 data-nosnippet>179</a>}
+<a href=#180 id=180 data-nosnippet>180</a>
+<a href=#181 id=181 data-nosnippet>181</a><span class="doccomment">/// Run every check over the repository at `root`, in the order of [`CHECKS`].
+<a href=#182 id=182 data-nosnippet>182</a>///
+<a href=#183 id=183 data-nosnippet>183</a>/// It reads the catalogue, the adapter modules, the provider-independent sources, the CI
+<a href=#184 id=184 data-nosnippet>184</a>/// workflows, the documentation and the loaded records, and asks no advisor anything.
+<a href=#185 id=185 data-nosnippet>185</a>/// The findings come back in check order; an empty list means every rule holds.
+<a href=#186 id=186 data-nosnippet>186</a>///
+<a href=#187 id=187 data-nosnippet>187</a>/// ```
+<a href=#188 id=188 data-nosnippet>188</a>/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+<a href=#189 id=189 data-nosnippet>189</a>/// use majordomus_cli::reasoning::check::run;
+<a href=#190 id=190 data-nosnippet>190</a>/// use majordomus_cli::reasoning::record::ReasoningRecord;
+<a href=#191 id=191 data-nosnippet>191</a>/// use majordomus_cli::reasoning::store::Loaded;
+<a href=#192 id=192 data-nosnippet>192</a>///
+<a href=#193 id=193 data-nosnippet>193</a>/// let record: ReasoningRecord = serde_json::from_value(serde_json::json!({
+<a href=#194 id=194 data-nosnippet>194</a>///     "schema": "majordomus/reasoning-record", "version": 1, "id": "consultation-1",
+<a href=#195 id=195 data-nosnippet>195</a>///     "task": "t", "recorded_at": "2026-10-01T00:00:01Z",
+<a href=#196 id=196 data-nosnippet>196</a>///     "body": {
+<a href=#197 id=197 data-nosnippet>197</a>///         "kind": "consultation", "plan": "plan-0", "advisor": "alpha", "status": "timeout",
+<a href=#198 id=198 data-nosnippet>198</a>///     },
+<a href=#199 id=199 data-nosnippet>199</a>/// }))
+<a href=#200 id=200 data-nosnippet>200</a>/// .unwrap();
+<a href=#201 id=201 data-nosnippet>201</a>/// let loaded = Loaded { records: vec![record], unreadable: vec![] };
+<a href=#202 id=202 data-nosnippet>202</a>/// let root = tempfile::tempdir().unwrap();
+<a href=#203 id=203 data-nosnippet>203</a>/// let found = run(root.path(), &amp;AdvisorCatalogue::default(), &amp;References::default(), &amp;loaded);
+<a href=#204 id=204 data-nosnippet>204</a>/// let messages: Vec&lt;&amp;str&gt; = found.iter().map(|f| f.message.as_str()).collect();
+<a href=#205 id=205 data-nosnippet>205</a>/// assert_eq!(
+<a href=#206 id=206 data-nosnippet>206</a>///     messages,
+<a href=#207 id=207 data-nosnippet>207</a>///     [
+<a href=#208 id=208 data-nosnippet>208</a>///         "names advisor 'alpha', which the catalogue does not declare",
+<a href=#209 id=209 data-nosnippet>209</a>///         "cites plan plan-0, which is not recorded",
+<a href=#210 id=210 data-nosnippet>210</a>///     ]
+<a href=#211 id=211 data-nosnippet>211</a>/// );
+<a href=#212 id=212 data-nosnippet>212</a>/// ```
+<a href=#213 id=213 data-nosnippet>213</a></span><span class="kw">pub fn </span>run(
+<a href=#214 id=214 data-nosnippet>214</a>    root: <span class="kw-2">&amp;</span>Path,
+<a href=#215 id=215 data-nosnippet>215</a>    catalogue: <span class="kw-2">&amp;</span>AdvisorCatalogue,
+<a href=#216 id=216 data-nosnippet>216</a>    refs: <span class="kw-2">&amp;</span>References,
+<a href=#217 id=217 data-nosnippet>217</a>    loaded: <span class="kw-2">&amp;</span>Loaded,
+<a href=#218 id=218 data-nosnippet>218</a>) -&gt; Vec&lt;ReasoningFinding&gt; {
+<a href=#219 id=219 data-nosnippet>219</a>    <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="kw">let </span><span class="kw-2">mut </span>push = |check: <span class="kw-2">&amp;</span>str, subject: String, message: String| {
+<a href=#221 id=221 data-nosnippet>221</a>        out.push(ReasoningFinding {
+<a href=#222 id=222 data-nosnippet>222</a>            check: check.into(),
+<a href=#223 id=223 data-nosnippet>223</a>            subject,
+<a href=#224 id=224 data-nosnippet>224</a>            message,
+<a href=#225 id=225 data-nosnippet>225</a>        })
+<a href=#226 id=226 data-nosnippet>226</a>    };
+<a href=#227 id=227 data-nosnippet>227</a>
+<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">for </span>d <span class="kw">in </span>catalogue.diagnostics(refs) {
+<a href=#229 id=229 data-nosnippet>229</a>        push(<span class="string">"catalogue"</span>, <span class="string">"share/advisors.yaml"</span>.into(), d);
+<a href=#230 id=230 data-nosnippet>230</a>    }
+<a href=#231 id=231 data-nosnippet>231</a>
+<a href=#232 id=232 data-nosnippet>232</a>    <span class="kw">if </span>root.join(ADAPTER_DIR).is_dir() {
+<a href=#233 id=233 data-nosnippet>233</a>        <span class="kw">let </span><span class="kw-2">mut </span>adapters: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = catalogue
+<a href=#234 id=234 data-nosnippet>234</a>            .advisors
+<a href=#235 id=235 data-nosnippet>235</a>            .iter()
+<a href=#236 id=236 data-nosnippet>236</a>            .map(|a| a.adapter.as_str())
+<a href=#237 id=237 data-nosnippet>237</a>            .collect();
+<a href=#238 id=238 data-nosnippet>238</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = <span class="kw-2">&amp;</span>catalogue.peers {
+<a href=#239 id=239 data-nosnippet>239</a>            adapters.push(<span class="kw-2">&amp;</span>p.adapter);
+<a href=#240 id=240 data-nosnippet>240</a>        }
+<a href=#241 id=241 data-nosnippet>241</a>        <span class="kw">for </span>adapter <span class="kw">in </span>adapters {
+<a href=#242 id=242 data-nosnippet>242</a>            <span class="kw">let </span>module = <span class="macro">format!</span>(<span class="string">"{ADAPTER_DIR}/{adapter}.mjs"</span>);
+<a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">if </span>!root.join(<span class="kw-2">&amp;</span>module).is_file() {
+<a href=#244 id=244 data-nosnippet>244</a>                push(
+<a href=#245 id=245 data-nosnippet>245</a>                    <span class="string">"adapters"</span>,
+<a href=#246 id=246 data-nosnippet>246</a>                    module.clone(),
+<a href=#247 id=247 data-nosnippet>247</a>                    <span class="macro">format!</span>(<span class="string">"the catalogue names adapter '{adapter}' and no transport module {module} implements it"</span>),
+<a href=#248 id=248 data-nosnippet>248</a>                );
+<a href=#249 id=249 data-nosnippet>249</a>            }
+<a href=#250 id=250 data-nosnippet>250</a>        }
+<a href=#251 id=251 data-nosnippet>251</a>    }
+<a href=#252 id=252 data-nosnippet>252</a>
+<a href=#253 id=253 data-nosnippet>253</a>    <span class="kw">let </span>names = catalogue_names(catalogue);
+<a href=#254 id=254 data-nosnippet>254</a>    <span class="kw">for </span>rel <span class="kw">in </span>INDEPENDENT_SOURCES {
+<a href=#255 id=255 data-nosnippet>255</a>        <span class="kw">for </span>file <span class="kw">in </span>files_under(root, rel, <span class="kw-2">&amp;</span>[<span class="string">"rs"</span>, <span class="string">"mjs"</span>]) {
+<a href=#256 id=256 data-nosnippet>256</a>            <span class="kw">let </span><span class="prelude-val">Ok</span>(text) = std::fs::read_to_string(<span class="kw-2">&amp;</span>file) <span class="kw">else </span>{
+<a href=#257 id=257 data-nosnippet>257</a>                <span class="kw">continue</span>;
+<a href=#258 id=258 data-nosnippet>258</a>            };
+<a href=#259 id=259 data-nosnippet>259</a>            <span class="kw">for </span>n <span class="kw">in </span>literals_naming(<span class="kw-2">&amp;</span>text, <span class="kw-2">&amp;</span>names) {
+<a href=#260 id=260 data-nosnippet>260</a>                push(
+<a href=#261 id=261 data-nosnippet>261</a>                    <span class="string">"coupling"</span>,
+<a href=#262 id=262 data-nosnippet>262</a>                    file.strip_prefix(root).unwrap_or(<span class="kw-2">&amp;</span>file).display().to_string(),
+<a href=#263 id=263 data-nosnippet>263</a>                    <span class="macro">format!</span>(<span class="string">"provider-independent code names '{n}'; it must reach advisors through the catalogue"</span>),
+<a href=#264 id=264 data-nosnippet>264</a>                );
+<a href=#265 id=265 data-nosnippet>265</a>            }
+<a href=#266 id=266 data-nosnippet>266</a>        }
+<a href=#267 id=267 data-nosnippet>267</a>    }
+<a href=#268 id=268 data-nosnippet>268</a>
+<a href=#269 id=269 data-nosnippet>269</a>    <span class="kw">let </span>credentials: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = refs
+<a href=#270 id=270 data-nosnippet>270</a>        .models
+<a href=#271 id=271 data-nosnippet>271</a>        .vendors
+<a href=#272 id=272 data-nosnippet>272</a>        .iter()
+<a href=#273 id=273 data-nosnippet>273</a>        .filter_map(|v| v.credential_env.as_deref())
+<a href=#274 id=274 data-nosnippet>274</a>        .collect();
+<a href=#275 id=275 data-nosnippet>275</a>    <span class="kw">let </span><span class="kw-2">mut </span>ci_files = files_under(root, <span class="string">".github/workflows"</span>, <span class="kw-2">&amp;</span>[<span class="string">"yml"</span>, <span class="string">"yaml"</span>]);
+<a href=#276 id=276 data-nosnippet>276</a>    ci_files.extend(files_under(root, <span class="string">".ai/repo/ci/gates.yaml"</span>, <span class="kw-2">&amp;</span>[<span class="string">"yaml"</span>]));
+<a href=#277 id=277 data-nosnippet>277</a>    <span class="kw">for </span>file <span class="kw">in </span>ci_files {
+<a href=#278 id=278 data-nosnippet>278</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(text) = std::fs::read_to_string(<span class="kw-2">&amp;</span>file) <span class="kw">else </span>{
+<a href=#279 id=279 data-nosnippet>279</a>            <span class="kw">continue</span>;
+<a href=#280 id=280 data-nosnippet>280</a>        };
+<a href=#281 id=281 data-nosnippet>281</a>        <span class="kw">for </span>var <span class="kw">in </span><span class="kw-2">&amp;</span>credentials {
+<a href=#282 id=282 data-nosnippet>282</a>            <span class="kw">if </span>text.contains(var) {
+<a href=#283 id=283 data-nosnippet>283</a>                push(
+<a href=#284 id=284 data-nosnippet>284</a>                    <span class="string">"ci"</span>,
+<a href=#285 id=285 data-nosnippet>285</a>                    file.strip_prefix(root)
+<a href=#286 id=286 data-nosnippet>286</a>                        .unwrap_or(<span class="kw-2">&amp;</span>file)
+<a href=#287 id=287 data-nosnippet>287</a>                        .display()
+<a href=#288 id=288 data-nosnippet>288</a>                        .to_string(),
+<a href=#289 id=289 data-nosnippet>289</a>                    <span class="macro">format!</span>(
+<a href=#290 id=290 data-nosnippet>290</a>                        <span class="string">"CI names the model credential {var}; no gate may depend on a live model"
+<a href=#291 id=291 data-nosnippet>291</a>                    </span>),
+<a href=#292 id=292 data-nosnippet>292</a>                );
+<a href=#293 id=293 data-nosnippet>293</a>            }
+<a href=#294 id=294 data-nosnippet>294</a>        }
+<a href=#295 id=295 data-nosnippet>295</a>    }
+<a href=#296 id=296 data-nosnippet>296</a>
+<a href=#297 id=297 data-nosnippet>297</a>    <span class="kw">let </span><span class="kw-2">mut </span>phrases: Vec&lt;String&gt; = catalogue
+<a href=#298 id=298 data-nosnippet>298</a>        .forbidden_claims
+<a href=#299 id=299 data-nosnippet>299</a>        .iter()
+<a href=#300 id=300 data-nosnippet>300</a>        .map(|p| p.to_lowercase())
+<a href=#301 id=301 data-nosnippet>301</a>        .collect();
+<a href=#302 id=302 data-nosnippet>302</a>    <span class="kw">for </span>a <span class="kw">in </span><span class="kw-2">&amp;</span>catalogue.advisors {
+<a href=#303 id=303 data-nosnippet>303</a>        <span class="kw">let </span>t = a.title.to_lowercase();
+<a href=#304 id=304 data-nosnippet>304</a>        phrases.push(<span class="macro">format!</span>(<span class="string">"requires {t}"</span>));
+<a href=#305 id=305 data-nosnippet>305</a>        phrases.push(<span class="macro">format!</span>(<span class="string">"{t} is required"</span>));
+<a href=#306 id=306 data-nosnippet>306</a>    }
+<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">let </span><span class="kw-2">mut </span>docs = files_under(root, <span class="string">"docs"</span>, <span class="kw-2">&amp;</span>[<span class="string">"md"</span>]);
+<a href=#308 id=308 data-nosnippet>308</a>    docs.extend(files_under(root, <span class="string">"site/content"</span>, <span class="kw-2">&amp;</span>[<span class="string">"md"</span>]));
+<a href=#309 id=309 data-nosnippet>309</a>    docs.extend(files_under(root, <span class="string">".ai/repo"</span>, <span class="kw-2">&amp;</span>[<span class="string">"md"</span>]));
+<a href=#310 id=310 data-nosnippet>310</a>    docs.push(root.join(<span class="string">"README.md"</span>));
+<a href=#311 id=311 data-nosnippet>311</a>    <span class="kw">for </span>file <span class="kw">in </span>docs {
+<a href=#312 id=312 data-nosnippet>312</a>        <span class="kw">let </span><span class="prelude-val">Ok</span>(text) = std::fs::read_to_string(<span class="kw-2">&amp;</span>file) <span class="kw">else </span>{
+<a href=#313 id=313 data-nosnippet>313</a>            <span class="kw">continue</span>;
+<a href=#314 id=314 data-nosnippet>314</a>        };
+<a href=#315 id=315 data-nosnippet>315</a>        <span class="kw">let </span>lower = text.to_lowercase();
+<a href=#316 id=316 data-nosnippet>316</a>        <span class="kw">for </span>p <span class="kw">in </span><span class="kw-2">&amp;</span>phrases {
+<a href=#317 id=317 data-nosnippet>317</a>            <span class="kw">if </span>lower.contains(p.as_str()) {
+<a href=#318 id=318 data-nosnippet>318</a>                push(
+<a href=#319 id=319 data-nosnippet>319</a>                    <span class="string">"claims"</span>,
+<a href=#320 id=320 data-nosnippet>320</a>                    file.strip_prefix(root)
+<a href=#321 id=321 data-nosnippet>321</a>                        .unwrap_or(<span class="kw-2">&amp;</span>file)
+<a href=#322 id=322 data-nosnippet>322</a>                        .display()
+<a href=#323 id=323 data-nosnippet>323</a>                        .to_string(),
+<a href=#324 id=324 data-nosnippet>324</a>                    <span class="macro">format!</span>(<span class="string">"asserts '{p}', a claim the reasoning design refuses"</span>),
+<a href=#325 id=325 data-nosnippet>325</a>                );
+<a href=#326 id=326 data-nosnippet>326</a>            }
+<a href=#327 id=327 data-nosnippet>327</a>        }
+<a href=#328 id=328 data-nosnippet>328</a>    }
+<a href=#329 id=329 data-nosnippet>329</a>
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="kw">for </span>u <span class="kw">in </span><span class="kw-2">&amp;</span>loaded.unreadable {
+<a href=#331 id=331 data-nosnippet>331</a>        push(
+<a href=#332 id=332 data-nosnippet>332</a>            <span class="string">"records"</span>,
+<a href=#333 id=333 data-nosnippet>333</a>            u.clone(),
+<a href=#334 id=334 data-nosnippet>334</a>            <span class="string">"a reasoning record that does not parse"</span>.into(),
+<a href=#335 id=335 data-nosnippet>335</a>        );
+<a href=#336 id=336 data-nosnippet>336</a>    }
+<a href=#337 id=337 data-nosnippet>337</a>    <span class="kw">for </span>r <span class="kw">in </span><span class="kw-2">&amp;</span>loaded.records {
+<a href=#338 id=338 data-nosnippet>338</a>        <span class="kw">match </span><span class="kw-2">&amp;</span>r.body {
+<a href=#339 id=339 data-nosnippet>339</a>            ReasoningBody::Consultation(c) =&gt; {
+<a href=#340 id=340 data-nosnippet>340</a>                <span class="kw">let </span>known = catalogue.get(<span class="kw-2">&amp;</span>c.advisor).is_some() || c.advisor.starts_with(<span class="string">"peer:"</span>);
+<a href=#341 id=341 data-nosnippet>341</a>                <span class="kw">if </span>!known {
+<a href=#342 id=342 data-nosnippet>342</a>                    push(
+<a href=#343 id=343 data-nosnippet>343</a>                        <span class="string">"records"</span>,
+<a href=#344 id=344 data-nosnippet>344</a>                        r.id.clone(),
+<a href=#345 id=345 data-nosnippet>345</a>                        <span class="macro">format!</span>(
+<a href=#346 id=346 data-nosnippet>346</a>                            <span class="string">"names advisor '{}', which the catalogue does not declare"</span>,
+<a href=#347 id=347 data-nosnippet>347</a>                            c.advisor
+<a href=#348 id=348 data-nosnippet>348</a>                        ),
+<a href=#349 id=349 data-nosnippet>349</a>                    );
+<a href=#350 id=350 data-nosnippet>350</a>                }
+<a href=#351 id=351 data-nosnippet>351</a>                <span class="kw">match </span>loaded.get(<span class="kw-2">&amp;</span>c.plan).map(|p| <span class="kw-2">&amp;</span>p.body) {
+<a href=#352 id=352 data-nosnippet>352</a>                    <span class="prelude-val">Some</span>(ReasoningBody::Plan(p)) =&gt; {
+<a href=#353 id=353 data-nosnippet>353</a>                        <span class="kw">if </span>!p.plan.selected.iter().any(|s| s.advisor == c.advisor) {
+<a href=#354 id=354 data-nosnippet>354</a>                            push(
+<a href=#355 id=355 data-nosnippet>355</a>                                <span class="string">"records"</span>,
+<a href=#356 id=356 data-nosnippet>356</a>                                r.id.clone(),
+<a href=#357 id=357 data-nosnippet>357</a>                                <span class="macro">format!</span>(
+<a href=#358 id=358 data-nosnippet>358</a>                                    <span class="string">"claims advisor '{}', which plan {} did not select"</span>,
+<a href=#359 id=359 data-nosnippet>359</a>                                    c.advisor, c.plan
+<a href=#360 id=360 data-nosnippet>360</a>                                ),
+<a href=#361 id=361 data-nosnippet>361</a>                            );
+<a href=#362 id=362 data-nosnippet>362</a>                        }
+<a href=#363 id=363 data-nosnippet>363</a>                    }
+<a href=#364 id=364 data-nosnippet>364</a>                    <span class="kw">_ </span>=&gt; push(
+<a href=#365 id=365 data-nosnippet>365</a>                        <span class="string">"records"</span>,
+<a href=#366 id=366 data-nosnippet>366</a>                        r.id.clone(),
+<a href=#367 id=367 data-nosnippet>367</a>                        <span class="macro">format!</span>(<span class="string">"cites plan {}, which is not recorded"</span>, c.plan),
+<a href=#368 id=368 data-nosnippet>368</a>                    ),
+<a href=#369 id=369 data-nosnippet>369</a>                }
+<a href=#370 id=370 data-nosnippet>370</a>            }
+<a href=#371 id=371 data-nosnippet>371</a>            ReasoningBody::Conclusion(k) =&gt; {
+<a href=#372 id=372 data-nosnippet>372</a>                <span class="kw">let </span><span class="kw-2">mut </span>computed: Vec&lt;String&gt; = Vec::new();
+<a href=#373 id=373 data-nosnippet>373</a>                <span class="kw">for </span>id <span class="kw">in </span><span class="kw-2">&amp;</span>k.input.consultations {
+<a href=#374 id=374 data-nosnippet>374</a>                    <span class="kw">match </span>loaded.get(id).map(|x| <span class="kw-2">&amp;</span>x.body) {
+<a href=#375 id=375 data-nosnippet>375</a>                        <span class="prelude-val">Some</span>(ReasoningBody::Consultation(c))
+<a href=#376 id=376 data-nosnippet>376</a>                            <span class="kw">if </span>c.status == ConsultationStatus::Completed =&gt;
+<a href=#377 id=377 data-nosnippet>377</a>                        {
+<a href=#378 id=378 data-nosnippet>378</a>                            <span class="kw">if </span>!computed.contains(<span class="kw-2">&amp;</span>c.advisor) {
+<a href=#379 id=379 data-nosnippet>379</a>                                computed.push(c.advisor.clone());
+<a href=#380 id=380 data-nosnippet>380</a>                            }
+<a href=#381 id=381 data-nosnippet>381</a>                        }
+<a href=#382 id=382 data-nosnippet>382</a>                        <span class="kw">_ </span>=&gt; push(
+<a href=#383 id=383 data-nosnippet>383</a>                            <span class="string">"records"</span>,
+<a href=#384 id=384 data-nosnippet>384</a>                            r.id.clone(),
+<a href=#385 id=385 data-nosnippet>385</a>                            <span class="macro">format!</span>(<span class="string">"cites {id}, which is not a completed consultation"</span>),
+<a href=#386 id=386 data-nosnippet>386</a>                        ),
+<a href=#387 id=387 data-nosnippet>387</a>                    }
+<a href=#388 id=388 data-nosnippet>388</a>                }
+<a href=#389 id=389 data-nosnippet>389</a>                <span class="kw">crate</span>::order::canonical(<span class="kw-2">&amp;mut </span>computed);
+<a href=#390 id=390 data-nosnippet>390</a>                <span class="kw">if </span>computed != k.reviewed_by || k.independent_review_count != k.reviewed_by.len() {
+<a href=#391 id=391 data-nosnippet>391</a>                    push(
+<a href=#392 id=392 data-nosnippet>392</a>                        <span class="string">"records"</span>,
+<a href=#393 id=393 data-nosnippet>393</a>                        r.id.clone(),
+<a href=#394 id=394 data-nosnippet>394</a>                        <span class="macro">format!</span>(
+<a href=#395 id=395 data-nosnippet>395</a>                            <span class="string">"claims review by [{}] ({}), and the consultations it cites show [{}]"</span>,
+<a href=#396 id=396 data-nosnippet>396</a>                            k.reviewed_by.join(<span class="string">", "</span>),
+<a href=#397 id=397 data-nosnippet>397</a>                            k.independent_review_count,
+<a href=#398 id=398 data-nosnippet>398</a>                            computed.join(<span class="string">", "</span>)
+<a href=#399 id=399 data-nosnippet>399</a>                        ),
+<a href=#400 id=400 data-nosnippet>400</a>                    );
+<a href=#401 id=401 data-nosnippet>401</a>                }
+<a href=#402 id=402 data-nosnippet>402</a>            }
+<a href=#403 id=403 data-nosnippet>403</a>            <span class="kw">_ </span>=&gt; {}
+<a href=#404 id=404 data-nosnippet>404</a>        }
+<a href=#405 id=405 data-nosnippet>405</a>    }
+<a href=#406 id=406 data-nosnippet>406</a>    out
+<a href=#407 id=407 data-nosnippet>407</a>}
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a><span class="doccomment">/// The checks, by name, in the order [`run`] performs them.
+<a href=#410 id=410 data-nosnippet>410</a></span><span class="kw">pub const </span>CHECKS: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str] = <span class="kw-2">&amp;</span>[
+<a href=#411 id=411 data-nosnippet>411</a>    <span class="string">"catalogue"</span>,
+<a href=#412 id=412 data-nosnippet>412</a>    <span class="string">"adapters"</span>,
+<a href=#413 id=413 data-nosnippet>413</a>    <span class="string">"coupling"</span>,
+<a href=#414 id=414 data-nosnippet>414</a>    <span class="string">"ci"</span>,
+<a href=#415 id=415 data-nosnippet>415</a>    <span class="string">"claims"</span>,
+<a href=#416 id=416 data-nosnippet>416</a>    <span class="string">"records"</span>,
+<a href=#417 id=417 data-nosnippet>417</a>];
+<a href=#418 id=418 data-nosnippet>418</a>
+<a href=#419 id=419 data-nosnippet>419</a><span class="attr">#[cfg(test)]
+<a href=#420 id=420 data-nosnippet>420</a></span><span class="kw">mod </span>tests {
+<a href=#421 id=421 data-nosnippet>421</a>    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+<a href=#422 id=422 data-nosnippet>422</a>
+<a href=#423 id=423 data-nosnippet>423</a>    <span class="attr">#[test]
+<a href=#424 id=424 data-nosnippet>424</a>    </span><span class="kw">fn </span>a_literal_is_a_name_and_a_word_inside_prose_is_not() {
+<a href=#425 id=425 data-nosnippet>425</a>        <span class="kw">let </span>names = <span class="macro">vec!</span>[<span class="string">"alpha"</span>.to_string()];
+<a href=#426 id=426 data-nosnippet>426</a>        <span class="macro">assert_eq!</span>(literals_naming(<span class="string">"let x = \"alpha\";"</span>, <span class="kw-2">&amp;</span>names), [<span class="string">"alpha"</span>]);
+<a href=#427 id=427 data-nosnippet>427</a>        <span class="macro">assert_eq!</span>(
+<a href=#428 id=428 data-nosnippet>428</a>            literals_naming(<span class="string">"import('./alpha.mjs')"</span>, <span class="kw-2">&amp;</span>names),
+<a href=#429 id=429 data-nosnippet>429</a>            Vec::&lt;String&gt;::new()
+<a href=#430 id=430 data-nosnippet>430</a>        );
+<a href=#431 id=431 data-nosnippet>431</a>        <span class="macro">assert_eq!</span>(
+<a href=#432 id=432 data-nosnippet>432</a>            literals_naming(<span class="string">"// the alpha advisor"</span>, <span class="kw-2">&amp;</span>names),
+<a href=#433 id=433 data-nosnippet>433</a>            Vec::&lt;String&gt;::new()
+<a href=#434 id=434 data-nosnippet>434</a>        );
+<a href=#435 id=435 data-nosnippet>435</a>    }
+<a href=#436 id=436 data-nosnippet>436</a>
+<a href=#437 id=437 data-nosnippet>437</a>    <span class="doccomment">/// The anti-coupling proof for this crate: the shipped catalogue's names appear in no
+<a href=#438 id=438 data-nosnippet>438</a>    /// provider-independent source file as a literal.
+<a href=#439 id=439 data-nosnippet>439</a>    </span><span class="attr">#[test]
+<a href=#440 id=440 data-nosnippet>440</a>    </span><span class="kw">fn </span>the_reasoning_core_names_no_advisor_of_the_shipped_catalogue() {
+<a href=#441 id=441 data-nosnippet>441</a>        <span class="kw">let </span>root = Path::new(<span class="macro">env!</span>(<span class="string">"CARGO_MANIFEST_DIR"</span>)).join(<span class="string">"../.."</span>);
+<a href=#442 id=442 data-nosnippet>442</a>        <span class="kw">let </span>share = root.join(<span class="string">"share"</span>);
+<a href=#443 id=443 data-nosnippet>443</a>        <span class="kw">let </span>catalogue = AdvisorCatalogue::load(<span class="kw-2">&amp;</span>share).unwrap();
+<a href=#444 id=444 data-nosnippet>444</a>        <span class="macro">assert!</span>(
+<a href=#445 id=445 data-nosnippet>445</a>            !catalogue.advisors.is_empty(),
+<a href=#446 id=446 data-nosnippet>446</a>            <span class="string">"the shipped catalogue declares advisors"
+<a href=#447 id=447 data-nosnippet>447</a>        </span>);
+<a href=#448 id=448 data-nosnippet>448</a>        <span class="kw">let </span>names = catalogue_names(<span class="kw-2">&amp;</span>catalogue);
+<a href=#449 id=449 data-nosnippet>449</a>        <span class="kw">let </span><span class="kw-2">mut </span>scanned = <span class="number">0</span>;
+<a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">for </span>rel <span class="kw">in </span>INDEPENDENT_SOURCES {
+<a href=#451 id=451 data-nosnippet>451</a>            <span class="kw">for </span>file <span class="kw">in </span>files_under(<span class="kw-2">&amp;</span>root, rel, <span class="kw-2">&amp;</span>[<span class="string">"rs"</span>, <span class="string">"mjs"</span>]) {
+<a href=#452 id=452 data-nosnippet>452</a>                scanned += <span class="number">1</span>;
+<a href=#453 id=453 data-nosnippet>453</a>                <span class="kw">let </span>text = std::fs::read_to_string(<span class="kw-2">&amp;</span>file).unwrap();
+<a href=#454 id=454 data-nosnippet>454</a>                <span class="macro">assert_eq!</span>(
+<a href=#455 id=455 data-nosnippet>455</a>                    literals_naming(<span class="kw-2">&amp;</span>text, <span class="kw-2">&amp;</span>names),
+<a href=#456 id=456 data-nosnippet>456</a>                    Vec::&lt;String&gt;::new(),
+<a href=#457 id=457 data-nosnippet>457</a>                    <span class="string">"{} names an advisor"</span>,
+<a href=#458 id=458 data-nosnippet>458</a>                    file.display()
+<a href=#459 id=459 data-nosnippet>459</a>                );
+<a href=#460 id=460 data-nosnippet>460</a>            }
+<a href=#461 id=461 data-nosnippet>461</a>        }
+<a href=#462 id=462 data-nosnippet>462</a>        <span class="macro">assert!</span>(
+<a href=#463 id=463 data-nosnippet>463</a>            scanned &gt;= <span class="number">7</span>,
+<a href=#464 id=464 data-nosnippet>464</a>            <span class="string">"the scan reached the module ({scanned} files)"
+<a href=#465 id=465 data-nosnippet>465</a>        </span>);
+<a href=#466 id=466 data-nosnippet>466</a>    }
+<a href=#467 id=467 data-nosnippet>467</a>}
+</code></pre></div></section></main></body></html>

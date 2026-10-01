@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["AUTH_COOLDOWN","COOLDOWN_ENV","DISABLE_ENV","FAILURES_TO_OPEN","FAILURE_COOLDOWN","MODE_ENV","RATE_LIMIT_COOLDOWN"],"enum":["AdvisorStatus","ReasoningMode"],"fn":["derive_availability","resolve_mode"],"struct":["AdvisorCircuit","AdvisorState","Inputs","LinkedPeer","ModeResolution","Outcome","SystemPresence"],"trait":["Presence"]};

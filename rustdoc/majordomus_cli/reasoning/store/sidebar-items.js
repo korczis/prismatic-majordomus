@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["STATE_DIR","UNTASKED"],"fn":["admit","assessment_of","mint_id","prior_on_subject","redact","resolution_of","standing_conclusion","strip_controls"],"struct":["Admission","Loaded","Refusal","Store"]};

@@ -1,0 +1,64 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="The reasoning state of a session, derived from its records and nothing else: what is uncertain, what was asked and what came back, where advice disagreed and what settled it, what was concluded and whether it was proven — plus the timeline, the degradation that happened along the way, and the report a handover or a final summary carries."><title>majordomus_cli::reasoning::state - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-1ed95124.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="majordomus_cli" data-themes="" data-resource-suffix="" data-rustdoc-version="1.98.1 (48a229cea 2026-09-01)" data-channel="1.98.1" data-search-js="search-9944d736.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../../static.files/main-417ebf0a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module state</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../../majordomus_cli/index.html">majordomus_<wbr>cli</a><span class="version">0.11.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module state</a></h2><h3><a href="#structs">Module Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"><h2><a href="../index.html">In majordomus_<wbr>cli::<wbr>reasoning</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../../index.html">majordomus_cli</a>::<wbr><a href="../index.html">reasoning</a></div><h1>Module <span>state</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../../src/majordomus_cli/reasoning/state.rs.html#1-1131">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>The reasoning state of a session, derived from its records and nothing else: what is
+uncertain, what was asked and what came back, where advice disagreed and what settled
+it, what was concluded and whether it was proven — plus the timeline, the degradation
+that happened along the way, and the report a handover or a final summary carries.</p>
+<p>Deterministic: the records are read in <code>(recorded_at, id)</code> order, every list here keeps
+that order, and the report is rendered from these lists alone. The same records give
+the same state on every surface, which is what lets the CLI, HTTP, MCP, the Cockpit,
+<code>majordomus context</code> and a handover all say the same thing.</p>
+<p>The lifecycle: records are admitted and stored, <a href="fn.derive.html" title="fn majordomus_cli::reasoning::state::derive"><code>derive()</code></a> turns them into a
+<a href="struct.ReasoningState.html" title="struct majordomus_cli::reasoning::state::ReasoningState"><code>ReasoningState</code></a>, and <a href="fn.render_markdown.html" title="fn majordomus_cli::reasoning::state::render_markdown"><code>render_markdown</code></a> turns that state into the paragraph a
+handover carries. <a href="fn.explain.html" title="fn majordomus_cli::reasoning::state::explain"><code>explain</code></a> answers for one record with its whole chain.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+<span class="kw">use </span>majordomus_cli::reasoning::record::<span class="kw-2">*</span>;
+<span class="kw">use </span>majordomus_cli::reasoning::state::{derive, explain, render_markdown, AssessmentStanding};
+<span class="kw">use </span>majordomus_cli::reasoning::store::{admit, Admission, Loaded};
+
+<span class="kw">let </span>mode = ModeResolution { mode: ReasoningMode::Standard, source: <span class="string">"default"</span>.into() };
+<span class="kw">let </span>admission = Admission { mode: <span class="kw-2">&amp;</span>mode, availability: <span class="kw-2">&amp;</span>[] };
+<span class="kw">let </span><span class="kw-2">mut </span>loaded = Loaded::default();
+<span class="kw">let </span>add = |loaded: <span class="kw-2">&amp;mut </span>Loaded, input: ReasoningInput| {
+    <span class="kw">let </span>body = admit(input, loaded, <span class="kw-2">&amp;</span>admission).unwrap();
+    <span class="kw">let </span>n = loaded.records.len() + <span class="number">1</span>;
+    <span class="kw">let </span>id = <span class="macro">format!</span>(<span class="string">"{}-{n}"</span>, body.kind());
+    loaded.records.push(ReasoningRecord {
+        schema: RECORD_SCHEMA.into(),
+        version: RECORD_VERSION,
+        id: id.clone(),
+        task: <span class="string">"t"</span>.into(),
+        recorded_at: <span class="macro">format!</span>(<span class="string">"2026-10-01T00:00:{n:02}Z"</span>),
+        head: <span class="prelude-val">None</span>,
+        redacted: <span class="macro">vec!</span>[],
+        body,
+    });
+    id
+};
+
+<span class="kw">let </span>a = add(<span class="kw-2">&amp;mut </span>loaded, ReasoningInput::Assessment(AssessmentInput {
+    subject: <span class="string">"whether the cache survives a restart"</span>.into(),
+    ..Default::default()
+}));
+add(<span class="kw-2">&amp;mut </span>loaded, ReasoningInput::Plan(PlanInput { assessment: a.clone() }));
+<span class="kw">let </span>k = add(<span class="kw-2">&amp;mut </span>loaded, ReasoningInput::Conclusion(ConclusionInput {
+    assessment: a.clone(),
+    decision: <span class="string">"rebuild the cache on start"</span>.into(),
+    rationale: <span class="string">"nothing persists it"</span>.into(),
+    ..Default::default()
+}));
+add(<span class="kw-2">&amp;mut </span>loaded, ReasoningInput::Validation(ValidationInput {
+    conclusion: k.clone(),
+    check: <span class="string">"a restarted worker rebuilds it"</span>.into(),
+    command: <span class="prelude-val">None</span>,
+    outcome: ValidationOutcome::Pass,
+    evidence: <span class="macro">vec!</span>[],
+}));
+
+<span class="kw">let </span>state = derive(<span class="kw-2">&amp;</span>loaded, <span class="prelude-val">Some</span>(<span class="string">"t"</span>));
+<span class="macro">assert_eq!</span>(state.assessments[<span class="number">0</span>].standing, AssessmentStanding::Validated);
+<span class="macro">assert_eq!</span>(state.timeline.len(), <span class="number">4</span>);
+<span class="kw">let </span>report = render_markdown(<span class="kw-2">&amp;</span>state);
+<span class="macro">assert!</span>(report.contains(<span class="string">"- Decision conclusion-3: rebuild the cache on start"</span>));
+<span class="macro">assert_eq!</span>(explain(<span class="kw-2">&amp;</span>loaded, <span class="kw-2">&amp;</span>k).unwrap().chain.len(), <span class="number">4</span>);</code></pre></div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.AssessmentView.html" title="struct majordomus_cli::reasoning::state::AssessmentView">Assessment<wbr>View</a></dt><dd>One assessment and where it stands.</dd><dt><a class="struct" href="struct.ConclusionView.html" title="struct majordomus_cli::reasoning::state::ConclusionView">Conclusion<wbr>View</a></dt><dd>One conclusion, as the state reports it.</dd><dt><a class="struct" href="struct.ConsultationView.html" title="struct majordomus_cli::reasoning::state::ConsultationView">Consultation<wbr>View</a></dt><dd>One consultation, as the state reports it.</dd><dt><a class="struct" href="struct.DisagreementView.html" title="struct majordomus_cli::reasoning::state::DisagreementView">Disagreement<wbr>View</a></dt><dd>One disagreement, as the state reports it.</dd><dt><a class="struct" href="struct.ReasoningExplanation.html" title="struct majordomus_cli::reasoning::state::ReasoningExplanation">Reasoning<wbr>Explanation</a></dt><dd>A record with everything it rests on and everything that rests on it.</dd><dt><a class="struct" href="struct.ReasoningState.html" title="struct majordomus_cli::reasoning::state::ReasoningState">Reasoning<wbr>State</a></dt><dd>The reasoning state of a task (or of every task).</dd><dt><a class="struct" href="struct.ReasoningStep.html" title="struct majordomus_cli::reasoning::state::ReasoningStep">Reasoning<wbr>Step</a></dt><dd>One step of the timeline: when, which record, which phase, and one line saying what
+happened.</dd><dt><a class="struct" href="struct.ReasoningTotals.html" title="struct majordomus_cli::reasoning::state::ReasoningTotals">Reasoning<wbr>Totals</a></dt><dd>Totals over the records of the derived task: counts, reviewers and reported tokens.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.AssessmentStanding.html" title="enum majordomus_cli::reasoning::state::AssessmentStanding">Assessment<wbr>Standing</a></dt><dd>Where an assessment stands, from open through validated.</dd><dt><a class="enum" href="enum.ReasoningPhase.html" title="enum majordomus_cli::reasoning::state::ReasoningPhase">Reasoning<wbr>Phase</a></dt><dd>A phase of the reasoning timeline.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.derive.html" title="fn majordomus_cli::reasoning::state::derive">derive</a></dt><dd>Derive the state of <code>task</code> (<code>None</code> for every task).</dd><dt><a class="fn" href="fn.explain.html" title="fn majordomus_cli::reasoning::state::explain">explain</a></dt><dd>Explain one record: its assessment and the whole chain of that assessment.</dd><dt><a class="fn" href="fn.render_markdown.html" title="fn majordomus_cli::reasoning::state::render_markdown">render_<wbr>markdown</a></dt><dd>The state as Markdown: what a handover carries and a final report ends with. Empty
+when there is nothing to say.</dd></dl></section></div></main></body></html>

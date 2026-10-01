@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AssessmentStanding","ReasoningPhase"],"fn":["derive","explain","render_markdown"],"struct":["AssessmentView","ConclusionView","ConsultationView","DisagreementView","ReasoningExplanation","ReasoningState","ReasoningStep","ReasoningTotals"]};

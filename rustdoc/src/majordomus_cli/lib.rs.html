@@ -60,49 +60,50 @@
 <a href=#60 id=60 data-nosnippet>60</a><span class="kw">pub mod </span>proto;
 <a href=#61 id=61 data-nosnippet>61</a><span class="kw">pub mod </span>providers;
 <a href=#62 id=62 data-nosnippet>62</a><span class="kw">pub mod </span>quality;
-<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub mod </span>redaction;
-<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub mod </span>release;
-<a href=#65 id=65 data-nosnippet>65</a><span class="kw">pub mod </span>repository;
-<a href=#66 id=66 data-nosnippet>66</a><span class="kw">pub mod </span>rules;
-<a href=#67 id=67 data-nosnippet>67</a><span class="kw">pub mod </span>scope;
-<a href=#68 id=68 data-nosnippet>68</a><span class="kw">pub mod </span>served;
-<a href=#69 id=69 data-nosnippet>69</a><span class="kw">pub mod </span>session;
-<a href=#70 id=70 data-nosnippet>70</a><span class="kw">pub mod </span>share;
-<a href=#71 id=71 data-nosnippet>71</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>shared;
-<a href=#72 id=72 data-nosnippet>72</a><span class="kw">pub mod </span>site;
-<a href=#73 id=73 data-nosnippet>73</a><span class="kw">pub mod </span>synthetic;
-<a href=#74 id=74 data-nosnippet>74</a><span class="kw">pub mod </span>web;
-<a href=#75 id=75 data-nosnippet>75</a><span class="kw">pub mod </span>why;
-<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub mod </span>worktree;
-<a href=#77 id=77 data-nosnippet>77</a>
-<a href=#78 id=78 data-nosnippet>78</a><span class="kw">pub use </span>error::Error;
-<a href=#79 id=79 data-nosnippet>79</a><span class="kw">pub use </span>index::Index;
-<a href=#80 id=80 data-nosnippet>80</a><span class="kw">pub use </span>model::{Diagnostic, Object, Provenance, Severity};
-<a href=#81 id=81 data-nosnippet>81</a><span class="kw">pub use </span>repository::Repository;
-<a href=#82 id=82 data-nosnippet>82</a>
-<a href=#83 id=83 data-nosnippet>83</a><span class="doccomment">/// The executable's version, from the crate manifest.
-<a href=#84 id=84 data-nosnippet>84</a></span><span class="kw">pub const </span>VERSION: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>);
-<a href=#85 id=85 data-nosnippet>85</a>
-<a href=#86 id=86 data-nosnippet>86</a><span class="doccomment">/// The Rust target triple this executable was built for, from `build.rs`. The same string
-<a href=#87 id=87 data-nosnippet>87</a>/// the distribution model names a target by, so that a build can say which artifact it is.
-<a href=#88 id=88 data-nosnippet>88</a></span><span class="kw">pub const </span>TARGET: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_TARGET"</span>);
-<a href=#89 id=89 data-nosnippet>89</a>
-<a href=#90 id=90 data-nosnippet>90</a><span class="doccomment">/// The cargo profile this executable was built with.
-<a href=#91 id=91 data-nosnippet>91</a></span><span class="kw">pub const </span>PROFILE: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_PROFILE"</span>);
-<a href=#92 id=92 data-nosnippet>92</a>
-<a href=#93 id=93 data-nosnippet>93</a><span class="doccomment">/// The commit this executable was built from, or `unknown` outside a work tree. Read at
-<a href=#94 id=94 data-nosnippet>94</a>/// build time: nothing here shells out to git, and an installed binary needs no repository
-<a href=#95 id=95 data-nosnippet>95</a>/// in order to say what it is.
-<a href=#96 id=96 data-nosnippet>96</a></span><span class="kw">pub const </span>COMMIT: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_COMMIT"</span>);
-<a href=#97 id=97 data-nosnippet>97</a>
-<a href=#98 id=98 data-nosnippet>98</a><span class="doccomment">/// The generation this executable was built from: the digest `generation::crate_generation`
-<a href=#99 id=99 data-nosnippet>99</a>/// takes over the crate sources, compiled in by `build.rs`, or `unknown` when the build
-<a href=#100 id=100 data-nosnippet>100</a>/// could not read them.
-<a href=#101 id=101 data-nosnippet>101</a>///
-<a href=#102 id=102 data-nosnippet>102</a>/// [`VERSION`] says what this executable calls itself; this says what it *is*. Two builds
-<a href=#103 id=103 data-nosnippet>103</a>/// of `majordomus-cli 0.4.0` from different revisions of the crate carry different models
-<a href=#104 id=104 data-nosnippet>104</a>/// and derive a repository differently, and only this tells them apart — which is why
-<a href=#105 id=105 data-nosnippet>105</a>/// `majordomus generate` compares it against the tree it is asked to derive rather than
-<a href=#106 id=106 data-nosnippet>106</a>/// comparing versions.
-<a href=#107 id=107 data-nosnippet>107</a></span><span class="kw">pub const </span>GENERATION: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_GENERATION"</span>);
+<a href=#63 id=63 data-nosnippet>63</a><span class="kw">pub mod </span>reasoning;
+<a href=#64 id=64 data-nosnippet>64</a><span class="kw">pub mod </span>redaction;
+<a href=#65 id=65 data-nosnippet>65</a><span class="kw">pub mod </span>release;
+<a href=#66 id=66 data-nosnippet>66</a><span class="kw">pub mod </span>repository;
+<a href=#67 id=67 data-nosnippet>67</a><span class="kw">pub mod </span>rules;
+<a href=#68 id=68 data-nosnippet>68</a><span class="kw">pub mod </span>scope;
+<a href=#69 id=69 data-nosnippet>69</a><span class="kw">pub mod </span>served;
+<a href=#70 id=70 data-nosnippet>70</a><span class="kw">pub mod </span>session;
+<a href=#71 id=71 data-nosnippet>71</a><span class="kw">pub mod </span>share;
+<a href=#72 id=72 data-nosnippet>72</a><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">mod </span>shared;
+<a href=#73 id=73 data-nosnippet>73</a><span class="kw">pub mod </span>site;
+<a href=#74 id=74 data-nosnippet>74</a><span class="kw">pub mod </span>synthetic;
+<a href=#75 id=75 data-nosnippet>75</a><span class="kw">pub mod </span>web;
+<a href=#76 id=76 data-nosnippet>76</a><span class="kw">pub mod </span>why;
+<a href=#77 id=77 data-nosnippet>77</a><span class="kw">pub mod </span>worktree;
+<a href=#78 id=78 data-nosnippet>78</a>
+<a href=#79 id=79 data-nosnippet>79</a><span class="kw">pub use </span>error::Error;
+<a href=#80 id=80 data-nosnippet>80</a><span class="kw">pub use </span>index::Index;
+<a href=#81 id=81 data-nosnippet>81</a><span class="kw">pub use </span>model::{Diagnostic, Object, Provenance, Severity};
+<a href=#82 id=82 data-nosnippet>82</a><span class="kw">pub use </span>repository::Repository;
+<a href=#83 id=83 data-nosnippet>83</a>
+<a href=#84 id=84 data-nosnippet>84</a><span class="doccomment">/// The executable's version, from the crate manifest.
+<a href=#85 id=85 data-nosnippet>85</a></span><span class="kw">pub const </span>VERSION: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"CARGO_PKG_VERSION"</span>);
+<a href=#86 id=86 data-nosnippet>86</a>
+<a href=#87 id=87 data-nosnippet>87</a><span class="doccomment">/// The Rust target triple this executable was built for, from `build.rs`. The same string
+<a href=#88 id=88 data-nosnippet>88</a>/// the distribution model names a target by, so that a build can say which artifact it is.
+<a href=#89 id=89 data-nosnippet>89</a></span><span class="kw">pub const </span>TARGET: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_TARGET"</span>);
+<a href=#90 id=90 data-nosnippet>90</a>
+<a href=#91 id=91 data-nosnippet>91</a><span class="doccomment">/// The cargo profile this executable was built with.
+<a href=#92 id=92 data-nosnippet>92</a></span><span class="kw">pub const </span>PROFILE: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_PROFILE"</span>);
+<a href=#93 id=93 data-nosnippet>93</a>
+<a href=#94 id=94 data-nosnippet>94</a><span class="doccomment">/// The commit this executable was built from, or `unknown` outside a work tree. Read at
+<a href=#95 id=95 data-nosnippet>95</a>/// build time: nothing here shells out to git, and an installed binary needs no repository
+<a href=#96 id=96 data-nosnippet>96</a>/// in order to say what it is.
+<a href=#97 id=97 data-nosnippet>97</a></span><span class="kw">pub const </span>COMMIT: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_COMMIT"</span>);
+<a href=#98 id=98 data-nosnippet>98</a>
+<a href=#99 id=99 data-nosnippet>99</a><span class="doccomment">/// The generation this executable was built from: the digest `generation::crate_generation`
+<a href=#100 id=100 data-nosnippet>100</a>/// takes over the crate sources, compiled in by `build.rs`, or `unknown` when the build
+<a href=#101 id=101 data-nosnippet>101</a>/// could not read them.
+<a href=#102 id=102 data-nosnippet>102</a>///
+<a href=#103 id=103 data-nosnippet>103</a>/// [`VERSION`] says what this executable calls itself; this says what it *is*. Two builds
+<a href=#104 id=104 data-nosnippet>104</a>/// of `majordomus-cli 0.4.0` from different revisions of the crate carry different models
+<a href=#105 id=105 data-nosnippet>105</a>/// and derive a repository differently, and only this tells them apart — which is why
+<a href=#106 id=106 data-nosnippet>106</a>/// `majordomus generate` compares it against the tree it is asked to derive rather than
+<a href=#107 id=107 data-nosnippet>107</a>/// comparing versions.
+<a href=#108 id=108 data-nosnippet>108</a></span><span class="kw">pub const </span>GENERATION: <span class="kw-2">&amp;</span>str = <span class="macro">env!</span>(<span class="string">"MAJORDOMUS_GENERATION"</span>);
 </code></pre></div></section></main></body></html>
