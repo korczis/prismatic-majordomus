@@ -17,7 +17,13 @@ fresh() {
   rm -rf "$F"; mkdir -p "$F/site/data/registry" "$F/site/data/generated" "$F/site/public/graphs"
   printf 'order = ["hero"]\n\n[budget]\nassets_bytes = 100\ninline_json_bytes = 20\n' > "$F/site/data/homepage.toml"
   printf '[indexing]\nunlisted = []\n' > "$F/site/data/nav.toml"
-  printf '%s\n' '{"features":[],"providers":[]}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"features":[],"providers":[],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
+  # what every homepage-check run reads, whichever check is asked about: the web topology
+  # (ADR 0086), the claims matrix and the design tones
+  mkdir -p "$F/docs/generated"
+  printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"}]}' > "$F/docs/generated/web.json"
+  printf '%s\n' '{"status_order":["guaranteed"],"claims":[]}' > "$F/site/data/generated/capabilities.json"
+  printf '%s\n' '{"states":{"guaranteed":"neutral","unknown":"neutral"}}' > "$F/site/data/registry/design.json"
   printf '%s\n' '{"install_command":"i","next_command":"n","verify_command":"v"}' > "$F/site/data/registry/distribution.json"
   # the registry, in its own order: one capability reaching two surfaces, then two reaching three
   cat > "$F/site/data/registry/registry.json" <<'JSON'
