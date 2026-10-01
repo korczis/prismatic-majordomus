@@ -47,16 +47,26 @@ RS
   printf 'pub mod mesh;\npub mod server;\n' > "$C/main.rs"
   printf 'pub fn serve() {}\n' > "$C/server.rs"
   printf 'kinds:\n  mesh-declaration:\n    schema: majordomus/mesh-declaration/v1\n' > "$F/share/kinds.yaml"
-  printf '{ "type": "object" }\n' > "$F/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json"
+  printf '{ "type": "object", "properties": { "cooperation": { "type": "object" } } }\n' \
+    > "$F/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json"
   printf '# The mesh observes; it grants nothing.\n' \
     > "$F/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
+  printf '# A peer is admitted only by its key.\n' \
+    > "$F/.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md"
+  # what the gate grew after this case was written: the Cockpit's mesh page asks the four
+  # mesh capabilities, and an initialised repository's source classes read the declaration
+  mkdir -p "$C/cockpit" "$F/share/skeleton/ai/repo/knowledge"
+  printf 'const MESH: [&str; 4] = ["mesh.status", "mesh.peers", "mesh.state", "mesh.cooperation"];\n' \
+    > "$C/cockpit/pages.rs"
+  printf 'classes:\n  - kind: mesh-declaration\n    glob: .ai/repo/mesh/*.yaml\n' \
+    > "$F/share/skeleton/ai/repo/knowledge/sources.yaml"
   printf '%s' "$F"
 }
 
 # ---------------------------------------------------------------- the tree it accepts
 F="$(fixture 0)"
 expect_exit 0 env MJ_ROOT="$F" "$GATE"
-expect_grep 'mesh-check: OK   sockets under src/mesh/, one registry, declaration complete'
+expect_grep 'mesh-check: OK   sockets, links and the journal under src/mesh/, one registry, capability-projected surfaces, declaration complete'
 
 # ---------------------------------------------------------------- 1. one transport
 # The violation: a second place in the crate that opens a UDP socket. This is how a
@@ -115,22 +125,22 @@ expect_exit 0 env MJ_ROOT="$F" "$GATE"
 # A kind without its schema is an object nothing validates; a schema without its kind is a
 # file nothing reaches; a rule missing is a boundary nobody wrote down. The gate names
 # which of the three is absent, because "the declaration is incomplete" is not an
-# instruction and `kind=1 schema=0 rule=1` is.
+# instruction and `kind=1 schema=0 rules=1` is.
 F="$(fixture 5)"
 rm -f "$F/share/schemas/majordomus/mesh-declaration/mesh-declaration.v1.schema.json"
 expect_exit 10 env MJ_ROOT="$F" "$GATE"
-expect_grep 'the mesh declaration is incomplete: kind=1 schema=0 rule=1'
-expect_grep 'the kind in share/kinds.yaml, its schema and the rule move together'
+expect_grep 'the mesh declaration is incomplete: kind=1 schema=0 rules=1'
+expect_grep 'the kind in share/kinds.yaml, its schema .with the cooperation section. and both rules move together'
 
 F="$(fixture 6)"
 printf 'kinds:\n  session:\n    schema: majordomus/session/v1\n' > "$F/share/kinds.yaml"
 expect_exit 10 env MJ_ROOT="$F" "$GATE"
-expect_grep 'incomplete: kind=0 schema=1 rule=1'
+expect_grep 'incomplete: kind=0 schema=1 rules=1'
 
 F="$(fixture 7)"
 rm -f "$F/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
 expect_exit 10 env MJ_ROOT="$F" "$GATE"
-expect_grep 'incomplete: kind=1 schema=1 rule=0'
+expect_grep 'incomplete: kind=1 schema=1 rules=0'
 
 # and all three back is the tree it accepted at the start
 F="$(fixture 8)"
@@ -152,6 +162,6 @@ rm -f "$F/.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md"
 expect_exit 10 env MJ_ROOT="$F" "$GATE"
 expect_grep 'discovery.rs opens a UDP socket'
 expect_grep 'server.rs constructs MeshRegistry'
-expect_grep 'incomplete: kind=1 schema=1 rule=0'
+expect_grep 'incomplete: kind=1 schema=1 rules=0'
 
 echo "    the mesh boundary refuses a second transport, a second peer store and a half-declared kind"
