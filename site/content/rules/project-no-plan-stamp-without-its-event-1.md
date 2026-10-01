@@ -1,7 +1,7 @@
 +++
 title = "No plan stamp without its event"
 description = "No plan stamp without its event"
-weight = 109
+weight = 113
 [extra]
 kind = "rule"
 slug = "project-no-plan-stamp-without-its-event-1"

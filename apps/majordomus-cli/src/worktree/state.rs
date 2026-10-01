@@ -226,16 +226,51 @@ pub struct BranchRef {
 /// Every local branch, in one subprocess: name, commit, upstream with its ahead/behind
 /// distance, and the work tree holding it.
 pub fn branches(primary: &Path) -> Result<Vec<BranchRef>> {
-    let out = git::run(
-        primary,
-        &[
-            "for-each-ref",
-            "refs/heads",
-            "--format=%(refname:short)%00%(objectname)%00%(upstream:short)%00%(upstream:track,nobracket)%00%(worktreepath)%00",
-        ],
-    )?;
+    let out = git::run(primary, &["for-each-ref", "refs/heads", BRANCH_FORMAT])?;
     Ok(parse_branches(&String::from_utf8_lossy(&out.stdout)))
 }
+
+/// One local branch, read now: the same fields as [`branches`], for a caller that must not act
+/// on a reading taken earlier. `None` when the branch no longer exists.
+///
+/// `for-each-ref refs/heads/<name>` also matches the branches below `<name>/`, so the result is
+/// filtered to the exact name.
+///
+/// ```
+/// use majordomus_cli::worktree::state::branch;
+/// let repo = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let ok = std::process::Command::new("git")
+///         .args(["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"])
+///         .args(args)
+///         .current_dir(repo.path())
+///         .status()
+///         .unwrap();
+///     assert!(ok.success(), "git {args:?}");
+/// };
+/// git(&["init", "-q", "-b", "trunk"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+/// git(&["branch", "feat/sub"]);
+///
+/// // `refs/heads/feat` matches feat/sub as well; the exact-name filter drops it.
+/// assert!(branch(repo.path(), "feat").unwrap().is_none());
+/// let feat = branch(repo.path(), "feat/sub").unwrap().expect("feat/sub exists");
+/// assert_eq!(feat.name, "feat/sub");
+/// assert!(feat.upstream.is_none());
+/// assert_eq!(feat.head.len(), 40);
+/// assert!(branch(repo.path(), "trunk").unwrap().unwrap().worktree.is_some());
+/// assert!(branch(repo.path(), "gone").unwrap().is_none());
+/// ```
+pub fn branch(primary: &Path, name: &str) -> Result<Option<BranchRef>> {
+    let pattern = format!("refs/heads/{name}");
+    let out = git::run(primary, &["for-each-ref", pattern.as_str(), BRANCH_FORMAT])?;
+    Ok(parse_branches(&String::from_utf8_lossy(&out.stdout))
+        .into_iter()
+        .find(|b| b.name == name))
+}
+
+/// The `for-each-ref` format [`parse_branches`] reads.
+const BRANCH_FORMAT: &str = "--format=%(refname:short)%00%(objectname)%00%(upstream:short)%00%(upstream:track,nobracket)%00%(worktreepath)%00";
 
 /// Parse the format above: five NUL-terminated fields per branch, one branch per line.
 ///
