@@ -163,6 +163,31 @@ pub fn parse_branches(text: &str) -> Vec<BranchRef> {
     out
 }
 
+/// Every local branch reachable from `trunk` or from the remote-tracking branch `trunk`
+/// follows. A local trunk that has fallen behind its remote — a primary checkout nobody has
+/// pulled, because a session holds uncommitted work in it — would otherwise call every branch
+/// that landed since unmerged, and cleanup would offer nothing; a branch the remote trunk
+/// contains is published and integrated, which is the safety cleanup asks for.
+pub fn merged_into_trunk(primary: &Path, trunk: &str) -> Result<BTreeSet<String>> {
+    let mut merged = merged_into(primary, trunk)?;
+    let upstream = format!("{trunk}@{{upstream}}");
+    if let Ok(out) = git::run(
+        primary,
+        &[
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            &upstream,
+        ],
+    ) {
+        let name = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if !name.is_empty() {
+            merged.extend(merged_into(primary, &name)?);
+        }
+    }
+    Ok(merged)
+}
+
 /// Every local branch reachable from `trunk`, in one subprocess.
 pub fn merged_into(primary: &Path, trunk: &str) -> Result<BTreeSet<String>> {
     let out = git::run(
