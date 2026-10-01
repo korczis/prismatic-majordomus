@@ -105,3 +105,34 @@ expect_grep "codex +disabled +cli +mode_ci"
 # ---------------------------------------------------------------- 7. absence is never a failure
 expect_exit 0 rz reasoning check
 expect_grep "no finding"
+
+# ---------------------------------------------------------------- 8. the MCP tools, as a client calls them
+# The same reasoning, asked over MCP the way a client asks it: a session, then a tools/call per
+# tool. Each answers this repository's records, not an empty one: the status carries the
+# assessment, explain the conclusion, the plan a local review, check no finding, and a record
+# sent over MCP is written and read back.
+mreq() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }
+{
+  mreq 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case730","version":"0"}}'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  mreq 2 tools/call '{"name":"majordomus_reasoning","arguments":{"task":"all"}}'
+  mreq 3 tools/call "{\"name\":\"majordomus_reasoning_explain\",\"arguments\":{\"id\":\"$K\"}}"
+  mreq 4 tools/call '{"name":"majordomus_reasoning_plan","arguments":{"materiality":"high","confidence":"medium"}}'
+  mreq 5 tools/call '{"name":"majordomus_reasoning_check","arguments":{}}'
+  mreq 6 tools/call "{\"name\":\"majordomus_reasoning_record\",\"arguments\":{\"record\":{\"kind\":\"validation\",\"conclusion\":\"$K\",\"check\":\"recorded over MCP\",\"command\":\"true\",\"outcome\":\"pass\"}}}"
+} > "$T/mcp.in"
+rc=0; ( cd "$R" && rz_env "$RB" mcp < "$T/mcp.in" > "$T/mcp.out" 2> "$T/mcp.err" ) || rc=$?
+[ "$rc" = 0 ] || { echo "    the MCP server exited $rc"; tail -5 "$T/mcp.err"; exit 1; }
+frame() { jq -c --argjson id "$1" 'select(.id == $id)' "$T/mcp.out"; }
+ok() {   # ok <id> <tool> <jq predicate over structuredContent> <what it must show>
+  frame "$1" | jq -e --arg a "$A" --arg k "$K" ".result.isError == false and (.result.structuredContent | $3)" >/dev/null \
+    || { echo "    $2 over MCP does not show $4:"; frame "$1" | head -c 600; echo; exit 1; }
+}
+ok 2 majordomus_reasoning         'tostring | test($a)'  "the recorded assessment"
+ok 3 majordomus_reasoning_explain 'tostring | test($k)'  "the conclusion it was asked about"
+ok 4 majordomus_reasoning_plan    'type == "object" and length > 0' "a plan"
+ok 5 majordomus_reasoning_check   'tostring | test("finding|clean|checks")' "its checks"
+ok 6 majordomus_reasoning_record  'tostring | test($k)'  "the validation it wrote, for the conclusion it names"
+# and the record sent over MCP is the repository's record, which the command line reads back
+expect_exit 0 rz reasoning explain "$K"
+expect_grep "recorded over MCP"
