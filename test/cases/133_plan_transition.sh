@@ -86,7 +86,7 @@ move I0002 start > "$S/start.json" || note "the capability failed to start I0002
 # normalised away. Everything else must be identical, including where each field sits.
 normalise() { # the record with its identity and its timestamps replaced, so that what is
               # left is only the shape each engine wrote
-  sed -E -e 's/^(started_at|verified_at|completed_at|updated_at): .*/\1: X/' -e 's/I000[0-9]/ID/g' "$1"
+  sed -E -e 's/^(started_at|verified_at|completed_at|updated_at|started_event|verified_event|completed_event): .*/\1: X/' -e 's/I000[0-9]/ID/g' "$1"
 }
 normalise .ai/repo/project/issues/I0001.yaml > "$S/shell.yaml"
 normalise .ai/repo/project/issues/I0002.yaml > "$S/rust.yaml"
@@ -98,6 +98,8 @@ fi
 # The field is where the shell puts it, and the status follows from it in both engines.
 grep -q '^started_at: ' .ai/repo/project/issues/I0002.yaml || note "the capability wrote no started_at"
 grep -q '^updated_at: ' .ai/repo/project/issues/I0002.yaml || note "the capability wrote no updated_at"
+grep -q '^started_event: sha256:' .ai/repo/project/issues/I0002.yaml || note "the capability wrote no started_event seal"
+grep -q '^started_event: sha256:' .ai/repo/project/issues/I0001.yaml || note "the shell wrote no started_event seal"
 [ "$(jq -r .to < "$S/start.json")" = ACTIVE ] || note "start did not report ACTIVE"
 [ "$(jq -r .from < "$S/start.json")" = READY ] || note "start did not report READY as the status before"
 

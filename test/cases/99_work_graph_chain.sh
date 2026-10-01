@@ -125,6 +125,9 @@ jq -e '.commit.attribution == "unattributed"' "$S/un.json" >/dev/null \
 # --- the remote says closed; the model does not, and says why
 [ "$("$MJ" plan list | awk '$1=="I0001"{print $2}')" != DONE ] \
   || { echo "    the issue is DONE before any evidence was recorded"; exit 1; }
+# Started first: done refuses an issue that was never started on its status alone, and the
+# refusal this asserts is the one about evidence.
+"$MJ" plan start I0001 >/dev/null
 expect_exit 10 "$MJ" plan "done" I0001
 expect_grep 'built'
 
@@ -134,7 +137,6 @@ grep -qE '^DRIFT  closed +issue I0001' "$S/drift.txt" \
   || { echo "    a remote close of an issue that is not DONE here must be reported:"; cat "$S/drift.txt"; exit 1; }
 
 # --- evidence is what completes it, and nothing else
-"$MJ" plan start I0001 >/dev/null
 "$MJ" plan evidence I0001 --covers built --type test --command "bash test/run.sh" --result "the thing is built" >/dev/null
 "$MJ" plan verify I0001 >/dev/null
 expect_exit 0 "$MJ" plan "done" I0001
