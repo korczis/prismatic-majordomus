@@ -171,6 +171,23 @@ it always has. The semantics are the serial runner's: a failing case turns the r
 filter that matches nothing is a usage error, an empty case directory is a usage error, and
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
 
+## The crate's tests in lanes
+
+The `rust` job is a matrix of three lanes. `scripts/rust-check` deals `cargo test` by whole
+test binaries (`MJ_RUST_TEST_LANE`), using their measured seconds:
+
+1. the doctests and `preflight`;
+2. the lib's unit tests, the binaries, `cli_examples`, `bench` and `peer_claims`;
+3. every other test binary, so a new one lands there by itself, and every other gate: fmt,
+   clippy, the docs, the benchmark build, the registry checks, the plan's rust gates and the
+   executable artifact.
+
+`scripts/rust-check --lanes` prints the deal. With `MJ_RUST_TEST_LANE` unset, `rust-check`
+runs the whole `cargo test` as before. Each lane keeps its own `cargo-test-<lane>.txt`, and
+the `evidence` job joins them. Every binary's record starts at a `Running` line or a
+`Doc-tests` line, which the recorder treats as a boundary, so joining the files cannot credit
+one lane's result to another lane's binary.
+
 ## The suite in shards
 
 On CI the suite runs as four shards on four runners (`suite-shard`, a matrix), each four

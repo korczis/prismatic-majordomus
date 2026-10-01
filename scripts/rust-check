@@ -35,6 +35,9 @@
 #                                       majordomus-cli.json beside it (commit, target triple,
 #                                       rustc, Cargo.lock digest, profile) for a later job
 #   MJ_CI_TIMINGS=FILE                  append "rust-check<TAB>step<TAB>seconds" per step
+#   MJ_RUST_TEST_LANE=1|2|3            run one lane of `cargo test` (CI's rust matrix); 1 and 2 run
+#                                       their tests and exit, 3 runs the rest and every other gate
+#   scripts/rust-check --lanes          print which test targets each lane runs
 #   MJ_CARGO_TEST_OUTPUT=FILE           also keep cargo test's output (both streams) in FILE, the
 #                                       report `majordomus evidence record --crate-output` reads
 set -eu
@@ -53,6 +56,7 @@ while [ $# -gt 0 ]; do
     --doc) MODE=doc; shift ;;
     --integration) MODE=integration; shift ;;
     --artifact) ARTIFACT="$2"; shift 2 ;;
+    --lanes) MODE=lanes; shift ;;
     *) echo "rust-check: unknown option $1" >&2; exit 2 ;;
   esac
 done
@@ -213,19 +217,69 @@ HTML
     "$(find "$out" -type f | wc -l | tr -d ' ')" "${out#"$ROOT"/}" "$commit"
 }
 
+# MJ_RUST_TEST_LANE splits `cargo test` across the rust job's three lanes on CI, by whole test
+# binaries so that every binary's `Running` / `test result:` pair the evidence recorder reads is
+# unchanged. Measured seconds (2026-10-01): doctests 648, cli_examples 293, bench 184, the lib's
+# unit tests 142, preflight 91, peer_claims 91, everything else ~250. Lanes 1 and 2 run their
+# tests and nothing else; lane 3 runs every other test binary — whatever tests/*.rs holds that
+# lanes 1 and 2 do not name, so a new binary lands there by itself — and every other gate.
+# Unset (or `all`) is the whole `cargo test`, as a person runs it.
+LANE1_TESTS="preflight"
+LANE2_TESTS="cli_examples bench peer_claims"
+lane="${MJ_RUST_TEST_LANE:-all}"
+case "$lane" in all|1|2|3) ;; *) echo "rust-check: MJ_RUST_TEST_LANE must be all, 1, 2 or 3, got '$lane'" >&2; exit 2 ;; esac
+lane_rest() {   # the test binaries no other lane names, as --test arguments
+  for f in "$CRATE"/tests/*.rs; do
+    n="$(basename "$f" .rs)"
+    case " $LANE1_TESTS $LANE2_TESTS " in *" $n "*) continue ;; esac
+    printf -- '--test %s ' "$n"
+  done
+}
+lane_tests() {   # the --test arguments of the named binaries
+  for n in "$@"; do printf -- '--test %s ' "$n"; done
+}
+# one cargo invocation, its output kept beside the others of this lane
+run_tests() {
+  if [ -n "${MJ_CARGO_TEST_OUTPUT:-}" ]; then "$@" 2>&1 | tee -a "$MJ_CARGO_TEST_OUTPUT"; else "$@"; fi
+}
+cargo_test() {
+  # cargo prints each binary's `Running` line on stderr and its `test result:` on stdout; the
+  # evidence recorder joins the two, so a kept copy holds both streams. Under the script's
+  # pipefail a failing suite is still this step's failure and not tee's success; a lane of
+  # several invocations runs them all and fails if any failed, as --no-fail-fast would.
+  [ -z "${MJ_CARGO_TEST_OUTPUT:-}" ] || : > "$MJ_CARGO_TEST_OUTPUT"
+  rc=0
+  case "$lane" in
+    all) run_tests cargo test --no-fail-fast || rc=$? ;;
+    1)   run_tests cargo test --no-fail-fast --doc || rc=$?
+         # shellcheck disable=SC2046 # the names are crate test targets, one word each
+         run_tests cargo test --no-fail-fast $(lane_tests $LANE1_TESTS) || rc=$? ;;
+    2)   # shellcheck disable=SC2046
+         run_tests cargo test --no-fail-fast --lib --bins $(lane_tests $LANE2_TESTS) || rc=$? ;;
+    3)   # shellcheck disable=SC2046
+         run_tests cargo test --no-fail-fast $(lane_rest) || rc=$? ;;
+  esac
+  return "$rc"
+}
+
+# --lanes: which test targets each lane runs, one line per target, and nothing run
+if [ "$MODE" = lanes ]; then
+  printf '1\tdoc\n'; for n in $LANE1_TESTS; do printf '1\ttest:%s\n' "$n"; done
+  printf '2\tlib\n2\tbins\n'; for n in $LANE2_TESTS; do printf '2\ttest:%s\n' "$n"; done
+  for a in $(lane_rest); do [ "$a" = --test ] || printf '3\ttest:%s\n' "$a"; done
+  exit 0
+fi
+
 if [ "$MODE" != integration ]; then
   if [ "$MODE" != doc ]; then
+    if [ "$lane" = 1 ] || [ "$lane" = 2 ]; then
+      step "rust-check: lane $lane: cargo test"; cargo_test
+      step "rust-check: lane $lane's tests passed; the other gates run in lane 3"
+      exit 0
+    fi
     step "cargo fmt --check";            cargo fmt --check
     step "cargo clippy -D warnings";     cargo clippy --all-targets --all-features -- -D warnings
-    step "cargo test"
-    # cargo prints each binary's `Running` line on stderr and its `test result:` on stdout; the
-    # evidence recorder joins the two, so a kept copy holds both streams. Under the script's
-    # pipefail a failing suite is still this step's failure and not tee's success.
-    if [ -n "${MJ_CARGO_TEST_OUTPUT:-}" ]; then
-      cargo test --no-fail-fast 2>&1 | tee "$MJ_CARGO_TEST_OUTPUT"
-    else
-      cargo test --no-fail-fast
-    fi
+    step "cargo test";                   cargo_test
   fi
   # not a step of its own: a question to cargo and one rm, and the step list is the gates
   rustdoc_fresh
