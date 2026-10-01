@@ -4836,14 +4836,17 @@ pub fn integration(ctx: &Context) -> Page {
         .trail(trail);
     };
 
+    // Reached only with a recorded observation (the early return above handles none).
+    // ui-integrity: tallies count every observed assessment, so an absent lane holds none
+    let lane = |name: &str| q.tallies.by_lane.get(name).copied().unwrap_or(0);
     let statistics = tally_statistics(
         &serde_json::json!({
             "open": q.tallies.open,
-            "ready": q.tallies.by_lane.get("ready").copied().unwrap_or(0),
-            "waiting": q.tallies.by_lane.get("waiting").copied().unwrap_or(0),
-            "repair": q.tallies.by_lane.get("repair").copied().unwrap_or(0),
-            "cleanup": q.tallies.by_lane.get("cleanup").copied().unwrap_or(0),
-            "held": q.tallies.by_lane.get("held").copied().unwrap_or(0),
+            "ready": lane("ready"),
+            "waiting": lane("waiting"),
+            "repair": lane("repair"),
+            "cleanup": lane("cleanup"),
+            "held": lane("held"),
             "starving": q.starving.len(),
         }),
         "integration.queue",
@@ -6947,5 +6950,127 @@ mod tests {
         assert!(rendered.contains("required"), "{rendered}");
         assert!(rendered.contains("max=\"50\""), "{rendered}");
         assert!(rendered.contains("data-mj-type=\"integer\""), "{rendered}");
+    }
+
+    /// A git repository with an origin/master and one commit, for the integration page.
+    fn integration_repository() -> (crate::synthetic::SyntheticRepository, String) {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}: {:?}", out);
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "master"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        let sha = git(&["rev-parse", "HEAD"]);
+        git(&["update-ref", "refs/remotes/origin/master", &sha]);
+        (repo, sha)
+    }
+
+    fn observed_pr(
+        number: u64,
+        head_sha: &str,
+        state: crate::integration::CheckRunState,
+    ) -> crate::integration::PullRequestObservation {
+        crate::integration::PullRequestObservation {
+            number,
+            title: format!("change {number}"),
+            author: "someone".into(),
+            head_ref: format!("feature/{number}"),
+            head_sha: head_sha.into(),
+            base_ref: "master".into(),
+            draft: false,
+            labels: vec![],
+            created_at: format!("2026-09-0{number}T00:00:00Z"),
+            updated_at: format!("2026-09-0{number}T00:00:00Z"),
+            body: String::new(),
+            checks: vec![crate::integration::CheckObservation {
+                name: "ci".into(),
+                state,
+            }],
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+        }
+    }
+
+    /// With nothing observed the page says so and names the command that observes; with an
+    /// observation it renders the lanes, the base, the lease and the recent actions, every
+    /// figure from the same queue the command line and MCP answer.
+    #[test]
+    fn the_integration_page_renders_the_observed_queue_and_says_when_there_is_none() {
+        use crate::integration::{
+            drain, store_observation, CheckRunState, ForgeObservation, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+
+        let ctx = repo.context().expect("a context");
+        let empty = integration(&ctx).main.render();
+        assert!(empty.contains("prs refresh"), "{empty}");
+
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: sha.clone(),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                reviews_required: Some(false),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    observed_pr(1, &sha, CheckRunState::Passed),
+                    observed_pr(2, &sha, CheckRunState::Failed),
+                    observed_pr(3, &sha, CheckRunState::Pending),
+                ],
+            },
+        )
+        .expect("an observation");
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                at: "2026-10-01T00:01:00Z".into(),
+                actor: "test".into(),
+                action: "merge_succeeded".into(),
+                pr: Some(9),
+                master_before: Some(sha.clone()),
+                head_sha: Some(sha.clone()),
+                master_after: Some(sha.clone()),
+                reasons: vec![],
+                detail: "merged #9".into(),
+                passed_over: vec![],
+            },
+        );
+        let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");
+
+        let ctx = repo.context().expect("a context");
+        let page = integration(&ctx);
+        let html = page.main.render();
+        assert_eq!(page.status, 200);
+        for n in ["#1", "#2", "#3"] {
+            assert!(html.contains(n), "{n} is not on the page: {html}");
+        }
+        assert!(html.contains(&sha[..10]), "the base master is not named");
+        assert!(
+            html.contains("merged #9") || html.contains("#9"),
+            "the last merge is missing"
+        );
+        assert!(
+            !html.contains("prs refresh records one"),
+            "an observed queue says nothing is observed"
+        );
+        drop(lease);
     }
 }
