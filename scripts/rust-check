@@ -79,7 +79,21 @@ RUSTFLAGS=''; export RUSTFLAGS
 # compiled in, while a built_from read from HEAD names the new one (measured on a fixture crate
 # with rustdoc 1.98.1). For the whole script rather than the doc step alone, because a value
 # that changed between two steps reruns build.rs and recompiles the crate for the next one.
-MAJORDOMUS_BUILD_COMMIT="${MAJORDOMUS_BUILD_COMMIT:-$(git -C "$ROOT" rev-parse HEAD)}"
+#
+# A commit handed in from outside says nothing about the tree, so build.rs records its
+# dirtiness as unknown; when the commit is this checkout's HEAD the tree is here to ask, and
+# the flag is handed in with it — the crate's directory, tracked files only, the question
+# build.rs asks itself — or every build through this script would name its commit and say
+# nothing about whether the tree matched it. --no-optional-locks: a read must not rewrite the
+# index another session is staging into.
+if [ -z "${MAJORDOMUS_BUILD_COMMIT:-}" ]; then
+  MAJORDOMUS_BUILD_COMMIT="$(git -C "$ROOT" rev-parse HEAD)"
+  if [ -z "${MAJORDOMUS_BUILD_DIRTY:-}" ] \
+    && st="$(git -C "$CRATE" --no-optional-locks status --porcelain --untracked-files=no -- .)"; then
+    if [ -n "$st" ]; then MAJORDOMUS_BUILD_DIRTY=true; else MAJORDOMUS_BUILD_DIRTY=false; fi
+    export MAJORDOMUS_BUILD_DIRTY
+  fi
+fi
 export MAJORDOMUS_BUILD_COMMIT
 t_step=""; last=""
 step() {

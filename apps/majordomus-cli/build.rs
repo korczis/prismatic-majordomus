@@ -5,7 +5,15 @@
 //! and must still be able to say what it is.
 //!
 //! `MAJORDOMUS_BUILD_COMMIT` overrides the commit, which is how a release pipeline records
-//! the commit it checked out when the build happens outside a git work tree.
+//! the commit it checked out when the build happens outside a git work tree — a container
+//! build is one: the image copies the crate and not the repository, so without the build
+//! argument the deployed process could only say `unknown`. `MAJORDOMUS_BUILD_DIRTY`
+//! (`true`/`false`) says whether that tree carried uncommitted changes; without it the flag
+//! is read from git when git named the commit, and is `unknown` otherwise, because a commit
+//! handed in from outside says nothing about the tree it was built from. That decision is
+//! `src/build_identity.rs`, compiled in through `#[path]` like the generation below, so its
+//! table is unit-tested in the crate rather than trusted here. The flag covers the crate's
+//! directory as it stood when this script last ran, not the tree at the moment of asking.
 //!
 //! The generation is what `majordomus generate` compares against the tree it is asked to
 //! derive. `src/generation.rs` is compiled into this build script as well as into the
@@ -20,6 +28,9 @@ use std::process::Command;
 #[path = "src/generation.rs"]
 mod generation;
 
+#[path = "src/build_identity.rs"]
+mod build_identity;
+
 fn main() {
     // The default — rerun when any file in the package changes — is off the moment a build
     // script emits any `rerun-if` instruction, and this one has always emitted the env line
@@ -31,6 +42,7 @@ fn main() {
     println!("cargo:rerun-if-changed=Cargo.lock");
     println!("cargo:rerun-if-changed=build.rs");
     println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_COMMIT");
+    println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_DIRTY");
     println!(
         "cargo:rustc-env=MAJORDOMUS_TARGET={}",
         std::env::var("TARGET").unwrap_or_else(|_| "unknown".into())
@@ -39,20 +51,23 @@ fn main() {
         "cargo:rustc-env=MAJORDOMUS_PROFILE={}",
         std::env::var("PROFILE").unwrap_or_else(|_| "unknown".into())
     );
-    let commit = std::env::var("MAJORDOMUS_BUILD_COMMIT")
-        .ok()
-        .filter(|c| !c.is_empty())
-        .or_else(|| {
-            Command::new("git")
-                .args(["rev-parse", "HEAD"])
-                .output()
-                .ok()
-                .filter(|o| o.status.success())
-                .and_then(|o| String::from_utf8(o.stdout).ok())
-                .map(|s| s.trim().to_string())
-                .filter(|s| !s.is_empty())
-        })
-        .unwrap_or_else(|| "unknown".into());
+    let git = |args: &[&str]| {
+        Command::new("git")
+            .args(args)
+            .output()
+            .ok()
+            .filter(|o| o.status.success())
+            .and_then(|o| String::from_utf8(o.stdout).ok())
+    };
+    // The decision is build_identity's, compiled in here and tested there; this only reads
+    // what the build was handed and lends it git, from the crate's directory (cargo runs a
+    // build script there), so the dirty flag is the crate's and not the whole repository's.
+    let (commit, dirty) = build_identity::identify(
+        std::env::var("MAJORDOMUS_BUILD_COMMIT").ok().as_deref(),
+        std::env::var("MAJORDOMUS_BUILD_DIRTY").ok().as_deref(),
+        git,
+    );
+    println!("cargo:rustc-env=MAJORDOMUS_DIRTY={dirty}");
     println!("cargo:rustc-env=MAJORDOMUS_COMMIT={commit}");
     let crate_dir =
         PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("cargo sets CARGO_MANIFEST_DIR"));
