@@ -39,6 +39,18 @@ pub enum Declares {
 /// What a declared version asks of the installed one. A `.nvmrc` that says `22` pins a
 /// release line; a `rust-version` of `1.85` is a floor that 1.90 satisfies. Reading the
 /// second as the first reports every up-to-date machine as wrong.
+///
+/// The same pair of versions answers differently under each pin:
+///
+/// ```
+/// use majordomus_cli::environment::toolchain::{satisfies, Pin};
+/// // a newer release satisfies a floor but not a pinned release line
+/// assert_eq!(satisfies("1.85", "1.90.0", Pin::Minimum), Some(true));
+/// assert_eq!(satisfies("1.85", "1.90.0", Pin::Exact), Some(false));
+/// // a release inside the pinned line satisfies both
+/// assert_eq!(satisfies("22", "22.20.0", Pin::Exact), Some(true));
+/// assert_eq!(satisfies("22", "22.20.0", Pin::Minimum), Some(true));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pin {
     /// The installed version starts with the declared one, component by component.
