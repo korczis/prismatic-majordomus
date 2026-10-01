@@ -2130,6 +2130,14 @@
         "external": true
       },
       {
+        "id": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "file",
+        "label": "doctor.rs",
+        "summary": "named by the layer; not an object of this index",
+        "source": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "external": true
+      },
+      {
         "id": "file:apps/majordomus-cli/src/mesh/journal.rs",
         "kind": "file",
         "label": "journal.rs",
@@ -4529,6 +4537,97 @@
         }
       },
       {
+        "id": "majordomus://adr/adr-0059",
+        "kind": "adr",
+        "label": "adr-0059",
+        "summary": "The mesh is on for this repository, and every session start holds it",
+        "route": "/cockpit/objects/adr/adr-0059",
+        "source": ".ai/repo/adrs/0059-the-mesh-is-on-for-this-repository-and-every-session-start-h.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-30",
+          "related": [
+            "file:.ai/repo/adrs/0050-mesh-peer-discovery-is-provider-based-observation-with-authe.md",
+            "file:.ai/repo/adrs/0044-cooperation-is-repository-wide-the-board-is-gathered-not-shared.md",
+            "file:.ai/repo/adrs/0067-mesh-cooperation-is-authenticated-links-and-one-replicated-journal.md",
+            "file:.ai/repo/mesh/majordomus.yaml",
+            "file:docs/MESH.md",
+            "file:apps/majordomus-cli/src/mesh/doctor.rs",
+            "file:lib/capture.sh",
+            "claim:mesh-declared-is-held",
+            "test:test/cases/494_the_mesh_is_declared_and_held.sh",
+            "test:test/cases/491_the_mesh_is_on_here.sh"
+          ],
+          "tags": [
+            "mesh",
+            "coordination",
+            "operations"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0061",
+        "kind": "adr",
+        "label": "adr-0061",
+        "summary": "A gate's verdict is evidence, and a rule the repository enforces itself is proven by it",
+        "route": "/cockpit/objects/adr/adr-0061",
+        "source": ".ai/repo/adrs/0061-a-gate-s-verdict-is-evidence-and-a-rule-the-repository-enfor.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "governance",
+            "evidence"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0062",
+        "kind": "adr",
+        "label": "adr-0062",
+        "summary": "A verification is proved against a commit, and two attempts that disagree are not proof",
+        "route": "/cockpit/objects/adr/adr-0062",
+        "source": ".ai/repo/adrs/0062-a-verification-is-proved-against-a-commit-and-two-attempts-t.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "evidence",
+            "verification"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0063",
+        "kind": "adr",
+        "label": "adr-0063",
+        "summary": "A peer's uncommitted work is part of its claim, and a commit that carries it is refused",
+        "route": "/cockpit/objects/adr/adr-0063",
+        "source": ".ai/repo/adrs/0063-a-peer-s-uncommitted-work-is-part-of-its-claim-and-a-commit-.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "coordination"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0064",
+        "kind": "adr",
+        "label": "adr-0064",
+        "summary": "A declared tool has a version, and a mismatch is a finding",
+        "route": "/cockpit/objects/adr/adr-0064",
+        "source": ".ai/repo/adrs/0064-a-declared-tool-has-a-version-and-a-mismatch-is-a-finding.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-14",
+          "tags": [
+            "environment"
+          ]
+        }
+      },
+      {
         "id": "majordomus://adr/adr-0066",
         "kind": "adr",
         "label": "adr-0066",
@@ -6396,12 +6495,11 @@
         "id": "majordomus://claim/evidence-recorded-in-ci",
         "kind": "claim",
         "label": "evidence-recorded-in-ci",
-        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
+        "summary": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
         "route": "/cockpit/objects/claim/evidence-recorded-in-ci",
         "source": "docs/CLAIMS.yaml",
         "status": "guaranteed",
         "facts": {
-          "claim": "CI records every test it ran with the commit and the run it happened in, and the site publishes that evidence as current, stale with its distance, or unavailable with the reason",
           "implementation": "scripts/ci/evidence-collect",
           "responsibility": "none",
           "source": "docs/EVIDENCE.md",
@@ -6996,6 +7094,21 @@
           "responsibility": "none",
           "source": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
           "test": "apps/majordomus-cli/tests/mesh_cooperation.rs"
+        }
+      },
+      {
+        "id": "majordomus://claim/mesh-declared-is-held",
+        "kind": "claim",
+        "label": "mesh-declared-is-held",
+        "summary": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+        "route": "/cockpit/objects/claim/mesh-declared-is-held",
+        "source": "docs/CLAIMS.yaml",
+        "status": "guaranteed",
+        "facts": {
+          "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+          "responsibility": "none",
+          "source": "docs/MESH.md",
+          "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
         }
       },
       {
@@ -11875,6 +11988,14 @@
         "summary": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
         "route": "/cockpit/objects/document/docs-claims-mesh-cooperation-links-md",
         "source": "docs/claims/mesh-cooperation-links.md"
+      },
+      {
+        "id": "majordomus://document/docs/claims/mesh-declared-is-held.md",
+        "kind": "document",
+        "label": "docs/claims/mesh-declared-is-held.md",
+        "summary": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+        "route": "/cockpit/objects/document/docs-claims-mesh-declared-is-held-md",
+        "source": "docs/claims/mesh-declared-is-held.md"
       },
       {
         "id": "majordomus://document/docs/claims/mesh-liveness-expiry.md",
@@ -24452,6 +24573,50 @@
         }
       },
       {
+        "id": "majordomus://issue/I1516",
+        "kind": "issue",
+        "label": "I1516",
+        "summary": "The adapter composes a projected body in one place",
+        "route": "/cockpit/objects/issue/i1516",
+        "source": ".ai/repo/project/issues/I1516.yaml",
+        "facts": {
+          "acceptance_criteria": [
+            "The region body is composed in exactly one place in the adapter",
+            "No caller writes the record marker without terminating its line",
+            "A body the splice would post classifies as insync, not edited"
+          ],
+          "created_at": "2026-09-15",
+          "depends_on": [],
+          "evidence_required": [
+            "the_two_compositions_are_one",
+            "a_spliced_body_is_recognised_as_its_own"
+          ],
+          "milestone": "work-graph-github",
+          "non_scope": [
+            "The remote rewrite itself, which is an operation and not a change to the repository.",
+            "The drift baseline, which shrinks on its own once the bodies are correct."
+          ],
+          "objective": "Make the body scripts/github-sync posts to an issue the same text it prints for that issue, by composing it once, so that a body the adapter wrote is a body the adapter recognises as its own.",
+          "parallel_safe": true,
+          "priority": "p0",
+          "profile": "implementation",
+          "risk": "Low. The change removes a duplicate definition; the rendering it keeps is the one every other surface already prints.",
+          "scope": [
+            "scripts/github-sync",
+            "test/cases/45_github_projection.sh",
+            "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh"
+          ],
+          "slug": "the-adapter-composes-one-body",
+          "started_at": "2026-09-15",
+          "updated_at": "2026-09-30",
+          "validation": [
+            "bash test/run.sh 45_github_projection",
+            "bash test/run.sh 602_a_spliced_body_is_recognised_as_its_own",
+            "bash scripts/ci/shell-lint"
+          ]
+        }
+      },
+      {
         "id": "majordomus://issue/I1520",
         "kind": "issue",
         "label": "I1520",
@@ -30920,6 +31085,27 @@
         }
       },
       {
+        "id": "majordomus://rule/project.a-number-names-one-case@1",
+        "kind": "rule",
+        "label": "project.a-number-names-one-case@1",
+        "summary": "A case number names one case",
+        "route": "/cockpit/objects/rule/project-a-number-names-one-case-1",
+        "source": ".ai/repo/rules/project/a-number-names-one-case.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.work-is-claimed-before-it-is-built@1",
+            "project.a-verdict-states-its-subject@1"
+          ],
+          "tags": [
+            "tests",
+            "identifiers",
+            "coordination"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "kind": "rule",
         "label": "project.a-tool-that-cannot-match-the-tree-refuses@1",
@@ -30997,7 +31183,7 @@
             "project.work-is-claimed-before-it-is-built@1",
             "project.destructive-sweeps-fail-closed@1",
             "project.reclaim-only-what-you-own@1",
-            "project.every-wait-is-bounded@1"
+            "project.every-wait-is-bounded@2"
           ],
           "tags": [
             "operations",
@@ -31130,15 +31316,15 @@
         }
       },
       {
-        "id": "majordomus://rule/project.commands-run-non-interactively@1",
+        "id": "majordomus://rule/project.commands-run-non-interactively@2",
         "kind": "rule",
-        "label": "project.commands-run-non-interactively@1",
+        "label": "project.commands-run-non-interactively@2",
         "summary": "A command runs with nobody at the keyboard",
-        "route": "/cockpit/objects/rule/project-commands-run-non-interactively-1",
-        "source": ".ai/repo/rules/project/commands-run-non-interactively.v1.md",
+        "route": "/cockpit/objects/rule/project-commands-run-non-interactively-2",
+        "source": ".ai/repo/rules/project/commands-run-non-interactively.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
             "project.portable-shell@1",
             "project.execution-state-is-authoritative@1"
@@ -31408,7 +31594,7 @@
             "project.shared-server-resilience@1",
             "project.interfaces-are-projections@1",
             "project.the-lease-is-read-once@1",
-            "project.every-wait-is-bounded@1"
+            "project.every-wait-is-bounded@2"
           ],
           "tags": [
             "entry",
@@ -31490,15 +31676,15 @@
         }
       },
       {
-        "id": "majordomus://rule/project.every-wait-is-bounded@1",
+        "id": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "rule",
-        "label": "project.every-wait-is-bounded@1",
+        "label": "project.every-wait-is-bounded@2",
         "summary": "Every wait is bounded",
-        "route": "/cockpit/objects/rule/project-every-wait-is-bounded-1",
-        "source": ".ai/repo/rules/project/every-wait-is-bounded.v1.md",
+        "route": "/cockpit/objects/rule/project-every-wait-is-bounded-2",
+        "source": ".ai/repo/rules/project/every-wait-is-bounded.v2.md",
         "status": "active",
         "facts": {
-          "class": "advisory",
+          "class": "blocking",
           "depends_on": [
             "project.execution-state-is-authoritative@1",
             "project.never-reported-is-not-green@1"
@@ -31676,6 +31862,25 @@
           "tags": [
             "performance",
             "doctrine"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.independent-of-prismatic@1",
+        "kind": "rule",
+        "label": "project.independent-of-prismatic@1",
+        "summary": "Independent of Prismatic",
+        "route": "/cockpit/objects/rule/project-independent-of-prismatic-1",
+        "source": ".ai/repo/rules/project/independent-of-prismatic.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.clean-room@1"
+          ],
+          "tags": [
+            "provenance",
+            "dependencies"
           ]
         }
       },
@@ -35832,6 +36037,13 @@
         "source": "test/cases/404_refused_files_are_named.sh"
       },
       {
+        "id": "majordomus://test/test/cases/408_a_receipt_is_provider_neutral.sh",
+        "kind": "test",
+        "label": "test/cases/408_a_receipt_is_provider_neutral.sh",
+        "route": "/cockpit/objects/test/test-cases-408-a-receipt-is-provider-neutral-sh",
+        "source": "test/cases/408_a_receipt_is_provider_neutral.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/40_project_model.sh",
         "kind": "test",
         "label": "test/cases/40_project_model.sh",
@@ -35991,6 +36203,13 @@
         "label": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
         "route": "/cockpit/objects/test/test-cases-493-mesh-compaction-keeps-what-is-live-sh",
         "source": "test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "kind": "test",
+        "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
+        "route": "/cockpit/objects/test/test-cases-494-the-mesh-is-declared-and-held-sh",
+        "source": "test/cases/494_the_mesh_is_declared_and_held.sh"
       },
       {
         "id": "majordomus://test/test/cases/49_roadmap_doctrine.sh",
@@ -36161,11 +36380,32 @@
         "source": "test/cases/55_session_context.sh"
       },
       {
+        "id": "majordomus://test/test/cases/560_a_case_number_names_one_case.sh",
+        "kind": "test",
+        "label": "test/cases/560_a_case_number_names_one_case.sh",
+        "route": "/cockpit/objects/test/test-cases-560-a-case-number-names-one-case-sh",
+        "source": "test/cases/560_a_case_number_names_one_case.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
+        "kind": "test",
+        "label": "test/cases/569_independent_of_prismatic.sh",
+        "route": "/cockpit/objects/test/test-cases-569-independent-of-prismatic-sh",
+        "source": "test/cases/569_independent_of_prismatic.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/56_derived_current_gate.sh",
         "kind": "test",
         "label": "test/cases/56_derived_current_gate.sh",
         "route": "/cockpit/objects/test/test-cases-56-derived-current-gate-sh",
         "source": "test/cases/56_derived_current_gate.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
+        "kind": "test",
+        "label": "test/cases/578_an_unknown_gate_refuses_completed.sh",
+        "route": "/cockpit/objects/test/test-cases-578-an-unknown-gate-refuses-completed-sh",
+        "source": "test/cases/578_an_unknown_gate_refuses_completed.sh"
       },
       {
         "id": "majordomus://test/test/cases/57_derived_merge_driver.sh",
@@ -36182,11 +36422,32 @@
         "source": "test/cases/58_home_path_gate.sh"
       },
       {
+        "id": "majordomus://test/test/cases/599_a_silent_check_is_not_a_pass.sh",
+        "kind": "test",
+        "label": "test/cases/599_a_silent_check_is_not_a_pass.sh",
+        "route": "/cockpit/objects/test/test-cases-599-a-silent-check-is-not-a-pass-sh",
+        "source": "test/cases/599_a_silent_check_is_not_a_pass.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/59_reference_integrity.sh",
         "kind": "test",
         "label": "test/cases/59_reference_integrity.sh",
         "route": "/cockpit/objects/test/test-cases-59-reference-integrity-sh",
         "source": "test/cases/59_reference_integrity.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+        "kind": "test",
+        "label": "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+        "route": "/cockpit/objects/test/test-cases-602-a-spliced-body-is-recognised-as-its-own-sh",
+        "source": "test/cases/602_a_spliced_body_is_recognised_as_its_own.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/608_deletion_is_accounted_for.sh",
+        "kind": "test",
+        "label": "test/cases/608_deletion_is_accounted_for.sh",
+        "route": "/cockpit/objects/test/test-cases-608-deletion-is-accounted-for-sh",
+        "source": "test/cases/608_deletion_is_accounted_for.sh"
       },
       {
         "id": "majordomus://test/test/cases/60_session_lifecycle.sh",
@@ -36201,6 +36462,13 @@
         "label": "test/cases/61_session_envelope.sh",
         "route": "/cockpit/objects/test/test-cases-61-session-envelope-sh",
         "source": "test/cases/61_session_envelope.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/620_mcp_tools_are_invoked_and_answer.sh",
+        "kind": "test",
+        "label": "test/cases/620_mcp_tools_are_invoked_and_answer.sh",
+        "route": "/cockpit/objects/test/test-cases-620-mcp-tools-are-invoked-and-answer-sh",
+        "source": "test/cases/620_mcp_tools_are_invoked_and_answer.sh"
       },
       {
         "id": "majordomus://test/test/cases/62_session_divergence.sh",
@@ -42275,7 +42543,7 @@
       },
       {
         "source": "majordomus://adr/adr-0039",
-        "target": "majordomus://rule/project.commands-run-non-interactively@1",
+        "target": "majordomus://rule/project.commands-run-non-interactively@2",
         "kind": "put_in_force"
       },
       {
@@ -42285,7 +42553,7 @@
       },
       {
         "source": "majordomus://adr/adr-0039",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "put_in_force"
       },
       {
@@ -42930,7 +43198,7 @@
       },
       {
         "source": "majordomus://adr/adr-0055",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "put_in_force"
       },
       {
@@ -42955,6 +43223,81 @@
       },
       {
         "source": "majordomus://adr/adr-0056",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://adr/adr-0044",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://adr/adr-0050",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://adr/adr-0067",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://claim/mesh-declared-is-held",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://implementation/lib/capture.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://mesh-declaration/majordomus",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://test/test/cases/491_the_mesh_is_on_here.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0059",
+        "target": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0061",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0062",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0063",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0064",
         "target": "kind:adr",
         "kind": "is_a"
       },
@@ -45712,6 +46055,26 @@
         "source": "majordomus://claim/mesh-cooperation-links",
         "target": "majordomus://rule/project.mesh-cooperation-is-authenticated@1",
         "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "file:apps/majordomus-cli/src/mesh/doctor.rs",
+        "kind": "implemented_by"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "kind:claim",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "majordomus://document/docs/MESH.md",
+        "kind": "defined_in"
+      },
+      {
+        "source": "majordomus://claim/mesh-declared-is-held",
+        "target": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
+        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/mesh-liveness-expiry",
@@ -49030,6 +49393,11 @@
       },
       {
         "source": "majordomus://document/docs/claims/mesh-cooperation-links.md",
+        "target": "kind:document",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://document/docs/claims/mesh-declared-is-held.md",
         "target": "kind:document",
         "kind": "is_a"
       },
@@ -53459,6 +53827,16 @@
         "kind": "belongs_to"
       },
       {
+        "source": "majordomus://issue/I1516",
+        "target": "kind:issue",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://issue/I1516",
+        "target": "majordomus://milestone/work-graph-github",
+        "kind": "belongs_to"
+      },
+      {
         "source": "majordomus://issue/I1520",
         "target": "kind:issue",
         "kind": "is_a"
@@ -54819,6 +55197,21 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.a-number-names-one-case@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.a-number-names-one-case@1",
+        "target": "majordomus://rule/project.a-verdict-states-its-subject@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.a-number-names-one-case@1",
+        "target": "majordomus://rule/project.work-is-claimed-before-it-is-built@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.a-tool-that-cannot-match-the-tree-refuses@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -54870,7 +55263,7 @@
       },
       {
         "source": "majordomus://rule/project.accumulation-is-measured@2",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "depends_on"
       },
       {
@@ -54954,17 +55347,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "majordomus://rule/project.execution-state-is-authoritative@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.commands-run-non-interactively@1",
+        "source": "majordomus://rule/project.commands-run-non-interactively@2",
         "target": "majordomus://rule/project.portable-shell@1",
         "kind": "depends_on"
       },
@@ -55125,7 +55518,7 @@
       },
       {
         "source": "majordomus://rule/project.entry-converges@2",
-        "target": "majordomus://rule/project.every-wait-is-bounded@1",
+        "target": "majordomus://rule/project.every-wait-is-bounded@2",
         "kind": "depends_on"
       },
       {
@@ -55204,17 +55597,17 @@
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "source": "majordomus://rule/project.every-wait-is-bounded@2",
         "target": "kind:rule",
         "kind": "is_a"
       },
       {
-        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "source": "majordomus://rule/project.every-wait-is-bounded@2",
         "target": "majordomus://rule/project.execution-state-is-authoritative@1",
         "kind": "depends_on"
       },
       {
-        "source": "majordomus://rule/project.every-wait-is-bounded@1",
+        "source": "majordomus://rule/project.every-wait-is-bounded@2",
         "target": "majordomus://rule/project.never-reported-is-not-green@1",
         "kind": "depends_on"
       },
@@ -55321,6 +55714,16 @@
       {
         "source": "majordomus://rule/project.hot-path-reads-once@1",
         "target": "majordomus://rule/project.derived-once@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.independent-of-prismatic@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.independent-of-prismatic@1",
+        "target": "majordomus://rule/project.clean-room@1",
         "kind": "depends_on"
       },
       {
@@ -56829,6 +57232,11 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/408_a_receipt_is_provider_neutral.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/40_project_model.sh",
         "target": "kind:test",
         "kind": "is_a"
@@ -56940,6 +57348,11 @@
       },
       {
         "source": "majordomus://test/test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/494_the_mesh_is_declared_and_held.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -57064,7 +57477,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/560_a_case_number_names_one_case.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/569_independent_of_prismatic.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/56_derived_current_gate.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/578_an_unknown_gate_refuses_completed.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -57079,7 +57507,22 @@
         "kind": "is_a"
       },
       {
+        "source": "majordomus://test/test/cases/599_a_silent_check_is_not_a_pass.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
         "source": "majordomus://test/test/cases/59_reference_integrity.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/602_a_spliced_body_is_recognised_as_its_own.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/608_deletion_is_accounted_for.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -57090,6 +57533,11 @@
       },
       {
         "source": "majordomus://test/test/cases/61_session_envelope.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/620_mcp_tools_are_invoked_and_answer.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -60800,8 +61248,8 @@
       }
     ],
     "metadata": {
-      "nodes": 1943,
-      "edges": 4390,
+      "nodes": 1963,
+      "edges": 4426,
       "acyclic": true,
       "truncated": false
     }

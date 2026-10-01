@@ -1,7 +1,7 @@
 +++
 title = "What already claims a path is checked before that path is built"
 description = "What already claims a path is checked before that path is built"
-weight = 141
+weight = 143
 [extra]
 kind = "rule"
 slug = "project-work-is-claimed-before-it-is-built-1"

@@ -2891,6 +2891,13 @@
         "test": "apps/majordomus-cli/tests/mesh.rs"
       },
       {
+        "id": "mesh-declared-is-held",
+        "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "route": "/guarantees/mesh-declared-is-held/",
+        "status": "guaranteed",
+        "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
+      },
+      {
         "id": "models-one-declaration",
         "implementation": "apps/majordomus-cli/src/models/mod.rs",
         "route": "/guarantees/models-one-declaration/",
@@ -2996,7 +3003,7 @@
   },
   "counts": {
     "capabilities": 143,
-    "claims": 63,
+    "claims": 64,
     "modules": 43
   },
   "generator": "majordomus-cli 0.11.0",

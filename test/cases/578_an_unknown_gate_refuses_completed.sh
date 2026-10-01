@@ -116,7 +116,7 @@ expect_no_grep 'FAIL gate'
 # ------------------------------------------------------------------ a real reader: accepted
 # The positive half needs the executable; without one the negative half above still stands.
 if [ -n "$OUTER_BIN" ]; then export MAJORDOMUS_BIN="$OUTER_BIN"; else unset MAJORDOMUS_BIN; fi
-BIN="$(rust_bin 2>/dev/null)" || { echo "    skip: positive path (no Rust executable)"; exit 0; }
+BIN="$(rust_bin 2>/dev/null)" || skip "positive path (no Rust executable)"
 export MAJORDOMUS_BIN="$BIN"
 mkdir -p .ai/repo/ci && cp "$S/gates.yaml" .ai/repo/ci/gates.yaml
 git add -A >/dev/null && git commit -qm 'model again'
