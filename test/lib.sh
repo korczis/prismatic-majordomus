@@ -483,7 +483,7 @@ rustdoc_fixture_crate() {
   version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/$c/Cargo.toml" | head -n 1)"
   mkdir -p "$c/src" scripts lib
   cp "$ROOT/scripts/rust-check" scripts/rust-check
-  cp "$ROOT/lib/rust_bin.sh" lib/rust_bin.sh
+  cp "$ROOT/lib/rust_bin.sh" "$ROOT/lib/sha256.sh" lib/
   cp "$ROOT/rust-toolchain.toml" rust-toolchain.toml
   printf 'target/\n' > .gitignore
   cat > "$c/Cargo.toml" <<TOML
