@@ -35,7 +35,11 @@ expect_file "$MANIFEST"
 REGISTRY="$ROOT/docs/generated/registry.json"
 expect_file "$REGISTRY"
 
-running="$("$BIN" version 2>/dev/null | tr -d ' \n' | sed 's/^majordomus//')"
+# `--version`, not `version`: the executable has no `version` subcommand, so `version`
+# exited 2 with nothing on stdout, `running` was always empty, and every refusal below
+# reported "( vs <declared>)", a diagnostic that named no version at all.
+running="$("$BIN" --version 2>/dev/null | tr -d ' \n' | sed 's/^majordomus//')"
+[ -n "$running" ] || { echo "    could not read the executable's version from $BIN --version"; exit 1; }
 # the one shell reader of the authority, never a second parse of the manifest here
 declared="$("$ROOT/scripts/release-version" 2>/dev/null || true)"
 [ -n "$declared" ] || { echo "    the manifest declares no version"; exit 1; }
