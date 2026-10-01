@@ -510,6 +510,10 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   local fix steps_json="" first=1 raw norm asserts fail_reason
   id="$(mj_uc_v "$i" id)"; setup="$(mj_uc_v "$i" scenario.setup)"
   [ -n "$setup" ] || return 2
+  # A scenario's output is published evidence, so it may not depend on what this machine
+  # has installed. Reasoning's ci mode admits no advisor whatever is on PATH (ADR 0098),
+  # which makes every advisor line `doctor` prints the same on a laptop and on a runner.
+  MAJORDOMUS_REASONING_MODE=ci; export MAJORDOMUS_REASONING_MODE
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
