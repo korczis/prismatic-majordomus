@@ -1,7 +1,7 @@
 +++
 title = "Majordomus Mesh"
 description = "the mesh: how running Majordomus instances discover each other — Ed25519 node identity, one signed bounded envelope over multicast, broadcast and rendezvous, one registry, deny-unknown trust, the off-by-default declaration, the threat model, and how to operate and extend it"
-weight = 52
+weight = 53
 [extra]
 source = "docs/MESH.md"
 +++
@@ -457,26 +457,68 @@ private network or the tailnet, and `test/cases/491_the_mesh_is_on_here.sh` refu
 declaration that names a public one.
 
 **Adding a machine.** Run `majordomus mesh identity` there, add the key under `trust.allow` with
-a comment naming the machine, and commit it; `majordomus mesh doctor` on that machine passes its
+a comment naming the machine and its node id to the trust row of the table above, and commit
+both; `majordomus mesh doctor` on that machine passes its
 `trust` check once the key is listed, and names the remedy until then. A new hub is a server
 started with `majordomus serve --host 0.0.0.0 --port 8791` on the machine, and its addresses
 added under `rendezvous.endpoints`.
 
-**Turning it off.** Commit `enabled: false`; a server started after that opens nothing and
-`mesh status` says why.
+**Turning it off.** Commit `enabled: false`; a server started after that opens nothing,
+`mesh status` says why, and the briefing says `Mesh: off, as declared`. That reverses ADR 0059,
+so it is a decision of its own: case 494 refuses a disabled declaration until the decision and
+the case change with it.
+
+**Whether the server holds it.** The declaration says what should run; the shared server
+decides what does, and the two can drift — on 2026-09-12 three machines ran an uncommitted
+`enabled: true` while the committed file said `false`, and the one reset to it was silently
+alone (ADR 0059). So `mesh doctor` ends with a `runtime` check that is the server's verdict:
+
+<div class="overflow-x-auto" tabindex="0">
+
+| `runtime` says | when | verdict |
+|---|---|---|
+| `active as <node> since …: n of m provider(s) running; …` | the server activated the mesh | holds; fails only when every declared transport failed |
+| `off, as declared — …` | the declaration is disabled and the server left the mesh off | holds |
+| `the declaration is enabled and this server's mesh is not active — <reason>` | the server could not, or did not, activate an enabled declaration | **fails**, with the impact and the restart that follows fixing the reason |
+| `not decided in this process: …` | no server runs in the process asked | holds: an absence, not a verdict |
+
+</div>
+
+
+`majordomus mesh doctor` asks this checkout's running server for its report when one serves
+it — the verdict is the server's — and runs in its own process when none does; it exits 10 on
+any failed check. `majordomus run mesh.doctor` is the self-check of the invoking process alone,
+under its own state directory, and never asks a server.
+
+**The session start says it.** The briefing the provider's start event injects carries one line
+under the server line whenever the repository tracks a declaration and the server is ready:
+
+```
+Shared server: ready http://127.0.0.1:8741 pid 123 version 0.10.0
+Mesh: active — 2 of 2 provider(s) running; 2 node(s) known, 2 trusted, 2 present
+Mesh: off, as declared
+Mesh: DECLARED ENABLED BUT NOT ACTIVE — identity: …/majordomus/node.json: Is a directory (os error 21)
+```
+
+(one of the three). A tracked declaration the index cannot read is
+`Mesh: DECLARATION NOT READ — …`. The line is the executable's `mesh doctor` rendered by the
+hook library, which sends no request of its own (SECURITY.md); with no ready server there is no
+line, and the server line above says why.
 
 **What holds it.** `test/cases/491_the_mesh_is_on_here.sh`: the committed declaration is the
-reviewed one as the executable reads it, `mesh doctor` holds over this repository, two
+reviewed one as the executable reads it, the self-check holds over this repository, two
 worktrees under one key link, an unlisted key is refused `untrusted`, and a machine whose key is
-missing is told so. A fuller design — the doctor judging the running server and not only the
-machine, a session-start briefing line naming the mesh, and a script that installs a hub as a
-systemd user unit — is proposed on the branch `feature/the-mesh-is-on-and-held` (its ADR 0059)
-and is not part of this tree.
+missing is told so. `test/cases/494_the_mesh_is_declared_and_held.sh`: the declaration is
+tracked, enabled, `deny_unknown`, allowlists at least as many keys as the trust row above names
+machines, and names a hub — so adding a machine is a key under `trust.allow` and a node id in
+that row, in one commit — and a disposable repository proves every briefing answer and exit 10
+through the start event. The hubs are started by hand; an installer that runs one as a service
+is owed as a typed capability or a Rhai workflow (ADR 0059).
 
 ## Operating it
 
 ```sh
-majordomus mesh doctor            # prerequisites on this machine, each failure with impact and remedy
+majordomus mesh doctor            # prerequisites and the server's runtime verdict; exits 10 on a failed check
 majordomus mesh identity          # this machine's key, for trust.allow
 majordomus mesh status            # discovery: providers, tallies, refusals
 majordomus mesh nodes             # discovery: one row per node × runtime
@@ -517,7 +559,8 @@ the same capabilities from their Capabilities pages.
 ## Troubleshooting
 
 1. **`mesh doctor`** on each machine. A failed `declaration`, `identity`, `trust`,
-   `repository`, `udp` or `multicast` check names its impact and remedy.
+   `repository`, `udp` or `multicast` check names its impact and remedy; a failed `runtime`
+   check is the server's: the declaration is enabled and its mesh is not active, and why.
 2. **`mesh status`** — discovery. No nodes: multicast is not routed between the machines;
    declare `cooperation.seeds` or a rendezvous. Rising `signature` refusals: a broken or
    hostile sender. `version` refusals: a peer runs an executable older than discovery

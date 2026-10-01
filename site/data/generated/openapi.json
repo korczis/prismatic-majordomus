@@ -59,6 +59,9 @@
     "op-health-live": "docs/api/health/",
     "op-health-ready": "docs/api/health/",
     "op-health-report": "docs/api/health/",
+    "op-integration-events": "docs/api/integration/",
+    "op-integration-explain": "docs/api/integration/",
+    "op-integration-queue": "docs/api/integration/",
     "op-lifecycle-closed": "docs/api/lifecycle/",
     "op-lifecycle-episodes": "docs/api/lifecycle/",
     "op-lifecycle-providers": "docs/api/lifecycle/",
@@ -299,6 +302,7 @@
     "schema-DeliveryTallies": "docs/api/delivery/",
     "schema-DeliveryVerdict": "docs/api/delivery/",
     "schema-DemonstrateReport": "docs/api/executions/",
+    "schema-DependencyCertainty": "docs/api/integration/",
     "schema-DeploymentCheck": "docs/api/deploy/",
     "schema-DeploymentList": "docs/api/deploy/",
     "schema-DeploymentStanding": "docs/api/served/",
@@ -382,6 +386,7 @@
     "schema-Episodes": "docs/api/lifecycle/",
     "schema-ErrorBody": "docs/api/shared/",
     "schema-ErrorDetail": "docs/api/shared/",
+    "schema-EvaluatedAgainst": "docs/api/integration/",
     "schema-EventHistory": "docs/api/executions/",
     "schema-EventList": "docs/api/mesh/",
     "schema-Evidence": "docs/api/obligations/",
@@ -412,6 +417,7 @@
     "schema-ExecutionPolicy": "docs/api/capabilities/",
     "schema-ExecutionState": "docs/api/executions/",
     "schema-ExecutionView": "docs/api/executions/",
+    "schema-ExecutorWait": "docs/api/integration/",
     "schema-Exemption": "docs/api/quality/",
     "schema-ExplainInput": "docs/api/shared/",
     "schema-Explanation": "docs/api/devcontext/",
@@ -474,6 +480,16 @@
     "schema-InstallabilityReport": "docs/api/distribution/",
     "schema-InstanceId": "docs/api/mesh/",
     "schema-Integration": "docs/api/trace/",
+    "schema-IntegrationEvent": "docs/api/integration/",
+    "schema-IntegrationEvents": "docs/api/integration/",
+    "schema-IntegrationEvidence": "docs/api/integration/",
+    "schema-IntegrationExplanation": "docs/api/integration/",
+    "schema-IntegrationLane": "docs/api/integration/",
+    "schema-IntegrationLeaseState": "docs/api/integration/",
+    "schema-IntegrationPolicy": "docs/api/integration/",
+    "schema-IntegrationQueue": "docs/api/integration/",
+    "schema-IntegrationRisk": "docs/api/integration/",
+    "schema-IntegrationStatus": "docs/api/integration/",
     "schema-Interface": "docs/api/deploy/",
     "schema-IssueTrace": "docs/api/trace/",
     "schema-JournalTallies": "docs/api/mesh/",
@@ -484,6 +500,7 @@
     "schema-KindList": "docs/api/entity/",
     "schema-KindRef": "docs/api/product/",
     "schema-LayerSummary": "docs/api/environment/",
+    "schema-LeaseHolder": "docs/api/integration/",
     "schema-LeaseView": "docs/api/server/",
     "schema-Libc": "docs/api/distribution/",
     "schema-LimitsView": "docs/api/executions/",
@@ -556,7 +573,9 @@
     "schema-OverlapPath": "docs/api/peers/",
     "schema-ParallelSet": "docs/api/devtask/",
     "schema-ParameterView": "docs/api/executions/",
+    "schema-PassedOver": "docs/api/integration/",
     "schema-PathChange": "docs/api/commit/",
+    "schema-PathOverlap": "docs/api/integration/",
     "schema-Peer": "docs/api/peers/",
     "schema-PeerCheckout": "docs/api/peers/",
     "schema-PeerDetail": "docs/api/mesh/",
@@ -622,9 +641,14 @@
     "schema-PublicApiQuality": "docs/api/quality/",
     "schema-PublicIdentity": "docs/api/mesh/",
     "schema-Publication": "docs/api/delivery/",
+    "schema-PullRequestAssessment": "docs/api/integration/",
+    "schema-PullRequestDependency": "docs/api/integration/",
+    "schema-PullRequestDisposition": "docs/api/integration/",
+    "schema-PullRequestReview": "docs/api/integration/",
     "schema-QualityAnswer": "docs/api/quality/",
     "schema-QualityReport": "docs/api/quality/",
     "schema-QualitySeverity": "docs/api/quality/",
+    "schema-QueueTallies": "docs/api/integration/",
     "schema-Readiness": "docs/api/health/",
     "schema-ReadinessVerdict": "docs/api/devtask/",
     "schema-Reason": "docs/api/repository/",
@@ -659,6 +683,7 @@
     "schema-RegisterAnswer": "docs/api/mesh/",
     "schema-RegisterInput": "docs/api/mesh/",
     "schema-RelationDirection": "docs/api/entity/",
+    "schema-RelationToMaster": "docs/api/integration/",
     "schema-ReleaseArtifactView": "docs/api/distribution/",
     "schema-ReleaseBaseline": "docs/api/release/",
     "schema-ReleaseChange": "docs/api/release/",
@@ -693,6 +718,7 @@
     "schema-RepositoryReport": "docs/api/repository/",
     "schema-RepositoryTopology": "docs/api/worktree/",
     "schema-RepositoryView": "docs/api/worktree/",
+    "schema-RequiredCheckState": "docs/api/integration/",
     "schema-Resolution": "docs/api/environment/",
     "schema-Resolved": "docs/api/design/",
     "schema-ResolvedRefs": "docs/api/product/",
@@ -871,6 +897,7 @@
     "tag-gates": "docs/api/gates/",
     "tag-graph": "docs/api/graph/",
     "tag-health": "docs/api/health/",
+    "tag-integration": "docs/api/integration/",
     "tag-lifecycle": "docs/api/lifecycle/",
     "tag-mesh": "docs/api/mesh/",
     "tag-models": "docs/api/models/",
@@ -897,9 +924,9 @@
   },
   "binding": "GET binds every top-level input property as a query parameter; POST binds the input as the JSON body",
   "counts": {
-    "operations": 147,
-    "schemas": 703,
-    "tags": 44
+    "operations": 150,
+    "schemas": 726,
+    "tags": 45
   },
   "dialect": "https://spec.openapis.org/oas/3.1/dialect/base",
   "errors": [
@@ -1043,6 +1070,9 @@
     "health.live": "health",
     "health.ready": "health",
     "health.report": "health",
+    "integration.events": "integration",
+    "integration.explain": "integration",
+    "integration.queue": "integration",
     "lifecycle.closed": "lifecycle",
     "lifecycle.episodes": "lifecycle",
     "lifecycle.providers": "lifecycle",
@@ -1287,6 +1317,7 @@
     "DeliveryTallies": "delivery",
     "DeliveryVerdict": "delivery",
     "DemonstrateReport": "executions",
+    "DependencyCertainty": "integration",
     "DeploymentCheck": "deploy",
     "DeploymentList": "deploy",
     "DeploymentStanding": "served",
@@ -1370,6 +1401,7 @@
     "Episodes": "lifecycle",
     "ErrorBody": "shared",
     "ErrorDetail": "shared",
+    "EvaluatedAgainst": "integration",
     "EventHistory": "executions",
     "EventList": "mesh",
     "Evidence": "obligations",
@@ -1400,6 +1432,7 @@
     "ExecutionPolicy": "capabilities",
     "ExecutionState": "executions",
     "ExecutionView": "executions",
+    "ExecutorWait": "integration",
     "Exemption": "quality",
     "ExplainInput": "shared",
     "Explanation": "devcontext",
@@ -1462,6 +1495,16 @@
     "InstallabilityReport": "distribution",
     "InstanceId": "mesh",
     "Integration": "trace",
+    "IntegrationEvent": "integration",
+    "IntegrationEvents": "integration",
+    "IntegrationEvidence": "integration",
+    "IntegrationExplanation": "integration",
+    "IntegrationLane": "integration",
+    "IntegrationLeaseState": "integration",
+    "IntegrationPolicy": "integration",
+    "IntegrationQueue": "integration",
+    "IntegrationRisk": "integration",
+    "IntegrationStatus": "integration",
     "Interface": "deploy",
     "IssueTrace": "trace",
     "JournalTallies": "mesh",
@@ -1472,6 +1515,7 @@
     "KindList": "entity",
     "KindRef": "product",
     "LayerSummary": "environment",
+    "LeaseHolder": "integration",
     "LeaseView": "server",
     "Libc": "distribution",
     "LimitsView": "executions",
@@ -1544,7 +1588,9 @@
     "OverlapPath": "peers",
     "ParallelSet": "devtask",
     "ParameterView": "executions",
+    "PassedOver": "integration",
     "PathChange": "commit",
+    "PathOverlap": "integration",
     "Peer": "peers",
     "PeerCheckout": "peers",
     "PeerDetail": "mesh",
@@ -1610,9 +1656,14 @@
     "PublicApiQuality": "quality",
     "PublicIdentity": "mesh",
     "Publication": "delivery",
+    "PullRequestAssessment": "integration",
+    "PullRequestDependency": "integration",
+    "PullRequestDisposition": "integration",
+    "PullRequestReview": "integration",
     "QualityAnswer": "quality",
     "QualityReport": "quality",
     "QualitySeverity": "quality",
+    "QueueTallies": "integration",
     "Readiness": "health",
     "ReadinessVerdict": "devtask",
     "Reason": "repository",
@@ -1647,6 +1698,7 @@
     "RegisterAnswer": "mesh",
     "RegisterInput": "mesh",
     "RelationDirection": "entity",
+    "RelationToMaster": "integration",
     "ReleaseArtifactView": "distribution",
     "ReleaseBaseline": "release",
     "ReleaseChange": "release",
@@ -1681,6 +1733,7 @@
     "RepositoryReport": "repository",
     "RepositoryTopology": "worktree",
     "RepositoryView": "worktree",
+    "RequiredCheckState": "integration",
     "Resolution": "environment",
     "Resolved": "design",
     "ResolvedRefs": "product",
@@ -10202,6 +10255,29 @@
       "variants": []
     },
     {
+      "description": "How a dependency is known. Only a declared one blocks.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "DependencyCertainty",
+      "properties": [],
+      "type": "\"confirmed\" | \"inferred\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestDependency"
+      ],
+      "values": [
+        {
+          "description": "Declared: a `Depends on #N` / `Stacked on #N` line in the body, or a base branch\nthat is another open pull request's head.",
+          "value": "confirmed"
+        },
+        {
+          "description": "Inferred: the head contains the other's head commit. Evidence, never a block.",
+          "value": "inferred"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "Whether the deployments this repository declares would work, decided locally: against\nthe capability registry this process built and the workspace it sits in.",
       "home": "deploy",
       "is_enum": false,
@@ -15494,6 +15570,9 @@
         "product.matrix",
         "product.providers",
         "product.validate",
+        "integration.queue",
+        "integration.events",
+        "integration.explain",
         "quality.report",
         "quality.rustdoc",
         "health.ready",
@@ -15562,6 +15641,35 @@
       "used_by": [],
       "used_by_schemas": [
         "ErrorBody"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The revisions a decision was taken against. A decision is valid only while both still\nhold: the executor compares them with what it re-reads before it acts.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "EvaluatedAgainst",
+      "properties": [
+        {
+          "description": "The master commit.",
+          "name": "master_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request's head commit.",
+          "name": "head_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
       ],
       "values": [],
       "variants": []
@@ -17406,6 +17514,44 @@
       "used_by_schemas": [
         "CancelReport",
         "ExecutionList"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How long a pull request has waited for the executor, from the audit trail. Starvation is\nmade visible here, never resolved by changing the rank: the rank's age tie-break already\nprefers the older of two otherwise equal candidates, and a wait this long is a fact a\nperson reads, not a reason to merge anything less safe.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "ExecutorWait",
+      "properties": [
+        {
+          "description": "When it was first observed ready or refreshable in its current run of being so,\nRFC 3339.",
+          "name": "actionable_since",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How many times the executor selected another pull request while this one was ready\nor refreshable.",
+          "name": "passed_over",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The last of those times.",
+          "name": "last_passed_over",
+          "refs": [
+            "PassedOver"
+          ],
+          "required": false,
+          "type": "PassedOver | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
       ],
       "values": [],
       "variants": []
@@ -20608,6 +20754,522 @@
       "variants": []
     },
     {
+      "description": "One entry of the audit trail.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationEvent",
+      "properties": [
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "Who: the git identity, the process and the machine.",
+          "name": "actor",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What (`selected`, `refresh_selected`, `stale_decision`, `merge_attempted`,\n`merge_succeeded`, `merge_failed`, `verification_failed`, `refreshed`,\n`refresh_failed`, `closed_superseded`, `idle`, and the two transitions the wait is\nfolded from: `became_actionable`, `left_actionable`).",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request, when one.",
+          "name": "pr",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "Master before.",
+          "name": "master_before",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The head acted on.",
+          "name": "head_sha",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Master after.",
+          "name": "master_after",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The decision's reason codes.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What happened, for a person.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "On a selection: the other actionable pull requests the executor chose this one over,\nin rank order. The wait of each is folded from it (`super::wait`).",
+          "name": "passed_over",
+          "refs": [],
+          "required": false,
+          "type": "array of integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationEvents",
+        "IntegrationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The audit trail.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationEvents",
+      "properties": [
+        {
+          "description": "Every recorded integration action, oldest first.",
+          "name": "events",
+          "refs": [
+            "IntegrationEvent"
+          ],
+          "required": true,
+          "type": "array of IntegrationEvent"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.events"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One piece of evidence behind a disposition: what was read, and what it said.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationEvidence",
+      "properties": [
+        {
+          "description": "What kind of fact (`required_checks`, `relation_to_master`, `review`, `label`,\n`dependency`, `draft`, `base`).",
+          "name": "kind",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "What it said, as a word.",
+          "name": "status",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The detail a person reads.",
+          "name": "detail",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "One pull request's assessment and rank, or why it has none.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationExplanation",
+      "properties": [
+        {
+          "description": "Whether the pull request is in the observed queue.",
+          "name": "found",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why not, when not.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "Its position in the ranked queue, 1-based.",
+          "name": "rank",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "How many open pull requests were ranked.",
+          "name": "of",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "When the forge was observed.",
+          "name": "observed_at",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The assessment.",
+          "name": "assessment",
+          "refs": [
+            "PullRequestAssessment"
+          ],
+          "required": false,
+          "type": "PullRequestAssessment | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.explain"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The queues the Cockpit and the status table group pull requests into.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "IntegrationLane",
+      "properties": [],
+      "type": "\"ready\" | \"waiting\" | \"repair\" | \"cleanup\" | \"held\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [
+        {
+          "description": "The executor may merge it now.",
+          "value": "ready"
+        },
+        {
+          "description": "Something will happen without a person: a refresh, a check, a dependency.",
+          "value": "waiting"
+        },
+        {
+          "description": "A person must change the branch.",
+          "value": "repair"
+        },
+        {
+          "description": "Its work is on master already.",
+          "value": "cleanup"
+        },
+        {
+          "description": "Not asking to be merged, or undecidable.",
+          "value": "held"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The lease of a base as an observer reads it.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationLeaseState",
+      "properties": [
+        {
+          "description": "Who holds it; `None` when the file does not say in a form this reads.",
+          "name": "holder",
+          "refs": [
+            "LeaseHolder"
+          ],
+          "required": false,
+          "type": "LeaseHolder | null"
+        },
+        {
+          "description": "How long ago the holder last renewed it.",
+          "name": "renewed_seconds_ago",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "Whether it is older than `LEASE_STALE_AFTER`: its holder stopped without releasing\nit, and the next executor takes it over.",
+          "name": "stale",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "What the repository requires before a merge, as observed from the forge and the\nrepository — never a list kept here beside it.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationPolicy",
+      "properties": [
+        {
+          "description": "The branch integrated into.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The status contexts the branch protection requires, as read from the forge.\n`None` when the protection could not be read: every required-check verdict is then\n`unknown`, never `passed`.",
+          "name": "required_checks",
+          "refs": [],
+          "required": false,
+          "type": "array | null"
+        },
+        {
+          "description": "Whether the branch protection requires an approving review; `None` when unread.",
+          "name": "reviews_required",
+          "refs": [],
+          "required": false,
+          "type": "boolean | null"
+        },
+        {
+          "description": "Labels that hold a pull request whatever else is true.",
+          "name": "blocking_labels",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The merge method the executor asks the forge for.",
+          "name": "merge_method",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationQueue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The integration queue: every open pull request assessed against one master, ranked.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationQueue",
+      "properties": [
+        {
+          "description": "`owner/name`.",
+          "name": "repository",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The integration base.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The master commit every assessment was decided against (this clone's fetched ref).",
+          "name": "master_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When the forge was observed.",
+          "name": "observed_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The base commit the forge reported at that moment.",
+          "name": "observed_base_sha",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The policy in force.",
+          "name": "policy",
+          "refs": [
+            "IntegrationPolicy"
+          ],
+          "required": true,
+          "type": "IntegrationPolicy"
+        },
+        {
+          "description": "Every open pull request, in rank order: the first `ready` one is the next merge.",
+          "name": "assessments",
+          "refs": [
+            "PullRequestAssessment"
+          ],
+          "required": true,
+          "type": "array of PullRequestAssessment"
+        },
+        {
+          "description": "The next merge, when anything is ready.",
+          "name": "next_merge",
+          "refs": [],
+          "required": false,
+          "type": "integer | null"
+        },
+        {
+          "description": "The pull requests the executor could refresh (bring master in), in rank order.",
+          "name": "next_refresh",
+          "refs": [],
+          "required": true,
+          "type": "array of integer (uint64)"
+        },
+        {
+          "description": "Counts.",
+          "name": "tallies",
+          "refs": [
+            "QueueTallies"
+          ],
+          "required": true,
+          "type": "QueueTallies"
+        },
+        {
+          "description": "What makes this queue less than a full answer.",
+          "name": "diagnostics",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "The actionable pull requests the executor has passed over at least\n`wait::STARVING_AFTER` times in their current wait, in rank order. Visible, never\npromoted: see `wait`.",
+          "name": "starving",
+          "refs": [],
+          "required": false,
+          "type": "array of integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationStatus"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "How much could go wrong if this lands and something was missed. Planning information:\nit orders work and it never relaxes a policy.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "IntegrationRisk",
+      "properties": [],
+      "type": "\"low\" | \"medium\" | \"high\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [
+        {
+          "description": "Documentation, tests, content.",
+          "value": "low"
+        },
+        {
+          "description": "Code of the executable or the tool.",
+          "value": "medium"
+        },
+        {
+          "description": "CI, release, governance, schemas, or a large change.",
+          "value": "high"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "The queue, or why there is none.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "IntegrationStatus",
+      "properties": [
+        {
+          "description": "Whether a forge observation is recorded in this checkout.",
+          "name": "observed",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        },
+        {
+          "description": "Why there is no queue, when there is none.",
+          "name": "reason",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The queue.",
+          "name": "queue",
+          "refs": [
+            "IntegrationQueue"
+          ],
+          "required": false,
+          "type": "IntegrationQueue | null"
+        },
+        {
+          "description": "The base branch's integration lease as an observer reads it: `None` when nobody\nholds it (or nothing is observed, so no base is known).",
+          "name": "lease",
+          "refs": [
+            "IntegrationLeaseState"
+          ],
+          "required": false,
+          "type": "IntegrationLeaseState | null"
+        },
+        {
+          "description": "The last merge the executor recorded, from the audit trail.",
+          "name": "last_merge",
+          "refs": [
+            "IntegrationEvent"
+          ],
+          "required": false,
+          "type": "IntegrationEvent | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [
+        "integration.queue"
+      ],
+      "used_by_schemas": [],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "Which interface a process listens on.",
       "home": "deploy",
       "is_enum": true,
@@ -21084,6 +21746,49 @@
       "used_by": [],
       "used_by_schemas": [
         "RepositoryEnvironment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Who holds the lease.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "LeaseHolder",
+      "properties": [
+        {
+          "description": "The process.",
+          "name": "pid",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint32)"
+        },
+        {
+          "description": "The machine.",
+          "name": "host",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The base branch.",
+          "name": "base",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "When it was taken, seconds since the epoch.",
+          "name": "since",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationLeaseState"
       ],
       "values": [],
       "variants": []
@@ -25116,6 +25821,42 @@
       "variants": []
     },
     {
+      "description": "One time the executor chose another pull request.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "PassedOver",
+      "properties": [
+        {
+          "description": "When, RFC 3339.",
+          "name": "at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The pull request chosen instead.",
+          "name": "for_pr",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "What it was chosen for (`selected` to merge, `refresh_selected` to bring master in).",
+          "name": "action",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "ExecutorWait"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
       "description": "One path, and where it stands.\n```\nuse majordomus_cli::commit::ChangeStage;\nuse majordomus_cli::commit::plan::PathChange;\n// staged and modified again since: the commit would carry the staged half only\nlet c = PathChange {\n    path: \"src/a.rs\".into(), stage: ChangeStage::Staged, status: \"MM\".into(), partial: true,\n};\nassert!(c.partial);\n```",
       "home": "commit",
       "is_enum": false,
@@ -25156,6 +25897,35 @@
       "used_by": [],
       "used_by_schemas": [
         "WorkingTreeState"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Shared authored paths with one other open pull request.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "PathOverlap",
+      "properties": [
+        {
+          "description": "The other pull request.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The paths both change.",
+          "name": "paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
       ],
       "values": [],
       "variants": []
@@ -28476,6 +29246,331 @@
       "variants": []
     },
     {
+      "description": "The canonical state of one open pull request: what was observed, what it is to master,\nhow it is classified and why. The one value every surface renders.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "PullRequestAssessment",
+      "properties": [
+        {
+          "description": "The number.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "The title.",
+          "name": "title",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The author.",
+          "name": "author",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The head branch.",
+          "name": "head_ref",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The base branch.",
+          "name": "base_ref",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "The revisions this was decided against.",
+          "name": "evaluated_against",
+          "refs": [
+            "EvaluatedAgainst"
+          ],
+          "required": true,
+          "type": "EvaluatedAgainst"
+        },
+        {
+          "description": "The classification.",
+          "name": "disposition",
+          "refs": [
+            "PullRequestDisposition"
+          ],
+          "required": true,
+          "type": "PullRequestDisposition"
+        },
+        {
+          "description": "The queue it is in.",
+          "name": "lane",
+          "refs": [
+            "IntegrationLane"
+          ],
+          "required": true,
+          "type": "IntegrationLane"
+        },
+        {
+          "description": "Machine-readable reason codes, most decisive first.",
+          "name": "reasons",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "What a person or the executor does next, when anything.",
+          "name": "next_action",
+          "refs": [],
+          "required": false,
+          "type": "string | null"
+        },
+        {
+          "description": "The required checks on the head.",
+          "name": "required_checks",
+          "refs": [
+            "RequiredCheckState"
+          ],
+          "required": true,
+          "type": "RequiredCheckState"
+        },
+        {
+          "description": "The review state.",
+          "name": "review",
+          "refs": [
+            "PullRequestReview"
+          ],
+          "required": true,
+          "type": "PullRequestReview"
+        },
+        {
+          "description": "What the head is to master.",
+          "name": "relation",
+          "refs": [
+            "RelationToMaster"
+          ],
+          "required": true,
+          "type": "RelationToMaster"
+        },
+        {
+          "description": "Declared and inferred dependencies.",
+          "name": "dependencies",
+          "refs": [
+            "PullRequestDependency"
+          ],
+          "required": true,
+          "type": "array of PullRequestDependency"
+        },
+        {
+          "description": "Paths the pull request changes (authored ones; derived output is excluded).",
+          "name": "authored_paths",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Other open pull requests changing a same authored path, with the shared paths.",
+          "name": "overlaps",
+          "refs": [
+            "PathOverlap"
+          ],
+          "required": true,
+          "type": "array of PathOverlap"
+        },
+        {
+          "description": "The planning risk.",
+          "name": "risk",
+          "refs": [
+            "IntegrationRisk"
+          ],
+          "required": true,
+          "type": "IntegrationRisk"
+        },
+        {
+          "description": "Why the risk is what it is.",
+          "name": "risk_factors",
+          "refs": [],
+          "required": true,
+          "type": "array of string"
+        },
+        {
+          "description": "Every fact read.",
+          "name": "evidence",
+          "refs": [
+            "IntegrationEvidence"
+          ],
+          "required": true,
+          "type": "array of IntegrationEvidence"
+        },
+        {
+          "description": "When it was opened.",
+          "name": "created_at",
+          "refs": [],
+          "required": true,
+          "type": "string"
+        },
+        {
+          "description": "How long it has been the executor's to act on, and how often another was chosen\ninstead — derived from the audit trail (`super::wait`), present only while it is\nready or refreshable.",
+          "name": "wait",
+          "refs": [
+            "ExecutorWait"
+          ],
+          "required": false,
+          "type": "ExecutorWait | null"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationExplanation",
+        "IntegrationQueue"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "Explicit ordering between pull requests, as declared.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "PullRequestDependency",
+      "properties": [
+        {
+          "description": "The pull request this one waits for.",
+          "name": "number",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint64)"
+        },
+        {
+          "description": "How it is known.",
+          "name": "certainty",
+          "refs": [
+            "DependencyCertainty"
+          ],
+          "required": true,
+          "type": "DependencyCertainty"
+        },
+        {
+          "description": "Whether it is satisfied: that pull request has landed (or is not open any more).",
+          "name": "satisfied",
+          "refs": [],
+          "required": true,
+          "type": "boolean"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": []
+    },
+    {
+      "description": "The one classification of an open pull request. Every value carries a machine-readable\nreason in `PullRequestAssessment::reasons`; there is no `mergeable: bool`.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "PullRequestDisposition",
+      "properties": [],
+      "type": "\"ready\" | \"needs_refresh\" | \"waiting_for_checks\" | \"waiting_for_review\" | \"waiting_for_dependency\" | \"draft\" | \"needs_repair\" | \"conflicting\" | \"blocked\" | \"superseded\" | \"possibly_redundant\" | \"other_base\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [
+        {
+          "description": "Contains the current master, every required check passed on its head, nothing\nblocks it: the executor may merge it.",
+          "value": "ready"
+        },
+        {
+          "description": "Merges cleanly but does not contain master: the executor may bring master in (a\nmerge commit on the branch, never a rewrite), after which CI must run again.",
+          "value": "needs_refresh"
+        },
+        {
+          "description": "Contains master; a required check has not finished on this head.",
+          "value": "waiting_for_checks"
+        },
+        {
+          "description": "A required review is missing or changes were requested.",
+          "value": "waiting_for_review"
+        },
+        {
+          "description": "A declared dependency has not landed.",
+          "value": "waiting_for_dependency"
+        },
+        {
+          "description": "A draft.",
+          "value": "draft"
+        },
+        {
+          "description": "A required check failed on this head.",
+          "value": "needs_repair"
+        },
+        {
+          "description": "Conflicts on authored paths: a person resolves them.",
+          "value": "conflicting"
+        },
+        {
+          "description": "A blocking label holds it.",
+          "value": "blocked"
+        },
+        {
+          "description": "Its head already landed, or its patch is already fully on master: strong evidence,\neligible for closure under policy.",
+          "value": "superseded"
+        },
+        {
+          "description": "Only derived artifacts would change: the authored change appears to be on master\nalready. Surfaced for a person; never closed automatically.",
+          "value": "possibly_redundant"
+        },
+        {
+          "description": "Targets a branch other than the integration base.",
+          "value": "other_base"
+        },
+        {
+          "description": "Something needed to decide could not be observed.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
+      "description": "Where the forge's review policy stands.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "PullRequestReview",
+      "properties": [],
+      "type": "\"not_required\" | \"approved\" | \"changes_requested\" | \"pending\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [
+        {
+          "description": "The branch protection requires no review.",
+          "value": "not_required"
+        },
+        {
+          "description": "Approved.",
+          "value": "approved"
+        },
+        {
+          "description": "A reviewer asked for changes.",
+          "value": "changes_requested"
+        },
+        {
+          "description": "A required review has not been given.",
+          "value": "pending"
+        },
+        {
+          "description": "The protection could not be read.",
+          "value": "unknown"
+        }
+      ],
+      "variants": []
+    },
+    {
       "description": "The answer: the measurement, or the reason there was not one.",
       "home": "quality",
       "is_enum": false,
@@ -28613,6 +29708,42 @@
           "value": "warning"
         }
       ],
+      "variants": []
+    },
+    {
+      "description": "How many pull requests are in each disposition and lane.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "QueueTallies",
+      "properties": [
+        {
+          "description": "Open pull requests.",
+          "name": "open",
+          "refs": [],
+          "required": true,
+          "type": "integer (uint)"
+        },
+        {
+          "description": "By disposition word.",
+          "name": "by_disposition",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        },
+        {
+          "description": "By lane word.",
+          "name": "by_lane",
+          "refs": [],
+          "required": true,
+          "type": "map of integer (uint)"
+        }
+      ],
+      "type": "object",
+      "used_by": [],
+      "used_by_schemas": [
+        "IntegrationQueue"
+      ],
+      "values": [],
       "variants": []
     },
     {
@@ -31266,6 +32397,154 @@
       "variants": []
     },
     {
+      "description": "What the pull request's head is to the current master, decided locally by git with\nthis repository's own merge drivers — never by the forge's `mergeable`, which cannot\nrun the derived-file driver and calls nearly every pull request here conflicting.",
+      "home": "integration",
+      "is_enum": false,
+      "name": "RelationToMaster",
+      "properties": [],
+      "type": "one of 7 variants",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [],
+      "variants": [
+        {
+          "description": "The head is an ancestor of master: every commit already landed.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"contained\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Merging the head into master changes nothing: its patch is already fully there.",
+          "properties": [
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"superseded\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Merging changes only derived artifacts: the authored change is already on master,\nand what differs is output the generators rewrite.",
+          "properties": [
+            {
+              "description": "The derived paths that would change.",
+              "name": "paths",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"derived_only\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The head already contains master and merges cleanly.",
+          "properties": [
+            {
+              "description": "Authored (non-derived) paths the merge changes.",
+              "name": "authored",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"up_to_date\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "The head does not contain master, but the merge is clean with the derived driver.",
+          "properties": [
+            {
+              "description": "Commits on master the head does not have.",
+              "name": "behind",
+              "refs": [],
+              "required": true,
+              "type": "integer (uint64)"
+            },
+            {
+              "description": "Authored paths the merge changes.",
+              "name": "authored",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"behind\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Merging conflicts on authored paths: a person must resolve it.",
+          "properties": [
+            {
+              "description": "The conflicting authored paths.",
+              "name": "paths",
+              "refs": [],
+              "required": true,
+              "type": "array of string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"conflicting\""
+            }
+          ],
+          "type": "object"
+        },
+        {
+          "description": "Git could not answer (the head is not fetched, or git failed); the reason.",
+          "properties": [
+            {
+              "description": "Why.",
+              "name": "reason",
+              "refs": [],
+              "required": true,
+              "type": "string"
+            },
+            {
+              "description": "",
+              "name": "kind",
+              "refs": [],
+              "required": true,
+              "type": "\"unknown\""
+            }
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    {
       "description": "The artifact a target and a tag name, and the directory it unpacks into.",
       "home": "distribution",
       "is_enum": false,
@@ -33161,6 +34440,41 @@
         "StatusReport"
       ],
       "values": [],
+      "variants": []
+    },
+    {
+      "description": "The state of the repository's *required* checks on one head, which is the only check\nstate a merge decision reads. A visible green check that is not required proves nothing,\nand a required check that is absent is not a pass.",
+      "home": "integration",
+      "is_enum": true,
+      "name": "RequiredCheckState",
+      "properties": [],
+      "type": "\"passed\" | \"pending\" | \"failed\" | \"missing\" | \"unknown\"",
+      "used_by": [],
+      "used_by_schemas": [
+        "PullRequestAssessment"
+      ],
+      "values": [
+        {
+          "description": "Every required check passed on this head.",
+          "value": "passed"
+        },
+        {
+          "description": "A required check is queued or running.",
+          "value": "pending"
+        },
+        {
+          "description": "A required check failed.",
+          "value": "failed"
+        },
+        {
+          "description": "A required check has not reported on this head at all.",
+          "value": "missing"
+        },
+        {
+          "description": "The repository's required checks could not be read.",
+          "value": "unknown"
+        }
+      ],
       "variants": []
     },
     {
@@ -45756,6 +47070,188 @@
       "slug": "health"
     },
     {
+      "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+      "name": "integration",
+      "operations": [
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "prs status",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests\"",
+          "description": "The ranked queue: the repository, the base and the master commit every assessment was decided against, when the forge was observed, the policy in force (the branch protection's required checks and reviews, the blocking labels, the merge method), every open pull request's assessment in rank order — an actionable one with how long it has waited for the executor and how often another was chosen instead — the next merge, the pull requests that need master brought in, the starving ones, the tallies by disposition and lane, and the diagnostics, a stale observation first; beside it, who holds the base branch's integration lease and the last merge the executor recorded. `observed: false` with the reason when this checkout has recorded no observation.",
+          "home": "integration",
+          "id": "integration.queue",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_requests",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The integration queue: the result.",
+              "schema": "IntegrationStatus",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationStatus",
+          "stability": "experimental",
+          "summary": "The integration queue"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "prs events",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/events\"",
+          "description": "Every action this checkout's executor recorded, oldest first: selections, stale decisions, merge attempts, merges with the master before and after, refusals, refreshes, verification failures and closures, each with its actor, the pull request, the head and the decision's reasons.",
+          "home": "integration",
+          "id": "integration.events",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_integration_events",
+          "method": "GET",
+          "parameters": [],
+          "path": "/api/v1/pull-requests/events",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "The integration audit trail: the result.",
+              "schema": "IntegrationEvents",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationEvents",
+          "stability": "experimental",
+          "summary": "The integration audit trail"
+        },
+        {
+          "benchmark": "required",
+          "benchmark_reason": "",
+          "body_examples": [],
+          "body_schema": "",
+          "cache": "disabled",
+          "cache_detail": "",
+          "cli": "prs explain",
+          "curl": "curl -s \"http://127.0.0.1:8741/api/v1/pull-requests/explain?number=1\"",
+          "description": "One pull request's assessment — disposition, lane, reasons, next action, the master and head it was decided against, required checks, review, relation to master, dependencies, overlaps, risk with its factors, and every piece of evidence — with its rank in the queue. `found: false` with the reason when it is not open or nothing is observed.",
+          "home": "integration",
+          "id": "integration.explain",
+          "kind": "query",
+          "mcp_resource": "",
+          "mcp_tool": "majordomus_pull_request_explain",
+          "method": "GET",
+          "parameters": [
+            {
+              "description": "The pull request number.",
+              "examples": [
+                {
+                  "case": "a-number",
+                  "value": "1"
+                }
+              ],
+              "name": "number",
+              "required": true,
+              "type": "integer (uint64)"
+            }
+          ],
+          "path": "/api/v1/pull-requests/explain",
+          "primary": true,
+          "provenance": {
+            "module": "majordomus_cli::capability::builtin::integration",
+            "source": "builtin"
+          },
+          "responses": [
+            {
+              "description": "Why one pull request is where it is: the result.",
+              "schema": "IntegrationExplanation",
+              "status": "200"
+            },
+            {
+              "description": "`invalid_input`: The input does not fit the schema: a parameter of the wrong type, an unknown one, or a value the capability rejects.",
+              "schema": "ErrorBody",
+              "status": "400"
+            },
+            {
+              "description": "`not_found`: The input names something the repository does not hold.",
+              "schema": "ErrorBody",
+              "status": "404"
+            },
+            {
+              "description": "`internal`: The capability failed for a reason of its own; the message names it.",
+              "schema": "ErrorBody",
+              "status": "500"
+            },
+            {
+              "description": "Any other failure the transport reports: 405 `method_not_allowed` for another method on this path, 400 `invalid_input` for a body that is not a JSON object.",
+              "schema": "ErrorBody",
+              "status": "default"
+            }
+          ],
+          "result_schema": "IntegrationExplanation",
+          "stability": "experimental",
+          "summary": "Why one pull request is where it is"
+        }
+      ],
+      "slug": "integration"
+    },
+    {
       "description": "The episode lifecycle as an operator sees it: every open episode of this checkout's store rather than only the one the pointer follows, the episodes that can no longer close themselves, the commit this process is answering about against the commit the repository is on, what each provider's adapter declares it can do, and the tracked records a clone receives. Read from the local half of the layer and from the index; written by nothing here.",
       "name": "lifecycle",
       "operations": [
@@ -46290,7 +47786,7 @@
           "cache_detail": "",
           "cli": "mesh doctor",
           "curl": "curl -s \"http://127.0.0.1:8741/api/v1/mesh/doctor\"",
-          "description": "Every prerequisite proved on this machine alone: the declaration parses, the identity loads, the repository has a mesh identity, the advertised endpoints are reachable from beyond this machine, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory. Each failed check names its impact and its remedy. Deterministic, no second node required.",
+          "description": "Every prerequisite proved on this machine alone — the declaration parses, the identity loads and, under an allowlist, is on it, the repository has a mesh identity, a UDP socket binds, the multicast group joins, broadcast enables, and the discovery and link protocols sign and verify end to end in memory — and then the server's own verdict: in a shared server, whether an enabled declaration actually activated the mesh and, when it did not, the server's reason, which fails the report. Each failed check names its impact and its remedy. Deterministic, no second node required.",
           "home": "mesh",
           "id": "mesh.doctor",
           "kind": "query",

@@ -557,7 +557,7 @@ impl WorktreeService {
             .map(|b| (b.name.clone(), b.clone()))
             .collect();
         let merged: Option<BTreeSet<String>> = match trunk.branch.as_deref() {
-            Some(t) => Some(state::merged_into(primary, t)?),
+            Some(t) => Some(state::merged_into_trunk(primary, t)?),
             None => None,
         };
 

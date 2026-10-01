@@ -1,7 +1,7 @@
 +++
 title = "Generated reference documentation is part of documentation closure, from its source to its public URL"
 description = "Generated reference documentation is part of documentation closure, from its source to its public URL"
-weight = 132
+weight = 135
 [extra]
 kind = "rule"
 slug = "project-the-crate-reference-is-published-1"

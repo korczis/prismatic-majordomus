@@ -4778,6 +4778,338 @@ pub fn worktrees(ctx: &Context) -> Page {
     .script("worktrees.js")
 }
 
+// ---------------------------------------------------------------- integration
+
+/// The badge status of a disposition: what the reader should feel about it.
+fn disposition_status(d: crate::integration::PullRequestDisposition) -> &'static str {
+    use crate::integration::IntegrationLane as L;
+    match d.lane() {
+        L::Ready => "ok",
+        L::Waiting => "info",
+        L::Repair => "fail",
+        L::Cleanup => "warn",
+        L::Held => "unknown",
+    }
+}
+
+/// The pull-request integration queue (ADR 0101): the lanes, the master every decision was
+/// taken against, the lease, the starving, and the executor's recent actions — all of it
+/// `integration.queue` and `integration.events`, the answers the command line and MCP give.
+/// Read from the last recorded observation, so a page load never reaches the forge.
+pub fn integration(ctx: &Context) -> Page {
+    use crate::capability::builtin::integration::{IntegrationEvents, IntegrationStatus};
+    use crate::integration::IntegrationLane;
+
+    let status: IntegrationStatus = match ask(ctx, "integration.queue", json!({})) {
+        Ok(s) => s,
+        Err(e) => return failed(Area::Integration, "Integration", e),
+    };
+    let trail = vec![("Cockpit", Some("/cockpit")), ("Integration", None)];
+    let commands = card(
+        "Commands",
+        el("div")
+            .child(el("p").class("mj-prose").text(
+                "The Cockpit reads; the command line acts, one merge at a time, each against a master observed a moment before, under the base branch's lease. Nothing here reaches the forge.",
+            ))
+            .child(pre(
+                "majordomus prs refresh                  # observe the forge now; the one network read\nmajordomus prs status                   # this queue, in rank order\nmajordomus prs explain <n>              # why one pull request is where it is\nmajordomus prs drain --dry-run          # what the executor would do; changes nothing\nmajordomus prs drain --max 1            # merge the next provably safe one, verify, re-plan\nmajordomus prs drain --continuous       # drain, wait, drain again, until Ctrl-C\nmajordomus prs cleanup                  # list what is provably on master; --apply closes",
+            )),
+    );
+    let Some(q) = status.queue else {
+        return Page::new(
+            Area::Integration,
+            "Integration",
+            el("div")
+                .class("mj-grid")
+                .child(card(
+                    "No queue",
+                    el("div")
+                        .child(alert(
+                            "info",
+                            status
+                                .reason
+                                .unwrap_or_else(|| "nothing is observed".into()),
+                        ))
+                        .child(nothing(
+                            "The queue is built from a recorded forge observation, and this checkout has none. `majordomus prs refresh` records one.",
+                        )),
+                ))
+                .child(commands),
+        )
+        .subtitle("Every open pull request classified against the current master, and the executor that merges the next provably safe one.")
+        .trail(trail);
+    };
+
+    // Reached only with a recorded observation (the early return above handles none).
+    // ui-integrity: tallies count every observed assessment, so an absent lane holds none
+    let lane = |name: &str| q.tallies.by_lane.get(name).copied().unwrap_or(0);
+    let statistics = tally_statistics(
+        &serde_json::json!({
+            "open": q.tallies.open,
+            "ready": lane("ready"),
+            "waiting": lane("waiting"),
+            "repair": lane("repair"),
+            "cleanup": lane("cleanup"),
+            "held": lane("held"),
+            "starving": q.starving.len(),
+        }),
+        "integration.queue",
+    );
+
+    let lease = match &status.lease {
+        None => badge("ok", "free"),
+        Some(l) if l.stale => badge(
+            "warn",
+            format!(
+                "stale — renewed {} s ago; the next executor takes it over",
+                l.renewed_seconds_ago
+            ),
+        ),
+        Some(l) => match &l.holder {
+            Some(h) => badge(
+                "info",
+                format!(
+                    "held by pid {} on {}, renewed {} s ago",
+                    h.pid, h.host, l.renewed_seconds_ago
+                ),
+            ),
+            None => badge("info", "held (holder unreadable)"),
+        },
+    };
+    let last_merge = match &status.last_merge {
+        Some(e) => Node::Element(
+            el("span")
+                .child(mono(format!("#{}", e.pr.unwrap_or_default())))
+                .text(format!(
+                    " at {} — master {}",
+                    e.at,
+                    e.master_after.clone().unwrap_or_else(|| "?".into())
+                )),
+        ),
+        None => Node::Element(el("span").text("none recorded in this checkout")),
+    };
+    let identity = card_with(
+        "This queue",
+        link(
+            "/cockpit/capabilities/integration.queue",
+            "integration.queue",
+        ),
+        facts(vec![
+            ("Repository", Node::Element(mono(&q.repository))),
+            (
+                "Base",
+                Node::Element(
+                    el("span")
+                        .child(mono(&q.base))
+                        .text(" at ")
+                        .child(mono(&q.master_sha)),
+                ),
+            ),
+            (
+                "Observed",
+                Node::Element(el("span").text(format!(
+                    "{} — the forge then said {} is {}",
+                    q.observed_at, q.base, q.observed_base_sha
+                ))),
+            ),
+            (
+                "Next merge",
+                Node::Element(match q.next_merge {
+                    Some(n) => badge("ok", format!("#{n}")),
+                    None => badge("info", "nothing is ready"),
+                }),
+            ),
+            ("Lease", Node::Element(lease)),
+            ("Last merge", last_merge),
+            (
+                "Policy",
+                Node::Element(el("span").text(format!(
+                    "required checks: {}; review required: {}; merge method: {}",
+                    q.policy
+                        .required_checks
+                        .as_ref()
+                        .map(|c| if c.is_empty() { "none".to_string() } else { c.join(", ") })
+                        .unwrap_or_else(|| "unread — nothing can be ready".into()),
+                    q.policy
+                        .reviews_required
+                        .map(|r| r.to_string())
+                        .unwrap_or_else(|| "unread".into()),
+                    q.policy.merge_method
+                ))),
+            ),
+        ]),
+    );
+
+    let diagnostics = if q.diagnostics.is_empty() {
+        card(
+            "Diagnostics",
+            nothing("The observation is current for this clone's master."),
+        )
+    } else {
+        card_with(
+            "Diagnostics",
+            badge("warn", format!("{}", q.diagnostics.len())),
+            el("div").children(
+                q.diagnostics
+                    .iter()
+                    .map(|d| alert("warn", d.clone()))
+                    .collect::<Vec<_>>(),
+            ),
+        )
+    };
+
+    // one card per lane, in the lanes' own order; an empty lane says so rather than vanishing
+    let lanes = [
+        (
+            IntegrationLane::Ready,
+            "Ready",
+            "Nothing is ready: the executor has nothing to merge.",
+        ),
+        (
+            IntegrationLane::Waiting,
+            "Waiting",
+            "Nothing is waiting on a refresh, a check, a review or a dependency.",
+        ),
+        (
+            IntegrationLane::Repair,
+            "Needs repair",
+            "No pull request needs a person to change its branch.",
+        ),
+        (
+            IntegrationLane::Cleanup,
+            "Cleanup",
+            "No open pull request's work is on master already.",
+        ),
+        (
+            IntegrationLane::Held,
+            "Held",
+            "Nothing is held: no draft, blocking label, other base or unknown.",
+        ),
+    ];
+    let mut lane_cards = Vec::new();
+    for (lane, title, empty_note) in lanes {
+        let rows: Vec<El> = q
+            .assessments
+            .iter()
+            .enumerate()
+            .filter(|(_, a)| a.lane == lane)
+            .map(|(i, a)| {
+                let waited = a.wait.as_ref().map(|w| {
+                    let mut s = format!("since {}", w.actionable_since);
+                    if w.passed_over > 0 {
+                        s.push_str(&format!(", passed over {}×", w.passed_over));
+                    }
+                    s
+                });
+                row(vec![
+                    text_cell((i + 1).to_string()),
+                    cell(
+                        el("span")
+                            .child(link(
+                                format!(
+                                    "/cockpit/capabilities/integration.explain?number={}",
+                                    a.number
+                                ),
+                                format!("#{}", a.number),
+                            ))
+                            .when(q.starving.contains(&a.number), |e| {
+                                e.text(" ").child(tag("starving"))
+                            }),
+                    ),
+                    cell(badge(
+                        disposition_status(a.disposition),
+                        a.disposition.as_str(),
+                    )),
+                    text_cell(word(&a.risk)),
+                    text_cell(a.reasons.join(", ")),
+                    text_cell(a.next_action.clone().unwrap_or_default()),
+                    text_cell(waited.unwrap_or_default()),
+                    text_cell(a.title.clone()),
+                ])
+            })
+            .collect();
+        let n = rows.len();
+        lane_cards.push(if rows.is_empty() {
+            card(title, nothing(empty_note))
+        } else {
+            card_with(
+                title,
+                badge(
+                    if lane == IntegrationLane::Repair {
+                        "fail"
+                    } else {
+                        "info"
+                    },
+                    n.to_string(),
+                ),
+                table(
+                    &[
+                        "Rank",
+                        "PR",
+                        "Disposition",
+                        "Risk",
+                        "Reasons",
+                        "Next",
+                        "Waiting",
+                        "Title",
+                    ],
+                    rows,
+                ),
+            )
+        });
+    }
+
+    let events: Vec<crate::integration::drain::IntegrationEvent> =
+        ask::<IntegrationEvents>(ctx, "integration.events", json!({}))
+            .map(|e| e.events)
+            .unwrap_or_default();
+    let recent: Vec<El> = events
+        .iter()
+        .rev()
+        .take(20)
+        .map(|e| {
+            row(vec![
+                text_cell(e.at.clone()),
+                cell(mono(&e.action)),
+                text_cell(e.pr.map(|n| format!("#{n}")).unwrap_or_else(|| "-".into())),
+                text_cell(e.detail.clone()),
+                text_cell(e.actor.clone()),
+            ])
+        })
+        .collect();
+    let history = if recent.is_empty() {
+        card(
+            "Recent actions",
+            nothing("The executor has recorded nothing in this checkout."),
+        )
+    } else {
+        card_with(
+            "Recent actions",
+            link(
+                "/cockpit/capabilities/integration.events",
+                "integration.events",
+            ),
+            table(&["When", "Action", "PR", "Detail", "Actor"], recent),
+        )
+    };
+
+    let mut grid = el("div")
+        .class("mj-grid")
+        .child(statistics)
+        .child(identity)
+        .child(diagnostics);
+    for c in lane_cards {
+        grid = grid.child(c);
+    }
+    Page::new(
+        Area::Integration,
+        "Integration",
+        grid.child(history).child(commands),
+    )
+    .subtitle("Every open pull request classified against the current master, and the executor that merges the next provably safe one — one at a time, re-planning after every merge.")
+    .trail(trail)
+}
+
 // ------------------------------------------------------------------ not found
 
 /// A page for a path the Cockpit does not serve.
@@ -6622,5 +6954,127 @@ mod tests {
         assert!(rendered.contains("required"), "{rendered}");
         assert!(rendered.contains("max=\"50\""), "{rendered}");
         assert!(rendered.contains("data-mj-type=\"integer\""), "{rendered}");
+    }
+
+    /// A git repository with an origin/master and one commit, for the integration page.
+    fn integration_repository() -> (crate::synthetic::SyntheticRepository, String) {
+        let repo = crate::synthetic::SyntheticRepository::small().expect("a repository");
+        let root = repo.root().to_path_buf();
+        let git = |args: &[&str]| {
+            let out = std::process::Command::new("git")
+                .arg("-C")
+                .arg(&root)
+                .args(args)
+                .env("GIT_AUTHOR_NAME", "t")
+                .env("GIT_AUTHOR_EMAIL", "t@example.com")
+                .env("GIT_COMMITTER_NAME", "t")
+                .env("GIT_COMMITTER_EMAIL", "t@example.com")
+                .output()
+                .expect("git");
+            assert!(out.status.success(), "git {args:?}: {:?}", out);
+            String::from_utf8_lossy(&out.stdout).trim().to_string()
+        };
+        git(&["init", "-q", "-b", "master"]);
+        git(&["commit", "-q", "--allow-empty", "-m", "base"]);
+        let sha = git(&["rev-parse", "HEAD"]);
+        git(&["update-ref", "refs/remotes/origin/master", &sha]);
+        (repo, sha)
+    }
+
+    fn observed_pr(
+        number: u64,
+        head_sha: &str,
+        state: crate::integration::CheckRunState,
+    ) -> crate::integration::PullRequestObservation {
+        crate::integration::PullRequestObservation {
+            number,
+            title: format!("change {number}"),
+            author: "someone".into(),
+            head_ref: format!("feature/{number}"),
+            head_sha: head_sha.into(),
+            base_ref: "master".into(),
+            draft: false,
+            labels: vec![],
+            created_at: format!("2026-09-0{number}T00:00:00Z"),
+            updated_at: format!("2026-09-0{number}T00:00:00Z"),
+            body: String::new(),
+            checks: vec![crate::integration::CheckObservation {
+                name: "ci".into(),
+                state,
+            }],
+            review_decision: String::new(),
+            auto_merge: false,
+            cross_repository: false,
+        }
+    }
+
+    /// With nothing observed the page says so and names the command that observes; with an
+    /// observation it renders the lanes, the base, the lease and the recent actions, every
+    /// figure from the same queue the command line and MCP answer.
+    #[test]
+    fn the_integration_page_renders_the_observed_queue_and_says_when_there_is_none() {
+        use crate::integration::{
+            drain, store_observation, CheckRunState, ForgeObservation, OBSERVATION_SCHEMA,
+        };
+        let (repo, sha) = integration_repository();
+        let root = repo.root().to_path_buf();
+
+        let ctx = repo.context().expect("a context");
+        let empty = integration(&ctx).main.render();
+        assert!(empty.contains("prs refresh"), "{empty}");
+
+        store_observation(
+            &root,
+            &ForgeObservation {
+                schema: OBSERVATION_SCHEMA,
+                repository: "owner/repo".into(),
+                base: "master".into(),
+                base_sha: sha.clone(),
+                observed_at: "2026-10-01T00:00:00Z".into(),
+                required_checks: Some(vec!["ci".into()]),
+                reviews_required: Some(false),
+                merge_methods: vec!["merge".into()],
+                pull_requests: vec![
+                    observed_pr(1, &sha, CheckRunState::Passed),
+                    observed_pr(2, &sha, CheckRunState::Failed),
+                    observed_pr(3, &sha, CheckRunState::Pending),
+                ],
+            },
+        )
+        .expect("an observation");
+        drain::record(
+            &root,
+            drain::IntegrationEvent {
+                at: "2026-10-01T00:01:00Z".into(),
+                actor: "test".into(),
+                action: "merge_succeeded".into(),
+                pr: Some(9),
+                master_before: Some(sha.clone()),
+                head_sha: Some(sha.clone()),
+                master_after: Some(sha.clone()),
+                reasons: vec![],
+                detail: "merged #9".into(),
+                passed_over: vec![],
+            },
+        );
+        let lease = drain::IntegrationLease::acquire(&root, "master").expect("the lease");
+
+        let ctx = repo.context().expect("a context");
+        let page = integration(&ctx);
+        let html = page.main.render();
+        assert_eq!(page.status, 200);
+        for n in ["#1", "#2", "#3"] {
+            assert!(html.contains(n), "{n} is not on the page: {html}");
+        }
+        assert!(html.contains(&sha[..10]), "the base master is not named");
+        assert!(
+            html.contains("merged #9") || html.contains("#9"),
+            "the last merge is missing"
+        );
+        assert!(
+            !html.contains("prs refresh records one"),
+            "an observed queue says nothing is observed"
+        );
+        drop(lease);
     }
 }

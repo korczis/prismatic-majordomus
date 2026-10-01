@@ -4,7 +4,7 @@ description = "Provider-independent reasoning: the optional advisors and what th
 sort_by = "weight"
 template = "docs-cli-group.html"
 page_template = "docs-cli-command.html"
-weight = 137
+weight = 146
 [extra]
 route = "/docs/cli/reasoning/"
 command = "majordomus reasoning"

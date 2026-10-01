@@ -1,13 +1,13 @@
 +++
 title = "A command runs with nobody at the keyboard"
 description = "A command runs with nobody at the keyboard"
-weight = 69
+weight = 70
 [extra]
 kind = "rule"
-slug = "project-commands-run-non-interactively-1"
-identity = "project.commands-run-non-interactively@1"
+slug = "project-commands-run-non-interactively-2"
+identity = "project.commands-run-non-interactively@2"
 status = "active"
-source = ".ai/repo/rules/project/commands-run-non-interactively.v1.md"
+source = ".ai/repo/rules/project/commands-run-non-interactively.v2.md"
 +++
 {% raw %}
 
@@ -63,10 +63,19 @@ terminal. The finding names the construct, the file and the line. The scan is te
 itself first: each construct is planted in a fixture and must be found, and the prose and
 non-interactive forms beside it must not be.
 
-What the scan cannot see stays with review: a program whose documented behaviour is to wait for
+`scripts/liveness-check` decides the other half over every tracked shell file: a `git log`,
+`diff`, `show` or `blame` whose output is neither captured, piped, redirected nor `--no-pager`
+pages to a terminal and stops on a keypress no agent sends, and is reported as a `pager-blocks`
+finding. It is gated `always: true` in the `structure` job with its debt ratcheted in
+`.ai/repo/liveness-baseline.txt`.
+
+What neither scan can see stays with review: a program whose documented behaviour is to wait for
 a keypress but whose name is not on the list, and a command a person runs by hand.
 
 ## Verification
 
-`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there.
+`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there, and
+`scripts/liveness-check`'s `pager-blocks` shape, mutation-tested by
+`test/cases/122_liveness_gate.sh`. `test/cases/121_liveness_doctrine.sh` holds this rule's own
+class and enforcement block.
 {% endraw %}

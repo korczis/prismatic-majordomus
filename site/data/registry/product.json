@@ -5,15 +5,15 @@
     "id": "majordomus-cli",
     "version": "0.11.0"
   },
-  "fingerprint": "f1e9feb9675aed8e098fa05be4650e47406955200c8360ee35b46f35a0b895bb",
+  "fingerprint": "4400bfab76dfd5406276d0de86d61f7c9357d65610274360c9f93a0348283f6b",
   "route": "/features/",
   "counts": {
     "features": 26,
     "features_all": 27,
     "featured": 14,
     "providers": 6,
-    "modules": 44,
-    "modules_covered": 38,
+    "modules": 45,
+    "modules_covered": 39,
     "commands": 30,
     "commands_covered": 30,
     "kinds": 26,
@@ -304,7 +304,7 @@
         },
         {
           "name": "claim",
-          "objects": 203
+          "objects": 204
         }
       ],
       "rule_refs": [
@@ -568,11 +568,11 @@
       "counts": {
         "capabilities": 11,
         "mcp_tools": 11,
-        "mcp_resources": 267,
+        "mcp_resources": 268,
         "http_routes": 11,
         "cli_paths": 10,
         "commands": 2,
-        "objects": 261,
+        "objects": 262,
         "rules": 5,
         "enforced_rules": 4,
         "docs": 3,
@@ -1344,7 +1344,8 @@
       "modules": [
         "peers",
         "server",
-        "worktree"
+        "worktree",
+        "integration"
       ],
       "commands": [
         "start",
@@ -1362,7 +1363,8 @@
       "docs": [
         "docs/WORKTREES.md",
         "docs/MCP.md",
-        "docs/ADOPTION.md"
+        "docs/ADOPTION.md",
+        "docs/INTEGRATION.md"
       ],
       "adrs": [
         "adr-0003",
@@ -1380,7 +1382,8 @@
         "work-on-a-branch-in-its-canonical-worktree"
       ],
       "cockpit": [
-        "worktrees"
+        "worktrees",
+        "integration"
       ],
       "web": [
         "mcp"
@@ -1493,6 +1496,42 @@
               "cli": "majordomus worktree topology"
             }
           ]
+        },
+        {
+          "id": "integration",
+          "title": "Pull-request integration",
+          "description": "Every open pull request classified against the current master — ready, needs refresh, waiting for checks, review or a dependency, draft, needs repair, conflicting, blocked, superseded, possibly redundant, other base or unknown — each with the master and head it was decided against, its reasons, its evidence, its risk and its overlaps, ranked deterministically; and the audit trail of the executor that merges the next provably safe one, one at a time. The relation to master is decided by git with this repository's own merge drivers, because the forge cannot run the derived-file driver. Read from the last recorded forge observation: nothing here reaches the network.",
+          "stability": "experimental",
+          "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+          "capabilities": [
+            {
+              "id": "integration.events",
+              "title": "The integration audit trail",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_integration_events",
+              "route": "GET /api/v1/pull-requests/events",
+              "cli": "majordomus prs events"
+            },
+            {
+              "id": "integration.explain",
+              "title": "Why one pull request is where it is",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_request_explain",
+              "route": "GET /api/v1/pull-requests/explain",
+              "cli": "majordomus prs explain"
+            },
+            {
+              "id": "integration.queue",
+              "title": "The integration queue",
+              "kind": "query",
+              "stability": "experimental",
+              "tool": "majordomus_pull_requests",
+              "route": "GET /api/v1/pull-requests",
+              "cli": "majordomus prs status"
+            }
+          ]
         }
       ],
       "command_refs": [
@@ -1570,6 +1609,10 @@
         {
           "path": "docs/ADOPTION.md",
           "title": "Adoption"
+        },
+        {
+          "path": "docs/INTEGRATION.md",
+          "title": "Pull-request integration"
         }
       ],
       "adr_refs": [
@@ -1630,6 +1673,11 @@
           "id": "worktrees",
           "title": "Worktrees",
           "route": "/cockpit/worktrees"
+        },
+        {
+          "id": "integration",
+          "title": "Integration",
+          "route": "/cockpit/integration"
         }
       ],
       "web_refs": [
@@ -1734,16 +1782,16 @@
         "worktrees"
       ],
       "counts": {
-        "capabilities": 7,
-        "mcp_tools": 7,
+        "capabilities": 10,
+        "mcp_tools": 10,
         "mcp_resources": 2,
-        "http_routes": 7,
-        "cli_paths": 5,
+        "http_routes": 10,
+        "cli_paths": 8,
         "commands": 3,
         "objects": 0,
         "rules": 5,
         "enforced_rules": 3,
-        "docs": 3,
+        "docs": 4,
         "adrs": 2,
         "claims": 5,
         "use_cases": 2,
@@ -1754,7 +1802,8 @@
           "guaranteed": 5
         },
         "modules": {
-          "behaviorally_verified": 3
+          "behaviorally_verified": 3,
+          "experimental": 1
         }
       }
     },
@@ -3703,7 +3752,7 @@
       "kind_refs": [
         {
           "name": "adr",
-          "objects": 64
+          "objects": 70
         },
         {
           "name": "knowledge",
@@ -3711,7 +3760,7 @@
         },
         {
           "name": "document",
-          "objects": 284
+          "objects": 286
         }
       ],
       "rule_refs": [
@@ -3960,11 +4009,11 @@
       "counts": {
         "capabilities": 2,
         "mcp_tools": 2,
-        "mcp_resources": 350,
+        "mcp_resources": 358,
         "http_routes": 2,
         "cli_paths": 0,
         "commands": 6,
-        "objects": 349,
+        "objects": 357,
         "rules": 4,
         "enforced_rules": 3,
         "docs": 2,
@@ -4174,7 +4223,7 @@
       "kind_refs": [
         {
           "name": "rule",
-          "objects": 144
+          "objects": 147
         }
       ],
       "rule_refs": [
@@ -4538,11 +4587,11 @@
       "counts": {
         "capabilities": 6,
         "mcp_tools": 4,
-        "mcp_resources": 146,
+        "mcp_resources": 149,
         "http_routes": 6,
         "cli_paths": 3,
         "commands": 5,
-        "objects": 144,
+        "objects": 147,
         "rules": 7,
         "enforced_rules": 7,
         "docs": 2,
@@ -6833,7 +6882,7 @@
         },
         {
           "name": "issue",
-          "objects": 237
+          "objects": 238
         }
       ],
       "rule_refs": [
@@ -6976,11 +7025,11 @@
       "counts": {
         "capabilities": 14,
         "mcp_tools": 14,
-        "mcp_resources": 259,
+        "mcp_resources": 260,
         "http_routes": 14,
         "cli_paths": 2,
         "commands": 1,
-        "objects": 257,
+        "objects": 258,
         "rules": 3,
         "enforced_rules": 3,
         "docs": 2,
@@ -9910,6 +9959,13 @@
         ]
       },
       {
+        "id": "integration",
+        "title": "Pull-request integration",
+        "features": [
+          "coordination"
+        ]
+      },
+      {
         "id": "lifecycle",
         "title": "Session lifecycle",
         "features": [
@@ -10300,7 +10356,7 @@
     "kinds": [
       {
         "id": "adr",
-        "title": "adr (64)",
+        "title": "adr (70)",
         "features": [
           "knowledge"
         ]
@@ -10328,7 +10384,7 @@
       },
       {
         "id": "claim",
-        "title": "claim (203)",
+        "title": "claim (204)",
         "features": [
           "declare-once"
         ]
@@ -10368,7 +10424,7 @@
       },
       {
         "id": "issue",
-        "title": "issue (237)",
+        "title": "issue (238)",
         "features": [
           "planning"
         ]
@@ -10431,7 +10487,7 @@
       },
       {
         "id": "rule",
-        "title": "rule (144)",
+        "title": "rule (147)",
         "features": [
           "doctrine"
         ]
@@ -11243,6 +11299,11 @@
       "route": "/cockpit/worktrees"
     },
     {
+      "id": "integration",
+      "title": "Integration",
+      "route": "/cockpit/integration"
+    },
+    {
       "id": "mesh",
       "title": "Mesh",
       "route": "/cockpit/mesh"
@@ -11289,31 +11350,31 @@
     }
   ],
   "telemetry": {
-    "capabilities": 1674,
-    "builtin": 149,
-    "declarative": 1525,
-    "modules": 44,
-    "mcp_tools": 143,
-    "mcp_resources": 1572,
-    "http_routes": 147,
-    "cli_commands": 152,
+    "capabilities": 1704,
+    "builtin": 152,
+    "declarative": 1552,
+    "modules": 45,
+    "mcp_tools": 146,
+    "mcp_resources": 1599,
+    "http_routes": 150,
+    "cli_commands": 161,
     "shell_commands": 30,
     "kinds": 29,
-    "objects": 1525,
+    "objects": 1552,
     "by_kind": {
-      "adr": 64,
+      "adr": 70,
       "application": 5,
       "area": 9,
       "audience": 8,
-      "claim": 203,
+      "claim": 204,
       "command": 31,
       "context": 31,
       "deployment": 1,
       "distribution-model": 1,
-      "document": 284,
+      "document": 286,
       "feature": 27,
       "implementation": 49,
-      "issue": 237,
+      "issue": 238,
       "knowledge": 1,
       "mesh-declaration": 1,
       "milestone": 20,
@@ -11322,12 +11383,12 @@
       "profile": 4,
       "prompt": 4,
       "release-record": 7,
-      "rule": 144,
+      "rule": 147,
       "scope": 1,
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 272,
+      "test": 286,
       "use-case": 46,
       "workspace": 1
     },
@@ -11344,7 +11405,7 @@
       "executions": 6,
       "newest": "2026-09-12T10:36:18Z"
     },
-    "declared": 187,
+    "declared": 188,
     "supported": 0,
     "claims": {
       "a-finding-names-how-to-see-it-again": {
@@ -11954,6 +12015,12 @@
         "supported": false
       },
       "mesh-cooperation-links": {
+        "status": "guaranteed",
+        "state": "not-run",
+        "label": "not run",
+        "supported": false
+      },
+      "mesh-declared-is-held": {
         "status": "guaranteed",
         "state": "not-run",
         "label": "not run",

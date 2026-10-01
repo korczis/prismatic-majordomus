@@ -51,6 +51,7 @@ pub(crate) mod executions;
 pub mod gates;
 pub(crate) mod graph;
 pub mod health;
+pub(crate) mod integration;
 pub mod lifecycle;
 pub(crate) mod mesh;
 pub(crate) mod models;
@@ -198,6 +199,7 @@ pub fn modules() -> Vec<ModuleDescriptor> {
         design,
         devtask,
         worktree,
+        integration,
         trace,
         product
     ]

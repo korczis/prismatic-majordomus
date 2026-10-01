@@ -1,17 +1,17 @@
 ---
 id: project.commands-run-non-interactively
-version: 1
+version: 2
 kind: rule
 title: A command runs with nobody at the keyboard
 description: Where a non-interactive form of a command exists it is the one used — pagers disabled, confirmations passed as flags, stdin supplied explicitly — so that no step of any automated run can block waiting for a person who is not there.
 statement: Where a non-interactive form exists it is the one used; a command that can block for input is not run unless the operator asked for an interactive session.
 status: active
-class: advisory
+class: blocking
 depends_on: [project.portable-shell@1, project.execution-state-is-authoritative@1]
 tags: [shell, process, agents]
 
 x-majordomus:
-  tests: [test/cases/08_no_forbidden_constructs.sh]
+  tests: [test/cases/08_no_forbidden_constructs.sh, test/cases/122_liveness_gate.sh, test/cases/121_liveness_doctrine.sh]
 ---
 
 # Rationale
@@ -66,9 +66,18 @@ terminal. The finding names the construct, the file and the line. The scan is te
 itself first: each construct is planted in a fixture and must be found, and the prose and
 non-interactive forms beside it must not be.
 
-What the scan cannot see stays with review: a program whose documented behaviour is to wait for
+`scripts/liveness-check` decides the other half over every tracked shell file: a `git log`,
+`diff`, `show` or `blame` whose output is neither captured, piped, redirected nor `--no-pager`
+pages to a terminal and stops on a keypress no agent sends, and is reported as a `pager-blocks`
+finding. It is gated `always: true` in the `structure` job with its debt ratcheted in
+`.ai/repo/liveness-baseline.txt`.
+
+What neither scan can see stays with review: a program whose documented behaviour is to wait for
 a keypress but whose name is not on the list, and a command a person runs by hand.
 
 # Verification
 
-`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there.
+`test/cases/08_no_forbidden_constructs.sh`, the mechanical half ADR 0039 placed there, and
+`scripts/liveness-check`'s `pager-blocks` shape, mutation-tested by
+`test/cases/122_liveness_gate.sh`. `test/cases/121_liveness_doctrine.sh` holds this rule's own
+class and enforcement block.

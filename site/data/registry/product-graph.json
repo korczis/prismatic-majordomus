@@ -524,7 +524,7 @@
       "id": "kind:adr",
       "kind": "kind",
       "label": "adr",
-      "summary": "64 object(s) of the layer",
+      "summary": "70 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -552,7 +552,7 @@
       "id": "kind:claim",
       "kind": "kind",
       "label": "claim",
-      "summary": "203 object(s) of the layer",
+      "summary": "204 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -580,7 +580,7 @@
       "id": "kind:document",
       "kind": "kind",
       "label": "document",
-      "summary": "284 object(s) of the layer",
+      "summary": "286 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -594,7 +594,7 @@
       "id": "kind:issue",
       "kind": "kind",
       "label": "issue",
-      "summary": "237 object(s) of the layer",
+      "summary": "238 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -657,7 +657,7 @@
       "id": "kind:rule",
       "kind": "kind",
       "label": "rule",
-      "summary": "144 object(s) of the layer",
+      "summary": "147 object(s) of the layer",
       "source": "share/kinds.yaml"
     },
     {
@@ -847,6 +847,15 @@
       "route": "/registry/modules/health/",
       "source": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "status": "behaviorally_verified"
+    },
+    {
+      "id": "module:integration",
+      "kind": "module",
+      "label": "integration",
+      "summary": "Pull-request integration",
+      "route": "/registry/modules/integration/",
+      "source": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "status": "experimental"
     },
     {
       "id": "module:lifecycle",
@@ -1473,6 +1482,11 @@
       "source": "feature:coordination",
       "target": "feature:worktrees",
       "kind": "related_to"
+    },
+    {
+      "source": "feature:coordination",
+      "target": "module:integration",
+      "kind": "made_of"
     },
     {
       "source": "feature:coordination",
@@ -2720,6 +2734,26 @@
       "kind": "exposed_through"
     },
     {
+      "source": "module:integration",
+      "target": "surface:api",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:integration",
+      "target": "surface:cli",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:integration",
+      "target": "surface:cockpit",
+      "kind": "exposed_through"
+    },
+    {
+      "source": "module:integration",
+      "target": "surface:mcp",
+      "kind": "exposed_through"
+    },
+    {
       "source": "module:lifecycle",
       "target": "surface:api",
       "kind": "exposed_through"
@@ -3086,8 +3120,8 @@
     }
   ],
   "metadata": {
-    "nodes": 124,
-    "edges": 403,
+    "nodes": 125,
+    "edges": 408,
     "acyclic": false,
     "truncated": false
   },

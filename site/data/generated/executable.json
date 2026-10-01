@@ -1061,6 +1061,57 @@
       "tool": "majordomus_health"
     },
     {
+      "api_anchor": "/docs/api/integration/#op-integration-events",
+      "claims": [],
+      "cli": "majordomus prs events",
+      "id": "integration.events",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-events/",
+      "slug": "integration-events",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The integration audit trail",
+      "tool": "majordomus_integration_events"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-explain",
+      "claims": [],
+      "cli": "majordomus prs explain",
+      "id": "integration.explain",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-explain/",
+      "slug": "integration-explain",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "Why one pull request is where it is",
+      "tool": "majordomus_pull_request_explain"
+    },
+    {
+      "api_anchor": "/docs/api/integration/#op-integration-queue",
+      "claims": [],
+      "cli": "majordomus prs status",
+      "id": "integration.queue",
+      "kind": "query",
+      "module": "integration",
+      "module_route": "/registry/modules/integration/",
+      "resource": null,
+      "route": "/registry/capabilities/integration-queue/",
+      "slug": "integration-queue",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "tests": [],
+      "title": "The integration queue",
+      "tool": "majordomus_pull_requests"
+    },
+    {
       "api_anchor": "/docs/api/lifecycle/#op-lifecycle-closed",
       "claims": [
         {
@@ -2993,6 +3044,13 @@
         "test": "apps/majordomus-cli/tests/mesh.rs"
       },
       {
+        "id": "mesh-declared-is-held",
+        "implementation": "apps/majordomus-cli/src/mesh/doctor.rs",
+        "route": "/guarantees/mesh-declared-is-held/",
+        "status": "guaranteed",
+        "test": "test/cases/494_the_mesh_is_declared_and_held.sh"
+      },
+      {
         "id": "models-one-declaration",
         "implementation": "apps/majordomus-cli/src/models/mod.rs",
         "route": "/guarantees/models-one-declaration/",
@@ -3132,9 +3190,9 @@
     ]
   },
   "counts": {
-    "capabilities": 149,
-    "claims": 68,
-    "modules": 44
+    "capabilities": 152,
+    "claims": 69,
+    "modules": 45
   },
   "generator": "majordomus-cli 0.11.0",
   "modules": [
@@ -3676,6 +3734,32 @@
       "source_path": "apps/majordomus-cli/src/capability/builtin/health.rs",
       "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/health.rs",
       "title": "Health"
+    },
+    {
+      "capabilities": [
+        {
+          "id": "integration.events",
+          "route": "/registry/capabilities/integration-events/",
+          "slug": "integration-events"
+        },
+        {
+          "id": "integration.explain",
+          "route": "/registry/capabilities/integration-explain/",
+          "slug": "integration-explain"
+        },
+        {
+          "id": "integration.queue",
+          "route": "/registry/capabilities/integration-queue/",
+          "slug": "integration-queue"
+        }
+      ],
+      "claims": [],
+      "id": "integration",
+      "route": "/registry/modules/integration/",
+      "slug": "integration",
+      "source_path": "apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "source_url": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/capability/builtin/integration.rs",
+      "title": "Pull-request integration"
     },
     {
       "capabilities": [

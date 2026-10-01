@@ -49,6 +49,7 @@ pub(crate) mod mcp;
 pub(crate) mod mesh;
 pub(crate) mod models;
 pub(crate) mod product;
+pub(crate) mod prs;
 pub(crate) mod quality;
 pub(crate) mod reasoning;
 pub(crate) mod release;
@@ -81,6 +82,7 @@ pub fn run(cli: Cli) -> Result<u8> {
         Command::Commands(args) => command_graph::run(args),
         Command::Completion(args) => completion::run(args),
         Command::Worktree(args) => worktree::run(args),
+        Command::Prs(args) => prs::run(args),
         Command::Commit(args) => commit::run(args),
         Command::Product(args) => product::run(args),
         Command::Release(args) => release::run(args),
