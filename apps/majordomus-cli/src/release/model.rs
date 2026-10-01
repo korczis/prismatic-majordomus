@@ -384,7 +384,78 @@ pub struct Changelog {
     pub produced_by: Option<ProducedBy>,
 }
 
-/// What the version is, and what the commits since the last release imply it should become.
+/// Who answered a version report's `next`: the public contract, the contract with the
+/// commits, or — only when it could not be measured — the commit subjects.
+///
+/// ADR 0051 makes the contract the authority and demotes conventional commits to evidence,
+/// so [`DecidedBy::Contract`] is the normal answer and [`DecidedBy::Commits`] is a fallback
+/// that names itself rather than passing for the measurement.
+///
+/// ```
+/// use majordomus_cli::release::model::DecidedBy;
+/// assert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), "contract");
+/// assert_eq!(DecidedBy::Commits.as_str(), "commits");
+/// assert_eq!(DecidedBy::default(), DecidedBy::Commits);
+/// ```
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+#[schemars(rename = "ReleaseVersionDecidedBy")]
+pub enum DecidedBy {
+    /// `release analyze` measured the public contract against the last release, and `next`
+    /// is the version it requires: the declared version when that already satisfies the
+    /// contract, otherwise the smallest one it allows.
+    Contract,
+    /// The contract was measured and requires no release over the last one — only behaviour
+    /// behind the public boundary changed — while the commits carry changes: `next` is the
+    /// smallest release above the last, a patch, however much the commit subjects claim.
+    ContractAndCommits,
+    /// The contract could not be measured — no published baseline carries a registry, or a
+    /// version is not three numbers — so `next` is what the commit subjects imply, and says
+    /// so.
+    #[default]
+    Commits,
+}
+
+impl DecidedBy {
+    /// The word the JSON value carries for who answered.
+    ///
+    /// ```
+    /// use majordomus_cli::release::model::DecidedBy;
+    /// for by in [DecidedBy::Contract, DecidedBy::ContractAndCommits, DecidedBy::Commits] {
+    ///     assert_eq!(serde_json::to_value(by).unwrap(), by.as_str());
+    /// }
+    /// ```
+    pub fn as_str(self) -> &'static str {
+        match self {
+            DecidedBy::Contract => "contract",
+            DecidedBy::ContractAndCommits => "contract_and_commits",
+            DecidedBy::Commits => "commits",
+        }
+    }
+
+    /// Who answered, as the text renderings print it after "decided by".
+    ///
+    /// ```
+    /// use majordomus_cli::release::model::DecidedBy;
+    /// assert_eq!(DecidedBy::Contract.phrase(), "the contract");
+    /// assert_eq!(DecidedBy::ContractAndCommits.phrase(), "the contract and the commits");
+    /// ```
+    pub fn phrase(self) -> &'static str {
+        match self {
+            DecidedBy::Contract => "the contract",
+            DecidedBy::ContractAndCommits => "the contract and the commits",
+            DecidedBy::Commits => "the commits",
+        }
+    }
+}
+
+/// What the version is, what the public contract requires it to become, and what the
+/// commits since the last release say about themselves.
+///
+/// `next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the
+/// smallest release above the last when that requirement is the last release itself. The
+/// commit inference is evidence — `bump` and `commits_imply` — and is the answer only when
+/// the contract cannot be measured, which `decided_by` and `contract_unreadable` then say.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[schemars(rename = "ReleaseVersionReport")]
 pub struct VersionReport {
@@ -397,13 +468,31 @@ pub struct VersionReport {
     /// asked by the executable, so every surface can show the answer.
     pub agree: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// The last release the layer records.
+    /// The last release: the highest version the layer records (the newest version tag when
+    /// it records none) — the baseline `release analyze` measures the contract from, so the
+    /// contract and the commit evidence describe one window.
     pub last_release: Option<String>,
-    /// What the commits since it imply: `major`, `minor`, `patch`, or `none`.
+    /// What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.
+    /// Evidence only — the contract decides `next`; `release analyze` reports where the two
+    /// disagree.
     pub bump: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// The version that bump would produce from the last release (from the declared version
+    /// when nothing was released yet). Evidence only.
+    pub commits_imply: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    /// The version that bump would produce.
+    /// The next version. When the contract could be measured, the version it requires: the
+    /// declared version when that already satisfies it, otherwise the smallest one it allows
+    /// — and, when that is the last release itself, the smallest release above it. When it
+    /// could not, the commit inference, labelled by `decided_by`. Absent when nothing would
+    /// be released.
     pub next: Option<String>,
+    #[serde(default)]
+    /// Who answered `next`.
+    pub decided_by: DecidedBy,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// Why the contract could not answer, when `decided_by` is `commits`.
+    pub contract_unreadable: Option<String>,
     /// How many commits since the last release, and of what kind — the evidence for the
     /// bump, so that a surprising answer can be checked rather than believed.
     pub changes: Vec<Change>,

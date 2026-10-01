@@ -350,15 +350,31 @@ fn pending_bump(v: &Value, answer: &Value) -> (HealthStatus, String) {
 }
 
 fn next_version(v: &Value, answer: &Value) -> (HealthStatus, String) {
-    match v.as_str() {
-        Some(_) => (
+    let bump = answer["bump"].as_str().unwrap_or("?");
+    match (v.as_str(), answer["decided_by"].as_str()) {
+        (Some(_), Some("contract")) => (
             HealthStatus::Ok,
             format!(
-                "what the {} bump would produce; `release analyze` measures the contract",
-                answer["bump"].as_str().unwrap_or("?")
+                "the version the public contract requires: the declared one when it already \
+                 satisfies the contract, otherwise the smallest it allows; the commits imply a \
+                 {bump} (evidence)"
             ),
         ),
-        None => (HealthStatus::Ok, "nothing would be released".to_string()),
+        (Some(_), Some("contract_and_commits")) => (
+            HealthStatus::Ok,
+            format!(
+                "the contract requires no release over the last one and the commits imply a \
+                 {bump}: the smallest release above it, a patch"
+            ),
+        ),
+        (Some(_), _) => (
+            HealthStatus::Ok,
+            format!(
+                "what the {bump} bump the commits imply would produce; the contract could not \
+                 be measured"
+            ),
+        ),
+        (None, _) => (HealthStatus::Ok, "nothing would be released".to_string()),
     }
 }
 
@@ -724,6 +740,30 @@ pub fn module() -> ModuleDescriptor {
 mod tests {
     use super::*;
     use crate::synthetic::{Shape, SyntheticRepository};
+
+    /// The next-version card names who answered: the contract, the contract with the
+    /// commits, or the commits alone — never the commits' answer passed off as the contract's.
+    #[test]
+    fn the_next_version_card_names_who_answered() {
+        let v = Value::from("0.11.0");
+        let by = |decided_by: &str| {
+            next_version(
+                &v,
+                &serde_json::json!({ "bump": "major", "decided_by": decided_by }),
+            )
+        };
+        let (status, contract) = by("contract");
+        assert_eq!(status, HealthStatus::Ok);
+        assert!(contract.starts_with("the version the public contract requires"));
+        assert!(contract.contains("the commits imply a major (evidence)"));
+        let (_, both) = by("contract_and_commits");
+        assert!(both.starts_with("the contract requires no release over the last one"));
+        let (_, commits) = by("commits");
+        assert!(commits.contains("the contract could not be measured"));
+        assert!(!commits.contains("the public contract requires"));
+        let (_, nothing) = next_version(&Value::Null, &serde_json::json!({}));
+        assert_eq!(nothing, "nothing would be released");
+    }
 
     /// The declaration is the only place the projections are named; a refactor that
     /// dropped one would still compile, and this is the assertion that would not.

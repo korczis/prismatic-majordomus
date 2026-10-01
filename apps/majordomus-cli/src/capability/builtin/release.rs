@@ -106,7 +106,7 @@ pub fn module() -> ModuleDescriptor {
     module! {
         id: "release",
         title: "Release",
-        description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become.",
+        description: "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become, with what the commits since the last release imply beside it as evidence.",
         stability: Stability::Implemented,
         capabilities: [
             capability! {
@@ -134,8 +134,8 @@ pub fn module() -> ModuleDescriptor {
             },
             capability! {
                 id: "release.version",
-                title: "The version, and the one the commits imply",
-                description: "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+                title: "The version, and the one the contract requires next",
+                description: "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence; they answer `next` only when the contract cannot be measured, and `decided_by` and `contract_unreadable` then say so.",
                 input: Empty,
                 output: VersionReport,
                 stability: Stability::Implemented,
@@ -253,9 +253,18 @@ fn changelog(ctx: &Context, input: ChangelogInput) -> Result<Changelog, Capabili
     Ok(log)
 }
 
+/// The version report, whose `next` is the contract's answer (ADR 0051).
+///
+/// The same analysis `release analyze` makes, asked against the last release; when it cannot
+/// be made — no published baseline carries a registry, or a version is not three numbers and
+/// the analysis could only guess — the report falls back to the commit inference and names
+/// the reason, rather than refusing the half that does not depend on it.
 fn version(ctx: &Context, _: Empty) -> Result<VersionReport, CapabilityError> {
     let root = std::path::Path::new(&ctx.index.repository.root);
-    Ok(release::version::report(root, &ctx.index.objects))
+    let contract = release::compat::analyze(root, &ctx.registry, &ctx.index.objects, None)
+        .map_err(|e| e.to_string())
+        .and_then(|plan| plan.measured_version());
+    Ok(release::version::report(root, &ctx.index.objects, contract))
 }
 
 /// The one analysis, behind every surface that shows a version verdict.

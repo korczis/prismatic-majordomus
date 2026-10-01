@@ -140,11 +140,39 @@ fn render_version(args: &ReleaseArgs) -> Result<u8> {
             .map_err(Error::Transport)?;
             writeln!(out, "commits      {} since it", report.changes.len())
                 .map_err(Error::Transport)?;
+            writeln!(
+                out,
+                "next         {} (decided by {})",
+                report.next.as_deref().unwrap_or("—"),
+                report.decided_by.phrase()
+            )
+            .map_err(Error::Transport)?;
+            if let Some(why) = report.contract_unreadable.as_deref() {
+                writeln!(
+                    out,
+                    "             the contract could not be measured: {why}"
+                )
+                .map_err(Error::Transport)?;
+            }
             writeln!(out, "bump         {}", report.bump).map_err(Error::Transport)?;
             writeln!(
                 out,
-                "next         {}",
-                report.next.as_deref().unwrap_or("—")
+                "             commits imply {}{} ({})",
+                report.bump,
+                report
+                    .commits_imply
+                    .as_deref()
+                    .map(|v| format!(" -> {v}"))
+                    .unwrap_or_default(),
+                match report.decided_by {
+                    release::model::DecidedBy::Contract => "evidence; the contract decides",
+                    release::model::DecidedBy::ContractAndCommits => {
+                        "evidence; the contract requires no release, so a patch carries them"
+                    }
+                    release::model::DecidedBy::Commits => {
+                        "evidence, answering only because the contract could not be measured"
+                    }
+                }
             )
             .map_err(Error::Transport)?;
             for d in &findings {

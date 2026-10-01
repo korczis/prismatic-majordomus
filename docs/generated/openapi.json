@@ -164,7 +164,7 @@
     },
     {
       "name": "release",
-      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become."
+      "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become, with what the commits since the last release imply beside it as evidence."
     },
     {
       "name": "repository",
@@ -12534,15 +12534,15 @@
     "/api/v1/release/version": {
       "get": {
         "operationId": "release.version",
-        "summary": "The version, and the one the commits imply",
-        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+        "summary": "The version, and the one the contract requires next",
+        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence; they answer `next` only when the contract cannot be measured, and `decided_by` and `contract_unreadable` then say so.",
         "tags": [
           "release"
         ],
         "parameters": [],
         "responses": {
           "200": {
-            "description": "The version, and the one the commits imply: the result.",
+            "description": "The version, and the one the contract requires next: the result.",
             "content": {
               "application/json": {
                 "schema": {
@@ -39615,6 +39615,26 @@
         ],
         "description": "Which projection of the contract a change is in.\n\nNot where it was *found* — everything here is found in the registry — but which promise\nit is, so that a reader sees \"a route is gone\" rather than a JSON pointer.\n\n```\nuse majordomus_cli::release::compat::SurfaceKind;\nassert_eq!(SurfaceKind::Http.as_str(), \"route\");\n```"
       },
+      "ReleaseVersionDecidedBy": {
+        "oneOf": [
+          {
+            "type": "string",
+            "const": "contract",
+            "description": "`release analyze` measured the public contract against the last release, and `next`\nis the version it requires: the declared version when that already satisfies the\ncontract, otherwise the smallest one it allows."
+          },
+          {
+            "type": "string",
+            "const": "contract_and_commits",
+            "description": "The contract was measured and requires no release over the last one — only behaviour\nbehind the public boundary changed — while the commits carry changes: `next` is the\nsmallest release above the last, a patch, however much the commit subjects claim."
+          },
+          {
+            "type": "string",
+            "const": "commits",
+            "description": "The contract could not be measured — no published baseline carries a registry, or a\nversion is not three numbers — so `next` is what the commit subjects imply, and says\nso."
+          }
+        ],
+        "description": "Who answered a version report's `next`: the public contract, the contract with the\ncommits, or — only when it could not be measured — the commit subjects.\n\nADR 0051 makes the contract the authority and demotes conventional commits to evidence,\nso `DecidedBy::Contract` is the normal answer and `DecidedBy::Commits` is a fallback\nthat names itself rather than passing for the measurement.\n\n```\nuse majordomus_cli::release::model::DecidedBy;\nassert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), \"contract\");\nassert_eq!(DecidedBy::Commits.as_str(), \"commits\");\nassert_eq!(DecidedBy::default(), DecidedBy::Commits);\n```"
+      },
       "ReleaseVersionPlan": {
         "type": "object",
         "properties": {
@@ -39735,18 +39755,37 @@
               "string",
               "null"
             ],
-            "description": "The last release the layer records."
+            "description": "The last release: the highest version the layer records (the newest version tag when\nit records none) — the baseline `release analyze` measures the contract from, so the\ncontract and the commit evidence describe one window."
           },
           "bump": {
             "type": "string",
-            "description": "What the commits since it imply: `major`, `minor`, `patch`, or `none`."
+            "description": "What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.\nEvidence only — the contract decides `next`; `release analyze` reports where the two\ndisagree."
+          },
+          "commits_imply": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The version that bump would produce from the last release (from the declared version\nwhen nothing was released yet). Evidence only."
           },
           "next": {
             "type": [
               "string",
               "null"
             ],
-            "description": "The version that bump would produce."
+            "description": "The next version. When the contract could be measured, the version it requires: the\ndeclared version when that already satisfies it, otherwise the smallest one it allows\n— and, when that is the last release itself, the smallest release above it. When it\ncould not, the commit inference, labelled by `decided_by`. Absent when nothing would\nbe released."
+          },
+          "decided_by": {
+            "$ref": "#/components/schemas/ReleaseVersionDecidedBy",
+            "description": "Who answered `next`.",
+            "default": "commits"
+          },
+          "contract_unreadable": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Why the contract could not answer, when `decided_by` is `commits`."
           },
           "changes": {
             "type": "array",
@@ -39763,7 +39802,7 @@
           "bump",
           "changes"
         ],
-        "description": "What the version is, and what the commits since the last release imply it should become."
+        "description": "What the version is, what the public contract requires it to become, and what the\ncommits since the last release say about themselves.\n\n`next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the\nsmallest release above the last when that requirement is the last release itself. The\ncommit inference is evidence — `bump` and `commits_imply` — and is the answer only when\nthe contract cannot be measured, which `decided_by` and `contract_unreadable` then say."
       },
       "ReleaseView": {
         "type": "object",

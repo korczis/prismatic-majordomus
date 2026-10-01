@@ -359,6 +359,27 @@ same ones in its plan:
 </div>
 
 
+**What the next version is, `release version` answers with the contract.** Its `next` is
+the `required_version` of the same analysis `release analyze` makes against the last release
+([ADR 0051](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0051-the-minimum-release-version-is-measured-from-the-public-contract.md)):
+the declared version when it already satisfies the contract, otherwise the smallest one the
+contract allows, and `decided_by: contract` says so. Both halves measure from one baseline —
+the highest version the layer records — so the contract and the commit evidence describe the
+same window. The bump the conventional commits since that release imply is carried beside it
+as evidence — `bump`, and `commits_imply`, the version it would produce from the last release
+rather than from the already-declared version, so a version raised for the window is never
+raised again by the same commits. The text form prints the contract's `next` and, separately,
+`commits imply <bump> (evidence; the contract decides)`.
+
+The contract's answer is a minimum, and when only behaviour behind the public boundary
+changed that minimum is the release already made. `next` is then never the last release: if
+the commits carry anything, it is the smallest release above it, a patch, labelled
+`decided_by: contract_and_commits` — however much the subjects claim — and if they carry
+nothing, `next` is absent and nothing would be released. Only when the contract cannot be
+measured — no published release carries a registry, or a version is not three numbers and the
+analysis could only guess — does the commit inference answer on its own, and then it is
+labelled: `decided_by: commits`, with the reason in `contract_unreadable`, never silently.
+
 A stale projection is a warning rather than an error on purpose: a writer that refused its
 own un-derived state could not correct a bump it had just made.
 
@@ -506,9 +527,10 @@ appended is refused, naming the tag.
 | | |
 |---|---|
 | `apps/majordomus-cli/src/release/commits.rs` | the parser: the conventional shapes, both spellings of breaking, an unknown lowercase type, and a subject that is not conventional kept whole; and the resolution: an id the layer holds becomes a reference carrying that record's title, an id of the same shape that names nothing does not, a name mentioned twice is carried once, and a word that merely starts with the letter is not an id |
-| `apps/majordomus-cli/src/release/version.rs` | the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, writing touches only the manifest's line and the lock's own entry, the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
+| `apps/majordomus-cli/src/release/version.rs` | the contract decides `next` and the commit inference answers only, labelled, when it cannot; a contract that requires no release never answers the last release; the commit inference raises the last release, not the declared version; the bump is a total function of the changes, raising zeroes what it supersedes, a version that is not three numbers is refused, writing touches only the manifest's line and the lock's own entry, the projection round-trips through the generated file, a stale projection warns and one nothing derives is refused, and a version written by hand is found where a generated one is not |
 | `apps/majordomus-cli/src/release/changelog.rs` | a decision belongs to the release whose window contains its date, the unreleased window opens after the last release, a timestamp and a date compare on the day they share, and the groups reach the renderer in rank order whatever order the commits arrived in |
 | `test/cases/103_release_projection.sh` | the whole surface against the real executable, in a disposable repository with a real history: which commits fall in which range, which decision belongs to which window, a record added with nothing else edited, a subject that follows no convention carried rather than dropped, a fixture whose repository is not a forge the tool knows producing no link rather than a guessed one, a commit naming one id the layer holds and one it does not, and every exit code above |
+| `test/cases/743_release_version_answers_with_the_contract.sh` | on a fixture whose commits say BREAKING and whose surface only grew, `release version`'s `next` is `release analyze`'s required version, decided by the contract, with the commits' major shown as evidence; with no published baseline the commit inference answers labelled `decided_by: commits` with its reason; a version already raised to the requirement is not raised again; a manifest with no version line is not passed off as the contract's answer; after a published release with only a `fix:` since and an unchanged surface, `next` is a patch above it and not the release itself; and with a version declared above the minimum the commit inference still raises the last release |
 | `test/cases/484_the_version_is_authored_once.sh` | the shell tool states no version; it prints the authority because it reads its own projection, generated from the manifest and never from `MAJORDOMUS_SHARE`; a hand-edited projection is refused by `generate --check`; the writer writes the manifest's line and the lock's own entry and nothing else; a version written by hand in `lib/` is refused — each section first shown to fail against the tree before ADR 0085 |
 | `scripts/ci/release-check` | the manifest the writer names is the one the release script reads, the shell tool prints what it declares on every plan rather than only at publication, the lock records it, no hand-kept changelog has appeared, and the tree is not behind the newest release the layer records |
 | gate `version-authored-once` | `bin/majordomus-cli release version`: the projection is current and no version is written by hand where the tool's files live |
