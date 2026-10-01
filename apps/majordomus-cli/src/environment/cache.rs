@@ -89,6 +89,17 @@ pub struct CachedTier {
     /// The installed toolchain versions; expires with the markers, and with time.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub toolchains: Option<Entry<Vec<ToolchainState>>>,
+    /// The rule tally a full preflight counted, for the entry path, which never builds the
+    /// index. It carries the commit and tree it was counted at and the preflight judges it
+    /// stale against any other, so it needs no fingerprint of its own.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rules: Option<Entry<super::preflight::RulesTally>>,
+    /// For each commit the evidence ledger records a run at, whether the tree in front of
+    /// you is that commit's tree (the ledger's own row excluded). Each answer costs git two
+    /// processes, and entry would pay them on every `cd`; the fingerprint covers HEAD, every
+    /// path git reports changed and the ledger file itself, so any of those moving recomputes.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ledger_trees: Option<Entry<std::collections::BTreeMap<String, bool>>>,
     /// The digest of the last snapshot rendered to a person, so that a banner in `auto`
     /// mode can tell a first look from a re-entry. Not a record of anything a person did:
     /// one digest, overwritten, naming nothing about the session that saw it.

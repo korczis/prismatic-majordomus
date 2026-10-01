@@ -27,7 +27,7 @@
 # what makes the delegation real and not a preference.
 MAJORDOMUS_BIN="$(rust_bin)" || rust_bin_exit $?
 export MAJORDOMUS_BIN
-command -v jq >/dev/null 2>&1 || { echo "    skip: jq not installed"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "jq not installed"
 
 # A bare `[ ... ]` under the runner's `set -e` ends a case having printed nothing anywhere:
 # no message, no line number, a bare FAIL. It happened twice while this case was being

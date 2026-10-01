@@ -88,8 +88,10 @@ jobs:
       ui_audit: ${{ steps.plan.outputs.ui_audit }}
       interaction_probe: ${{ steps.plan.outputs.interaction_probe }}
       macos: ${{ steps.plan.outputs.macos }}
+      mesh_lab: ${{ steps.plan.outputs.mesh_lab }}
       installer_live: ${{ steps.plan.outputs.installer_live }}
       pages_live: ${{ steps.plan.outputs.pages_live }}
+      rustdoc: ${{ steps.plan.outputs.rustdoc }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -180,24 +182,39 @@ jobs:
   # cargo's own gates (the crate's HTTP and projection suites, the doc examples, the
   # benchmark build) keep cargo, warm from the cache. Zola and the site dependencies are
   # present so the site cases run rather than skip.
-  suite:
+  # Four shards of the suite on four runners, each running its cases four at a time. Which
+  # case runs where is decided by test/run.sh (MJ_TEST_SHARD) from the seconds recorded in
+  # .ai/repo/ci/suite-durations.tsv, longest first: one committed file, so every shard deals
+  # the same hand and their union is the whole suite. Measured: one runner took >130 min,
+  # because 24,879 case-seconds were dealt to four workers; dealt to sixteen, the critical
+  # path is the longest single case (~35 min). The suite job below proves the union.
+  suite-shard:
     needs: plan
     if: needs.plan.outputs.shell_suite == 'true'
-    # 150, not 100. The bound is a backstop against a wedged runner, and every case already
-    # carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound only has
-    # to sit above what a healthy run costs. It did not. The suite costs 93 to 100 minutes,
-    # and two branches cut a minute apart on 2026-09-11 decided it:
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    # 225, re-measured. The bound is a backstop against a wedged runner, and every case
+    # already carries one of its own (test/run.sh, `majordomus-timeout:`), so the job bound
+    # only has to sit above what a healthy run costs. It kept not doing that. 150 was set
+    # from a 93-100 minute cost after two branches cut a minute apart on 2026-09-11 decided
+    # it — #209 finished in 92m 48s with a verdict, #208 was killed at 100m 22s without one —
+    # and that comment asked for the cost to be re-measured from the first run allowed to
+    # finish. Measured, eleven consecutive runs on 2026-09-19/20:
     #
-    #   #209  10:01:37Z -> 11:34:25Z   92m 48s   failure    (a verdict)
-    #   #208  10:02:38Z -> 11:43:00Z  100m 22s   cancelled  (killed at the bound)
+    #   94.2  98.4  121.8  126.1  142.3  142.9  144.7  145.0  145.3  145.4  148.3   minutes
     #
-    # Seventy-nine seconds of runner variance settled whether a pull request was validated
-    # at all. A margin of 7% is a coin flip, not a bound; 150 makes it about 60%. And a
-    # cancelled job carries no verdict while looking, in GitHub's own interface, exactly
-    # like one a person abandoned — which is how master's suite went days without reporting
-    # and nobody noticed. The true cost should be re-measured from the first run that is
-    # allowed to finish, and this number set from that.
-    timeout-minutes: 150
+    # The margin had fallen to 1.7 minutes, so runner weather again decided whether a pull
+    # request was validated at all — and a cancelled job carries no verdict while looking, in
+    # GitHub's own interface, exactly like one a person abandoned. 225 restores the same ~50%
+    # doctrine against the cost actually measured.
+    #
+    # Raising a bound only buys time, so it is not the whole change: .ai/repo/ci/suite.yaml
+    # declares this number and what a healthy run may cost in case seconds, and the
+    # suite-budget step below refuses growth while the bound still has room. One declaration,
+    # two readers — test/cases/417 refuses the workflow and the model when they disagree.
+    timeout-minutes: 225
     runs-on: ubuntu-latest
     steps:
       # the whole history: a case that clones this checkout into a fixture and pushes
@@ -209,6 +226,13 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # The crate's reference, which scripts/site-build composes into every build and refuses
+      # to build without (ADR 0086): the cases that build the site (09, 12, 96, 97) build it
+      # here. The toolchain and cache are the step above's, so it sets up nothing of its own.
+      - name: the crate's Rust API reference
+        uses: ./.github/actions/rustdoc
+        with:
+          setup: "false"
       # `just` is a subject of this suite, not a convenience: 77_rust_evidence asks whether a
       # person running `just test` reaches the same gates CI runs, and 90 and 102 read the
       # recipe list and the completion it declares. The runner had no `just`, so 77 died at
@@ -228,16 +252,107 @@ jobs:
       - name: behavioural tests
         env:
           MJ_TEST_JOBS: 4
+          MJ_TEST_SHARD: ${{ matrix.shard }}/4
           MJ_TEST_REPORT: suite.tsv
         run: bash test/run.sh
+      # The tree the suite ran in, measured here, right after its run: the evidence job records
+      # the suite's report against this measurement, never against its own fresh checkout
+      # (ADR 0087 decision 6). The one output the run names, its report, is excluded by name,
+      # and nothing else is; whatever else the run left behind makes the tree dirty, and the
+      # first lines of it are printed.
+      - name: the tree the suite ran in
+        if: always()
+        run: |
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)suite.tsv')"
+          if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["suite.tsv"]}' > "$RUNNER_TEMP/suite-tree.json"
+      # an artifact of its own per shard (the ci job reads every ci-metrics-* artifact as
+      # metrics); the suite job joins the four into the one measurement the evidence job reads
       - if: always()
-        run: scripts/ci/summary --job suite --report suite.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-suite-tree-${{ matrix.shard }}
+          path: ${{ runner.temp }}/suite-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - if: always()
+        run: scripts/ci/summary --job suite --report suite.tsv --fact "shard=${{ matrix.shard }}/4" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: suite-shard-${{ matrix.shard }}
+          path: suite.tsv
+          retention-days: 3
+
+  # The suite's one verdict, over every shard: the four reports joined, every case under
+  # test/cases/ present exactly once (test/run.sh --verify-report, so a shard that lost or
+  # repeated a case is a failure, not a quieter suite), the budget held against the whole run,
+  # and the joined report published as ci-metrics-suite for the evidence job and the metrics.
+  # It fails when any shard failed. Named `suite` so the gate model, the evidence job and the
+  # ci verdict read it exactly as they read the single job it replaces.
+  suite:
+    needs: [plan, suite-shard]
+    if: always() && needs.plan.outputs.shell_suite == 'true'
+    # 225, re-measured. The bound is a backstop against a wedged runner, and every case
+    # already carries one of its own (test/run.sh, `majordomus-timeout:`); it stays the
+    # number .ai/repo/ci/suite.yaml declares (case 417) and bounds every shard below too.
+    timeout-minutes: 225
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: suite-shard-*
+          path: shards
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-evidence-suite-tree-*
+          path: ${{ runner.temp }}/trees
+      # The suite ran in four trees, one per shard, each measured where it ran. The suite's
+      # tree is clean only when all four were and when they are one commit; a shard that left
+      # no measurement leaves the suite's tree unknown, and no file is written at all.
+      - name: the trees the shards ran in
+        if: always()
+        run: |
+          set -- "$RUNNER_TEMP"/trees/*/suite-tree.json
+          if [ "$#" -eq 4 ] && [ -f "$1" ]; then
+            jq -s '{commit: (if (map(.commit) | unique | length) == 1 then .[0].commit else "several" end),
+                    working_tree: (if all(.[]; .working_tree == "clean") and (map(.commit) | unique | length) == 1
+                                   then "clean" else "dirty" end),
+                    excluded: ["suite.tsv"]}' "$@" > "$RUNNER_TEMP/suite-tree.json"
+            cat "$RUNNER_TEMP/suite-tree.json"
+          else
+            echo "::warning::$# of 4 shards left a tree measurement; the suite's tree is unknown"
+          fi
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-evidence-suite-tree
+          path: ${{ runner.temp }}/suite-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: every case, exactly once
+        run: |
+          cat shards/*/suite.tsv > suite.tsv
+          test/run.sh --verify-report suite.tsv
+      - if: always()
+        run: scripts/ci/summary --job suite --report suite.tsv
+      # What the run cost, against what .ai/repo/ci/suite.yaml says it may cost: the whole
+      # suite's case-seconds and its slowest case, never a shard's share of them.
+      - name: the suite finishes inside its bound
+        if: always()
+        run: scripts/ci/suite-budget --report suite.tsv
       - if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-suite
           path: suite.tsv
           retention-days: 14
+      - name: every shard passed
+        if: always()
+        run: |
+          echo "the shards concluded: ${{ needs.suite-shard.result }}"
+          [ "${{ needs.suite-shard.result }}" = success ]
 
   # ------------------------------------------------------------------ rust
   # The Rust executable through scripts/rust-check: every gate (--ci: format, lints as
@@ -247,9 +362,39 @@ jobs:
   # executable is the artifact majordomus-cli-<target> for a later job or a later phase.
   rust:
     needs: plan
-    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true'
-    timeout-minutes: 30
+    if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true' || needs.plan.outputs.projection_closure == 'true' || needs.plan.outputs.web_topology == 'true' || needs.plan.outputs.command_graph == 'true' || needs.plan.outputs.version_surface == 'true' || needs.plan.outputs.rustdoc == 'true'
+    # The bound. 30 minutes was set on 2026-09-09 from the observed maximum of twenty runs
+    # plus headroom, and the work grew into it: of the 110 rust jobs that reached a verdict
+    # from 2026-09-20 to 09-28 the slowest took 29.9 minutes (feature/mesh-cooperation, runs
+    # 35495674263 and 36075604033), and master's took 17.6 to 25.6. The integration batch
+    # int/batch-b (#651) — 27 capabilities and 398 doctests more (885 to 1283) — was then
+    # killed at the bound on both attempts of run 36508890963, and reported cancelled. Not a
+    # hang: `cargo test` finished both times, in 1666 s and 1668 s against Batch A's 1072 s
+    # (run 36356512201), 29.7 and 30.1 minutes into the job, and `cargo doc` had run 32 s
+    # and 10 s when the job was killed.
+    #
+    # What the batch costs, measured to the end of `cargo test` and estimated after it:
+    # Batch A's later rust-check phases (327 s: cargo doc, bench --no-run, build, the
+    # registry checks, quality report) scaled by the test ratio 1.556 are 509 s; the rust
+    # gates of the plan, which since #634 run the rustdoc gate and rebuild for web-topology,
+    # took 69 s on #634's own run 36241676207 and are 107 s scaled; the steps after them and
+    # the cache save that a partial restore owes (unmeasured) are allowed 65 s. That is
+    # 41.4 minutes, or 38.6 with #634's later phases unscaled. 60 is 1.45 and 1.55 times
+    # those, the ~50% doctrine the suite job's bound follows (.ai/repo/ci/suite.yaml): a
+    # slow runner still reaches a verdict, and a hang still fails inside the hour. Raise it
+    # again from a run that measured the whole job, not from this estimate.
+    timeout-minutes: 60
     runs-on: ubuntu-latest
+    # Three lanes of the crate's tests on three runners (scripts/rust-check, MJ_RUST_TEST_LANE),
+    # dealt by whole test binaries from their measured seconds: 1 is the doctests and preflight,
+    # 2 the lib, the binaries, cli_examples, bench and peer_claims, 3 every other binary and
+    # every other gate — fmt, clippy, docs, the benchmark build, the registry checks, the plan's
+    # rust gates and the executable artifact. One runner spent ~30 of its 40 minutes in
+    # `cargo test`; dealt to three, each lane costs about a third of it.
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [1, 2, 3]
     steps:
       # the whole history: `generate --check` runs here, and the changelog is composed from
       # the release records, the decisions and `git log <previous>..<this>` — history is one
@@ -266,33 +411,74 @@ jobs:
         uses: ./.github/actions/setup-rust
         with:
           components: rustfmt, clippy
+      - name: the crate's tests, lane ${{ matrix.lane }}
+        if: matrix.lane != 3 && needs.plan.outputs.rust_check == 'true'
+        env:
+          MJ_RUST_TEST_LANE: ${{ matrix.lane }}
+          # the lane's results, for the evidence job to record (ADR 68): plain text, which the
+          # recorder reads line by line, and outside the checkout the tree step measures
+          CARGO_TERM_COLOR: never
+          MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test-${{ matrix.lane }}.txt
+        run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check --ci
       - name: rust-check
-        if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+        if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
+          MJ_RUST_TEST_LANE: 3
+          # the crate's results, for the evidence job to record (ADR 68): plain text, which the
+          # recorder reads line by line, and outside the checkout the next step measures
+          CARGO_TERM_COLOR: never
+          MJ_CARGO_TEST_OUTPUT: ${{ runner.temp }}/cargo-test-3.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
-      - uses: actions/download-artifact@v4
+      # The tree the crate ran in, measured here, before the plan below is downloaded into it
+      # (ADR 0087 decision 6). The two outputs the step above names, its timings and its
+      # artifact directory, are excluded by name, and nothing else is. scripts/rust-check runs
+      # in the crate's directory, so both relative names land there, and that is where they
+      # are excluded: excluded at the root, they matched nothing and the tree read dirty.
+      - name: the tree the crate ran in
+        if: always() && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
+        run: |
+          st="$(git --no-optional-locks status --porcelain --untracked-files=all -- . ':(exclude)apps/majordomus-cli/timings.tsv' ':(exclude)apps/majordomus-cli/dist')"
+          if [ -z "$st" ]; then wt=clean; else wt=dirty; printf '%s\n' "$st" | sed -n '1,50p'; fi
+          jq -n --arg commit "$(git rev-parse HEAD)" --arg wt "$wt" '{commit: $commit, working_tree: $wt, excluded: ["apps/majordomus-cli/timings.tsv","apps/majordomus-cli/dist"]}' > "$RUNNER_TEMP/crate-tree.json"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          # one artifact per lane, its output beside the tree it ran in; the evidence job
+          # joins the three outputs and the three measurements
+          name: ci-evidence-crate-${{ matrix.lane }}
+          path: |
+            ${{ runner.temp }}/cargo-test-${{ matrix.lane }}.txt
+            ${{ runner.temp }}/crate-tree.json
+          if-no-files-found: ignore
+          retention-days: 14
+      - if: matrix.lane == 3
+        uses: actions/download-artifact@v4
         with:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
       # the step above built: projection-closure, web-topology, command-graph,
-      # version-surface. rust-check and rust-integration are the step above, with the mode
-      # and the artifact argument the model's line does not carry, so they are the only two
-      # skipped here.
+      # version-surface, and rustdoc, which judges the tree the --ci run of the step above
+      # handed off into target/web/rustdoc (the gate requires rust-check, so the two are
+      # always planned together). rust-check and rust-integration are the step above, with
+      # the mode and the artifact argument the model's line does not carry, so they are the
+      # only two skipped here.
       - name: the rust gates of the plan
+        if: matrix.lane == 3
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
+        if: matrix.lane == 3
         run: |
           echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
-      - if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+      - if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: majordomus-cli-${{ steps.target.outputs.triple }}
           path: dist
           retention-days: 7
-      - if: always()
+      - if: always() && matrix.lane == 3
         run: scripts/ci/summary --job rust --timings timings.tsv --fact "mode=${{ needs.plan.outputs.rust_check == 'true' && 'ci' || 'integration' }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "artifact=majordomus-cli-${{ steps.target.outputs.triple }}"
-      - if: always()
+      - if: always() && matrix.lane == 3
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-rust
@@ -332,6 +518,81 @@ jobs:
           retention-days: 14
       - if: always()
         run: ../../scripts/ci/summary --job coverage --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "crate threshold=$(cat ../../scripts/rust-coverage-threshold)" --fact "session domain threshold=$(cat ../../scripts/session-coverage-threshold)"
+
+  # ------------------------------------------------------------------ evidence
+  # What this run proved, kept where it happened (docs/EVIDENCE.md, ADR 68 as ADR 0087 amends
+  # it). The suite, the crate and the coverage jobs each leave a raw report, and the suite and
+  # the crate a measurement of the tree they ran in. scripts/ci/evidence-collect first derives
+  # the report from the tracked ledger on this checkout, then records the suite's and the
+  # crate's results as `ci` executions stamped with this run (a run record, which decides no
+  # verdict), summarises the coverage, and this job keeps the result as the artifact `evidence`.
+  # The reports and the result live under the runner's temporary directory, never in the
+  # checkout the report is derived in. It is not a gate and the verdict does not need it: it
+  # reads jobs that have already decided, and a red suite is exactly the evidence worth
+  # keeping. It runs whenever the suite or the crate produced anything, whatever they concluded.
+  #
+  # On master, when this commit is still the tip, it then dispatches the pages workflow, so the
+  # site that was published at once with the nearest older evidence (labelled stale) republishes
+  # with the evidence of the commit it shows. pages.yml stays triggered by the push alone.
+  evidence:
+    needs: [plan, suite, rust, coverage]
+    if: always() && (needs.suite.result == 'success' || needs.suite.result == 'failure' || needs.rust.result == 'success' || needs.rust.result == 'failure')
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # `gh workflow run pages.yml`, and nothing else of Actions
+      actions: write
+    env:
+      # the head a pull request was built from, carried beside the merge commit that ran
+      MJ_RUN_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      # the whole history: the report compares each execution's commit with the tree
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable
+        run: |
+          RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
+          echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-suite-tree}'
+          path: ${{ runner.temp }}/reports
+          merge-multiple: true
+      # each lane in a directory of its own: every lane names its measurement crate-tree.json
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ci-evidence-crate-*
+          path: ${{ runner.temp }}/lanes
+      # Each lane of the rust job kept its own cargo test output and the recorder reads one;
+      # every binary's record starts at a `Running` or `Doc-tests` line, so joining is exact.
+      # The crate ran in three trees: clean only when all three were and on one commit, and
+      # unknown (no file) when a lane left no measurement.
+      - name: gather
+        run: |
+          r="$RUNNER_TEMP/reports"; mkdir -p "$r"
+          cat "$RUNNER_TEMP"/lanes/*/cargo-test-*.txt > "$r/cargo-test.txt" 2>/dev/null || : > "$r/cargo-test.txt"
+          set -- "$RUNNER_TEMP"/lanes/*/crate-tree.json
+          if [ "$#" -eq 3 ] && [ -f "$1" ]; then
+            jq -s '{commit: (if (map(.commit) | unique | length) == 1 then .[0].commit else "several" end),
+                    working_tree: (if all(.[]; .working_tree == "clean") and (map(.commit) | unique | length) == 1
+                                   then "clean" else "dirty" end),
+                    excluded: .[0].excluded}' "$@" > "$r/crate-tree.json"
+          fi
+          scripts/ci/evidence-collect --out "$RUNNER_TEMP/evidence" --suite "$r/suite.tsv" --suite-tree "$r/suite-tree.json" --crate-output "$r/cargo-test.txt" --crate-tree "$r/crate-tree.json" --coverage "$r/coverage.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidence
+          path: ${{ runner.temp }}/evidence
+          retention-days: 90
+      - name: refresh the publication
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: scripts/ci/evidence-collect --refresh-publication
 
   # ------------------------------------------------------------------ bench
   # The benchmark check against the committed baseline of its platform (.ai/repo/benchmarks/
@@ -383,6 +644,15 @@ jobs:
         run: scripts/ci/timed --bound 2700 cockpit-assets "cockpit-assets --check" timings.tsv scripts/cockpit-assets --check
       - name: derived site data in sync
         run: scripts/ci/timed --bound 2700 site-build "generate-site-data --check" timings.tsv scripts/generate-site-data --check
+      # The crate's Rust API reference, produced the one way it is produced everywhere
+      # (.github/actions/rustdoc: the rust gate's own rustdoc step and its handoff). The build
+      # below composes it at /rustdoc and refuses without it, and the check after it asserts
+      # it is there and built from this commit (ADR 0086). Its rows go into this job's timings.
+      - name: the crate's Rust API reference
+        id: rust
+        uses: ./.github/actions/rustdoc
+        with:
+          timings: timings.tsv
       - name: build the site
         run: scripts/ci/timed --bound 2700 site-build site-build timings.tsv scripts/site-build --no-data
       # Metadata and landmarks on every route, no unrendered template delimiter, every
@@ -400,7 +670,7 @@ jobs:
       - name: manifest
         run: cat site/data/generated/source.json
       - if: always()
-        run: scripts/ci/summary --job site --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "routes=$(find site/public -name index.html | wc -l | tr -d ' ')"
+        run: scripts/ci/summary --job site --timings timings.tsv --fact "npm cache hit=${{ steps.site.outputs.npm-cache-hit }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "routes=$(find site/public -name index.html | wc -l | tr -d ' ')"
       - if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -424,6 +694,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: site
         uses: ./.github/actions/setup-site
+      # the build refuses without the crate's reference, which it composes at /rustdoc
+      - name: the crate's Rust API reference
+        uses: ./.github/actions/rustdoc
+        with:
+          timings: timings.tsv
       - name: build the site
         run: scripts/ci/timed --bound 2400 interaction-probe site-build timings.tsv scripts/site-build --no-data
       - name: exercise every control
@@ -454,10 +729,17 @@ jobs:
       - uses: actions/checkout@v4
       - id: site
         uses: ./.github/actions/setup-site
-      - name: build the site
-        run: scripts/ci/timed --bound 2400 ui-audit site-build timings.tsv scripts/site-build --no-data
+      # before the build, which composes the crate's reference at /rustdoc and refuses without
+      # it; one toolchain and one cache for the reference and the executable below
       - id: rust
         uses: ./.github/actions/setup-rust
+      - name: the crate's Rust API reference
+        uses: ./.github/actions/rustdoc
+        with:
+          setup: "false"
+          timings: timings.tsv
+      - name: build the site
+        run: scripts/ci/timed --bound 2400 ui-audit site-build timings.tsv scripts/site-build --no-data
       - name: the executable the audit drives
         run: |
           RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml
@@ -515,6 +797,49 @@ jobs:
           path: timings.tsv
           retention-days: 14
 
+  # ------------------------------------------------------------------ mesh-lab
+  # Mesh cooperation over a real network (test/mesh-lab/run, claim mesh-network-acceptance):
+  # four Linux containers on one docker bridge, multicast discovery with no seeds, links, a
+  # claim and a handover across nodes, a node disconnected from the network and healed, a
+  # node killed and restarted, and `mesh verify` inside a node. The executable is built here
+  # and copied into the node image, so the lab tests exactly what the crate builds; the
+  # evidence file is kept as an artifact.
+  mesh-lab:
+    needs: plan
+    if: needs.plan.outputs.mesh_lab == 'true'
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: rust
+        uses: ./.github/actions/setup-rust
+      - name: the executable the nodes run
+        run: RUSTFLAGS='' cargo build --quiet --locked --manifest-path apps/majordomus-cli/Cargo.toml --bin majordomus
+      - name: the lab
+        run: MESH_LAB_BIN="$PWD/apps/majordomus-cli/target/debug/majordomus" scripts/ci/timed --bound 1500 mesh-lab mesh-lab timings.tsv test/mesh-lab/run
+      # The lab does not judge itself: this reads the record it wrote and refuses anything
+      # short of a complete acceptance — a dropped scenario, a pass that measured nothing,
+      # an executable no node could name. `always()` so that a failing lab's record is read
+      # too, and the step names which half is wrong.
+      - name: the record the lab wrote
+        if: always()
+        run: scripts/ci/mesh-lab-evidence
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mesh-lab-evidence
+          path: target/mesh-lab/evidence.json
+          if-no-files-found: warn
+          retention-days: 30
+      - if: always()
+        run: scripts/ci/summary --job mesh-lab --timings timings.tsv --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}"
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-metrics-mesh-lab
+          path: timings.tsv
+          retention-days: 14
+
   # ------------------------------------------------------------------ macos
   # The behaviour that depends on the platform: the suite under the stock macOS shell
   # (bash 3.2) and BSD userland, and the crate's own suites there (files, signals, the
@@ -533,6 +858,11 @@ jobs:
         uses: ./.github/actions/setup-site
       - id: rust
         uses: ./.github/actions/setup-rust
+      # the cases that build the site need the crate's reference it composes (ADR 0086)
+      - name: the crate's Rust API reference
+        uses: ./.github/actions/rustdoc
+        with:
+          setup: "false"
       - name: shell syntax under bash 3.2
         run: for f in bin/majordomus lib/*.sh test/run.sh test/lib.sh test/cases/*.sh; do /bin/bash -n "$f"; done
       - name: the executable, built once for every case
@@ -621,7 +951,7 @@ jobs:
   # setting and is not made here; until it is required, this is a verdict a person can read
   # and not one the merge obeys.
   ci:
-    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, ui, cockpit, macos, install, pages]
+    needs: [plan, structure, suite, rust, coverage, bench, site, interactions, ui, cockpit, mesh-lab, macos, install, pages]
     if: always()
     timeout-minutes: 15
     runs-on: ubuntu-latest

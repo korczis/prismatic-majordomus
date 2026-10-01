@@ -84,8 +84,15 @@ printf '%s\n' "$rust_job" | grep -qE 'scripts/rust-check "\$MODE" --artifact dis
   || { echo "    the rust job does not ask scripts/rust-check for the artifact in dist"; exit 1; }
 printf '%s\n' "$rust_job" | grep -qF 'name: majordomus-cli-${{ steps.target.outputs.triple }}' \
   || { echo "    the rust job does not upload the artifact under majordomus-cli-<target>"; exit 1; }
-printf '%s\n' "$rust_job" | awk '/upload-artifact/{f=1} f&&/path:/{print; exit}' | grep -qE 'path: dist$' \
-  || { echo "    the rust job's first upload is not the dist directory rust-check wrote"; exit 1; }
+# The upload that carries the executable is the one named for the triple, whichever upload of
+# the job it happens to be. The job publishes more than one artifact — the crate's test output
+# the evidence recorder reads, and the timings — and which goes first is an ordering, not the
+# property. What is asserted is the pairing: the artifact named majordomus-cli-<target> is the
+# dist directory rust-check wrote.
+printf '%s\n' "$rust_job" \
+  | awk '/name: majordomus-cli-\$\{\{ steps\.target\.outputs\.triple \}\}/{f=1; next} f&&/path:/{print; exit}' \
+  | grep -qE 'path: dist$' \
+  || { echo "    the artifact named majordomus-cli-<target> is not the dist directory rust-check wrote"; exit 1; }
 printf '%s\n' "$rust_job" | grep -qF "triple=\$(rustc -vV | sed -n 's/^host: //p')" \
   || { echo "    the artifact's name is not the triple the manifest records"; exit 1; }
 # the suite jobs build once and hand the executable to every case

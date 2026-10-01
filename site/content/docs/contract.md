@@ -10,11 +10,11 @@ source = "AGENTS.md"
 
 This file is a bootstrap, not the rulebook. Read `README.md` for what this
 repository is. The provider-neutral AI context and governance layer lives under
-[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/master/.ai), and everything normative is there.
+[`.ai/`](https://github.com/korczis/prismatic-majordomus/tree/@source-ref@/.ai), and everything normative is there.
 
 Before substantive planning, implementation, review or repository mutation:
 
-1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/README.md) and follow its discovery protocol,
+1. read [`.ai/README.md`](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/README.md) and follow its discovery protocol,
 2. load the effective rules under `.ai/repo/rules/` and resolve their dependencies,
 3. load only the skills, workflows and knowledge the task is about,
 4. never load `.ai/local/` implicitly; it is this checkout's own state and not context.
@@ -44,6 +44,16 @@ table: change the canonical `capability!` or module declaration under
 `apps/majordomus-cli/src/capability/builtin/` and run `majordomus generate`; a repeated
 semantic definition across projections is a design defect (`docs/CAPABILITIES.md`, ADR 0004).
 
+New repository automation is a typed or scripted capability (ADR 0069), not shell;
+`majordomus shell check` refuses a shell unit `.ai/repo/automation/` does not exempt.
+
+Material engineering uncertainty is reasoned about through `majordomus reasoning` (ADR
+0098, `docs/REASONING.md`): record the assessment with its evidence, let
+`scripts/advisor-consult` ask whichever optional advisors the plan selects, settle a
+disagreement with an experiment rather than a count, record the conclusion, and continue.
+No advisor is needed; an absent one is reported state, never a reason to stop or to ask a
+person what to do.
+
 A capability you add or change has use cases: run `majordomus usecase impact` and the
 scenarios it names, and close a coverage gap (`majordomus usecase coverage`) with a use
 case that executes (`.ai/repo/workflows/use-cases.md`); `finish` refuses a required gap.
@@ -64,6 +74,16 @@ the board before you open a mandate and before you fan work out: two workers bui
 subsystem in one afternoon because neither looked first. A scope announced there is a claim,
 not a lock, and `check --overlap` only reports; what refuses a change is the task's own scope,
 at `check`, at `finish` and in the pre-push hook.
+
+Sessions on other machines are reachable too when the repository enables the mesh (ADR
+0067): linked runtimes replicate sessions, claims, handovers and reviews, and your board
+announcements travel as advisory claims without you doing anything. When work must not
+overlap across machines, claim it exclusively with `majordomus_mesh_claim` — a refusal
+names the claim it meets — see who works where with `majordomus_mesh_peers`, hand work to
+another machine with `majordomus_mesh_handover_publish` and take it with
+`majordomus_mesh_handover_consume`, and ask for a review with `majordomus_mesh_review_request`.
+Do not invent another coordination channel between sessions; the rule is
+`project.mesh-cooperation-is-authenticated` and the manual is `docs/MESH.md`.
 
 Push what you have, early. A branch whose commits reach no remote is invisible to every
 other worker, cannot be integrated by anyone but you, and is one disk away from being lost;

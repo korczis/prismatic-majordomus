@@ -191,7 +191,7 @@ expect_grep 'FAIL obligation +deploy'
 # ---------------------------------------------------------------- no model, no verdict
 git rm -q .ai/repo/ci/gates.yaml && git commit -qm 'no model'
 expect_exit 0 "$MJ" check
-expect_grep 'no readable CI model'
+expect_grep 'declares no CI model'
 
 # ---------------------------------------------------------------- one declaration, two readers
 # The executable's plan and scripts/ci-plan read the same file and must select the same set.

@@ -1,0 +1,14 @@
+schema: economics-task/v1
+id: test-repair
+title: "Repair a suite broken by a rename, following the rename convention"
+category: test-repair
+complexity: small
+source: "A red suite after a refactoring, where the convention decides which fix is correct."
+fixture: test/fixtures/economics/ledgerlite
+setup: test/fixtures/economics/setup/test-repair.patch
+acceptance: test/fixtures/economics/acceptance/test-repair
+reference: test/fixtures/economics/reference/test-repair.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md

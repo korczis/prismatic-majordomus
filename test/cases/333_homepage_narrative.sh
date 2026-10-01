@@ -27,10 +27,18 @@ fresh() {
   printf '<html><head><title>p</title></head><body>plain</body></html>\n' > "$F/site/public/docs/plain/index.html"
   printf '<html><head><title>d</title><script src="https://x.test/js/mermaid.min.js"></script></head><body><pre class="mermaid">graph TD</pre></body></html>\n' > "$F/site/public/docs/diagram/index.html"
   printf '[[groups]]\nlabel = "Plan"\nhref = "/plan/"\n\n[indexing]\nunlisted = ["plan"]\n' > "$F/site/data/nav.toml"
-  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}]}' > "$F/site/data/registry/product.json"
+  printf '%s\n' '{"features":[{"id":"good","route":"/features/good/","status":"stable"},{"id":"draft","route":"/features/draft/","status":"draft"}],"providers":[{"id":"one","title":"Tool One"},{"id":"two","title":"Tool Two","route":"/providers/two/"}],"evidence":{"available":false,"claims":{}}}' > "$F/site/data/registry/product.json"
   printf '%s\n' '{"install_command":"curl -fsSL https://x.test/install.sh | sh","next_command":"majordomus init","verify_command":"majordomus --version","latest":{"version":"9.9.9","published_at":"2026-09-16T00:00:00Z"}}' > "$F/site/data/registry/distribution.json"
-  mkdir -p "$F/site/data/generated"
+  mkdir -p "$F/site/data/generated" "$F/docs/generated" "$F/site/public/ref/api"
+  # the topology: the app, and one surface site-build composes at /ref, whose pages are that
+  # surface's own and follow neither the story nor the indexing policy (ADR 0086)
+  printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"},{"id":"ref","kind":"static-directory","mount":"/ref","artifact":"target/web/ref","availability":"both"}]}' > "$F/docs/generated/web.json"
+  printf '<html><head><title>r</title><script src="https://x.test/js/mermaid.min.js"></script></head><body>r</body></html>\n' > "$F/site/public/ref/index.html"
+  printf '<html><head><title>a</title></head><body>a</body></html>\n' > "$F/site/public/ref/api/index.html"
   printf '%s\n' '{"use_cases":[{"id":"a"},{"id":"b"},{"id":"c"}],"categories":[{"id":"x"},{"id":"y"}]}' > "$F/site/data/generated/catalogue.json"
+  # the claims matrix, the design tones and no recorded evidence: the proof band says unknown
+  printf '%s\n' '{"status_order":["guaranteed"],"claims":[]}' > "$F/site/data/generated/capabilities.json"
+  printf '%s\n' '{"states":{"guaranteed":"neutral","unknown":"neutral"}}' > "$F/site/data/registry/design.json"
   printf '%s\n' '{"commit":"abcdef1234567890","dirty":false}' > "$F/site/data/build.json"
   cat > "$F/site/public/index.html" <<'HTML'
 <html><head><title>home</title><script defer src="https://x.test/js/app.js"></script></head><body><main>
@@ -42,6 +50,7 @@ fresh() {
 <div data-trust-key="commit"><dt>commit</dt><dd>abcdef1</dd></div>
 <div data-trust-key="use-cases"><dt>use cases</dt><dd>3</dd><dd>2 areas</dd></div>
 </dl>
+<dl data-claims-proof><div><dt>guaranteed claims, declared</dt><dd data-declared="guaranteed">0</dd><dd data-supported="unknown">unknown</dd></div></dl>
 <div data-surfaces x-data="{}"><select data-surface-picker><option value="one.show" selected>one.show</option></select>
 <dl><div><dd><a data-surface-id="one.show" href="/r/">one.show</a></dd></div><div><dd data-surface="cli">majordomus one show</dd></div><div><dd><a data-surface="http" href="/docs/api/">GET /api/v1/one</a></dd></div><div><dd data-surface="mcp">majordomus_one</dd></div></dl></div></section>
 <section id="how"><dl><dt>x</dt><dd>7</dd></dl></section>
@@ -71,7 +80,7 @@ expect_finding() { # <exit> <pattern> <what>
 # --- a clean tree passes, every check reporting
 fresh
 expect_finding 0 '^OK   narrative ' "a clean tree"
-for c in substance honesty install runtime providers trust surfaces weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
+for c in substance honesty install runtime providers trust surfaces evidence declared weight indexing; do grep -q "^OK   $c " out.txt || { echo "    a clean tree did not report $c"; cat out.txt; exit 1; }; done
 
 # --- narrative, both directions and the order
 fresh; sed -i.bak 's#<section id="how">#<section id="extra"><a href="/x/">x</a></section><section id="how">#' "$F/site/public/index.html"
@@ -133,4 +142,18 @@ fresh; sed -i.bak 's#</urlset>#<url><loc>https://x.test/plan/i0001/</loc></url><
 expect_finding 10 '/plan/i0001/ is below an unlisted section and is in sitemap.xml' "an unlisted page in the sitemap"
 fresh; sed -i.bak 's#<url><loc>https://x.test/features/good/</loc></url>##' "$F/site/public/sitemap.xml"
 expect_finding 10 '/features/good/ is indexable and absent from sitemap.xml' "an indexable page missing from the sitemap"
+
+# --- the composed surface's pages are not the site's: the clean tree above carried /ref/ and
+#     /ref/api/, out of the sitemap, without noindex, one loading the Mermaid runtime with
+#     nothing to draw, and passed. The exemption is the topology's and nothing else's: the
+#     same tree with /ref no longer declared is judged like any other page, and a tree whose
+#     topology cannot be read is not judged at all rather than judged without it
+fresh; printf '%s\n' '{"surfaces":[{"id":"app","kind":"static-directory","mount":"/","artifact":"site/public","availability":"published-only"}]}' > "$F/docs/generated/web.json"
+expect_finding 10 '/ref/api/ is indexable and absent from sitemap.xml' "a page under a mount the topology does not compose"
+grep -q 'load the Mermaid runtime with no diagram to render: .*/ref/' out.txt \
+  || { echo "    a page under an undeclared mount escaped the runtime check"; cat out.txt; exit 1; }
+fresh; printf '%s\n' '{"surfaces":[{"id":"ref","kind":"static-directory","mount":"/ref","artifact":"target/web/ref","availability":"served-only"}]}' > "$F/docs/generated/web.json"
+expect_finding 10 '/ref/ is indexable and absent from sitemap.xml' "a served-only surface is not composed into the publication"
+fresh; rm "$F/docs/generated/web.json"
+expect_finding 12 'web.json is missing' "a topology that cannot be read"
 exit 0

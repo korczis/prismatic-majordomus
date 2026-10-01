@@ -10,9 +10,31 @@ import assert from 'node:assert/strict';
 import { breakpointsFromCss, commonPrefix, criticalWidths, discoverPages, tierPages, viewports, REFLOW_FLOOR } from './ui-discover.mjs';
 import { escapes, nameTaskCheckboxes, normalise, normaliseRendered, plainClasses, scan, scrollingTags, textOf } from './ui-static.mjs';
 import { contrast, enforce, measure, raise, MINIMUM } from './ui-contrast.mjs';
+import { sample, siblingFamilies } from './ui-routes.mjs';
 
 const tests = [];
 const test = (name, fn) => tests.push([name, fn]);
+
+// ------------------------------------------------------------------ route sampling
+test('dozens of sibling families that differ in one segment are one renderer, sampled once', () => {
+  const families = {};
+  for (let k = 0; k < 29; k++) families[`/cockpit/objects/k${String(k).padStart(2, '0')}/*`] = [`/cockpit/objects/k${String(k).padStart(2, '0')}/a`, `/cockpit/objects/k${String(k).padStart(2, '0')}/b`];
+  families['/cockpit/graphs/*'] = ['/cockpit/graphs/1', '/cockpit/graphs/2'];
+  families['/cockpit/commands/*'] = ['/cockpit/commands/a'];
+  const groups = siblingFamilies(families, 4);
+  assert.equal(groups.filter((g) => g.length > 1).length, 1, 'the 29 kinds form one group');
+  assert.equal(groups.filter((g) => g.length === 1).length, 2, 'a handful of hand-written siblings stay apart');
+  const visited = sample({ document: true, entry: '/cockpit', navigation: [], families }, 4);
+  const objects = visited.filter((r) => r.startsWith('/cockpit/objects/'));
+  assert.equal(objects.length, 8, 'twice the sample, spread over the kinds');
+  assert.ok(objects.includes('/cockpit/objects/k00/a') && objects.includes('/cockpit/objects/k28/a'), 'first and last kind');
+  assert.ok(visited.includes('/cockpit/graphs/1') && visited.includes('/cockpit/commands/a'));
+});
+
+test('a few sibling families are each sampled in full, as before', () => {
+  const families = { '/cockpit/a/*': ['/cockpit/a/1'], '/cockpit/b/*': ['/cockpit/b/1'], '/cockpit/c/*': ['/cockpit/c/1'] };
+  assert.equal(siblingFamilies(families, 4).every((g) => g.length === 1), true);
+});
 
 // ------------------------------------------------------------------ the static scanner
 test('a scrolling box a keyboard cannot reach is a failure, and one it can is not', () => {
@@ -198,6 +220,18 @@ test('an orphan the sitemap does not name is still audited', () => {
   const orphan = discoverPages(root).find((p) => p.route === '/orphan/');
   assert.ok(orphan, 'the orphan is audited');
   assert.equal(orphan.published, false);
+  rmSync(root, { recursive: true, force: true });
+});
+
+test('a surface composed into a build at its mount is not the build\'s page, and only that mount', () => {
+  const { root, write } = fixture();
+  write('index.html', '<h1>home</h1>');
+  write('ref/index.html', '<h1>another producer</h1>');
+  write('ref/api/index.html', '<h1>another producer</h1>');
+  write('reference/index.html', '<h1>a page of the site whose name begins like the mount</h1>');
+  // the mounts come from the topology (mj_web_composed); without them every page is the build's
+  assert.deepEqual(discoverPages(root).map((p) => p.route), ['/', '/ref/', '/ref/api/', '/reference/']);
+  assert.deepEqual(discoverPages(root, ['/ref']).map((p) => p.route), ['/', '/reference/']);
   rmSync(root, { recursive: true, force: true });
 });
 

@@ -153,6 +153,14 @@ sources:
     pathspec: ':(glob).ai/repo/deployments/*.yaml'
     required: false
 
+  # The mesh declaration (ADR 0050, ADR 0067): without this class a repository's committed
+  # `.ai/repo/mesh/*.yaml` is never read, and the mesh stays off however it is declared.
+  - id: mesh-declaration
+    kind: mesh-declaration
+    discovery: vcs
+    pathspec: ':(glob).ai/repo/mesh/*.yaml'
+    required: false
+
   - id: document
     kind: document
     discovery: vcs

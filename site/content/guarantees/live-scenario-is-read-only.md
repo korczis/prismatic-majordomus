@@ -1,7 +1,7 @@
 +++
 title = "A live scenario may only run commands share/commands.yaml declares read-only, names no setup, and asserts an obligation only where something owes one; every other shape is refused by usecase validate with exit 10"
 description = "A use case's scenario declares where it runs. mode: fixture, the default, prepares a"
-weight = 141
+weight = 144
 [extra]
 claim_id = "live-scenario-is-read-only"
 status = "guaranteed"

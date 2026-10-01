@@ -52,7 +52,7 @@
 //!
 //! let outcome = record(
 //!     root.path(),
-//!     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Ci },
+//!     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Ci, run: None },
 //! )
 //! .unwrap();
 //! assert_eq!(outcome.recorded, 1);
@@ -96,7 +96,7 @@ use crate::error::{Error, Result};
 /// ```
 /// use majordomus_cli::evidence::{record, Origin, RecordRequest};
 ///
-/// let nothing = RecordRequest { suite: None, crate_output: None, origin: Origin::Local };
+/// let nothing = RecordRequest { suite: None, crate_output: None, origin: Origin::Local, run: None };
 /// let root = tempfile::tempdir().unwrap();
 /// let refused = record(root.path(), &nothing).unwrap_err().to_string();
 /// assert!(refused.contains("nothing to record"), "{refused}");
@@ -105,6 +105,7 @@ use crate::error::{Error, Result};
 ///     suite: Some("tmp/run.tsv".into()),
 ///     crate_output: None,
 ///     origin: Origin::Ci,
+///     run: None,
 /// };
 /// assert_eq!(suite_run.origin, Origin::Ci);
 /// assert_eq!(suite_run.suite.as_deref(), Some(std::path::Path::new("tmp/run.tsv")));
@@ -114,7 +115,7 @@ use crate::error::{Error, Result};
 ///
 /// ```
 /// use majordomus_cli::evidence::{Origin, RecordRequest};
-/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci };
+/// let r = RecordRequest { suite: None, crate_output: None, origin: Origin::Ci, run: None };
 /// assert_eq!(r.origin, Origin::Ci);
 /// ```
 pub struct RecordRequest {
@@ -124,6 +125,8 @@ pub struct RecordRequest {
     pub crate_output: Option<std::path::PathBuf>,
     /// Where the run happened.
     pub origin: Origin,
+    /// The continuous-integration run to stamp every execution with, when there is one.
+    pub run: Option<super::RunRef>,
 }
 
 /// What a recording did: how much of the run reached the ledger, how much of it passed,
@@ -157,7 +160,7 @@ pub struct RecordRequest {
 ///
 /// let outcome: RecordOutcome = record(
 ///     root.path(),
-///     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Local },
+///     &RecordRequest { suite: Some(tsv), crate_output: None, origin: Origin::Local, run: None },
 /// )
 /// .unwrap();
 /// assert_eq!(outcome.recorded, 1, "only the case this repository actually has");
@@ -188,7 +191,8 @@ pub struct RecordOutcome {
     pub passed: usize,
     /// The commit they were recorded against.
     pub commit: String,
-    /// The tree's state at the time: `clean`, `dirty` or `unknown`.
+    /// The tree's state at the time: `clean`, `dirty` or `unknown`. The ledger's own
+    /// pending change is not what makes it dirty — see [`record`].
     pub working_tree: String,
     /// Reports the run named that no runner in this repository owns; recorded for nobody
     /// and named here rather than dropped.
@@ -245,6 +249,15 @@ fn now_rfc3339() -> String {
 /// use majordomus_cli::evidence::parse_crate_binaries;
 /// assert!(parse_crate_binaries("nothing to see here").is_empty());
 /// ```
+/// The outputs of several lanes are joined end to end, so a binary whose run was cut short
+/// must not take the next result line, a doctest run's least of all:
+/// ```
+/// use majordomus_cli::evidence::parse_crate_binaries;
+/// let joined = "     Running tests/cut.rs (target/debug/deps/cut-1a2b)\n\
+///                  Doc-tests majordomus_cli\n\
+///               test result: ok. 900 passed; 0 failed; finished in 600.00s\n";
+/// assert!(parse_crate_binaries(joined).is_empty());
+/// ```
 pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
     let mut out = Vec::new();
     let mut pending: Option<String> = None;
@@ -258,6 +271,11 @@ pub fn parse_crate_binaries(text: &str) -> Vec<(String, Outcome, u64)> {
                 .strip_prefix("tests/")
                 .and_then(|p| p.strip_suffix(".rs"))
                 .map(str::to_string);
+            continue;
+        }
+        // a doctest run is not a test binary: its result belongs to nothing this records
+        if t.starts_with("Doc-tests ") {
+            pending = None;
             continue;
         }
         if let Some(rest) = t.strip_prefix("test result: ") {
@@ -341,7 +359,7 @@ fn parse_suite(text: &str) -> Result<Vec<(String, Outcome, u64)>> {
 /// let suite = |name: &str, rows: &str| {
 ///     let p = reports.path().join(name);
 ///     std::fs::write(&p, rows).unwrap();
-///     RecordRequest { suite: Some(p), crate_output: None, origin: Origin::Local }
+///     RecordRequest { suite: Some(p), crate_output: None, origin: Origin::Local, run: None }
 /// };
 ///
 /// let both = suite("all.tsv", "07_scope\tok\t1\tparallel\n08_other\tok\t2\tparallel\n");
@@ -373,10 +391,15 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
     }
 
     let git = crate::git::inspect(root);
+    // The ledger is evidence *about* the tree, not part of what any test measures, so an
+    // earlier recording's own row is not what makes this tree dirty. Without the exclusion
+    // the second recording in a session would be stamped `dirty` by the first one's
+    // bookkeeping, and — since a dirty run can never derive `proven` — a repository that
+    // records twice could never prove anything again.
     let (commit, working_tree) = match &git {
         crate::git::GitState::Available(i) => (
             i.head.clone().unwrap_or_else(|| "unknown".into()),
-            i.working_tree.clone(),
+            crate::git::working_tree_ignoring(root, &[super::LEDGER_PATH]),
         ),
         crate::git::GitState::Unavailable { .. } => ("unknown".into(), "unknown".into()),
     };
@@ -446,6 +469,7 @@ pub fn record(root: &Path, req: &RecordRequest) -> Result<RecordOutcome> {
             at: at.clone(),
             origin: req.origin,
             command: id.reproduce(),
+            run: req.run.clone(),
         });
     }
 
@@ -518,6 +542,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Ci,
+                run: None,
             },
         )
         .unwrap();
@@ -547,6 +572,52 @@ mod tests {
         );
     }
 
+    /// The tree a run is stamped with is the tree it measured, and the ledger is not part
+    /// of that: a recording made when the only pending change is the previous recording's
+    /// own row is `clean`. Any other pending change is `dirty`, because the commit the run
+    /// is joined to is then not what ran.
+    #[test]
+    fn the_ledgers_own_row_does_not_make_the_tree_dirty() {
+        let d = repo();
+        let reports = tempfile::tempdir().unwrap();
+        let tsv = reports.path().join("run.tsv");
+        std::fs::write(&tsv, "07_scope\tok\t1\tparallel\n").unwrap();
+        let req = || RecordRequest {
+            suite: Some(tsv.clone()),
+            crate_output: None,
+            origin: Origin::Local,
+            run: None,
+        };
+
+        // the first recording writes the ledger; the second one sees it pending
+        assert_eq!(record(d.path(), &req()).unwrap().working_tree, "clean");
+        let second = record(d.path(), &req()).unwrap();
+        assert_eq!(
+            second.working_tree, "clean",
+            "the previous recording's own row made the next run read as measured on a dirty tree"
+        );
+        assert_eq!(
+            Ledger::load(d.path())
+                .unwrap()
+                .latest("suite:07_scope")
+                .unwrap()
+                .working_tree,
+            "clean"
+        );
+
+        // anything else pending is dirty, and the recorded row says so
+        std::fs::write(d.path().join("test/cases/08_other.sh"), "echo edited\n").unwrap();
+        assert_eq!(record(d.path(), &req()).unwrap().working_tree, "dirty");
+        assert_eq!(
+            Ledger::load(d.path())
+                .unwrap()
+                .latest("suite:07_scope")
+                .unwrap()
+                .working_tree,
+            "dirty"
+        );
+    }
+
     /// A report naming a case this repository does not have is named, not recorded. An
     /// execution of a test that does not exist would be evidence for nothing, and silently
     /// dropping it would hide a runner and a matrix that have diverged.
@@ -565,6 +636,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -593,6 +665,7 @@ mod tests {
                 suite: Some(all),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -605,6 +678,7 @@ mod tests {
                 suite: Some(one),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -633,6 +707,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap_err()
@@ -664,6 +739,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap();
@@ -683,7 +759,8 @@ mod tests {
             &RecordRequest {
                 suite: None,
                 crate_output: None,
-                origin: Origin::Local
+                origin: Origin::Local,
+                run: None,
             }
         )
         .is_err());
@@ -705,6 +782,7 @@ mod tests {
                 suite: Some(tsv),
                 crate_output: None,
                 origin: Origin::Local,
+                run: None,
             },
         )
         .unwrap_err()

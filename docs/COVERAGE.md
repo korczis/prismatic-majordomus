@@ -72,6 +72,16 @@ Unknown is not pass. Blocked is not pass. A crashed measurement is never green â
 that turns "the coverage tool failed" into a pass is the failure mode the whole exercise
 exists to refuse.
 
+A test that fails under instrumentation is BLOCKED too: cargo-llvm-cov writes no export for
+a suite that failed. The gate then prints what the test harness reported, the `failures:`
+section of every failing binary with each failing test's name and panic, so the job log names
+the test rather than only its binary. A binary killed by a signal writes no such section and
+no `test result:` line, so its unfinished `running N tests` block is printed too: its header,
+how many tests completed and its last lines. It cannot name the test that was running, because
+the parallel harness writes a test's line only when that test completes; cargo's stderr names
+the binary and the signal. A green run prints none of the harness's output.
+`test/cases/536_the_coverage_gate_names_the_failing_test.sh` holds that behaviour.
+
 ## Running it
 
 ```
@@ -91,6 +101,23 @@ local `check` and the pre-commit path reach the same judgment. The behavioural p
 synthetic diffs and asserts that a deliberately uncovered changed line fails, the same line
 covered passes, a documentation-only change is held to nothing, and an unresolvable base is
 UNKNOWN rather than a silent pass.
+
+## The record the preflight reads
+
+A whole-crate measurement that `scripts/rust-coverage` runs itself (the gate, or `--report`)
+leaves a record at `.ai/local/state/coverage/rust.json`: the crate and domain totals, the
+outcome (`pass`, `fail` or `report`), cargo's exit status for the instrumented suite, and the
+commit and tree it measured. The tree is read before the suite runs and again after it, and
+the record says `clean` only when both readings are clean and name the same HEAD.
+`--from`, `--changed` and `--domain` record nothing: the first measures a tree the script never
+saw, the other two measure part of the crate.
+
+The preflight's `verification.coverage` check (`docs/PREFLIGHT.md`) judges coverage by that
+record alone. A record of another commit or of a tree that moved is `stale`, and a failing suite
+is `failed` even where the thresholds hold. With no record, the check is `unavailable`. The
+record is local state, so the answer covers only this checkout. A CI measurement never reaches
+it. `test/cases/552_coverage_is_recorded_for_the_preflight.sh` runs the real script against a
+stand-in `cargo` and has the real executable judge each record it writes.
 
 ## What this is not, yet
 

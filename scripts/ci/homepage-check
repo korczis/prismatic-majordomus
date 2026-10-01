@@ -4,6 +4,7 @@
 #
 #   scripts/ci/homepage-check          over site/public, as scripts/site-build left it
 #   MJ_ROOT=<dir> scripts/ci/homepage-check   over another tree (test/cases/333 builds one)
+#   scripts/ci/homepage-check --only evidence,declared   report and count those checks alone
 #
 # Rule: project.homepage-tells-a-declared-story. What is held, each in both directions:
 #
@@ -29,6 +30,13 @@
 #               line, HTTP and MCP, each surface printed is its exposure, the picker offers exactly
 #               the registry's capabilities, and the published graphs/surfaces.json matches the
 #               registry — one declaration shown reaching every surface, with nothing typed
+#   evidence    no declared claim status is filed under the success tone, and a badge on any page
+#               is coloured as a success only when it names a claim (data-claim) whose verdict in
+#               data/registry/product.json `evidence` is supported; a verdict badge names a claim
+#               that has one, and some page renders them at all
+#   declared    the homepage proof band gives the declared guaranteed figure of the matrix and,
+#               apart from it, the figure a recorded run supports, or `unknown` when the evidence
+#               is not available; and it never says a test proves it while fewer are supported
 #   weight      the scripts and stylesheets the homepage loads from this site, plus any graph data
 #               it carries inline, weigh no more than site/data/homepage.toml's [budget] declares
 #   indexing    a page below a section nav.toml lists under [indexing] unlisted carries
@@ -40,8 +48,22 @@
 # 12 when site/public or a declaration it reads is missing.
 set -eu
 ROOT="${MJ_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+MJ_HOMEPAGE_ONLY=""
+if [ "${1:-}" = --only ]; then
+  [ $# -ge 2 ] || { echo "homepage-check: --only needs a comma-separated list of checks" >&2; exit 2; }
+  MJ_HOMEPAGE_ONLY="$2"
+fi
+export MJ_HOMEPAGE_ONLY
 command -v python3 >/dev/null 2>&1 || { echo "homepage-check: python3 is not installed" >&2; exit 12; }
 [ -f "$ROOT/site/public/index.html" ] || { echo "homepage-check: $ROOT/site/public/index.html missing; run scripts/site-build" >&2; exit 12; }
+# The pages walked below are the site's own: a surface scripts/site-build composes into the
+# build at its mount (ADR 0086) is another producer's pages, which neither tell this story nor
+# follow this indexing policy. Its mounts come from the tree's own topology, through the one
+# helper every site check asks, so nothing here names one.
+# shellcheck source=../../lib/common.sh
+. "$(cd "$(dirname "$0")/../.." && pwd)/lib/common.sh"
+MJ_COMPOSED_MOUNTS="$(mj_web_composed "$ROOT" mounts)" || exit 12
+export MJ_COMPOSED_MOUNTS
 exec python3 - "$ROOT" <<'PY'
 import html, json, os, re, sys, tomllib
 
@@ -49,11 +71,28 @@ root = sys.argv[1]
 pub = os.path.join(root, "site", "public")
 fails = 0
 
+# the composed mounts, as paths relative to the build ("/rustdoc" -> "rustdoc")
+composed = {m.strip("/") for m in os.environ.get("MJ_COMPOSED_MOUNTS", "").split() if m.strip("/")}
+
+def site_walk():
+    """os.walk over the build, never descending into a composed surface's mount."""
+    for dirpath, dirs, files in os.walk(pub):
+        rel = os.path.relpath(dirpath, pub).replace(os.sep, "/")
+        dirs[:] = [d for d in dirs if (d if rel == "." else rel + "/" + d) not in composed]
+        yield dirpath, dirs, files
+
+# --only: the checks reported and counted; every other one still runs, and says nothing
+only = {c for c in os.environ.get("MJ_HOMEPAGE_ONLY", "").split(",") if c}
+
 def ok(name, msg):
+    if only and name not in only:
+        return
     print(f"OK   {name:<12} {msg}")
 
 def bad(name, msg):
     global fails
+    if only and name not in only:
+        return
     fails += 1
     print(f"FAIL {name:<12} {msg}")
 
@@ -138,7 +177,7 @@ else:
 mermaid_src = re.compile(r'<script\b[^>]*\bsrc="[^"]*mermaid(\.min)?\.js"')
 mermaid_block = re.compile(r'class="[^"]*\bmermaid\b')
 idle = []
-for dirpath, _, files in os.walk(pub):
+for dirpath, _, files in site_walk():
     if "index.html" not in files:
         continue
     text = open(os.path.join(dirpath, "index.html"), errors="replace").read()
@@ -285,6 +324,93 @@ else:
     if not problems:
         ok("surfaces", f"the homepage shows {default} on every surface the registry gives it, the picker offers all {len(builtin)} capabilities, and the published slice matches the registry")
 
+# ---------------------------------------------------------------- evidence and declared
+# A claim's status is what docs/CLAIMS.yaml declares; whether a recorded run supports it is the
+# verdict `majordomus evidence show` derives, carried by product.json `evidence`. Unknown is not
+# healthy and declared is not proven, so the success colour belongs to a supported verdict alone.
+# The tone of a word is the design declaration's (data/registry/design.json `states`), never
+# restated here.
+tones = (load_json("site/data/registry/design.json").get("states") or {})
+caps = load_json("site/data/generated/capabilities.json")
+statuses = list(caps.get("status_order") or [])
+ev = product.get("evidence")
+if not isinstance(ev, dict) or not isinstance(ev.get("claims"), dict):
+    bad("evidence", "site/data/registry/product.json carries no evidence section, so no verdict stands behind any claim (regenerate: majordomus generate)")
+    bad("declared", "site/data/registry/product.json carries no evidence section, so the homepage cannot say what a recorded run supports")
+else:
+    verdicts = ev["claims"]
+    available = ev.get("available") is True
+    problems = []
+    if not tones:
+        problems.append("site/data/registry/design.json files no word under a tone, so no badge colour can be judged")
+    # (a) the declaration itself: a declared claim status filed under the success tone is a
+    #     declared state rendered as a healthy one, on every surface that shows it
+    for s in statuses:
+        if tones.get(s) == "ok":
+            problems.append(f"the declared claim status {s!r} is filed under the success tone in share/design/tokens.yaml")
+    # (b) every rendered badge: a success-coloured word needs a supported verdict behind it
+    badge_re = re.compile(r'<[a-z]+\b[^>]*\bclass="[^"]*\bmj-badge--([a-z0-9-]+)\b[^"]*"[^>]*>')
+    claim_re = re.compile(r'\bdata-claim="([^"]*)"')
+    examined = 0
+    for dirpath, _, files in site_walk():
+        for name in files:
+            if not name.endswith(".html"):
+                continue
+            path = "/" + os.path.relpath(os.path.join(dirpath, name), pub).replace(os.sep, "/")
+            text = open(os.path.join(dirpath, name), errors="replace").read()
+            for m in badge_re.finditer(text):
+                word = m.group(1)
+                cm = claim_re.search(m.group(0))
+                if cm:
+                    examined += 1
+                    cid = cm.group(1)
+                    if word != "unknown" and cid not in verdicts:
+                        problems.append(f"{path}: an evidence badge {word!r} for claim {cid!r}, which has no verdict in product.json")
+                    elif tones.get(word) == "ok" and not (available and (verdicts.get(cid) or {}).get("supported") is True):
+                        problems.append(f"{path}: claim {cid!r} is coloured as supported ({word!r}) and the evidence does not support it")
+                elif word in statuses and tones.get(word) == "ok":
+                    problems.append(f"{path}: the declared status {word!r} is rendered in the success colour with no evidence verdict behind it")
+    if verdicts and not examined:
+        problems.append("no page renders a claim's evidence verdict (a badge carrying data-claim), so nothing on the site says what is supported")
+    if problems:
+        for p in problems[:12]:
+            bad("evidence", p)
+        if len(problems) > 12:
+            bad("evidence", f"... and {len(problems) - 12} more")
+    else:
+        ok("evidence", f"{examined} claim evidence badge(s), each backed by a verdict, and no declared status or unsupported claim in the success colour")
+
+    # the homepage's proof band: the declared figure is the matrix's, and beside the guaranteed
+    # one the supported figure is the evidence's, or `unknown` when nothing is recorded — never
+    # a figure that reads as known without a dataset, and never "a test proves it" while the
+    # evidence supports fewer claims than are declared
+    wrong = []
+    band = re.search(r"<dl\b[^>]*\bdata-claims-proof\b[^>]*>(.*?)</dl>", home, re.S)
+    declared = sum(1 for c in caps.get("claims") or [] if c.get("status") == "guaranteed")
+    supported = sum(1 for v in verdicts.values() if v.get("supported") is True)
+    if not band:
+        wrong.append("the homepage has no claims proof band (<dl data-claims-proof>)")
+    else:
+        b = band.group(1)
+        dm = re.search(r'data-declared="guaranteed"[^>]*>\s*([^<]*?)\s*<', b)
+        if not dm or dm.group(1) != str(declared):
+            wrong.append(f"the declared guaranteed figure is {dm.group(1) if dm else 'absent'!r}, and docs/CLAIMS.yaml declares {declared}")
+        sm = re.search(r'data-supported="([^"]*)"[^>]*>(.*?)</dd>', b, re.S)
+        want = str(supported) if available else "unknown"
+        if not sm:
+            wrong.append("the proof band does not say how many guaranteed claims a recorded run supports")
+        else:
+            said = html.unescape(re.sub(r"<[^>]+>", " ", sm.group(2)))
+            if sm.group(1) != want or want not in said:
+                wrong.append(f"the supported figure reads {sm.group(1)!r} ({' '.join(said.split())!r}), and the evidence says {want!r}")
+    if supported < declared and re.search(r"test proves it", html.unescape(re.sub(r"<[^>]+>", " ", home))):
+        wrong.append(f"the homepage says a test proves it, and a recorded run supports {supported} of {declared} declared guarantee(s)")
+    if wrong:
+        for w in wrong:
+            bad("declared", w)
+    else:
+        ok("declared", f"the proof band says {declared} declared guaranteed and {want} supported by a recorded run, as the matrix and the evidence give them")
+
 # ---------------------------------------------------------------- weight
 # Only what this page decides: the same-origin scripts and stylesheets it links, and graph data
 # inlined as JSON. The HTML itself is not budgeted here — its size follows the recorded runs the
@@ -332,7 +458,7 @@ for loc in re.findall(r"<loc>([^<]+)</loc>", sitemap):
 noindex_re = re.compile(r'<meta name="robots" content="noindex">')
 problems = []
 pages = 0
-for dirpath, _, files in os.walk(pub):
+for dirpath, _, files in site_walk():
     if "index.html" not in files:
         continue
     rel = os.path.relpath(dirpath, pub)

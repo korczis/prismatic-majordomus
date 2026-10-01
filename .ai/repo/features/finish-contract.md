@@ -15,7 +15,7 @@ modules: [gates, obligations]
 rules: [majordomus.verification-integrity, majordomus.define-done-first, majordomus.verify-outcomes, majordomus.blocker-resolution, majordomus.note-integrity, majordomus.state-consistency, project.finding-carries-reproduce]
 docs: [docs/CLI.md, docs/DESIGN.md]
 claims: [finish-contract, finish-refusal-is-recorded, typed-outcome, open-question-gate, consistency-check, reproduce-command, exit-code-contract, blocker-store, blocker-survives-handover]
-use_cases: [accept-or-refuse-finished-work, block-acceptance-on-an-open-question, carry-a-blocker-across-a-handover]
+use_cases: [accept-or-refuse-finished-work, block-acceptance-on-an-open-question, carry-a-blocker-across-a-handover, know-whether-this-work-is-finished, prove-what-a-task-owed-before-calling-it-done, say-what-reached-the-remote-and-what-did-not]
 related: [doctrine, coordination]
 tags: [verification, contract]
 ---

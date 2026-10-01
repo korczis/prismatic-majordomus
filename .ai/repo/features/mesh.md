@@ -2,47 +2,57 @@
 schema: feature/v1
 id: mesh
 kind: feature
-title: Running instances find each other, and prove who they are
+title: Sessions on several machines work one repository without colliding
 short_title: Mesh
-headline: A running Majordomus can discover the others — over multicast, broadcast or a rendezvous — and every observation is signed, converged into one registry, and trusted for nothing by default.
-summary: A node is an Ed25519 keypair kept per user and machine; one signed, versioned, bounded envelope travels over every discovery transport; providers only observe while the manager owns the single verification path and the single registry; trust is an explicit policy that defaults to deny_unknown; and nothing opens a socket until the repository commits an enabled mesh declaration. CLI, HTTP, OpenAPI, MCP and the Cockpit render the same runtime state.
+headline: Majordomus runtimes of one repository — on one machine or several — discover each other, link through a signed handshake, and share sessions, claims, handovers and reviews through one replicated journal that survives disconnects, crashes and partitions.
+summary: Each runtime is a key-authenticated participant; discovery (multicast, broadcast, rendezvous, seeds) only finds candidates, and a signed handshake admits a link only for the same repository, a compatible protocol and a trusted key. Linked runtimes replicate one signed event journal every heartbeat and fold it into the same state everywhere, so an exclusive claim on one machine refuses an overlapping claim on another, a handover published on one is consumed on another, and a runtime that crashes expires everywhere on its own. The CLI, HTTP, OpenAPI, MCP and the Cockpit render the same state, and every guarantee is held by tests over real processes and a container lab on a real network.
 status: stable
 weight: 45
 featured: true
 areas: [coordination]
 modules: [mesh]
 kinds: [mesh-declaration]
-rules: [project.mesh-is-observation-not-authority]
+rules: [project.mesh-is-observation-not-authority, project.mesh-cooperation-is-authenticated]
 docs: [docs/MESH.md]
-adrs: [adr-0050]
-claims: [mesh-observation-not-authority, mesh-one-registry, mesh-off-by-default]
+adrs: [adr-0050, adr-0067]
+claims: [mesh-cooperation-links, mesh-claims-cross-runtime, mesh-repository-isolation, mesh-liveness-expiry, mesh-three-runtime-convergence, mesh-network-acceptance, mesh-observation-not-authority, mesh-one-registry, mesh-off-by-default]
 use_cases: []
 cockpit: [mesh]
 related: [coordination]
-tags: [mesh, discovery, network, security]
+tags: [mesh, discovery, cooperation, network, security, distributed]
 ---
 
 ## What it does
 
-With an enabled `mesh` declaration in the repository, the shared server announces its
-existence — a compact envelope signed by the machine's node key — over UDP multicast,
-optionally over broadcast, and to any rendezvous endpoints the declaration names, and
-listens for the same from others. Every datagram heard anywhere passes one verification
-path (bounds, shape, version, staleness, signature) and lands in one registry,
-deduplicated by node identity: the same node heard on two transports is one record with
-two sightings, and a restart is the same node with a new instance, never a duplicate.
-`majordomus mesh status`, `mesh nodes`, `mesh identity` and `mesh doctor` render it on
-the command line; `/api/v1/mesh*`, the MCP tools and the Cockpit's mesh page render the
-same runtime state. Any Majordomus server is a rendezvous for any other: `mesh.register`
-verifies a presented envelope like any datagram and answers with candidates that verify
-end-to-end on their own signatures.
+Several AI coding sessions — two terminals on a laptop, a desktop, a build machine — work
+one repository. With an enabled `mesh` declaration each checkout's server is a runtime of
+the mesh: it announces itself (signed, over multicast, a broadcast fallback, a rendezvous,
+or declared seeds), and when it finds a runtime of the **same repository** whose key it
+**trusts**, the two open a link through a signed handshake. From then on, every heartbeat,
+they exchange what the other lacks of one journal of signed events:
+
+- **sessions** — who is working, with which client, on which issue, branch and head;
+  the peer board's announcements are projected in automatically;
+- **claims** — an exclusive claim made on one machine refuses an overlapping claim on every
+  linked machine, `claim_conflict` naming the claim it meets;
+- **handovers** — `mesh handover publish` on one machine, `mesh handover consume` on
+  another, and the record lands where `majordomus handover --resolve` finds it;
+- **reviews** — ask a named runtime for a review and see its answer on your machine.
+
+Every linked runtime folds the same events into the same state and prints the same digest.
+A runtime that stops beating — killed, crashed, cut off — expires on its peers within the
+declared expiry, its claims stop excluding, and when it comes back it reconnects as the same
+runtime. `majordomus mesh peers`, `mesh state`, `mesh verify`, `/api/v1/mesh/*`, the MCP
+tools and the Cockpit's Mesh page show machines, runtimes, sessions, claims, links and why
+anything was refused.
 
 ## What it does not do
 
-It grants nothing. A discovered node — even a trusted one — gains no execution, no
-authorization and no access; trust labels records and shapes candidate-sharing, and
-whoever builds remote operations later must bring their own authorization decision. It
-sends nothing until a person commits `enabled: true`, advertises no secret, no path and
-no repository content (repositories travel as digests), and persists nothing but the one
-identity file under the user's state directory — the registry is process memory and dies
-with the server.
+It does not trust the network: discovery finds candidates and grants nothing, a link needs
+the same repository, a compatible protocol and a trusted key, and nothing a peer sends
+executes anything. It is not a strongly consistent lock service — during a partition both
+sides may claim the same scope, and the conflict is named with one winner after healing.
+It does not encrypt: links belong on a private network or an overlay such as a tailnet. It
+does not cross a WAN, traverse NAT or copy source files — git owns the code; the mesh
+carries what people and agents say about their work. And it sends nothing until a person
+commits `enabled: true` and lists the keys to trust.

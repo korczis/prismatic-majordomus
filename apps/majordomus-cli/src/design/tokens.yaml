@@ -1,6 +1,6 @@
 # GENERATED FILE — DO NOT EDIT DIRECTLY
 # Source: share/design/tokens.yaml, the one declaration of the design; regenerate with `majordomus generate`
-# Generator: majordomus-cli 0.8.0
+# Generator: majordomus-cli 0.11.0
 # The design system of every surface this repository renders, declared once.
 #
 # Four surfaces put HTML in front of a person — the site published to GitHub Pages, the
@@ -227,6 +227,10 @@ roles:
 # else, so `succeeded` on the Cockpit and `done` on the site are the same green because they
 # are the same statement. A word absent here renders neutral; the design gate refuses a
 # word a surface emits that this list does not hold.
+#
+# A declared status is not a verdict: `guaranteed` is what docs/CLAIMS.yaml says a claim is,
+# not what a recorded run showed, so it is filed as neutral. Only an evidence state earns
+# a colour (scripts/ci/homepage-check, check `evidence`).
 status:
   roles:
     ok:
@@ -274,7 +278,7 @@ status:
         light: blue-200
         dark: blue-900
     neutral:
-      about: no meaning carried by colour; unknown, planned, external, draft
+      about: no meaning carried by colour; unknown, declared-only, planned, external, draft
       fg:
         light: fg
         dark: fg
@@ -285,11 +289,11 @@ status:
         light: line
         dark: line
   states:
-    ok: [ok, pass, passed, succeeded, completed, done, current, declared, covered, guaranteed, healthy, live, present, synced, stable, read-only, connected, accepted, enforced, wired, behaviorally-verified, valid, clean, merged, documented]
+    ok: [ok, pass, passed, succeeded, completed, done, current, declared, covered, healthy, live, present, synced, stable, read-only, connected, accepted, enforced, wired, behaviorally-verified, valid, clean, merged, documented, proven]
     warn: [warn, warning, stale, partial, advisory, cancelled, cancelling, not-generated, reconnecting, verify, executable, ahead, behind, dirty, proposed, deprecated, degraded, experimental, ephemeral]
-    bad: [bad, fail, failed, error, missing, blocked, rejected, blocking, refused, disconnected, offline, lost, stderr, superseded, unwired, unsupported, owed, foreign, misplaced]
-    info: [info, running, queued, active, verified, generated, cached, runtime, resource, pending, loading, streaming, implemented, featured, exempt, inherited, unmerged, detached]
-    neutral: [neutral, unknown, external, planned, described, draft, ready, inactive, stopped, idle, query, command, builtin, declarative, vendored, high, medium, low, setup, begin, work, inspect, conclude]
+    bad: [bad, fail, failed, error, missing, blocked, rejected, blocking, refused, disconnected, offline, lost, stderr, superseded, unwired, unsupported, owed, foreign, misplaced, failing, unrunnable]
+    info: [info, running, queued, active, verified, generated, cached, runtime, resource, pending, loading, streaming, implemented, featured, exempt, inherited, unmerged, detached, inputs-unchanged]
+    neutral: [neutral, unknown, guaranteed, external, planned, described, draft, ready, inactive, stopped, idle, query, command, builtin, declarative, vendored, high, medium, low, setup, begin, work, inspect, conclude, not-run, no-test]
 
 # The type scale the dense surfaces use, as named steps: Tailwind emits a `text-<name>`
 # utility for each, and the compiled-in block carries the same names for the pages that

@@ -346,6 +346,31 @@ fn full(environment: &RepositoryEnvironment, presentation: &Presentation) -> Str
     if !providers.is_empty() {
         rows.push(Row::Field("agents".into(), providers));
     }
+    if let Some(r) = &environment.reasoning {
+        // Reasoning is operational with no advisor at all, so the line leads with that and
+        // counts advisors after it: absence of an optional advisor is a number, not a mark.
+        let advisors = if r.available.is_empty() {
+            "local review only".to_string()
+        } else {
+            format!("{} available", r.available.len())
+        };
+        rows.push(Row::Field(
+            "advisors".into(),
+            truncate_with(
+                &format!(
+                    "reasoning {} {} {} {} {advisors} {} {} optional absent",
+                    g.yes,
+                    g.bullet,
+                    sanitise(&r.mode),
+                    g.bullet,
+                    g.bullet,
+                    r.unavailable
+                ),
+                inner - LABEL_WIDTH - 2,
+                g.ellipsis,
+            ),
+        ));
+    }
 
     // ---- where things are
     let running: Vec<&super::ServiceState> = environment
@@ -758,6 +783,7 @@ pub(crate) mod tests_support {
                     availability: ServiceAvailability::Available,
                 },
             ],
+            reasoning: None,
             diagnostics: vec![],
             provenance: vec![],
         }
