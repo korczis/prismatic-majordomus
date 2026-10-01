@@ -144,7 +144,7 @@ The public site is a projection of the files above, not a second copy of them. I
 npm ci
 scripts/site-build      # generate canonical data, build with Zola, compile Tailwind
 scripts/site-check      # the checks CI runs
-scripts/site-serve      # watch mode
+scripts/site-serve      # build, then serve the built pages at http://127.0.0.1:1111/
 ```
 
 `site/data/generated/`, `site/content/` and `public/` are rewritten on every build and are

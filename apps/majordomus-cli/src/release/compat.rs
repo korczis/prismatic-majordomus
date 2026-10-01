@@ -1316,11 +1316,12 @@ pub struct VersionPlan {
     pub policy: Policy,
     /// The release this was measured against.
     pub baseline: Baseline,
-    /// The version the crate manifest declares.
+    /// The version the crate manifest declares — the one place it is authored.
     pub declared_version: String,
-    /// The version `bin/majordomus` prints, and whether the two agree.
+    /// The version `bin/majordomus` prints: what its projection, `share/version.txt`, states.
     pub tool_version: String,
-    /// Whether the two writers of the version state one value.
+    /// Whether that projection is current — states what the manifest declares. The name is
+    /// kept from when the version had two writers; the manifest is the only one now.
     pub writers_agree: bool,
     /// How many public atoms this tree carries.
     pub atoms: usize,
@@ -1534,19 +1535,12 @@ pub fn analyze(
             ),
         });
     }
-    let writers_agree = declared_version == tool_version;
-    if !writers_agree {
-        diagnostics.push(Diagnostic {
-            id: "writers-disagree".into(),
-            severity: Severity::Error,
-            message: format!(
-                "{} states '{declared_version}' and {} states '{tool_version}'; \
-                 one release has one version — `majordomus release bump --exact {declared_version}` writes both",
-                super::version::MANIFEST,
-                super::version::ENTRY
-            ),
-        });
-    }
+    // Where the version is stated: the projection against the authority, and any version
+    // written down by hand. A stale projection is a warning — every bump leaves one until the
+    // derivation runs, `generate --check` refuses it, and an error here would make the writer
+    // refuse to correct a bump it had just made. The rest are errors.
+    let writers_agree = super::version::projection_current(root);
+    diagnostics.extend(super::version::diagnose(root));
 
     let (declared, required_version) = match (base_v, declared_v) {
         (Some(b), Some(d)) => {
@@ -1582,9 +1576,7 @@ pub fn analyze(
     };
     let understated = commits.implied < implied;
 
-    let status = if declared < required
-        || !writers_agree
-        || diagnostics.iter().any(|d| d.severity == Severity::Error)
+    let status = if declared < required || diagnostics.iter().any(|d| d.severity == Severity::Error)
     {
         Status::Blocked
     } else {

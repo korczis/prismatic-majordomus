@@ -1,4 +1,5 @@
 # majordomus-covers: none
+# claims: command-coverage
 #
 # Test coverage is computed, not remembered. This case joins the public command surface in
 # share/commands.yaml to the coverage each test case declares about itself, and fails when a

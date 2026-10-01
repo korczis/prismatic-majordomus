@@ -26,6 +26,11 @@ site-build:
 site-docs:
     scripts/site-build --serve
 
+# Produce the crate's rustdoc reference: the rustdoc step of the Rust gate alone, warnings denied, and its handoff into target/web/rustdoc with the surface.json that names the commit it was built from — `just serve` answers /rustdoc/ from it and `just site-build` composes it into the site (docs/RUSTDOC.md).
+[group('site')]
+rustdoc:
+    scripts/rust-check --doc
+
 # The static checks over the built site (scripts/site-check).
 [group('site')]
 site-check:

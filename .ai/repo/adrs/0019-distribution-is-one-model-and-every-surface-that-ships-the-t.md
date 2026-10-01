@@ -115,6 +115,13 @@ Two versions must be kept in step by a check rather than by derivation: the crat
 `scripts/release-version --check` is what makes them one fact, and it runs before a release
 builds anything.
 
+> **Amended by [ADR 0085](0085-the-version-is-authored-once-and-shipped-as-a-projection.md) (proposed), 2026-09-24.**
+> Not two versions kept in step any more: one authored, one projected. The crate manifest is
+> the one place the version is written; `share/version.txt` is its generated projection,
+> shipped in every archive beside the tool, which reads it at start-up. `generate --check`
+> refuses a stale projection, and `scripts/release-version --check` still runs before a
+> release builds anything — now proving that the tool prints the authority.
+
 The installed layout is a versioned tree plus two generated launchers rather than a single
 file in `~/.local/bin`. That is what makes the swap atomic and the rollback trivial, and it
 costs one extra process per invocation and a slightly longer answer to "what does

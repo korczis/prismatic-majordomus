@@ -1,3 +1,4 @@
+# claims: context-coverage, context-documents
 # Scoped context documents: discovery by contract, the ancestor chain, scope, composition,
 # a deterministic order, provider and audience filtering, and every way the tree can be
 # wrong — each refused by name, with the tree unchanged.

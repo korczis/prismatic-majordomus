@@ -298,6 +298,14 @@ finding at every class, because it reads as proof and is not. For a blocking rul
 refuses work that violates this" false. `gated`, `reviewed` and `not run` are not findings —
 they are weaker states, said out loud and counted, which is a different thing from a defect.
 
+Because they are not findings, "no findings" is not "proven", and the report never lets one
+be read as the other. `satisfied` is exactly "there are no findings". The report's
+`verdict`, printed first in text and carried at the top of the JSON, is what the corpus can
+be said to prove: `failing` when there is any finding; `proven` only when every blocking
+rule is `proven` or `inputs unchanged`; `unproven` otherwise — a blocking rule never run,
+gated, reviewed or stale, or no blocking rule at all. A corpus with no recorded run behind
+any blocking rule is `satisfied` and `unproven`, which is the truth about it.
+
 Both directions are readable. `rules show` answers what proves a rule; `rules proves`
 answers what a test proves, and names the rules that would be left with nothing at all if
 it were deleted. That is the question that could not be asked while the relation ran one

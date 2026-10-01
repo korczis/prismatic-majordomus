@@ -19,7 +19,7 @@ version: 1
 
 statuses:
   - id: guaranteed
-    meaning: Deterministic and blocking. Implemented, and a behavioural test proves it.
+    meaning: Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.
   - id: advisory
     meaning: Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.
   - id: planned
@@ -376,7 +376,7 @@ claims:
     note: A body with a missing or empty required section is refused and names the sections.
 
   - id: no-transcripts
-    claim: Handovers carry durable facts, never conversation transcripts
+    claim: A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected
     source: docs/DESIGN.md
     implementation: lib/handover.sh
     test: test/cases/05_handover.sh
@@ -386,6 +386,14 @@ claims:
   - id: finish-contract
     claim: finish evaluates the finish contract line by line and refuses when any line is unmet
     source: docs/CLI.md
+    implementation: lib/finish.sh
+    test: test/cases/06_finish.sh
+    status: guaranteed
+    responsibility: finish
+
+  - id: finish-refusal-is-recorded
+    claim: every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none
+    source: share/events.yaml
     implementation: lib/finish.sh
     test: test/cases/06_finish.sh
     status: guaranteed
@@ -723,6 +731,33 @@ claims:
     responsibility: none      # planned; no responsibility implements it yet
     note: Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement.
 
+  - id: context-selection-counted
+    claim: What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated
+    source: docs/ECONOMICS.md
+    implementation: apps/majordomus-cli/src/economics/context.rs
+    test: test/cases/430_economics.sh
+    status: guaranteed
+    responsibility: projection
+    note: The measurement is of selection, not of savings. `majordomus economics measure` records it; the metric carries its own statement of what it is not.
+
+  - id: economics-claims-gated
+    claim: A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand
+    source: docs/ECONOMICS.md
+    implementation: apps/majordomus-cli/src/economics/claims.rs
+    test: test/cases/431_economics_claims_gated.sh
+    status: guaranteed
+    responsibility: doctor
+    note: "`majordomus economics check` exits 10 naming every finding; the numbers readers see are generated from recorded runs into docs/generated/economics.* and the site's data."
+
+  - id: token-savings-measured
+    claim: Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule
+    source: docs/ECONOMICS.md
+    implementation: '-'
+    test: '-'
+    status: planned
+    responsibility: none      # planned until the publication rule is met; economics check refuses guaranteed before then
+    note: The benchmark, its runner and its calculator exist; what is missing is enough evidence. The generated report states what the recorded runs show and why no claim follows yet.
+
   - id: cost-per-outcome
     claim: Cost per accepted outcome will be reported from measured data only
     source: docs/DESIGN.md
@@ -861,7 +896,7 @@ claims:
     claim: Every capability of the Rust executable is defined once, and the registry refuses a duplicate id or a colliding projection name, naming both parties
     source: docs/CAPABILITIES.md
     implementation: apps/majordomus-cli/src/capability/registry.rs
-    test: test/cases/76_capabilities_projections.sh
+    test: apps/majordomus-cli/tests/registry.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: Two sources, builtin executables and the layer's objects, meet in one registry built at one place; ids, MCP names and URIs, HTTP routes and CLI paths are each unique or the registry does not build. The crate's tests/registry.rs covers every collision.
@@ -915,7 +950,7 @@ claims:
     claim: Nothing a client leaves behind locks another client out of the shared server; a corrupt, empty, stale or abandoned lease is taken over and named, a client that cannot share is served alone with the reason logged, and a signal removes the lease before the server dies
     source: docs/MCP.md
     implementation: apps/majordomus-cli/src/lease.rs
-    test: test/cases/90_mcp_shared_server.sh
+    test: apps/majordomus-cli/tests/mcp_shared.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The election classifies the lease on every attempt and is bounded by time; commands/mcp.rs degrades to a standalone session when the lease or the server cannot be used; SIGTERM, SIGINT and SIGHUP unlink the lease in the handler. The crate's tests/mcp_shared.rs proves each path over real processes, and case 90 plants a corrupt lease behind the launcher. The doctrine is project.shared-server-resilience.
@@ -951,7 +986,7 @@ claims:
     claim: A majordomus:// URI resolves the same way through the MCP resource read, the majordomus_get tool and the HTTP object route, and majordomus://repository answers repository.info as a JSON document tagged builtin
     source: docs/MCP.md
     implementation: apps/majordomus-cli/src/capability/builtin/objects.rs
-    test: test/cases/72_rust_mcp.sh
+    test: apps/majordomus-cli/tests/http_serve.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: One function, objects::resolve, is the resolution for every projection; a file of the layer is answered tagged declarative, a query with a resource exposure tagged builtin with its answer as data and the resource text beside it; an unknown URI is not found everywhere; the registry refuses a query read as a resource whose input requires anything. The crate's tests/objects.rs covers every branch at the library level.
@@ -987,7 +1022,7 @@ claims:
     claim: A capability of the Rust executable is declared once and composed into its module, the root composes modules, and the registry refuses a capability outside its module's namespace
     source: docs/CAPABILITIES.md
     implementation: apps/majordomus-cli/src/capability/module.rs
-    test: test/cases/91_canonical_architecture.sh
+    test: apps/majordomus-cli/tests/registry.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: capability!, module! and compose_modules! build plain values handed to the registry builder; adding a capability to an existing module touches that module's file alone, and MCP, HTTP, OpenAPI, Swagger UI, the CLI, the benchmark targets, the cache and the generated reference follow. The crate's tests/registry.rs holds the invariants, tests/projections.rs the propagation.
@@ -996,7 +1031,7 @@ claims:
     claim: Every externally callable operation of the Rust executable is a benchmark target with a denominator generated from the registry, and a missing case fails the structural check
     source: docs/CAPABILITIES.md
     implementation: apps/majordomus-cli/src/bench/coverage.rs
-    test: test/cases/91_canonical_architecture.sh
+    test: apps/majordomus-cli/tests/bench_units.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: Each required executable is a target directly and on every transport its exposure declares, with the cases its input type provides; the transports' own operations are targets declared once; waivers are typed and never counted. Runners time the executor, a real loopback socket and a real majordomus mcp child; results are majordomus/benchmark-result/v1; the baseline is per platform under .ai/repo/benchmarks/rust/ and the policy is data.
@@ -1014,7 +1049,7 @@ claims:
     claim: A cached capability of the Rust executable answers the same value uncached, cold and warm, a hit runs no handler, errors and commands are never cached, and the key carries the registry fingerprint
     source: docs/CAPABILITIES.md
     implementation: apps/majordomus-cli/src/capability/executor.rs
-    test: test/cases/91_canonical_architecture.sh
+    test: apps/majordomus-cli/tests/executor.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: One executor for every transport; CachePolicy on the descriptor; bounded per capability; the key is the canonical id, the input in canonical form and a sha-256 fingerprint of the repository content and the descriptors. tests/executor.rs and the proptest harness in tests/properties.rs iterate every cached capability with every case and generated inputs.
@@ -1071,13 +1106,13 @@ claims:
     test: test/cases/94_ci_plan.sh
     status: guaranteed
     responsibility: none      # the harness, not a supervised responsibility
-    note: MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.
+    note: MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary; test/lib.sh refuses a case that does not stand in the fixture test/run.sh made for it, so a case started by hand cannot write its fixture into a checkout. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness.
 
   - id: rust-binary-artifact
     claim: The Rust executable the rust gate built is published as an artifact with its provenance, and every Rust case drives the executable MAJORDOMUS_BIN names instead of building one
     source: docs/CI.md
     implementation: scripts/rust-check
-    test: test/cases/94_ci_plan.sh
+    test: test/cases/401_the_rust_artifact_carries_its_provenance.sh
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: scripts/rust-check --artifact DIR copies the debug executable beside a majordomus-cli.json naming the commit, the target triple, the toolchain and the Cargo.lock digest; the workflow uploads it as majordomus-cli-<target>. rust_bin in test/lib.sh hands a case MAJORDOMUS_BIN when set, refuses one that is not executable, builds once with cargo when unset, and asks the case to skip when there is neither; the launcher bin/majordomus-mcp honours the same variable.
@@ -1184,7 +1219,7 @@ claims:
     claim: Every committed derived artifact of the repository is regenerated by one command in dependency order and checked by one read-only command that names every stale artifact, a second regeneration on a clean tree changes nothing, and no derived file records the commit it lands in
     source: docs/GITHUB_PAGES_ARCHITECTURE.md
     implementation: scripts/derive
-    test: test/cases/51_derived_artifacts_committed.sh
+    test: test/cases/400_derivation_is_one_graph.sh
     status: guaranteed
     responsibility: none      # orchestration over the generators, not a supervised responsibility
     note: scripts/derive runs majordomus generate (the code-only projections), scripts/generate-site-data (the site's data and content and the derived documents, reading the registry manifest and the OpenAPI document), and majordomus generate again (the site dataset and the benchmark matrix over the index the documents joined); no stage reads its own output. scripts/derive-check composes generate --check and generate-site-data --check and exits 10 with both reports. The commit a page was built from is a fact of the build (site/data/build.json, served at /build.json, never committed), so source.json no longer carries it and the generator is idempotent on a clean tree. just derive, just derive-check and the Pages workflow call the scripts; just test runs the check.
@@ -1238,7 +1273,7 @@ claims:
     claim: An operational moment is one file under the layer, discovered rather than registered, and answered by the command line, the HTTP API, the OpenAPI document, MCP, the derived graph and the website with nothing else changed
     source: docs/WHY.md
     implementation: apps/majordomus-cli/src/why.rs
-    test: test/cases/98_why_catalogue.sh
+    test: apps/majordomus-cli/tests/why.rs
     status: guaranteed
     responsibility: layer
     note: Removing the file removes it from all of them, which is what a hidden registry would fail.
@@ -1316,10 +1351,10 @@ claims:
     note: Acceptance is the person's act — a tool that can write `accepted` turns its own inference into repository truth and a later reader cannot tell which, so propose has no flag for it and an extracted record claiming it is a finding. An extracted record must name its evidence in provenance.derived_from, whose references are typed and whose file and test references must resolve; it may still be superseded, because that is something a later record did to it. The identity is allocated under a lock over the section directory, and the case proves it with real concurrent processes, because this repository shipped two 0005s and two 0007s before anything checked.
 
   - id: cli-documentation-executable
-    claim: Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable
+    claim: Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable
     source: .ai/repo/rules/project/rust-cli-evidence.v1.md
     implementation: apps/majordomus-cli/src/cli.rs
-    test: apps/majordomus-cli/tests/cli_docs.rs
+    test: apps/majordomus-cli/tests/cli_examples.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The documentation and the examples are declared beside the clap declaration, as typed Rust; an example is an argument vector and the command line a reader sees is composed from it. capabilities validate exits 10 naming every violation with the command, the file and the rule; the suite parses every documented vector against the canonical parser and runs every example against the compiled binary in a disposable repository, the two long-running commands as bounded probes. An example the suite deliberately does not run carries its reason and shows it wherever the example is shown.
@@ -1341,6 +1376,60 @@ claims:
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there.
+
+  - id: rustdoc-discoverable
+    claim: The crate's rustdoc is a web surface at /rustdoc declared by discovery from the crate, present in the topology, its committed projection and the home page whether or not its producer has run, and a running server answers /rustdoc/ from the tree its producer wrote
+    source: docs/RUSTDOC.md
+    implementation: apps/majordomus-cli/src/web/discover.rs
+    test: test/cases/488_rustdoc_discoverable.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The surface is declared from the crate the way the served documentation is declared from the site configuration, so nothing about it depends on one checkout having built it; built_from comes from the producer's surface.json and is left out of docs/generated/web.json, which must read the same in every clone. The Rust side is the web::discover tests. ADR 0086 decides the mount and why it is not under /docs.
+
+  - id: rustdoc-composed-from-the-topology
+    claim: The site build composes every published static surface into its output at that surface's mount, read from the committed topology with no surface named by hand, and refuses, naming the producer, when a published surface's artifact is absent
+    source: docs/RUSTDOC.md
+    implementation: scripts/site-build
+    test: test/cases/486_rustdoc_composition.sh
+    status: guaranteed
+    responsibility: none      # the site's own build, not a supervised responsibility
+    note: The list is docs/generated/web.json, read through mj_web_composed in lib/common.sh, which every check that must tell the site's pages from a composed surface's asks too. A mount the site itself already fills is refused as a second owner of one path rather than overwritten. The composition runs after Zola and after the site's accessibility pass, so the site's normalisation never touches another producer's pages.
+
+  - id: rustdoc-published
+    claim: The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names, and is never committed
+    source: docs/RUSTDOC.md
+    implementation: scripts/site-deploy
+    test: test/cases/489_rustdoc_deploy.sh
+    status: guaranteed
+    responsibility: none      # the site's own deploy path, not a supervised responsibility
+    note: The case deploys a composed site to a local bare remote, no network, and reads the published branch back. The site's /build.json records every composed surface with the commit its producer declared, so the commit the reference was built from is readable from outside beside the commit the site was built from. The tree is produced in CI by the rustdoc job of the pages workflow through .github/actions/rustdoc, the action the validation workflow uses too.
+
+  - id: rustdoc-complete
+    claim: Every item the crate exports has its rustdoc page at the route derived from its path and kind, no item page exists without its item, and a module added to the crate becomes a required page with no list edited
+    source: docs/RUSTDOC.md
+    implementation: apps/majordomus-cli/src/quality/rustdoc.rs
+    test: test/cases/490_rustdoc_new_module.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: majordomus quality rustdoc joins the rendered tree with quality::source::Inventory, the crate's own syntax-tree measurement of what it exports, which is also what the rust-quality gate measures. No inventory of modules or items is kept for the reference. The check exits 10 naming each missing or orphan page and 12 when there is no tree, never a pass over nothing. The crate's quality::rustdoc tests hold one fixture per way of failing.
+
+  - id: rustdoc-verified-live
+    claim: A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it
+    source: docs/RUSTDOC.md
+    implementation: scripts/pages
+    test: test/cases/487_rustdoc_staleness.sh
+    status: guaranteed
+    responsibility: none      # the site's own deploy path, not a supervised responsibility
+    note: Two witnesses that do not share a writer name the commit, the producer's built_from and the value rustdoc renders on the crate's own COMMIT constant page. scripts/pages verify-rustdoc is a hard step of the pages workflow once the site serves the deployed commit, so a deployment whose public reference is absent, broken or stale fails its run, and scripts/ci/pages-check asks again as the pages-live gate.
+
+  - id: rustdoc-referenced
+    claim: Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference
+    source: docs/RUSTDOC.md
+    implementation: apps/majordomus-cli/src/site.rs
+    test: test/cases/492_rustdoc_module_links.sh
+    status: guaranteed
+    responsibility: none      # the site's own pages, not a supervised responsibility
+    note: The mapping is quality::rustdoc::module_routes, the crate's exported modules each with the page derived from the crate's own inventory, which majordomus quality rustdoc requires of the tree as a missing-page finding. majordomus generate carries it into the site's registry dataset as rustdoc on each module, and a module rustdoc gives no page (pub(crate) or private) carries none. The template joins it with the surfaces the build composed, from data/build.json, which scripts/site-build writes from docs/generated/web.json; it derives no route, and a build without the reference links nothing. scripts/ci/link-check resolves every such link against the composed site.
 
   - id: worktree-topology-derived
     claim: A branch's worktree path is derived from git identity and the branch name alone — the primary checkout's sibling named with -wt, then the branch with its hierarchy kept — and is the same answer from every directory of every worktree, with nothing registered or configured
@@ -1397,13 +1486,31 @@ claims:
     note: The boundary is a field-by-field copy through PUBLIC_FEATURE_FIELDS, not an exclusion that could be forgotten: a field added to the model is absent from the site until somebody names it. The test asserts no un-allow-listed key, no body, no fixture root and no temporary path; scripts/generate-site-data refuses the artifact again before rendering anything from it.
 
   - id: landing-page-is-a-projection
-    claim: The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed
+    claim: The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged
     source: docs/GITHUB_PAGES_ARCHITECTURE.md
     implementation: site/templates/index.html
-    test: test/cases/12_site_build.sh
+    test: test/cases/400_derivation_is_one_graph.sh
     status: guaranteed
     responsibility: none      # the site's projection of apps/majordomus-cli, not a supervised responsibility
     note: scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository.
+
+  - id: cockpit-is-a-projection-of-the-registry
+    claim: A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited
+    source: docs/COCKPIT.md
+    implementation: apps/majordomus-cli/src/cockpit/mod.rs
+    test: apps/majordomus-cli/tests/cockpit.rs
+    status: guaranteed
+    responsibility: none      # the Cockpit is a projection of apps/majordomus-cli, not a supervised responsibility
+    note: a_capability_the_repository_adds_reaches_every_cockpit_surface adds one rule to a fixture repository, which the registry makes a capability, and asks the Cockpit for it over a real socket in its listing, on its own page, on its object page with the navigation entry for its kind, and in its search; the_runner_form_is_generated_from_the_input_schema in the same file proves the form. Nothing of the Cockpit names that capability.
+
+  - id: deployment-contract-refuses-by-name
+    claim: A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named
+    source: .ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md
+    implementation: lib/deployment.sh
+    test: test/cases/84_deployment_contract.sh
+    status: guaranteed
+    responsibility: none      # the deployment section of the layer, not a supervised responsibility
+    note: This is the shell half of the contract, decided without a Rust toolchain present. The semantic half, a health route no capability registers or a package the workspace does not contain, belongs to apps/majordomus-cli/src/deploy/mod.rs and is proven by that module's own tests, not by this case. The case matches each refusal by its reason; it does not require the finding to name the object, does not check doctor's exit status and does not show the object reaching the index or the object listing, so none of those is claimed here.
 
   - id: evidence-proof-is-an-execution
     claim: A claim's proof is an execution that was recorded with the commit it ran against, not a test path that resolves
@@ -1413,6 +1520,15 @@ claims:
     status: guaranteed
     responsibility: none
     note: The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence.
+
+  - id: evidence-recorded-in-ci
+    claim: CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason
+    source: docs/EVIDENCE.md
+    implementation: scripts/ci/evidence-collect
+    test: test/cases/357_ci_records_evidence.sh
+    status: guaranteed
+    responsibility: none
+    note: The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it.
 
   - id: rule-proof-is-named-and-resolves
     claim: Every blocking rule names what proves it, and every path it names is in the tree
@@ -1502,16 +1618,79 @@ claims:
     test: apps/majordomus-cli/tests/mesh.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050).
+    note: The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The skeleton a new repository starts from ships no declaration (ADR 0050); this repository commits its own enabled, a reviewed decision that docs/MESH.md describes and test/cases/491_the_mesh_is_on_here.sh holds.
 
   - id: mesh-one-registry
-    claim: Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own
+    claim: Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own
     source: docs/MESH.md
     implementation: apps/majordomus-cli/src/mesh/registry.rs
-    test: test/cases/130_mesh.sh
+    test: apps/majordomus-cli/tests/mesh.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site.
+    note: tests/mesh.rs proves the convergence to one record over a real socket, and the registry unit tests prove multi-source deduplication, replay drops, restart handling and the eviction bound; test/cases/130_mesh.sh covers the operator's path without a network and carries no part of this claim; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site. Since discovery protocol 2 (ADR 0067) a record is one runtime of a node, so two worktrees of one machine are two records under one key.
+
+  - id: mesh-cooperation-links
+    claim: Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible
+    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+    implementation: apps/majordomus-cli/src/mesh/cooperation.rs
+    test: apps/majordomus-cli/tests/mesh_cooperation.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Separate server processes link over TCP and their refusals of malformed, forged, future-protocol, other-repository and untrusted hellos are read back over HTTP; the unit tests of mesh::cooperation cover replay of a hello and of a sync counter, and the self link. No TLS — authenticity is the protocol's, confidentiality the network's (ADR 0067).
+
+  - id: mesh-claims-cross-runtime
+    claim: An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere
+    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+    implementation: apps/majordomus-cli/src/mesh/state.rs
+    test: apps/majordomus-cli/tests/mesh_cooperation.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Property tests of mesh::state prove the fold is independent of order and duplication and that no interleaving leaves two held exclusive claims meeting; the integration tests refuse a conflicting claim across two processes, across two worktrees and through a relay; the in-process partition test and the lab's network_partition scenario heal a partition into one held and one conflicted claim. Not strong consistency: under a partition both sides may hold, and the conflict is named after healing.
+
+  - id: mesh-repository-isolation
+    claim: Runtimes serving different repositories never form a cooperative link, even when they discover each other
+    source: .ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md
+    implementation: apps/majordomus-cli/src/mesh/repository.rs
+    test: apps/majordomus-cli/tests/mesh_cooperation.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The repository identity is the digest of the root commits or a declared value, never a path; the handshake refuses a mismatch both ways and ingest refuses another repository's event. The lab proves it between Linux nodes that discovered each other by multicast.
+
+  - id: mesh-liveness-expiry
+    claim: A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/cooperation.rs
+    test: apps/majordomus-cli/tests/mesh_cooperation.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: A server process is killed with SIGKILL and restarted in the same checkout; its peer lists it once with restarts counted and its previous run's claim stays expired. Beats are aged on each runtime's own monotonic clock. The lab repeats it with docker kill and a network disconnect.
+
+  - id: mesh-three-runtime-convergence
+    claim: Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/journal.rs
+    test: apps/majordomus-cli/tests/mesh_cooperation.rs
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Three server processes in a line agree on the digest, hold the same event count, and carry no further events once converged; origin signatures survive the relay. Delivery is at-least-once with idempotent application, not exactly-once.
+
+  - id: mesh-compaction-keeps-what-is-live
+    claim: Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/journal.rs
+    test: test/cases/493_mesh_compaction_keeps_what_is_live.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Case 493 runs tests/mesh_compaction.rs, two runtimes linked through the real signed protocol over an in-process transport, because no black-box knob reaches compaction in bounded time (a server compacts every sixty heartbeats and keeps a dead stream fifteen minutes; only the heartbeat and the expiry are declarable). The journal's unit tests reproduce each defect PR 588 recorded, and its property test holds that compaction changes no live claim, open session, handover taker or review answer over random histories. Not covered — two runtimes may print different digests while each compacts on its own schedule; what is live agrees, and docs/MESH.md says so.
+
+  - id: mesh-network-acceptance
+    claim: Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs
+    source: docs/MESH.md
+    implementation: test/mesh-lab/run
+    test: test/cases/414_mesh_lab_evidence.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: Four containers on one docker bridge, no seeds; ten scenarios with measured timings written to target/mesh-lab/evidence.json; the mesh-lab CI job runs the lab and then scripts/ci/mesh-lab-evidence, which refuses a record that is not a complete acceptance — the lab does not judge itself. Case 414 covers that reader and holds its required set equal to the scenarios the lab reaches. One layer-2 segment and one kernel — not a routed, NATed or WAN topology; physical machines are a documented manual procedure.
 
   - id: mesh-observation-not-authority
     claim: A discovered node — trusted or not — gains no execution, no authorization and no write surface; trust labels records under an explicit policy that defaults to deny_unknown
@@ -1520,7 +1699,16 @@ claims:
     test: apps/majordomus-cli/tests/mesh.rs
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
-    note: The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. The capabilities the mesh exposes are read-only projections plus one registration command that changes process memory only.
+    note: The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. Discovery still grants nothing: being heard or trusted admits no link on its own — a link needs the handshake of mesh-cooperation-links — and nothing a linked peer sends executes anything; the cooperation commands write this runtime's journal and, for a consumed handover, one record in this checkout's handovers directory (ADR 0067).
+
+  - id: mesh-declared-is-held
+    claim: An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub
+    source: docs/MESH.md
+    implementation: apps/majordomus-cli/src/mesh/doctor.rs
+    test: test/cases/494_the_mesh_is_declared_and_held.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand.
 
   - id: models-one-declaration
     claim: Vendors and models are declared once in share/models.yaml, and the CLI, HTTP, OpenAPI, MCP and Cockpit render that one declaration with no model name of their own
@@ -1544,7 +1732,7 @@ claims:
     claim: The model catalogue reports whether a vendor's named credential variable is set and can carry no secret value — the schema has no field one could hide in
     source: docs/MODELS.md
     implementation: apps/majordomus-cli/src/models/mod.rs
-    test: apps/majordomus-cli/src/models/mod.rs
+    test: test/cases/131_models.sh
     status: guaranteed
     responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
     note: credential_env names an environment variable and only std::env::var_os(..).is_some() is ever consulted; the test walks the catalogue's JSON schema and refuses any property name that smells like a credential.
@@ -1585,3 +1773,75 @@ claims:
     responsibility: policy
     note: Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data.
 
+
+  - id: a-skipped-case-is-not-a-proof
+    claim: A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names
+    source: docs/EVIDENCE.md
+    implementation: test/run.sh
+    test: test/cases/413_a_skipped_case_is_not_a_proof.sh
+    status: guaranteed
+    responsibility: none
+    note: A case that cannot meet a precondition said so with `exit 0`, which is the status the runner wrote `ok` for, so `majordomus evidence record` entered a run that measured nothing into the ledger as a pass. test/lib.sh's `skip` exits 4 and writes the file the runner names in MJ_SKIP_MARK, the runner writes SKIP into the TSV in both the serial and the parallel phase, and Outcome::Skip does not prove. A skip is still not a failure: the run's exit status is unchanged and a run whose cases all declined is a run rather than "no cases found". A failure is not a skip either: a case runs under `set -e`, `jq -e` fails with 4 when it produced no result, and a 4 without the mark is recorded as FAIL. The old shape is refused where it would be written: the case that proves this claim reads every file in test/cases/ and fails when one says `exit 0` before its last statement outside a heredoc body or a comment, so a case can leave with status 0 only by reaching its end.
+
+  - id: reasoning-works-with-no-advisor
+    claim: Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review
+    source: docs/REASONING.md
+    implementation: apps/majordomus-cli/src/reasoning/policy.rs
+    test: test/cases/730_reasoning_works_with_no_advisor.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: the case builds its environment from nothing (env -i, a PATH holding git and node only, no credential), so it holds on a machine where every advisor is installed.
+
+  - id: advisor-transports-share-one-contract
+    claim: Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential
+    source: docs/REASONING.md
+    implementation: scripts/lib/advisors/contract.mjs
+    test: test/cases/731_advisor_transport_contract.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: node --test scripts/lib/advisors/contract.test.mjs; the case refuses a run of fewer tests than the suite holds.
+
+  - id: advice-is-weighed-not-counted
+    claim: Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed
+    source: docs/REASONING.md
+    implementation: apps/majordomus-cli/src/reasoning/store.rs
+    test: test/cases/732_disagreement_is_settled_by_evidence.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: the case lets the minority position win once an experiment settles the disagreement.
+
+  - id: advisor-failure-is-recorded-and-recovers
+    claim: An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session
+    source: docs/REASONING.md
+    implementation: apps/majordomus-cli/src/reasoning/availability.rs
+    test: test/cases/733_advisor_failure_and_recovery.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: the circuit is derived from the recorded outcomes and the clock; the case shortens the cooldown with MAJORDOMUS_REASONING_COOLDOWN_SECONDS.
+
+  - id: reasoning-survives-the-session
+    claim: A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence
+    source: docs/REASONING.md
+    implementation: apps/majordomus-cli/src/reasoning/state.rs
+    test: test/cases/734_reasoning_survives_the_session.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: the scripted advisor of session B would hang if it were asked, so reuse is proven by the absence of a consultation.
+
+  - id: advisors-are-declared-once
+    claim: Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited
+    source: docs/REASONING.md
+    implementation: share/advisors.yaml
+    test: test/cases/735_a_new_advisor_needs_no_consumer_edit.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: the case appends a representative advisor to a fixture catalogue and reads it back from every surface, then removes its executable and sees it unavailable everywhere.
+
+  - id: review-is-never-fabricated
+    claim: A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document
+    source: docs/REASONING.md
+    implementation: apps/majordomus-cli/src/reasoning/check.rs
+    test: test/cases/736_reasoning_check_refuses_drift.sh
+    status: guaranteed
+    responsibility: none      # served by apps/majordomus-cli, not a supervised responsibility
+    note: a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor.

@@ -120,6 +120,21 @@ expect_exit 0 env MJ_ROOT="$F" "$CGATE" --strict
 expect_grep 'guaranteed claims: +0 of 1'
 expect_grep 'every guaranteed claim names a test that names it back'
 
+# --- a guaranteed claim whose test is something no runner executes is refused outright, even
+# when that file names the claim back: `models-no-secret-fields` once named a source file, and
+# the back-link read clean while the evidence ledger could only call it unrunnable
+mkdir -p "$F/lib"
+printf '# proves source-claim\n' > "$F/lib/x.sh"
+claim "$F" source-claim guaranteed lib/x.sh
+expect_exit 10 env MJ_ROOT="$F" "$CGATE" --strict
+expect_grep 'source-claim names lib/x\.sh, which no runner executes'
+expect_exit 10 env MJ_ROOT="$F" "$CGATE"
+expect_grep 'a guaranteed claim names a test no runner can execute'
+awk 'BEGIN{skip=0} /^  - id: source-claim$/{skip=1; next} /^  - id: /{skip=0} !skip' "$F/docs/CLAIMS.yaml" > "$F/docs/CLAIMS.yaml.tmp"
+mv "$F/docs/CLAIMS.yaml.tmp" "$F/docs/CLAIMS.yaml"
+expect_exit 0 env MJ_ROOT="$F" "$CGATE" --strict
+expect_grep '^runnable tests: +every guaranteed claim names a shell case or a crate test'
+
 # --- a tree with no claims file is a tree the gate does not apply to, which is not the same
 # as a tree it found nothing wrong in
 rm -f "$F/docs/CLAIMS.yaml"

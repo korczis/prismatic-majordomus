@@ -3,7 +3,7 @@
   "source": "docs/CLAIMS.yaml",
   "generator": "scripts/generate-site-data",
   "statuses": {
-    "guaranteed": "Deterministic and blocking. Implemented, and a behavioural test proves it.",
+    "guaranteed": "Declared deterministic and blocking, implemented, and naming the behavioural test that is to prove it. Whether a recorded run supports it is the evidence verdict, shown beside it.",
     "advisory": "Projected into the worker's instructions. Whether a worker honours it is not observable from outside. Documentation, not enforcement.",
     "planned": "Specified and not implemented. Named so the omission is visible.",
     "rejected": "Considered and deliberately refused, with the reason recorded."
@@ -377,7 +377,7 @@
     {
       "id": "claim:no-transcripts",
       "kind": "claim",
-      "label": "Handovers carry durable facts, never conversation transcripts",
+      "label": "A handover is a state record, not a transcript - its required sections must be present and non-empty, a placeholder body is refused, and its identity is computed and refused when written into the body; a transcript pasted into a section is not detected",
       "status": "guaranteed",
       "route": "/guarantees/no-transcripts/",
       "external": false,
@@ -389,6 +389,15 @@
       "label": "finish evaluates the finish contract line by line and refuses when any line is unmet",
       "status": "guaranteed",
       "route": "/guarantees/finish-contract/",
+      "external": false,
+      "note": null
+    },
+    {
+      "id": "claim:finish-refusal-is-recorded",
+      "kind": "claim",
+      "label": "every refused finish appends a task.refused event naming the outcome claimed, the unmet count and the doctrines that refused, and finish --check writes none",
+      "status": "guaranteed",
+      "route": "/guarantees/finish-refusal-is-recorded/",
       "external": false,
       "note": null
     },
@@ -724,6 +733,33 @@
       "route": "/guarantees/telemetry/",
       "external": false,
       "note": "Nothing measures token spend today. Any estimated_ field is labelled and excluded from enforcement."
+    },
+    {
+      "id": "claim:context-selection-counted",
+      "kind": "claim",
+      "label": "What the context compiler selects, out of what it judged relevant, is counted in tokens of a named tokenizer and recorded, never estimated",
+      "status": "guaranteed",
+      "route": "/guarantees/context-selection-counted/",
+      "external": false,
+      "note": "The measurement is of selection, not of savings. `majordomus economics measure` records it; the metric carries its own statement of what it is not."
+    },
+    {
+      "id": "claim:economics-claims-gated",
+      "kind": "claim",
+      "label": "A quantity about tokens, context or cost typed into hand-written prose is refused, and a claim bound to a metric cannot be guaranteed while its evidence does not stand",
+      "status": "guaranteed",
+      "route": "/guarantees/economics-claims-gated/",
+      "external": false,
+      "note": "`majordomus economics check` exits 10 naming every finding; the numbers readers see are generated from recorded runs into docs/generated/economics.* and the site's data."
+    },
+    {
+      "id": "claim:token-savings-measured",
+      "kind": "claim",
+      "label": "Majordomus will state a total-token change only from matched, verified runs that meet the methodology's publication rule",
+      "status": "planned",
+      "route": "/guarantees/token-savings-measured/",
+      "external": false,
+      "note": "The benchmark, its runner and its calculator exist; what is missing is enough evidence. The generated report states what the recorded runs show and why no claim follows yet."
     },
     {
       "id": "claim:cost-per-outcome",
@@ -1074,7 +1110,7 @@
       "status": "guaranteed",
       "route": "/guarantees/suite-parallel/",
       "external": false,
-      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
+      "note": "MJ_TEST_JOBS bounds the pool (xargs -P, never a bare ampersand); each case has its own log; the verdicts are rendered in name order with a failing case's whole log before its line; a filter that matches nothing and an empty case directory are usage errors in both modes; MJ_TEST_REPORT writes one row per case for the summary; test/lib.sh refuses a case that does not stand in the fixture test/run.sh made for it, so a case started by hand cannot write its fixture into a checkout. test/cases/26_ci_wiring.sh proves the failure semantics through both modes on a private harness."
     },
     {
       "id": "claim:rust-binary-artifact",
@@ -1322,7 +1358,7 @@
     {
       "id": "claim:cli-documentation-executable",
       "kind": "claim",
-      "label": "Every command of the Rust executable's command line carries a summary, a long description, help on every argument and at least one example, and every example shown to a reader is executed against the built executable",
+      "label": "Every command of the Rust executable's command line carries a summary, help on every argument and, where it runs, at least one example, the root carries a long description, and every example shown to a reader is executed against the built executable",
       "status": "guaranteed",
       "route": "/guarantees/cli-documentation-executable/",
       "external": false,
@@ -1345,6 +1381,60 @@
       "route": "/guarantees/web-namespaces-reserved/",
       "external": false,
       "note": "The Swagger UI held /docs until documentation arrived and wanted the name it had already been given. The case asserts the mounts as data before asserting them as routes, refuses a Swagger producer at /docs, and proves the documentation mount does not swallow /swagger or /openapi.json once it is built. Unbuilt documentation answers 503 naming the command that builds it rather than the viewer that used to answer there."
+    },
+    {
+      "id": "claim:rustdoc-discoverable",
+      "kind": "claim",
+      "label": "The crate's rustdoc is a web surface at /rustdoc declared by discovery from the crate, present in the topology, its committed projection and the home page whether or not its producer has run, and a running server answers /rustdoc/ from the tree its producer wrote",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-discoverable/",
+      "external": false,
+      "note": "The surface is declared from the crate the way the served documentation is declared from the site configuration, so nothing about it depends on one checkout having built it; built_from comes from the producer's surface.json and is left out of docs/generated/web.json, which must read the same in every clone. The Rust side is the web::discover tests. ADR 0086 decides the mount and why it is not under /docs."
+    },
+    {
+      "id": "claim:rustdoc-composed-from-the-topology",
+      "kind": "claim",
+      "label": "The site build composes every published static surface into its output at that surface's mount, read from the committed topology with no surface named by hand, and refuses, naming the producer, when a published surface's artifact is absent",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-composed-from-the-topology/",
+      "external": false,
+      "note": "The list is docs/generated/web.json, read through mj_web_composed in lib/common.sh, which every check that must tell the site's pages from a composed surface's asks too. A mount the site itself already fills is refused as a second owner of one path rather than overwritten. The composition runs after Zola and after the site's accessibility pass, so the site's normalisation never touches another producer's pages."
+    },
+    {
+      "id": "claim:rustdoc-published",
+      "kind": "claim",
+      "label": "The crate's rustdoc is published at /rustdoc with the site, built from the commit the site names, and is never committed",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-published/",
+      "external": false,
+      "note": "The case deploys a composed site to a local bare remote, no network, and reads the published branch back. The site's /build.json records every composed surface with the commit its producer declared, so the commit the reference was built from is readable from outside beside the commit the site was built from. The tree is produced in CI by the rustdoc job of the pages workflow through .github/actions/rustdoc, the action the validation workflow uses too."
+    },
+    {
+      "id": "claim:rustdoc-complete",
+      "kind": "claim",
+      "label": "Every item the crate exports has its rustdoc page at the route derived from its path and kind, no item page exists without its item, and a module added to the crate becomes a required page with no list edited",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-complete/",
+      "external": false,
+      "note": "majordomus quality rustdoc joins the rendered tree with quality::source::Inventory, the crate's own syntax-tree measurement of what it exports, which is also what the rust-quality gate measures. No inventory of modules or items is kept for the reference. The check exits 10 naming each missing or orphan page and 12 when there is no tree, never a pass over nothing. The crate's quality::rustdoc tests hold one fixture per way of failing."
+    },
+    {
+      "id": "claim:rustdoc-verified-live",
+      "kind": "claim",
+      "label": "A rustdoc tree built from another commit than the one it is checked or deployed as is refused, by the integrity check before publication and by the public verification after it",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-verified-live/",
+      "external": false,
+      "note": "Two witnesses that do not share a writer name the commit, the producer's built_from and the value rustdoc renders on the crate's own COMMIT constant page. scripts/pages verify-rustdoc is a hard step of the pages workflow once the site serves the deployed commit, so a deployment whose public reference is absent, broken or stale fails its run, and scripts/ci/pages-check asks again as the pages-live gate."
+    },
+    {
+      "id": "claim:rustdoc-referenced",
+      "kind": "claim",
+      "label": "Every builtin module's page on the site links the page the crate's reference documents that module on, from the one module-to-page mapping the rustdoc check holds the published tree to, and only in a build that composed the reference",
+      "status": "guaranteed",
+      "route": "/guarantees/rustdoc-referenced/",
+      "external": false,
+      "note": "The mapping is quality::rustdoc::module_routes, the crate's exported modules each with the page derived from the crate's own inventory, which majordomus quality rustdoc requires of the tree as a missing-page finding. majordomus generate carries it into the site's registry dataset as rustdoc on each module, and a module rustdoc gives no page (pub(crate) or private) carries none. The template joins it with the surfaces the build composed, from data/build.json, which scripts/site-build writes from docs/generated/web.json; it derives no route, and a build without the reference links nothing. scripts/ci/link-check resolves every such link against the composed site."
     },
     {
       "id": "claim:worktree-topology-derived",
@@ -1403,11 +1493,29 @@
     {
       "id": "claim:landing-page-is-a-projection",
       "kind": "claim",
-      "label": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset fails the build before it can be deployed",
+      "label": "The website's homepage and feature pages name no feature, module, command, provider or count of their own, and a stale product dataset is refused by the pre-commit hook and by the rust gate before it can be merged",
       "status": "guaranteed",
       "route": "/guarantees/landing-page-is-a-projection/",
       "external": false,
       "note": "scripts/site-check refuses a template, a generator, a jq program or a navigation file that names a feature route or a provider's own file, proves every public feature has its page and every page a feature, and compares the marks the matrix shows with the marks the model derived. `majordomus generate --check` refuses a tree whose dataset does not match the repository."
+    },
+    {
+      "id": "claim:cockpit-is-a-projection-of-the-registry",
+      "kind": "claim",
+      "label": "A capability added to the registry appears in the Cockpit's listing, navigation and search and on a page of its own with a form generated from its schema, without one line of the Cockpit being edited",
+      "status": "guaranteed",
+      "route": "/guarantees/cockpit-is-a-projection-of-the-registry/",
+      "external": false,
+      "note": "a_capability_the_repository_adds_reaches_every_cockpit_surface adds one rule to a fixture repository, which the registry makes a capability, and asks the Cockpit for it over a real socket in its listing, on its own page, on its object page with the navigation entry for its kind, and in its search; the_runner_form_is_generated_from_the_input_schema in the same file proves the form. Nothing of the Cockpit names that capability."
+    },
+    {
+      "id": "claim:deployment-contract-refuses-by-name",
+      "kind": "claim",
+      "label": "A deployment object that breaks its closed contract, whether by a key the contract does not have, another schema version, a missing field, an interface, port, machine count or health route that could not work, a value that reads as a credential or an identity two files claim, is refused by doctor with the reason named",
+      "status": "guaranteed",
+      "route": "/guarantees/deployment-contract-refuses-by-name/",
+      "external": false,
+      "note": "This is the shell half of the contract, decided without a Rust toolchain present. The semantic half, a health route no capability registers or a package the workspace does not contain, belongs to apps/majordomus-cli/src/deploy/mod.rs and is proven by that module's own tests, not by this case. The case matches each refusal by its reason; it does not require the finding to name the object, does not check doctor's exit status and does not show the object reaching the index or the object listing, so none of those is claimed here."
     },
     {
       "id": "claim:evidence-proof-is-an-execution",
@@ -1417,6 +1525,15 @@
       "route": "/guarantees/evidence-proof-is-an-execution/",
       "external": false,
       "note": "The matrix binds a claim to a test by path, and the path check proves only that a file exists. The ledger under .ai/repo/evidence records the latest execution of every test with its outcome, duration, commit, tree state, source digest, time and origin; `majordomus evidence show` derives each claim's state from that join on every read, and a claim whose test nobody ran reads `not_run` rather than inheriting a guarantee from the file's existence."
+    },
+    {
+      "id": "claim:evidence-recorded-in-ci",
+      "kind": "claim",
+      "label": "CI records every test it ran with the commit and the run it happened in, and the site publishes the tracked ledger's verdict at that commit as current only when CI's run of the published commit measured clean trees and nothing was absent, refused or failed; otherwise as stale with its distance or its failures, as unknown with its reasons, or as unavailable with the reason",
+      "status": "guaranteed",
+      "route": "/guarantees/evidence-recorded-in-ci/",
+      "external": false,
+      "note": "The evidence job of validate.yml derives the report first, through `majordomus evidence show` on its own checkout, measured clean or dirty, with the downloaded reports and its output under the runner's temporary directory, so that report is the tracked ledger's verdict at the run's commit. Only then does it record the suite's and the crate's results through `majordomus evidence record --origin ci`, which stamps each execution with the run from its environment; those rows are a run record, counted in the manifest and deciding no verdict, and a trunk run's rows reach the tracked ledger only through ADR 0080's recording pull request. The suite and the rust job each measure the tree they ran in, excluding only the outputs their run names at the paths where that run writes them (rust-check writes in the crate's directory), and the manifest's working tree is derived from those measurements; a report measured at another commit is refused, and a report that yielded no execution is absent. For a pull request the recorded commit is the merge commit that ran, with the head beside it. `scripts/pages evidence` publishes the artifact of the commit being published or its nearest ancestor into site/data/evidence.json, never committed, and withholds current, with every reason, whenever the run cannot confirm the report, a report the collector failed to derive or did not carry included. ADR 68, as ADR 0087 amends it."
     },
     {
       "id": "claim:rule-proof-is-named-and-resolves",
@@ -1506,16 +1623,79 @@
       "status": "guaranteed",
       "route": "/guarantees/mesh-off-by-default/",
       "external": false,
-      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The committed default of this repository is enabled false (ADR 0050)."
+      "note": "The shared server activates the mesh runtime only from an enabled mesh-declaration object (kind, schema and source class in the layer); tests prove a disabled declaration opens nothing, creates no identity, and answers why, and that activation never delays serving. The skeleton a new repository starts from ships no declaration (ADR 0050); this repository commits its own enabled, a reviewed decision that docs/MESH.md describes and test/cases/491_the_mesh_is_on_here.sh holds."
     },
     {
       "id": "claim:mesh-one-registry",
       "kind": "claim",
-      "label": "Every discovery observation converges into one bounded registry, deduplicated by node identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
+      "label": "Every discovery observation converges into one bounded registry, deduplicated by node and runtime identity across sources, replay-protected per instance, and every surface projects that registry and holds no peers of its own",
       "status": "guaranteed",
       "route": "/guarantees/mesh-one-registry/",
       "external": false,
-      "note": "The registry unit tests prove multi-source convergence, replay drops, restart handling and the eviction bound; tests/mesh.rs proves it over a real socket; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site."
+      "note": "tests/mesh.rs proves the convergence to one record over a real socket, and the registry unit tests prove multi-source deduplication, replay drops, restart handling and the eviction bound; test/cases/130_mesh.sh covers the operator's path without a network and carries no part of this claim; scripts/ci/mesh-check (gate mesh-check) refuses a UDP socket outside src/mesh/ and a second MeshRegistry construction site. Since discovery protocol 2 (ADR 0067) a record is one runtime of a node, so two worktrees of one machine are two records under one key."
+    },
+    {
+      "id": "claim:mesh-cooperation-links",
+      "kind": "claim",
+      "label": "Two runtimes of one repository link only through a signed, replay-protected handshake that checks protocol, repository identity and trust, and every refusal is typed and visible",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-cooperation-links/",
+      "external": false,
+      "note": "Separate server processes link over TCP and their refusals of malformed, forged, future-protocol, other-repository and untrusted hellos are read back over HTTP; the unit tests of mesh::cooperation cover replay of a hello and of a sync counter, and the self link. No TLS — authenticity is the protocol's, confidentiality the network's (ADR 0067)."
+    },
+    {
+      "id": "claim:mesh-claims-cross-runtime",
+      "kind": "claim",
+      "label": "An exclusive claim made on one runtime excludes an overlapping claim on every linked runtime, and concurrent claims resolve to one named winner everywhere",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-claims-cross-runtime/",
+      "external": false,
+      "note": "Property tests of mesh::state prove the fold is independent of order and duplication and that no interleaving leaves two held exclusive claims meeting; the integration tests refuse a conflicting claim across two processes, across two worktrees and through a relay; the in-process partition test and the lab's network_partition scenario heal a partition into one held and one conflicted claim. Not strong consistency: under a partition both sides may hold, and the conflict is named after healing."
+    },
+    {
+      "id": "claim:mesh-repository-isolation",
+      "kind": "claim",
+      "label": "Runtimes serving different repositories never form a cooperative link, even when they discover each other",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-repository-isolation/",
+      "external": false,
+      "note": "The repository identity is the digest of the root commits or a declared value, never a path; the handshake refuses a mismatch both ways and ingest refuses another repository's event. The lab proves it between Linux nodes that discovered each other by multicast."
+    },
+    {
+      "id": "claim:mesh-liveness-expiry",
+      "kind": "claim",
+      "label": "A runtime that stops beating — crashed, killed or partitioned — expires on its peers within the declared expiry, its claims stop excluding, and its restart reconnects as the same runtime without a duplicate",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-liveness-expiry/",
+      "external": false,
+      "note": "A server process is killed with SIGKILL and restarted in the same checkout; its peer lists it once with restarts counted and its previous run's claim stays expired. Beats are aged on each runtime's own monotonic clock. The lab repeats it with docker kill and a network disconnect."
+    },
+    {
+      "id": "claim:mesh-three-runtime-convergence",
+      "kind": "claim",
+      "label": "Runtimes linked only through a relay converge on one state digest, each event held once, with no replication loop",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-three-runtime-convergence/",
+      "external": false,
+      "note": "Three server processes in a line agree on the digest, hold the same event count, and carry no further events once converged; origin signatures survive the relay. Delivery is at-least-once with idempotent application, not exactly-once."
+    },
+    {
+      "id": "claim:mesh-compaction-keeps-what-is-live",
+      "kind": "claim",
+      "label": "Compacting the cooperation journal changes nothing live — a handover nobody has taken keeps its stream for a bounded retention, who took a handover and who answered a review stay with them, and a compacted runtime that beats again is fetched again whole",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-compaction-keeps-what-is-live/",
+      "external": false,
+      "note": "Case 493 runs tests/mesh_compaction.rs, two runtimes linked through the real signed protocol over an in-process transport, because no black-box knob reaches compaction in bounded time (a server compacts every sixty heartbeats and keeps a dead stream fifteen minutes; only the heartbeat and the expiry are declarable). The journal's unit tests reproduce each defect PR 588 recorded, and its property test holds that compaction changes no live claim, open session, handover taker or review answer over random histories. Not covered — two runtimes may print different digests while each compacts on its own schedule; what is live agrees, and docs/MESH.md says so."
+    },
+    {
+      "id": "claim:mesh-network-acceptance",
+      "kind": "claim",
+      "label": "Separate Linux nodes on a real network discover each other by multicast, link, share claims and handovers, and recover from a partition and a crash, in a lab CI runs",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-network-acceptance/",
+      "external": false,
+      "note": "Four containers on one docker bridge, no seeds; ten scenarios with measured timings written to target/mesh-lab/evidence.json; the mesh-lab CI job runs the lab and then scripts/ci/mesh-lab-evidence, which refuses a record that is not a complete acceptance — the lab does not judge itself. Case 414 covers that reader and holds its required set equal to the scenarios the lab reaches. One layer-2 segment and one kernel — not a routed, NATed or WAN topology; physical machines are a documented manual procedure."
     },
     {
       "id": "claim:mesh-observation-not-authority",
@@ -1524,7 +1704,16 @@
       "status": "guaranteed",
       "route": "/guarantees/mesh-observation-not-authority/",
       "external": false,
-      "note": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. The capabilities the mesh exposes are read-only projections plus one registration command that changes process memory only."
+      "note": "The trust unit tests prove deny_unknown observes without trusting, allowlist and TOFU semantics, and that a key change under a known node id is rejected; the integration test proves a forged envelope is a counted refusal. Discovery still grants nothing: being heard or trusted admits no link on its own — a link needs the handshake of mesh-cooperation-links — and nothing a linked peer sends executes anything; the cooperation commands write this runtime's journal and, for a consumed handover, one record in this checkout's handovers directory (ADR 0067)."
+    },
+    {
+      "id": "claim:mesh-declared-is-held",
+      "kind": "claim",
+      "label": "An enabled mesh declaration whose shared server did not activate the mesh is a failed `runtime` check of `mesh doctor` (exit 10) carrying the server's reason, and a `Mesh: DECLARED ENABLED BUT NOT ACTIVE` line in the session-start briefing — never a quiet off; and this repository's committed declaration is tracked, enabled, allowlists the fleet and names a hub",
+      "status": "guaranteed",
+      "route": "/guarantees/mesh-declared-is-held/",
+      "external": false,
+      "note": "The runtime keeps one bit saying whether a shared server decided anything (activated, or declined with a reason); the doctor's `runtime` check reads the server's decision when the bit is set and reports an absence when it is not, and `majordomus mesh doctor` asks the running server for its report so that the verdict is the server's. The hook library renders the briefing line from that report and sends no request of its own. apps/majordomus-cli/tests/mesh.rs proves the three verdicts over a real server; the case proves the briefing answers and the exit code through the provider's start event, and reads this repository's committed declaration (ADR 0059). It does not make the mesh reach anybody, and hubs are started by hand."
     },
     {
       "id": "claim:models-one-declaration",
@@ -1588,6 +1777,78 @@
       "route": "/guarantees/commit-plan-is-refusable/",
       "external": false,
       "note": "Several workers share a checkout here and more share a repository, so a plan computed at one HEAD and executed at another would commit files somebody else staged under a message about work that is no longer what changed. The fingerprint is not a lock and does not prevent the race; it refuses to be the one that loses it silently. Two worktrees of one repository share a repository and differ in worktree, which is what keeps their plans apart. It also carries the project.derived-files-regenerated rule: a change set holding generated files is one commit, because only the last of several could carry current derived data."
+    },
+    {
+      "id": "claim:a-skipped-case-is-not-a-proof",
+      "kind": "claim",
+      "label": "A test case that declines to run is reported as a skip and recorded as one, so the evidence ledger can never read a case that asserted nothing as the proof of the claim it names",
+      "status": "guaranteed",
+      "route": "/guarantees/a-skipped-case-is-not-a-proof/",
+      "external": false,
+      "note": "A case that cannot meet a precondition said so with `exit 0`, which is the status the runner wrote `ok` for, so `majordomus evidence record` entered a run that measured nothing into the ledger as a pass. test/lib.sh's `skip` exits 4 and writes the file the runner names in MJ_SKIP_MARK, the runner writes SKIP into the TSV in both the serial and the parallel phase, and Outcome::Skip does not prove. A skip is still not a failure: the run's exit status is unchanged and a run whose cases all declined is a run rather than \"no cases found\". A failure is not a skip either: a case runs under `set -e`, `jq -e` fails with 4 when it produced no result, and a 4 without the mark is recorded as FAIL. The old shape is refused where it would be written: the case that proves this claim reads every file in test/cases/ and fails when one says `exit 0` before its last statement outside a heredoc body or a comment, so a case can leave with status 0 only by reaching its end."
+    },
+    {
+      "id": "claim:reasoning-works-with-no-advisor",
+      "kind": "claim",
+      "label": "Majordomus reasons, decides, implements and validates with no advisor at all: absent advisors are reported as ordinary state, material uncertainty gets a structured local review, and the conclusion claims no independent review",
+      "status": "guaranteed",
+      "route": "/guarantees/reasoning-works-with-no-advisor/",
+      "external": false,
+      "note": "the case builds its environment from nothing (env -i, a PATH holding git and node only, no credential), so it holds on a machine where every advisor is installed."
+    },
+    {
+      "id": "claim:advisor-transports-share-one-contract",
+      "kind": "claim",
+      "label": "Every advisor transport is held to one contract — typed failures, deadlines, cancellation, normalised answers, reported usage, redacted secrets — proven against fakes with no network, model or credential",
+      "status": "guaranteed",
+      "route": "/guarantees/advisor-transports-share-one-contract/",
+      "external": false,
+      "note": "node --test scripts/lib/advisors/contract.test.mjs; the case refuses a run of fewer tests than the suite holds."
+    },
+    {
+      "id": "claim:advice-is-weighed-not-counted",
+      "kind": "claim",
+      "label": "Advisors that disagree never decide by count: a conclusion is refused while a disagreement on its assessment is unsettled, a resolution needs evidence, and every answer received must be weighed",
+      "status": "guaranteed",
+      "route": "/guarantees/advice-is-weighed-not-counted/",
+      "external": false,
+      "note": "the case lets the minority position win once an experiment settles the disagreement."
+    },
+    {
+      "id": "claim:advisor-failure-is-recorded-and-recovers",
+      "kind": "claim",
+      "label": "An advisor that times out, is rate limited, refuses its credential or answers malformed is recorded as exactly that, never blocks the work, opens a circuit that closes again after its cooldown, and never fails the session",
+      "status": "guaranteed",
+      "route": "/guarantees/advisor-failure-is-recorded-and-recovers/",
+      "external": false,
+      "note": "the circuit is derived from the recorded outcomes and the clock; the case shortens the cooldown with MAJORDOMUS_REASONING_COOLDOWN_SECONDS."
+    },
+    {
+      "id": "claim:reasoning-survives-the-session",
+      "kind": "claim",
+      "label": "A decision and its provenance survive the session: the next session finds them in its context and handover, reuses a standing conclusion instead of consulting again, and reopens it only on new evidence",
+      "status": "guaranteed",
+      "route": "/guarantees/reasoning-survives-the-session/",
+      "external": false,
+      "note": "the scripted advisor of session B would hang if it were asked, so reuse is proven by the absence of a consultation."
+    },
+    {
+      "id": "claim:advisors-are-declared-once",
+      "kind": "claim",
+      "label": "Advisors are declared once, in share/advisors.yaml, by reference to the provider table and the model catalogue; a new advisor reaches the command line, the policy, HTTP, OpenAPI, MCP and the Cockpit with no consumer edited",
+      "status": "guaranteed",
+      "route": "/guarantees/advisors-are-declared-once/",
+      "external": false,
+      "note": "the case appends a representative advisor to a fixture catalogue and reads it back from every surface, then removes its executable and sees it unavailable everywhere."
+    },
+    {
+      "id": "claim:review-is-never-fabricated",
+      "kind": "claim",
+      "label": "A session cannot claim review it did not get: a consultation must name an advisor its recorded plan selected, a conclusion's review is computed, and reasoning check and doctor refuse a forged record, provider coupling, a model credential in CI and a refused claim in a document",
+      "status": "guaranteed",
+      "route": "/guarantees/review-is-never-fabricated/",
+      "external": false,
+      "note": "a negative case: each defect is planted and must be named by reasoning check (exit 10) and by doctor."
     },
     {
       "id": "impl:.github/workflows/pages.yml",
@@ -1660,6 +1921,13 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/cockpit/mod.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/cockpit/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/commit/plan.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/commit/plan.rs",
@@ -1684,6 +1952,20 @@
       "id": "impl:apps/majordomus-cli/src/distribution/mod.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/distribution/mod.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/economics/claims.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/economics/claims.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/economics/context.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/economics/context.rs",
       "route": null,
       "external": false
     },
@@ -1737,9 +2019,44 @@
       "external": false
     },
     {
+      "id": "impl:apps/majordomus-cli/src/mesh/cooperation.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/cooperation.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/doctor.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/journal.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/journal.rs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:apps/majordomus-cli/src/mesh/registry.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/mesh/registry.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/repository.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/repository.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/mesh/state.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/mesh/state.rs",
       "route": null,
       "external": false
     },
@@ -1789,6 +2106,48 @@
       "id": "impl:apps/majordomus-cli/src/providers.rs",
       "kind": "implementation",
       "label": "apps/majordomus-cli/src/providers.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/quality/rustdoc.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/quality/rustdoc.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/availability.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/availability.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/check.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/check.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/policy.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/policy.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/state.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/state.rs",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:apps/majordomus-cli/src/reasoning/store.rs",
+      "kind": "implementation",
+      "label": "apps/majordomus-cli/src/reasoning/store.rs",
       "route": null,
       "external": false
     },
@@ -1929,6 +2288,13 @@
       "id": "impl:lib/decision.sh",
       "kind": "implementation",
       "label": "lib/decision.sh",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:lib/deployment.sh",
+      "kind": "implementation",
+      "label": "lib/deployment.sh",
       "route": null,
       "external": false
     },
@@ -2101,6 +2467,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/ci/evidence-collect",
+      "kind": "implementation",
+      "label": "scripts/ci/evidence-collect",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/ci/finding-reproduce-check",
       "kind": "implementation",
       "label": "scripts/ci/finding-reproduce-check",
@@ -2164,6 +2537,13 @@
       "external": false
     },
     {
+      "id": "impl:scripts/lib/advisors/contract.mjs",
+      "kind": "implementation",
+      "label": "scripts/lib/advisors/contract.mjs",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/lib/executable-site.jq",
       "kind": "implementation",
       "label": "scripts/lib/executable-site.jq",
@@ -2206,9 +2586,23 @@
       "external": false
     },
     {
+      "id": "impl:scripts/site-build",
+      "kind": "implementation",
+      "label": "scripts/site-build",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:scripts/site-deploy",
       "kind": "implementation",
       "label": "scripts/site-deploy",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "impl:share/advisors.yaml",
+      "kind": "implementation",
+      "label": "share/advisors.yaml",
       "route": null,
       "external": false
     },
@@ -2241,6 +2635,13 @@
       "external": false
     },
     {
+      "id": "impl:test/mesh-lab/run",
+      "kind": "implementation",
+      "label": "test/mesh-lab/run",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "impl:test/run.sh",
       "kind": "implementation",
       "label": "test/run.sh",
@@ -2262,6 +2663,13 @@
       "external": false
     },
     {
+      "id": "source:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
@@ -2279,6 +2687,13 @@
       "id": "source:.ai/repo/rules/project/web-surface-declared-once.v1.md",
       "kind": "source",
       "label": ".ai/repo/rules/project/web-surface-declared-once.v1.md",
+      "route": null,
+      "external": false
+    },
+    {
+      "id": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "kind": "source",
+      "label": ".ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
       "route": null,
       "external": false
     },
@@ -2308,6 +2723,13 @@
       "kind": "source",
       "label": "docs/CLI.md",
       "route": "/docs/cli/",
+      "external": false
+    },
+    {
+      "id": "source:docs/COCKPIT.md",
+      "kind": "source",
+      "label": "docs/COCKPIT.md",
+      "route": "/docs/cockpit/",
       "external": false
     },
     {
@@ -2374,6 +2796,13 @@
       "external": false
     },
     {
+      "id": "source:docs/ECONOMICS.md",
+      "kind": "source",
+      "label": "docs/ECONOMICS.md",
+      "route": "/docs/economics/",
+      "external": false
+    },
+    {
       "id": "source:docs/EVIDENCE.md",
       "kind": "source",
       "label": "docs/EVIDENCE.md",
@@ -2437,10 +2866,24 @@
       "external": false
     },
     {
+      "id": "source:docs/REASONING.md",
+      "kind": "source",
+      "label": "docs/REASONING.md",
+      "route": "/docs/reasoning/",
+      "external": false
+    },
+    {
       "id": "source:docs/ROADMAP.md",
       "kind": "source",
       "label": "docs/ROADMAP.md",
       "route": "/docs/roadmap/",
+      "external": false
+    },
+    {
+      "id": "source:docs/RUSTDOC.md",
+      "kind": "source",
+      "label": "docs/RUSTDOC.md",
+      "route": "/docs/rustdoc/",
       "external": false
     },
     {
@@ -2479,6 +2922,13 @@
       "external": false
     },
     {
+      "id": "source:share/events.yaml",
+      "kind": "source",
+      "label": "share/events.yaml",
+      "route": null,
+      "external": false
+    },
+    {
       "id": "source:share/skeleton/policy.yaml",
       "kind": "source",
       "label": "share/skeleton/policy.yaml",
@@ -2514,18 +2964,39 @@
       "external": false
     },
     {
-      "id": "test:apps/majordomus-cli/src/models/mod.rs",
+      "id": "test:apps/majordomus-cli/tests/bench_units.rs",
       "kind": "test",
-      "label": "apps/majordomus-cli/src/models/mod.rs",
+      "label": "apps/majordomus-cli/tests/bench_units.rs",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/src/models/mod.rs"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/bench_units.rs"
     },
     {
-      "id": "test:apps/majordomus-cli/tests/cli_docs.rs",
+      "id": "test:apps/majordomus-cli/tests/cli_examples.rs",
       "kind": "test",
-      "label": "apps/majordomus-cli/tests/cli_docs.rs",
+      "label": "apps/majordomus-cli/tests/cli_examples.rs",
       "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_docs.rs"
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cli_examples.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/cockpit.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/cockpit.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/cockpit.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/executor.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/executor.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/executor.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/http_serve.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/http_serve.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/http_serve.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/lease_lost.rs",
@@ -2535,11 +3006,25 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/lease_lost.rs"
     },
     {
+      "id": "test:apps/majordomus-cli/tests/mcp_shared.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/mcp_shared.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/mcp_shared.rs"
+    },
+    {
       "id": "test:apps/majordomus-cli/tests/mesh.rs",
       "kind": "test",
       "label": "apps/majordomus-cli/tests/mesh.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/mesh.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/mesh_cooperation.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/product.rs",
@@ -2554,6 +3039,13 @@
       "label": "apps/majordomus-cli/tests/projections.rs",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/projections.rs"
+    },
+    {
+      "id": "test:apps/majordomus-cli/tests/registry.rs",
+      "kind": "test",
+      "label": "apps/majordomus-cli/tests/registry.rs",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/apps/majordomus-cli/tests/registry.rs"
     },
     {
       "id": "test:apps/majordomus-cli/tests/why.rs",
@@ -2647,25 +3139,11 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/125_rule_proof.sh"
     },
     {
-      "id": "test:test/cases/12_site_build.sh",
-      "kind": "test",
-      "label": "test/cases/12_site_build.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/12_site_build.sh"
-    },
-    {
       "id": "test:test/cases/130_archive.sh",
       "kind": "test",
       "label": "test/cases/130_archive.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_archive.sh"
-    },
-    {
-      "id": "test:test/cases/130_mesh.sh",
-      "kind": "test",
-      "label": "test/cases/130_mesh.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/130_mesh.sh"
     },
     {
       "id": "test:test/cases/131_models.sh",
@@ -2843,6 +3321,13 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/33_event_registry.sh"
     },
     {
+      "id": "test:test/cases/357_ci_records_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/357_ci_records_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/357_ci_records_evidence.sh"
+    },
+    {
       "id": "test:test/cases/359_live_scenarios.sh",
       "kind": "test",
       "label": "test/cases/359_live_scenarios.sh",
@@ -2850,11 +3335,39 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/359_live_scenarios.sh"
     },
     {
+      "id": "test:test/cases/400_derivation_is_one_graph.sh",
+      "kind": "test",
+      "label": "test/cases/400_derivation_is_one_graph.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/400_derivation_is_one_graph.sh"
+    },
+    {
+      "id": "test:test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+      "kind": "test",
+      "label": "test/cases/401_the_rust_artifact_carries_its_provenance.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/401_the_rust_artifact_carries_its_provenance.sh"
+    },
+    {
       "id": "test:test/cases/40_project_model.sh",
       "kind": "test",
       "label": "test/cases/40_project_model.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/40_project_model.sh"
+    },
+    {
+      "id": "test:test/cases/413_a_skipped_case_is_not_a_proof.sh",
+      "kind": "test",
+      "label": "test/cases/413_a_skipped_case_is_not_a_proof.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/413_a_skipped_case_is_not_a_proof.sh"
+    },
+    {
+      "id": "test:test/cases/414_mesh_lab_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/414_mesh_lab_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/414_mesh_lab_evidence.sh"
     },
     {
       "id": "test:test/cases/41_project_status.sh",
@@ -2871,11 +3384,81 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/42_dag_waves.sh"
     },
     {
+      "id": "test:test/cases/430_economics.sh",
+      "kind": "test",
+      "label": "test/cases/430_economics.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/430_economics.sh"
+    },
+    {
+      "id": "test:test/cases/431_economics_claims_gated.sh",
+      "kind": "test",
+      "label": "test/cases/431_economics_claims_gated.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/431_economics_claims_gated.sh"
+    },
+    {
       "id": "test:test/cases/45_github_projection.sh",
       "kind": "test",
       "label": "test/cases/45_github_projection.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/45_github_projection.sh"
+    },
+    {
+      "id": "test:test/cases/486_rustdoc_composition.sh",
+      "kind": "test",
+      "label": "test/cases/486_rustdoc_composition.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/486_rustdoc_composition.sh"
+    },
+    {
+      "id": "test:test/cases/487_rustdoc_staleness.sh",
+      "kind": "test",
+      "label": "test/cases/487_rustdoc_staleness.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/487_rustdoc_staleness.sh"
+    },
+    {
+      "id": "test:test/cases/488_rustdoc_discoverable.sh",
+      "kind": "test",
+      "label": "test/cases/488_rustdoc_discoverable.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/488_rustdoc_discoverable.sh"
+    },
+    {
+      "id": "test:test/cases/489_rustdoc_deploy.sh",
+      "kind": "test",
+      "label": "test/cases/489_rustdoc_deploy.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/489_rustdoc_deploy.sh"
+    },
+    {
+      "id": "test:test/cases/490_rustdoc_new_module.sh",
+      "kind": "test",
+      "label": "test/cases/490_rustdoc_new_module.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/490_rustdoc_new_module.sh"
+    },
+    {
+      "id": "test:test/cases/492_rustdoc_module_links.sh",
+      "kind": "test",
+      "label": "test/cases/492_rustdoc_module_links.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/492_rustdoc_module_links.sh"
+    },
+    {
+      "id": "test:test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "kind": "test",
+      "label": "test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/493_mesh_compaction_keeps_what_is_live.sh"
+    },
+    {
+      "id": "test:test/cases/494_the_mesh_is_declared_and_held.sh",
+      "kind": "test",
+      "label": "test/cases/494_the_mesh_is_declared_and_held.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/494_the_mesh_is_declared_and_held.sh"
     },
     {
       "id": "test:test/cases/49_roadmap_doctrine.sh",
@@ -2890,13 +3473,6 @@
       "label": "test/cases/50_blocker_across_handover.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/50_blocker_across_handover.sh"
-    },
-    {
-      "id": "test:test/cases/51_derived_artifacts_committed.sh",
-      "kind": "test",
-      "label": "test/cases/51_derived_artifacts_committed.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/51_derived_artifacts_committed.sh"
     },
     {
       "id": "test:test/cases/52_generated_artifact_typing.sh",
@@ -2969,6 +3545,55 @@
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/72_rust_mcp.sh"
     },
     {
+      "id": "test:test/cases/730_reasoning_works_with_no_advisor.sh",
+      "kind": "test",
+      "label": "test/cases/730_reasoning_works_with_no_advisor.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/730_reasoning_works_with_no_advisor.sh"
+    },
+    {
+      "id": "test:test/cases/731_advisor_transport_contract.sh",
+      "kind": "test",
+      "label": "test/cases/731_advisor_transport_contract.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/731_advisor_transport_contract.sh"
+    },
+    {
+      "id": "test:test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "kind": "test",
+      "label": "test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/732_disagreement_is_settled_by_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/733_advisor_failure_and_recovery.sh",
+      "kind": "test",
+      "label": "test/cases/733_advisor_failure_and_recovery.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/733_advisor_failure_and_recovery.sh"
+    },
+    {
+      "id": "test:test/cases/734_reasoning_survives_the_session.sh",
+      "kind": "test",
+      "label": "test/cases/734_reasoning_survives_the_session.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/734_reasoning_survives_the_session.sh"
+    },
+    {
+      "id": "test:test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "kind": "test",
+      "label": "test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/735_a_new_advisor_needs_no_consumer_edit.sh"
+    },
+    {
+      "id": "test:test/cases/736_reasoning_check_refuses_drift.sh",
+      "kind": "test",
+      "label": "test/cases/736_reasoning_check_refuses_drift.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/736_reasoning_check_refuses_drift.sh"
+    },
+    {
       "id": "test:test/cases/76_capabilities_projections.sh",
       "kind": "test",
       "label": "test/cases/76_capabilities_projections.sh",
@@ -2981,6 +3606,13 @@
       "label": "test/cases/77_rust_evidence.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/77_rust_evidence.sh"
+    },
+    {
+      "id": "test:test/cases/84_deployment_contract.sh",
+      "kind": "test",
+      "label": "test/cases/84_deployment_contract.sh",
+      "external": true,
+      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/84_deployment_contract.sh"
     },
     {
       "id": "test:test/cases/84_distribution_model.sh",
@@ -3121,13 +3753,6 @@
       "label": "test/cases/97_product_features.sh",
       "external": true,
       "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/97_product_features.sh"
-    },
-    {
-      "id": "test:test/cases/98_why_catalogue.sh",
-      "kind": "test",
-      "label": "test/cases/98_why_catalogue.sh",
-      "external": true,
-      "route": "https://github.com/korczis/prismatic-majordomus/blob/master/test/cases/98_why_catalogue.sh"
     },
     {
       "id": "test:test/cases/99_adr.sh",
@@ -3349,6 +3974,11 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "source:share/events.yaml",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:typed-outcome",
       "target": "source:docs/SCHEMAS.md",
       "kind": "specified_by"
@@ -3531,6 +4161,21 @@
     {
       "source": "claim:telemetry",
       "target": "source:docs/DESIGN.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:context-selection-counted",
+      "target": "source:docs/ECONOMICS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:economics-claims-gated",
+      "target": "source:docs/ECONOMICS.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:token-savings-measured",
+      "target": "source:docs/ECONOMICS.md",
       "kind": "specified_by"
     },
     {
@@ -3879,6 +4524,36 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:rustdoc-discoverable",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rustdoc-composed-from-the-topology",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rustdoc-published",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rustdoc-complete",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rustdoc-verified-live",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
+      "target": "source:docs/RUSTDOC.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:worktree-topology-derived",
       "target": "source:docs/WORKTREES.md",
       "kind": "specified_by"
@@ -3914,7 +4589,22 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:cockpit-is-a-projection-of-the-registry",
+      "target": "source:docs/COCKPIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:deployment-contract-refuses-by-name",
+      "target": "source:.ai/repo/rules/vendor/majordomus/rules/deployment-contract.v1.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:evidence-proof-is-an-execution",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:evidence-recorded-in-ci",
       "target": "source:docs/EVIDENCE.md",
       "kind": "specified_by"
     },
@@ -3974,8 +4664,48 @@
       "kind": "specified_by"
     },
     {
+      "source": "claim:mesh-cooperation-links",
+      "target": "source:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-claims-cross-runtime",
+      "target": "source:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-repository-isolation",
+      "target": "source:.ai/repo/rules/project/mesh-cooperation-is-authenticated.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-liveness-expiry",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-three-runtime-convergence",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-network-acceptance",
+      "target": "source:docs/MESH.md",
+      "kind": "specified_by"
+    },
+    {
       "source": "claim:mesh-observation-not-authority",
       "target": "source:.ai/repo/rules/project/mesh-is-observation-not-authority.v1.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "source:docs/MESH.md",
       "kind": "specified_by"
     },
     {
@@ -4011,6 +4741,46 @@
     {
       "source": "claim:commit-plan-is-refusable",
       "target": "source:docs/COMMIT.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:a-skipped-case-is-not-a-proof",
+      "target": "source:docs/EVIDENCE.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:reasoning-works-with-no-advisor",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advisor-transports-share-one-contract",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advice-is-weighed-not-counted",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advisor-failure-is-recorded-and-recovers",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:reasoning-survives-the-session",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:advisors-are-declared-once",
+      "target": "source:docs/REASONING.md",
+      "kind": "specified_by"
+    },
+    {
+      "source": "claim:review-is-never-fabricated",
+      "target": "source:docs/REASONING.md",
       "kind": "specified_by"
     },
     {
@@ -4224,6 +4994,11 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "impl:lib/finish.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:typed-outcome",
       "target": "impl:lib/finish.sh",
       "kind": "implemented_by"
@@ -4386,6 +5161,16 @@
     {
       "source": "claim:blocker-survives-handover",
       "target": "impl:lib/check.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:context-selection-counted",
+      "target": "impl:apps/majordomus-cli/src/economics/context.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:economics-claims-gated",
+      "target": "impl:apps/majordomus-cli/src/economics/claims.rs",
       "kind": "implemented_by"
     },
     {
@@ -4709,6 +5494,36 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:rustdoc-discoverable",
+      "target": "impl:apps/majordomus-cli/src/web/discover.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rustdoc-composed-from-the-topology",
+      "target": "impl:scripts/site-build",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rustdoc-published",
+      "target": "impl:scripts/site-deploy",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rustdoc-complete",
+      "target": "impl:apps/majordomus-cli/src/quality/rustdoc.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rustdoc-verified-live",
+      "target": "impl:scripts/pages",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
+      "target": "impl:apps/majordomus-cli/src/site.rs",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:worktree-topology-derived",
       "target": "impl:apps/majordomus-cli/src/worktree/path.rs",
       "kind": "implemented_by"
@@ -4744,8 +5559,23 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:cockpit-is-a-projection-of-the-registry",
+      "target": "impl:apps/majordomus-cli/src/cockpit/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:deployment-contract-refuses-by-name",
+      "target": "impl:lib/deployment.sh",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:evidence-proof-is-an-execution",
       "target": "impl:apps/majordomus-cli/src/evidence/mod.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "impl:scripts/ci/evidence-collect",
       "kind": "implemented_by"
     },
     {
@@ -4804,8 +5634,48 @@
       "kind": "implemented_by"
     },
     {
+      "source": "claim:mesh-cooperation-links",
+      "target": "impl:apps/majordomus-cli/src/mesh/cooperation.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-claims-cross-runtime",
+      "target": "impl:apps/majordomus-cli/src/mesh/state.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-repository-isolation",
+      "target": "impl:apps/majordomus-cli/src/mesh/repository.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-liveness-expiry",
+      "target": "impl:apps/majordomus-cli/src/mesh/cooperation.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-three-runtime-convergence",
+      "target": "impl:apps/majordomus-cli/src/mesh/journal.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "impl:apps/majordomus-cli/src/mesh/journal.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-network-acceptance",
+      "target": "impl:test/mesh-lab/run",
+      "kind": "implemented_by"
+    },
+    {
       "source": "claim:mesh-observation-not-authority",
       "target": "impl:apps/majordomus-cli/src/mesh/trust.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "impl:apps/majordomus-cli/src/mesh/doctor.rs",
       "kind": "implemented_by"
     },
     {
@@ -4841,6 +5711,46 @@
     {
       "source": "claim:commit-plan-is-refusable",
       "target": "impl:apps/majordomus-cli/src/commit/plan.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:a-skipped-case-is-not-a-proof",
+      "target": "impl:test/run.sh",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:reasoning-works-with-no-advisor",
+      "target": "impl:apps/majordomus-cli/src/reasoning/policy.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advisor-transports-share-one-contract",
+      "target": "impl:scripts/lib/advisors/contract.mjs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advice-is-weighed-not-counted",
+      "target": "impl:apps/majordomus-cli/src/reasoning/store.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advisor-failure-is-recorded-and-recovers",
+      "target": "impl:apps/majordomus-cli/src/reasoning/availability.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:reasoning-survives-the-session",
+      "target": "impl:apps/majordomus-cli/src/reasoning/state.rs",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:advisors-are-declared-once",
+      "target": "impl:share/advisors.yaml",
+      "kind": "implemented_by"
+    },
+    {
+      "source": "claim:review-is-never-fabricated",
+      "target": "impl:apps/majordomus-cli/src/reasoning/check.rs",
       "kind": "implemented_by"
     },
     {
@@ -5054,6 +5964,11 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:finish-refusal-is-recorded",
+      "target": "test:test/cases/06_finish.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:typed-outcome",
       "target": "test:test/cases/06_finish.sh",
       "kind": "proved_by"
@@ -5219,6 +6134,16 @@
       "kind": "proved_by"
     },
     {
+      "source": "claim:context-selection-counted",
+      "target": "test:test/cases/430_economics.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:economics-claims-gated",
+      "target": "test:test/cases/431_economics_claims_gated.sh",
+      "kind": "proved_by"
+    },
+    {
       "source": "claim:project-schema",
       "target": "test:test/cases/40_project_model.sh",
       "kind": "proved_by"
@@ -5275,7 +6200,7 @@
     },
     {
       "source": "claim:capability-registry",
-      "target": "test:test/cases/76_capabilities_projections.sh",
+      "target": "test:apps/majordomus-cli/tests/registry.rs",
       "kind": "proved_by"
     },
     {
@@ -5305,7 +6230,7 @@
     },
     {
       "source": "claim:mcp-lease-resilience",
-      "target": "test:test/cases/90_mcp_shared_server.sh",
+      "target": "test:apps/majordomus-cli/tests/mcp_shared.rs",
       "kind": "proved_by"
     },
     {
@@ -5325,7 +6250,7 @@
     },
     {
       "source": "claim:mcp-uri-resolution",
-      "target": "test:test/cases/72_rust_mcp.sh",
+      "target": "test:apps/majordomus-cli/tests/http_serve.rs",
       "kind": "proved_by"
     },
     {
@@ -5345,12 +6270,12 @@
     },
     {
       "source": "claim:capability-modules",
-      "target": "test:test/cases/91_canonical_architecture.sh",
+      "target": "test:apps/majordomus-cli/tests/registry.rs",
       "kind": "proved_by"
     },
     {
       "source": "claim:benchmark-coverage-derived",
-      "target": "test:test/cases/91_canonical_architecture.sh",
+      "target": "test:apps/majordomus-cli/tests/bench_units.rs",
       "kind": "proved_by"
     },
     {
@@ -5360,7 +6285,7 @@
     },
     {
       "source": "claim:execution-cache-equivalence",
-      "target": "test:test/cases/91_canonical_architecture.sh",
+      "target": "test:apps/majordomus-cli/tests/executor.rs",
       "kind": "proved_by"
     },
     {
@@ -5390,7 +6315,7 @@
     },
     {
       "source": "claim:rust-binary-artifact",
-      "target": "test:test/cases/94_ci_plan.sh",
+      "target": "test:test/cases/401_the_rust_artifact_carries_its_provenance.sh",
       "kind": "proved_by"
     },
     {
@@ -5450,7 +6375,7 @@
     },
     {
       "source": "claim:derivation-one-graph",
-      "target": "test:test/cases/51_derived_artifacts_committed.sh",
+      "target": "test:test/cases/400_derivation_is_one_graph.sh",
       "kind": "proved_by"
     },
     {
@@ -5480,7 +6405,7 @@
     },
     {
       "source": "claim:why-catalogue-discovered",
-      "target": "test:test/cases/98_why_catalogue.sh",
+      "target": "test:apps/majordomus-cli/tests/why.rs",
       "kind": "proved_by"
     },
     {
@@ -5525,7 +6450,7 @@
     },
     {
       "source": "claim:cli-documentation-executable",
-      "target": "test:apps/majordomus-cli/tests/cli_docs.rs",
+      "target": "test:apps/majordomus-cli/tests/cli_examples.rs",
       "kind": "proved_by"
     },
     {
@@ -5536,6 +6461,36 @@
     {
       "source": "claim:web-namespaces-reserved",
       "target": "test:test/cases/89_web_surface.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-discoverable",
+      "target": "test:test/cases/488_rustdoc_discoverable.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-composed-from-the-topology",
+      "target": "test:test/cases/486_rustdoc_composition.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-published",
+      "target": "test:test/cases/489_rustdoc_deploy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-complete",
+      "target": "test:test/cases/490_rustdoc_new_module.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-verified-live",
+      "target": "test:test/cases/487_rustdoc_staleness.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:rustdoc-referenced",
+      "target": "test:test/cases/492_rustdoc_module_links.sh",
       "kind": "proved_by"
     },
     {
@@ -5570,12 +6525,27 @@
     },
     {
       "source": "claim:landing-page-is-a-projection",
-      "target": "test:test/cases/12_site_build.sh",
+      "target": "test:test/cases/400_derivation_is_one_graph.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:cockpit-is-a-projection-of-the-registry",
+      "target": "test:apps/majordomus-cli/tests/cockpit.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:deployment-contract-refuses-by-name",
+      "target": "test:test/cases/84_deployment_contract.sh",
       "kind": "proved_by"
     },
     {
       "source": "claim:evidence-proof-is-an-execution",
       "target": "test:test/cases/124_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:evidence-recorded-in-ci",
+      "target": "test:test/cases/357_ci_records_evidence.sh",
       "kind": "proved_by"
     },
     {
@@ -5630,12 +6600,52 @@
     },
     {
       "source": "claim:mesh-one-registry",
-      "target": "test:test/cases/130_mesh.sh",
+      "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-cooperation-links",
+      "target": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-claims-cross-runtime",
+      "target": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-repository-isolation",
+      "target": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-liveness-expiry",
+      "target": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-three-runtime-convergence",
+      "target": "test:apps/majordomus-cli/tests/mesh_cooperation.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-compaction-keeps-what-is-live",
+      "target": "test:test/cases/493_mesh_compaction_keeps_what_is_live.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-network-acceptance",
+      "target": "test:test/cases/414_mesh_lab_evidence.sh",
       "kind": "proved_by"
     },
     {
       "source": "claim:mesh-observation-not-authority",
       "target": "test:apps/majordomus-cli/tests/mesh.rs",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:mesh-declared-is-held",
+      "target": "test:test/cases/494_the_mesh_is_declared_and_held.sh",
       "kind": "proved_by"
     },
     {
@@ -5650,7 +6660,7 @@
     },
     {
       "source": "claim:models-no-secret-fields",
-      "target": "test:apps/majordomus-cli/src/models/mod.rs",
+      "target": "test:test/cases/131_models.sh",
       "kind": "proved_by"
     },
     {
@@ -5671,6 +6681,46 @@
     {
       "source": "claim:commit-plan-is-refusable",
       "target": "test:test/cases/274_commit_policy.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:a-skipped-case-is-not-a-proof",
+      "target": "test:test/cases/413_a_skipped_case_is_not_a_proof.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:reasoning-works-with-no-advisor",
+      "target": "test:test/cases/730_reasoning_works_with_no_advisor.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advisor-transports-share-one-contract",
+      "target": "test:test/cases/731_advisor_transport_contract.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advice-is-weighed-not-counted",
+      "target": "test:test/cases/732_disagreement_is_settled_by_evidence.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advisor-failure-is-recorded-and-recovers",
+      "target": "test:test/cases/733_advisor_failure_and_recovery.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:reasoning-survives-the-session",
+      "target": "test:test/cases/734_reasoning_survives_the_session.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:advisors-are-declared-once",
+      "target": "test:test/cases/735_a_new_advisor_needs_no_consumer_edit.sh",
+      "kind": "proved_by"
+    },
+    {
+      "source": "claim:review-is-never-fabricated",
+      "target": "test:test/cases/736_reasoning_check_refuses_drift.sh",
       "kind": "proved_by"
     }
   ]

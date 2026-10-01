@@ -1,5 +1,6 @@
 # majordomus-covers: handover
 # majordomus-negative: handover start
+# claims: handover-record, no-transcripts
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib && echo a > lib/a && git add . && git commit -qm base
@@ -59,6 +60,10 @@ git checkout -q -
 # newest wins within the same tier
 sleep 1
 expect_exit 0 bash -c "printf '# Objective\nsecond\n# Current State\ns\n# Next Action\ns\n' | '$MJ' handover --close"
+# append-only: the second handover is a new record, and the first is still there, byte for byte
+[ "$(ls .ai/local/state/handovers/*.md | wc -l | tr -d ' ')" = 2 ] \
+  || { echo "    a second handover did not add a record beside the first"; ls .ai/local/state/handovers; exit 1; }
+cmp -s "$rec" "$T/record.keep" || { echo "    a second handover changed or removed the first record"; exit 1; }
 expect_exit 0 "$MJ" handover --resolve
 expect_grep '^second$'
 # --close lets a new task start; old one is archived, not lost

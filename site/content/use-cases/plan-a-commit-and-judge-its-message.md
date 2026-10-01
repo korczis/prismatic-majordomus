@@ -6,7 +6,7 @@ weight = 25
 id = "plan-a-commit-and-judge-its-message"
 source = ".ai/repo/use-cases/plan-a-commit-and-judge-its-message.md"
 category = "policy"
-maturity = "described"
+maturity = "executable"
 +++
 
 ## Situation

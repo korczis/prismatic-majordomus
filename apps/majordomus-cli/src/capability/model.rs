@@ -460,7 +460,7 @@ pub enum Effect {
     /// [`ExecutionPolicy::writes_repository`], the way one that stops says so with
     /// [`ExecutionPolicy::stoppable`].
     ///
-    /// [ADR 0040]: ../../../../.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
+    /// [ADR 0040]: https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0040-development-semantics-are-capabilities-of-one-runtime.md
     RepositoryMutation,
 }
 

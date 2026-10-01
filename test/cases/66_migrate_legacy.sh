@@ -1,5 +1,6 @@
 # majordomus-covers: migrate
 # majordomus-negative: migrate
+# claims: legacy-migration
 # migrate moves a repository from the pre-.ai layout (.majordomus/ holding project data)
 # to the portable .ai/ layer: explicitly, previewed, with a verified backup of the local
 # state, never deleting what it does not know, and idempotent afterwards.

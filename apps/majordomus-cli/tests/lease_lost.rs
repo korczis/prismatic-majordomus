@@ -13,6 +13,8 @@
 //! about the process that is never unmade — a lease taken over is not given back — so the
 //! before and the after cannot be two tests sharing a binary.
 
+// claims: mcp-lease-lost
+
 mod common;
 
 use std::sync::Arc;
@@ -122,6 +124,26 @@ fn a_server_that_lost_its_lease_says_so_and_takes_on_nobody_new() {
     assert!(
         !lease::probe(&url, repo.root()),
         "a client with a remembered address is not answered as though this were the one"
+    );
+
+    // its health says that what the server check describes is another process
+    let report = app
+        .context
+        .execute("health.report", json!({}))
+        .expect("health.report answers");
+    let server_check = report["checks"]
+        .as_array()
+        .expect("the report carries checks")
+        .iter()
+        .find(|c| c["id"] == "server")
+        .expect("the report carries the server check")
+        .clone();
+    assert_eq!(server_check["status"], "warn", "{server_check}");
+    assert!(
+        server_check
+            .to_string()
+            .contains("what is described above is another process"),
+        "the check names the process it describes as another one: {server_check}"
     );
 
     // it takes on nobody new, and the refusal names what to do instead

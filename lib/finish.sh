@@ -81,6 +81,14 @@ H
   done
   contract="{${contract%,}}"
   if [ "$unmet" -gt 0 ]; then
+    # A refusal is a record. Until it was one, a task refused four times before it passed
+    # left the same ledger as a task that passed first try, so the one claim this command
+    # exists to make falsifiable — "done" — left no trace of every time it was false. The
+    # doctrines that refused are named, because a count nobody can attribute is not evidence.
+    # `finish --check` returned above and writes nothing: a check is a question, not a claim.
+    local d refused_json=""
+    for d in $refused; do refused_json="$refused_json\"$d\","; done
+    mj_ledger_append task.refused "\"task_id\":\"$id\",\"outcome\":\"$outcome\",\"unmet\":$unmet,\"refused\":[${refused_json%,}],\"contract\":$contract"
     if [ "$MJ_JSON" != 1 ]; then
       printf 'finish: refused, %s unmet\n' "$unmet"
       [ -n "$refused" ] && printf 'blocking doctrines:%s\n' "$(printf '%s' "$refused" | tr ' ' '\n' | sed '/^$/d' | sed 's/^/\n- /' | tr -d '\n' | sed 's/^/\n/')"
@@ -127,7 +135,10 @@ mj_validate_verification() {
   if [ -z "$MJ_FINISH_VERIFY" ]; then
     mj_doctrine_fail verification "$id" "profile $(mj_cur profile) requires --verify-command" "majordomus finish --outcome completed --verify-command \"<cmd>\""; return 0; fi
   local t0 t1 vexit; t0="$(date +%s)"
-  if ( cd "$MJ_ROOT" && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
+  # The verify command is the project's own verification, run as a worker would run it. The
+  # outcome this finish claims is its own state: a `check` the command runs that saw it would
+  # judge obligations and gates as a completed finish and refuse, so it is not exported there.
+  if ( cd "$MJ_ROOT" && unset MJ_FINISH_OUTCOME && sh -c "$MJ_FINISH_VERIFY" ) > /dev/null 2>&1; then vexit=0; else vexit=$?; fi
   t1="$(date +%s)"; MJ_FINISH_VEXIT="$vexit"; MJ_FINISH_VSECS=$((t1-t0))
   if [ "$vexit" = 0 ]; then mj_doctrine_ok verification "$id" "$MJ_FINISH_VERIFY — exit 0, ${MJ_FINISH_VSECS}s"
   else mj_doctrine_fail verification "$id" "$MJ_FINISH_VERIFY — exit $vexit, ${MJ_FINISH_VSECS}s" "$MJ_FINISH_VERIFY"; fi

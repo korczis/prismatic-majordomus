@@ -1,5 +1,6 @@
 # majordomus-covers: plan
 # majordomus-negative: plan
+# claims: project-schema
 # The canonical project model: what parses, what is refused, and what is never stored.
 #
 # The schema rule is the same one policy and profiles live under — a key nobody reads is an

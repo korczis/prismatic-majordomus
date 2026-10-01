@@ -1,3 +1,4 @@
+# claims: worktree-ownership
 # A task record names the checkout it belongs to. Local state is never tracked, but a record
 # can still arrive in another checkout — a copied working directory, a synced folder, a tool
 # that moved it — and that checkout must not be held to a scope it never claimed. "One

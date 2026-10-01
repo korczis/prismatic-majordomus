@@ -1,5 +1,63 @@
 # Sourced by every test case. Provides expect_exit / expect_grep / expect_no_grep.
+
+# A case runs only in the fixture the runner made for it. Every case writes into the
+# directory it starts in (`printf ... > docs/CLAIMS.yaml`, `git add -A`, `git commit`),
+# because test/run.sh starts it in $T, a disposable repository of its own. Started by hand
+# from a checkout, it writes into that checkout. On 2026-09-28 the fixture of case 506,
+# run with a checkout as its working directory, emptied that checkout's claims matrix,
+# replaced its toolchain pin, added two stub files and staged all four; only the checkout's
+# own pre-commit hook stopped the `git commit -qm fixture` behind them.
+#
+# So before a case's first line runs: $T and $ROOT are set, the case stands in $T, and $T
+# is a fixture rather than a checkout of this repository, so it is neither $ROOT nor inside
+# it, and it has no test/run.sh. Setting T to the checkout is the first thing a caller tries
+# when this refuses, and it is refused too. The other callers that load this library
+# themselves (scripts/shell-coverage, case 35, the harness of case 413, and the use-case
+# runner in lib/usecase.sh, whose scenario setups use its helpers) set T and stand in it,
+# as test/run.sh does. Case 94 proves the refusal. The cost is two subshells.
+mj_case_in_its_fixture() {
+  local here fixture root
+  [ -n "${T:-}" ] && [ -n "${ROOT:-}" ] || return 1
+  here="$(pwd -P)" || return 1
+  fixture="$(cd "$T" 2>/dev/null && pwd -P)" || return 1
+  root="$(cd "$ROOT" 2>/dev/null && pwd -P)" || return 1
+  [ "$here" = "$fixture" ] || return 1
+  case "$fixture/" in "$root/"*) return 1 ;; esac
+  [ ! -e "$fixture/test/run.sh" ]
+}
+mj_case_in_its_fixture || {
+  printf '    run this case through test/run.sh: a case writes its fixture into the directory it starts in, and %s is not a fixture test/run.sh made (T=%s)\n' \
+    "$(pwd)" "${T:-unset}" >&2
+  exit 1
+}
+
 LAST_OUT=""
+
+# The exit status a case uses to say it declined to run. It is not 0 and it is not 1: the
+# runner maps it to SKIP, and every other non-zero status stays a failure.
+#
+# A case that cannot meet a precondition -- no jq, no zola, no built executable -- used to
+# say so with `echo "    skip: ..."; exit 0`, and exit 0 is the word the runner writes for a
+# case that ran and asserted everything it was written to assert. The two then became one
+# `ok` in the TSV, `majordomus evidence record` entered that `ok` into the ledger, and the
+# claim the case proves read as supported on the strength of a run that proved nothing. The
+# ledger already had the word for this (`Outcome::Skip`, which does not prove); what was
+# missing was a runner that could ever write it.
+#
+#   command -v jq >/dev/null 2>&1 || skip "no jq"
+#
+# The status alone is not the declaration. A case runs under `set -e`, so any command that
+# fails with the same status ends the case with it -- `jq -e` exits 4 when it produced no
+# result, which is what it does on the empty output of a command that broke -- and a runner
+# that read 4 as a skip would record that failure as a case that declined. So `skip` also
+# writes the file the runner names in MJ_SKIP_MARK, and the runner reads a skip only when
+# both are there; a 4 nobody declared stays a failure.
+MJ_SKIP_STATUS=4
+skip() {
+  printf '    skip: %s\n' "$*"
+  if [ -n "${MJ_SKIP_MARK:-}" ]; then printf '%s\n' "$*" > "$MJ_SKIP_MARK"; fi
+  exit "$MJ_SKIP_STATUS"
+}
 expect_exit() {
   local want="$1"; shift
   local got=0
@@ -93,7 +151,27 @@ rust_bin() {
 }
 # The line a Rust case runs first: the executable into RB, or the skip/failure exit.
 #   RB="$(rust_bin)" || rust_bin_exit $?
-rust_bin_exit() { [ "$1" = 3 ] && { echo "    skip: no cargo and no MAJORDOMUS_BIN"; exit 0; }; exit 1; }
+rust_bin_exit() { [ "$1" = 3 ] && skip "no cargo and no MAJORDOMUS_BIN"; exit 1; }
+
+# The end of a case that cannot measure its subject here, and why.
+#
+# The harness has no skip state: a case that exits 0 is reported `ok`, so a skip is a pass
+# that measured nothing, and the machine that lacks every tool shows the greenest suite
+# (cases 12 and 33 each read as fixed that way while they were red). Two rules follow. Under
+# CI (CI=true, which GitHub Actions sets) the job installs every tool the suite needs, so an
+# absence there is the job's setup failing and the case fails saying so — the path that
+# protects master never reports `ok` for a case that did not run. Anywhere else the case ends
+# with a line that names what was not measured, so a reader who greps a log for `skip:` finds
+# every pass that proved nothing.
+#   command -v zola >/dev/null || skip_case "zola is absent, so the site build was not measured"
+skip_case() {
+  if [ "${CI:-}" = true ]; then
+    printf '    %s; under CI every tool the suite needs is installed, so this is a failure, not a skip\n' "$1"
+    exit 1
+  fi
+  printf '    skip: %s\n' "$1"
+  exit 0
+}
 
 # The whole workflow declaration of this repository, written to a file a case can grep.
 #
@@ -342,3 +420,171 @@ start_http() {
 }
 
 stop_http() { [ -n "${HTTP_PID:-}" ] && kill "$HTTP_PID" 2>/dev/null; HTTP_PID=""; return 0; }
+
+# `majordomus serve` of the current directory on an ephemeral port, for the cases that ask a
+# real socket. Once it listens, SRV is its pid and U its base URL (http://127.0.0.1:<port>);
+# `serve_down` stops it. The caller has set RB (rust_bin) and kills $SRV in its EXIT trap, as
+# it does for anything it starts. Answers 1, having said why and printed the server's log,
+# when the server exits before it listens or has not listened within 30 s.
+#   serve_up <out> <err>      the server's stdout and stderr, which the case may read after
+#
+# Two things here are what the copies of this in cases 89 and 488 got wrong, seen on a loaded
+# runner as "no URL on the listening line" from a server that had listened:
+#  * The log is emptied in this shell before the server starts. The redirection empties it
+#    too, but in the background child, whenever that child gets to it: a wait that reads the
+#    file at once can find the previous server's listening line there, and the read after it
+#    the file the child has just emptied.
+#  * The wait polls for the URL itself, not for the words before it, and U is the value the
+#    poll found. Nothing reads the file a second time, so nothing can read it between states.
+serve_up() {
+  local out="$1" err="$2" i=0
+  local url='/listening on http:\/\/127\.0\.0\.1:[0-9]/'
+  url="$url"'{s#.*listening on \(http://127\.0\.0\.1:[0-9][0-9]*\).*#\1#p;q;}'
+  U=""
+  : > "$err"
+  "$RB" serve --repo "$PWD" --port 0 > "$out" 2> "$err" & SRV=$!
+  while :; do
+    U="$(sed -n "$url" "$err")"
+    [ -z "$U" ] || return 0
+    kill -0 "$SRV" 2>/dev/null || { echo "    the server exited before listening"; cat "$err"; return 1; }
+    i=$((i+1))
+    [ "$i" -lt 300 ] || { echo "    the server has not listened in 30 s"; cat "$err"; return 1; }
+    sleep 0.1
+  done
+}
+# `wait` on a signalled child reports its signal, which is the expected outcome here and not
+# a failure of the case, so neither it nor the kill is allowed to trip `set -e`.
+serve_down() {
+  [ -n "${SRV:-}" ] || return 0
+  kill "$SRV" 2>/dev/null || true
+  wait "$SRV" 2>/dev/null || true
+  SRV=""
+}
+
+# A crate where the repository's own crate lives, shaped the way the rustdoc producer expects
+# the real one and small enough to document in seconds: the package majordomus-cli, its
+# library majordomus_cli, its executable majordomus, and a COMMIT constant the build is handed
+# the commit through, as the real crate's build.rs is (MAJORDOMUS_BUILD_COMMIT). Written into
+# the current directory beside the producer itself — scripts/rust-check and the file it
+# sources — and the repository's toolchain pin, so the fixture is documented by the rustdoc the
+# published reference is, and handed off by the script that hands that one off rather than by
+# a case's copy of its steps. The caller commits: the producer records HEAD.
+#   rustdoc_fixture_crate            the crate, one module (alpha) and one exported macro,
+#                                    the producer and the pin
+#   rustdoc_fixture_module NAME      `pub mod NAME;` with one documented struct in it
+#   rustdoc_fixture_produce          scripts/rust-check --doc, quietly; says why when it fails
+rustdoc_fixture_crate() {
+  local c=apps/majordomus-cli version
+  # the version the executable was built at: `majordomus generate` refuses to stamp a tree
+  # whose crate declares another one
+  version="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/$c/Cargo.toml" | head -n 1)"
+  mkdir -p "$c/src" scripts lib
+  cp "$ROOT/scripts/rust-check" scripts/rust-check
+  cp "$ROOT/lib/rust_bin.sh" lib/rust_bin.sh
+  cp "$ROOT/rust-toolchain.toml" rust-toolchain.toml
+  printf 'target/\n' > .gitignore
+  cat > "$c/Cargo.toml" <<TOML
+[package]
+name = "majordomus-cli"
+version = "$version"
+edition = "2021"
+publish = false
+
+[lib]
+name = "majordomus_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "majordomus"
+path = "src/main.rs"
+TOML
+  cat > "$c/build.rs" <<'RUST'
+//! The commit the build was handed, compiled in, as the real crate's build script does.
+fn main() {
+    println!("cargo:rerun-if-env-changed=MAJORDOMUS_BUILD_COMMIT");
+    let commit = std::env::var("MAJORDOMUS_BUILD_COMMIT").unwrap_or_else(|_| "unknown".into());
+    println!("cargo:rustc-env=MAJORDOMUS_COMMIT={commit}");
+}
+RUST
+  # the macro is there for the redirect stub rustdoc writes for it (macro.nothing!.html)
+  cat > "$c/src/lib.rs" <<'RUST'
+//! The fixture crate.
+#![warn(missing_docs)]
+
+/// The commit this build was handed.
+pub const COMMIT: &str = env!("MAJORDOMUS_COMMIT");
+
+/// Expands to nothing.
+#[macro_export]
+macro_rules! nothing {
+    () => {};
+}
+
+pub mod alpha;
+RUST
+  printf '//! The executable.\n\nfn main() {}\n' > "$c/src/main.rs"
+  rustdoc_fixture_module alpha
+}
+rustdoc_fixture_module() {
+  local c=apps/majordomus-cli
+  grep -qx "pub mod $1;" "$c/src/lib.rs" || printf 'pub mod %s;\n' "$1" >> "$c/src/lib.rs"
+  printf '//! The module %s.\n\n/// The one thing %s has.\npub struct Thing;\n' "$1" "$1" > "$c/src/$1.rs"
+}
+rustdoc_fixture_produce() {
+  local log; log="$(mktemp "${TMPDIR:-/tmp}/mj-rustdoc-fixture.XXXXXX")"
+  env -u CARGO_TARGET_DIR -u MAJORDOMUS_BUILD_COMMIT scripts/rust-check --doc > "$log" 2>&1 || {
+    printf '    scripts/rust-check --doc failed on the fixture crate:\n' >&2
+    sed 's/^/    | /' "$log" >&2; rm -f "$log"; return 1; }
+  rm -f "$log"
+}
+
+# ---------------------------------------------------------------- reasoning (ADR 0098)
+# A fixture repository for the reasoning cases, and a way to run the executable and the
+# transport in an environment that holds exactly what the case gives it: `env -i`, a PATH
+# with git, node and a directory of stubs the case fills ($RZ_BIN), and no credential. On a
+# machine where every advisor is installed the zero-advisor case must still be zero, so
+# nothing of the caller's PATH or environment leaks in.
+#   reasoning_fixture            R (the repository, committed), RZ_BIN (empty stub dir)
+#   rz <args>                    the executable in $R, with $RZ_ENV (space-separated
+#                                NAME=value words) added to the environment
+#   rz_consult <args>            scripts/advisor-consult in $R, the same environment, with
+#                                the fixture adapters of test/fixtures/advisors
+#   rz_stub <name>               an executable named <name> on the isolated PATH
+#   rz_record <json>             record one reasoning step; prints its id
+reasoning_fixture() {
+  R="$T/repo"
+  fixture_repo "$R" >/dev/null
+  git -C "$R" init -q .
+  git -C "$R" config user.email t@example.com
+  git -C "$R" config user.name t
+  git -C "$R" add -A >/dev/null
+  git -C "$R" commit -qm fixture >/dev/null
+  RZ_BIN="$T/rz-bin"; mkdir -p "$RZ_BIN"
+  ln -sf "$(command -v git)" "$RZ_BIN/git"
+  # A skipped case reports ok, so on a CI runner a missing node is a failure, not a skip.
+  local node; node="$(node -p 'process.execPath' 2>/dev/null)" || {
+    [ -z "${CI:-}" ] || { echo "    node is required on CI: the reasoning transport cannot run"; exit 1; }
+    skip "no node"; }
+  ln -sf "$node" "$RZ_BIN/node"
+  RZ_ENV=""
+}
+rz_env() {
+  # shellcheck disable=SC2086 # RZ_ENV is a list of NAME=value words by contract
+  env -i HOME="$T" TMPDIR="${TMPDIR:-/tmp}" PATH="$RZ_BIN:/usr/bin:/bin" LANG=C.UTF-8 \
+    MAJORDOMUS_SHARE="$R/share" MAJORDOMUS_CLI="$RB" $RZ_ENV "$@"
+}
+rz() { ( cd "$R" && rz_env "$RB" "$@" ); }
+rz_consult() { ( cd "$R" && rz_env node "$R/scripts/advisor-consult" --adapters "$ROOT/test/fixtures/advisors" "$@" ); }
+rz_stub() { printf '#!/bin/sh\nexit 0\n' > "$RZ_BIN/$1"; chmod +x "$RZ_BIN/$1"; }
+rz_record() {
+  local out err="$T/rz_record.err"
+  out="$(printf '%s' "$1" | rz reasoning record --format json 2> "$err")" \
+    || { printf '    the record was refused: %s\n    input: %s\n' "$(cat "$err")" "$1" >&2; return 1; }
+  printf '%s' "$out" | jq -r '.record.id'
+}
+#   rz_json <args>               the executable's JSON answer alone (stdout); its stderr is
+#                                shown, and the case fails, when it exits non-zero
+rz_json() {
+  local err="$T/rz_json.err"
+  rz "$@" --format json 2> "$err" || { printf '    rz %s failed:\n' "$*" >&2; cat "$err" >&2; return 1; }
+}

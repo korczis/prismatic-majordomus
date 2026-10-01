@@ -17,7 +17,7 @@ rules: [majordomus.handover-integrity, majordomus.session-lifecycle, majordomus.
 docs: [docs/CONTINUITY.md, docs/CONTEXT.md]
 adrs: [adr-0009, adr-0014, adr-0015, adr-0017]
 claims: [handover-record, no-transcripts, checkpoint-record, record-resolution, context-assembly, divergence-label, session-records, session-lifecycle, prompt-capture, prompt-assets, continuity-reachable]
-use_cases: [hand-work-between-sessions, checkpoint-long-work, open-and-close-a-session, capture-the-prompts-that-started-the-work, let-the-provider-draw-the-episode-boundary]
+use_cases: [hand-work-between-sessions, checkpoint-long-work, open-and-close-a-session, capture-the-prompts-that-started-the-work, let-the-provider-draw-the-episode-boundary, recover-an-episode-nobody-closed, resume-from-a-prompt-asset]
 cockpit: [continuity]
 related: [knowledge, provenance, coordination]
 tags: [sessions, handover, prompts]

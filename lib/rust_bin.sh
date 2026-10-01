@@ -349,3 +349,20 @@ mj_rust_space_check() {
   } >&2
   return 1
 }
+
+# The reasoning report of the open task (ADR 0098), as `majordomus reasoning status
+# --report` renders it: the decisions with who reviewed them, what is unresolved, and the
+# degradation on the way. One renderer, the executable's, so that `context`, a derived
+# handover and every other surface say the same thing. Never a build, as for the peer
+# board: an executable that is not there yields nothing, and so does a task with no
+# reasoning records. Prints the report or nothing; always returns 0.
+mj_rust_reasoning_report() {
+  mj_rr_root="$1"
+  mj_rr_bin="$(mj_rust_bin "$mj_rr_root")"
+  [ -x "$mj_rr_bin" ] || return 0
+  [ -d "$mj_rr_root/.ai/local/state/reasoning" ] || return 0
+  mj_rr_share="$(mj_rust_share "$mj_rr_root")"
+  ( [ -z "$mj_rr_share" ] || export MAJORDOMUS_SHARE="$mj_rr_share"
+    "$mj_rr_bin" reasoning status --report --repo "$mj_rr_root" ) 2>/dev/null || true
+  return 0
+}

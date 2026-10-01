@@ -6,7 +6,7 @@ weight = 9
 id = "see-what-the-repository-holds-without-reading-it"
 source = ".ai/repo/use-cases/see-what-the-repository-holds-without-reading-it.md"
 category = "mcp"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

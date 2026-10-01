@@ -6,7 +6,7 @@ weight = 26
 id = "block-acceptance-on-an-open-question"
 source = ".ai/repo/use-cases/block-acceptance-on-an-open-question.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

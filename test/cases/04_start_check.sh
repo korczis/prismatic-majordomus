@@ -1,5 +1,6 @@
 # majordomus-covers: start check
 # majordomus-negative: start check
+# claims: consistency-check, divergence-label, git-identity, overlap-report, scope-enforcement, scoped-task
 . "$ROOT/test/lib.sh"
 "$MJ" init >/dev/null; "$MJ" update >/dev/null
 mkdir -p lib/auth lib/other && echo x > lib/auth/a.txt && echo y > lib/other/b.txt && git add . && git commit -qm base
@@ -14,6 +15,10 @@ expect_grep '^head: '"$(git rev-parse HEAD)"'$' .ai/local/state/current.yaml
 expect_grep '^branch: '"$(git branch --show-current)"'$' .ai/local/state/current.yaml
 expect_grep '^  - lib/auth$' .ai/local/state/current.yaml
 expect_grep '"event":"task.started"' .ai/local/state/ledger.jsonl
+# git-identity: a body that authors an identity field is refused, and the record keeps git's value
+expect_exit 10 bash -c "printf '# Objective\no\nhead: abc\n# Current State\nc\n# Next Action\nn\n' | '$MJ' handover"
+expect_grep 'must not contain identity fields; they are computed'
+expect_grep '^head: '"$(git rev-parse HEAD)"'$' .ai/local/state/current.yaml
 # repeated --scope accumulates; spaces after commas are tolerated; a hand-edited trailing slash still contains
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover --close >/dev/null
 expect_exit 0 "$MJ" start "multi" --scope lib/auth --scope="lib/other, ./lib/auth/sub/"
@@ -41,6 +46,13 @@ expect_grep '^  effort=high'
 echo z >> lib/auth/a.txt && git commit -qam inscope
 expect_exit 0 "$MJ" check
 expect_grep 'OK +state .* advanced'
+# divergence-label: a recorded head that is not an ancestor of HEAD is diverged
+rec=$(sed -n 's/^head: //p' .ai/local/state/current.yaml)
+stray=$(git commit-tree "HEAD^{tree}" -m stray)
+sed -i.bak "s/^head: .*/head: $stray/" .ai/local/state/current.yaml; rm -f .ai/local/state/current.yaml.bak
+expect_exit 10 "$MJ" check
+expect_grep 'FAIL state .* diverged from recorded head'
+sed -i.bak "s/^head: .*/head: $rec/" .ai/local/state/current.yaml; rm -f .ai/local/state/current.yaml.bak
 # out-of-scope edit fails, names the file
 echo z >> lib/other/b.txt
 expect_exit 10 "$MJ" check
@@ -77,6 +89,11 @@ git worktree add -q "$wt" -b bob
 ( cd "$wt" && "$MJ" start "bob task" --scope lib/auth/sub --owner bob >/dev/null )   # the tracked half is there; the local half is created on first write
 expect_exit 0 "$MJ" check --overlap
 expect_grep 'INFO overlap +.*wt-bob — claims lib/auth/sub — contained by your lib/auth'
+# overlap-report: the other containment direction, a wider claim elsewhere containing ours
+( cd "$wt" && printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover --close >/dev/null \
+  && "$MJ" start "bob wide" --scope lib --owner bob >/dev/null )
+expect_exit 0 "$MJ" check --overlap
+expect_grep 'INFO overlap +.*wt-bob — claims lib — contains your lib/auth'
 # ...and only reported: the exit above is 0 with an overlap present. The worker bootstraps once
 # told every agent that `check --overlap` refuses a commit; a sentence an agent obeys has to
 # match the exit code it will meet, so no template this checkout renders may say otherwise.
