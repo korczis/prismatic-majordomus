@@ -34,6 +34,26 @@ pub fn dirty_state(worktree: &Path) -> Result<DirtyState> {
 /// was not measured, or git refused to say. The answers come back in the order the work
 /// trees were given, whatever order they finished in, so what this feeds is byte-identical
 /// to reading them one at a time.
+///
+/// ```
+/// use majordomus_cli::worktree::state::dirty_states;
+/// let repo = tempfile::tempdir().unwrap();
+/// let init = std::process::Command::new("git")
+///     .args(["init", "-q"])
+///     .current_dir(repo.path())
+///     .status()
+///     .unwrap();
+/// assert!(init.success());
+/// std::fs::write(repo.path().join("new.txt"), "work").unwrap();
+///
+/// let states = dirty_states(&[Some(repo.path()), None, Some(repo.path())]);
+/// assert_eq!(states.len(), 3);
+/// assert!(states[1].is_none(), "a None in is a None out");
+/// let first = states[0].as_ref().expect("a git work tree is measured");
+/// assert_eq!(first.untracked, 1);
+/// assert!(!first.clean);
+/// assert_eq!(states[2], states[0], "answers come back in input order");
+/// ```
 pub fn dirty_states(worktrees: &[Option<&Path>]) -> Vec<Option<DirtyState>> {
     let mut out: Vec<Option<DirtyState>> = vec![None; worktrees.len()];
     let wanted: Vec<usize> = worktrees
