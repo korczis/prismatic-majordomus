@@ -225,7 +225,7 @@ git add -A >/dev/null && git -c core.hooksPath=/dev/null commit -qm "require cov
 expect_exit 10 "$MJ" check
 expect_grep 'FAIL use-case +command doctor — gap: 0 use case\(s\) name it, 0 run it; the policy requires an executable use case'
 printf '# Objective\no\n# Current State\nc\n# Next Action\nn\n' | "$MJ" handover >/dev/null
-expect_exit 10 "$MJ" finish --outcome completed --verify-command true
+expect_exit 10 "$MJ" finish --outcome completed --verify-command "test -d .ai"
 expect_grep 'FAIL use-case'
 expect_grep 'refused'
 
