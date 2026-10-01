@@ -22,7 +22,8 @@ every run writes its own summary.
 <pre class="mermaid">
 flowchart LR
   plan["plan"] --&gt; structure["structure&lt;br&gt;(always)"]
-  plan --&gt; suite["suite"]
+  plan --&gt; shards["suite-shard ×4&lt;br&gt;the suite, dealt by duration"]
+  shards --&gt; suite["suite&lt;br&gt;every case exactly once,&lt;br&gt;budget, one verdict"]
   plan --&gt; rust["rust"]
   plan --&gt; coverage["coverage"]
   plan --&gt; bench["bench (macOS)"]
@@ -169,6 +170,52 @@ case's whole log before its line. Without `MJ_TEST_JOBS` it runs serially, strea
 it always has. The semantics are the serial runner's: a failing case turns the run red, a
 filter that matches nothing is a usage error, an empty case directory is a usage error, and
 `MJ_TEST_REPORT` writes one row per case (name, result, seconds, phase) for the summary.
+
+## The crate's tests in lanes
+
+The `rust` job is a matrix of three lanes. `scripts/rust-check` deals `cargo test` by whole
+test binaries (`MJ_RUST_TEST_LANE`), using their measured seconds:
+
+1. the doctests and `preflight`;
+2. the lib's unit tests, the binaries, `cli_examples`, `bench` and `peer_claims`;
+3. every other test binary, so a new one lands there by itself, and every other gate: fmt,
+   clippy, the docs, the benchmark build, the registry checks, the plan's rust gates and the
+   executable artifact.
+
+`scripts/rust-check --lanes` prints the deal. With `MJ_RUST_TEST_LANE` unset, `rust-check`
+runs the whole `cargo test` as before. Each lane keeps its own `cargo-test-<lane>.txt`, and
+the `evidence` job joins them. Every binary's record starts at a `Running` line or a
+`Doc-tests` line, which the recorder treats as a boundary, so joining the files cannot credit
+one lane's result to another lane's binary.
+
+## The suite in shards
+
+On CI the suite runs as four shards on four runners (`suite-shard`, a matrix), each four
+cases at a time. `MJ_TEST_SHARD=i/n` makes `test/run.sh` run the i-th part. The cases are
+dealt longest-first over n × `MJ_TEST_JOBS` worker slots by the seconds
+`.ai/repo/ci/suite-durations.tsv` records, and then the exclusive cases go to the
+least-loaded shard. Slot s belongs to shard s mod n, so the heaviest cases open one per
+shard. In the first run the slots were numbered shard by shard, the four 35-minute cases
+landed on one runner and starved each other past the 3630 s timeout, and case 721 now
+refuses that deal. A case with no recorded seconds weighs 300 s. The file is committed, so
+every shard of a run deals the same hand: stale numbers only unbalance the shards, they
+never lose a case. Measured on one runner the suite took more than two hours, because
+24,879 case-seconds were dealt to four workers. Dealt to sixteen workers, the critical path
+is the longest single case, about 35 minutes.
+
+Sharding can lose a case or run one twice, and either looks like a quieter or a slower
+suite rather than a wrong one. So the `suite` job does not run cases. It joins the shards'
+reports and runs `test/run.sh --verify-report`, which fails unless every case under
+`test/cases/` has exactly one row. It holds `scripts/ci/suite-budget` against the whole run,
+publishes the joined report as `ci-metrics-suite`, and fails when any shard failed. Case 721
+proves the deal and the verification. `MJ_TEST_LIST=1` prints what an invocation would run.
+
+To rebalance, record the seconds of a recent green run (the `ci-metrics-suite` artifact):
+
+```console
+$ gh run download <run-id> -n ci-metrics-suite -D /tmp/s
+$ awk -F'\t' -v OFS='\t' '{print $1, $3}' /tmp/s/suite.tsv | LC_ALL=C sort > .ai/repo/ci/suite-durations.tsv
+```
 
 The jobs that run the suite check out the whole history: a case that clones the checkout
 into a fixture and pushes cannot push a shallow clone. So does the `rust` job, for the

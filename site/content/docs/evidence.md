@@ -516,7 +516,7 @@ finishes. The decision is
 <pre class="mermaid">
 flowchart LR
   suite["suite job&lt;br&gt;suite.tsv"]
-  crate["rust job&lt;br&gt;cargo-test.txt"]
+  crate["rust job, three lanes&lt;br&gt;cargo-test-1..3.txt, joined"]
   cov["coverage job&lt;br&gt;coverage.json"]
   collect["evidence job&lt;br&gt;scripts/ci/evidence-collect"]
   artifact["artifact `evidence`&lt;br&gt;ledger · report · coverage · manifest"]
@@ -585,6 +585,7 @@ will refresh it.
 ```
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
 scripts/ci/evidence-collect --out <dir> --suite suite.tsv --crate-output cargo-test.txt --coverage coverage.json
 ```
 
