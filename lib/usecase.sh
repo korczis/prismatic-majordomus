@@ -462,6 +462,12 @@ mj_uc_cmd_validate() {
 # along with everything else. Whether the race fires depends on the machine, so recording it
 # makes the artifact differ by where it was generated. It is a fact about the recording, not
 # about the command, and the pipes that produce it are removed where they are ours.
+#
+# What `doctor` reports about reasoning (ADR 0098) is decided by the recording machine too:
+# which advisors it has installed, and whether the job that recorded the scenario could reach
+# the executable at all — the suite job can, the site job cannot, and the catalogue each one
+# derived differed by seven lines. The advisor lines and the passing check line go, and the
+# remaining line becomes one token; a FAIL is kept whole, since a finding is the repository's.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -497,7 +503,10 @@ mj_uc_normalise() { # repo-path
     -e 's/^(owner +).*$/\1<owner>/' \
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
-    -e '/: printf: write error: Broken pipe$/d'
+    -e '/: printf: write error: Broken pipe$/d' \
+    -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
+    -e '/^OK +reasoning +- — reasoning check: /d' \
+    -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
 }
 # a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
 # other control byte dropped; the newlines of a command's output are its structure
