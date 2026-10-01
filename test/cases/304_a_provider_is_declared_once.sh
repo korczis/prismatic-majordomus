@@ -19,7 +19,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/providers-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
 
 # A tree with the shape the gate reads: three providers declared, a template for each, the
 # generated document the executable wrote from both, a policy that projects through each,

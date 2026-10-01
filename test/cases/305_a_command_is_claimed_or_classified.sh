@@ -21,7 +21,7 @@
 . "$ROOT/test/lib.sh"
 GATE="$ROOT/scripts/ci/projection-check"
 [ -x "$GATE" ] || { echo "    $GATE is not executable"; exit 1; }
-command -v jq >/dev/null 2>&1 || { echo "    skip: no jq"; exit 0; }
+command -v jq >/dev/null 2>&1 || skip "no jq"
 
 # A tree whose executable answers whatever the fixture wrote. The stub honours
 # MJ_STUB_FAIL, so a case can also make the answer unavailable rather than wrong.
