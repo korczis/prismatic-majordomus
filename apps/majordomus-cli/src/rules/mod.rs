@@ -62,6 +62,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::evidence::freshness::{self, Comparison, Presented, Recorded, TreeState};
 use crate::evidence::{Execution, Ledger, ProofState, TestId};
 use crate::index::Index;
 
@@ -449,8 +450,9 @@ pub struct TestProof {
 
 /// What the repository can say about one rule's proof, as a whole.
 ///
-/// Ordered strongest to weakest so that a summary sorted by this reads as a ranking, and so
-/// that a rule's state is the weakest of its parts by `max`.
+/// Ordered strongest to weakest so that a summary sorted by this reads as a ranking. A rule's
+/// state is made from its parts' by [`crate::evidence::freshness::aggregate`]: a failing part
+/// makes it failing, and otherwise the weakest part that can carry proof decides.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -704,7 +706,9 @@ pub struct Coverage {
 /// states rather than defects (docs/DOCTRINE.md). Read alone, `satisfied: true` over such a
 /// corpus says "every rule is enforced" about a repository that has shown nothing. The
 /// verdict is the answer that cannot be read that way: it is `proven` only when every
-/// blocking rule carries a current passing run.
+/// blocking rule is `proven` — a passing run recorded on a clean tree, at a commit that
+/// nothing but the evidence ledger has changed since. A rule whose inputs are merely
+/// unchanged is not that (ADR 0041), and leaves the corpus `unproven`.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -722,12 +726,19 @@ pub struct Coverage {
 ///     RulesVerdict::Unproven
 /// );
 /// assert_eq!(RulesVerdict::of([RuleState::Proven], false), RulesVerdict::Proven);
+/// // a pass whose inputs are merely unchanged is not proven
+/// assert_eq!(
+///     RulesVerdict::of([RuleState::Proven, RuleState::InputsUnchanged], false),
+///     RulesVerdict::Unproven
+/// );
 /// ```
 pub enum RulesVerdict {
-    /// Every blocking rule carries a passing run that nothing it names has changed since.
+    /// Every blocking rule is proven: a passing run recorded on a clean tree, at a commit
+    /// that nothing but the evidence ledger has changed since.
     Proven,
-    /// No finding, and at least one blocking rule has no current passing run — never run,
-    /// gated, reviewed, stale — or there is no blocking rule at all.
+    /// No rule is a finding, and at least one blocking rule is not proven — never run,
+    /// gated, reviewed, stale, or passing with only its inputs unchanged — or there is no
+    /// blocking rule at all.
     Unproven,
     /// At least one rule declares a class its proof does not support.
     Failing,
@@ -737,17 +748,20 @@ impl RulesVerdict {
     /// Decide the verdict from the state of every blocking rule and whether any finding
     /// exists.
     ///
-    /// `stale` does not count: a pass older than its subject is a pass of something else.
-    /// An empty set of blocking rules is `unproven`, not `proven` — a corpus that claims
-    /// nothing has shown nothing, and success by vacancy is the number that stops meaning
-    /// anything.
+    /// Only `proven` counts. `stale` does not: a pass older than its subject is a pass of
+    /// something else. Nor does `inputs unchanged`: a run recorded on a dirty tree, or one
+    /// whose repository has moved since, is the absence of a known invalidation and not
+    /// proof (ADR 0041), and a corpus verdict of `proven` over it would be the one badge the
+    /// evidence states exist to refuse. An empty set of blocking rules is `unproven`, not
+    /// `proven` — a corpus that claims nothing has shown nothing, and success by vacancy is
+    /// the number that stops meaning anything.
     /// ```
     /// use majordomus_cli::rules::{RuleState, RulesVerdict};
     /// assert_eq!(RulesVerdict::of([RuleState::Stale], false), RulesVerdict::Unproven);
     /// assert_eq!(RulesVerdict::of([], false), RulesVerdict::Unproven);
     /// assert_eq!(
     ///     RulesVerdict::of([RuleState::InputsUnchanged], false),
-    ///     RulesVerdict::Proven
+    ///     RulesVerdict::Unproven
     /// );
     /// ```
     pub fn of(blocking: impl IntoIterator<Item = RuleState>, any_finding: bool) -> Self {
@@ -757,7 +771,7 @@ impl RulesVerdict {
         let mut any = false;
         for state in blocking {
             any = true;
-            if !matches!(state, RuleState::Proven | RuleState::InputsUnchanged) {
+            if state != RuleState::Proven {
                 return RulesVerdict::Unproven;
             }
         }
@@ -792,8 +806,7 @@ impl RulesVerdict {
     ///
     /// The sentence is the whole point of the type. A report that found no fault used to be
     /// rendered as a pass, and "no rule is a finding" is a far weaker statement than "every
-    /// blocking rule carries a current passing run": the first is satisfied by a corpus
-    /// nothing has ever run. `unproven` says that distinction out loud, in the one place a
+    /// blocking rule is proven": the first is satisfied by a corpus nothing has ever run. `unproven` says that distinction out loud, in the one place a
     /// person reads, so that an absence of findings cannot be quoted as proof.
     /// ```
     /// use majordomus_cli::rules::RulesVerdict;
@@ -803,11 +816,13 @@ impl RulesVerdict {
     pub fn meaning(self) -> &'static str {
         match self {
             RulesVerdict::Proven => {
-                "Every blocking rule carries a passing run that nothing it names has changed since."
+                "Every blocking rule is proven: a passing run recorded on a clean tree, at a \
+                 commit that nothing but the evidence ledger has changed since."
             }
             RulesVerdict::Unproven => {
-                "No rule is a finding, and at least one blocking rule has no current passing run: \
-                 not a finding is not proven."
+                "No rule is a finding, and at least one blocking rule is not proven — never run, \
+                 gated, reviewed, stale, or passing with only its inputs unchanged: not a finding \
+                 is not proven."
             }
             RulesVerdict::Failing => {
                 "At least one rule declares a class its proof does not support."
@@ -1074,26 +1089,6 @@ fn gate_runs_exactly(gate: &str, path: &str, commands: &[(String, String)]) -> b
         .any(|(g, runs)| g == gate && runs.split_whitespace().any(|w| w == path))
 }
 
-/// Every path that differs between `commit` and the working tree.
-///
-/// `None` when git could not answer, which the caller must not read as "nothing changed".
-fn changed_since(root: &Path, commit: &str) -> Option<BTreeSet<String>> {
-    let out = crate::git::read_only(root)
-        .args(["diff", "--name-only", commit, "--"])
-        .output()
-        .ok()?;
-    if !out.status.success() {
-        return None;
-    }
-    Some(
-        String::from_utf8_lossy(&out.stdout)
-            .lines()
-            .map(|l| l.trim().to_string())
-            .filter(|l| !l.is_empty())
-            .collect(),
-    )
-}
-
 /// Map one test's [`ProofState`] onto the rule vocabulary. The two agree everywhere they
 /// overlap; `Dangling` and `Unproven` are the rule-level states evidence has no word for,
 /// because a claim naming a missing file is already `Unrunnable` to it.
@@ -1176,11 +1171,14 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         crate::git::GitState::Unavailable { .. } => (None, "unknown".to_string()),
     };
 
-    let mut diffs: BTreeMap<String, Option<BTreeSet<String>>> = BTreeMap::new();
+    // Rules are judged at the working tree, through the one freshness function the evidence
+    // report uses: one comparison per commit the ledger names, shared by every rule.
+    let presented = Presented::WorkingTree;
+    let mut comparisons: BTreeMap<String, Comparison> = BTreeMap::new();
     for e in &ledger.executions {
-        diffs
+        comparisons
             .entry(e.commit.clone())
-            .or_insert_with(|| changed_since(&root, &e.commit));
+            .or_insert_with(|| freshness::compare(&root, &e.commit, &presented));
     }
     let gate_commands = gate_commands(&root);
 
@@ -1232,45 +1230,26 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
                 .as_ref()
                 .and_then(|t| ledger.latest(&t.as_string()))
                 .cloned();
-            let state = match (&id, &execution) {
-                (None, _) => ProofState::Unrunnable,
-                (Some(_), None) => ProofState::NotRun,
-                (Some(t), Some(e)) => {
-                    if !e.outcome.proves() {
-                        ProofState::Failing
-                    } else {
-                        match diffs.get(&e.commit).and_then(|d| d.as_ref()) {
-                            // git could not compare: not knowing is not proof
-                            None => ProofState::Stale,
-                            Some(d) => {
-                                let changed_at_all: Vec<&String> = d
-                                    .iter()
-                                    .filter(|p| p.as_str() != crate::evidence::LEDGER_PATH)
-                                    .collect();
-                                // what this rule names, and nothing else
-                                let names_changed =
-                                    d.contains(&t.source()) || d.contains(&def.path);
-                                let test_moved = e.digest_matches(&root) == Some(false);
-                                if names_changed || test_moved {
-                                    ProofState::Stale
-                                } else if changed_at_all.is_empty() {
-                                    // The diff says the commit is the tree in front of us;
-                                    // the execution's own `working_tree` says whether that
-                                    // commit was the tree the run measured. Both, or the
-                                    // rule is not proven — the same cap the evidence
-                                    // derivation applies, from the same function.
-                                    crate::evidence::capped_by_working_tree(
-                                        ProofState::Proven,
-                                        &e.working_tree,
-                                    )
-                                } else {
-                                    ProofState::InputsUnchanged
-                                }
-                            }
-                        }
-                    }
-                }
+            let recorded = match (&id, &execution) {
+                (None, _) => Recorded::Unrunnable,
+                (Some(_), None) => Recorded::NotRun,
+                (Some(_), Some(e)) => Recorded::Ran(e),
             };
+            // what this rule names, and nothing else: the test and the rule's own definition
+            let test_source = id.as_ref().map(TestId::source).unwrap_or_default();
+            let inputs = [test_source.clone(), def.path.clone()];
+            let test_moved = execution
+                .as_ref()
+                .is_some_and(|e| e.outcome.proves() && e.digest_matches(&root) == Some(false));
+            let state = freshness::freshness(
+                recorded,
+                Some(&inputs),
+                &test_source,
+                test_moved,
+                execution.as_ref().and_then(|e| comparisons.get(&e.commit)),
+                TreeState::Clean,
+            )
+            .state;
             tests.push(TestProof {
                 gates,
                 kind,
@@ -1284,12 +1263,17 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
             });
         }
 
-        // The rule's state is the weakest of the parts that can carry proof — and which
-        // parts those are is the whole subtlety, learned by running this against the real
-        // corpus.
+        // A failing test makes the rule failing, whatever its other tests say; otherwise the
+        // rule's state is the weakest of the parts that can carry proof — and which parts
+        // those are is the whole subtlety, learned by running this against the real corpus.
         //
         // `dangling` always dominates: a named path that is not in the tree is a lie
         // whatever else the rule names, because the rule reads as proven on its strength.
+        //
+        // The failure comes next because the declared order ranks `failing` above `not_run`:
+        // a plain weakest-of over a rule whose tests are one fail and one skip (which reads
+        // `not_run`) would read `not_run`, which is not a finding, and the counter-evidence
+        // would be hidden behind an absence.
         //
         // An artifact no runner and no gate drives is different. It contributes nothing,
         // and that is not a defect in the rule: `project.web-surface-declared-once` names a
@@ -1297,7 +1281,8 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         // command. Letting that one path drag the rule to `unrunnable` reported six rules
         // as unprovable while each had a perfectly good case — a false finding, which is
         // the failure this whole subsystem exists to refuse. So such a path is reported,
-        // and judged only when it is all the rule has.
+        // and judged only when it is all the rule has. `freshness::aggregate` is that rule,
+        // written once for every aggregation of states.
         let mut state = if def.enforcement.mode == Mode::Reviewed {
             RuleState::Reviewed
         } else if def.enforcement.mode == Mode::Declarative {
@@ -1305,20 +1290,11 @@ pub fn report(index: &Index, ledger: &Ledger) -> RulesReport {
         } else if tests.iter().any(|t| !t.present) {
             RuleState::Dangling
         } else {
-            let provable = tests
+            let parts: Vec<(RuleState, bool)> = tests
                 .iter()
-                .filter(|t| t.kind != ArtifactKind::Unknown)
-                .map(rule_state_of)
-                .max();
-            match provable {
-                Some(worst) => worst,
-                // nothing it names can ever be recorded: that is the honest verdict
-                None => tests
-                    .iter()
-                    .map(rule_state_of)
-                    .max()
-                    .unwrap_or(RuleState::Unproven),
-            }
+                .map(|t| (rule_state_of(t), t.kind != ArtifactKind::Unknown))
+                .collect();
+            freshness::aggregate(&parts, RuleState::Failing).unwrap_or(RuleState::Unproven)
         };
         if let Some(v) = &validator {
             if !v.present {
