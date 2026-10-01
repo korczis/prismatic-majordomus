@@ -4952,7 +4952,7 @@ pub fn peers(ctx: &Context) -> Page {
                         .map(|o| {
                             let mut paths = el("span");
                             for path in &o.paths {
-                                paths = paths.child(mono(&o_path(path))).text(" ");
+                                paths = paths.child(mono(o_path(path))).text(" ");
                             }
                             row(vec![
                                 cell(mono(o.peer.as_str())),
