@@ -18,6 +18,44 @@
 //!   "two advisors said A" to a decision that skips the evidence;
 //! * a conclusion on material uncertainty carries evidence and a validation plan, weighs
 //!   every completed consultation of its assessment, and has its review count computed.
+//!
+//! The lifecycle of a write: [`Store::load`] reads what is durable, [`admit`] checks the
+//! input against it, [`redact`] removes secret shapes, [`mint_id`] names the record, and
+//! [`Store::write`] makes it durable where the next [`Store::load`] finds it.
+//!
+//! ```
+//! use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+//! use majordomus_cli::reasoning::record::*;
+//! use majordomus_cli::reasoning::store::{admit, mint_id, redact, Admission, Store};
+//!
+//! let dir = tempfile::tempdir().unwrap();
+//! let store = Store::at(dir.path());
+//! let mode = ModeResolution { mode: ReasoningMode::Standard, source: "default".into() };
+//! let admission = Admission { mode: &mode, availability: &[] };
+//!
+//! let input = ReasoningInput::Assessment(AssessmentInput {
+//!     subject: "whether the cache survives a restart".into(),
+//!     ..Default::default()
+//! });
+//! let (body, redacted) = redact(admit(input, &store.load(), &admission).unwrap());
+//! let at = "2026-10-01T00:00:00Z";
+//! let record = ReasoningRecord {
+//!     schema: RECORD_SCHEMA.into(),
+//!     version: RECORD_VERSION,
+//!     id: mint_id(body.kind(), at),
+//!     task: store.current_task(),
+//!     recorded_at: at.into(),
+//!     head: None,
+//!     redacted,
+//!     body,
+//! };
+//! store.write(&record).unwrap();
+//!
+//! let loaded = store.load();
+//! assert_eq!(loaded.records.len(), 1);
+//! assert_eq!(loaded.records[0].task, "untasked");
+//! assert!(loaded.get(&record.id).is_some());
+//! ```
 
 use std::path::{Path, PathBuf};
 
@@ -30,7 +68,18 @@ pub const STATE_DIR: &str = ".ai/local/state/reasoning";
 /// The task name of a record written while no task was open.
 pub const UNTASKED: &str = "untasked";
 
-/// Why a record was refused.
+/// Why a record was refused: one sentence a caller can act on.
+///
+/// Every rule [`admit`] enforces ends in a refusal rather than a repair, and the sentence
+/// names what is missing or wrong. It displays as the sentence alone, so a surface can
+/// print it without wrapping.
+///
+/// ```
+/// use majordomus_cli::reasoning::store::Refusal;
+///
+/// let r = Refusal("a disagreement has at least two positions".into());
+/// assert_eq!(r.to_string(), "a disagreement has at least two positions");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Refusal(pub String);
 
@@ -53,6 +102,24 @@ impl crate::order::Ordered for ReasoningRecord {
 }
 
 /// The records of a store, read.
+///
+/// Records are kept in canonical order, `recorded_at` then id, and every query of this
+/// module reads them in that order. A file that does not parse, or that carries another
+/// schema or version, is listed in `unreadable` instead of being dropped silently. The
+/// default is the empty store, which is what admission sees before anything is written.
+///
+/// ```
+/// use majordomus_cli::reasoning::store::{Loaded, Store};
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let task = dir.path().join(".ai/local/state/reasoning/t");
+/// std::fs::create_dir_all(&task).unwrap();
+/// std::fs::write(task.join("broken.json"), "{ not json").unwrap();
+///
+/// let loaded: Loaded = Store::at(dir.path()).load();
+/// assert!(loaded.records.is_empty());
+/// assert_eq!(loaded.unreadable, ["t/broken.json"]);
+/// ```
 #[derive(Debug, Default)]
 pub struct Loaded {
     /// Every record that parsed, ordered by `recorded_at` then id.
@@ -62,13 +129,47 @@ pub struct Loaded {
 }
 
 impl Loaded {
-    /// The record of an id.
+    /// The record with this id, or `None` when no loaded record carries it.
+    ///
+    /// Ids are unique in a store, so the first match is the only one.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::record::*;
+    /// use majordomus_cli::reasoning::store::Loaded;
+    ///
+    /// let mut loaded = Loaded::default();
+    /// loaded.records.push(ReasoningRecord {
+    ///     schema: RECORD_SCHEMA.into(),
+    ///     version: RECORD_VERSION,
+    ///     id: "assessment-1".into(),
+    ///     task: "t".into(),
+    ///     recorded_at: "2026-10-01T00:00:01Z".into(),
+    ///     head: None,
+    ///     redacted: vec![],
+    ///     body: ReasoningBody::Assessment(AssessmentInput::default()),
+    /// });
+    /// assert_eq!(loaded.get("assessment-1").map(|r| r.body.kind()), Some("assessment"));
+    /// assert!(loaded.get("assessment-2").is_none());
+    /// ```
     pub fn get(&self, id: &str) -> Option<&ReasoningRecord> {
         self.records.iter().find(|r| r.id == id)
     }
 }
 
-/// The store of one checkout.
+/// The store of one checkout: the one place reasoning records are read from and written to.
+///
+/// It is a handle on a repository root and nothing more; constructing one touches no
+/// file. Records live under [`STATE_DIR`], one directory per task and one JSON file per
+/// record.
+///
+/// ```
+/// use majordomus_cli::reasoning::store::{Store, STATE_DIR};
+///
+/// let dir = tempfile::tempdir().unwrap();
+/// let store = Store::at(dir.path());
+/// assert_eq!(store.dir(), dir.path().join(STATE_DIR));
+/// assert!(store.load().records.is_empty(), "an absent store reads as empty");
+/// ```
 #[derive(Debug, Clone)]
 pub struct Store {
     root: PathBuf,
@@ -76,19 +177,54 @@ pub struct Store {
 
 impl Store {
     /// The store of the repository at `root`.
+    ///
+    /// Nothing is read or created until the store is loaded or written.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::store::Store;
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let store = Store::at(dir.path());
+    /// assert!(store.dir().starts_with(dir.path()));
+    /// assert!(!store.dir().exists());
+    /// ```
     pub fn at(root: &Path) -> Self {
         Self {
             root: root.to_path_buf(),
         }
     }
 
-    /// Its directory.
+    /// The directory the records live in: [`STATE_DIR`] under the repository root.
+    ///
+    /// ```
+    /// use std::path::Path;
+    /// use majordomus_cli::reasoning::store::Store;
+    ///
+    /// let store = Store::at(Path::new("/repo"));
+    /// assert_eq!(store.dir(), Path::new("/repo/.ai/local/state/reasoning"));
+    /// ```
     pub fn dir(&self) -> PathBuf {
         self.root.join(STATE_DIR)
     }
 
     /// The task open in this checkout, from `.ai/local/state/current.yaml`, or
     /// [`UNTASKED`].
+    ///
+    /// The task id is the `id:` line of that file, quotes trimmed. A missing file, a file
+    /// with no such line, or an empty id all mean no task is open.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::store::{Store, UNTASKED};
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let store = Store::at(dir.path());
+    /// assert_eq!(store.current_task(), UNTASKED);
+    ///
+    /// let state = dir.path().join(".ai/local/state");
+    /// std::fs::create_dir_all(&state).unwrap();
+    /// std::fs::write(state.join("current.yaml"), "id: \"task-42\"\n").unwrap();
+    /// assert_eq!(store.current_task(), "task-42");
+    /// ```
     pub fn current_task(&self) -> String {
         std::fs::read_to_string(self.root.join(".ai/local/state/current.yaml"))
             .ok()
@@ -103,6 +239,40 @@ impl Store {
     }
 
     /// Every record of every task, in canonical order.
+    ///
+    /// Only `.json` files are read, so a temporary file of a write in progress is never
+    /// met. An absent store is an empty one; a file that does not parse is reported in
+    /// [`Loaded::unreadable`].
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::record::*;
+    /// use majordomus_cli::reasoning::store::Store;
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let store = Store::at(dir.path());
+    /// for (id, at) in [("attempt-b", "2026-10-01T00:00:02Z"), ("attempt-a", "2026-10-01T00:00:01Z")] {
+    ///     store.write(&ReasoningRecord {
+    ///         schema: RECORD_SCHEMA.into(),
+    ///         version: RECORD_VERSION,
+    ///         id: id.into(),
+    ///         task: "t".into(),
+    ///         recorded_at: at.into(),
+    ///         head: None,
+    ///         redacted: vec![],
+    ///         body: ReasoningBody::Attempt(AttemptInput {
+    ///             assessment: None,
+    ///             attempt: "x".into(),
+    ///             observed_failure: "y".into(),
+    ///             assumption_invalidated: None,
+    ///             evidence: vec![],
+    ///             updated_hypothesis: None,
+    ///         }),
+    ///     })
+    ///     .unwrap();
+    /// }
+    /// let ids: Vec<String> = store.load().records.into_iter().map(|r| r.id).collect();
+    /// assert_eq!(ids, ["attempt-a", "attempt-b"], "ordered by when, not by name");
+    /// ```
     pub fn load(&self) -> Loaded {
         let mut out = Loaded::default();
         let Ok(tasks) = std::fs::read_dir(self.dir()) else {
@@ -138,6 +308,31 @@ impl Store {
     }
 
     /// Make a record durable: temporary name, then rename. Returns its path.
+    ///
+    /// The file is `<task>/<id>.json` under the store. A record whose file already exists
+    /// is refused with `AlreadyExists`: a record is written once and never overwritten.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::record::*;
+    /// use majordomus_cli::reasoning::store::Store;
+    ///
+    /// let dir = tempfile::tempdir().unwrap();
+    /// let store = Store::at(dir.path());
+    /// let record = ReasoningRecord {
+    ///     schema: RECORD_SCHEMA.into(),
+    ///     version: RECORD_VERSION,
+    ///     id: "assessment-1".into(),
+    ///     task: "t".into(),
+    ///     recorded_at: "2026-10-01T00:00:01Z".into(),
+    ///     head: None,
+    ///     redacted: vec![],
+    ///     body: ReasoningBody::Assessment(AssessmentInput::default()),
+    /// };
+    /// let path = store.write(&record).unwrap();
+    /// assert_eq!(path, store.dir().join("t/assessment-1.json"));
+    /// let again = store.write(&record).unwrap_err();
+    /// assert_eq!(again.kind(), std::io::ErrorKind::AlreadyExists);
+    /// ```
     pub fn write(&self, record: &ReasoningRecord) -> std::io::Result<PathBuf> {
         let dir = self.dir().join(&record.task);
         std::fs::create_dir_all(&dir)?;
@@ -158,6 +353,25 @@ impl Store {
 }
 
 /// What admission needs besides the records.
+///
+/// The mode and the availability of this moment are read only when a plan is admitted:
+/// they are what the plan is computed from and what its snapshot records. Every other
+/// input is judged against the records alone, so an empty availability is a complete
+/// admission context for them.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::record::{AssessmentInput, ReasoningInput};
+/// use majordomus_cli::reasoning::store::{admit, Admission, Loaded};
+///
+/// let mode = ModeResolution { mode: ReasoningMode::Ci, source: "CI".into() };
+/// let admission = Admission { mode: &mode, availability: &[] };
+/// let input = ReasoningInput::Assessment(AssessmentInput {
+///     subject: "a name".into(),
+///     ..Default::default()
+/// });
+/// assert!(admit(input, &Loaded::default(), &admission).is_ok());
+/// ```
 pub struct Admission<'a> {
     /// The mode in force.
     pub mode: &'a ModeResolution,
@@ -173,6 +387,44 @@ fn subject_key(s: &str) -> String {
 }
 
 /// The conclusion that stands for an assessment: its latest not superseded by another.
+///
+/// A conclusion stops standing when any later conclusion names it in `supersedes`. When
+/// none stands, the assessment is still open to a conclusion without `supersedes`.
+///
+/// ```
+/// use majordomus_cli::reasoning::record::*;
+/// use majordomus_cli::reasoning::store::{standing_conclusion, Loaded};
+///
+/// fn conclusion(id: &str, at: &str, supersedes: Option<&str>) -> ReasoningRecord {
+///     ReasoningRecord {
+///         schema: RECORD_SCHEMA.into(),
+///         version: RECORD_VERSION,
+///         id: id.into(),
+///         task: "t".into(),
+///         recorded_at: at.into(),
+///         head: None,
+///         redacted: vec![],
+///         body: ReasoningBody::Conclusion(StoredConclusion {
+///             input: ConclusionInput {
+///                 assessment: "assessment-1".into(),
+///                 decision: id.into(),
+///                 rationale: "r".into(),
+///                 supersedes: supersedes.map(String::from),
+///                 ..Default::default()
+///             },
+///             reviewed_by: vec![],
+///             independent_review_count: 0,
+///         }),
+///     }
+/// }
+/// let mut loaded = Loaded::default();
+/// loaded.records.push(conclusion("conclusion-1", "2026-10-01T00:00:01Z", None));
+/// assert_eq!(standing_conclusion(&loaded, "assessment-1").unwrap().id, "conclusion-1");
+///
+/// loaded.records.push(conclusion("conclusion-2", "2026-10-01T00:00:02Z", Some("conclusion-1")));
+/// assert_eq!(standing_conclusion(&loaded, "assessment-1").unwrap().id, "conclusion-2");
+/// assert!(standing_conclusion(&loaded, "assessment-9").is_none());
+/// ```
 pub fn standing_conclusion<'a>(
     loaded: &'a Loaded,
     assessment: &str,
@@ -193,6 +445,52 @@ pub fn standing_conclusion<'a>(
 
 /// A standing conclusion on the same subject as an assessment, from any task: what a
 /// later session reuses instead of asking again.
+///
+/// Subjects match when they are equal after collapsing whitespace and ignoring case. The
+/// latest other assessment with a standing conclusion wins; an assessment never finds
+/// itself, and a record that is not an assessment finds nothing.
+///
+/// ```
+/// use majordomus_cli::reasoning::record::*;
+/// use majordomus_cli::reasoning::store::{prior_on_subject, Loaded};
+///
+/// fn record(id: &str, at: &str, body: ReasoningBody) -> ReasoningRecord {
+///     ReasoningRecord {
+///         schema: RECORD_SCHEMA.into(),
+///         version: RECORD_VERSION,
+///         id: id.into(),
+///         task: "t".into(),
+///         recorded_at: at.into(),
+///         head: None,
+///         redacted: vec![],
+///         body,
+///     }
+/// }
+/// let assessment = |s: &str| {
+///     ReasoningBody::Assessment(AssessmentInput { subject: s.into(), ..Default::default() })
+/// };
+/// let mut loaded = Loaded::default();
+/// loaded.records.push(record("assessment-1", "2026-10-01T00:00:01Z", assessment("Lock  scope")));
+/// loaded.records.push(record(
+///     "conclusion-1",
+///     "2026-10-01T00:00:02Z",
+///     ReasoningBody::Conclusion(StoredConclusion {
+///         input: ConclusionInput {
+///             assessment: "assessment-1".into(),
+///             decision: "keep the lock".into(),
+///             rationale: "measured".into(),
+///             ..Default::default()
+///         },
+///         reviewed_by: vec![],
+///         independent_review_count: 0,
+///     }),
+/// ));
+/// let later = record("assessment-2", "2026-10-02T00:00:00Z", assessment("lock scope"));
+/// assert_eq!(prior_on_subject(&loaded, &later).unwrap().id, "conclusion-1");
+///
+/// let other = record("assessment-3", "2026-10-02T00:00:00Z", assessment("retry policy"));
+/// assert!(prior_on_subject(&loaded, &other).is_none());
+/// ```
 pub fn prior_on_subject<'a>(
     loaded: &'a Loaded,
     assessment: &ReasoningRecord,
@@ -228,6 +526,53 @@ fn nonempty(field: &str, value: &str) -> Result<(), Refusal> {
 }
 
 /// The assessment a record belongs to, when it belongs to one.
+///
+/// Records that name their assessment answer directly; a consultation answers through
+/// its plan, a resolution through its disagreement and a validation through its
+/// conclusion. A reference to an unrecorded record, and an attempt that names no
+/// assessment, belong to none.
+///
+/// ```
+/// use majordomus_cli::reasoning::record::*;
+/// use majordomus_cli::reasoning::store::{assessment_of, Loaded};
+///
+/// fn record(id: &str, body: ReasoningBody) -> ReasoningRecord {
+///     ReasoningRecord {
+///         schema: RECORD_SCHEMA.into(),
+///         version: RECORD_VERSION,
+///         id: id.into(),
+///         task: "t".into(),
+///         recorded_at: "2026-10-01T00:00:00Z".into(),
+///         head: None,
+///         redacted: vec![],
+///         body,
+///     }
+/// }
+/// let mut loaded = Loaded::default();
+/// loaded.records.push(record(
+///     "conclusion-1",
+///     ReasoningBody::Conclusion(StoredConclusion {
+///         input: ConclusionInput { assessment: "assessment-1".into(), ..Default::default() },
+///         reviewed_by: vec![],
+///         independent_review_count: 0,
+///     }),
+/// ));
+/// let validation = |conclusion: &str| {
+///     record(
+///         "validation-1",
+///         ReasoningBody::Validation(ValidationInput {
+///             conclusion: conclusion.into(),
+///             check: "the test passes".into(),
+///             command: None,
+///             outcome: ValidationOutcome::Pass,
+///             evidence: vec![],
+///         }),
+///     )
+/// };
+/// let found = assessment_of(&loaded, &validation("conclusion-1"));
+/// assert_eq!(found.as_deref(), Some("assessment-1"));
+/// assert_eq!(assessment_of(&loaded, &validation("conclusion-9")), None);
+/// ```
 pub fn assessment_of(loaded: &Loaded, record: &ReasoningRecord) -> Option<String> {
     match &record.body {
         ReasoningBody::Assessment(_) => Some(record.id.clone()),
@@ -248,6 +593,38 @@ pub fn assessment_of(loaded: &Loaded, record: &ReasoningRecord) -> Option<String
 }
 
 /// Admit an input against the records already durable: the body to store, or why not.
+///
+/// This is where every rule of the module header is enforced. Admission reads, never
+/// writes: the caller redacts, names and writes the body it returns. A plan is computed
+/// here from `admission`; a conclusion's review count is computed here from the
+/// consultations it cites.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::Materiality;
+/// use majordomus_cli::reasoning::record::{AssessmentInput, ReasoningInput};
+/// use majordomus_cli::reasoning::store::{admit, Admission, Loaded};
+///
+/// let mode = ModeResolution { mode: ReasoningMode::Standard, source: "default".into() };
+/// let admission = Admission { mode: &mode, availability: &[] };
+///
+/// // evidence comes before opinion: a material assessment without it is refused
+/// let bare = ReasoningInput::Assessment(AssessmentInput {
+///     subject: "the wire format of a public record".into(),
+///     materiality: Materiality::Material,
+///     ..Default::default()
+/// });
+/// let refused = admit(bare, &Loaded::default(), &admission).unwrap_err();
+/// assert!(refused.0.starts_with("a material assessment carries the evidence"));
+///
+/// // trivia needs none
+/// let trivial = ReasoningInput::Assessment(AssessmentInput {
+///     subject: "a local variable's name".into(),
+///     materiality: Materiality::Trivial,
+///     ..Default::default()
+/// });
+/// assert_eq!(admit(trivial, &Loaded::default(), &admission).unwrap().kind(), "assessment");
+/// ```
 pub fn admit(
     input: ReasoningInput,
     loaded: &Loaded,
@@ -485,6 +862,35 @@ pub fn admit(
 }
 
 /// The resolution of a disagreement, when there is one.
+///
+/// Admission allows at most one resolution per disagreement, so the first match is the
+/// only one. A disagreement without a resolution blocks every conclusion on its
+/// assessment.
+///
+/// ```
+/// use majordomus_cli::reasoning::record::*;
+/// use majordomus_cli::reasoning::store::{resolution_of, Loaded};
+///
+/// let mut loaded = Loaded::default();
+/// assert!(resolution_of(&loaded, "disagreement-1").is_none());
+/// loaded.records.push(ReasoningRecord {
+///     schema: RECORD_SCHEMA.into(),
+///     version: RECORD_VERSION,
+///     id: "resolution-1".into(),
+///     task: "t".into(),
+///     recorded_at: "2026-10-01T00:00:01Z".into(),
+///     head: None,
+///     redacted: vec![],
+///     body: ReasoningBody::Resolution(ResolutionInput {
+///         disagreement: "disagreement-1".into(),
+///         experiment: "run the supervision test".into(),
+///         outcome: "no caller retries".into(),
+///         favours: "neither".into(),
+///         evidence: vec![],
+///     }),
+/// });
+/// assert_eq!(resolution_of(&loaded, "disagreement-1").unwrap().id, "resolution-1");
+/// ```
 pub fn resolution_of<'a>(loaded: &'a Loaded, disagreement: &str) -> Option<&'a ReasoningRecord> {
     loaded
         .records
@@ -493,6 +899,20 @@ pub fn resolution_of<'a>(loaded: &'a Loaded, disagreement: &str) -> Option<&'a R
 }
 
 /// A fresh record id: the kind, the stamp, and six hex digits of the moment and process.
+///
+/// The stamp is `recorded_at` with every character that is not ASCII alphanumeric
+/// removed. The suffix hashes the clock, the process id and a counter, so two ids minted
+/// by one process in the same instant still differ.
+///
+/// ```
+/// use majordomus_cli::reasoning::store::mint_id;
+///
+/// let a = mint_id("plan", "2026-10-01T00:00:00Z");
+/// let b = mint_id("plan", "2026-10-01T00:00:00Z");
+/// assert!(a.starts_with("plan-20261001T000000Z-"));
+/// assert_eq!(a.len(), "plan-20261001T000000Z-".len() + 6);
+/// assert_ne!(a, b);
+/// ```
 pub fn mint_id(kind: &str, recorded_at: &str) -> String {
     use std::sync::atomic::{AtomicU64, Ordering};
     static COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -517,6 +937,15 @@ pub fn mint_id(kind: &str, recorded_at: &str) -> String {
 
 /// A text without control characters: ANSI escape sequences dropped whole, every other
 /// control character but the newline dropped.
+///
+/// A diagnostic captured from a terminal can carry colour codes; every surface renders
+/// record text, and not all of them escape it, so none of it reaches a record.
+///
+/// ```
+/// use majordomus_cli::reasoning::store::strip_controls;
+///
+/// assert_eq!(strip_controls("\u{1b}[31mred\u{1b}[0m\tdone\nnext"), "reddone\nnext");
+/// ```
 pub fn strip_controls(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut chars = s.chars().peekable();
@@ -539,6 +968,27 @@ pub fn strip_controls(s: &str) -> String {
 }
 
 /// Remove every secret shape from every string of a body; the shapes that fired.
+///
+/// Every string field is first stripped of control characters and then passed through
+/// the crate's secret redaction; the names of the shapes that fired come back once each,
+/// in canonical order, for the record's `redacted` field. A body without secrets comes
+/// back unchanged with no shapes.
+///
+/// ```
+/// use majordomus_cli::reasoning::record::{AssessmentInput, ReasoningBody};
+/// use majordomus_cli::reasoning::store::redact;
+///
+/// // assembled at run time, so that no committed file carries a credential's shape
+/// let key = format!("{}{}", "sk-ant-", "b".repeat(24));
+/// let body = ReasoningBody::Assessment(AssessmentInput {
+///     subject: format!("the key {key} leaks"),
+///     ..Default::default()
+/// });
+/// let (body, kinds) = redact(body);
+/// let ReasoningBody::Assessment(a) = body else { panic!("the kind is kept") };
+/// assert!(!a.subject.contains("sk-ant-"));
+/// assert_eq!(kinds, ["anthropic-key"]);
+/// ```
 pub fn redact(body: ReasoningBody) -> (ReasoningBody, Vec<String>) {
     fn walk(v: &mut serde_json::Value, kinds: &mut Vec<String>) {
         match v {

@@ -7,6 +7,30 @@
 //! record's provenance (`reasoning.explain`), and the checks that keep the design honest
 //! (`reasoning.check`). None of them talks to an advisor: the transport is the Node layer
 //! (`scripts/lib/advisors/`), which records what it did through `reasoning.record`.
+//!
+//! # Example
+//!
+//! ```
+//! use majordomus_cli::capability::builtin::reasoning::module;
+//! use majordomus_cli::capability::model::Effect;
+//!
+//! // The declaration is the only place these names exist; every surface derives from it.
+//! let m = module();
+//! assert_eq!(m.id.as_str(), "reasoning");
+//! let plan = m.capabilities.iter().find(|e| e.capability.id.as_str() == "reasoning.plan").unwrap();
+//! let exposure = &plan.capability.exposure;
+//! assert_eq!(exposure.mcp.as_ref().and_then(|m| m.tool.as_deref()), Some("majordomus_reasoning_plan"));
+//! assert_eq!(exposure.http.as_ref().map(|h| h.path.as_str()), Some("/api/v1/reasoning/plan"));
+//!
+//! // one writer: only `reasoning.record` changes the repository
+//! let writers: Vec<&str> = m
+//!     .capabilities
+//!     .iter()
+//!     .filter(|e| e.capability.execution.effect == Effect::RepositoryMutation)
+//!     .map(|e| e.capability.id.as_str())
+//!     .collect();
+//! assert_eq!(writers, ["reasoning.record"]);
+//! ```
 
 use std::path::Path;
 
@@ -70,7 +94,18 @@ pub(crate) fn setting(ctx: &Context) -> Result<Setting, CapabilityError> {
 
 // ---------------------------------------------------------------- reasoning.advisors
 
-/// One advisory capability and who can provide it now.
+/// One advisory capability and who can provide it now: a row of the capacity table
+/// `reasoning.advisors` reports. An empty `available` is answered by the local review.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::AdvisorCapacity;
+///
+/// let row: AdvisorCapacity = serde_json::from_value(serde_json::json!({
+///     "capability": "code_review", "description": "Critique of a change.", "available": [],
+/// })).unwrap();
+/// assert_eq!(row.capability, "code_review");
+/// assert!(row.available.is_empty());
+/// ```
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdvisorCapacity {
     /// The capability word.
@@ -81,7 +116,22 @@ pub struct AdvisorCapacity {
     pub available: Vec<String>,
 }
 
-/// The answer of `reasoning.advisors`.
+/// The answer of `reasoning.advisors`: the mode in force, how many advisors may and may
+/// not be asked, every advisor's state, the capacity per advisory capability, and the
+/// catalogue's own findings. `operational` is `true` whatever the counts.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::AdvisorsReport;
+///
+/// let report: AdvisorsReport = serde_json::from_value(serde_json::json!({
+///     "operational": true,
+///     "mode": { "mode": "ci", "source": "CI" },
+///     "available": 0, "unavailable": 0, "advisors": [], "capacity": [],
+/// })).unwrap();
+/// assert!(report.operational && report.advisors.is_empty());
+/// assert_eq!(report.mode.source, "CI");
+/// assert!(report.diagnostics.is_empty(), "absent findings are the ordinary case");
+/// ```
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct AdvisorsReport {
     /// Reasoning works whatever the advisors: always `true`, stated so a reader need not
@@ -146,6 +196,18 @@ fn reasoning_advisors(ctx: &Context, _: super::Empty) -> Result<AdvisorsReport, 
 #[serde(deny_unknown_fields, default)]
 /// The input of `reasoning.plan`: a stated uncertainty, in transport-friendly scalars.
 /// Nothing is recorded; `reasoning.record` with a `plan` records one.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::PlanPreviewInput;
+/// use majordomus_cli::reasoning::Materiality;
+///
+/// let input: PlanPreviewInput = serde_json::from_value(serde_json::json!({
+///     "materiality": "high", "capabilities": "code_review,security_review",
+/// })).unwrap();
+/// assert_eq!(input.materiality, Some(Materiality::High));
+/// assert!(input.confidence.is_none(), "an absent field takes the policy's default");
+/// assert!(serde_json::from_value::<PlanPreviewInput>(serde_json::json!({ "quorum": 2 })).is_err());
+/// ```
 pub struct PlanPreviewInput {
     /// `trivial`, `low`, `material`, `high` or `critical`.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -202,7 +264,18 @@ fn reasoning_plan(ctx: &Context, input: PlanPreviewInput) -> Result<ReviewPlan, 
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-/// The input of `reasoning.record`: one record, as authored.
+/// The input of `reasoning.record`: one record, as authored, tagged by its `kind`. The
+/// writer computes everything else (id, task, stamp, a plan's selection) itself.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningRecordInput;
+/// use majordomus_cli::reasoning::record::ReasoningInput;
+///
+/// let input: ReasoningRecordInput = serde_json::from_value(serde_json::json!({
+///     "record": { "kind": "plan", "assessment": "assessment-1" },
+/// })).unwrap();
+/// assert!(matches!(input.record, ReasoningInput::Plan(ref p) if p.assessment == "assessment-1"));
+/// ```
 pub struct ReasoningRecordInput {
     /// The record.
     pub record: ReasoningInput,
@@ -222,7 +295,17 @@ impl BenchmarkCases for ReasoningRecordInput {
     }
 }
 
-/// The answer of `reasoning.record`.
+/// The answer of `reasoning.record`: the record as stored, where it was written, and the
+/// timeline step it adds.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningRecorded;
+///
+/// let schema = serde_json::to_value(schemars::schema_for!(ReasoningRecorded)).unwrap();
+/// for field in ["record", "path", "step"] {
+///     assert!(schema["required"].as_array().unwrap().iter().any(|f| f == field), "{field}");
+/// }
+/// ```
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ReasoningRecorded {
     /// The stored record.
@@ -289,7 +372,17 @@ fn reasoning_record(
 
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields, default)]
-/// The input of `reasoning.status`.
+/// The input of `reasoning.status`: which task's records to derive the state from. Absent
+/// is the open task; `all` is every task the store holds.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningStatusInput;
+///
+/// let open: ReasoningStatusInput = serde_json::from_str("{}").unwrap();
+/// assert!(open.task.is_none());
+/// let all: ReasoningStatusInput = serde_json::from_str(r#"{"task":"all"}"#).unwrap();
+/// assert_eq!(all.task.as_deref(), Some("all"));
+/// ```
 pub struct ReasoningStatusInput {
     /// A task id, or `all`; the open task when absent.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -310,7 +403,17 @@ impl BenchmarkCases for ReasoningStatusInput {
     }
 }
 
-/// The answer of `reasoning.status`.
+/// The answer of `reasoning.status`: the mode in force, the advisor counts, the state the
+/// records derive, and that state rendered as the Markdown a handover carries.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningStatus;
+///
+/// let schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();
+/// for field in ["mode", "advisors_available", "advisors_unavailable", "state", "report"] {
+///     assert!(schema["required"].as_array().unwrap().iter().any(|f| f == field), "{field}");
+/// }
+/// ```
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ReasoningStatus {
     /// The mode in force.
@@ -354,7 +457,16 @@ fn reasoning_status(
 
 #[derive(Debug, Default, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-/// The input of `reasoning.explain`.
+/// The input of `reasoning.explain`: the id of the record whose assessment chain is
+/// explained. An id no record carries is a not-found answer.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningExplainInput;
+///
+/// let input: ReasoningExplainInput = serde_json::from_str(r#"{"id":"conclusion-1"}"#).unwrap();
+/// assert_eq!(input.id, "conclusion-1");
+/// assert!(serde_json::from_str::<ReasoningExplainInput>("{}").is_err(), "the id is required");
+/// ```
 pub struct ReasoningExplainInput {
     /// A record id: a conclusion, usually.
     pub id: String,
@@ -382,7 +494,18 @@ fn reasoning_explain(
 
 // ---------------------------------------------------------------- reasoning.check
 
-/// The answer of `reasoning.check`.
+/// The answer of `reasoning.check`: whether it is clean, the checks performed in order,
+/// and every finding. `ok` is `true` exactly when `findings` is empty.
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::ReasoningCheck;
+///
+/// let clean: ReasoningCheck = serde_json::from_value(serde_json::json!({
+///     "ok": true, "checks": ["catalogue"], "findings": [],
+/// })).unwrap();
+/// assert!(clean.ok && clean.findings.is_empty());
+/// assert_eq!(clean.checks, ["catalogue"]);
+/// ```
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 pub struct ReasoningCheck {
     /// No finding.
@@ -408,7 +531,23 @@ fn reasoning_check(ctx: &Context, _: super::Empty) -> Result<ReasoningCheck, Cap
     })
 }
 
-/// The module.
+/// The canonical declaration of the `reasoning` module: its six capabilities with every
+/// projection each is exposed through. The MCP tools and resources, HTTP routes, CLI
+/// paths and the generated OpenAPI are read from here and nowhere else (ADR 0004).
+///
+/// ```
+/// use majordomus_cli::capability::builtin::reasoning::{module, REASONING_URI};
+///
+/// let m = module();
+/// let ids: Vec<&str> = m.capabilities.iter().map(|e| e.capability.id.as_str()).collect();
+/// assert_eq!(ids, [
+///     "reasoning.advisors", "reasoning.plan", "reasoning.record",
+///     "reasoning.status", "reasoning.explain", "reasoning.check",
+/// ]);
+/// let status = &m.capabilities[3].capability.exposure;
+/// let resource = status.mcp.as_ref().and_then(|m| m.resource.as_ref()).unwrap();
+/// assert_eq!(resource.uri, REASONING_URI);
+/// ```
 pub fn module() -> ModuleDescriptor {
     module! {
         id: "reasoning",

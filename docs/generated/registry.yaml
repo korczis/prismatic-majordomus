@@ -13152,7 +13152,7 @@ capabilities:
               - mode
               - available
               - unavailable
-            description: "Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the\nsame derivation, never a provider list of its own."
+            description: "Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the\nsame derivation, never a provider list of its own.\n\n```\nuse majordomus_cli::environment::ReasoningSummary;\n\nlet summary: ReasoningSummary = serde_json::from_value(serde_json::json!({\n    \"operational\": true, \"mode\": \"offline\", \"available\": [\"local\"], \"unavailable\": 2,\n})).unwrap();\nassert!(summary.operational);\nassert_eq!(summary.available, [\"local\"]);\nassert_eq!(serde_json::to_value(&summary).unwrap()[\"unavailable\"], 2);\n```"
           FieldSource:
             type: object
             properties:
@@ -29019,7 +29019,7 @@ capabilities:
           - unavailable
           - advisors
           - capacity
-        description: "The answer of `reasoning.advisors`."
+        description: "The answer of `reasoning.advisors`: the mode in force, how many advisors may and may\nnot be asked, every advisor's state, the capacity per advisory capability, and the\ncatalogue's own findings. `operational` is `true` whatever the counts.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::AdvisorsReport;\n\nlet report: AdvisorsReport = serde_json::from_value(serde_json::json!({\n    \"operational\": true,\n    \"mode\": { \"mode\": \"ci\", \"source\": \"CI\" },\n    \"available\": 0, \"unavailable\": 0, \"advisors\": [], \"capacity\": [],\n})).unwrap();\nassert!(report.operational && report.advisors.is_empty());\nassert_eq!(report.mode.source, \"CI\");\nassert!(report.diagnostics.is_empty(), \"absent findings are the ordinary case\");\n```"
         title: AdvisorsReport
         "$defs":
           ModeResolution:
@@ -29034,7 +29034,7 @@ capabilities:
             required:
               - mode
               - source
-            description: The mode in force and what decided it.
+            description: "The mode in force and what decided it, as `resolve_mode` returns it. A plan and a\nreport carry the source beside the mode, so a reader learns why the mode is what it is.\n\n```\nuse majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};\n\nlet r: ModeResolution = resolve_mode(None, true, None);\nassert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() });\n```"
           ReasoningMode:
             oneOf:
               - type: string
@@ -29052,7 +29052,7 @@ capabilities:
               - type: string
                 const: strict
                 description: "Review wider, and complementary review where the stakes are highest."
-            description: "How much independent review a session may use, and where from."
+            description: "How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \"offline\");\nlet m: ReasoningMode = serde_json::from_str(\"\\\"strict\\\"\").unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```"
           AdvisorState:
             type: object
             properties:
@@ -29115,7 +29115,7 @@ capabilities:
               - status
               - reason
               - probe
-            description: One advisor as it stands now.
+            description: "One advisor as it stands now: what the catalogue declares of it, its status, the one\nmachine word saying why, and what was probed. The row `reasoning.advisors` reports and\nthe policy plans over.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\n\nstruct Nothing;\nimpl Presence for Nothing {\n    fn executable(&self, _: &str) -> bool { false }\n    fn variable(&self, _: &str) -> bool { false }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: local_runtime\\n    adapter: a-rt\\n    executable: rt\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet refs = References::default();\nlet state: AdvisorState = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &Nothing, mode: ReasoningMode::Standard, disabled: &[],\n    history: &[], peers: &[], now: 0, cooldown: None,\n})\n.remove(0);\nassert_eq!((state.id.as_str(), state.status), (\"a\", AdvisorStatus::Unavailable));\nassert_eq!(state.probe, \"executable rt on PATH\");\nassert!(state.circuit.is_none() && !state.recovering);\n```"
           AdvisorTransport:
             oneOf:
               - type: string
@@ -29130,7 +29130,7 @@ capabilities:
               - type: string
                 const: peer
                 description: A linked mesh runtime carrying the review feature; present while linked.
-            description: How an advisor is reached.
+            description: "How an advisor is reached. The transport decides how its presence is probed (a\ncredential variable, an executable, a mesh link) and whether `offline` mode admits it.\n\n```\nuse majordomus_cli::reasoning::catalogue::AdvisorTransport;\n\nlet t: AdvisorTransport = serde_json::from_str(\"\\\"local_runtime\\\"\").unwrap();\nassert_eq!(t, AdvisorTransport::LocalRuntime);\nassert!(!t.is_remote());\n```"
           AdvisorStatus:
             oneOf:
               - type: string
@@ -29151,7 +29151,7 @@ capabilities:
               - type: string
                 const: rate_limited
                 description: It answered with a rate limit; not asked again until the limit passes.
-            description: "An advisor's standing."
+            description: "An advisor's standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \"not_configured\");\nlet s: AdvisorStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```"
           AdvisorCircuit:
             type: object
             properties:
@@ -29170,7 +29170,7 @@ capabilities:
               - opened_by
               - failures
               - until
-            description: "An open circuit: why, and until when."
+            description: "An open circuit: the consultation that opened it, the failures behind it, and when it\ncloses. Derived from the records and the clock, never stored.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nstruct All;\nimpl Presence for All {\n    fn executable(&self, _: &str) -> bool { true }\n    fn variable(&self, _: &str) -> bool { true }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: cli\\n    adapter: a-cli\\n    executable: a\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet limited = [Outcome {\n    id: \"consultation-1\".into(), advisor: \"a\".into(),\n    status: ConsultationStatus::RateLimited, at: 0, retry_after: Some(60),\n}];\nlet refs = References::default();\nlet states = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &All, mode: ReasoningMode::Standard, disabled: &[],\n    history: &limited, peers: &[], now: 10, cooldown: None,\n});\nlet circuit: &AdvisorCircuit = states[0].circuit.as_ref().unwrap();\nassert_eq!(circuit.opened_by, \"consultation-1\");\nassert_eq!(circuit.until, \"1970-01-01T00:01:00Z\");\n```"
           AdvisorCapacity:
             type: object
             properties:
@@ -29189,7 +29189,7 @@ capabilities:
               - capability
               - description
               - available
-            description: One advisory capability and who can provide it now.
+            description: "One advisory capability and who can provide it now: a row of the capacity table\n`reasoning.advisors` reports. An empty `available` is answered by the local review.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::AdvisorCapacity;\n\nlet row: AdvisorCapacity = serde_json::from_value(serde_json::json!({\n    \"capability\": \"code_review\", \"description\": \"Critique of a change.\", \"available\": [],\n})).unwrap();\nassert_eq!(row.capability, \"code_review\");\nassert!(row.available.is_empty());\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::reasoning
@@ -29255,7 +29255,7 @@ capabilities:
           - ok
           - checks
           - findings
-        description: "The answer of `reasoning.check`."
+        description: "The answer of `reasoning.check`: whether it is clean, the checks performed in order,\nand every finding. `ok` is `true` exactly when `findings` is empty.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningCheck;\n\nlet clean: ReasoningCheck = serde_json::from_value(serde_json::json!({\n    \"ok\": true, \"checks\": [\"catalogue\"], \"findings\": [],\n})).unwrap();\nassert!(clean.ok && clean.findings.is_empty());\nassert_eq!(clean.checks, [\"catalogue\"]);\n```"
         title: ReasoningCheck
         "$defs":
           ReasoningFinding:
@@ -29274,7 +29274,7 @@ capabilities:
               - check
               - subject
               - message
-            description: One finding.
+            description: "One finding of a reasoning check: which check, where, and what is wrong.\n\n`check` is one of `CHECKS`; `subject` is a repository-relative path, a record id or\nan advisor; `message` is one sentence saying what the rule refuses. Findings are\nreported, never repaired.\n\n```\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\nuse majordomus_cli::reasoning::check::{run, ReasoningFinding, CHECKS};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet root = tempfile::tempdir().unwrap();\nlet loaded = Loaded { records: vec![], unreadable: vec![\"t/broken.json\".into()] };\nlet found = run(root.path(), &AdvisorCatalogue::default(), &References::default(), &loaded);\nlet expected = ReasoningFinding {\n    check: \"records\".into(),\n    subject: \"t/broken.json\".into(),\n    message: \"a reasoning record that does not parse\".into(),\n};\nassert_eq!(found, [expected]);\nassert!(CHECKS.contains(&found[0].check.as_str()));\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::reasoning
@@ -29319,7 +29319,7 @@ capabilities:
             description: "A record id: a conclusion, usually."
         required:
           - id
-        description: "The input of `reasoning.explain`."
+        description: "The input of `reasoning.explain`: the id of the record whose assessment chain is\nexplained. An id no record carries is a not-found answer.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningExplainInput;\n\nlet input: ReasoningExplainInput = serde_json::from_str(r#\"{\"id\":\"conclusion-1\"}\"#).unwrap();\nassert_eq!(input.id, \"conclusion-1\");\nassert!(serde_json::from_str::<ReasoningExplainInput>(\"{}\").is_err(), \"the id is required\");\n```"
         title: ReasoningExplainInput
     output:
       name: ReasoningExplanation
@@ -29342,7 +29342,7 @@ capabilities:
         required:
           - record
           - chain
-        description: A record with everything it rests on and everything that rests on it.
+        description: "A record with everything it rests on and everything that rests on it.\n\nIt carries the record itself, the assessment it belongs to, and that assessment's\nwhole provenance chain as timeline steps in order. A record that belongs to no\nassessment has a chain of itself alone.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{explain, ReasoningExplanation};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"attempt-1\", 1, json!({\n    \"kind\": \"attempt\", \"attempt\": \"inline it\", \"observed_failure\": \"still slow\",\n})));\nlet e: ReasoningExplanation = explain(&loaded, \"attempt-1\").unwrap();\nassert_eq!(e.record.id, \"attempt-1\");\nassert_eq!(e.assessment, None);\nassert_eq!(e.chain.len(), 1);\n```"
         title: ReasoningExplanation
         "$defs":
           ReasoningRecord:
@@ -29385,7 +29385,7 @@ capabilities:
               - task
               - recorded_at
               - body
-            description: A stored record.
+            description: "A stored record: a body with the envelope only the writer stamps.\n\nThe envelope carries the schema and version, a unique id, the task, the time it was\nrecorded, the commit the checkout was on and the secret shapes redacted from its text.\nOne record is one JSON file in the store; the store reads back only records whose\nschema and version match.\n\n```\nuse majordomus_cli::reasoning::record::*;\n\nlet record = ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"attempt-20261001T000000Z-abcdef\".into(),\n    task: \"untasked\".into(),\n    recorded_at: \"2026-10-01T00:00:00Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Attempt(AttemptInput {\n        assessment: None,\n        attempt: \"inline the call\".into(),\n        observed_failure: \"the test still fails\".into(),\n        assumption_invalidated: None,\n        evidence: vec![],\n        updated_hypothesis: None,\n    }),\n};\nlet text = serde_json::to_string(&record).unwrap();\nassert!(!text.contains(\"\\\"head\\\"\"), \"an absent head is not written\");\nlet back: ReasoningRecord = serde_json::from_str(&text).unwrap();\nassert_eq!(back.id, record.id);\nassert_eq!(back.body.kind(), \"attempt\");\n```"
           ReasoningBody:
             oneOf:
               - type: object
@@ -29688,7 +29688,7 @@ capabilities:
                   - attempt
                   - observed_failure
                 description: A failed attempt.
-            description: "A stored record's body."
+            description: "A stored record's body: the admitted input, with whatever the writer computed.\n\nIt mirrors `ReasoningInput` variant for variant, except that a plan is stored as a\n`StoredPlan` and a conclusion as a `StoredConclusion`. Only the store produces one,\nby admitting an input; its JSON form is tagged by `kind` like the input's.\n\n```\nuse majordomus_cli::reasoning::record::{AssessmentInput, ReasoningBody};\n\nlet body = ReasoningBody::Assessment(AssessmentInput {\n    subject: \"lock scope\".into(),\n    ..Default::default()\n});\nassert_eq!(body.kind(), \"assessment\");\nassert_eq!(serde_json::to_value(&body).unwrap()[\"kind\"], \"assessment\");\n```"
           Materiality:
             oneOf:
               - type: string
@@ -29706,7 +29706,7 @@ capabilities:
               - type: string
                 const: critical
                 description: "Irreversible or destructive, or repository governance itself."
-            description: How much the uncertain decision could matter.
+            description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
           ReasoningConfidence:
             oneOf:
               - type: string
@@ -29718,7 +29718,7 @@ capabilities:
               - type: string
                 const: high
                 description: Supported by evidence that would be hard to overturn.
-            description: How sure the primary executor is of its current hypothesis.
+            description: "How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \"default\".into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&request, &mode, &[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```"
           ReasoningEvidence:
             type: object
             additionalProperties: false
@@ -29737,7 +29737,7 @@ capabilities:
             required:
               - kind
               - reference
-            description: A reference to something that supports a claim.
+            description: "A reference to something that supports a claim.\n\nEvidence is a pointer, never a copy: a path, a case, an id or a command line, with an\noptional one-line note of what it shows. Unknown fields are refused, so a misspelt\nfield is an error rather than a silently dropped claim.\n\n```\nuse majordomus_cli::reasoning::record::{ReasoningEvidence, ReasoningEvidenceKind};\n\nlet e: ReasoningEvidence = serde_json::from_value(serde_json::json!({\n    \"kind\": \"file\",\n    \"reference\": \"src/worker.rs:42\",\n}))\n.unwrap();\nassert_eq!(e.kind, ReasoningEvidenceKind::File);\nassert_eq!(e.note, None);\n\nlet typo = serde_json::from_value::<ReasoningEvidence>(serde_json::json!({\n    \"kind\": \"file\", \"reference\": \"x\", \"notes\": \"misspelt\",\n}));\nassert!(typo.is_err());\n```"
           ReasoningEvidenceKind:
             oneOf:
               - type: string
@@ -29770,7 +29770,7 @@ capabilities:
               - type: string
                 const: prior_external_opinion
                 description: "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
-            description: What a piece of evidence is.
+            description: "What a piece of evidence is.\n\nThe kind tells a reader how to follow the reference: open a file, run a test, read an\nADR or a rule, show a commit. A prior external opinion is a kind of its own so that an\nadvisor's earlier conclusion, handed to another advisor, is never read as a fact.\n\n```\nuse majordomus_cli::reasoning::record::ReasoningEvidenceKind;\n\nlet kind: ReasoningEvidenceKind = serde_json::from_str(\"\\\"prior_external_opinion\\\"\").unwrap();\nassert_eq!(kind, ReasoningEvidenceKind::PriorExternalOpinion);\nassert_eq!(serde_json::to_string(&ReasoningEvidenceKind::Adr).unwrap(), \"\\\"adr\\\"\");\n```"
           ReviewPlan:
             type: object
             properties:
@@ -29834,7 +29834,7 @@ capabilities:
               - selected
               - excluded
               - available
-            description: "The plan: the decision with its reasons attached."
+            description: "The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \"MAJORDOMUS_REASONING_MODE\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&request, &mode, &[]);\nassert_eq!(p.mode_source, \"MAJORDOMUS_REASONING_MODE\");\nassert_eq!(p.capabilities, [\"independent_reasoning\"]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\"no available advisor offers\"));\n```"
           ReasoningMode:
             oneOf:
               - type: string
@@ -29852,7 +29852,7 @@ capabilities:
               - type: string
                 const: strict
                 description: "Review wider, and complementary review where the stakes are highest."
-            description: "How much independent review a session may use, and where from."
+            description: "How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \"offline\");\nlet m: ReasoningMode = serde_json::from_str(\"\\\"strict\\\"\").unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```"
           PlanOutcome:
             oneOf:
               - type: string
@@ -29864,7 +29864,7 @@ capabilities:
               - type: string
                 const: reuse_prior
                 description: A standing conclusion already answers this; reuse it rather than ask again.
-            description: What the plan decided.
+            description: "What the plan decided: consult the selected advisors, decide on local evidence, or\nreuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};\n\nlet mode = ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() };\nlet request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };\nlet outcome: PlanOutcome = plan(&request, &mode, &[]).outcome;\nassert_eq!(outcome, PlanOutcome::DecideLocally);\nassert_eq!(serde_json::to_value(outcome).unwrap(), \"decide_locally\");\n```"
           SelectedAdvisor:
             type: object
             properties:
@@ -29883,7 +29883,7 @@ capabilities:
               - advisor
               - covers
               - why
-            description: One selected advisor and why.
+            description: "One selected advisor, the requested capabilities it covers, and why the greedy\nselection chose it at its position.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p = plan(&request, &mode, &[advisor(\"a\", \"x-api\", \"available\")]);\nlet chosen: &SelectedAdvisor = &p.selected[0];\nassert_eq!(chosen.advisor, \"a\");\nassert_eq!(chosen.covers, [\"independent_reasoning\"]);\nassert!(chosen.why.starts_with(\"the first available advisor\"));\n```"
           ExcludedAdvisor:
             type: object
             properties:
@@ -29900,7 +29900,7 @@ capabilities:
               - advisor
               - status
               - reason
-            description: One advisor left out and why.
+            description: "One advisor left out of the plan, its standing when the plan was made, and why: its\nstatus, a capability it does not offer, or a budget already spent.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet states = [advisor(\"a\", \"x-api\", \"available\"), advisor(\"b\", \"y-api\", \"available\")];\nlet p = plan(&request, &mode, &states);\nlet left: &ExcludedAdvisor = &p.excluded[0];\nassert_eq!((left.advisor.as_str(), left.status), (\"b\", AdvisorStatus::Available));\nassert!(left.reason.contains(\"budget was spent\"));\n```"
           AdvisorStatus:
             oneOf:
               - type: string
@@ -29921,7 +29921,7 @@ capabilities:
               - type: string
                 const: rate_limited
                 description: It answered with a rate limit; not asked again until the limit passes.
-            description: "An advisor's standing."
+            description: "An advisor's standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \"not_configured\");\nlet s: AdvisorStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```"
           AdvisorState:
             type: object
             properties:
@@ -29984,7 +29984,7 @@ capabilities:
               - status
               - reason
               - probe
-            description: One advisor as it stands now.
+            description: "One advisor as it stands now: what the catalogue declares of it, its status, the one\nmachine word saying why, and what was probed. The row `reasoning.advisors` reports and\nthe policy plans over.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\n\nstruct Nothing;\nimpl Presence for Nothing {\n    fn executable(&self, _: &str) -> bool { false }\n    fn variable(&self, _: &str) -> bool { false }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: local_runtime\\n    adapter: a-rt\\n    executable: rt\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet refs = References::default();\nlet state: AdvisorState = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &Nothing, mode: ReasoningMode::Standard, disabled: &[],\n    history: &[], peers: &[], now: 0, cooldown: None,\n})\n.remove(0);\nassert_eq!((state.id.as_str(), state.status), (\"a\", AdvisorStatus::Unavailable));\nassert_eq!(state.probe, \"executable rt on PATH\");\nassert!(state.circuit.is_none() && !state.recovering);\n```"
           AdvisorTransport:
             oneOf:
               - type: string
@@ -29999,7 +29999,7 @@ capabilities:
               - type: string
                 const: peer
                 description: A linked mesh runtime carrying the review feature; present while linked.
-            description: How an advisor is reached.
+            description: "How an advisor is reached. The transport decides how its presence is probed (a\ncredential variable, an executable, a mesh link) and whether `offline` mode admits it.\n\n```\nuse majordomus_cli::reasoning::catalogue::AdvisorTransport;\n\nlet t: AdvisorTransport = serde_json::from_str(\"\\\"local_runtime\\\"\").unwrap();\nassert_eq!(t, AdvisorTransport::LocalRuntime);\nassert!(!t.is_remote());\n```"
           AdvisorCircuit:
             type: object
             properties:
@@ -30018,7 +30018,7 @@ capabilities:
               - opened_by
               - failures
               - until
-            description: "An open circuit: why, and until when."
+            description: "An open circuit: the consultation that opened it, the failures behind it, and when it\ncloses. Derived from the records and the clock, never stored.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nstruct All;\nimpl Presence for All {\n    fn executable(&self, _: &str) -> bool { true }\n    fn variable(&self, _: &str) -> bool { true }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: cli\\n    adapter: a-cli\\n    executable: a\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet limited = [Outcome {\n    id: \"consultation-1\".into(), advisor: \"a\".into(),\n    status: ConsultationStatus::RateLimited, at: 0, retry_after: Some(60),\n}];\nlet refs = References::default();\nlet states = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &All, mode: ReasoningMode::Standard, disabled: &[],\n    history: &limited, peers: &[], now: 10, cooldown: None,\n});\nlet circuit: &AdvisorCircuit = states[0].circuit.as_ref().unwrap();\nassert_eq!(circuit.opened_by, \"consultation-1\");\nassert_eq!(circuit.until, \"1970-01-01T00:01:00Z\");\n```"
           StoredPlan:
             type: object
             properties:
@@ -30037,7 +30037,7 @@ capabilities:
               - assessment
               - plan
               - availability
-            description: "A plan as stored: the decision and the availability it was made against."
+            description: "A plan as stored: the decision and the availability it was made against.\n\nThe store builds it when it admits a `PlanInput`; nothing else does. The snapshot of\navailability is what a later consultation is admitted against, so an answer that\narrives after the advisor's circuit opened still belongs to the plan that asked for it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::PlanOutcome;\nuse majordomus_cli::reasoning::record::*;\nuse majordomus_cli::reasoning::store::{admit, Admission, Loaded};\n\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet admission = Admission { mode: &mode, availability: &[] };\nlet mut loaded = Loaded::default();\nloaded.records.push(ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"assessment-1\".into(),\n    task: \"t\".into(),\n    recorded_at: \"2026-10-01T00:00:01Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Assessment(AssessmentInput {\n        subject: \"a name\".into(),\n        ..Default::default()\n    }),\n});\nlet input = ReasoningInput::Plan(PlanInput { assessment: \"assessment-1\".into() });\nlet ReasoningBody::Plan(stored) = admit(input, &loaded, &admission).unwrap() else {\n    panic!(\"a plan input is stored as a plan\");\n};\nlet stored: StoredPlan = stored;\nassert_eq!(stored.assessment, \"assessment-1\");\nassert_eq!(stored.plan.outcome, PlanOutcome::DecideLocally);\nassert!(stored.availability.is_empty());\n```"
           ConsultationStatus:
             oneOf:
               - type: string
@@ -30067,7 +30067,7 @@ capabilities:
               - type: string
                 const: error
                 description: Anything else the adapter could not classify.
-            description: How a consultation ended.
+            description: "How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```"
           Stance:
             oneOf:
               - type: string
@@ -30082,7 +30082,7 @@ capabilities:
               - type: string
                 const: inconclusive
                 description: It does not decide.
-            description: "Where an advisor's answer stands relative to the executor's hypothesis."
+            description: "Where an advisor's answer stands relative to the executor's hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\"\\\"alternative\\\"\").unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::<Stance>(\"\\\"agrees\\\"\").is_err());\n```"
           AdvisorUsage:
             type: object
             additionalProperties: false
@@ -30099,7 +30099,7 @@ capabilities:
                 minimum: 0
                 description: Output tokens.
                 default: 0
-            description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated."
+            description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated.\n\nThe state sums these into its totals. A missing count reads as zero, so an adapter\nthat reports only one of the two still records what it reported.\n\n```\nuse majordomus_cli::reasoning::record::AdvisorUsage;\n\nlet u: AdvisorUsage = serde_json::from_str(r#\"{\"input_tokens\": 120}\"#).unwrap();\nassert_eq!(u, AdvisorUsage { input_tokens: 120, output_tokens: 0 });\n```"
           DisagreementPosition:
             type: object
             additionalProperties: false
@@ -30113,10 +30113,10 @@ capabilities:
             required:
               - source
               - position
-            description: One side of a disagreement.
+            description: "One side of a disagreement: whose position it is, and the position in one line.\n\nThe source is `primary` for the executor, or the id of a completed consultation; the\nstore refuses a position sourced from a consultation that did not complete.\n\n```\nuse majordomus_cli::reasoning::record::DisagreementPosition;\n\nlet p = DisagreementPosition { source: \"primary\".into(), position: \"keep the lock\".into() };\nlet json = serde_json::to_value(&p).unwrap();\nassert_eq!(json, serde_json::json!({ \"source\": \"primary\", \"position\": \"keep the lock\" }));\n```"
           StoredConclusion:
             type: object
-            description: "A conclusion as stored: the input and what only the writer computes."
+            description: "A conclusion as stored: the input and what only the writer computes.\n\nThe input is flattened, so a stored conclusion reads as the input plus two fields:\nthe advisors whose completed consultations it cites, each once and in canonical\norder, and their count. Both are computed at admission and checked again by\n`reasoning.check`, so a hand-edited count is reported.\n\n```\nuse majordomus_cli::reasoning::record::{ConclusionInput, StoredConclusion};\n\nlet stored = StoredConclusion {\n    input: ConclusionInput {\n        assessment: \"assessment-1\".into(),\n        decision: \"keep the lock\".into(),\n        rationale: \"measured\".into(),\n        ..Default::default()\n    },\n    reviewed_by: vec![\"alpha\".into()],\n    independent_review_count: 1,\n};\nlet json = serde_json::to_value(&stored).unwrap();\nassert_eq!(json[\"decision\"], \"keep the lock\");\nassert_eq!(json[\"independent_review_count\"], 1);\n```"
             properties:
               assessment:
                 type: string
@@ -30195,7 +30195,7 @@ capabilities:
               - type: string
                 const: fail
                 description: It failed.
-            description: Whether a validation passed.
+            description: "Whether a performed validation step passed or failed.\n\nOne failed validation is enough to mark the assessment's standing as\n`validation_failed` in the derived state, whatever else passed.\n\n```\nuse majordomus_cli::reasoning::record::ValidationOutcome;\n\nlet o: ValidationOutcome = serde_json::from_str(\"\\\"fail\\\"\").unwrap();\nassert_eq!(o, ValidationOutcome::Fail);\nassert_eq!(serde_json::to_string(&ValidationOutcome::Pass).unwrap(), \"\\\"pass\\\"\");\n```"
           ReasoningStep:
             type: object
             properties:
@@ -30216,7 +30216,7 @@ capabilities:
               - id
               - phase
               - summary
-            description: One step of the timeline.
+            description: "One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"attempt-1\", 1, json!({\n    \"kind\": \"attempt\", \"attempt\": \"share the client\\nacross threads\",\n    \"observed_failure\": \"the handle is not Sync\",\n})));\nlet state = derive(&loaded, None);\nlet step: &ReasoningStep = &state.timeline[0];\nassert_eq!(step.at, \"2026-10-01T00:00:01Z\");\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \"share the client failed: the handle is not Sync\");\n```"
           ReasoningPhase:
             oneOf:
               - type: string
@@ -30252,7 +30252,7 @@ capabilities:
               - type: string
                 const: attempt
                 description: A failed attempt.
-            description: A phase of the reasoning timeline.
+            description: "A phase of the reasoning timeline.\n\nEach record maps to one phase: a plan to consulting, local or reuse by its outcome, a\nconsultation to an advisor response or a degradation by its status, and every other\nkind to the phase of the same name.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, json!({\n    \"kind\": \"consultation\", \"plan\": \"plan-0\", \"advisor\": \"alpha\", \"status\": \"unavailable\",\n})));\nlet phases: Vec<ReasoningPhase> =\n    derive(&loaded, None).timeline.iter().map(|s| s.phase).collect();\nassert_eq!(phases, [ReasoningPhase::Degradation]);\nlet word = serde_json::to_value(ReasoningPhase::AdvisorResponse).unwrap();\nassert_eq!(word, \"advisor_response\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::reasoning
@@ -30308,7 +30308,7 @@ capabilities:
               - string
               - "null"
             description: "Advisory capabilities review needs, comma-separated."
-        description: "The input of `reasoning.plan`: a stated uncertainty, in transport-friendly scalars.\nNothing is recorded; `reasoning.record` with a `plan` records one."
+        description: "The input of `reasoning.plan`: a stated uncertainty, in transport-friendly scalars.\nNothing is recorded; `reasoning.record` with a `plan` records one.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::PlanPreviewInput;\nuse majordomus_cli::reasoning::Materiality;\n\nlet input: PlanPreviewInput = serde_json::from_value(serde_json::json!({\n    \"materiality\": \"high\", \"capabilities\": \"code_review,security_review\",\n})).unwrap();\nassert_eq!(input.materiality, Some(Materiality::High));\nassert!(input.confidence.is_none(), \"an absent field takes the policy's default\");\nassert!(serde_json::from_value::<PlanPreviewInput>(serde_json::json!({ \"quorum\": 2 })).is_err());\n```"
         title: PlanPreviewInput
         "$defs":
           Materiality:
@@ -30328,7 +30328,7 @@ capabilities:
               - type: string
                 const: critical
                 description: "Irreversible or destructive, or repository governance itself."
-            description: How much the uncertain decision could matter.
+            description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
           ReasoningConfidence:
             oneOf:
               - type: string
@@ -30340,7 +30340,7 @@ capabilities:
               - type: string
                 const: high
                 description: Supported by evidence that would be hard to overturn.
-            description: How sure the primary executor is of its current hypothesis.
+            description: "How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \"default\".into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&request, &mode, &[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```"
     output:
       name: ReviewPlan
       schema:
@@ -30406,7 +30406,7 @@ capabilities:
           - selected
           - excluded
           - available
-        description: "The plan: the decision with its reasons attached."
+        description: "The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \"MAJORDOMUS_REASONING_MODE\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&request, &mode, &[]);\nassert_eq!(p.mode_source, \"MAJORDOMUS_REASONING_MODE\");\nassert_eq!(p.capabilities, [\"independent_reasoning\"]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\"no available advisor offers\"));\n```"
         title: ReviewPlan
         "$defs":
           ReasoningMode:
@@ -30426,7 +30426,7 @@ capabilities:
               - type: string
                 const: strict
                 description: "Review wider, and complementary review where the stakes are highest."
-            description: "How much independent review a session may use, and where from."
+            description: "How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \"offline\");\nlet m: ReasoningMode = serde_json::from_str(\"\\\"strict\\\"\").unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```"
           Materiality:
             oneOf:
               - type: string
@@ -30444,7 +30444,7 @@ capabilities:
               - type: string
                 const: critical
                 description: "Irreversible or destructive, or repository governance itself."
-            description: How much the uncertain decision could matter.
+            description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
           ReasoningConfidence:
             oneOf:
               - type: string
@@ -30456,7 +30456,7 @@ capabilities:
               - type: string
                 const: high
                 description: Supported by evidence that would be hard to overturn.
-            description: How sure the primary executor is of its current hypothesis.
+            description: "How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \"default\".into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&request, &mode, &[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```"
           PlanOutcome:
             oneOf:
               - type: string
@@ -30468,7 +30468,7 @@ capabilities:
               - type: string
                 const: reuse_prior
                 description: A standing conclusion already answers this; reuse it rather than ask again.
-            description: What the plan decided.
+            description: "What the plan decided: consult the selected advisors, decide on local evidence, or\nreuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};\n\nlet mode = ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() };\nlet request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };\nlet outcome: PlanOutcome = plan(&request, &mode, &[]).outcome;\nassert_eq!(outcome, PlanOutcome::DecideLocally);\nassert_eq!(serde_json::to_value(outcome).unwrap(), \"decide_locally\");\n```"
           SelectedAdvisor:
             type: object
             properties:
@@ -30487,7 +30487,7 @@ capabilities:
               - advisor
               - covers
               - why
-            description: One selected advisor and why.
+            description: "One selected advisor, the requested capabilities it covers, and why the greedy\nselection chose it at its position.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p = plan(&request, &mode, &[advisor(\"a\", \"x-api\", \"available\")]);\nlet chosen: &SelectedAdvisor = &p.selected[0];\nassert_eq!(chosen.advisor, \"a\");\nassert_eq!(chosen.covers, [\"independent_reasoning\"]);\nassert!(chosen.why.starts_with(\"the first available advisor\"));\n```"
           ExcludedAdvisor:
             type: object
             properties:
@@ -30504,7 +30504,7 @@ capabilities:
               - advisor
               - status
               - reason
-            description: One advisor left out and why.
+            description: "One advisor left out of the plan, its standing when the plan was made, and why: its\nstatus, a capability it does not offer, or a budget already spent.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet states = [advisor(\"a\", \"x-api\", \"available\"), advisor(\"b\", \"y-api\", \"available\")];\nlet p = plan(&request, &mode, &states);\nlet left: &ExcludedAdvisor = &p.excluded[0];\nassert_eq!((left.advisor.as_str(), left.status), (\"b\", AdvisorStatus::Available));\nassert!(left.reason.contains(\"budget was spent\"));\n```"
           AdvisorStatus:
             oneOf:
               - type: string
@@ -30525,7 +30525,7 @@ capabilities:
               - type: string
                 const: rate_limited
                 description: It answered with a rate limit; not asked again until the limit passes.
-            description: "An advisor's standing."
+            description: "An advisor's standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \"not_configured\");\nlet s: AdvisorStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::reasoning
@@ -30570,7 +30570,7 @@ capabilities:
             description: The record.
         required:
           - record
-        description: "The input of `reasoning.record`: one record, as authored."
+        description: "The input of `reasoning.record`: one record, as authored, tagged by its `kind`. The\nwriter computes everything else (id, task, stamp, a plan's selection) itself.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningRecordInput;\nuse majordomus_cli::reasoning::record::ReasoningInput;\n\nlet input: ReasoningRecordInput = serde_json::from_value(serde_json::json!({\n    \"record\": { \"kind\": \"plan\", \"assessment\": \"assessment-1\" },\n})).unwrap();\nassert!(matches!(input.record, ReasoningInput::Plan(ref p) if p.assessment == \"assessment-1\"));\n```"
         title: ReasoningRecordInput
         "$defs":
           ReasoningInput:
@@ -30935,7 +30935,7 @@ capabilities:
                   - attempt
                   - observed_failure
                 description: A failed attempt.
-            description: "Anything a session records, as authored."
+            description: "Anything a session records, as authored.\n\nThe JSON form is tagged by `kind`, with the variant's fields beside the tag. This is\nwhat the CLI, HTTP and MCP surfaces accept; `crate::reasoning::store::admit` turns\nit into the `ReasoningBody` that is stored, or refuses it.\n\n```\nuse majordomus_cli::reasoning::record::ReasoningInput;\n\nlet input: ReasoningInput = serde_json::from_value(serde_json::json!({\n    \"kind\": \"plan\",\n    \"assessment\": \"assessment-1\",\n}))\n.unwrap();\nassert!(matches!(input, ReasoningInput::Plan(ref p) if p.assessment == \"assessment-1\"));\nlet unknown = serde_json::json!({ \"kind\": \"opinion\", \"text\": \"x\" });\nassert!(serde_json::from_value::<ReasoningInput>(unknown).is_err());\n```"
           Materiality:
             oneOf:
               - type: string
@@ -30953,7 +30953,7 @@ capabilities:
               - type: string
                 const: critical
                 description: "Irreversible or destructive, or repository governance itself."
-            description: How much the uncertain decision could matter.
+            description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
           ReasoningConfidence:
             oneOf:
               - type: string
@@ -30965,7 +30965,7 @@ capabilities:
               - type: string
                 const: high
                 description: Supported by evidence that would be hard to overturn.
-            description: How sure the primary executor is of its current hypothesis.
+            description: "How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \"default\".into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&request, &mode, &[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```"
           ReasoningEvidence:
             type: object
             additionalProperties: false
@@ -30984,7 +30984,7 @@ capabilities:
             required:
               - kind
               - reference
-            description: A reference to something that supports a claim.
+            description: "A reference to something that supports a claim.\n\nEvidence is a pointer, never a copy: a path, a case, an id or a command line, with an\noptional one-line note of what it shows. Unknown fields are refused, so a misspelt\nfield is an error rather than a silently dropped claim.\n\n```\nuse majordomus_cli::reasoning::record::{ReasoningEvidence, ReasoningEvidenceKind};\n\nlet e: ReasoningEvidence = serde_json::from_value(serde_json::json!({\n    \"kind\": \"file\",\n    \"reference\": \"src/worker.rs:42\",\n}))\n.unwrap();\nassert_eq!(e.kind, ReasoningEvidenceKind::File);\nassert_eq!(e.note, None);\n\nlet typo = serde_json::from_value::<ReasoningEvidence>(serde_json::json!({\n    \"kind\": \"file\", \"reference\": \"x\", \"notes\": \"misspelt\",\n}));\nassert!(typo.is_err());\n```"
           ReasoningEvidenceKind:
             oneOf:
               - type: string
@@ -31017,7 +31017,7 @@ capabilities:
               - type: string
                 const: prior_external_opinion
                 description: "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
-            description: What a piece of evidence is.
+            description: "What a piece of evidence is.\n\nThe kind tells a reader how to follow the reference: open a file, run a test, read an\nADR or a rule, show a commit. A prior external opinion is a kind of its own so that an\nadvisor's earlier conclusion, handed to another advisor, is never read as a fact.\n\n```\nuse majordomus_cli::reasoning::record::ReasoningEvidenceKind;\n\nlet kind: ReasoningEvidenceKind = serde_json::from_str(\"\\\"prior_external_opinion\\\"\").unwrap();\nassert_eq!(kind, ReasoningEvidenceKind::PriorExternalOpinion);\nassert_eq!(serde_json::to_string(&ReasoningEvidenceKind::Adr).unwrap(), \"\\\"adr\\\"\");\n```"
           ConsultationStatus:
             oneOf:
               - type: string
@@ -31047,7 +31047,7 @@ capabilities:
               - type: string
                 const: error
                 description: Anything else the adapter could not classify.
-            description: How a consultation ended.
+            description: "How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```"
           Stance:
             oneOf:
               - type: string
@@ -31062,7 +31062,7 @@ capabilities:
               - type: string
                 const: inconclusive
                 description: It does not decide.
-            description: "Where an advisor's answer stands relative to the executor's hypothesis."
+            description: "Where an advisor's answer stands relative to the executor's hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\"\\\"alternative\\\"\").unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::<Stance>(\"\\\"agrees\\\"\").is_err());\n```"
           AdvisorUsage:
             type: object
             additionalProperties: false
@@ -31079,7 +31079,7 @@ capabilities:
                 minimum: 0
                 description: Output tokens.
                 default: 0
-            description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated."
+            description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated.\n\nThe state sums these into its totals. A missing count reads as zero, so an adapter\nthat reports only one of the two still records what it reported.\n\n```\nuse majordomus_cli::reasoning::record::AdvisorUsage;\n\nlet u: AdvisorUsage = serde_json::from_str(r#\"{\"input_tokens\": 120}\"#).unwrap();\nassert_eq!(u, AdvisorUsage { input_tokens: 120, output_tokens: 0 });\n```"
           DisagreementPosition:
             type: object
             additionalProperties: false
@@ -31093,7 +31093,7 @@ capabilities:
             required:
               - source
               - position
-            description: One side of a disagreement.
+            description: "One side of a disagreement: whose position it is, and the position in one line.\n\nThe source is `primary` for the executor, or the id of a completed consultation; the\nstore refuses a position sourced from a consultation that did not complete.\n\n```\nuse majordomus_cli::reasoning::record::DisagreementPosition;\n\nlet p = DisagreementPosition { source: \"primary\".into(), position: \"keep the lock\".into() };\nlet json = serde_json::to_value(&p).unwrap();\nassert_eq!(json, serde_json::json!({ \"source\": \"primary\", \"position\": \"keep the lock\" }));\n```"
           ValidationOutcome:
             oneOf:
               - type: string
@@ -31102,7 +31102,7 @@ capabilities:
               - type: string
                 const: fail
                 description: It failed.
-            description: Whether a validation passed.
+            description: "Whether a performed validation step passed or failed.\n\nOne failed validation is enough to mark the assessment's standing as\n`validation_failed` in the derived state, whatever else passed.\n\n```\nuse majordomus_cli::reasoning::record::ValidationOutcome;\n\nlet o: ValidationOutcome = serde_json::from_str(\"\\\"fail\\\"\").unwrap();\nassert_eq!(o, ValidationOutcome::Fail);\nassert_eq!(serde_json::to_string(&ValidationOutcome::Pass).unwrap(), \"\\\"pass\\\"\");\n```"
     output:
       name: ReasoningRecorded
       schema:
@@ -31121,7 +31121,7 @@ capabilities:
           - record
           - path
           - step
-        description: "The answer of `reasoning.record`."
+        description: "The answer of `reasoning.record`: the record as stored, where it was written, and the\ntimeline step it adds.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningRecorded;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningRecorded)).unwrap();\nfor field in [\"record\", \"path\", \"step\"] {\n    assert!(schema[\"required\"].as_array().unwrap().iter().any(|f| f == field), \"{field}\");\n}\n```"
         title: ReasoningRecorded
         "$defs":
           ReasoningRecord:
@@ -31164,7 +31164,7 @@ capabilities:
               - task
               - recorded_at
               - body
-            description: A stored record.
+            description: "A stored record: a body with the envelope only the writer stamps.\n\nThe envelope carries the schema and version, a unique id, the task, the time it was\nrecorded, the commit the checkout was on and the secret shapes redacted from its text.\nOne record is one JSON file in the store; the store reads back only records whose\nschema and version match.\n\n```\nuse majordomus_cli::reasoning::record::*;\n\nlet record = ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"attempt-20261001T000000Z-abcdef\".into(),\n    task: \"untasked\".into(),\n    recorded_at: \"2026-10-01T00:00:00Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Attempt(AttemptInput {\n        assessment: None,\n        attempt: \"inline the call\".into(),\n        observed_failure: \"the test still fails\".into(),\n        assumption_invalidated: None,\n        evidence: vec![],\n        updated_hypothesis: None,\n    }),\n};\nlet text = serde_json::to_string(&record).unwrap();\nassert!(!text.contains(\"\\\"head\\\"\"), \"an absent head is not written\");\nlet back: ReasoningRecord = serde_json::from_str(&text).unwrap();\nassert_eq!(back.id, record.id);\nassert_eq!(back.body.kind(), \"attempt\");\n```"
           ReasoningBody:
             oneOf:
               - type: object
@@ -31467,7 +31467,7 @@ capabilities:
                   - attempt
                   - observed_failure
                 description: A failed attempt.
-            description: "A stored record's body."
+            description: "A stored record's body: the admitted input, with whatever the writer computed.\n\nIt mirrors `ReasoningInput` variant for variant, except that a plan is stored as a\n`StoredPlan` and a conclusion as a `StoredConclusion`. Only the store produces one,\nby admitting an input; its JSON form is tagged by `kind` like the input's.\n\n```\nuse majordomus_cli::reasoning::record::{AssessmentInput, ReasoningBody};\n\nlet body = ReasoningBody::Assessment(AssessmentInput {\n    subject: \"lock scope\".into(),\n    ..Default::default()\n});\nassert_eq!(body.kind(), \"assessment\");\nassert_eq!(serde_json::to_value(&body).unwrap()[\"kind\"], \"assessment\");\n```"
           Materiality:
             oneOf:
               - type: string
@@ -31485,7 +31485,7 @@ capabilities:
               - type: string
                 const: critical
                 description: "Irreversible or destructive, or repository governance itself."
-            description: How much the uncertain decision could matter.
+            description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
           ReasoningConfidence:
             oneOf:
               - type: string
@@ -31497,7 +31497,7 @@ capabilities:
               - type: string
                 const: high
                 description: Supported by evidence that would be hard to overturn.
-            description: How sure the primary executor is of its current hypothesis.
+            description: "How sure the primary executor is of its current hypothesis. `high` lowers the review\nbudget by one; the other levels leave it as the mode and materiality set it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};\n\nlet mode = ModeResolution { mode: ReasoningMode::Strict, source: \"default\".into() };\nlet budget = |confidence: ReasoningConfidence| {\n    let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };\n    plan(&request, &mode, &[]).budget\n};\nassert_eq!(budget(ReasoningConfidence::Medium), 3);\nassert_eq!(budget(ReasoningConfidence::High), 2);\n```"
           ReasoningEvidence:
             type: object
             additionalProperties: false
@@ -31516,7 +31516,7 @@ capabilities:
             required:
               - kind
               - reference
-            description: A reference to something that supports a claim.
+            description: "A reference to something that supports a claim.\n\nEvidence is a pointer, never a copy: a path, a case, an id or a command line, with an\noptional one-line note of what it shows. Unknown fields are refused, so a misspelt\nfield is an error rather than a silently dropped claim.\n\n```\nuse majordomus_cli::reasoning::record::{ReasoningEvidence, ReasoningEvidenceKind};\n\nlet e: ReasoningEvidence = serde_json::from_value(serde_json::json!({\n    \"kind\": \"file\",\n    \"reference\": \"src/worker.rs:42\",\n}))\n.unwrap();\nassert_eq!(e.kind, ReasoningEvidenceKind::File);\nassert_eq!(e.note, None);\n\nlet typo = serde_json::from_value::<ReasoningEvidence>(serde_json::json!({\n    \"kind\": \"file\", \"reference\": \"x\", \"notes\": \"misspelt\",\n}));\nassert!(typo.is_err());\n```"
           ReasoningEvidenceKind:
             oneOf:
               - type: string
@@ -31549,7 +31549,7 @@ capabilities:
               - type: string
                 const: prior_external_opinion
                 description: "A prior external opinion: an advisor's conclusion handed to another advisor.\nMarked so it is never mistaken for a fact."
-            description: What a piece of evidence is.
+            description: "What a piece of evidence is.\n\nThe kind tells a reader how to follow the reference: open a file, run a test, read an\nADR or a rule, show a commit. A prior external opinion is a kind of its own so that an\nadvisor's earlier conclusion, handed to another advisor, is never read as a fact.\n\n```\nuse majordomus_cli::reasoning::record::ReasoningEvidenceKind;\n\nlet kind: ReasoningEvidenceKind = serde_json::from_str(\"\\\"prior_external_opinion\\\"\").unwrap();\nassert_eq!(kind, ReasoningEvidenceKind::PriorExternalOpinion);\nassert_eq!(serde_json::to_string(&ReasoningEvidenceKind::Adr).unwrap(), \"\\\"adr\\\"\");\n```"
           ReviewPlan:
             type: object
             properties:
@@ -31613,7 +31613,7 @@ capabilities:
               - selected
               - excluded
               - available
-            description: "The plan: the decision with its reasons attached."
+            description: "The plan: the decision with its reasons attached. It carries what it answered (mode,\nmateriality, confidence, capabilities), the budget, the outcome with one sentence of\nwhy, every advisor selected or excluded, and the local review when one is due.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};\n\nlet mode = ModeResolution { mode: ReasoningMode::Offline, source: \"MAJORDOMUS_REASONING_MODE\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p: ReviewPlan = plan(&request, &mode, &[]);\nassert_eq!(p.mode_source, \"MAJORDOMUS_REASONING_MODE\");\nassert_eq!(p.capabilities, [\"independent_reasoning\"]);\nassert_eq!((p.budget, p.available), (1, 0));\nassert_eq!(p.local_review.len(), LOCAL_REVIEW.len());\nassert!(p.reason.starts_with(\"no available advisor offers\"));\n```"
           ReasoningMode:
             oneOf:
               - type: string
@@ -31631,7 +31631,7 @@ capabilities:
               - type: string
                 const: strict
                 description: "Review wider, and complementary review where the stakes are highest."
-            description: "How much independent review a session may use, and where from."
+            description: "How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \"offline\");\nlet m: ReasoningMode = serde_json::from_str(\"\\\"strict\\\"\").unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```"
           PlanOutcome:
             oneOf:
               - type: string
@@ -31643,7 +31643,7 @@ capabilities:
               - type: string
                 const: reuse_prior
                 description: A standing conclusion already answers this; reuse it rather than ask again.
-            description: What the plan decided.
+            description: "What the plan decided: consult the selected advisors, decide on local evidence, or\nreuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};\n\nlet mode = ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() };\nlet request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };\nlet outcome: PlanOutcome = plan(&request, &mode, &[]).outcome;\nassert_eq!(outcome, PlanOutcome::DecideLocally);\nassert_eq!(serde_json::to_value(outcome).unwrap(), \"decide_locally\");\n```"
           SelectedAdvisor:
             type: object
             properties:
@@ -31662,7 +31662,7 @@ capabilities:
               - advisor
               - covers
               - why
-            description: One selected advisor and why.
+            description: "One selected advisor, the requested capabilities it covers, and why the greedy\nselection chose it at its position.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet p = plan(&request, &mode, &[advisor(\"a\", \"x-api\", \"available\")]);\nlet chosen: &SelectedAdvisor = &p.selected[0];\nassert_eq!(chosen.advisor, \"a\");\nassert_eq!(chosen.covers, [\"independent_reasoning\"]);\nassert!(chosen.why.starts_with(\"the first available advisor\"));\n```"
           ExcludedAdvisor:
             type: object
             properties:
@@ -31679,7 +31679,7 @@ capabilities:
               - advisor
               - status
               - reason
-            description: One advisor left out and why.
+            description: "One advisor left out of the plan, its standing when the plan was made, and why: its\nstatus, a capability it does not offer, or a budget already spent.\n\n```\nuse majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};\n\nfn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {\n    serde_json::from_value(serde_json::json!({\n        \"id\": id, \"title\": id, \"transport\": \"api\", \"adapter\": adapter,\n        \"capabilities\": [\"independent_reasoning\"], \"status\": status,\n        \"reason\": \"present\", \"probe\": \"\",\n    }))\n    .unwrap()\n}\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet request = PlanRequest { materiality: Materiality::Material, ..Default::default() };\nlet states = [advisor(\"a\", \"x-api\", \"available\"), advisor(\"b\", \"y-api\", \"available\")];\nlet p = plan(&request, &mode, &states);\nlet left: &ExcludedAdvisor = &p.excluded[0];\nassert_eq!((left.advisor.as_str(), left.status), (\"b\", AdvisorStatus::Available));\nassert!(left.reason.contains(\"budget was spent\"));\n```"
           AdvisorStatus:
             oneOf:
               - type: string
@@ -31700,7 +31700,7 @@ capabilities:
               - type: string
                 const: rate_limited
                 description: It answered with a rate limit; not asked again until the limit passes.
-            description: "An advisor's standing."
+            description: "An advisor's standing: whether it may be asked now and, when not, which kind of\nreason keeps it out. Only `available` advisors enter a plan.\n\n```\nuse majordomus_cli::reasoning::availability::AdvisorStatus;\n\nassert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), \"not_configured\");\nlet s: AdvisorStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, AdvisorStatus::RateLimited);\n```"
           AdvisorState:
             type: object
             properties:
@@ -31763,7 +31763,7 @@ capabilities:
               - status
               - reason
               - probe
-            description: One advisor as it stands now.
+            description: "One advisor as it stands now: what the catalogue declares of it, its status, the one\nmachine word saying why, and what was probed. The row `reasoning.advisors` reports and\nthe policy plans over.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\n\nstruct Nothing;\nimpl Presence for Nothing {\n    fn executable(&self, _: &str) -> bool { false }\n    fn variable(&self, _: &str) -> bool { false }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: local_runtime\\n    adapter: a-rt\\n    executable: rt\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet refs = References::default();\nlet state: AdvisorState = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &Nothing, mode: ReasoningMode::Standard, disabled: &[],\n    history: &[], peers: &[], now: 0, cooldown: None,\n})\n.remove(0);\nassert_eq!((state.id.as_str(), state.status), (\"a\", AdvisorStatus::Unavailable));\nassert_eq!(state.probe, \"executable rt on PATH\");\nassert!(state.circuit.is_none() && !state.recovering);\n```"
           AdvisorTransport:
             oneOf:
               - type: string
@@ -31778,7 +31778,7 @@ capabilities:
               - type: string
                 const: peer
                 description: A linked mesh runtime carrying the review feature; present while linked.
-            description: How an advisor is reached.
+            description: "How an advisor is reached. The transport decides how its presence is probed (a\ncredential variable, an executable, a mesh link) and whether `offline` mode admits it.\n\n```\nuse majordomus_cli::reasoning::catalogue::AdvisorTransport;\n\nlet t: AdvisorTransport = serde_json::from_str(\"\\\"local_runtime\\\"\").unwrap();\nassert_eq!(t, AdvisorTransport::LocalRuntime);\nassert!(!t.is_remote());\n```"
           AdvisorCircuit:
             type: object
             properties:
@@ -31797,7 +31797,7 @@ capabilities:
               - opened_by
               - failures
               - until
-            description: "An open circuit: why, and until when."
+            description: "An open circuit: the consultation that opened it, the failures behind it, and when it\ncloses. Derived from the records and the clock, never stored.\n\n```\nuse majordomus_cli::reasoning::availability::*;\nuse majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nstruct All;\nimpl Presence for All {\n    fn executable(&self, _: &str) -> bool { true }\n    fn variable(&self, _: &str) -> bool { true }\n}\nlet c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(\n    \"version: 1\\ncapabilities:\\n  - id: code_review\\n    description: x\\nadvisors:\\n  - id: a\\n    title: A\\n    transport: cli\\n    adapter: a-cli\\n    executable: a\\n    capabilities: [code_review]\\n\",\n).unwrap();\nlet limited = [Outcome {\n    id: \"consultation-1\".into(), advisor: \"a\".into(),\n    status: ConsultationStatus::RateLimited, at: 0, retry_after: Some(60),\n}];\nlet refs = References::default();\nlet states = derive_availability(&c, &Inputs {\n    refs: &refs, presence: &All, mode: ReasoningMode::Standard, disabled: &[],\n    history: &limited, peers: &[], now: 10, cooldown: None,\n});\nlet circuit: &AdvisorCircuit = states[0].circuit.as_ref().unwrap();\nassert_eq!(circuit.opened_by, \"consultation-1\");\nassert_eq!(circuit.until, \"1970-01-01T00:01:00Z\");\n```"
           StoredPlan:
             type: object
             properties:
@@ -31816,7 +31816,7 @@ capabilities:
               - assessment
               - plan
               - availability
-            description: "A plan as stored: the decision and the availability it was made against."
+            description: "A plan as stored: the decision and the availability it was made against.\n\nThe store builds it when it admits a `PlanInput`; nothing else does. The snapshot of\navailability is what a later consultation is admitted against, so an answer that\narrives after the advisor's circuit opened still belongs to the plan that asked for it.\n\n```\nuse majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};\nuse majordomus_cli::reasoning::policy::PlanOutcome;\nuse majordomus_cli::reasoning::record::*;\nuse majordomus_cli::reasoning::store::{admit, Admission, Loaded};\n\nlet mode = ModeResolution { mode: ReasoningMode::Standard, source: \"default\".into() };\nlet admission = Admission { mode: &mode, availability: &[] };\nlet mut loaded = Loaded::default();\nloaded.records.push(ReasoningRecord {\n    schema: RECORD_SCHEMA.into(),\n    version: RECORD_VERSION,\n    id: \"assessment-1\".into(),\n    task: \"t\".into(),\n    recorded_at: \"2026-10-01T00:00:01Z\".into(),\n    head: None,\n    redacted: vec![],\n    body: ReasoningBody::Assessment(AssessmentInput {\n        subject: \"a name\".into(),\n        ..Default::default()\n    }),\n});\nlet input = ReasoningInput::Plan(PlanInput { assessment: \"assessment-1\".into() });\nlet ReasoningBody::Plan(stored) = admit(input, &loaded, &admission).unwrap() else {\n    panic!(\"a plan input is stored as a plan\");\n};\nlet stored: StoredPlan = stored;\nassert_eq!(stored.assessment, \"assessment-1\");\nassert_eq!(stored.plan.outcome, PlanOutcome::DecideLocally);\nassert!(stored.availability.is_empty());\n```"
           ConsultationStatus:
             oneOf:
               - type: string
@@ -31846,7 +31846,7 @@ capabilities:
               - type: string
                 const: error
                 description: Anything else the adapter could not classify.
-            description: How a consultation ended.
+            description: "How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```"
           Stance:
             oneOf:
               - type: string
@@ -31861,7 +31861,7 @@ capabilities:
               - type: string
                 const: inconclusive
                 description: It does not decide.
-            description: "Where an advisor's answer stands relative to the executor's hypothesis."
+            description: "Where an advisor's answer stands relative to the executor's hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\"\\\"alternative\\\"\").unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::<Stance>(\"\\\"agrees\\\"\").is_err());\n```"
           AdvisorUsage:
             type: object
             additionalProperties: false
@@ -31878,7 +31878,7 @@ capabilities:
                 minimum: 0
                 description: Output tokens.
                 default: 0
-            description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated."
+            description: "Token counts an adapter reported. Absent when the transport reports none; never\nestimated.\n\nThe state sums these into its totals. A missing count reads as zero, so an adapter\nthat reports only one of the two still records what it reported.\n\n```\nuse majordomus_cli::reasoning::record::AdvisorUsage;\n\nlet u: AdvisorUsage = serde_json::from_str(r#\"{\"input_tokens\": 120}\"#).unwrap();\nassert_eq!(u, AdvisorUsage { input_tokens: 120, output_tokens: 0 });\n```"
           DisagreementPosition:
             type: object
             additionalProperties: false
@@ -31892,10 +31892,10 @@ capabilities:
             required:
               - source
               - position
-            description: One side of a disagreement.
+            description: "One side of a disagreement: whose position it is, and the position in one line.\n\nThe source is `primary` for the executor, or the id of a completed consultation; the\nstore refuses a position sourced from a consultation that did not complete.\n\n```\nuse majordomus_cli::reasoning::record::DisagreementPosition;\n\nlet p = DisagreementPosition { source: \"primary\".into(), position: \"keep the lock\".into() };\nlet json = serde_json::to_value(&p).unwrap();\nassert_eq!(json, serde_json::json!({ \"source\": \"primary\", \"position\": \"keep the lock\" }));\n```"
           StoredConclusion:
             type: object
-            description: "A conclusion as stored: the input and what only the writer computes."
+            description: "A conclusion as stored: the input and what only the writer computes.\n\nThe input is flattened, so a stored conclusion reads as the input plus two fields:\nthe advisors whose completed consultations it cites, each once and in canonical\norder, and their count. Both are computed at admission and checked again by\n`reasoning.check`, so a hand-edited count is reported.\n\n```\nuse majordomus_cli::reasoning::record::{ConclusionInput, StoredConclusion};\n\nlet stored = StoredConclusion {\n    input: ConclusionInput {\n        assessment: \"assessment-1\".into(),\n        decision: \"keep the lock\".into(),\n        rationale: \"measured\".into(),\n        ..Default::default()\n    },\n    reviewed_by: vec![\"alpha\".into()],\n    independent_review_count: 1,\n};\nlet json = serde_json::to_value(&stored).unwrap();\nassert_eq!(json[\"decision\"], \"keep the lock\");\nassert_eq!(json[\"independent_review_count\"], 1);\n```"
             properties:
               assessment:
                 type: string
@@ -31974,7 +31974,7 @@ capabilities:
               - type: string
                 const: fail
                 description: It failed.
-            description: Whether a validation passed.
+            description: "Whether a performed validation step passed or failed.\n\nOne failed validation is enough to mark the assessment's standing as\n`validation_failed` in the derived state, whatever else passed.\n\n```\nuse majordomus_cli::reasoning::record::ValidationOutcome;\n\nlet o: ValidationOutcome = serde_json::from_str(\"\\\"fail\\\"\").unwrap();\nassert_eq!(o, ValidationOutcome::Fail);\nassert_eq!(serde_json::to_string(&ValidationOutcome::Pass).unwrap(), \"\\\"pass\\\"\");\n```"
           ReasoningStep:
             type: object
             properties:
@@ -31995,7 +31995,7 @@ capabilities:
               - id
               - phase
               - summary
-            description: One step of the timeline.
+            description: "One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"attempt-1\", 1, json!({\n    \"kind\": \"attempt\", \"attempt\": \"share the client\\nacross threads\",\n    \"observed_failure\": \"the handle is not Sync\",\n})));\nlet state = derive(&loaded, None);\nlet step: &ReasoningStep = &state.timeline[0];\nassert_eq!(step.at, \"2026-10-01T00:00:01Z\");\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \"share the client failed: the handle is not Sync\");\n```"
           ReasoningPhase:
             oneOf:
               - type: string
@@ -32031,7 +32031,7 @@ capabilities:
               - type: string
                 const: attempt
                 description: A failed attempt.
-            description: A phase of the reasoning timeline.
+            description: "A phase of the reasoning timeline.\n\nEach record maps to one phase: a plan to consulting, local or reuse by its outcome, a\nconsultation to an advisor response or a degradation by its status, and every other\nkind to the phase of the same name.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, json!({\n    \"kind\": \"consultation\", \"plan\": \"plan-0\", \"advisor\": \"alpha\", \"status\": \"unavailable\",\n})));\nlet phases: Vec<ReasoningPhase> =\n    derive(&loaded, None).timeline.iter().map(|s| s.phase).collect();\nassert_eq!(phases, [ReasoningPhase::Degradation]);\nlet word = serde_json::to_value(ReasoningPhase::AdvisorResponse).unwrap();\nassert_eq!(word, \"advisor_response\");\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::reasoning
@@ -32076,7 +32076,7 @@ capabilities:
               - string
               - "null"
             description: "A task id, or `all`; the open task when absent."
-        description: "The input of `reasoning.status`."
+        description: "The input of `reasoning.status`: which task's records to derive the state from. Absent\nis the open task; `all` is every task the store holds.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatusInput;\n\nlet open: ReasoningStatusInput = serde_json::from_str(\"{}\").unwrap();\nassert!(open.task.is_none());\nlet all: ReasoningStatusInput = serde_json::from_str(r#\"{\"task\":\"all\"}\"#).unwrap();\nassert_eq!(all.task.as_deref(), Some(\"all\"));\n```"
         title: ReasoningStatusInput
     output:
       name: ReasoningStatus
@@ -32108,7 +32108,7 @@ capabilities:
           - advisors_unavailable
           - state
           - report
-        description: "The answer of `reasoning.status`."
+        description: "The answer of `reasoning.status`: the mode in force, the advisor counts, the state the\nrecords derive, and that state rendered as the Markdown a handover carries.\n\n```\nuse majordomus_cli::capability::builtin::reasoning::ReasoningStatus;\n\nlet schema = serde_json::to_value(schemars::schema_for!(ReasoningStatus)).unwrap();\nfor field in [\"mode\", \"advisors_available\", \"advisors_unavailable\", \"state\", \"report\"] {\n    assert!(schema[\"required\"].as_array().unwrap().iter().any(|f| f == field), \"{field}\");\n}\n```"
         title: ReasoningStatus
         "$defs":
           ModeResolution:
@@ -32123,7 +32123,7 @@ capabilities:
             required:
               - mode
               - source
-            description: The mode in force and what decided it.
+            description: "The mode in force and what decided it, as `resolve_mode` returns it. A plan and a\nreport carry the source beside the mode, so a reader learns why the mode is what it is.\n\n```\nuse majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};\n\nlet r: ModeResolution = resolve_mode(None, true, None);\nassert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: \"CI\".into() });\n```"
           ReasoningMode:
             oneOf:
               - type: string
@@ -32141,7 +32141,7 @@ capabilities:
               - type: string
                 const: strict
                 description: "Review wider, and complementary review where the stakes are highest."
-            description: "How much independent review a session may use, and where from."
+            description: "How much independent review a session may use, and where from. The policy reads it\nfor the review budget; availability reads it to leave advisors out (`ci` all of them,\n`offline` every one that leaves the machine). `standard` is the default.\n\n```\nuse majordomus_cli::reasoning::availability::ReasoningMode;\n\nassert_eq!(ReasoningMode::default(), ReasoningMode::Standard);\nassert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), \"offline\");\nlet m: ReasoningMode = serde_json::from_str(\"\\\"strict\\\"\").unwrap();\nassert_eq!(m, ReasoningMode::Strict);\n```"
           ReasoningState:
             type: object
             properties:
@@ -32189,7 +32189,7 @@ capabilities:
               - conclusions
               - timeline
               - totals
-            description: The reasoning state of a task (or of every task).
+            description: "The reasoning state of a task (or of every task).\n\nIt is what every surface reports: the assessments, consultations, disagreements and\nconclusions of the task, the timeline of every record, the totals, and the store\nfiles that could not be read. Derived by `derive`, never stored.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, task: &str, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": task,\n#         \"recorded_at\": \"2026-10-01T00:00:00Z\", \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningState};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nlet assessment = |subject: &str| json!({ \"kind\": \"assessment\", \"subject\": subject });\nloaded.records.push(rec(\"assessment-1\", \"t1\", assessment(\"a\")));\nloaded.records.push(rec(\"assessment-2\", \"t2\", assessment(\"b\")));\nloaded.unreadable.push(\"t2/broken.json\".into());\n\nlet one: ReasoningState = derive(&loaded, Some(\"t1\"));\nassert_eq!((one.task.as_str(), one.assessments.len()), (\"t1\", 1));\nlet all = derive(&loaded, None);\nassert_eq!((all.task.as_str(), all.totals.records), (\"all\", 2));\nassert_eq!(all.unreadable, [\"t2/broken.json\"]);\n```"
           AssessmentView:
             type: object
             properties:
@@ -32224,7 +32224,7 @@ capabilities:
               - subject
               - materiality
               - standing
-            description: One assessment and where it stands.
+            description: "One assessment and where it stands.\n\nThe view carries what a reader needs to pick the work up: the subject, its\nmateriality, its derived standing, the conclusion that stands for it and the\nquestions it left open.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::policy::Materiality;\nuse majordomus_cli::reasoning::state::{derive, AssessmentView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"assessment-1\", 1, json!({\n    \"kind\": \"assessment\", \"subject\": \"lock scope\", \"materiality\": \"trivial\",\n    \"questions\": [\"is it held across an await?\"],\n})));\nlet state = derive(&loaded, None);\nlet view: &AssessmentView = &state.assessments[0];\nassert_eq!((view.id.as_str(), view.task.as_str()), (\"assessment-1\", \"t\"));\nassert_eq!(view.materiality, Materiality::Trivial);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.questions, [\"is it held across an await?\"]);\n```"
           Materiality:
             oneOf:
               - type: string
@@ -32242,7 +32242,7 @@ capabilities:
               - type: string
                 const: critical
                 description: "Irreversible or destructive, or repository governance itself."
-            description: How much the uncertain decision could matter.
+            description: "How much the uncertain decision could matter. Ordered from `trivial` to `critical`:\nwith the mode it sets the review budget, and from `material` up a decision taken alone\ncarries the structured local review.\n\n```\nuse majordomus_cli::reasoning::policy::Materiality;\n\nassert_eq!(Materiality::default(), Materiality::Low);\nassert!(Materiality::Material < Materiality::Critical);\nlet m: Materiality = serde_json::from_str(\"\\\"high\\\"\").unwrap();\nassert_eq!(m, Materiality::High);\n```"
           AssessmentStanding:
             oneOf:
               - type: string
@@ -32263,7 +32263,7 @@ capabilities:
               - type: string
                 const: validation_failed
                 description: "Concluded, and a validation failed."
-            description: Where an assessment stands.
+            description: "Where an assessment stands, from open through validated.\n\nThe standing is derived, never stored: an unresolved disagreement makes it disputed\nwhatever else is recorded; otherwise its standing conclusion and that conclusion's\nvalidations decide it, and without a conclusion a recorded plan makes it planned.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, AssessmentStanding};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"assessment-1\", 1, json!({ \"kind\": \"assessment\", \"subject\": \"s\" })));\nassert_eq!(derive(&loaded, None).assessments[0].standing, AssessmentStanding::Open);\n\nloaded.records.push(rec(\"disagreement-2\", 2, json!({\n    \"kind\": \"disagreement\", \"assessment\": \"assessment-1\",\n    \"positions\": [\n        { \"source\": \"primary\", \"position\": \"A\" },\n        { \"source\": \"consultation-9\", \"position\": \"B\" },\n    ],\n    \"discriminating_question\": \"do callers retry?\",\n})));\nassert_eq!(derive(&loaded, None).assessments[0].standing, AssessmentStanding::Disputed);\n```"
           ConsultationView:
             type: object
             properties:
@@ -32299,7 +32299,7 @@ capabilities:
               - plan
               - advisor
               - status
-            description: "One consultation, as the state reports it."
+            description: "One consultation, as the state reports it.\n\nA failed consultation is reported as plainly as a completed one: its status and the\nadapter's diagnostic stand where the advice would, so degradation is visible rather\nthan silently absent.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::record::ConsultationStatus;\nuse majordomus_cli::reasoning::state::{derive, ConsultationView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, json!({\n    \"kind\": \"consultation\", \"plan\": \"plan-0\", \"advisor\": \"alpha\",\n    \"status\": \"timeout\", \"diagnostic\": \"timeout: no answer in 60s\",\n})));\nlet state = derive(&loaded, None);\nlet view: &ConsultationView = &state.consultations[0];\nassert_eq!(view.status, ConsultationStatus::Timeout);\nassert_eq!(view.conclusion, None);\nassert_eq!(view.diagnostic.as_deref(), Some(\"timeout: no answer in 60s\"));\nassert_eq!(state.totals.consultations_failed, 1);\n```"
           ConsultationStatus:
             oneOf:
               - type: string
@@ -32329,7 +32329,7 @@ capabilities:
               - type: string
                 const: error
                 description: Anything else the adapter could not classify.
-            description: How a consultation ended.
+            description: "How a consultation ended, as the adapter classified it.\n\nOnly a completed consultation carries advice and counts as review; every other status\nis a degradation that is recorded so the state can report it, never hidden. The wire\nform is the snake_case word that `ConsultationStatus::as_str` returns.\n\n```\nuse majordomus_cli::reasoning::record::ConsultationStatus;\n\nlet s: ConsultationStatus = serde_json::from_str(\"\\\"rate_limited\\\"\").unwrap();\nassert_eq!(s, ConsultationStatus::RateLimited);\nassert!(!s.is_transient());\nassert!(ConsultationStatus::Timeout.is_transient());\n```"
           Stance:
             oneOf:
               - type: string
@@ -32344,7 +32344,7 @@ capabilities:
               - type: string
                 const: inconclusive
                 description: It does not decide.
-            description: "Where an advisor's answer stands relative to the executor's hypothesis."
+            description: "Where an advisor's answer stands relative to the executor's hypothesis.\n\nA completed consultation must state its stance; the store refuses one without it. The\nstance is a label for the timeline, not a vote: agreement settles nothing.\n\n```\nuse majordomus_cli::reasoning::record::Stance;\n\nlet s: Stance = serde_json::from_str(\"\\\"alternative\\\"\").unwrap();\nassert_eq!(s, Stance::Alternative);\nassert!(serde_json::from_str::<Stance>(\"\\\"agrees\\\"\").is_err());\n```"
           DisagreementView:
             type: object
             properties:
@@ -32371,7 +32371,7 @@ capabilities:
               - id
               - assessment
               - discriminating_question
-            description: "One disagreement, as the state reports it."
+            description: "One disagreement, as the state reports it.\n\nThe view names the question that decides the disagreement and, once a resolution is\nrecorded, the resolution and the position its evidence favoured. A view without a\nresolution is an unsettled disagreement that blocks its assessment.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, DisagreementView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"disagreement-1\", 1, json!({\n    \"kind\": \"disagreement\", \"assessment\": \"assessment-0\",\n    \"positions\": [\n        { \"source\": \"primary\", \"position\": \"A\" },\n        { \"source\": \"consultation-9\", \"position\": \"B\" },\n    ],\n    \"discriminating_question\": \"do callers retry?\",\n})));\nloaded.records.push(rec(\"resolution-2\", 2, json!({\n    \"kind\": \"resolution\", \"disagreement\": \"disagreement-1\",\n    \"experiment\": \"read the callers\", \"outcome\": \"none retries\",\n    \"favours\": \"consultation-9\",\n    \"evidence\": [{ \"kind\": \"file\", \"reference\": \"src/caller.rs\" }],\n})));\nlet state = derive(&loaded, None);\nlet view: &DisagreementView = &state.disagreements[0];\nassert_eq!(view.discriminating_question, \"do callers retry?\");\nassert_eq!(view.resolution.as_deref(), Some(\"resolution-2\"));\nassert_eq!(view.favours.as_deref(), Some(\"consultation-9\"));\n```"
           ConclusionView:
             type: object
             properties:
@@ -32428,7 +32428,7 @@ capabilities:
               - validations_passed
               - validations_failed
               - validation_plan
-            description: "One conclusion, as the state reports it."
+            description: "One conclusion, as the state reports it.\n\nBesides the decision and its computed review, the view counts the validations\nrecorded against the conclusion and names the later conclusion that superseded it,\nif any. A superseded conclusion stays in the list; the report leaves it out.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ConclusionView};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet conclusion = |decision: &str, supersedes: Option<&str>| {\n    json!({\n        \"kind\": \"conclusion\", \"assessment\": \"assessment-0\", \"decision\": decision,\n        \"rationale\": \"r\", \"supersedes\": supersedes,\n        \"reviewed_by\": [], \"independent_review_count\": 0,\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"conclusion-1\", 1, conclusion(\"A\", None)));\nloaded.records.push(rec(\"validation-2\", 2, json!({\n    \"kind\": \"validation\", \"conclusion\": \"conclusion-1\", \"check\": \"x\", \"outcome\": \"fail\",\n})));\nloaded.records.push(rec(\"conclusion-3\", 3, conclusion(\"B\", Some(\"conclusion-1\"))));\n\nlet state = derive(&loaded, None);\nlet first: &ConclusionView = &state.conclusions[0];\nassert_eq!((first.validations_passed, first.validations_failed), (0, 1));\nassert_eq!(first.superseded_by.as_deref(), Some(\"conclusion-3\"));\nassert_eq!(state.conclusions[1].superseded_by, None);\n```"
           ReasoningStep:
             type: object
             properties:
@@ -32449,7 +32449,7 @@ capabilities:
               - id
               - phase
               - summary
-            description: One step of the timeline.
+            description: "One step of the timeline: when, which record, which phase, and one line saying what\nhappened.\n\nThe summary is cut to a single line of at most 140 characters, so a timeline renders\nthe same on a terminal, a page and a handover.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase, ReasoningStep};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"attempt-1\", 1, json!({\n    \"kind\": \"attempt\", \"attempt\": \"share the client\\nacross threads\",\n    \"observed_failure\": \"the handle is not Sync\",\n})));\nlet state = derive(&loaded, None);\nlet step: &ReasoningStep = &state.timeline[0];\nassert_eq!(step.at, \"2026-10-01T00:00:01Z\");\nassert_eq!(step.phase, ReasoningPhase::Attempt);\nassert_eq!(step.summary, \"share the client failed: the handle is not Sync\");\n```"
           ReasoningPhase:
             oneOf:
               - type: string
@@ -32485,7 +32485,7 @@ capabilities:
               - type: string
                 const: attempt
                 description: A failed attempt.
-            description: A phase of the reasoning timeline.
+            description: "A phase of the reasoning timeline.\n\nEach record maps to one phase: a plan to consulting, local or reuse by its outcome, a\nconsultation to an advisor response or a degradation by its status, and every other\nkind to the phase of the same name.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningPhase};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, json!({\n    \"kind\": \"consultation\", \"plan\": \"plan-0\", \"advisor\": \"alpha\", \"status\": \"unavailable\",\n})));\nlet phases: Vec<ReasoningPhase> =\n    derive(&loaded, None).timeline.iter().map(|s| s.phase).collect();\nassert_eq!(phases, [ReasoningPhase::Degradation]);\nlet word = serde_json::to_value(ReasoningPhase::AdvisorResponse).unwrap();\nassert_eq!(word, \"advisor_response\");\n```"
           ReasoningTotals:
             type: object
             properties:
@@ -32526,7 +32526,7 @@ capabilities:
               - independent_reviewers
               - input_tokens
               - output_tokens
-            description: Totals over the records.
+            description: "Totals over the records of the derived task: counts, reviewers and reported tokens.\n\nIndependent reviewers are distinct advisors with at least one completed consultation;\ntoken counts are summed only from what adapters reported, never estimated.\n\n```\n# use majordomus_cli::reasoning::record::ReasoningRecord;\n# use serde_json::json;\n# fn rec(id: &str, n: u32, body: serde_json::Value) -> ReasoningRecord {\n#     serde_json::from_value(json!({\n#         \"schema\": \"majordomus/reasoning-record\", \"version\": 1, \"id\": id, \"task\": \"t\",\n#         \"recorded_at\": format!(\"2026-10-01T00:00:{n:02}Z\"), \"body\": body,\n#     }))\n#     .unwrap()\n# }\nuse majordomus_cli::reasoning::state::{derive, ReasoningTotals};\nuse majordomus_cli::reasoning::store::Loaded;\n\nlet answer = |plan: &str| {\n    json!({\n        \"kind\": \"consultation\", \"plan\": plan, \"advisor\": \"alpha\", \"status\": \"completed\",\n        \"conclusion\": \"A\", \"stance\": \"supports\",\n        \"usage\": { \"input_tokens\": 100, \"output_tokens\": 20 },\n    })\n};\nlet mut loaded = Loaded::default();\nloaded.records.push(rec(\"consultation-1\", 1, answer(\"plan-a\")));\nloaded.records.push(rec(\"consultation-2\", 2, answer(\"plan-b\")));\nlet totals: ReasoningTotals = derive(&loaded, None).totals;\nassert_eq!(totals.consultations_completed, 2);\nassert_eq!(totals.independent_reviewers, 1, \"one advisor, however often asked\");\nassert_eq!((totals.input_tokens, totals.output_tokens), (200, 40));\n```"
     provenance:
       source: builtin
       module: majordomus_cli::capability::builtin::reasoning

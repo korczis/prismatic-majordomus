@@ -384,6 +384,17 @@ pub struct WorkflowEntrypoint {
 
 /// Reasoning as the environment reports it: a summary of `reasoning.advisors`, from the
 /// same derivation, never a provider list of its own.
+///
+/// ```
+/// use majordomus_cli::environment::ReasoningSummary;
+///
+/// let summary: ReasoningSummary = serde_json::from_value(serde_json::json!({
+///     "operational": true, "mode": "offline", "available": ["local"], "unavailable": 2,
+/// })).unwrap();
+/// assert!(summary.operational);
+/// assert_eq!(summary.available, ["local"]);
+/// assert_eq!(serde_json::to_value(&summary).unwrap()["unavailable"], 2);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ReasoningSummary {
     /// Reasoning works with no advisor at all; always `true`.

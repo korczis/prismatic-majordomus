@@ -61,11 +61,11 @@ export MAJORDOMUS_SHARE="$R/share"
 PATH="$RZ_BIN:$PATH"
 SRV=""; trap 'serve_down' EXIT
 serve_up "$T/serve.out" "$T/serve.err" || exit 1
-curl -fsS "$U/api/v1/reasoning/advisors" > "$T/http.json" || { echo "    GET /api/v1/reasoning/advisors failed"; exit 1; }
+curl -fsS --max-time 20 "$U/api/v1/reasoning/advisors" > "$T/http.json" || { echo "    GET /api/v1/reasoning/advisors failed"; exit 1; }
 jq -e '.advisors[] | select(.id=="example-reviewer")' "$T/http.json" >/dev/null || { echo "    HTTP does not serve the new advisor"; exit 1; }
-curl -fsS "$U/openapi.json" | jq -e '.paths["/api/v1/reasoning/advisors"].get.operationId == "reasoning.advisors"' >/dev/null \
+curl -fsS --max-time 20 "$U/openapi.json" | jq -e '.paths["/api/v1/reasoning/advisors"].get.operationId == "reasoning.advisors"' >/dev/null \
   || { echo "    the OpenAPI document does not describe the route"; exit 1; }
-curl -fsS "$U/cockpit/reasoning" > "$T/cockpit.html" || { echo "    the Cockpit page failed"; exit 1; }
+curl -fsS --max-time 20 "$U/cockpit/reasoning" > "$T/cockpit.html" || { echo "    the Cockpit page failed"; exit 1; }
 grep -q 'example-reviewer' "$T/cockpit.html" || { echo "    the Cockpit does not render the new advisor"; exit 1; }
 serve_down
 

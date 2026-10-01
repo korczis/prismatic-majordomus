@@ -212,15 +212,19 @@ pub enum ModelsCommand {
 }
 
 #[derive(Debug, Args)]
-/// `majordomus reasoning`.
+/// `majordomus reasoning`: the command-line projection of the `reasoning` capabilities.
+/// The repository arguments and the output shape are shared by every subcommand, and the
+/// shape is global, so `--format` reads the same before or after the subcommand.
 /// # Example
 ///
 /// ```
-/// use majordomus_cli::cli::{Cli, Command, ReasoningCommand};
+/// use majordomus_cli::cli::{Cli, Command, OutputFormat, ReasoningArgs, ReasoningCommand};
 /// use clap::Parser;
-/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan", "--materiality", "high"]).unwrap();
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan", "--materiality", "high", "--format", "json"]).unwrap();
 /// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let args: ReasoningArgs = args;
 /// assert!(matches!(args.command, ReasoningCommand::Plan { .. }));
+/// assert!(matches!(args.format, OutputFormat::Json));
 /// ```
 pub struct ReasoningArgs {
     #[command(flatten)]
@@ -237,7 +241,24 @@ pub struct ReasoningArgs {
 }
 
 #[derive(Debug, Subcommand)]
-/// The `reasoning` subcommands.
+/// The `reasoning` subcommands, one per capability: `advisors`, `plan` and `status` read,
+/// `explain` traces one record, `check` gates, and `record` is the one that writes.
+/// # Example
+///
+/// ```
+/// use majordomus_cli::cli::{Cli, Command, ReasoningCommand};
+/// use clap::Parser;
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "plan"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// let ReasoningCommand::Plan { materiality, confidence, capabilities } = args.command else {
+///     panic!("not plan")
+/// };
+/// assert_eq!((materiality.as_str(), confidence.as_str()), ("material", "medium"));
+/// assert!(capabilities.is_none());
+/// let cli = Cli::try_parse_from(["majordomus", "reasoning", "status", "--task", "all", "--report"]).unwrap();
+/// let Command::Reasoning(args) = cli.command else { panic!("not the reasoning command") };
+/// assert!(matches!(args.command, ReasoningCommand::Status { report: true, .. }));
+/// ```
 pub enum ReasoningCommand {
     /// Every advisor with its status and why, the mode in force, and who can provide each advisory capability now; no advisor at all is an ordinary answer
     Advisors,

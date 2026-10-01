@@ -16,6 +16,58 @@
 //!
 //! An empty result is an ordinary answer. A session with no advisor still reasons; it
 //! reasons locally, and says so.
+//!
+//! # Example
+//!
+//! One advisor through its lifecycle: present, then two timeouts open its circuit, then
+//! the cooldown passes and it is available again, marked `recovering`.
+//!
+//! ```
+//! use majordomus_cli::reasoning::availability::{
+//!     derive_availability, resolve_mode, AdvisorState, AdvisorStatus, Inputs, Outcome,
+//!     Presence, FAILURE_COOLDOWN,
+//! };
+//! use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+//! use majordomus_cli::reasoning::record::ConsultationStatus;
+//!
+//! // Presence is the seam a test fakes: this "machine" has the executable `a`.
+//! struct Installed;
+//! impl Presence for Installed {
+//!     fn executable(&self, name: &str) -> bool { name == "a" }
+//!     fn variable(&self, _: &str) -> bool { false }
+//! }
+//! let catalogue: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+//!     "version: 1\ncapabilities:\n  - id: code_review\n    description: x\nadvisors:\n  - id: a\n    title: A\n    transport: cli\n    adapter: a-cli\n    executable: a\n    capabilities: [code_review]\n",
+//! ).unwrap();
+//! let refs = References::default();
+//! let mode = resolve_mode(None, false, None);
+//! let at = |now: i64, history: &[Outcome]| -> AdvisorState {
+//!     derive_availability(&catalogue, &Inputs {
+//!         refs: &refs, presence: &Installed, mode: mode.mode, disabled: &[],
+//!         history, peers: &[], now, cooldown: None,
+//!     })
+//!     .remove(0)
+//! };
+//!
+//! assert_eq!(at(0, &[]).status, AdvisorStatus::Available);
+//!
+//! let timeouts: Vec<Outcome> = (0..2)
+//!     .map(|i| Outcome {
+//!         id: format!("consultation-{i}"),
+//!         advisor: "a".into(),
+//!         status: ConsultationStatus::Timeout,
+//!         at: 100 + i,
+//!         retry_after: None,
+//!     })
+//!     .collect();
+//! let open = at(102, &timeouts);
+//! assert_eq!(open.status, AdvisorStatus::TemporarilyFailed);
+//! assert_eq!(open.reason, "consecutive_failures");
+//!
+//! let later = at(101 + FAILURE_COOLDOWN, &timeouts);
+//! assert_eq!(later.status, AdvisorStatus::Available);
+//! assert!(later.recovering);
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -23,7 +75,18 @@ use serde::{Deserialize, Serialize};
 use super::catalogue::{AdvisorCatalogue, AdvisorTransport, References};
 use super::record::ConsultationStatus;
 
-/// How much independent review a session may use, and where from.
+/// How much independent review a session may use, and where from. The policy reads it
+/// for the review budget; availability reads it to leave advisors out (`ci` all of them,
+/// `offline` every one that leaves the machine). `standard` is the default.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::ReasoningMode;
+///
+/// assert_eq!(ReasoningMode::default(), ReasoningMode::Standard);
+/// assert_eq!(serde_json::to_value(ReasoningMode::Offline).unwrap(), "offline");
+/// let m: ReasoningMode = serde_json::from_str("\"strict\"").unwrap();
+/// assert_eq!(m, ReasoningMode::Strict);
+/// ```
 #[derive(
     Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
 )]
@@ -43,7 +106,15 @@ pub enum ReasoningMode {
 }
 
 impl ReasoningMode {
-    /// The mode a word names.
+    /// The mode a word names, ignoring surrounding whitespace. `None` for a word that
+    /// names no mode: a caller skips it rather than guessing at one.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::availability::ReasoningMode;
+    ///
+    /// assert_eq!(ReasoningMode::parse(" ci "), Some(ReasoningMode::Ci));
+    /// assert_eq!(ReasoningMode::parse("loud"), None);
+    /// ```
     pub fn parse(word: &str) -> Option<Self> {
         Some(match word.trim() {
             "offline" => Self::Offline,
@@ -55,7 +126,16 @@ impl ReasoningMode {
         })
     }
 
-    /// The word.
+    /// The word that names the mode, as configuration, profiles and plans write it: the
+    /// inverse of [`ReasoningMode::parse`].
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::availability::ReasoningMode;
+    ///
+    /// for word in ["offline", "ci", "fast", "standard", "strict"] {
+    ///     assert_eq!(ReasoningMode::parse(word).unwrap().as_str(), word);
+    /// }
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Offline => "offline",
@@ -67,7 +147,15 @@ impl ReasoningMode {
     }
 }
 
-/// The mode in force and what decided it.
+/// The mode in force and what decided it, as [`resolve_mode`] returns it. A plan and a
+/// report carry the source beside the mode, so a reader learns why the mode is what it is.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{resolve_mode, ModeResolution, ReasoningMode};
+///
+/// let r: ModeResolution = resolve_mode(None, true, None);
+/// assert_eq!(r, ModeResolution { mode: ReasoningMode::Ci, source: "CI".into() });
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ModeResolution {
     /// The mode.
@@ -126,15 +214,67 @@ pub fn resolve_mode(
     }
 }
 
-/// What the crate can observe about an advisor's installation. The one seam tests fake.
+/// What the crate can observe about an advisor's installation. The one seam tests fake:
+/// [`SystemPresence`] reads the process, and an example or a test answers from a list.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::Presence;
+///
+/// struct Listed(&'static [&'static str]);
+/// impl Presence for Listed {
+///     fn executable(&self, name: &str) -> bool { self.0.contains(&name) }
+///     fn variable(&self, name: &str) -> bool { self.0.contains(&name) }
+/// }
+/// let p: &dyn Presence = &Listed(&["tool", "ACME_KEY"]);
+/// assert!(p.executable("tool") && p.variable("ACME_KEY"));
+/// assert!(!p.executable("other"));
+/// ```
 pub trait Presence {
-    /// Whether an executable of this name is on `PATH`.
+    /// Whether an executable of this name is on `PATH`: what says a client tool or a
+    /// local runtime is installed.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::availability::Presence;
+    ///
+    /// struct Only(&'static str);
+    /// impl Presence for Only {
+    ///     fn executable(&self, name: &str) -> bool { name == self.0 }
+    ///     fn variable(&self, _: &str) -> bool { false }
+    /// }
+    /// assert!(Only("tool").executable("tool"));
+    /// assert!(!Only("tool").executable("other"));
+    /// ```
     fn executable(&self, name: &str) -> bool;
-    /// Whether an environment variable of this name is set and non-empty. Never its value.
+    /// Whether an environment variable of this name is set and non-empty: what says an
+    /// API advisor's credential is configured. Never its value.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::availability::Presence;
+    ///
+    /// struct Only(&'static str);
+    /// impl Presence for Only {
+    ///     fn executable(&self, _: &str) -> bool { false }
+    ///     fn variable(&self, name: &str) -> bool { name == self.0 }
+    /// }
+    /// assert!(Only("ACME_KEY").variable("ACME_KEY"));
+    /// assert!(!Only("ACME_KEY").variable("OTHER_KEY"));
+    /// ```
     fn variable(&self, name: &str) -> bool;
 }
 
-/// The process's own `PATH` and environment.
+/// The process's own `PATH` and environment: an executable counts when a file of its
+/// name with an execute bit stands in a `PATH` directory, a variable when it is set and
+/// non-empty. A name containing `/` is never an executable on `PATH`.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{Presence, SystemPresence};
+///
+/// std::env::set_var("MAJORDOMUS_DOCTEST_PRESENCE", "set");
+/// assert!(SystemPresence.variable("MAJORDOMUS_DOCTEST_PRESENCE"));
+/// std::env::set_var("MAJORDOMUS_DOCTEST_PRESENCE", "");
+/// assert!(!SystemPresence.variable("MAJORDOMUS_DOCTEST_PRESENCE"));
+/// assert!(!SystemPresence.executable("bin/a-path-is-not-a-name"));
+/// ```
 #[derive(Debug, Default, Clone, Copy)]
 pub struct SystemPresence;
 
@@ -157,7 +297,16 @@ impl Presence for SystemPresence {
     }
 }
 
-/// An advisor's standing.
+/// An advisor's standing: whether it may be asked now and, when not, which kind of
+/// reason keeps it out. Only `available` advisors enter a plan.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::AdvisorStatus;
+///
+/// assert_eq!(serde_json::to_value(AdvisorStatus::NotConfigured).unwrap(), "not_configured");
+/// let s: AdvisorStatus = serde_json::from_str("\"rate_limited\"").unwrap();
+/// assert_eq!(s, AdvisorStatus::RateLimited);
+/// ```
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
 )]
@@ -178,7 +327,16 @@ pub enum AdvisorStatus {
 }
 
 impl AdvisorStatus {
-    /// The word.
+    /// The word that names the status, the same one its JSON form carries: what an
+    /// exclusion reason and a report print.
+    ///
+    /// ```
+    /// use majordomus_cli::reasoning::availability::AdvisorStatus;
+    ///
+    /// let s = AdvisorStatus::TemporarilyFailed;
+    /// assert_eq!(s.as_str(), "temporarily_failed");
+    /// assert_eq!(serde_json::to_value(s).unwrap(), s.as_str());
+    /// ```
     pub fn as_str(self) -> &'static str {
         match self {
             Self::Available => "available",
@@ -191,7 +349,35 @@ impl AdvisorStatus {
     }
 }
 
-/// An open circuit: why, and until when.
+/// An open circuit: the consultation that opened it, the failures behind it, and when it
+/// closes. Derived from the records and the clock, never stored.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::*;
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+/// use majordomus_cli::reasoning::record::ConsultationStatus;
+///
+/// struct All;
+/// impl Presence for All {
+///     fn executable(&self, _: &str) -> bool { true }
+///     fn variable(&self, _: &str) -> bool { true }
+/// }
+/// let c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+///     "version: 1\ncapabilities:\n  - id: code_review\n    description: x\nadvisors:\n  - id: a\n    title: A\n    transport: cli\n    adapter: a-cli\n    executable: a\n    capabilities: [code_review]\n",
+/// ).unwrap();
+/// let limited = [Outcome {
+///     id: "consultation-1".into(), advisor: "a".into(),
+///     status: ConsultationStatus::RateLimited, at: 0, retry_after: Some(60),
+/// }];
+/// let refs = References::default();
+/// let states = derive_availability(&c, &Inputs {
+///     refs: &refs, presence: &All, mode: ReasoningMode::Standard, disabled: &[],
+///     history: &limited, peers: &[], now: 10, cooldown: None,
+/// });
+/// let circuit: &AdvisorCircuit = states[0].circuit.as_ref().unwrap();
+/// assert_eq!(circuit.opened_by, "consultation-1");
+/// assert_eq!(circuit.until, "1970-01-01T00:01:00Z");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct AdvisorCircuit {
     /// The consultation outcome that opened it.
@@ -202,7 +388,32 @@ pub struct AdvisorCircuit {
     pub until: String,
 }
 
-/// One advisor as it stands now.
+/// One advisor as it stands now: what the catalogue declares of it, its status, the one
+/// machine word saying why, and what was probed. The row `reasoning.advisors` reports and
+/// the policy plans over.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::*;
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+///
+/// struct Nothing;
+/// impl Presence for Nothing {
+///     fn executable(&self, _: &str) -> bool { false }
+///     fn variable(&self, _: &str) -> bool { false }
+/// }
+/// let c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+///     "version: 1\ncapabilities:\n  - id: code_review\n    description: x\nadvisors:\n  - id: a\n    title: A\n    transport: local_runtime\n    adapter: a-rt\n    executable: rt\n    capabilities: [code_review]\n",
+/// ).unwrap();
+/// let refs = References::default();
+/// let state: AdvisorState = derive_availability(&c, &Inputs {
+///     refs: &refs, presence: &Nothing, mode: ReasoningMode::Standard, disabled: &[],
+///     history: &[], peers: &[], now: 0, cooldown: None,
+/// })
+/// .remove(0);
+/// assert_eq!((state.id.as_str(), state.status), ("a", AdvisorStatus::Unavailable));
+/// assert_eq!(state.probe, "executable rt on PATH");
+/// assert!(state.circuit.is_none() && !state.recovering);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct AdvisorState {
     /// The advisor id (a peer is `peer:<runtime>`).
@@ -240,7 +451,35 @@ pub struct AdvisorState {
     pub circuit: Option<AdvisorCircuit>,
 }
 
-/// The recorded outcome of one consultation, as availability reads it.
+/// The recorded outcome of one consultation, as availability reads it: the advisor, how
+/// the consultation ended and when. The circuit is computed from these alone.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::*;
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+/// use majordomus_cli::reasoning::record::ConsultationStatus;
+///
+/// struct All;
+/// impl Presence for All {
+///     fn executable(&self, _: &str) -> bool { true }
+///     fn variable(&self, _: &str) -> bool { true }
+/// }
+/// let c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+///     "version: 1\ncapabilities:\n  - id: code_review\n    description: x\nadvisors:\n  - id: a\n    title: A\n    transport: cli\n    adapter: a-cli\n    executable: a\n    capabilities: [code_review]\n",
+/// ).unwrap();
+/// // a refused credential keeps the advisor out for AUTH_COOLDOWN seconds
+/// let refused = [Outcome {
+///     id: "consultation-1".into(), advisor: "a".into(),
+///     status: ConsultationStatus::AuthFailed, at: 0, retry_after: None,
+/// }];
+/// let refs = References::default();
+/// let at = |now| derive_availability(&c, &Inputs {
+///     refs: &refs, presence: &All, mode: ReasoningMode::Standard, disabled: &[],
+///     history: &refused, peers: &[], now, cooldown: None,
+/// })[0].reason.clone();
+/// assert_eq!(at(1), "authentication_failed");
+/// assert_eq!(at(AUTH_COOLDOWN), "present");
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Outcome {
     /// The consultation record id; the tie-break of equal stamps.
@@ -255,7 +494,34 @@ pub struct Outcome {
     pub retry_after: Option<u64>,
 }
 
-/// A linked mesh runtime carrying the review feature.
+/// A linked mesh runtime, as the mesh reports it. Those carrying the feature the
+/// catalogue's `peers` block names become advisors with the id `peer:<runtime>`.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::*;
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, AdvisorTransport, References};
+///
+/// struct Nothing;
+/// impl Presence for Nothing {
+///     fn executable(&self, _: &str) -> bool { false }
+///     fn variable(&self, _: &str) -> bool { false }
+/// }
+/// let c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+///     "version: 1\ncapabilities:\n  - id: code_review\n    description: x\npeers:\n  feature: reviews\n  adapter: mesh-review\n  capabilities: [code_review]\n",
+/// ).unwrap();
+/// let peers = [
+///     LinkedPeer { runtime: "n1-r1".into(), name: "one".into(), features: vec!["reviews".into()] },
+///     LinkedPeer { runtime: "n2-r1".into(), name: "two".into(), features: vec![] },
+/// ];
+/// let refs = References::default();
+/// let states = derive_availability(&c, &Inputs {
+///     refs: &refs, presence: &Nothing, mode: ReasoningMode::Standard, disabled: &[],
+///     history: &[], peers: &peers, now: 0, cooldown: None,
+/// });
+/// assert_eq!(states.len(), 1, "only the peer carrying the feature is an advisor");
+/// assert_eq!(states[0].id, "peer:n1-r1");
+/// assert_eq!(states[0].transport, AdvisorTransport::Peer);
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LinkedPeer {
     /// `<node>-<runtime>`.
@@ -276,7 +542,32 @@ pub const RATE_LIMIT_COOLDOWN: i64 = 900;
 /// fixed by asking again, so it is not asked again soon.
 pub const AUTH_COOLDOWN: i64 = 3_600;
 
-/// Everything availability reads besides the catalogue.
+/// Everything availability reads besides the catalogue: presence, the mode, the disable
+/// list, the recorded outcomes, the linked peers and the clock. Holding them in one value
+/// is what keeps [`derive_availability`] pure.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::*;
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+///
+/// struct All;
+/// impl Presence for All {
+///     fn executable(&self, _: &str) -> bool { true }
+///     fn variable(&self, _: &str) -> bool { true }
+/// }
+/// let c: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+///     "version: 1\ncapabilities:\n  - id: code_review\n    description: x\nadvisors:\n  - id: a\n    title: A\n    transport: cli\n    adapter: a-cli\n    executable: a\n    capabilities: [code_review]\n",
+/// ).unwrap();
+/// let refs = References::default();
+/// let disabled = vec!["all".to_string()];
+/// let inputs = Inputs {
+///     refs: &refs, presence: &All, mode: ReasoningMode::Strict, disabled: &disabled,
+///     history: &[], peers: &[], now: 0, cooldown: None,
+/// };
+/// let states = derive_availability(&c, &inputs);
+/// assert_eq!(states[0].status, AdvisorStatus::Disabled);
+/// assert_eq!(states[0].reason, "disabled_by_configuration");
+/// ```
 pub struct Inputs<'a> {
     /// The resolved references.
     pub refs: &'a References,

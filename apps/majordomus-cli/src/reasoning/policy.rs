@@ -27,13 +27,56 @@
 //! advisors, no majority: how advice becomes a decision is the conclusion's business,
 //! and a conclusion is refused while a disagreement it covers is unresolved (see
 //! [`super::store`]).
+//!
+//! # Example
+//!
+//! High uncertainty under `standard` allows two advisors. Of three, one is rate limited
+//! and is excluded with its reason; the other two are selected in preference order.
+//!
+//! ```
+//! use majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};
+//! use majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};
+//!
+//! fn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {
+//!     serde_json::from_value(serde_json::json!({
+//!         "id": id, "title": id, "transport": "api", "adapter": adapter,
+//!         "capabilities": ["independent_reasoning"], "status": status,
+//!         "reason": "present", "probe": "",
+//!     }))
+//!     .unwrap()
+//! }
+//! let states = [
+//!     advisor("first", "x-api", "available"),
+//!     advisor("limited", "y-api", "rate_limited"),
+//!     advisor("second", "z-cli", "available"),
+//! ];
+//! let mode = ModeResolution { mode: ReasoningMode::Standard, source: "default".into() };
+//! let request = PlanRequest { materiality: Materiality::High, ..Default::default() };
+//! let p = plan(&request, &mode, &states);
+//! assert_eq!(p.outcome, PlanOutcome::Consult);
+//! let selected: Vec<&str> = p.selected.iter().map(|s| s.advisor.as_str()).collect();
+//! assert_eq!(selected, ["first", "second"]);
+//! assert_eq!(p.excluded[0].advisor, "limited");
+//! assert!(p.excluded[0].reason.starts_with("rate_limited"));
+//! ```
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};
 
-/// How much the uncertain decision could matter.
+/// How much the uncertain decision could matter. Ordered from `trivial` to `critical`:
+/// with the mode it sets the review budget, and from `material` up a decision taken alone
+/// carries the structured local review.
+///
+/// ```
+/// use majordomus_cli::reasoning::policy::Materiality;
+///
+/// assert_eq!(Materiality::default(), Materiality::Low);
+/// assert!(Materiality::Material < Materiality::Critical);
+/// let m: Materiality = serde_json::from_str("\"high\"").unwrap();
+/// assert_eq!(m, Materiality::High);
+/// ```
 #[derive(
     Debug,
     Clone,
@@ -63,7 +106,21 @@ pub enum Materiality {
     Critical,
 }
 
-/// How sure the primary executor is of its current hypothesis.
+/// How sure the primary executor is of its current hypothesis. `high` lowers the review
+/// budget by one; the other levels leave it as the mode and materiality set it.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReasoningConfidence};
+///
+/// let mode = ModeResolution { mode: ReasoningMode::Strict, source: "default".into() };
+/// let budget = |confidence: ReasoningConfidence| {
+///     let request = PlanRequest { materiality: Materiality::Critical, confidence, ..Default::default() };
+///     plan(&request, &mode, &[]).budget
+/// };
+/// assert_eq!(budget(ReasoningConfidence::Medium), 3);
+/// assert_eq!(budget(ReasoningConfidence::High), 2);
+/// ```
 #[derive(
     Debug,
     Clone,
@@ -89,7 +146,21 @@ pub enum ReasoningConfidence {
     High,
 }
 
-/// What the policy is asked about.
+/// What the policy is asked about: the materiality and confidence of one uncertainty,
+/// the advisory capabilities review needs, and any standing conclusion on the subject.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::{plan, PlanOutcome, PlanRequest};
+///
+/// let request: PlanRequest = serde_json::from_str(
+///     r#"{"materiality":"high","confidence":"low","prior_conclusion":"conclusion-1"}"#,
+/// ).unwrap();
+/// assert!(request.capabilities.is_empty() && !request.new_evidence);
+/// let mode = ModeResolution { mode: ReasoningMode::Standard, source: "default".into() };
+/// // a standing conclusion and no new evidence: reuse it rather than ask again
+/// assert_eq!(plan(&request, &mode, &[]).outcome, PlanOutcome::ReusePrior);
+/// ```
 #[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema)]
 pub struct PlanRequest {
     /// Materiality of the uncertainty.
@@ -107,7 +178,19 @@ pub struct PlanRequest {
     pub new_evidence: bool,
 }
 
-/// What the plan decided.
+/// What the plan decided: consult the selected advisors, decide on local evidence, or
+/// reuse a standing conclusion. Deciding locally is an ordinary outcome, not a failure.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::{plan, Materiality, PlanOutcome, PlanRequest};
+///
+/// let mode = ModeResolution { mode: ReasoningMode::Ci, source: "CI".into() };
+/// let request = PlanRequest { materiality: Materiality::Critical, ..Default::default() };
+/// let outcome: PlanOutcome = plan(&request, &mode, &[]).outcome;
+/// assert_eq!(outcome, PlanOutcome::DecideLocally);
+/// assert_eq!(serde_json::to_value(outcome).unwrap(), "decide_locally");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum PlanOutcome {
@@ -119,7 +202,29 @@ pub enum PlanOutcome {
     ReusePrior,
 }
 
-/// One selected advisor and why.
+/// One selected advisor, the requested capabilities it covers, and why the greedy
+/// selection chose it at its position.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{AdvisorState, ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, SelectedAdvisor};
+///
+/// fn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {
+///     serde_json::from_value(serde_json::json!({
+///         "id": id, "title": id, "transport": "api", "adapter": adapter,
+///         "capabilities": ["independent_reasoning"], "status": status,
+///         "reason": "present", "probe": "",
+///     }))
+///     .unwrap()
+/// }
+/// let mode = ModeResolution { mode: ReasoningMode::Standard, source: "default".into() };
+/// let request = PlanRequest { materiality: Materiality::Material, ..Default::default() };
+/// let p = plan(&request, &mode, &[advisor("a", "x-api", "available")]);
+/// let chosen: &SelectedAdvisor = &p.selected[0];
+/// assert_eq!(chosen.advisor, "a");
+/// assert_eq!(chosen.covers, ["independent_reasoning"]);
+/// assert!(chosen.why.starts_with("the first available advisor"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct SelectedAdvisor {
     /// The advisor id.
@@ -130,7 +235,29 @@ pub struct SelectedAdvisor {
     pub why: String,
 }
 
-/// One advisor left out and why.
+/// One advisor left out of the plan, its standing when the plan was made, and why: its
+/// status, a capability it does not offer, or a budget already spent.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{AdvisorState, AdvisorStatus, ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::{plan, ExcludedAdvisor, Materiality, PlanRequest};
+///
+/// fn advisor(id: &str, adapter: &str, status: &str) -> AdvisorState {
+///     serde_json::from_value(serde_json::json!({
+///         "id": id, "title": id, "transport": "api", "adapter": adapter,
+///         "capabilities": ["independent_reasoning"], "status": status,
+///         "reason": "present", "probe": "",
+///     }))
+///     .unwrap()
+/// }
+/// let mode = ModeResolution { mode: ReasoningMode::Standard, source: "default".into() };
+/// let request = PlanRequest { materiality: Materiality::Material, ..Default::default() };
+/// let states = [advisor("a", "x-api", "available"), advisor("b", "y-api", "available")];
+/// let p = plan(&request, &mode, &states);
+/// let left: &ExcludedAdvisor = &p.excluded[0];
+/// assert_eq!((left.advisor.as_str(), left.status), ("b", AdvisorStatus::Available));
+/// assert!(left.reason.contains("budget was spent"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ExcludedAdvisor {
     /// The advisor id.
@@ -141,7 +268,23 @@ pub struct ExcludedAdvisor {
     pub reason: String,
 }
 
-/// The plan: the decision with its reasons attached.
+/// The plan: the decision with its reasons attached. It carries what it answered (mode,
+/// materiality, confidence, capabilities), the budget, the outcome with one sentence of
+/// why, every advisor selected or excluded, and the local review when one is due.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
+/// use majordomus_cli::reasoning::policy::{plan, Materiality, PlanRequest, ReviewPlan, LOCAL_REVIEW};
+///
+/// let mode = ModeResolution { mode: ReasoningMode::Offline, source: "MAJORDOMUS_REASONING_MODE".into() };
+/// let request = PlanRequest { materiality: Materiality::Material, ..Default::default() };
+/// let p: ReviewPlan = plan(&request, &mode, &[]);
+/// assert_eq!(p.mode_source, "MAJORDOMUS_REASONING_MODE");
+/// assert_eq!(p.capabilities, ["independent_reasoning"]);
+/// assert_eq!((p.budget, p.available), (1, 0));
+/// assert_eq!(p.local_review.len(), LOCAL_REVIEW.len());
+/// assert!(p.reason.starts_with("no available advisor offers"));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ReviewPlan {
     /// The mode it was made under.
@@ -183,7 +326,18 @@ pub const LOCAL_REVIEW: &[&str] = &[
     "record the conclusion with its evidence, rejected alternatives, risks and validation plan",
 ];
 
-/// The budget of a mode and materiality, before confidence.
+/// The budget of a mode and materiality, before confidence: how many advisors a plan may
+/// select, as the table in the module header states it.
+///
+/// ```
+/// use majordomus_cli::reasoning::availability::ReasoningMode;
+/// use majordomus_cli::reasoning::policy::{budget, Materiality};
+///
+/// assert_eq!(budget(ReasoningMode::Ci, Materiality::Critical), 0);
+/// assert_eq!(budget(ReasoningMode::Fast, Materiality::Material), 0);
+/// assert_eq!(budget(ReasoningMode::Standard, Materiality::High), 2);
+/// assert_eq!(budget(ReasoningMode::Strict, Materiality::Critical), 3);
+/// ```
 pub fn budget(mode: ReasoningMode, materiality: Materiality) -> usize {
     use Materiality::*;
     use ReasoningMode::*;
@@ -204,7 +358,9 @@ fn source_of(state: &AdvisorState) -> &str {
     &state.adapter
 }
 
-/// Make the plan.
+/// Make the plan for one request under one mode, over the advisors' states in preference
+/// order. Pure: the same inputs give the same plan, and every advisor not selected is in
+/// `excluded` with its reason.
 ///
 /// ```
 /// use majordomus_cli::reasoning::availability::{ModeResolution, ReasoningMode};
@@ -382,7 +538,15 @@ pub fn plan(request: &PlanRequest, mode: &ModeResolution, states: &[AdvisorState
     out
 }
 
-/// The materiality word.
+/// The word that names a materiality, the same one its JSON form carries: what a plan's
+/// reason sentence prints.
+///
+/// ```
+/// use majordomus_cli::reasoning::policy::{materiality_word, Materiality};
+///
+/// assert_eq!(materiality_word(Materiality::Critical), "critical");
+/// assert_eq!(serde_json::to_value(Materiality::Low).unwrap(), materiality_word(Materiality::Low));
+/// ```
 pub fn materiality_word(m: Materiality) -> &'static str {
     match m {
         Materiality::Trivial => "trivial",

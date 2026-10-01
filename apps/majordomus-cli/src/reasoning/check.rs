@@ -16,6 +16,28 @@
 //! * `records` — every stored record is readable, every consultation names an advisor
 //!   its plan selected and one this repository knows, every conclusion's computed review
 //!   matches the consultations it cites.
+//!
+//! The lifecycle: load the catalogue, its references and the store, then [`run`] every
+//! check over a repository root; an empty list is a clean repository.
+//!
+//! ```
+//! use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+//! use majordomus_cli::reasoning::check::run;
+//! use majordomus_cli::reasoning::store::Store;
+//!
+//! let root = tempfile::tempdir().unwrap();
+//! let catalogue = AdvisorCatalogue {
+//!     forbidden_claims: vec!["consensus guarantees correctness".into()],
+//!     ..Default::default()
+//! };
+//! let loaded = Store::at(root.path()).load();
+//! assert!(run(root.path(), &catalogue, &References::default(), &loaded).is_empty());
+//!
+//! std::fs::write(root.path().join("README.md"), "Consensus guarantees correctness.\n").unwrap();
+//! let findings = run(root.path(), &catalogue, &References::default(), &loaded);
+//! assert_eq!(findings.len(), 1);
+//! assert_eq!((findings[0].check.as_str(), findings[0].subject.as_str()), ("claims", "README.md"));
+//! ```
 
 use std::path::Path;
 
@@ -26,7 +48,28 @@ use super::catalogue::{AdvisorCatalogue, References};
 use super::record::{ConsultationStatus, ReasoningBody};
 use super::store::Loaded;
 
-/// One finding.
+/// One finding of a reasoning check: which check, where, and what is wrong.
+///
+/// `check` is one of [`CHECKS`]; `subject` is a repository-relative path, a record id or
+/// an advisor; `message` is one sentence saying what the rule refuses. Findings are
+/// reported, never repaired.
+///
+/// ```
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+/// use majordomus_cli::reasoning::check::{run, ReasoningFinding, CHECKS};
+/// use majordomus_cli::reasoning::store::Loaded;
+///
+/// let root = tempfile::tempdir().unwrap();
+/// let loaded = Loaded { records: vec![], unreadable: vec!["t/broken.json".into()] };
+/// let found = run(root.path(), &AdvisorCatalogue::default(), &References::default(), &loaded);
+/// let expected = ReasoningFinding {
+///     check: "records".into(),
+///     subject: "t/broken.json".into(),
+///     message: "a reasoning record that does not parse".into(),
+/// };
+/// assert_eq!(found, [expected]);
+/// assert!(CHECKS.contains(&found[0].check.as_str()));
+/// ```
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 pub struct ReasoningFinding {
     /// The check that found it.
@@ -76,6 +119,21 @@ fn files_under(root: &Path, rel: &str, ext: &[&str]) -> Vec<std::path::PathBuf> 
 }
 
 /// The names the independent code must not spell.
+///
+/// Every advisor's id, adapter, executable, provider, vendor and model, and the peer
+/// adapter when peers are declared: each once, in canonical order. These are the
+/// literals the `coupling` check looks for.
+///
+/// ```
+/// use majordomus_cli::reasoning::catalogue::AdvisorCatalogue;
+/// use majordomus_cli::reasoning::check::catalogue_names;
+///
+/// let catalogue: AdvisorCatalogue = majordomus_cli::metadata::yaml::parse_into(
+///     "version: 1\nadvisors:\n  - id: alpha\n    title: Alpha\n    transport: cli\n    adapter: alpha-cli\n    executable: alpha\n",
+/// )
+/// .unwrap();
+/// assert_eq!(catalogue_names(&catalogue), ["alpha", "alpha-cli"]);
+/// ```
 pub fn catalogue_names(catalogue: &AdvisorCatalogue) -> Vec<String> {
     let mut names = Vec::new();
     for a in &catalogue.advisors {
@@ -95,6 +153,18 @@ pub fn catalogue_names(catalogue: &AdvisorCatalogue) -> Vec<String> {
 }
 
 /// String literals of a source naming any of `names`: `"name"` or `'name'`, exactly.
+///
+/// A name inside prose, a path or a longer literal is not a hit: only a literal that is
+/// the name and nothing else couples code to an advisor. Each name is reported once, in
+/// the order of `names`.
+///
+/// ```
+/// use majordomus_cli::reasoning::check::literals_naming;
+///
+/// let names = vec!["alpha".to_string(), "beta".to_string()];
+/// let source = "let a = \"alpha\"; let b = 'alpha'; // the beta advisor\nimport('./beta.mjs')";
+/// assert_eq!(literals_naming(source, &names), ["alpha"]);
+/// ```
 pub fn literals_naming(text: &str, names: &[String]) -> Vec<String> {
     let mut hits = Vec::new();
     for n in names {
@@ -108,7 +178,38 @@ pub fn literals_naming(text: &str, names: &[String]) -> Vec<String> {
     hits
 }
 
-/// Run every check.
+/// Run every check over the repository at `root`, in the order of [`CHECKS`].
+///
+/// It reads the catalogue, the adapter modules, the provider-independent sources, the CI
+/// workflows, the documentation and the loaded records, and asks no advisor anything.
+/// The findings come back in check order; an empty list means every rule holds.
+///
+/// ```
+/// use majordomus_cli::reasoning::catalogue::{AdvisorCatalogue, References};
+/// use majordomus_cli::reasoning::check::run;
+/// use majordomus_cli::reasoning::record::ReasoningRecord;
+/// use majordomus_cli::reasoning::store::Loaded;
+///
+/// let record: ReasoningRecord = serde_json::from_value(serde_json::json!({
+///     "schema": "majordomus/reasoning-record", "version": 1, "id": "consultation-1",
+///     "task": "t", "recorded_at": "2026-10-01T00:00:01Z",
+///     "body": {
+///         "kind": "consultation", "plan": "plan-0", "advisor": "alpha", "status": "timeout",
+///     },
+/// }))
+/// .unwrap();
+/// let loaded = Loaded { records: vec![record], unreadable: vec![] };
+/// let root = tempfile::tempdir().unwrap();
+/// let found = run(root.path(), &AdvisorCatalogue::default(), &References::default(), &loaded);
+/// let messages: Vec<&str> = found.iter().map(|f| f.message.as_str()).collect();
+/// assert_eq!(
+///     messages,
+///     [
+///         "names advisor 'alpha', which the catalogue does not declare",
+///         "cites plan plan-0, which is not recorded",
+///     ]
+/// );
+/// ```
 pub fn run(
     root: &Path,
     catalogue: &AdvisorCatalogue,
