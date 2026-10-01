@@ -53,7 +53,7 @@ Output: `RecordReport`.
 
 ## `evidence.report` — Every claim against the evidence recorded for it
 
-The whole claims matrix joined to the ledger: per claim, the proof state, the sentence explaining how that state was derived, the execution behind it, the files that changed since it, and the command that produces it again. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.
+The whole claims matrix joined to the ledger and judged at the presented revision: the working tree by default, or the checked-out commit as committed, read from the ledger that commit holds. Per claim: the proof state, the sentence explaining how that state was derived, why when the state alone does not say, the execution behind it, the files that changed since it, and the command that produces it again. A run on a commit the presented revision does not contain is stale, a test that declined to run is not run, and a run the working ledger holds that the presented commit's does not can only withhold proven. The tallies count the whole matrix even when the answer is filtered, and the findings name every claim that declares a guarantee the evidence does not support. Read fresh on every call: the ledger is a file that changes outside this process.
 
 | | |
 |---|---|
@@ -77,6 +77,13 @@ Absent: every claim. |
 | `findings_only` | boolean | no | Only the claims whose declared status the evidence does not support, with the
 findings. The tallies still count the whole matrix, so a filtered answer never
 misreports how much of it was examined. |
+| `presented` | string or null | no | Judge at this revision, as committed, rather than at the working tree: `HEAD`, or
+any name of the checked-out commit. It must be the checked-out commit; the ledger is
+read as that commit holds it, and a run the working ledger holds that the commit's
+does not can only withhold `proven`. Absent: the working tree. |
+| `presented_tree` | object | no | What the caller knows about the presented commit's tree (`clean`, `dirty`,
+`unknown`). It can only weaken the measured state, never assert a clean tree over a
+dirty checkout, and it means nothing without `presented`. |
 
 Output: `EvidenceReport`.
 
