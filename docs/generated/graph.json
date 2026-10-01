@@ -1841,14 +1841,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/economics",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/economics/claims.rs",
         "kind": "file",
         "label": "claims.rs",
@@ -2313,14 +2305,6 @@
         "external": true
       },
       {
-        "id": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "file",
-        "label": "model.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/src/web/model.rs",
-        "external": true
-      },
-      {
         "id": "file:apps/majordomus-cli/src/web/report/ui.rs",
         "kind": "file",
         "label": "ui.rs",
@@ -2462,14 +2446,6 @@
         "label": "registry.rs",
         "summary": "named by the layer; not an object of this index",
         "source": "apps/majordomus-cli/tests/registry.rs",
-        "external": true
-      },
-      {
-        "id": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "file",
-        "label": "why.rs",
-        "summary": "named by the layer; not an object of this index",
-        "source": "apps/majordomus-cli/tests/why.rs",
         "external": true
       },
       {
@@ -2926,14 +2902,6 @@
         "label": "index.html",
         "summary": "named by the layer; not an object of this index",
         "source": "site/templates/index.html",
-        "external": true
-      },
-      {
-        "id": "file:test/fixtures/economics",
-        "kind": "file",
-        "label": "economics",
-        "summary": "named by the layer; not an object of this index",
-        "source": "test/fixtures/economics",
         "external": true
       },
       {
@@ -4090,6 +4058,32 @@
             "architecture",
             "coordination",
             "worktrees"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://adr/adr-0046",
+        "kind": "adr",
+        "label": "adr-0046",
+        "summary": "A working context is derived and a closed record is composed; neither is a document somebody must remember to write",
+        "route": "/cockpit/objects/adr/adr-0046",
+        "source": ".ai/repo/adrs/0046-a-working-context-is-derived-and-a-closed-record-is-composed.md",
+        "status": "proposed",
+        "facts": {
+          "date": "2026-09-11",
+          "related": [
+            "rule:project.episode-record-carries-its-episode",
+            "rule:project.the-session-context-is-derived",
+            "rule:project.no-new-nouns",
+            "file:lib/session_context.sh",
+            "file:lib/derive.sh",
+            "file:.ai/repo/sessions/README.md"
+          ],
+          "tags": [
+            "sessions",
+            "lifecycle",
+            "continuity",
+            "governance"
           ]
         }
       },
@@ -32180,6 +32174,26 @@
         }
       },
       {
+        "id": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "kind": "rule",
+        "label": "project.episode-record-carries-its-episode@1",
+        "summary": "An episode record carries its episode",
+        "route": "/cockpit/objects/rule/project-episode-record-carries-its-episode-1",
+        "source": ".ai/repo/rules/project/an-episode-record-carries-its-episode.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.diagnostics-decide-the-exit@1"
+          ],
+          "tags": [
+            "sessions",
+            "records",
+            "lifecycle"
+          ]
+        }
+      },
+      {
         "id": "majordomus://rule/project.every-link-and-control-is-tested@1",
         "kind": "rule",
         "label": "project.every-link-and-control-is-tested@1",
@@ -33258,6 +33272,26 @@
             "mcp",
             "server",
             "freshness"
+          ]
+        }
+      },
+      {
+        "id": "majordomus://rule/project.the-session-context-is-derived@1",
+        "kind": "rule",
+        "label": "project.the-session-context-is-derived@1",
+        "summary": "A working context is derived, not stored",
+        "route": "/cockpit/objects/rule/project-the-session-context-is-derived-1",
+        "source": ".ai/repo/rules/project/the-session-context-is-derived.v1.md",
+        "status": "active",
+        "facts": {
+          "class": "blocking",
+          "depends_on": [
+            "project.no-new-nouns@1"
+          ],
+          "tags": [
+            "sessions",
+            "continuity",
+            "lifecycle"
           ]
         }
       },
@@ -36154,6 +36188,13 @@
         "label": "test/cases/20_checkpoint.sh",
         "route": "/cockpit/objects/test/test-cases-20-checkpoint-sh",
         "source": "test/cases/20_checkpoint.sh"
+      },
+      {
+        "id": "majordomus://test/test/cases/210_session_context_is_derived.sh",
+        "kind": "test",
+        "label": "test/cases/210_session_context_is_derived.sh",
+        "route": "/cockpit/objects/test/test-cases-210-session-context-is-derived-sh",
+        "source": "test/cases/210_session_context_is_derived.sh"
       },
       {
         "id": "majordomus://test/test/cases/21_decision_question.sh",
@@ -43730,6 +43771,41 @@
         "kind": "put_in_force"
       },
       {
+        "source": "majordomus://adr/adr-0046",
+        "target": "kind:adr",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://context/ai.repo.sessions",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://implementation/lib/derive.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://implementation/lib/session_context.sh",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://rule/project.no-new-nouns@1",
+        "kind": "put_in_force"
+      },
+      {
+        "source": "majordomus://adr/adr-0046",
+        "target": "majordomus://rule/project.the-session-context-is-derived@1",
+        "kind": "put_in_force"
+      },
+      {
         "source": "majordomus://adr/adr-0047",
         "target": "file:apps/majordomus-cli/src/capability/builtin/session_domain.rs",
         "kind": "put_in_force"
@@ -49116,11 +49192,6 @@
       },
       {
         "source": "majordomus://claim/web-surface-declared-once",
-        "target": "file:apps/majordomus-cli/src/web/model.rs",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/web-surface-declared-once",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49141,11 +49212,6 @@
       },
       {
         "source": "majordomus://claim/why-catalogue-discovered",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-catalogue-discovered",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49161,11 +49227,6 @@
       },
       {
         "source": "majordomus://claim/why-diagnosis-explainable",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
-      },
-      {
-        "source": "majordomus://claim/why-diagnosis-explainable",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -49178,11 +49239,6 @@
         "source": "majordomus://claim/why-references-resolve",
         "target": "file:apps/majordomus-cli/src/why.rs",
         "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/why-references-resolve",
-        "target": "file:apps/majordomus-cli/tests/why.rs",
-        "kind": "tested_by"
       },
       {
         "source": "majordomus://claim/why-references-resolve",
@@ -49458,16 +49514,6 @@
         "source": "majordomus://context/ai.repo.benchmarks",
         "target": "kind:context",
         "kind": "is_a"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:apps/majordomus-cli/src/economics",
-        "kind": "tracks"
-      },
-      {
-        "source": "majordomus://context/ai.repo.benchmarks.economics",
-        "target": "file:test/fixtures/economics",
-        "kind": "tracks"
       },
       {
         "source": "majordomus://context/ai.repo.benchmarks.economics",
@@ -56865,6 +56911,16 @@
         "kind": "depends_on"
       },
       {
+        "source": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.episode-record-carries-its-episode@1",
+        "target": "majordomus://rule/project.diagnostics-decide-the-exit@1",
+        "kind": "depends_on"
+      },
+      {
         "source": "majordomus://rule/project.every-link-and-control-is-tested@1",
         "target": "kind:rule",
         "kind": "is_a"
@@ -57457,6 +57513,16 @@
       {
         "source": "majordomus://rule/project.the-server-sees-the-current-tree@1",
         "target": "majordomus://rule/project.rust-hot-path@1",
+        "kind": "depends_on"
+      },
+      {
+        "source": "majordomus://rule/project.the-session-context-is-derived@1",
+        "target": "kind:rule",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://rule/project.the-session-context-is-derived@1",
+        "target": "majordomus://rule/project.no-new-nouns@1",
         "kind": "depends_on"
       },
       {
@@ -58211,6 +58277,11 @@
       },
       {
         "source": "majordomus://test/test/cases/20_checkpoint.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/210_session_context_is_derived.sh",
         "target": "kind:test",
         "kind": "is_a"
       },
@@ -62182,7 +62253,7 @@
     ],
     "metadata": {
       "nodes": 2000,
-      "edges": 4451,
+      "edges": 4457,
       "acyclic": true,
       "truncated": true
     }

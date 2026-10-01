@@ -9,7 +9,7 @@
       "title": "Decisions",
       "description": "Every architecture decision this repository has recorded, with what it supersedes, what it put in force, and what has since referred back to it. One page per decision, generated from the decision's own file.",
       "weight": 45,
-      "count": 71,
+      "count": 72,
       "dir": "adrs",
       "statuses": [
         "accepted",
@@ -23,7 +23,7 @@
       "title": "Rules",
       "description": "Every rule in force here — the vendored doctrine package and this repository's own — with the class it declares, the artefacts it names as its enforcement, whether the tree holds them, and the rules either side of it in the dependency graph.",
       "weight": 46,
-      "count": 148,
+      "count": 150,
       "dir": "rules",
       "statuses": [
         "active"
@@ -37,7 +37,7 @@
       "route": "/adrs/",
       "title": "Decisions",
       "reason": null,
-      "count": 71
+      "count": 72
     },
     {
       "kind": "application",
@@ -205,7 +205,7 @@
       "route": "/rules/",
       "title": "Rules",
       "reason": null,
-      "count": 148
+      "count": 150
     },
     {
       "kind": "scope",
@@ -245,7 +245,7 @@
       "route": null,
       "title": null,
       "reason": "A test object is a case file. What it proves is published — on /guarantees/ for the claim and on the rule's own page for the rule — and that is the direction a reader asks in.",
-      "count": 302
+      "count": 303
     },
     {
       "kind": "use-case",
@@ -2623,6 +2623,67 @@
           "external": false
         }
       ]
+    },
+    {
+      "kind": "adr",
+      "id": "majordomus://adr/adr-0046",
+      "identity": "adr-0046",
+      "slug": "adr-0046",
+      "cockpit": "/cockpit/objects/adr/adr-0046",
+      "title": "A working context is derived and a closed record is composed; neither is a document somebody must remember to write",
+      "status": "proposed",
+      "tags": [
+        "sessions",
+        "lifecycle",
+        "continuity",
+        "governance"
+      ],
+      "source": ".ai/repo/adrs/0046-a-working-context-is-derived-and-a-closed-record-is-composed.md",
+      "references": [
+        {
+          "edge": "put_in_force",
+          "label": "ai.repo.sessions",
+          "kind": "context",
+          "route": "/context/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/derive.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "lib/session_context.sh",
+          "kind": "implementation",
+          "route": null,
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.episode-record-carries-its-episode@1",
+          "kind": "rule",
+          "route": "/rules/project-episode-record-carries-its-episode-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        },
+        {
+          "edge": "put_in_force",
+          "label": "project.the-session-context-is-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-the-session-context-is-derived-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": []
     },
     {
       "kind": "adr",
@@ -8521,6 +8582,13 @@
         },
         {
           "edge": "depends_on",
+          "label": "project.episode-record-carries-its-episode@1",
+          "kind": "rule",
+          "route": "/rules/project-episode-record-carries-its-episode-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
           "label": "project.execution-state-is-authoritative@1",
           "kind": "rule",
           "route": "/rules/project-execution-state-is-authoritative-1/",
@@ -8882,6 +8950,39 @@
           "label": "project.entry-reports-only-evidence@1",
           "kind": "rule",
           "route": "/rules/project-entry-reports-only-evidence-1/",
+          "external": false
+        }
+      ]
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.episode-record-carries-its-episode@1",
+      "identity": "project.episode-record-carries-its-episode@1",
+      "slug": "project-episode-record-carries-its-episode-1",
+      "cockpit": "/cockpit/objects/rule/project-episode-record-carries-its-episode-1",
+      "title": "An episode record carries its episode",
+      "status": "active",
+      "tags": [
+        "sessions",
+        "records",
+        "lifecycle"
+      ],
+      "source": ".ai/repo/rules/project/an-episode-record-carries-its-episode.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.diagnostics-decide-the-exit@1",
+          "kind": "rule",
+          "route": "/rules/project-diagnostics-decide-the-exit-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0046",
+          "kind": "adr",
+          "route": "/adrs/adr-0046/",
           "external": false
         }
       ]
@@ -10462,6 +10563,13 @@
           "external": false
         },
         {
+          "edge": "put_in_force",
+          "label": "adr-0046",
+          "kind": "adr",
+          "route": "/adrs/adr-0046/",
+          "external": false
+        },
+        {
           "edge": "depends_on",
           "label": "project.canonical-order@1",
           "kind": "rule",
@@ -10473,6 +10581,13 @@
           "label": "project.optional-complexity@1",
           "kind": "rule",
           "route": "/rules/project-optional-complexity-1/",
+          "external": false
+        },
+        {
+          "edge": "depends_on",
+          "label": "project.the-session-context-is-derived@1",
+          "kind": "rule",
+          "route": "/rules/project-the-session-context-is-derived-1/",
           "external": false
         }
       ]
@@ -11478,6 +11593,39 @@
         }
       ],
       "referenced_by": []
+    },
+    {
+      "kind": "rule",
+      "id": "majordomus://rule/project.the-session-context-is-derived@1",
+      "identity": "project.the-session-context-is-derived@1",
+      "slug": "project-the-session-context-is-derived-1",
+      "cockpit": "/cockpit/objects/rule/project-the-session-context-is-derived-1",
+      "title": "A working context is derived, not stored",
+      "status": "active",
+      "tags": [
+        "sessions",
+        "continuity",
+        "lifecycle"
+      ],
+      "source": ".ai/repo/rules/project/the-session-context-is-derived.v1.md",
+      "references": [
+        {
+          "edge": "depends_on",
+          "label": "project.no-new-nouns@1",
+          "kind": "rule",
+          "route": "/rules/project-no-new-nouns-1/",
+          "external": false
+        }
+      ],
+      "referenced_by": [
+        {
+          "edge": "put_in_force",
+          "label": "adr-0046",
+          "kind": "adr",
+          "route": "/adrs/adr-0046/",
+          "external": false
+        }
+      ]
     },
     {
       "kind": "rule",
