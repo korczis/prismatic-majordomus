@@ -36,6 +36,15 @@ it is described as real.
   multicast on the local segment only, rendezvous hubs on the owner's private network and
   tailnet, and `deny_unknown` trust listing the owner's three machines' keys and no other
   (`docs/MESH.md`, "This repository's mesh"; `test/cases/491_the_mesh_is_on_here.sh`).
+- **Pull-request integration reaches the forge only when asked to.** The Rust executable's
+  second declared exception (ADR 0101): `majordomus prs refresh`, `prs drain` and
+  `prs cleanup` run the GitHub CLI (`gh`) and `git fetch` against this repository's own
+  `origin`, with the person's own `gh` credentials. Nothing else does. `prs status`, `plan`,
+  `explain`, `events`, the HTTP routes under `/api/v1/pull-requests`, the MCP tools and the
+  Cockpit render the observation last recorded under `.ai/local/state/integration/`, with its
+  moment, and never reach the network. The executor never passes `--admin`, never force-pushes
+  and never closes a pull request without `--apply` and proof that its work is on master
+  (`test/cases/720_integration_follows_the_current_master.sh`).
 - **No evaluation of generated text.** Nothing that came from a worker, a model, a
   handover body, or a policy file is ever passed to `eval`, a shell, or a template
   engine that executes.

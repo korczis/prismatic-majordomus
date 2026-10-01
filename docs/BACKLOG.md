@@ -55,32 +55,32 @@ forever, and that wait is the whole backlog.
 
 **Ask git for the exit code, never grep its output.** `merge-tree`'s conflict wording is not
 a contract; a grep that misses it counts a conflicted merge as clean, which is the most
-expensive way this measurement can be wrong. `scripts/land` uses the exit code.
+expensive way this measurement can be wrong. `majordomus prs` uses the exit code.
 
 ## The commands
 
 | Quantity | Measure | Reduce |
 |---|---|---|
-| pull requests | `scripts/land` | `scripts/land --run` |
+| pull requests | `majordomus prs status` | `majordomus prs drain --refresh` |
 | worktrees, branches | `majordomus worktree` | `majordomus worktree` cleanup, by hand for dirty ones |
 | abandoned servers | `scripts/reap-orphans` | `scripts/reap-orphans --kill` |
 | build output on disk | `scripts/reap-orphans --targets` | `scripts/reap-orphans --reclaim` |
 | the whole gate | `scripts/ci/backlog-check` | `scripts/ci/backlog-check --remote` |
 
-### `scripts/land`
+### `majordomus prs`
 
-Reads every open pull request, fetches its head, and asks git — not GitHub — whether it
-merges. `--run` creates the integration branch's own worktree off `origin/master`, merges
-the clean ones in order, and regenerates the derived artifacts, which are stale on a merge
-result by construction because the driver resolved them to *ours*.
+Pull-request integration is a typed subsystem of the executable ([docs/INTEGRATION.md](INTEGRATION.md),
+ADR 0101). `majordomus prs refresh` observes the forge and fetches every open head;
+`status`, `plan` and `explain` classify each pull request against the current master with
+git and the derived driver — never the forge's `mergeable` — offline; `drain` merges the
+next ready one, verifies it landed, and observes again before anything else, one merge at a
+time. `drain --refresh` brings master into the first pull request that needs it when
+nothing is ready, one at a time, because merging anything else meanwhile would put it
+behind again.
 
-It stops before pushing, always, and prints the command that would publish. Landing is
-reversible until the push; deploying is a decision, not a side effect. Use `--exclude` for
-a pull request whose author is landing it themselves — check `majordomus_peers` first.
-
-A pull request that merges cleanly against `origin/master` can still conflict against the
-merges already on the integration branch. That is a real conflict, `land` reports it as
-left behind, and it is resolved by hand on the branch.
+It replaced `scripts/land`, which merged every clean pull request onto one integration
+branch: a batch whose regressions nobody could attribute, planned from a list that the first
+merge made stale.
 
 ### `scripts/reap-orphans`
 
