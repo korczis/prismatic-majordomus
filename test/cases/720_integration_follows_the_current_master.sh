@@ -132,6 +132,27 @@ q="$(prs status --format json)"
 [ "$(printf '%s' "$q" | jq '.tallies.open')" = 1 ] || { echo "    #1 is still in the queue after its merge"; exit 1; }
 [ "$(disp 2)" = needs_refresh ] || { echo "    #2 is $(disp 2) after the merge"; exit 1; }
 
+# ---------------------------------------------------------------- 6b. the MCP tools, as a client calls them
+# The three tools the registry projects over MCP answer from the same recorded observation the
+# command line renders: the queue without #1, #2's disposition, and the merge in the trail.
+mreq() { printf '{"jsonrpc":"2.0","id":%s,"method":"%s"%s}\n' "$1" "$2" "${3:+,\"params\":$3}"; }
+{
+  mreq 1 initialize '{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"case720","version":"0"}}'
+  printf '{"jsonrpc":"2.0","method":"notifications/initialized"}\n'
+  mreq 2 tools/call '{"name":"majordomus_pull_requests","arguments":{}}'
+  mreq 3 tools/call '{"name":"majordomus_pull_request_explain","arguments":{"number":2}}'
+  mreq 4 tools/call '{"name":"majordomus_integration_events","arguments":{}}'
+} > "$T/mcp.in"
+rc=0; (cd "$W" && "$RB" mcp < "$T/mcp.in" > "$T/mcp.out" 2> "$T/mcp.err") || rc=$?
+[ "$rc" = 0 ] || { echo "    the MCP server exited $rc"; tail -5 "$T/mcp.err"; exit 1; }
+frame() { jq -c --argjson id "$1" 'select(.id == $id)' "$T/mcp.out"; }
+frame 2 | jq -e '.result.isError == false and .result.structuredContent.observed == true and ([.result.structuredContent.queue.assessments[].number] | index(1) | not)' >/dev/null \
+  || { echo "    majordomus_pull_requests does not answer the refreshed queue:"; frame 2 | head -c 400; exit 1; }
+frame 3 | jq -e '.result.isError == false and .result.structuredContent.assessment.disposition == "needs_refresh"' >/dev/null \
+  || { echo "    majordomus_pull_request_explain does not say #2 needs a refresh:"; frame 3 | head -c 400; exit 1; }
+frame 4 | jq -e '.result.isError == false and (.result.structuredContent | tostring | test("merge_succeeded"))' >/dev/null \
+  || { echo "    majordomus_integration_events does not carry the merge:"; frame 4 | head -c 400; exit 1; }
+
 # ---------------------------------------------------------------- 7. the source
 src="$ROOT/apps/majordomus-cli/src"
 # a push is only ever a fast-forward: no force flag on any line that pushes
