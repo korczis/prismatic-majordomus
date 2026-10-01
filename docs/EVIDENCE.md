@@ -477,7 +477,7 @@ finishes. The decision is
 ```mermaid
 flowchart LR
   suite["suite job<br>suite.tsv"]
-  crate["rust job<br>cargo-test.txt"]
+  crate["rust job, three lanes<br>cargo-test-1..3.txt, joined"]
   cov["coverage job<br>coverage.json"]
   collect["evidence job<br>scripts/ci/evidence-collect"]
   artifact["artifact `evidence`<br>ledger · report · coverage · manifest"]
@@ -540,6 +540,7 @@ will refresh it.
 ```
 scripts/pages evidence                          # this commit, fetched with gh
 scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
 scripts/ci/evidence-collect --out <dir> --suite suite.tsv --crate-output cargo-test.txt --coverage coverage.json
 ```
 

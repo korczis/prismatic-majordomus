@@ -289,6 +289,16 @@ jobs:
     # again from a run that measured the whole job, not from this estimate.
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    # Three lanes of the crate's tests on three runners (scripts/rust-check, MJ_RUST_TEST_LANE),
+    # dealt by whole test binaries from their measured seconds: 1 is the doctests and preflight,
+    # 2 the lib, the binaries, cli_examples, bench and peer_claims, 3 every other binary and
+    # every other gate — fmt, clippy, docs, the benchmark build, the registry checks, the plan's
+    # rust gates and the executable artifact. One runner spent ~30 of its 40 minutes in
+    # `cargo test`; dealt to three, each lane costs about a third of it.
+    strategy:
+      fail-fast: false
+      matrix:
+        lane: [1, 2, 3]
     steps:
       # the whole history: `generate --check` runs here, and the changelog is composed from
       # the release records, the decisions and `git log <previous>..<this>` — history is one
@@ -305,21 +315,29 @@ jobs:
         uses: ./.github/actions/setup-rust
         with:
           components: rustfmt, clippy
+      - name: the crate's tests, lane ${{ matrix.lane }}
+        if: matrix.lane != 3 && needs.plan.outputs.rust_check == 'true'
+        env:
+          MJ_RUST_TEST_LANE: ${{ matrix.lane }}
+          MJ_CARGO_TEST_OUTPUT: ${{ github.workspace }}/cargo-test-${{ matrix.lane }}.txt
+        run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check --ci
       - name: rust-check
-        if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+        if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         env:
           MODE: ${{ needs.plan.outputs.rust_check == 'true' && '--ci' || '--integration' }}
+          MJ_RUST_TEST_LANE: 3
           # the crate's results, for the evidence job to record (ADR 68)
-          MJ_CARGO_TEST_OUTPUT: ${{ github.workspace }}/cargo-test.txt
+          MJ_CARGO_TEST_OUTPUT: ${{ github.workspace }}/cargo-test-3.txt
         run: MJ_CI_TIMINGS=timings.tsv scripts/rust-check "$MODE" --artifact dist
       - if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ci-evidence-crate
-          path: cargo-test.txt
+          name: ci-evidence-crate-${{ matrix.lane }}
+          path: cargo-test-${{ matrix.lane }}.txt
           if-no-files-found: ignore
           retention-days: 14
-      - uses: actions/download-artifact@v4
+      - if: matrix.lane == 3
+        uses: actions/download-artifact@v4
         with:
           name: ci-plan
       # The other gates the model assigns to this job — the ones that need the executable
@@ -330,19 +348,21 @@ jobs:
       # the mode and the artifact argument the model's line does not carry, so they are the
       # only two skipped here.
       - name: the rust gates of the plan
+        if: matrix.lane == 3
         run: MJ_CI_TIMINGS=timings.tsv scripts/ci/run-plan --plan plan.json --job rust --skip rust-check,rust-integration
       - id: target
+        if: matrix.lane == 3
         run: |
           echo "triple=$(rustc -vV | sed -n 's/^host: //p')" >> "$GITHUB_OUTPUT"
-      - if: needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true'
+      - if: matrix.lane == 3 && (needs.plan.outputs.rust_check == 'true' || needs.plan.outputs.rust_integration == 'true')
         uses: actions/upload-artifact@v4
         with:
           name: majordomus-cli-${{ steps.target.outputs.triple }}
           path: dist
           retention-days: 7
-      - if: always()
+      - if: always() && matrix.lane == 3
         run: scripts/ci/summary --job rust --timings timings.tsv --fact "mode=${{ needs.plan.outputs.rust_check == 'true' && 'ci' || 'integration' }}" --fact "rust cache hit=${{ steps.rust.outputs.cache-hit }}" --fact "artifact=majordomus-cli-${{ steps.target.outputs.triple }}"
-      - if: always()
+      - if: always() && matrix.lane == 3
         uses: actions/upload-artifact@v4
         with:
           name: ci-metrics-rust
@@ -417,11 +437,15 @@ jobs:
           echo "MAJORDOMUS_BIN=$PWD/apps/majordomus-cli/target/debug/majordomus" >> "$GITHUB_ENV"
       - uses: actions/download-artifact@v4
         with:
-          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-crate}'
+          pattern: '{ci-metrics-suite,ci-metrics-coverage,ci-evidence-crate-*}'
           path: reports
           merge-multiple: true
+      # each lane of the rust job kept its own cargo test output and the recorder reads one;
+      # every binary's record starts at a `Running` or `Doc-tests` line, so joining is exact
       - name: gather
-        run: scripts/ci/evidence-collect --out evidence --suite reports/suite.tsv --crate-output reports/cargo-test.txt --coverage reports/coverage.json
+        run: |
+          cat reports/cargo-test-*.txt > reports/cargo-test.txt 2>/dev/null || : > reports/cargo-test.txt
+          scripts/ci/evidence-collect --out evidence --suite reports/suite.tsv --crate-output reports/cargo-test.txt --coverage reports/coverage.json
       - uses: actions/upload-artifact@v4
         with:
           name: evidence
