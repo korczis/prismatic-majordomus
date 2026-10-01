@@ -30,7 +30,7 @@ pr="$(jq -r '[.matrix.rows[] | select(.proven != null)] | length' "$PD")"
 tf="$(jq -r '[.features[] | select(.claim_refs != null) | .claim_refs[] | select(.test != null)][0].test' "$PD")"
 [ "$tf" != null ] && [ -n "$tf" ]   || { echo "    no claim in the product data carries the test that settles it"; exit 1; }
 fid="$(jq -r --arg t "$tf" '[.features[] | select([.claim_refs[]?.test] | index($t))][0].id' "$PD")"
-expect_grep "$(printf '%s' "$tf" | sed 's/[.[\*^$]/\&/g')" "$P/features/$fid/index.html"
+expect_grep "$(printf '%s' "$tf" | sed 's/[.[\*^$]/\\&/g')" "$P/features/$fid/index.html"
 
 want="$(jq '[.matrix.rows[] | select(.status != "draft") | .exposed | length] | add' "$PD")"
 got="$(grep -o '✓' "$P/features/matrix/index.html" | wc -l | tr -d ' ')"
