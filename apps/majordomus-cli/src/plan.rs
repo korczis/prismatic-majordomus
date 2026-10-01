@@ -2127,6 +2127,7 @@ mod seal_tests {
                 kind_sources: vec![],
                 scope_origin: crate::scope::Origin::Distribution,
                 scope_path: String::new(),
+                observed: Default::default(),
             },
             objects,
             diagnostics: vec![],
