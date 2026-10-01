@@ -1193,7 +1193,7 @@
         "id": "capability:release.version",
         "kind": "capability",
         "label": "release.version",
-        "summary": "The version, and the one the commits imply",
+        "summary": "The version, and the one the contract requires next",
         "route": "/cockpit/capabilities/release.version",
         "source": "apps/majordomus-cli/src/capability/builtin/release.rs",
         "status": "query"
@@ -2614,14 +2614,6 @@
         "label": "evidence-check",
         "summary": "named by the layer; not an object of this index",
         "source": "scripts/evidence-check",
-        "external": true
-      },
-      {
-        "id": "file:scripts/generate-site-data",
-        "kind": "file",
-        "label": "generate-site-data",
-        "summary": "named by the layer; not an object of this index",
-        "source": "scripts/generate-site-data",
         "external": true
       },
       {
@@ -37350,6 +37342,13 @@
         "source": "test/cases/742_only_an_outage_is_asked_again.sh"
       },
       {
+        "id": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
+        "kind": "test",
+        "label": "test/cases/743_release_version_answers_with_the_contract.sh",
+        "route": "/cockpit/objects/test/test-cases-743-release-version-answers-with-the-contract-sh",
+        "source": "test/cases/743_release_version_answers_with_the_contract.sh"
+      },
+      {
         "id": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "kind": "test",
         "label": "test/cases/74_knowledge_edges.sh",
@@ -48893,11 +48892,6 @@
       },
       {
         "source": "majordomus://claim/skill-site-projection",
-        "target": "file:scripts/generate-site-data",
-        "kind": "implemented_by"
-      },
-      {
-        "source": "majordomus://claim/skill-site-projection",
         "target": "kind:claim",
         "kind": "is_a"
       },
@@ -59053,6 +59047,11 @@
       },
       {
         "source": "majordomus://test/test/cases/742_only_an_outage_is_asked_again.sh",
+        "target": "kind:test",
+        "kind": "is_a"
+      },
+      {
+        "source": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
         "target": "kind:test",
         "kind": "is_a"
       },

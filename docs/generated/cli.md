@@ -3374,13 +3374,13 @@ majordomus release version [OPTIONS]
 
 Examples:
 
-- **The version, and the one the commits imply** — The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.
+- **The version, and the one the contract requires next** — The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. `next` is the public contract's answer, the version `release analyze` requires (the declared version when it already satisfies the contract, otherwise the smallest one it allows); `decided_by` names who answered, and the bump the commit subjects imply is carried as evidence. This fixture has published no release with a registry, so the contract cannot be measured: `next` is absent and `decided_by` is `undecided`, with the reason in `contract_unreadable` — an unmeasurable baseline is refused, not guessed.
 
   ```console
   $ majordomus release version --format json
   ```
 
-  Verified: exits 0; prints one JSON document carrying /declared, /agree, /bump.
+  Verified: exits 0; prints one JSON document carrying /declared, /agree, /bump, /decided_by.
 
 <a id="majordomus-release-analyze"></a>
 ## `majordomus release analyze`

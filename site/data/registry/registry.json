@@ -6,23 +6,23 @@
     "version": "0.11.0"
   },
   "registry": {
-    "fingerprint": "193fea2d83a1f44b442b581cdc00ffc66ca006b6236370b555cd95ca003328b1",
+    "fingerprint": "33c702a757c57feab0f669fef8c57503a61243f48dea7fdbfa6c4ce42e2477e1",
     "summary": {
-      "total": 1733,
+      "total": 1734,
       "builtin": 152,
-      "declarative": 1581,
+      "declarative": 1582,
       "by_kind": {
         "command": 20,
         "query": 132,
-        "resource": 1581
+        "resource": 1582
       },
       "by_stability": {
         "behaviorally_verified": 110,
         "experimental": 34,
-        "implemented": 1589
+        "implemented": 1590
       },
       "mcp_tools": 146,
-      "mcp_resources": 1628,
+      "mcp_resources": 1629,
       "http_routes": 150,
       "cli_commands": 74,
       "modules": 74,
@@ -48357,8 +48357,8 @@
         "id": "release.version",
         "module": "release",
         "kind": "query",
-        "title": "The version, and the one the commits imply",
-        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+        "title": "The version, and the one the contract requires next",
+        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. It is the one release selection `release bump` also raises to when no target is named, so the report and the writer cannot disagree. When the contract cannot be measured — no published baseline, a version that is not three numbers, or any other error that makes the plan unsound, the plan `release bump` refuses to write from — the baseline is refused, not guessed: `next` is absent, `decided_by` is `undecided` and `contract_unreadable` carries every error, one per line. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence, and never answer `next` in the contract's place.",
         "input": {
           "name": "Empty",
           "schema": {
@@ -48390,18 +48390,37 @@
                   "string",
                   "null"
                 ],
-                "description": "The last release the layer records."
+                "description": "The last release: the highest version the layer records (the newest version tag when\nit records none) — the baseline `release analyze` measures the contract from, so the\ncontract and the commit evidence describe one window."
               },
               "bump": {
                 "type": "string",
-                "description": "What the commits since it imply: `major`, `minor`, `patch`, or `none`."
+                "description": "What the commit subjects since it imply: `major`, `minor`, `patch`, or `none`.\nEvidence only — the contract decides `next`; `release analyze` reports where the two\ndisagree."
+              },
+              "commits_imply": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "The version that bump would produce from the last release (from the declared version\nwhen nothing was released yet). Evidence only, even when the contract cannot answer."
               },
               "next": {
                 "type": [
                   "string",
                   "null"
                 ],
-                "description": "The version that bump would produce."
+                "description": "The next version. When the contract could be measured, the version it requires: the\ndeclared version when that already satisfies it, otherwise the smallest one it allows\n— and, when that is the last release itself, the smallest release above it. Absent\nwhen nothing would be released, and when the contract could not be measured\n(`decided_by: undecided`): an unmeasurable baseline is refused, not guessed."
+              },
+              "decided_by": {
+                "$ref": "#/$defs/ReleaseVersionDecidedBy",
+                "description": "Who answered `next`.",
+                "default": "undecided"
+              },
+              "contract_unreadable": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Why the contract could not answer, when `decided_by` is `undecided`."
               },
               "changes": {
                 "type": "array",
@@ -48418,9 +48437,29 @@
               "bump",
               "changes"
             ],
-            "description": "What the version is, and what the commits since the last release imply it should become.",
+            "description": "What the version is, what the public contract requires it to become, and what the\ncommits since the last release say about themselves.\n\n`next` is the contract's answer (ADR 0051): the analysis' `required_version`, or the\nsmallest release above the last when that requirement is the last release itself. The\ncommit inference is evidence — `bump` and `commits_imply` — and never the answer: when the\ncontract cannot be measured `next` is absent, `decided_by` is `undecided` and\n`contract_unreadable` says why. The selection is `crate::release::version::select`, the\none function `release bump` also takes its default target from.",
             "title": "ReleaseVersionReport",
             "$defs": {
+              "ReleaseVersionDecidedBy": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "const": "contract",
+                    "description": "`release analyze` measured the public contract against the last release, and `next`\nis the version it requires: the declared version when that already satisfies the\ncontract, otherwise the smallest one it allows."
+                  },
+                  {
+                    "type": "string",
+                    "const": "contract_and_commits",
+                    "description": "The contract was measured and requires no release over the last one — only behaviour\nbehind the public boundary changed — while the commits carry changes: `next` is the\nsmallest release above the last, a patch, however much the commit subjects claim."
+                  },
+                  {
+                    "type": "string",
+                    "const": "undecided",
+                    "description": "The contract could not be measured — no published baseline carries a registry, or a\nversion is not three numbers — so nothing decides `next`: it is absent, the reason is\nin `contract_unreadable`, and `release bump` without an explicit target refuses."
+                  }
+                ],
+                "description": "Who answered a version report's `next`: the public contract, the contract with the\ncommits — or no one, because the contract could not be measured.\n\nADR 0051 makes the contract the authority and demotes conventional commits to evidence,\nso `DecidedBy::Contract` is the normal answer. An unmeasurable contract is refused, not\nguessed: `DecidedBy::Undecided` leaves `next` absent and carries the reason, and the\ncommit inference stays what it always is, evidence — never the answer in its place.\n\n```\nuse majordomus_cli::release::model::DecidedBy;\nassert_eq!(serde_json::to_value(DecidedBy::Contract).unwrap(), \"contract\");\nassert_eq!(DecidedBy::Undecided.as_str(), \"undecided\");\nassert_eq!(DecidedBy::default(), DecidedBy::Undecided);\n```"
+              },
               "ReleaseChange": {
                 "type": "object",
                 "properties": {
@@ -59654,7 +59693,7 @@
       {
         "id": "release",
         "title": "Release",
-        "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the commits since the last release imply it should become.",
+        "description": "What this project has shipped and what it would ship next, derived rather than maintained: the changelog composes the layer's release records, the decisions dated inside each release's window and the conventional commits in its range; the version report reads the one place the version is authored and the projection the shell tool prints, and says what the public contract requires it to become — or that it cannot be measured, and so decides nothing — with what the commits since the last release imply beside it as evidence.",
         "stability": "implemented",
         "source": "builtin",
         "capabilities": 3,
@@ -59826,7 +59865,7 @@
         "title": "test",
         "description": "Declarative objects of kind 'test' from the repository's AI layer.",
         "source": "declarative",
-        "capabilities": 306,
+        "capabilities": 307,
         "capability_ids": []
       },
       {
@@ -59916,7 +59955,7 @@
     ]
   },
   "index": {
-    "fingerprint": "800dd6a80ecc0d29be9f93dda11862c0d6f1c037fa11ce7dd5072d1359bae75e",
+    "fingerprint": "41be999a7334b39d5a2564c60403b7fc47e5cb11accc45e2487208958803a862",
     "state": "ok",
     "layer_schema": "ai-repository/v1",
     "sections": {
@@ -59965,7 +60004,7 @@
       "session": 22,
       "skill": 3,
       "taxonomy": 10,
-      "test": 306,
+      "test": 307,
       "use-case": 46,
       "workspace": 1
     },
@@ -64803,7 +64842,7 @@
         "title": "The release — a changelog nobody writes, and one writer for the version",
         "path": "docs/RELEASE.md",
         "source_class": "document",
-        "bytes": 34769
+        "bytes": 39635
       },
       {
         "uri": "majordomus://document/docs/ROADMAP.md",
@@ -74145,7 +74184,7 @@
         "identity": "test/cases/103_release_projection.sh",
         "path": "test/cases/103_release_projection.sh",
         "source_class": "case",
-        "bytes": 32228
+        "bytes": 32804
       },
       {
         "uri": "majordomus://test/test/cases/104_published_site.sh",
@@ -76076,6 +76115,14 @@
         "bytes": 6366
       },
       {
+        "uri": "majordomus://test/test/cases/743_release_version_answers_with_the_contract.sh",
+        "kind": "test",
+        "identity": "test/cases/743_release_version_answers_with_the_contract.sh",
+        "path": "test/cases/743_release_version_answers_with_the_contract.sh",
+        "source_class": "case",
+        "bytes": 19680
+      },
+      {
         "uri": "majordomus://test/test/cases/74_knowledge_edges.sh",
         "kind": "test",
         "identity": "test/cases/74_knowledge_edges.sh",
@@ -76385,7 +76432,7 @@
         "identity": "test/cases/97_pages_fast_path.sh",
         "path": "test/cases/97_pages_fast_path.sh",
         "source_class": "case",
-        "bytes": 24458
+        "bytes": 25599
       },
       {
         "uri": "majordomus://test/test/cases/97_product_features.sh",
@@ -77259,7 +77306,7 @@
       "format": "text",
       "front_matter": "none",
       "identity": [],
-      "objects": 306
+      "objects": 307
     },
     {
       "name": "use-case",
@@ -92349,8 +92396,8 @@
             "examples": [
               {
                 "id": "release-version",
-                "title": "The version, and the one the commits imply",
-                "description": "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. What the next version must be is a different question, measured from the public contract by `release analyze`.",
+                "title": "The version, and the one the contract requires next",
+                "description": "The version is authored in one place, the crate manifest, and the shell tool reads its projection, share/version.txt, because an installed tree has no Cargo.toml. This says what the manifest declares, whether the projection states it, and — exit 10 — any version written down by hand where the tool's own files live. `next` is the public contract's answer, the version `release analyze` requires (the declared version when it already satisfies the contract, otherwise the smallest one it allows); `decided_by` names who answered, and the bump the commit subjects imply is carried as evidence. This fixture has published no release with a registry, so the contract cannot be measured: `next` is absent and `decided_by` is `undecided`, with the reason in `contract_unreadable` — an unmeasurable baseline is refused, not guessed.",
                 "argv": [
                   "release",
                   "version",
@@ -92359,7 +92406,7 @@
                 ],
                 "command": "majordomus release version --format json",
                 "setup": [],
-                "expectation": "exits 0; prints one JSON document carrying /declared, /agree, /bump"
+                "expectation": "exits 0; prints one JSON document carrying /declared, /agree, /bump, /decided_by"
               }
             ],
             "subcommands": []
@@ -103319,8 +103366,8 @@
       {
         "name": "majordomus_release_version",
         "id": "release.version",
-        "title": "The version, and the one the commits imply",
-        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the bump the conventional commits since the last release imply, the version it would produce, and the commits themselves as the evidence for it.",
+        "title": "The version, and the one the contract requires next",
+        "description": "The version the crate manifest declares — the one place it is authored — the version the shell tool prints from its projection `share/version.txt`, and whether that projection is current — the question `generate --check` refuses and `scripts/release-version --check` gates on. Then the next version, which is the public contract's answer: the version `release analyze` requires against the last release — the declared version when it already satisfies the contract, otherwise the smallest one it allows, and the smallest release above the last when the contract requires none over it — with `decided_by` naming who answered. It is the one release selection `release bump` also raises to when no target is named, so the report and the writer cannot disagree. When the contract cannot be measured — no published baseline, a version that is not three numbers, or any other error that makes the plan unsound, the plan `release bump` refuses to write from — the baseline is refused, not guessed: `next` is absent, `decided_by` is `undecided` and `contract_unreadable` carries every error, one per line. The bump the conventional commits since the last release imply, the version it would produce and the commits themselves are carried beside it as evidence, and never answer `next` in the contract's place.",
         "kind": "query",
         "read_only": true,
         "input": "Empty",
