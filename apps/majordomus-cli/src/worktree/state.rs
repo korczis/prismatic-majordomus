@@ -103,6 +103,32 @@ pub fn branches(primary: &Path) -> Result<Vec<BranchRef>> {
 ///
 /// `for-each-ref refs/heads/<name>` also matches the branches below `<name>/`, so the result is
 /// filtered to the exact name.
+///
+/// ```
+/// use majordomus_cli::worktree::state::branch;
+/// let repo = tempfile::tempdir().unwrap();
+/// let git = |args: &[&str]| {
+///     let ok = std::process::Command::new("git")
+///         .args(["-c", "user.name=t", "-c", "user.email=t@t", "-c", "commit.gpgsign=false"])
+///         .args(args)
+///         .current_dir(repo.path())
+///         .status()
+///         .unwrap();
+///     assert!(ok.success(), "git {args:?}");
+/// };
+/// git(&["init", "-q", "-b", "trunk"]);
+/// git(&["commit", "-q", "--allow-empty", "-m", "root"]);
+/// git(&["branch", "feat/sub"]);
+///
+/// // `refs/heads/feat` matches feat/sub as well; the exact-name filter drops it.
+/// assert!(branch(repo.path(), "feat").unwrap().is_none());
+/// let feat = branch(repo.path(), "feat/sub").unwrap().expect("feat/sub exists");
+/// assert_eq!(feat.name, "feat/sub");
+/// assert!(feat.upstream.is_none());
+/// assert_eq!(feat.head.len(), 40);
+/// assert!(branch(repo.path(), "trunk").unwrap().unwrap().worktree.is_some());
+/// assert!(branch(repo.path(), "gone").unwrap().is_none());
+/// ```
 pub fn branch(primary: &Path, name: &str) -> Result<Option<BranchRef>> {
     let pattern = format!("refs/heads/{name}");
     let out = git::run(primary, &["for-each-ref", pattern.as_str(), BRANCH_FORMAT])?;
