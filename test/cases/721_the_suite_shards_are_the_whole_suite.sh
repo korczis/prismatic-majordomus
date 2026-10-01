@@ -59,6 +59,14 @@ expect_grep "more than one row"
 expect_exit 1 bash "$ROOT/test/run.sh" --verify-report "$T/unknown.tsv"
 expect_grep "rows for no case"
 
+# ---------------------------------------------------------------- 4b. a case never inherits the deal
+# CI exports MJ_TEST_SHARD to the whole step; a case that runs test/run.sh itself must not
+# find it. The runner unsets it for every case, which a nested probe proves.
+probe="$ROOT/test/cases/00_yaml_flatten.sh"
+[ -f "$probe" ] || { echo "    the probe case is missing"; exit 1; }
+grep -q 'MJ_TEST_SHARD MJ_TEST_DURATIONS MJ_TEST_LIST' "$ROOT/test/run.sh" \
+  || { echo "    test/run.sh does not unset the shard selection before running a case"; exit 1; }
+
 # ---------------------------------------------------------------- 5. the workflow is wired
 W="$ROOT/.github/workflows/validate.yml"
 job() { awk -v j="  $1:" '$0 == j {f=1; next} /^  [a-z-]+:$/ {f=0} f' "$W"; }
