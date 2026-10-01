@@ -13,7 +13,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 
-import { family } from './ui-routes.mjs';
+import { collections, family, shape } from './ui-routes.mjs';
 
 /** The narrowest viewport every page must remain usable at (WCAG 2.2 reflow, 320 CSS px). */
 export const REFLOW_FLOOR = 320;
@@ -24,14 +24,19 @@ export const DESKTOP = 1440;
 /**
  * Every rendered route of a built site, from the filesystem, as paths beginning with `/`.
  * A directory holding `index.html` is a route; a stray `.html` file is one too.
+ *
+ * `composed` names the mounts of the surfaces scripts/site-build composes into a static build
+ * (`/rustdoc`, from the topology): their pages are another producer's and are audited by that
+ * surface's own check, so the walk does not descend into them.
  */
-export function routesFromFilesystem(publicDir) {
+export function routesFromFilesystem(publicDir, composed = []) {
   const routes = new Set();
+  const skip = new Set(composed.map((m) => m.replace(/^\/+|\/+$/g, '')).filter(Boolean));
   const walk = (dir) => {
     for (const entry of readdirSync(dir, { withFileTypes: true })) {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) {
-        walk(full);
+        if (!skip.has(relative(publicDir, full).split(sep).join('/'))) walk(full);
         continue;
       }
       if (!entry.name.endsWith('.html')) continue;
@@ -102,8 +107,8 @@ export function commonPrefix(paths) {
  * from. A route only the sitemap knows is a rendering failure; a route only the filesystem
  * knows is an orphan. Both are reported rather than silently dropped.
  */
-export function discoverPages(publicDir) {
-  const fromFiles = routesFromFilesystem(publicDir);
+export function discoverPages(publicDir, composed = []) {
+  const fromFiles = routesFromFilesystem(publicDir, composed);
   const fromSitemap = routesFromSitemap(publicDir);
   const all = [...new Set([...fromFiles, ...fromSitemap])].sort();
   return all.map((route) => ({
@@ -261,22 +266,29 @@ export function planSurfaces(surfaces, cssPath) {
   const pages = [];
   for (const surface of surfaces) {
     if (surface.kind === 'native-route') {
+      // the shapes the crawl itself filed, so the tiering and the sampling agree on where a
+      // renderer changes: a record page that takes view parameters is one family and not
+      // one per record. Without the crawled set there is nothing to derive that from, and
+      // the one-route reading is what is left.
+      const records = surface.derived?.routes
+        ? collections(surface.derived.routes, surface.derived.entry ?? surface.mount)
+        : null;
       for (const route of surface.pages ?? []) {
-        const shape = family(route);
+        const of = records ? shape(route, records) : family(route);
         pages.push({
           route,
           surface: surface.id,
           kind: 'native-route',
-          family: shape,
+          family: of,
           // a family is where a renderer changes, exactly as a directory is on a built
           // surface: one member of each takes the boundary sweep
-          section: `${surface.id}:${shape}`,
+          section: `${surface.id}:${of}`,
           found: 'the surface, crawled from its own anchors',
         });
       }
       continue;
     }
-    for (const page of discoverPages(surface.dir)) {
+    for (const page of discoverPages(surface.dir, surface.composed ?? [])) {
       pages.push({
         ...page,
         surface: surface.id,

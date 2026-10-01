@@ -26,10 +26,30 @@
 #                                         GitHub's own "pages build and deployment" of that commit:
 #                                         0 built, 10 errored, 12 not determinable (no gh, no token,
 #                                         or GitHub has not built it yet)
+#   scripts/pages evidence [--commit SHA] [--from DIR] [--out FILE]
+#                                         site/data/evidence.json: the CI evidence of that commit
+#                                         or its nearest ancestor (the `evidence` artifact, or DIR),
+#                                         current, stale with the distance, or unavailable with
+#                                         the reason; 0 in all three, 12 when it cannot write
 #   scripts/pages verify --url URL --commit SHA [--timeout N] [--quiet]
 #                                         poll the public site until it serves that commit;
 #                                         --timeout 0 is a single probe. 0 it serves it,
 #                                         10 it serves something else, 12 it never answered
+#   scripts/pages verify-docs --url URL --commit SHA [--quiet]
+#                                         the documentation that commit publishes, as served:
+#                                         /docs/index.json names the commit, and every route it
+#                                         publishes a kind at answers 200. 0 ok, 10 not,
+#                                         12 the index could not be fetched
+#   scripts/pages verify-rustdoc [--url URL] --commit SHA [--timeout N]
+#                                         poll the public site until the crate's reference it
+#                                         composes at the rustdoc surface's mount is that
+#                                         commit's and whole: its build.json entry, its
+#                                         surface.json, the landing page, the crate index, the
+#                                         index's stylesheets and scripts, a module page, the
+#                                         search index and the crate's COMMIT constant page.
+#                                         One ASCII line per URL probed.
+#                                         0 verified, 10 it serves something else, 12 it never
+#                                         answered or the probe cannot judge
 #
 # The model is .ai/repo/ci/pages.yaml. Nothing here carries a path list, a budget or a gate
 # name of its own. Exit 0 ok, 2 usage, 10 a refusal or a budget exceeded, 12 something missing.
@@ -98,15 +118,18 @@ cmd_current() {
 # The check is the executable's own `generate --check` rather than a comparison written here:
 # the staleness of a generated artifact is defined by the generator, and a second definition
 # in shell would be a second answer to the same question — and a weaker one, since it would
-# have to guess at what the generator hashes. It costs about 12 s against a hook that already
-# spends far longer in `doctor`.
+# have to guess at what the generator hashes. With the unoptimised build CI uses it costs about
+# 5 s (14 s until the changelog stopped asking git once per decision and release), against a
+# hook that already spends far longer in `doctor`; test/cases/56 bounds the whole gate.
 #
 # A repository without the built executable — an adopter's, or a clone before the first build
 # — skips it and says so. Skipping loudly is the point: silence here is what this gate is for.
+DERIVED_SKIPPED=""
 cmd_derived() {
   local cli="$ROOT/bin/majordomus-cli" out rc=0
   if [ ! -x "$cli" ]; then
     printf 'pages: no %s; the registry half of the derived data was not checked\n' "bin/majordomus-cli" >&2
+    DERIVED_SKIPPED=1
     return 0
   fi
   out="$(MAJORDOMUS_NO_BUILD=1 "$cli" generate --check 2>&1)" || rc=$?
@@ -114,11 +137,47 @@ cmd_derived() {
     0) [ -n "${MJ_PAGES_QUIET:-}" ] || printf 'pages: the registry projections are in sync with this tree\n'
        return 0 ;;
     12) printf 'pages: the executable is not built, so the registry half of the derived data was not checked\n' >&2
+        DERIVED_SKIPPED=1
         return 0 ;;
   esac
   printf '%s\n' "$out" | grep -v '^20[0-9][0-9]-' >&2
   printf '       the registry records every source file it indexed; a source change moves it, and\n       only `majordomus generate` writes it. Run scripts/derive and commit the result.\n' >&2
   return 10
+}
+
+# THE RECORD. `pages current` is the generation check the pre-commit hook runs on every commit,
+# and its verdict is recorded at .ai/local/state/generation/check.json, which the preflight's
+# `verification.docs` check reads (apps/majordomus-cli/src/environment/preflight.rs,
+# GENERATION_RECORD). The record names the *tree* it checked rather than a commit: the hook
+# runs before the commit exists, and the index it checks is exactly the tree that commit will
+# have, so the preflight compares it with HEAD^{tree}. A working tree that differs from the
+# index is not the tree the index names, so it is recorded with no tree, which that check
+# calls stale. Recording never changes the gate's verdict: a failure to record is silent.
+record_generation() {   # <exit status of the check>
+  local rc="$1" outcome tree="" head at record="$ROOT/.ai/local/state/generation/check.json"
+  if [ "$rc" != 0 ]; then outcome=fail
+  elif [ -n "$DERIVED_SKIPPED" ]; then outcome=partial
+  else outcome=pass; fi
+  head="$(git -C "$ROOT" rev-parse --verify --quiet HEAD 2>/dev/null)" || head=""
+  # --no-optional-locks: a read must not refresh the index under another session's feet.
+  if git -C "$ROOT" --no-optional-locks diff --quiet 2>/dev/null; then
+    tree="$(git -C "$ROOT" write-tree 2>/dev/null)" || tree=""
+  fi
+  at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  {
+    mkdir -p "$(dirname "$record")" &&
+    printf '{"schema":1,"check":"scripts/pages current","commit":"%s","tree":"%s","at":"%s","outcome":"%s"}\n' \
+      "$head" "$tree" "$at" "$outcome" > "$record.tmp.$$" &&
+    mv "$record.tmp.$$" "$record"
+  } 2>/dev/null || rm -f "$record.tmp.$$"
+  return 0
+}
+
+cmd_current_recorded() {
+  local rc=0
+  cmd_current "$@" && cmd_derived "$@" || rc=$?
+  record_generation "$rc"
+  return "$rc"
 }
 
 # ---------------------------------------------------------------- build
@@ -418,6 +477,61 @@ cmd_verify() {
   done
 }
 
+# ---------------------------------------------------------------- the documentation, as served
+# `verify` proves the site serves a commit; this proves that commit's documentation is there.
+# It reads /docs/index.json — which the build writes from the pages it published — and asks the
+# public site for the documentation root, every route the catalogue publishes a kind at, one
+# page of every kind published a page per object, and the machine-readable documents. Nothing
+# here lists a route: a kind added to site/data/publication.toml is probed because it was added.
+# Exit 0 every probe answered 200, 10 the index is not one, names another commit or a probe
+# failed, 12 the index could not be fetched at all.
+cmd_verify_docs() {
+  local url="" commit="" quiet=0 ix served routes r code bad=0 n=0
+  while [ $# -gt 0 ]; do case "$1" in
+    --url) url="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    --quiet) quiet=1; shift ;;
+    *) echo "pages verify-docs: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
+  [ -n "$commit" ] || commit="$(git -C "$ROOT" rev-parse HEAD)"
+  case "$commit" in *[!0-9a-fA-F]*|"") echo "pages verify-docs: --commit takes a commit sha, not '$commit'" >&2; exit 2 ;; esac
+  [ "${#commit}" -ge 7 ] || { echo "pages verify-docs: --commit $commit is too short to name a commit" >&2; exit 2; }
+  command -v curl >/dev/null || { echo "pages verify-docs: curl is required" >&2; return 12; }
+  url="${url%/}"
+  # The index lists every page, so it is the one large document here (half a megabyte at
+  # 1283 pages): it gets a bound of its own. And not reading it is not the same finding as
+  # reading something else — a fetch that ran past its bound once reported itself as "not a
+  # documentation index" and sent the reader looking at a file that was fine.
+  local fetched=0
+  ix="$(curl -fsSL --max-time "${MJ_PAGES_INDEX_SECONDS:-60}" -H 'Cache-Control: no-cache' "$url/docs/index.json?t=$(now)" 2>/dev/null)" && fetched=1
+  [ "$fetched" = 1 ] || {
+    echo "pages verify-docs: $url/docs/index.json could not be fetched within ${MJ_PAGES_INDEX_SECONDS:-60} s; the documentation was not measured" >&2; return 12; }
+  printf '%s' "$ix" | jq -e '.schema == 1 and (.pages | length > 0)' >/dev/null 2>&1 || {
+    echo "pages verify-docs: $url/docs/index.json answered, and what it serves is not a documentation index" >&2; return 10; }
+  served="$(printf '%s' "$ix" | jq -r '.build.commit // empty')"
+  [ -n "$served" ] && [ "${served#"$commit"}" != "$served" ] || {
+    echo "pages verify-docs: $url/docs/index.json was built from ${served:-no commit}, not ${commit:0:12}" >&2; return 10; }
+  routes="$(printf '%s' "$ix" | jq -r '. as $ix
+    | ["/docs/", "/openapi.json", "/build.json"]
+    + [$ix.kinds[] | .route | select(. != null)]
+    + [$ix.kinds[] | select(.projection == "entity") | .kind as $k
+       | first($ix.pages[] | select(.kind == $k)) | .route]
+    | unique[]' 2>/dev/null)"
+  for r in $routes; do
+    n=$((n + 1))
+    code="$(curl -s -o /dev/null -w '%{http_code}' --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' "$url$r" || true)"
+    if [ "$code" = 200 ]; then [ "$quiet" = 1 ] || printf '  200  %s%s\n' "$url" "$r"
+    else printf 'pages verify-docs: %s%s answered %s\n' "$url" "$r" "${code:-nothing}" >&2; bad=$((bad + 1)); fi
+  done
+  # the documentation root is the hub, not an older page at the same address
+  curl -fsSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" "$url/docs/?t=$(now)" 2>/dev/null | grep -q 'data-docs-search' || {
+    echo "pages verify-docs: $url/docs/ does not carry the documentation hub" >&2; bad=$((bad + 1)); }
+  [ "$bad" = 0 ] || return 10
+  [ "$quiet" = 1 ] || printf 'pages verify-docs: %s serves the documentation of %s: %s route(s), %s page(s) indexed\n' \
+    "$url" "${commit:0:12}" "$n" "$(printf '%s' "$ix" | jq -r '.pages | length')"
+}
+
 # ---------------------------------------------------------------- dispatch
 # ---------------------------------------------------------------- GitHub's own build
 # Publishing is two steps owned by two parties. This repository pushes gh-pages; GitHub's own
@@ -508,11 +622,328 @@ cmd_built() {
   esac
 }
 
+# ---------------------------------------------------------------- evidence
+# The dataset the site's evidence section renders: the newest evidence CI gathered
+# (scripts/ci/evidence-collect, the `evidence` artifact of validate.yml) for this commit or for
+# its nearest ancestor that has any. It is an input of one deployment, like data/build.json, and
+# it is never a gate on publishing. What it may never do is claim a currency it cannot back. The
+# report it carries is the tracked ledger's verdict at the run's commit; the run only confirms
+# it or not. So it is `current` only when the run is of this very commit, measured clean trees,
+# derived the report on a clean checkout, and nothing was absent, refused or failed; `stale`
+# for an ancestor's run, naming how many commits and changed files lie between, or for a run
+# that recorded a failure; `unknown`, with every reason, when the run cannot confirm the
+# report; and no evidence at all is published as unavailable, with the reason. ADR 68, as
+# ADR 0087 amends it; the reasons withhold `current` and never change the report.
+cmd_evidence() {
+  local commit="" from="" out="$ROOT/site/data/evidence.json" slug="" tmp="" aid="" sha="" best=""
+  local m ecommit behind changed repo_url cov_json cov_txt report_txt state reasons
+  while [ $# -gt 0 ]; do case "$1" in
+    --commit) commit="$2"; shift 2 ;;
+    --from) from="$2"; shift 2 ;;
+    --out) out="$2"; shift 2 ;;
+    *) echo "pages evidence: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$commit" ] || commit="HEAD"
+  commit="$(git -C "$ROOT" rev-parse --verify --quiet "$commit^{commit}")" || { echo "pages evidence: that is not a commit of this repository" >&2; exit 2; }
+  evidence_unavailable() {
+    jq -n --arg published "$commit" --arg reason "$1" \
+      '{schema: 1, available: false, published_commit: $published, reason: $reason}' > "$out" \
+      || { echo "pages evidence: could not write $out" >&2; exit 12; }
+    echo "pages evidence: unavailable: $1"
+  }
+  if [ -z "$from" ]; then
+    command -v gh >/dev/null 2>&1 || { evidence_unavailable "gh is not installed, so no CI evidence was fetched"; return 0; }
+    slug="${GITHUB_REPOSITORY:-}"
+    [ -n "$slug" ] || slug="$(git -C "$ROOT" remote get-url origin 2>/dev/null | sed -n 's|.*[:/]\([^/][^/]*/[^/][^/]*\)$|\1|p' | sed 's|\.git$||')"
+    [ -n "$slug" ] || { evidence_unavailable "no repository slug to ask for CI evidence"; return 0; }
+    tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-evidence.XXXXXX")"
+    gh api "repos/$slug/actions/artifacts?name=evidence&per_page=100" \
+      --jq '.artifacts[] | select(.expired | not) | select(.workflow_run.head_branch == "master") | "\(.id)\t\(.workflow_run.head_sha)"' \
+      > "$tmp/list" 2>/dev/null || { evidence_unavailable "the CI artifacts of $slug could not be listed"; return 0; }
+    # The nearest ancestor, not the newest upload: runs finish out of order, and the evidence of
+    # an older commit uploaded last would otherwise stand in for a nearer one.
+    while IFS=$'\t' read -r aid sha; do
+      [ -n "$sha" ] || continue
+      git -C "$ROOT" merge-base --is-ancestor "$sha" "$commit" 2>/dev/null || continue
+      printf '%s\t%s\n' "$(git -C "$ROOT" rev-list --count "$sha")" "$aid"
+    done < "$tmp/list" | LC_ALL=C sort -t "$(printf '\t')" -k1,1nr > "$tmp/candidates"
+    best="$(head -1 "$tmp/candidates" | cut -f2)"
+    [ -n "$best" ] || { evidence_unavailable "no evidence artifact of master's validation is recorded against this commit or a retained ancestor"; return 0; }
+    gh api "repos/$slug/actions/artifacts/$best/zip" > "$tmp/evidence.zip" 2>/dev/null \
+      && mkdir -p "$tmp/evidence" && unzip -qo "$tmp/evidence.zip" -d "$tmp/evidence" >/dev/null 2>&1 \
+      || { evidence_unavailable "the evidence artifact $best could not be downloaded"; return 0; }
+    from="$tmp/evidence"
+  fi
+  m="$from/manifest.json"
+  jq -e '.schema == 1 and (.commit | type == "string")' "$m" >/dev/null 2>&1 \
+    || { evidence_unavailable "the evidence manifest is absent or not one this build reads"; return 0; }
+  ecommit="$(jq -r .commit "$m")"
+  git -C "$ROOT" merge-base --is-ancestor "$ecommit" "$commit" 2>/dev/null \
+    || { evidence_unavailable "the evidence was recorded against ${ecommit:0:12}, which is not in the history of the commit being published"; return 0; }
+  behind="$(git -C "$ROOT" rev-list --count "$ecommit..$commit")"
+  changed="$(git -C "$ROOT" diff --name-only "$ecommit" "$commit" | wc -l | tr -d ' ')"
+  repo_url="$(jq -r '.repository_url // empty' "$ROOT/site/data/generated/project.json" 2>/dev/null || true)"
+  report_txt="$from/report.txt"; [ -f "$report_txt" ] || report_txt=/dev/null
+  cov_txt="$from/coverage.txt"; [ -f "$cov_txt" ] || cov_txt=/dev/null
+  cov_json="$from/coverage.json"; [ -f "$cov_json" ] || cov_json=/dev/null
+  jq -n --arg published "$commit" --argjson behind "$behind" --argjson changed "$changed" --arg repo "$repo_url" \
+    --slurpfile m "$m" --slurpfile cov "$cov_json" --rawfile report "$report_txt" --rawfile coverage "$cov_txt" '
+    $m[0] as $man
+    # What the run cannot confirm about the report it carries. Each reason only withholds
+    # `current`; none of them changes the report. A manifest written before the run measured
+    # its trees has no such key, and reads as not measured. A report the collector failed to
+    # derive, or one that did not reach the artifact, is nothing to confirm.
+    | ([($man.totals.outcomes // {}) | (.fail // 0), (.timeout // 0), (.error // 0)] | add) as $failed
+    | ([($man.panels // [])[] | select(.label == "evidence")] | .[0]) as $ep
+    | [
+        (if $ep == null then "The run names no report."
+         elif $ep.exit != 0 then "The report could not be derived: \($ep.command) exited \($ep.exit // "without a status")."
+         elif ($report | test("\\S") | not) then "The run carries no report text, so there is nothing to confirm."
+         else empty end),
+        (if $man.working_tree == "clean" then empty
+         elif $man.working_tree == "dirty" then "A job that ran tests ran them in a dirty tree."
+         else "Not every job that ran tests measured the tree it ran them in." end),
+        (if $man.report_tree == "clean" then empty
+         elif $man.report_tree == "dirty" then "The report was derived in a dirty checkout."
+         else "The checkout the report was derived in was not measured." end),
+        (($man.refused // []) | if length > 0
+          then "The run refused the report of " + (map(.runner) | join(", ")) + ", measured at another commit."
+          else empty end),
+        (($man.absent // []) | if length > 0 then "The run has no report from " + join(", ") + "." else empty end),
+        (if $failed > 0 then "The run recorded \($failed) failed, timed-out or errored execution(s)." else empty end)
+      ] as $unconfirmed
+    | (if $man.commit == $published and ($unconfirmed | length) == 0 then "current"
+       elif $man.commit != $published or $failed > 0 then "stale"
+       else "unknown" end) as $state
+    | {
+        schema: 1,
+        available: true,
+        published_commit: $published,
+        commit: $man.commit,
+        commit_url: (if $repo != "" then $repo + "/commit/" + $man.commit else null end),
+        state: $state,
+        current: ($state == "current"),
+        unconfirmed: $unconfirmed,
+        behind: $behind,
+        changed: $changed,
+        produced_at: $man.produced_at,
+        run: $man.run,
+        absent: $man.absent,
+        totals: $man.totals,
+        coverage: (if ($cov | length) == 0 then null else ($cov[0] | {crate, domain: (.domain | {lines, functions, regions})}) end),
+        panels: [
+          $man.panels[] | . as $p
+          | {label, command, exit, what,
+             output: (if $p.file == "report.txt" then $report elif $p.file == "coverage.txt" then $coverage else "" end),
+             links: [
+               (if $man.run then {label: "the run that recorded it", href: $man.run.url} else empty end),
+               (if $repo != "" then {label: ("commit " + $man.commit[0:12]), href: ($repo + "/commit/" + $man.commit)} else empty end)
+             ]}
+        ]
+      }' > "$out" || { echo "pages evidence: could not write $out" >&2; exit 12; }
+  state="$(jq -r .state "$out")"
+  reasons="$(jq -r '.unconfirmed | join(" ")' "$out")"
+  if [ "$state" = current ]; then
+    echo "pages evidence: current: the run of ${commit:0:12} confirms the report it carries"
+  elif [ "$behind" != 0 ]; then
+    echo "pages evidence: stale: recorded against ${ecommit:0:12}, $behind commit(s) and $changed changed file(s) behind ${commit:0:12}${reasons:+. $reasons}"
+  elif [ "$state" = stale ]; then
+    echo "pages evidence: stale: the run of ${commit:0:12} recorded failures, so it does not confirm the report it carries. $reasons"
+  else
+    echo "pages evidence: unknown: the run of ${commit:0:12} cannot confirm the report it carries. $reasons"
+  fi
+}
+
+# ---------------------------------------------------------------- the crate's reference, public
+# `verify` proves the site serves this commit's /build.json, and that is all it proves: a build
+# that composed a stale reference, a deploy that lost half of one, or a CDN that still answers
+# the old stylesheet all leave it green. The crate's rustdoc is a surface of its own composed
+# into the site (ADR 0086), with its own declaration and its own assets, so it is verified the
+# way a reader meets it rather than by the identity file alone.
+#
+# In order, each URL cache-busted as `verify` busts it (?t=): /build.json names the commit the
+# rustdoc surface was built from; the surface's own surface.json names it too; the landing page
+# answers HTML and carries the commit; the crate's index is rustdoc's page for the crate (the
+# generator meta, the title rustdoc writes); every stylesheet and script that index references
+# under static.files answers with its content type; the first module the index links, in
+# sorted order, answers as that module's page; and the search index the page's rustdoc-vars
+# point at answers; and the page of the crate's COMMIT constant, the build's own statement of
+# its commit, names the same commit as built_from. The mount is the topology's
+# (docs/generated/web.json) and the crate is the manifest's [lib], so nothing here is a second
+# declaration of either.
+#
+# A commit prefix counts as `verify` counts it: seven characters or more, matched as the start
+# of what the site states. The same two failures as `verify`, told apart the same way: a site
+# that answered and served something else is 10; a site that never answered, or a probe that
+# cannot judge, is 12. It polls until --timeout, and prints the URLs of the round that decided.
+cmd_verify_rustdoc() {
+  local url="" commit="" timeout=180 t0 rc round=0 mount crate
+  while [ $# -gt 0 ]; do case "$1" in
+    --url) url="$2"; shift 2 ;;
+    --commit) commit="$2"; shift 2 ;;
+    --timeout) timeout="$2"; shift 2 ;;
+    *) echo "pages verify-rustdoc: unknown option $1" >&2; exit 2 ;;
+  esac; done
+  [ -n "$commit" ] || { echo "pages verify-rustdoc: --commit SHA is required" >&2; exit 2; }
+  case "$commit" in *[!0-9a-fA-F]*) echo "pages verify-rustdoc: --commit takes a commit sha, not '$commit'" >&2; exit 2 ;; esac
+  [ "${#commit}" -ge 7 ] || { echo "pages verify-rustdoc: --commit $commit is too short to name a commit; use seven characters or more" >&2; exit 2; }
+  case "$timeout" in ''|*[!0-9]*) echo "pages verify-rustdoc: --timeout takes whole seconds, not '$timeout'" >&2; exit 2 ;; esac
+  # the base the public site is built for, from the same file `verify` reads it from
+  [ -n "$url" ] || url="$(sed -n 's/^base_url = "\(.*\)"/\1/p' "$ROOT/site/config.toml")"
+  [ -n "$url" ] || { echo "pages verify-rustdoc: no --url and site/config.toml declares no base_url" >&2; return 12; }
+  command -v curl >/dev/null || { echo "pages verify-rustdoc: curl is required" >&2; return 12; }
+  mount="$(jq -r '[.surfaces[] | select(.id == "rustdoc") | .mount] | first // empty' "$ROOT/docs/generated/web.json" 2>/dev/null || true)"
+  [ -n "$mount" ] || { echo "pages verify-rustdoc: docs/generated/web.json declares no rustdoc surface; there is no mount to verify" >&2; return 12; }
+  crate="$(sed -n '/^\[lib\]/,/^\[/ s/^name = "\(.*\)"/\1/p' "$ROOT/apps/majordomus-cli/Cargo.toml" | head -n 1)"
+  [ -n "$crate" ] || { echo "pages verify-rustdoc: apps/majordomus-cli/Cargo.toml names no [lib]; there is no crate index to verify" >&2; return 12; }
+  VR_WORK="$(mktemp -d "${TMPDIR:-/tmp}/mj-pages-rustdoc.XXXXXX")"
+  trap 'rm -rf "$VR_WORK"; rm -f "$FLAT" "${GFLAT:-}"' EXIT
+  t0="$(now)"
+  while :; do
+    round=$((round + 1)); rc=0
+    rustdoc_round "${url%/}" "$mount" "$crate" "$commit" > "$VR_WORK/lines" || rc=$?
+    if [ "$rc" = 0 ] || [ $(( $(now) - t0 )) -ge "$timeout" ]; then break; fi
+    printf 'pages verify-rustdoc: round %s not yet (exit %s): %s\n' "$round" "$rc" \
+      "$(grep -m1 ' fail$' "$VR_WORK/lines" || head -n 1 "$VR_WORK/lines")" >&2
+    sleep 5
+  done
+  cat "$VR_WORK/lines"
+  rm -rf "$VR_WORK"
+  case "$rc" in
+    0)  printf 'pages verify-rustdoc: %s%s/ serves the reference built from %s, whole, after %s s\n' "${url%/}" "$mount" "${commit:0:12}" "$(( $(now) - t0 ))" ;;
+    10) printf 'pages verify-rustdoc: after %s s %s%s/ serves something other than the reference built from %s\n' "$(( $(now) - t0 ))" "${url%/}" "$mount" "${commit:0:12}" >&2 ;;
+    *)  printf 'pages verify-rustdoc: %s%s/ could not be judged within %s s; the reference was not verified\n' "${url%/}" "$mount" "$timeout" >&2 ;;
+  esac
+  return "$rc"
+}
+
+# One probe of one URL: the body into $VR_WORK/body, and one ASCII line on stdout — requested
+# URL, final URL (curl's url_effective), status, content type, marker, ok/fail. The caller
+# judges; `vr_line` only records. VR_STATUS and VR_TYPE are left for the caller to read.
+VR_STATUS=""; VR_TYPE=""; VR_ANSWERED=0
+vr_get() {
+  local req="$1" meta
+  meta="$(curl -sSL --max-time "${MJ_PAGES_PROBE_SECONDS:-10}" -H 'Cache-Control: no-cache' \
+    -o "$VR_WORK/body" -w '%{http_code}\t%{content_type}\t%{url_effective}' "$req?t=$(now)" 2>/dev/null || true)"
+  VR_STATUS="$(printf '%s' "$meta" | cut -f1)"; VR_TYPE="$(printf '%s' "$meta" | cut -f2 | tr -d ' ')"
+  VR_FINAL="$(printf '%s' "$meta" | cut -f3)"
+  case "$VR_STATUS" in ''|000) VR_STATUS=000; : > "$VR_WORK/body" ;; *) VR_ANSWERED=1 ;; esac
+}
+vr_line() {   # verdict marker
+  printf 'url=%s final=%s status=%s type=%s marker="%s" %s\n' \
+    "$VR_REQ" "${VR_FINAL:-none}" "$VR_STATUS" "${VR_TYPE:-none}" "$(printf '%s' "$2" | LC_ALL=C tr -cd '\40-\176' | tr '"' "'")" "$1"
+}
+# a sha the site states, matched as `verify` matches it: the full value begins with the one asked
+vr_names() { [ -n "$1" ] && [ "${1#"$2"}" != "$1" ]; }
+
+rustdoc_round() {
+  local base="$1" mount="$2" crate="$3" commit="$4" bad=0 v m page a mod search suffix root
+  VR_ANSWERED=0
+  # 1. the build's identity names the commit the composed surface was built from
+  VR_REQ="$base/$IDENTITY"; vr_get "$VR_REQ"
+  v="$(jq -r '[.surfaces[]? | select(.id == "rustdoc") | .built_from // empty] | first // empty' "$VR_WORK/body" 2>/dev/null || true)"
+  if [ "$VR_STATUS" = 200 ] && vr_names "$v" "$commit"; then vr_line ok "surfaces.rustdoc.built_from=$v"
+  else vr_line fail "surfaces.rustdoc.built_from=${v:-absent}, want $commit"; bad=1; fi
+  # 2. the surface's own declaration, as published beside its pages
+  VR_REQ="$base$mount/surface.json"; vr_get "$VR_REQ"
+  v="$(jq -r 'select(.id == "rustdoc") | .built_from // empty' "$VR_WORK/body" 2>/dev/null || true)"
+  if [ "$VR_STATUS" = 200 ] && vr_names "$v" "$commit"; then vr_line ok "built_from=$v"
+  else vr_line fail "id rustdoc, built_from=${v:-absent}, want $commit"; bad=1; fi
+  # 3. the landing page the mount answers with, which names the commit
+  VR_REQ="$base$mount/"; vr_get "$VR_REQ"
+  case "$VR_STATUS $VR_TYPE" in
+    "200 text/html"*) if grep -qF "$commit" "$VR_WORK/body"; then vr_line ok "names $commit"
+                      else vr_line fail "does not name $commit"; bad=1; fi ;;
+    *) vr_line fail "want 200 text/html naming $commit"; bad=1 ;;
+  esac
+  # 4. the crate's index, as rustdoc writes it
+  page="$mount/$crate/index.html"
+  VR_REQ="$base$page"; vr_get "$VR_REQ"
+  cp "$VR_WORK/body" "$VR_WORK/crate.html"
+  case "$VR_STATUS $VR_TYPE" in
+    "200 text/html"*)
+      if grep -qF '<meta name="generator" content="rustdoc">' "$VR_WORK/crate.html" \
+         && grep -qF "<title>$crate - Rust</title>" "$VR_WORK/crate.html"; then
+        vr_line ok "generator rustdoc, title $crate - Rust"
+      else vr_line fail "want the rustdoc generator meta and <title>$crate - Rust</title>"; bad=1; fi ;;
+    *) vr_line fail "want 200 text/html, the crate's index"; bad=1
+       # everything below is read out of this page; without it there is nothing to derive
+       VR_REQ="$base$mount/static.files/"; VR_FINAL=""; VR_STATUS=-; VR_TYPE=-
+       vr_line fail "not probed: the assets, a module and the search index are named by the crate's index"
+       [ "$VR_ANSWERED" = 1 ] && return 10; return 12 ;;
+  esac
+  # 5. every stylesheet and script the index references under static.files, relative to it
+  root="$(sed -n 's/.*data-static-root-path="\([^"]*\)".*/\1/p' "$VR_WORK/crate.html" | head -n 1)"
+  { grep -oE '(href|src)="[^"$]*static\.files/[A-Za-z0-9._-]+\.(css|js)"' "$VR_WORK/crate.html" \
+      | sed -E 's/^(href|src)="//; s/"$//'
+    [ -n "$root" ] && grep -oE 'data-(search|stringdex|settings)-js="[A-Za-z0-9._-]+\.js"' "$VR_WORK/crate.html" \
+      | sed -E 's/^[^"]*"//; s/"$//' | sed "s#^#$root#"
+  } | LC_ALL=C sort -u > "$VR_WORK/assets"
+  [ -s "$VR_WORK/assets" ] || { VR_REQ="$base$page"; VR_STATUS=-; VR_TYPE=-; VR_FINAL=""
+    vr_line fail "the crate's index references no stylesheet or script under static.files"; bad=1; }
+  while IFS= read -r a; do
+    VR_REQ="$base$(vr_resolve "$mount/$crate/" "$a")"; vr_get "$VR_REQ"
+    case "$a" in *.css) m="text/css" ;; *) m="javascript" ;; esac
+    case "$VR_STATUS $VR_TYPE" in
+      200\ *"$m"*) vr_line ok "$m" ;;
+      *) vr_line fail "want 200 $m"; bad=1 ;;
+    esac
+  done < "$VR_WORK/assets"
+  # 6. one module page: the first module the index links, in sorted order
+  mod="$(grep -oE 'href="[a-z_][a-z0-9_]*/index\.html"' "$VR_WORK/crate.html" | sed -E 's/^href="//; s#/index\.html"$##' | LC_ALL=C sort -u | head -n 1)"
+  if [ -z "$mod" ]; then
+    VR_REQ="$base$page"; VR_STATUS=-; VR_TYPE=-; VR_FINAL=""; vr_line fail "the crate's index links no module"; bad=1
+  else
+    VR_REQ="$base$mount/$crate/$mod/index.html"; vr_get "$VR_REQ"
+    if [ "$VR_STATUS" = 200 ] && grep -qF "<title>$crate::$mod - Rust</title>" "$VR_WORK/body"; then vr_line ok "title $crate::$mod - Rust"
+    else vr_line fail "want 200 and <title>$crate::$mod - Rust</title>"; bad=1; fi
+  fi
+  # 7. the search index, where rustdoc's own script looks for it: root path, search.index/root,
+  #    resource suffix, .js
+  search="$(sed -n 's/.*data-root-path="\([^"]*\)".*/\1/p' "$VR_WORK/crate.html" | head -n 1)"
+  suffix="$(sed -n 's/.*data-resource-suffix="\([^"]*\)".*/\1/p' "$VR_WORK/crate.html" | head -n 1)"
+  VR_REQ="$base$(vr_resolve "$mount/$crate/" "${search}search.index/root${suffix}.js")"; vr_get "$VR_REQ"
+  case "$VR_STATUS $VR_TYPE" in
+    200\ *javascript*) vr_line ok "search index" ;;
+    *) vr_line fail "want 200 javascript, the search index"; bad=1 ;;
+  esac
+  # 8. the second witness of the commit (ADR 0086): the page rustdoc rendered for the crate's
+  #    COMMIT constant, whose value the compiler embedded from the commit the producer handed
+  #    the build. built_from above is the producer's statement; this is the build's. A tree
+  #    assembled from two builds is the one where they disagree. The page is the one the crate's
+  #    index links, so a crate that stopped exporting the constant is a finding here too.
+  if grep -qF 'href="constant.COMMIT.html"' "$VR_WORK/crate.html"; then
+    VR_REQ="$base$mount/$crate/constant.COMMIT.html"; vr_get "$VR_REQ"
+    if [ "$VR_STATUS" = 200 ] && grep -qF "&quot;$commit" "$VR_WORK/body"; then vr_line ok "COMMIT names $commit"
+    else vr_line fail "want 200 and the COMMIT constant naming $commit"; bad=1; fi
+  else
+    VR_REQ="$base$page"; VR_STATUS=-; VR_TYPE=-; VR_FINAL=""
+    vr_line fail "the crate's index links no constant.COMMIT.html, the second witness of the commit"; bad=1
+  fi
+  [ "$bad" = 0 ] && return 0
+  [ "$VR_ANSWERED" = 1 ] && return 10
+  return 12
+}
+
+# a relative reference resolved against the directory of the page that makes it
+vr_resolve() {
+  local dir="$1" ref="$2"
+  while :; do
+    case "$ref" in
+      ../*) ref="${ref#../}"; dir="${dir%/}"; dir="${dir%/*}/" ;;
+      ./*) ref="${ref#./}" ;;
+      *) break ;;
+    esac
+  done
+  printf '%s%s\n' "$dir" "$ref"
+}
+
 case "${1:-}" in
+  evidence)    shift; cmd_evidence "$@" ;;
   build)       shift; cmd_build "$@" ;;
   check)       shift; cmd_check "$@" ;;
   fingerprint) shift; cmd_fingerprint "$@" ;;
-  current)     shift; cmd_current "$@" && cmd_derived "$@" ;;
+  current)     shift; cmd_current_recorded "$@" ;;
   derived)     shift; cmd_derived "$@" ;;
   paths)       shift; cmd_paths "$@" ;;
   budget)      shift; cmd_budget "$@" ;;
@@ -520,6 +951,10 @@ case "${1:-}" in
   report)      shift; cmd_report "$@" ;;
   built)       shift; cmd_built "$@" ;;
   verify)      shift; cmd_verify "$@" ;;
-  -h|--help|"") sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//' ;;
+  verify-docs) shift; cmd_verify_docs "$@" ;;
+  verify-rustdoc) shift; cmd_verify_rustdoc "$@" ;;
+  # the whole header, up to the line that ends it, rather than a line range that stops
+  # short the day a command is added to it
+  -h|--help|"") awk 'NR > 1 && /^set -eu$/ { exit } NR > 1' "$0" | sed 's/^# \{0,1\}//' ;;
   *) echo "pages: unknown command $1 (scripts/pages --help)" >&2; exit 2 ;;
 esac

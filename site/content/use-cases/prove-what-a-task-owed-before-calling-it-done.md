@@ -6,7 +6,7 @@ weight = 20
 id = "prove-what-a-task-owed-before-calling-it-done"
 source = ".ai/repo/use-cases/prove-what-a-task-owed-before-calling-it-done.md"
 category = "completion"
-maturity = "described"
+maturity = "guaranteed"
 +++
 
 ## Situation

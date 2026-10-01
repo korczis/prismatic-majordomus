@@ -10,7 +10,7 @@ status: stable
 weight: 140
 featured: false
 areas: [context]
-modules: [directories, repository]
+modules: [directories, repository, devcontext]
 commands: [context]
 kinds: [context, scope]
 rules: [majordomus.context-integrity, majordomus.minimum-sufficient-context, project.context-locality, project.scope-is-declared, majordomus.layout-integrity, majordomus.ai-layout-integrity]

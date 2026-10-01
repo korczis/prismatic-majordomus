@@ -103,7 +103,7 @@
     <li class="min-w-0 rounded-base border border-default bg-neutral-primary-soft p-4">
       <p class="flex flex-wrap items-start gap-2">{{ <badge status={c.status} /> }}
         <a href="{{ get_url(path='/guarantees/' ~ c.id ~ '/', trailing_slash=true) }}" class="min-w-0 break-words text-sm font-medium text-heading hover:text-fg-brand hover:underline">{{ c.claim }}</a></p>
-      {%- if c.test %}<p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="{{ project.repository_url }}/blob/master/{{ c.test }}">{{ c.test }}</a></p>{% endif %}
+      {%- if c.test %}<p class="mt-1.5 text-xs"><span class="text-body-subtle">proved by</span> <a class="break-all font-mono text-fg-brand underline inline-block py-1" href="{{ <source_blob path={c.test} /> }}">{{ c.test }}</a></p>{% endif %}
     </li>
     {%- endfor %}
   </ul>

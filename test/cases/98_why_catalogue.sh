@@ -4,8 +4,9 @@
 # The point is not that the catalogue works. It is that nothing between the file and the
 # answers has a list in it. So this case adds ONE file, changes nothing else — no registry,
 # no navigation, no template, no Rust, no schema — and then asks the domain index, the
-# command line, the HTTP API, MCP and the site projection whether they know about it. Then
-# it deletes the file and asks all of them again.
+# command line, its JSON answer, MCP and the site projection whether they know about it. Then
+# it deletes the file and asks all of them again. The HTTP API and the OpenAPI document are
+# asked over a real socket by the crate's tests/why.rs, which holds the claim.
 #
 # Skips itself when there is neither cargo nor MAJORDOMUS_BIN, as the other Rust cases do.
 . "$ROOT/test/lib.sh"
@@ -154,7 +155,7 @@ expect_grep 'probe-area'
 expect_exit 0 "$RB" why diagnose
 expect_grep 'This case added one file.'
 
-# --- the HTTP API and the OpenAPI document answer it, from the same value
+# --- the JSON answer the HTTP API serves carries it (the route itself: tests/why.rs)
 expect_exit 0 "$RB" why list --format json
 "$RB" why list --format json > "$S/list.json" 2>/dev/null
 grep -q '"id": "a-probe-moment"' "$S/list.json" || { echo "    the JSON answer does not carry the moment"; exit 1; }

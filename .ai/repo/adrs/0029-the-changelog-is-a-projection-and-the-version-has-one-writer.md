@@ -41,6 +41,16 @@ provenance:
 > window is one interval said twice, the parser is total, and the version keeps two statements
 > and one writer.
 
+> **Amended by [ADR 0085](0085-the-version-is-authored-once-and-shipped-as-a-projection.md) (proposed), 2026-09-24.**
+> The version no longer keeps two statements. It is authored once, in the crate manifest, and
+> the shell tool reads `share/version.txt`, a generated projection shipped in every archive.
+> The alternative rejected below as *Collapsing the version to a single source* rejected a
+> build output and a run-time dependency; ADR 0085 answers each of its four reasons with a
+> projection, and `release bump` now writes the manifest's line and the lock's record of it,
+> not `bin/majordomus`. The changelog decisions stand. This record's status is unchanged: it
+> is `proposed`, and ADR 0051's closing remark that it "stays `accepted`" is a slip that is
+> corrected by saying so here, never by writing `accepted`.
+
 ## Context
 
 ADR 0002 made the capability registry the one declaration behind every interface, ADR 0027

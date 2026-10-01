@@ -1,0 +1,13 @@
+schema: economics-task/v1
+id: storage-v2
+title: "Version the storage format to record currency"
+category: schema-change
+complexity: medium
+source: "A persisted-format change with a migration rule written down in a decision record."
+fixture: test/fixtures/economics/ledgerlite
+acceptance: test/fixtures/economics/acceptance/storage-v2
+reference: test/fixtures/economics/reference/storage-v2.patch
+verify: python3 -m unittest discover -s tests -q
+scope: [ledgerlite, tests]
+sessions:
+  - prompt: prompt-1.md

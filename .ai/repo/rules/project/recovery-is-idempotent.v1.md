@@ -9,6 +9,9 @@ status: active
 class: advisory
 depends_on: [project.a-worker-that-stops-leaves-its-work-behind@1, project.destructive-sweeps-fail-closed@1]
 tags: [process, integration, agents]
+
+x-majordomus:
+  reviewed_because: nothing can mechanically detect that a retry was about to duplicate a side effect; what is detectable is the aftermath, and a duplicate identity in the index already refuses
 ---
 
 # Rationale

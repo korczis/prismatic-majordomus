@@ -1,7 +1,7 @@
 +++
 title = "The Cockpit"
 description = "the Cockpit: the registry rendered as pages for a person, what makes it a projection rather than a dashboard, the graph and health models, the browser layer and what happens without it, the security decisions, the asset pipeline"
-weight = 43
+weight = 45
 [extra]
 source = "docs/COCKPIT.md"
 +++
@@ -16,7 +16,7 @@ document and a Swagger UI over it. The Cockpit is the same server answering a pe
 It is a **projection**, in this repository's sense of the word: one more thing derived from
 the canonical capability declarations and the index, holding no model, no catalogue and no
 verdict of its own. The decision is
-[ADR 12](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md); the rules
+[ADR 12](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0012-the-cockpit-is-a-projection-not-an-application.md); the rules
 it is bound by are `project.interfaces-are-projections`,
 `project.rust-canonical-declaration`, `project.rust-benchmark-coverage` and
 `project.rust-hot-path`. Behaviour as implemented and tested; where this document and the
@@ -58,13 +58,15 @@ pages still render, say so, and remain fully usable.
 
 | Route | What it shows | Derived from |
 |---|---|---|
-| `/cockpit` | repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `repository.info`, `health.report` |
+| `/cockpit` | the four questions first (is it healthy, what changed, what is broken, what needs action), then repository identity, git state, index state, the registry counted, every diagnostic, the health summary | `dashboard.overview`, `repository.info`, `health.report` |
 | `/cockpit/capabilities` | every capability, filtered by module, kind, source or text | the registry |
 | `/cockpit/capabilities/<id>` | one descriptor in full: schemas, projections, cache and benchmark policy, provenance, examples, and a form that runs it | the descriptor and its `BenchmarkCases` |
 | `/cockpit/executions` | what this process has run and is running, with the counts beside it; follows the live channel and updates itself | `executions.list` |
 | `/cockpit/executions/<id>` | one execution: its state, steps, progress, diagnostics, live output, output or error, and the input as it was stored; a stable URL a reload restores from | `executions.get`, `executions.events` |
 | `/cockpit/objects` | the declarative objects of the layer, by kind | `objects.list` |
-| `/cockpit/object?uri=` | one object: front matter, provenance, content as it is | `objects.get` |
+| `/cockpit/objects/<kind>` | one kind's index, at the kind's own address | `entity.kinds`, `objects.list` |
+| `/cockpit/objects/<kind>/<slug>` | one entity: what it is and where the public site publishes it, what can be said about the artefacts it names, the references it declares and the references that resolve to it, the surfaces that answer for it, its front matter, and the file as it is | `entity.show` |
+| `/cockpit/object?uri=` | the address an object had before it had one of its own; still resolves, so no published link breaks | `objects.get` |
 | `/cockpit/graphs` | every graph this executable derives | `graph.list` |
 | `/cockpit/graphs/<id>` | one graph: the drawing, the vocabularies, and every node and edge as tables | `graph.get` |
 | `/cockpit/graphs/topology` | the registry graph in three dimensions — optional | `graph.get` (`registry`) |
@@ -83,6 +85,21 @@ pages still render, say so, and remain fully usable.
 Every route is a deep link: the filters are query parameters, a refresh loses nothing, and
 a page can be sent to somebody.
 
+Neither the kind nor the entity in the last three rows is named in the router. The address
+of an object is derived from its kind and its identity — `majordomus://rule/project.x@1`
+becomes `/cockpit/objects/rule/project-x-1` — so a file added under `.ai/` gets an index
+row, a page, and its place in every other page's backlinks without an edit anywhere in the
+Cockpit. Two identities of one kind that reduce to one address would be a collision rather
+than a tie-break; `majordomus entity kinds` reports every one and `scripts/ci/entity-check`
+refuses the tree while one exists. The rule is `project.entities-are-routable`.
+
+An entity page also names the object's public documentation page — "Published at
+https://majordomus.dev/adrs/adr-0056/" — or the reason its kind is not published. The page
+derives no address: it renders the `documentation` field of `entity.show`, which reads
+`site/data/publication.toml` and the site's `base_url` at request time, the same declaration
+`scripts/generate-site-data` writes the site's pages from. A repository with no such
+declaration has no public page to name, and the page says so.
+
 ## How a listing of the whole layer is read
 
 The two listings that hold everything — nine hundred capabilities, nine hundred objects —
@@ -92,7 +109,7 @@ are read a page at a time and entered by their parts:
   and never an error. The control under the table says which rows are being shown, and
   offers the first page, the last, the neighbours of this one, and a gap for the rest.
 - **Above the table are the listing's own parts** — the registry's modules on
-  `/cockpit/capabilities`, the index's kinds on `/cockpit/objects` — each with how many
+  `/cockpit/capabilities`, the listing's own kinds on `/cockpit/objects` — each with how many
   it holds *under the filters in force*. They are the same catalogues the sidebar shows,
   put where the listing is: a set of nine hundred rows is entered by its module or its
   kind rather than scrolled.
@@ -165,9 +182,32 @@ the HTTP routes make. It is counted in the same perf counters, answered from the
 and bound by the same validation. `tests/cockpit.rs` asserts that serving every page moves
 none of the counters that must only move at startup.
 
-**Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the
-index's kinds and the graph derivation table. The capability explorer is the registry
-filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
+**No page reads the index.** The other half of the sentence above, and the one that was
+documentation only until `scripts/ci/cockpit-projection-check` (gate `cockpit-projection`,
+ADR 0012) began refusing it: a view layer that reaches into the index because it is in the
+same process reads the repository outside the executor, outside the cache, outside the
+counters and outside the validation, and the day it disagrees with the capability neither
+answer is wrong in its own terms. The gate greps the Cockpit's own files, test modules
+included, and `test/cases/389_cockpit_projection.sh` drives it against fixture trees. The
+object count and the kind catalogue come from `repository.info`, a listing from
+`objects.list`, one object from `objects.get`.
+
+**Unknown is never drawn as healthy.** ADR 0089 (`project.ui-derived-state`) widens the same
+checker. Its `--ui-integrity` gate (`ui-integrity`) refuses four things:
+
+- a direct `ctx.registry`, `ctx.product` or `ctx.why` read outside the navigation's
+  commented allow-list;
+- a health check given `HealthStatus::Ok` as a literal;
+- a `#[default]` on a healthy enum variant;
+- an absent count rendered as zero in `pages.rs`.
+
+A site that is right as written says why in a `// ui-integrity: <reason>` comment. The
+findings master already holds are a ratchet in `.ai/repo/ui-integrity-baseline.txt`, and
+`test/cases/547_the_ui_says_only_what_is_derived.sh` plants each violation in a fixture tree.
+
+**Nothing in it is a list.** The sidebar's catalogues are the registry's modules, the kinds
+`repository.info` reports and the graph derivation table. The capability explorer is the
+registry filtered. The palette reads `/api/v1/capabilities`, `/api/v1/graphs` and `/api/v1/objects`,
 and takes the Cockpit's own pages out of the navigation the server already rendered.
 
 **The runner is generic.** A capability's form is generated from its input schema: the
@@ -186,6 +226,27 @@ The behavioural claim is one test:
 rule into a disposable repository and asserts it reaches the capability listing, a page of
 its own, the object explorer, the search and the listing the palette reads — with no line
 of the Cockpit written for it.
+
+## The four questions: a dashboard that is a projection
+
+The overview opens with the Overview of the Dashboard Suite (ADR 0088): four questions — *is it
+healthy*, *what changed*, *what is broken*, *what needs action* — answered by
+`dashboard.overview`, which is an ordinary capability (`GET /api/v1/dashboard/overview`, MCP
+`majordomus_dashboard_overview`, `majordomus dashboard overview`). It has no data of its own.
+Each card is one fact read out of another capability's answer — `health.report`,
+`release.version`, `plan.status`, `worktree.status`, `plan.next`, `continuity.state`, and
+`peers.list` for this checkout's board — and it carries that capability, the input it was asked
+with, the RFC 6901 pointer its value was read from and the measure (`exact`, or `count` for the
+length of a list the source omits when empty), beside the source's own verdict, the page to
+drill into and the command that acts on it. A source that cannot answer makes its cards
+`unknown`, never `ok`.
+
+The page writes each card's value as `data-value` — the JSON the route answered — so the page
+and the route are compared byte for byte. `tests/dashboard.rs` is the gate: it asks every
+card's source the card's own question over the source's own route, reads the pointer, and fails
+when the card's value differs; it names no card, so the next one is held to it unedited.
+`test/cases/534_the_overview_answers_four_questions.sh` holds the same contract through the
+built executable.
 
 ## Graphs
 
@@ -394,8 +455,11 @@ data the page also prints.
   Only a closed set of text media types is served.
 - **Loopback by default.** `serve` binds `127.0.0.1`; binding anything else logs what it
   means.
-- **Nothing writes.** Every capability the Cockpit can reach is a query, or the one command
-  that changes this process's own memory. Nothing in it writes to the repository.
+- **What writes is declared.** The runner can reach every capability, including the commands
+  whose declared effect is `repository_mutation`. The Run card derives its warning from that
+  effect, so a command that writes tracked files says so before it is sent, always as a
+  `POST` from the page's origin. Every other capability either reads or changes only this
+  process's own memory.
 
 ## Assets
 
@@ -500,7 +564,7 @@ what would change the trade — "when something genuinely long-running arrives, 
 will be worth its own decision, and the typed event envelope belongs in that decision rather
 than ahead of it".
 
-That arrived, and that is [ADR 22](https://github.com/korczis/prismatic-majordomus/blob/master/.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
+That arrived, and that is [ADR 22](https://github.com/korczis/prismatic-majordomus/blob/@source-ref@/.ai/repo/adrs/0033-an-execution-is-a-watched-capability-call-not-a-second-registry.md):
 a capability that reads every file of the layer takes long enough to watch rather than wait
 for, so an **execution** has an identity, typed events and a live channel at `GET /events`
 ([`EXECUTIONS.md`](@/docs/executions.md)). What did *not* change is the trade the paragraph
@@ -523,11 +587,12 @@ decides whether what this process *serves* is sound. Different subjects with dif
 engines, and the Rust server dispatches no shell, so there is no third thing that runs both.
 A reader who wants both runs both; each names the other's territory.
 
-**No write path.** Every capability the Cockpit can reach is a query, or a command that
-changes this process's own memory — starting an execution and cancelling one are two of
-those. Nothing in it writes to the repository, and a capability that did would need its own
-decision (ADR 12 says so explicitly) and would say so in its own execution policy, which is
-what the confirmation on the Run button reads.
+**The write path is declared, not absent.** Most capabilities the Cockpit can reach are
+queries or commands that change this process's own memory; starting an execution and
+cancelling one are two of those. The ones that write the repository declare the effect
+`repository_mutation` in their execution policy, and that policy is what the warning on the
+Run card reads. ADR 12 requires such a capability to be its own decision, and a unit test in
+`builtin` pins the set of them, so a new one shows up in a diff.
 
 ## In a browser
 

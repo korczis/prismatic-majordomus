@@ -1,6 +1,6 @@
 [package]
 name = "majordomus-cli"
-version = "0.7.0"
+version = "0.11.0"
 edition = "2021"
 rust-version = "1.85"
 description = "Majordomus control-plane CLI: a data-driven stdio MCP server over the repository's .ai/ layer"
@@ -46,13 +46,23 @@ libc = "0.2"
 # from one the crate exports; `span-locations` is what lets a finding name a line.
 syn = { version = "2", default-features = false, features = ["full", "parsing", "clone-impls", "printing", "proc-macro"] }
 proc-macro2 = { version = "1", features = ["span-locations"] }
-# ed25519-dalek: the mesh (ADR 0043) treats every discovery datagram as hostile input, and
+# ed25519-dalek: the mesh (ADR 0050) treats every discovery datagram as hostile input, and
 # the only identity a node has is a public key it can prove — an unsigned advertisement
 # is noise, not a peer. Signatures only; no encryption, no TLS, no key exchange.
 ed25519-dalek = { version = "2", default-features = false, features = ["std", "fast", "zeroize"] }
 # getrandom: the node's one long-lived signing key and each instance's id need OS entropy
 # once at creation; nothing else in the crate is random.
 getrandom = "0.2"
+# regex: the shapes a published artifact must never carry (src/quality/leak-patterns.tsv)
+# are POSIX extended expressions that scripts/site-check and scripts/ci/no-machine-paths
+# apply with grep; the crate applies the same file rather than a translation of it. Already
+# in the build through jsonschema, with the same features, so it adds no code.
+regex = "1"
+# tiktoken-rs: the economics subsystem counts context in tokens of a named, pinned
+# tokenizer (o200k_base, vocabulary embedded, no network) rather than dividing bytes by
+# four. It is not the tokenizer of every model, and every count it produces says which one
+# it is; provider-reported usage is recorded as the provider reported it and never recounted.
+tiktoken-rs = "=0.12.0"
 
 [build-dependencies]
 # sha2: build.rs takes the generation — the digest of the crate sources this build read —

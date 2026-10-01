@@ -104,6 +104,7 @@ thing a badge must never be derived from.
 | `at` | RFC 3339, UTC, to the second |
 | `origin` | `local`, `ci` or `release` |
 | `command` | the exact command that runs this one test again |
+| `run` | the CI run it was recorded in — provider, identifier, attempt, workflow, job and address — for a `ci` recording made inside one; absent otherwise (see *Recorded in CI*) |
 
 Only `pass` proves anything. The runner's word is read case-insensitively (`ok`, `pass`,
 `passed`; `fail`, `failed`; `skip`, `skipped`; `timeout`) and **anything unrecognised is
@@ -113,6 +114,20 @@ let a recorder write "this did not run" and have it counted among the things tha
 
 `origin` is provider-neutral. A CI adapter records `ci`; nothing in the model knows or
 cares which CI it was.
+
+The runner speaks that vocabulary. A case that cannot meet a precondition calls `skip` from
+`test/lib.sh`, which exits 4; `test/run.sh` prints `skip`, writes `SKIP` into the TSV in
+both the serial and the parallel phase, and counts it in a third tally beside passed and
+failed. It is not a failure — the run's exit status is unchanged — and it is not a pass
+either, which it was until the word existed: a case that declined exited 0, the runner
+wrote `ok`, and the ledger recorded the proof of a claim from a run that asserted nothing.
+The status is not the declaration on its own: `skip` also writes the file the runner names
+in `MJ_SKIP_MARK`, and a case that ends with 4 without it — `jq -e` fails with 4 when it
+produced no result, and a case runs under `set -e` — is a failure, not a skip.
+The claim is `a-skipped-case-is-not-a-proof` and the case is
+`test/cases/413_a_skipped_case_is_not_a_proof.sh`, which also refuses any case in
+`test/cases/` that still says `exit 0` before its last statement, so the old shape cannot
+come back with a new case.
 
 ## The seven states
 
@@ -147,9 +162,16 @@ invalidated the run rather than being told to go and look.
 This is the point of the whole subsystem, and it is the thing to preserve in any change to
 it.
 
-**`proven`** means a passing run exists and *nothing has changed since it*: the diff between
-the execution's own commit and the working tree is empty. It is proof of the tree in front
-of you — the tree the run measured is the tree you are looking at.
+**`proven`** means a passing run exists, *nothing has changed since it*, and *the run
+measured the commit it is joined to*: the diff between the execution's own commit and the
+working tree is empty, and the execution's `working_tree` is `clean`. It is proof of the
+tree in front of you — the tree the run measured is the tree you are looking at.
+
+Both halves are needed, and each fails differently. A run recorded while something else was
+pending sat on its commit without measuring it (ADR 0041: "`proven` is a passing run
+recorded against this exact commit with a clean tree"), so it is capped at
+`inputs_unchanged` however empty the diff is when the report is taken — a later `git
+checkout` of the edited file cannot retroactively make the commit describe what ran.
 
 The ledger's own row is excluded from that diff, because the evidence is *about* the tree
 rather than part of what the tests measure. Without that exclusion `proven` would be
@@ -158,6 +180,10 @@ committing the record moves HEAD past the commit the record names. That was a re
 in the first cut of this design, found in review; `test/cases/124_evidence.sh` now asserts
 both halves — that the tree is dirty after a recording, and that every claim is `proven`
 anyway — so a regression that made `proven` depend on a clean tree again would fail.
+
+The same exclusion applies when a run is *recorded*: a recording whose only pending change
+is the previous recording's own row is stamped `clean`, because that row is not something
+any test measured. Any other pending path is `dirty` and the execution says so.
 
 **`inputs_unchanged`** means a passing run exists and nothing the claim names has moved
 since it. That is the **absence of a known invalidation** — not proof at HEAD. Something
@@ -372,9 +398,18 @@ scripts/evidence-check --repo PATH  # judge that repository instead of this one
 Only `guaranteed` claims are judged. `advisory` states that enforcement is not observable
 from outside, `planned` that nothing implements it, and `rejected` that nothing will;
 demanding a current proof of those would be demanding proof of a thing the claim already
-says is not there. A `guaranteed` claim in any of the three passing states — `proven`,
-`inputs_unchanged` or `stale` — is supported; `failing`, `not_run`, `unrunnable` and
-`no_test` are findings, each with the reason and the command that would settle it.
+says is not there. A `guaranteed` claim is supported by `proven` or `inputs_unchanged`, and
+by nothing else; `stale`, `failing`, `not_run`, `unrunnable` and `no_test` are findings,
+each with the reason and the command that would settle it.
+
+`stale` is the one of those that looks like support and is not, and it was counted as
+support until it was measured: 14 guarantees rested on it, against 0 proven. A stale run
+*is* a pass — `passing()` says so, and the summary must keep it apart from a failure — but
+it is a pass of a subject that has since moved: the claim's implementation or its test
+changed after the run offered as its proof, so what passed is not what the claim now names.
+Accepting it made the gate accept, as support for a guarantee, a measurement of something
+else, which is the whole defect this subsystem exists to name one level down. The floor is
+`inputs_unchanged`: weaker than `proven`, but at least a pass of *this* subject.
 
 **It is advisory today, and this is a choice with an end.** The ledger starts empty, so on
 the day the gate arrives every guaranteed claim is `not_run` — true, and as a blocking gate
@@ -430,6 +465,121 @@ from it. `proven` is reachable in a repository that tracks its own evidence, whi
 only arrangement in which the evidence is worth anything to anybody but the person who ran
 the tests. `test/cases/124_evidence.sh` proves it on a fixture whose ledger is tracked
 exactly as this repository's is.
+
+## Recorded in CI
+
+The ledger above holds whatever was recorded into the tree. CI's runs are recorded as well, and
+a validating run never commits its rows: they are kept where the run happened, as a run record.
+A trunk run's rows are committed later, by a separate pull request (ADR 0080), because a run
+cannot commit what it proved without adding a commit after the one it proved, on a trunk that
+moves faster than the suite finishes. That recording pull request is not wired yet. The
+decision is
+[ADR 68](../.ai/repo/adrs/0068-ci-evidence-is-kept-where-the-run-happened-and-published-with-the-commit-it-proves.md),
+as ADR 0087 amends it.
+
+```mermaid
+flowchart LR
+  suite["suite job, four shards<br>suite.tsv · suite-tree.json, joined"]
+  crate["rust job, three lanes<br>cargo-test-1..3.txt · crate-tree.json, joined"]
+  cov["coverage job<br>coverage.json"]
+  collect["evidence job<br>scripts/ci/evidence-collect"]
+  artifact["artifact `evidence`<br>report · ledger · coverage · manifest"]
+  pages["pages.yml<br>scripts/pages evidence"]
+  site["/evidence/<br>current · stale · unknown · unavailable"]
+  suite --> collect
+  crate --> collect
+  cov --> collect
+  collect --> artifact --> pages --> site
+  collect -. "commit still the tip: dispatch" .-> pages
+```
+
+**What the collector derives first.** Before it records anything, `scripts/ci/evidence-collect`
+measures the checkout it runs in and derives the report through `majordomus evidence show`, as
+`report.txt` and `report.json`. The reports it is handed and the directory it writes are under
+the runner's temporary directory, outside that checkout. The report is therefore the tracked
+ledger's verdict at the run's commit, the answer a clean checkout of that commit gives, and the
+manifest's `report_tree` says whether the checkout was clean when it was derived.
+
+**What the run's rows are.** Only then does it record the suite's and the crate's results
+through `majordomus evidence record --origin ci`, and keep the ledger that now holds them as
+`ledger.json`. Those rows are a run record. They are counted in the manifest and decide no
+verdict, in the artifact or on the site. A trunk run's rows become verdicts only when ADR
+0080's recording pull request lands them in the tracked ledger. The collector also summarises
+the coverage export through `scripts/rust-coverage --summary-json`.
+
+**What the producers and the recorder measure.** Each job that ran tests measures its own
+checkout right after its run and hands the measurement over beside its report:
+`suite-tree.json` from the suite job, `crate-tree.json` from the rust job. Each excludes by name
+the outputs its own run names, at the paths where that run writes them, and nothing else: the
+suite its report, at the root; the rust job its timings and its artifact directory, which
+`scripts/rust-check` writes in the crate's directory, where it runs. The measurement lists what
+it excluded. The manifest's `working_tree` is derived from those measurements
+alone: clean when every recorded job measured a clean tree, dirty when any measured a dirty one,
+unknown otherwise. It is never read from the recorder's checkout, which is clean by
+construction. The recorded rows still carry the recorder's own stamp, which the manifest keeps
+apart as `rows_working_tree`. A report whose job measured a commit other than the one the
+collector runs on is refused: it is not recorded, and it is named.
+
+The collector writes `manifest.json`, naming:
+
+- the commit that ran (for a pull request, GitHub's merge commit), and `head_sha`, the head it
+  was built from, carried beside it and never in its place;
+- the event and the run;
+- the outcomes of that run's executions;
+- the producers' measurements, the `working_tree` derived from them, and the `report_tree`;
+- which reports were absent, a report that yielded no execution included, and which were
+  refused, with the reason.
+
+An absent report is named, never counted as a pass. The job keeps the directory as the artifact
+`evidence`. It is not a gate: it reads jobs that have already decided, and a red suite is
+exactly the evidence worth keeping.
+
+**An execution names its run.** A `ci` recording made inside a GitHub Actions environment stamps
+every execution with `run`: the provider, the run's identifier, its attempt, the workflow, the
+job and the address the provider gave. `RunRef::from_env` is the only place that knows the
+environment's names. A local recording names no run, even inside a CI shell, and rows recorded
+before runs were named have no `run` at all.
+
+```json
+"run": {
+  "provider": "github_actions",
+  "id": "<run id>",
+  "attempt": 1,
+  "workflow": "validate",
+  "job": "evidence",
+  "url": "https://github.com/korczis/prismatic-majordomus/actions/runs/<run id>/attempts/1"
+}
+```
+
+**What a publication says about it.** Before the build, `scripts/pages evidence` finds the
+`evidence` artifact recorded against the commit being published or its nearest ancestor. It
+chooses the nearest ancestor by history, not the newest upload. It writes
+`site/data/evidence.json`, which is never committed. It publishes the report as it was derived,
+and reads the manifest only to decide whether the run confirms it: a reason can withhold
+`current`, and never changes the report. ADR 0087 defines the states it says:
+
+| state | when | what the page says |
+|---|---|---|
+| current | the run is of the published commit, every job that ran tests measured a clean tree, the report was derived on a clean checkout and is carried, and nothing was absent, refused or failed | CURRENT, with the commit and the run |
+| stale | the run is of an ancestor, or it is of the published commit and recorded a failure | STALE, with how many commits and changed files lie between, or with the failures |
+| unknown | the run is of the published commit and cannot confirm the report: a tree not measured or not clean, a report absent or refused, or its own report not derived or not carried | UNKNOWN, with every reason |
+| unavailable | no retained artifact of this history, or one that cannot be read | UNKNOWN, with the reason |
+
+Whatever withholds `current` is listed under the sentence. None of the states stops a
+publication. When a master run's evidence is kept while its commit is still the tip, the job
+dispatches `pages.yml`, and that publication says current when the run confirms the report.
+When master has moved on, the newer publication already carries the evidence as stale and the
+newer run will refresh it.
+
+```sh
+scripts/pages evidence                          # this commit, fetched with gh
+scripts/pages evidence --from <dir> --out FILE  # a gathered directory, offline
+cat cargo-test-*.txt > cargo-test.txt   # the rust job's three lanes, joined
+scripts/ci/evidence-collect --out <dir> --suite suite.tsv --suite-tree suite-tree.json \
+  --crate-output cargo-test.txt --crate-tree crate-tree.json --coverage coverage.json
+```
+
+The behavioural proof is `test/cases/357_ci_records_evidence.sh`.
 
 ## What this is not
 
@@ -502,6 +652,8 @@ passed against this commit. Whether the test tests the claim is a question for r
 | the declaration yields exactly the projections it claims; only the recorder writes, and it is not on the network | implemented, unit tests in `src/capability/builtin/evidence.rs` |
 | the whole path end to end in a fixture repository — nothing recorded, provenance, a partial run, `stale` with the path named, `proven` against `inputs_unchanged`, `failing` and the exit code, both directions, the refusals | behaviourally verified (`test/cases/124_evidence.sh`) |
 | the gate planned on every push, and the paths that can change the answer | declared in `.ai/repo/ci/gates.yaml`; the planner that reads it is behaviourally verified (`test/cases/94_ci_plan.sh`) |
-| CI recording its own runs into the ledger | not implemented; the report is written and uploaded, nothing records it and nothing commits it |
+| CI recording its own runs, stamped with the run, into the `evidence` artifact of the commit | behaviourally verified (`test/cases/357_ci_records_evidence.sh`); see *Recorded in CI* |
+| the site publishing that evidence as current, stale with its distance, or unavailable with its reason | behaviourally verified (`test/cases/357_ci_records_evidence.sh`); rendered on `/evidence/` |
+| CI's evidence committed into the tracked ledger | refused — ADR 68: a run cannot commit what it proved without adding a commit after the one it proved |
 | the site rendering a claim's proof state beside its status | not implemented; the guarantees page still shows the declared status alone |
 | tamper resistance, a signed ledger, a run history, captured output | not implemented, and refused — see *What this is not* and ADR 40 |

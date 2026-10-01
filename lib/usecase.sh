@@ -462,6 +462,12 @@ mj_uc_cmd_validate() {
 # along with everything else. Whether the race fires depends on the machine, so recording it
 # makes the artifact differ by where it was generated. It is a fact about the recording, not
 # about the command, and the pipes that produce it are removed where they are ours.
+#
+# What `doctor` reports about reasoning (ADR 0098) is decided by the recording machine too:
+# which advisors it has installed, and whether the job that recorded the scenario could reach
+# the executable at all — the suite job can, the site job cannot, and the catalogue each one
+# derived differed by seven lines. The advisor lines and the passing check line go, and the
+# remaining line becomes one token; a FAIL is kept whole, since a finding is the repository's.
 mj_uc_normalise() { # repo-path
   local real; real="$(cd "$1" 2>/dev/null && pwd -P)"
   sed -E \
@@ -497,7 +503,10 @@ mj_uc_normalise() { # repo-path
     -e 's/^(owner +).*$/\1<owner>/' \
     -e 's/^( *owner=).*$/\1<owner>/' \
     -e 's/"owner":"[^"]*"/"owner":"<owner>"/g' \
-    -e '/: printf: write error: Broken pipe$/d'
+    -e '/: printf: write error: Broken pipe$/d' \
+    -e '/^INFO advisor +[^ ]+ — .* — optional$/d' \
+    -e '/^OK +reasoning +- — reasoning check: /d' \
+    -e 's/^(OK|INFO) +reasoning +.*$/·    reasoning   <decided by the advisors and the executable of the recording machine>/'
 }
 # a JSON string body: backslash and quote escaped, newlines and tabs as escapes, every
 # other control byte dropped; the newlines of a command's output are its structure
@@ -510,6 +519,10 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   local fix steps_json="" first=1 raw norm asserts fail_reason
   id="$(mj_uc_v "$i" id)"; setup="$(mj_uc_v "$i" scenario.setup)"
   [ -n "$setup" ] || return 2
+  # A scenario's output is published evidence, so it may not depend on what this machine
+  # has installed. Reasoning's ci mode admits no advisor whatever is on PATH (ADR 0098),
+  # which makes every advisor line `doctor` prints the same on a laptop and on a runner.
+  MAJORDOMUS_REASONING_MODE=ci; export MAJORDOMUS_REASONING_MODE
   fix="$(mj_uc_fixture_dir)"
   tmp="$(mktemp -d "${TMPDIR:-/tmp}/mj-uc.XXXXXX")"
   W="$tmp/repo"; mkdir -p "$W"
@@ -527,7 +540,9 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # the setup script prepares the repository, with the same helpers the test suite gives it
   local setup_out="$tmp/setup.out"
   # the helpers the setup scripts use (pj_* for a plan model) come from the tool's test
-  # library, which the distribution ships beside the fixtures
+  # library, which the distribution ships beside the fixtures. The library loads only in
+  # a fixture, the directory named by T that the caller stands in, and the scenario's
+  # repository is that fixture here, as a case's $T is under test/run.sh.
   local helpers="$fix/../../lib.sh"
   # The tool under test is on PATH for the setup and every step, as an installed launcher
   # would be. A provider hook the setup installs resolves the executable the way the
@@ -537,7 +552,7 @@ mj_uc_run_one() { # index, evidence-file, keep(0|1)
   # `wired`; and that difference reached the committed evidence, which is the one thing
   # derivation may not do. The tool being exercised is the one the hook should find.
   case ":$PATH:" in *":$MJ_BIN_DIR:"*) ;; *) PATH="$MJ_BIN_DIR:$PATH"; export PATH ;; esac
-  ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$MJ_ROOT" && export MJ FIXTURE_SETUP ROOT \
+  ( cd "$W" && MJ="$MJ_BIN_DIR/majordomus" FIXTURE_SETUP="$fix/setup" ROOT="$MJ_ROOT" T="$W" && export MJ FIXTURE_SETUP ROOT T \
       && if [ -f "$helpers" ]; then # shellcheck disable=SC1090
         . "$helpers"; fi \
       && { # shellcheck disable=SC1090
@@ -907,7 +922,18 @@ mj_uc_cmd_impact() {
   cmds="${cmds% }"; rules="${rules% }"; ucs="${ucs% }"
   # behavioural cases that declare coverage of an affected command, and the rules' tests
   for c in $cmds; do cases="$cases $(grep -lE "^# majordomus-covers:.*\b$c\b" "$MJ_ROOT"/test/cases/*.sh 2>/dev/null | sed "s#^$MJ_ROOT/##" | tr '\n' ' ')"; done
-  for r in $rules; do n="$(mj_doc_index "$r" 2>/dev/null)" && cases="$cases $(mj_doc_list "$n" tests | tr '\n' ' ')"; done
+  # a changed rule's own proof: the cases its x-majordomus block names. Read from the resolved
+  # rule set, which carries every rule, and not from the doctrine table, which carries only the
+  # dispatched ones and was never loaded here — so a changed rule used to name no case at all.
+  if [ -n "$rules" ]; then
+    . "$MJ_LIB_DIR/rules.sh"
+    if mj_rules_load 2>/dev/null; then
+      for r in $rules; do
+        n="$(mj_rule_index "$r" 2>/dev/null)" || continue
+        cases="$cases $(mj_rule_list "$n" tests | grep '^test/cases/' | tr '\n' ' ')"
+      done
+    fi
+  fi
   cases="$(printf '%s\n' $cases | LC_ALL=C sort -u | tr '\n' ' ')"; cases="${cases% }"
   local scen=""; for id in $ucs; do i="$(mj_uc_index "$id")" && mj_uc_has_scenario "$i" && scen="$scen $id"; done; scen="${scen# }"
   if [ "$json" = 1 ]; then

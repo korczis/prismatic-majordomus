@@ -84,6 +84,35 @@
           "items": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
         }
       }
+    },
+    "cooperation": {
+      "description": "Cooperation (ADR 0067): authenticated links to trusted runtimes of the same repository and the journal of sessions, claims, handovers and reviews they replicate. On by default once the mesh is enabled; a link needs a trusted key, so the default trust policy with an empty allowlist links nothing.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" },
+        "heartbeat_seconds": {
+          "description": "Seconds between heartbeats: one beat and one sync per link.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "expiry_seconds": {
+          "description": "Seconds of silence after which a runtime is expired; at least three heartbeats.",
+          "type": "integer",
+          "minimum": 3
+        },
+        "seeds": {
+          "description": "Endpoints to dial whether or not discovery heard them.",
+          "type": "array",
+          "items": { "type": "string", "pattern": "^http://[^/]+:[0-9]+$" }
+        },
+        "repository": {
+          "description": "The repository's mesh identity, declared instead of derived from its root commits (a shallow clone needs it).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
+      }
     }
   }
 }

@@ -250,6 +250,82 @@ fn a_blocking_rule_is_held_to_its_proof_and_an_advisory_one_is_not() {
     }
 }
 
+/// The corpus verdict is three-valued, because "no findings" and "proven" are different
+/// sentences. A blocking rule that was never run is not a finding (docs/DOCTRINE.md), and it
+/// is not proof either: the verdict over it is `unproven`. Only a corpus every one of whose
+/// blocking rules carries a current passing run is `proven`, and any finding is `failing`.
+#[test]
+fn the_verdict_is_proven_only_when_every_blocking_rule_passed() {
+    use RuleState::*;
+    // proven: every blocking rule carries a current pass
+    assert_eq!(
+        RulesVerdict::of([Proven, InputsUnchanged], false),
+        RulesVerdict::Proven
+    );
+    // unproven: each weaker state that is not a finding, alone among passing rules
+    for weaker in [NotRun, Gated, Reviewed, Stale] {
+        assert_eq!(
+            RulesVerdict::of([Proven, weaker], false),
+            RulesVerdict::Unproven,
+            "{} must not read as proven",
+            weaker.label()
+        );
+    }
+    // and never proven by vacancy
+    assert_eq!(RulesVerdict::of([], false), RulesVerdict::Unproven);
+    // failing: a finding wins over every state
+    assert_eq!(RulesVerdict::of([Proven], true), RulesVerdict::Failing);
+    assert_eq!(RulesVerdict::of([], true), RulesVerdict::Failing);
+    for v in [
+        RulesVerdict::Proven,
+        RulesVerdict::Unproven,
+        RulesVerdict::Failing,
+    ] {
+        assert_eq!(serde_json::to_value(v).unwrap(), json!(v.label()));
+        assert!(!v.meaning().is_empty());
+    }
+}
+
+/// The report carries the verdict, derived from the corpus: a blocking rule naming a case
+/// that is in the tree and was never run leaves the report satisfied — no finding — and
+/// unproven.
+#[test]
+fn a_blocking_rule_never_run_is_not_a_finding_and_leaves_the_corpus_unproven() {
+    let repo = crate::synthetic::SyntheticRepository::small().unwrap();
+    std::fs::create_dir_all(repo.root().join("test/cases")).unwrap();
+    std::fs::write(repo.root().join("test/cases/07_scope.sh"), "# scope\n").unwrap();
+    let rel = ".ai/repo/rules/project/rule-2.v1.md";
+    let text = std::fs::read_to_string(repo.root().join(rel)).unwrap();
+    std::fs::write(
+        repo.root().join(rel),
+        text.replace(
+            "class: advisory",
+            "class: blocking\n\nx-majordomus:\n  tests: [test/cases/07_scope.sh]",
+        ),
+    )
+    .unwrap();
+
+    let r = report(&repo.index().unwrap(), &Ledger::load(repo.root()).unwrap());
+    let p = r
+        .rules
+        .iter()
+        .find(|p| p.rule.id == "project.rule-2")
+        .unwrap();
+    assert_eq!(p.state, RuleState::NotRun);
+    assert!(
+        r.findings.is_empty(),
+        "never run is a weaker state, not a finding"
+    );
+    assert!(r.satisfied());
+    assert_eq!(
+        r.verdict,
+        RulesVerdict::Unproven,
+        "a blocking rule nobody ran must not leave the corpus reading as proven"
+    );
+    let v = serde_json::to_value(&r).unwrap();
+    assert_eq!(v["verdict"], json!("unproven"));
+}
+
 // ---------------------------------------------------------------- the gates
 
 /// A gate's binding to a path is read from the gate's own command. No gate id is written
@@ -341,6 +417,8 @@ fn a_corpus_with_no_proof_is_unproven_and_not_a_finding() {
         "advisory rules owe no executable proof"
     );
     assert!(r.satisfied());
+    // and no finding is not proof: a corpus with no blocking rule has shown nothing
+    assert_eq!(r.verdict, RulesVerdict::Unproven);
 
     // canonical order, from the crate's one comparator, so that two runs over one tree
     // agree whatever order the filesystem handed the discovery
@@ -453,6 +531,11 @@ fn a_blocking_rule_naming_a_missing_case_is_dangling_and_a_finding() {
         "a finding carries how to reproduce it"
     );
     assert!(!r.satisfied());
+    assert_eq!(
+        r.verdict,
+        RulesVerdict::Failing,
+        "a finding makes the corpus failing"
+    );
 }
 
 /// A blocking rule that names nothing at all is the other half of the same defect, and the

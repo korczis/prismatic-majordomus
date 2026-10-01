@@ -3,6 +3,7 @@
 # A doctrine's class is not a label: it decides whether the command stops. Blocking
 # doctrines refuse; the one advisory doctrine reports and lets the command pass. A
 # blocker refuses completion and permits `blocked`.
+# claims: doctrine-class-decides
 . "$ROOT/test/lib.sh"
 # The mutations below rewrite the tool itself, so the case runs against its own copy.
 mkdir -p "$T/tool" "$T/tool/.github/workflows"

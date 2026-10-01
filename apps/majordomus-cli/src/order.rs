@@ -25,6 +25,9 @@
 //! different iterator was used, or because one machine's filesystem enumerates differently
 //! from another's; identities are unique, so the comparison always ends there.
 //!
+//! A numeric sample is ordered here too, by [`numeric`]: nobody reads it item by item, but a
+//! median read off it depends on its order, and a float has exactly one order worth having.
+//!
 //! ```
 //! use majordomus_cli::order::{canonical, OrderKey, Ordered};
 //!
@@ -161,6 +164,49 @@ pub fn canonical<T: Ordered>(items: &mut [T]) {
 /// ```
 pub fn canonical_strings<S: AsRef<str>>(items: &mut [S]) {
     items.sort_by(|a, b| natural_cmp(a.as_ref(), b.as_ref()));
+}
+
+/// Put a numeric sample in ascending order, in place.
+///
+/// A sample is not a collection a person reads item by item: it is ordered so that its
+/// order statistics — a median, a quantile, the bounds of a bootstrap interval — can be read
+/// off it. It still has exactly one order, IEEE 754's total order, in which every value,
+/// both zeros and a NaN included, has one fixed place, so the result never depends on the
+/// order the values arrived in. It is written here, once, instead of as a comparator beside
+/// every piece of arithmetic that needs one.
+///
+/// ```
+/// use majordomus_cli::order::numeric;
+///
+/// let mut sample = vec![0.5, 0.0, 0.25, -0.0];
+/// numeric(&mut sample);
+/// assert_eq!(sample, [0.0, 0.0, 0.25, 0.5]);
+/// assert!(sample[0].is_sign_negative(), "-0 has its own place, before +0");
+/// ```
+pub fn numeric(values: &mut [f64]) {
+    values.sort_by(f64::total_cmp);
+}
+
+/// Put a set of numeric samples in ascending order, in place: value by value in
+/// [`numeric`]'s order, and a sample that is a prefix of another before it. Once each sample
+/// is itself in [`numeric`] order, this is what makes a computation that draws among the
+/// samples independent of the order they were listed in.
+///
+/// ```
+/// use majordomus_cli::order::numeric_samples;
+///
+/// let mut samples = vec![vec![0.3, 0.4], vec![0.1], vec![0.3]];
+/// numeric_samples(&mut samples);
+/// assert_eq!(samples, [vec![0.1], vec![0.3], vec![0.3, 0.4]]);
+/// ```
+pub fn numeric_samples(samples: &mut [Vec<f64>]) {
+    samples.sort_by(|a, b| {
+        a.iter()
+            .zip(b.iter())
+            .map(|(x, y)| x.total_cmp(y))
+            .find(|o| o.is_ne())
+            .unwrap_or_else(|| a.len().cmp(&b.len()))
+    });
 }
 
 /// Is this collection already in canonical order? What a validator asks of a projection it
